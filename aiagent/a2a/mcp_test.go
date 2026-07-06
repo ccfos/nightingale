@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	mcpclient "github.com/n9e/n9e-mcp-server/pkg/client"
 	mcptoolset "github.com/n9e/n9e-mcp-server/pkg/toolset"
@@ -143,7 +144,7 @@ func TestClientForwardsTokenThroughTransport(t *testing.T) {
 func TestBuildMCPServerToolsListing(t *testing.T) {
 	httpClient := &http.Client{Transport: &inProcRoundTripper{dispatcher: http.NotFoundHandler()}}
 
-	full := listToolNames(t, buildMCPServer(httpClient, []string{"mutes"}, false))
+	full := listToolNames(t, buildMCPServer(httpClient, MCPConfig{Toolsets: []string{"mutes"}}))
 	if contains(full, "n9e_assistant") {
 		t.Fatal("legacy n9e_assistant tool should be removed")
 	}
@@ -154,7 +155,7 @@ func TestBuildMCPServerToolsListing(t *testing.T) {
 		t.Fatalf("non-whitelisted toolset leaked: %v", full)
 	}
 
-	readOnly := listToolNames(t, buildMCPServer(httpClient, []string{"mutes"}, true))
+	readOnly := listToolNames(t, buildMCPServer(httpClient, MCPConfig{Toolsets: []string{"mutes"}, ReadOnly: true}))
 	if contains(readOnly, "create_mute") || contains(readOnly, "update_mute") {
 		t.Fatalf("read-only server should drop write tools: %v", readOnly)
 	}
@@ -173,38 +174,111 @@ func TestResolveToolsets(t *testing.T) {
 
 	// Empty → every default toolset, metrics included (its tools decode the
 	// native Prometheus envelope since n9e-mcp-server's doPromGet).
-	if got := resolveToolsets(MCPConfig{}); len(got) != all || !contains(got, "metrics") {
+	if got := resolveToolsets(MCPConfig{}, mcptoolset.DefaultToolsets); len(got) != all || !contains(got, "metrics") {
 		t.Fatalf("empty whitelist should be all default toolsets incl. metrics: %v", got)
 	}
 	// "all" is kept as a config-back-compat synonym for the default.
-	if got := resolveToolsets(MCPConfig{Toolsets: []string{"all"}}); len(got) != all || !contains(got, "metrics") {
+	if got := resolveToolsets(MCPConfig{Toolsets: []string{"all"}}, mcptoolset.DefaultToolsets); len(got) != all || !contains(got, "metrics") {
 		t.Fatalf("explicit all should include metrics: %v", got)
 	}
-	if got := resolveToolsets(MCPConfig{Toolsets: []string{"metrics"}}); len(got) != 1 || got[0] != "metrics" {
+	if got := resolveToolsets(MCPConfig{Toolsets: []string{"metrics"}}, mcptoolset.DefaultToolsets); len(got) != 1 || got[0] != "metrics" {
 		t.Fatalf("metrics-only whitelist should be honored: %v", got)
 	}
-	if got := resolveToolsets(MCPConfig{Toolsets: []string{"mutes"}}); len(got) != 1 || got[0] != "mutes" {
+	if got := resolveToolsets(MCPConfig{Toolsets: []string{"mutes"}}, mcptoolset.DefaultToolsets); len(got) != 1 || got[0] != "mutes" {
 		t.Fatalf("valid whitelist should pass through: %v", got)
 	}
 	// The core fail-closed case: a typo drops that name, keeping the rest.
-	if got := resolveToolsets(MCPConfig{Toolsets: []string{"mutes", "dashbaords"}}); len(got) != 1 || got[0] != "mutes" {
+	if got := resolveToolsets(MCPConfig{Toolsets: []string{"mutes", "dashbaords"}}, mcptoolset.DefaultToolsets); len(got) != 1 || got[0] != "mutes" {
 		t.Fatalf("typo should be dropped, not widen to all; got %v", got)
 	}
-	if got := resolveToolsets(MCPConfig{Toolsets: []string{"nope"}}); len(got) != 0 {
+	if got := resolveToolsets(MCPConfig{Toolsets: []string{"nope"}}, mcptoolset.DefaultToolsets); len(got) != 0 {
 		t.Fatalf("all-unknown whitelist should enable nothing; got %v", got)
 	}
 
 	// End-to-end: a typo-only whitelist must expose zero tools, never fall open
 	// to the full (write-capable) set.
 	httpClient := &http.Client{Transport: &inProcRoundTripper{dispatcher: http.NotFoundHandler()}}
-	enabled := resolveToolsets(MCPConfig{Toolsets: []string{"dashbaords"}})
-	if names := listToolNames(t, buildMCPServer(httpClient, enabled, false)); len(names) != 0 {
+	if names := listToolNames(t, buildMCPServer(httpClient, MCPConfig{Toolsets: []string{"dashbaords"}})); len(names) != 0 {
 		t.Fatalf("typo-only whitelist should expose no tools; got %v", names)
 	}
 
 	// Sanity: NewMCPHandler tolerates a bad whitelist without panicking.
 	if h := NewMCPHandler(http.NotFoundHandler(), MCPConfig{Toolsets: []string{"nope"}}); h == nil {
 		t.Fatal("handler is nil for invalid toolset config")
+	}
+}
+
+// TestMCPExtraToolsets covers the embedder extension point: a registrar adds a
+// custom toolset whose tool calls an embedder route (/api/n9e-plus/...)
+// through the same in-process transport, the whitelist accepts the extra
+// name, and the tool round-trips a real call end to end.
+func TestMCPExtraToolsets(t *testing.T) {
+	var gotPath, gotToken string
+	dispatcher := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotToken = r.Header.Get("X-User-Token")
+		_, _ = w.Write([]byte(`{"dat":[{"id":1,"name":"demo-view"}],"err":""}`))
+	})
+	httpClient := &http.Client{Transport: &inProcRoundTripper{dispatcher: dispatcher}}
+
+	registrar := func(group *mcptoolset.ToolsetGroup, getClient mcpclient.GetClientFunc) {
+		ts := mcptoolset.NewToolset("plus_demo", "demo embedder toolset")
+		ts.AddReadTools(mcptoolset.NewServerTool(
+			mcp.Tool{Name: "list_demo_views", Description: "list demo views",
+				InputSchema: &jsonschema.Schema{Type: "object"}},
+			mcptoolset.MakeToolHandler(func(ctx context.Context, req *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, error) {
+				c := getClient(ctx)
+				got, err := mcpclient.DoGet[[]map[string]any](c, ctx, "/api/n9e-plus/demo-views", nil)
+				if err != nil {
+					return mcptoolset.NewToolResultError(err.Error()), nil
+				}
+				return mcptoolset.MarshalResult(got), nil
+			}),
+		))
+		group.AddToolset(ts)
+	}
+
+	// Extra toolset shows up next to the defaults, and the whitelist accepts
+	// its name (validated against the composed group, not a static list).
+	cfg := MCPConfig{Toolsets: []string{"plus_demo"}, ExtraToolsets: []MCPToolsetRegistrar{registrar}}
+	names := listToolNames(t, buildMCPServer(httpClient, cfg))
+	if len(names) != 1 || names[0] != "list_demo_views" {
+		t.Fatalf("whitelisted extra toolset should expose exactly its tool: %v", names)
+	}
+
+	// Empty whitelist includes defaults + extras.
+	allNames := listToolNames(t, buildMCPServer(httpClient, MCPConfig{ExtraToolsets: []MCPToolsetRegistrar{registrar}}))
+	if !contains(allNames, "list_demo_views") || !contains(allNames, "list_mutes") {
+		t.Fatalf("default set should include defaults and extras: %d tools", len(allNames))
+	}
+
+	// Call the tool through a real in-memory MCP session: the credential from
+	// the connect context must reach the embedder route via the transport.
+	ctx := context.WithValue(context.Background(), mcpTokenCtxKey{}, mcpCredential{token: "tok-plus"})
+	clientTransport, serverTransport := mcp.NewInMemoryTransports()
+	ss, err := buildMCPServer(httpClient, cfg).Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatalf("server connect: %v", err)
+	}
+	defer ss.Close()
+	cs, err := mcp.NewClient(&mcp.Implementation{Name: "t", Version: "0"}, nil).Connect(ctx, clientTransport, nil)
+	if err != nil {
+		t.Fatalf("client connect: %v", err)
+	}
+	defer cs.Close()
+
+	res, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "list_demo_views"})
+	if err != nil {
+		t.Fatalf("call tool: %v", err)
+	}
+	if res.IsError {
+		t.Fatalf("tool errored: %+v", res.Content)
+	}
+	if gotPath != "/api/n9e-plus/demo-views" {
+		t.Fatalf("embedder route not hit, path=%q", gotPath)
+	}
+	if gotToken != "tok-plus" {
+		t.Fatalf("caller token not replayed to embedder route, got %q", gotToken)
 	}
 }
 

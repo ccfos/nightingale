@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/pkg/logx"
@@ -42,18 +43,30 @@ const (
 // envelope the /api/n9e/proxy route forwards (doPromGet in n9e-mcp-server),
 // so the empty-whitelist default is simply every default toolset.
 
-// MCPConfig selects which n9e-mcp-server toolsets /mcp exposes and how the
-// caller's credential is replayed onto the internal API hop.
+// MCPToolsetRegistrar registers extra toolsets onto the /mcp tool group.
+// Embedders (e.g. the enterprise edition) use it to expose their own API
+// surface as MCP tools alongside the default n9e-mcp-server toolsets, without
+// this package knowing about them. The tools' outbound requests go through
+// the same in-process transport, so the embedder's routes see the caller's
+// credential and their own auth/RBAC/license middlewares apply unchanged.
+// getClient resolves the caller-scoped client from a tool call's context.
+type MCPToolsetRegistrar func(group *mcptoolset.ToolsetGroup, getClient mcpclient.GetClientFunc)
+
+// MCPConfig selects which toolsets /mcp exposes and how the caller's
+// credential is replayed onto the internal API hop.
 type MCPConfig struct {
-	// Toolsets is the enabled toolset whitelist; empty means the center default
-	// (every default toolset, metrics included). Unknown names
-	// are dropped (see resolveToolsets), never widened to all.
+	// Toolsets is the enabled toolset whitelist; empty means everything
+	// registered (default toolsets plus ExtraToolsets). Unknown names are
+	// dropped (see resolveToolsets), never widened to all.
 	Toolsets []string
 	// ReadOnly registers only read tools when true.
 	ReadOnly bool
 	// TokenHeader is the center's configured TokenAuth header name (defaults to
 	// X-User-Token). The caller's token is read from and replayed under it.
 	TokenHeader string
+	// ExtraToolsets lets an embedder register additional toolsets on top of
+	// n9e-mcp-server's defaults; run in order after the defaults.
+	ExtraToolsets []MCPToolsetRegistrar
 }
 
 // NewMCPHandler builds an MCP Streamable HTTP handler that exposes the
@@ -91,11 +104,11 @@ func NewMCPHandler(dispatcher http.Handler, cfg MCPConfig) http.Handler {
 	// transport is safe to reuse.
 	httpClient := &http.Client{Transport: &inProcRoundTripper{dispatcher: dispatcher, tokenHeader: tokenHeader}}
 
-	// A single shared server: the ~60 tools are registered once, and the
+	// A single shared server: the tools are registered once, and the
 	// per-caller n9e client is built on demand from the token in the request
 	// context (stashed below). There is deliberately no per-token server cache —
 	// such a cache never evicts and would grow unbounded as tokens rotate.
-	server := buildMCPServer(httpClient, resolveToolsets(cfg), cfg.ReadOnly)
+	server := buildMCPServer(httpClient, cfg)
 	streamable := mcp.NewStreamableHTTPHandler(
 		func(*http.Request) *mcp.Server { return server },
 		&mcp.StreamableHTTPOptions{Stateless: true},
@@ -127,18 +140,24 @@ func NewMCPHandler(dispatcher http.Handler, cfg MCPConfig) http.Handler {
 	})
 }
 
-// resolveToolsets returns the enabled-toolset list. An empty whitelist (and
-// the explicit "all" keyword, kept for config back-compat) means every default
-// toolset. Otherwise only the known names are kept: an unknown name is dropped
-// with a warning — a typo shrinks the exposed set, it never fails open by
-// widening a restricted whitelist to all toolsets.
-func resolveToolsets(cfg MCPConfig) []string {
+// resolveToolsets returns the enabled-toolset list. available is what is
+// actually registered on the group (defaults plus any embedder extras). An
+// empty whitelist (and the explicit "all" keyword, kept for config
+// back-compat) means everything available. Otherwise only the known names are
+// kept: an unknown name is dropped with a warning — a typo shrinks the
+// exposed set, it never fails open by widening a restricted whitelist to all
+// toolsets.
+func resolveToolsets(cfg MCPConfig, available []string) []string {
+	// Sort a copy: callers may hand in a shared slice (e.g. a package-level
+	// default list) that must not be reordered in place.
+	available = append([]string(nil), available...)
+	sort.Strings(available)
 	if len(cfg.Toolsets) == 0 {
-		return mcptoolset.DefaultToolsets
+		return available
 	}
 
-	valid := make(map[string]bool, len(mcptoolset.DefaultToolsets))
-	for _, name := range mcptoolset.DefaultToolsets {
+	valid := make(map[string]bool, len(available))
+	for _, name := range available {
 		valid[name] = true
 	}
 
@@ -149,9 +168,9 @@ func resolveToolsets(cfg MCPConfig) []string {
 		case name == "":
 			continue
 		case name == "all":
-			return mcptoolset.DefaultToolsets
+			return available
 		case !valid[name]:
-			logx.Warningf(context.Background(), "[MCP] ignoring unknown toolset %q; valid names: %v", name, mcptoolset.DefaultToolsets)
+			logx.Warningf(context.Background(), "[MCP] ignoring unknown toolset %q; valid names: %v", name, available)
 		default:
 			enabled = append(enabled, name)
 		}
@@ -189,7 +208,7 @@ func IsMCPInProcDispatch(ctx context.Context) bool {
 // center via a token-scoped in-process client that the receiving middleware
 // builds on demand from the token in the request context — no per-token
 // server or client cache to grow unbounded as tokens rotate.
-func buildMCPServer(httpClient *http.Client, enabled []string, readOnly bool) *mcp.Server {
+func buildMCPServer(httpClient *http.Client, cfg MCPConfig) *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    "Nightingale MCP Server",
 		Version: "1.0.0",
@@ -211,9 +230,15 @@ func buildMCPServer(httpClient *http.Client, enabled []string, readOnly bool) *m
 		}
 	})
 
-	group := mcpapi.DefaultToolsetGroup(mcpclient.ClientFromContext, readOnly)
-	// enabled holds only known names (resolveToolsets), so this cannot error.
-	_ = group.EnableToolsets(enabled)
+	group := mcpapi.DefaultToolsetGroup(mcpclient.ClientFromContext, cfg.ReadOnly)
+	for _, register := range cfg.ExtraToolsets {
+		if register != nil {
+			register(group, mcpclient.ClientFromContext)
+		}
+	}
+	// The whitelist is validated against the composed group, so this cannot
+	// error on unknown names.
+	_ = group.EnableToolsets(resolveToolsets(cfg, group.GetAvailableToolsets()))
 	group.RegisterAll(server)
 
 	return server

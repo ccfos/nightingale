@@ -238,9 +238,10 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 		// re-dispatched onto /api/n9e/... through the full middleware chain,
 		// carrying the caller's X-User-Token so RBAC applies unchanged.
 		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(r, a2a.MCPConfig{
-			Toolsets:    rt.HTTP.A2A.MCPToolsets,
-			ReadOnly:    rt.HTTP.A2A.MCPReadOnly,
-			TokenHeader: tokenHeader,
+			Toolsets:      rt.HTTP.A2A.MCPToolsets,
+			ReadOnly:      rt.HTTP.A2A.MCPReadOnly,
+			TokenHeader:   tokenHeader,
+			ExtraToolsets: rt.MCPExtraToolsets,
 		}))
 		mcpGroup := r.Group("/mcp")
 		// /mcp accepts TokenAuth (X-User-Token) and OAuth access tokens, with the
