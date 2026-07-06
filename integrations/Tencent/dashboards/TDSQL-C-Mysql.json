@@ -11,15 +11,7 @@
                 "label": "DataSource",
                 "type": "datasource",
                 "hide": false,
-                "definition": "prometheus",
-                "defaultValue": "",
-                "value": "prom-hb1yr07y",
-                "options": [
-                    {
-                        "label": "prom-hb1yr07y",
-                        "value": "prom-hb1yr07y"
-                    }
-                ]
+                "definition": "prometheus"
             },
             {
                 "name": "region",

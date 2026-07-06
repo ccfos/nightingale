@@ -20,30 +20,6 @@
                 "type": "row"
             },
             {
-                "type": "text",
-                "id": "80079949-dbff-48fe-a1eb-54b646c30135",
-                "layout": {
-                    "h": 3,
-                    "w": 6,
-                    "x": 0,
-                    "y": 1,
-                    "i": "80079949-dbff-48fe-a1eb-54b646c30135",
-                    "isResizable": true
-                },
-                "version": "3.1.0",
-                "name": "MySQL Uptime",
-                "maxPerRow": 4,
-                "custom": {
-                    "textColor": "#000000",
-                    "textDarkColor": "#FFFFFF",
-                    "bgColor": "rgba(0, 0, 0, 0)",
-                    "textSize": 12,
-                    "justifyContent": "center",
-                    "alignItems": "center",
-                    "content": "<img src=\"https://download.flashcat.cloud/ulric/icon-mysql.png\" width=\"256\"/>"
-                }
-            },
-            {
                 "type": "timeseries",
                 "id": "9fd6dd09-d131-4c0e-88ea-ed62c72baf97",
                 "layout": {

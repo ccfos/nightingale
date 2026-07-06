@@ -19,30 +19,6 @@
             },
             {
                 "custom": {
-                    "alignItems": "center",
-                    "bgColor": "rgba(0, 0, 0, 0)",
-                    "content": "<img src=\"https://download.flashcat.cloud/ulric/icon-mysql.png\" width=\"256\"/>",
-                    "justifyContent": "center",
-                    "textColor": "#000000",
-                    "textDarkColor": "#FFFFFF",
-                    "textSize": 12
-                },
-                "id": "80079949-dbff-48fe-a1eb-54b646c30135",
-                "layout": {
-                    "h": 3,
-                    "i": "80079949-dbff-48fe-a1eb-54b646c30135",
-                    "isResizable": true,
-                    "w": 6,
-                    "x": 0,
-                    "y": 1
-                },
-                "maxPerRow": 4,
-                "name": "MySQL Uptime",
-                "type": "text",
-                "version": "3.1.0"
-            },
-            {
-                "custom": {
                     "drawStyle": "lines",
                     "fillOpacity": 0.01,
                     "gradientMode": "none",

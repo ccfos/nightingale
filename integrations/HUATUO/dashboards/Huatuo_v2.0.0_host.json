@@ -9,23 +9,14 @@
       {
         "name": "datasource",
         "type": "datasource",
-        "definition": "prometheus",
-        "defaultValue": 1
+        "definition": "prometheus"
       },
       {
         "name": "datasource",
         "label": "DataSource",
         "type": "datasource",
         "hide": false,
-        "definition": "prometheus",
-        "defaultValue": "",
-        "value": "huatuo-bamai-prom",
-        "options": [
-          {
-            "label": "huatuo-bamai-prom",
-            "value": "huatuo-bamai-prom"
-          }
-        ]
+        "definition": "prometheus"
       },
       {
         "name": "region",

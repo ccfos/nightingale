@@ -10,78 +10,7 @@
             {
                 "name": "datasource",
                 "type": "datasource",
-                "definition": "prometheus",
-                "value": 129,
-                "options": [
-                    {
-                        "label": "hw",
-                        "value": 129
-                    },
-                    {
-                        "label": "test_fc_vm",
-                        "value": 125
-                    },
-                    {
-                        "label": "zj-test",
-                        "value": 123
-                    },
-                    {
-                        "label": "Default-自监控",
-                        "value": 109
-                    },
-                    {
-                        "label": "Skywalking_prom",
-                        "value": 100
-                    },
-                    {
-                        "label": "microservice",
-                        "value": 99
-                    },
-                    {
-                        "label": "云服务-cn-hangzhou",
-                        "value": 94
-                    },
-                    {
-                        "label": "arms_metrics_cn-beijing_cloud_beijing",
-                        "value": 85
-                    },
-                    {
-                        "label": "最佳实践测试-zj",
-                        "value": 83
-                    },
-                    {
-                        "label": "AOM-云服务",
-                        "value": 81
-                    },
-                    {
-                        "label": "demo_k8s_test",
-                        "value": 80
-                    },
-                    {
-                        "label": "huawei-aom-prom-test",
-                        "value": 79
-                    },
-                    {
-                        "label": "北京机房（阿里云）",
-                        "value": 42
-                    },
-                    {
-                        "label": "demo_k8s",
-                        "value": 40
-                    },
-                    {
-                        "label": "fc_1",
-                        "value": 12
-                    },
-                    {
-                        "label": "Default",
-                        "value": 11
-                    },
-                    {
-                        "label": "Flashcat_metrics",
-                        "value": 4
-                    }
-                ]
+                "definition": "prometheus"
             },
             {
                 "name": "node",
