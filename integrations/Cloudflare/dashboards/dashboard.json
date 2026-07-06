@@ -1,0 +1,2559 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "CloudFlare Zone Analytics",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "a1ba0c47-923e-444a-8a88-5aad7b456d4a",
+                "layout": {
+                    "h": 1,
+                    "i": "a1ba0c47-923e-444a-8a88-5aad7b456d4a",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Overview",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "avg",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "6e4fdf5e-be4c-44e8-8a09-47eac2c6af80",
+                "layout": {
+                    "h": 5,
+                    "i": "6e4fdf5e-be4c-44e8-8a09-47eac2c6af80",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Total Requests",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "increase(cloudflare_zone_requests_total{zone=~\"$zone\"}[$__range])",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "avg",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "571eefd5-a2d9-49c4-aae9-8e48be7989e1",
+                "layout": {
+                    "h": 5,
+                    "i": "571eefd5-a2d9-49c4-aae9-8e48be7989e1",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Total Bandwidth",
+                "options": {
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "increase(cloudflare_zone_bandwidth_total{zone=~\"$zone\"}[$__range])",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "avg",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "4f1f749a-ffef-42e5-8d07-033aca66b9c2",
+                "layout": {
+                    "h": 5,
+                    "i": "4f1f749a-ffef-42e5-8d07-033aca66b9c2",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Requests / second",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_requests_total{zone=~\"$zone\"}[$__interval])",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "avg",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "1f6a153f-f783-410f-aeaa-d7afcce21ded",
+                "layout": {
+                    "h": 5,
+                    "i": "1f6a153f-f783-410f-aeaa-d7afcce21ded",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Bandwidth / second",
+                "options": {
+                    "standardOptions": {
+                        "util": "bytesSecSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_bandwidth_total{zone=~\"$zone\"}[$__interval])",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "avg",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "UV总数",
+                "id": "746ca071-f19f-46b1-beed-ef0fd0d0683a",
+                "layout": {
+                    "h": 5,
+                    "i": "746ca071-f19f-46b1-beed-ef0fd0d0683a",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Total Unique Visitors",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "increase(cloudflare_zone_uniques_total{zone=~\"$zone\"}[$__range])",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "avg",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "每秒UV数量",
+                "id": "eff006ae-5302-4e89-aa29-aa9f93f94cf2",
+                "layout": {
+                    "h": 5,
+                    "i": "eff006ae-5302-4e89-aa29-aa9f93f94cf2",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Uniques / second",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_uniques_total{zone=~\"$zone\"}[$__interval])",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "",
+                "id": "7533d84f-774f-4d5f-ad86-3d73749467b8",
+                "layout": {
+                    "h": 5,
+                    "i": "ba617d0d-6a1b-4ac7-8507-ae380a53c1f5",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Firewall Events Total",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(cloudflare_zone_firewall_events_count{zone=\"$zone\"}[$__range]))",
+                        "instant": false,
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": null
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "",
+                "id": "c82dda2d-14a7-4c69-93e1-251bd02ac23e",
+                "layout": {
+                    "h": 5,
+                    "i": "23ba7364-0043-43da-bb6d-267eb12fa689",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Firewall Block Action",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(cloudflare_zone_firewall_events_count{zone=\"$zone\", action=\"block\"}[$__range]))",
+                        "instant": false,
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": null
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "",
+                "id": "908f4a89-d392-486d-aa74-d4b074b9aeb4",
+                "layout": {
+                    "h": 5,
+                    "i": "7b881b0e-00a6-4d6f-aeea-2277c62515a0",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Firewall Allow Action",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(cloudflare_zone_firewall_events_count{zone=\"$zone\", action=\"allow\"}[$__range]))",
+                        "instant": false,
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": null
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "c0953b1c-3e13-43a2-b83a-454e9f555560",
+                "layout": {
+                    "h": 5,
+                    "i": "ca0de98a-cf52-48d2-b1af-ed4499049c26",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 6
+                },
+                "maxPerRow": 4,
+                "name": "Firewall Traffic / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(rate(cloudflare_zone_firewall_events_count{zone=~\"$zone\"}[$__interval]))",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "每秒UV数量",
+                "id": "9b760253-7150-44c3-9796-f78754de49c3",
+                "layout": {
+                    "h": 8,
+                    "i": "9b760253-7150-44c3-9796-f78754de49c3",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 11
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Unique Visitors",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_uniques_total{zone=~\"$zone\"}[$__interval])",
+                        "legend": "visitors",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "8aa64361-f751-41ae-bdc6-259a9e0c621c",
+                "layout": {
+                    "h": 7,
+                    "i": "8aa64361-f751-41ae-bdc6-259a9e0c621c",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 19
+                },
+                "links": [],
+                "maxPerRow": 3,
+                "name": "Requests in $regions / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_requests_country{zone=~\"$zone\", region=~\"$regions\"}[$__interval]) \u003e 10",
+                        "legend": "{{ country }}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "1e039efa-33bf-430c-8bf0-e0a8e1d57db6",
+                "layout": {
+                    "h": 1,
+                    "i": "1e039efa-33bf-430c-8bf0-e0a8e1d57db6",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 26
+                },
+                "name": "Requests",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "5e85b376-c35a-48a0-81e8-daf768483c5a",
+                "layout": {
+                    "h": 9,
+                    "i": "5e85b376-c35a-48a0-81e8-daf768483c5a",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 27
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Requests / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_requests_total{zone=~\"$zone\"}[$__interval])",
+                        "legend": "total",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(cloudflare_zone_requests_cached{zone=~\"$zone\"}[$__interval])",
+                        "legend": "cached",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "d4552599-c8bb-44e7-88a1-faa3fe12cdaa",
+                "layout": {
+                    "h": 9,
+                    "i": "d4552599-c8bb-44e7-88a1-faa3fe12cdaa",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 27
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Requests per Country / Second",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_requests_country{zone=~\"$zone\"}[$__interval]) \u003e 0",
+                        "legend": "{{country}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "5c6c7e49-64b4-4368-b14e-3757a7aa6e45",
+                "layout": {
+                    "h": 9,
+                    "i": "5c6c7e49-64b4-4368-b14e-3757a7aa6e45",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 36
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Requests / Second (status codes)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_requests_status{zone=~\"$zone\", status!~\"5..\"}[$__interval]) ",
+                        "legend": "{{status}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "36c1c582-310e-42db-844b-9b355e5d8eb3",
+                "layout": {
+                    "h": 9,
+                    "i": "36c1c582-310e-42db-844b-9b355e5d8eb3",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 36
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Requests / Second (status codes not 2XX)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "increase(cloudflare_zone_requests_status{zone=~\"$zone\", status!~\"2..\"}[$__interval]) ",
+                        "legend": "{{status}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "detailName": "详情",
+                    "donut": false,
+                    "labelWithName": true,
+                    "labelWithValue": false,
+                    "legengPosition": "top",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "9dadc43b-0c1e-47d4-a7e8-ad1dd1d7a33d",
+                "layout": {
+                    "h": 11,
+                    "i": "9dadc43b-0c1e-47d4-a7e8-ad1dd1d7a33d",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 45
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Cached Requests",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "cloudflare_zone_requests_cached{zone=~\"$zone\"} / cloudflare_zone_requests_total{zone=~\"$zone\"}",
+                        "legend": "cached",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "(cloudflare_zone_requests_total{zone=~\"$zone\"} - cloudflare_zone_requests_cached{zone=~\"$zone\"}) / cloudflare_zone_requests_total{zone=~\"$zone\"}",
+                        "legend": "uncached",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "pie",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "detailName": "详情",
+                    "labelWithName": true,
+                    "legengPosition": "top",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "130e474a-7b19-4016-b563-dec6f5c082c9",
+                "layout": {
+                    "h": 11,
+                    "i": "130e474a-7b19-4016-b563-dec6f5c082c9",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 45
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Requests SSL",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "cloudflare_zone_requests_ssl_encrypted{zone=~\"$zone\"} / cloudflare_zone_requests_total{zone=~\"$zone\"}",
+                        "legend": "encrypted",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "( cloudflare_zone_requests_total{zone=~\"$zone\"} - cloudflare_zone_requests_ssl_encrypted{zone=~\"$zone\"}  ) / cloudflare_zone_requests_total{zone=~\"$zone\"}",
+                        "legend": "unencrypted",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "pie",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "cd07ee34-22ca-40b2-855a-68e4d103a5af",
+                "layout": {
+                    "h": 5,
+                    "i": "cd07ee34-22ca-40b2-855a-68e4d103a5af",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 45
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Errors / Second",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_requests_status{zone=~\"$zone\", status=~\"5.*\"}[$__interval]) ",
+                        "legend": "{{status}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barchart",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorField": "status",
+                    "xAxisField": "status",
+                    "yAxisField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "e7c0bb8e-7a83-42a6-88e6-e1eaf7e1200d",
+                "layout": {
+                    "h": 6,
+                    "i": "e7c0bb8e-7a83-42a6-88e6-e1eaf7e1200d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 50
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Requests Status Codes",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "increase(cloudflare_zone_requests_status{zone=~\"$zone\"}[$__range])",
+                        "legend": "{{ status }}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barchart",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "794f5fb4-e136-4d4a-84eb-d7932cee9dbe",
+                "layout": {
+                    "h": 10,
+                    "i": "794f5fb4-e136-4d4a-84eb-d7932cee9dbe",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 56
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Country",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "increase(cloudflare_zone_requests_country{zone=~\"$zone\"}[$__range])",
+                        "legend": "{{country}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "detailName": "详情",
+                    "legengPosition": "right",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "42deea8c-2590-4454-ab0d-3febff31d202",
+                "layout": {
+                    "h": 10,
+                    "i": "42deea8c-2590-4454-ab0d-3febff31d202",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 56
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Content Type",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "increase(cloudflare_zone_requests_content_type{zone=~\"$zone\"}[$__range])",
+                        "legend": "{{content_type}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "pie",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "b23d40b1-1678-4a23-8b78-4b021c203bf7",
+                "layout": {
+                    "h": 1,
+                    "i": "b23d40b1-1678-4a23-8b78-4b021c203bf7",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 66
+                },
+                "name": "Bandwidth",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "998a7aaf-4de7-49a8-a53c-a10ff439a355",
+                "layout": {
+                    "h": 10,
+                    "i": "998a7aaf-4de7-49a8-a53c-a10ff439a355",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 67
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Bandwidth / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_bandwidth_total{zone=~\"$zone\"}[$__interval])",
+                        "legend": "total",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": 60
+                    },
+                    {
+                        "expr": "rate(cloudflare_zone_bandwidth_cached{zone=~\"$zone\"}[$__interval])",
+                        "legend": "cached",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "detailName": "详情",
+                    "legengPosition": "right",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "ea194b0e-f004-4dd8-84e2-cee960fc52c9",
+                "layout": {
+                    "h": 10,
+                    "i": "ea194b0e-f004-4dd8-84e2-cee960fc52c9",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 77
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Cached Bandwidth",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "cloudflare_zone_bandwidth_cached{zone=~\"$zone\"} / cloudflare_zone_bandwidth_total{zone=~\"$zone\"}",
+                        "legend": "cached",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "(cloudflare_zone_bandwidth_total{zone=~\"$zone\"} - cloudflare_zone_bandwidth_cached{zone=~\"$zone\"}) / cloudflare_zone_bandwidth_total{zone=~\"$zone\"}",
+                        "legend": "uncached",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "pie",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "thresholds"
+                    ],
+                    "textMode": "valueAndName",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "98019be9-9c62-407d-8684-9a4fe1e9585e",
+                "layout": {
+                    "h": 10,
+                    "i": "98019be9-9c62-407d-8684-9a4fe1e9585e",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 77
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Bandwidth Content Type",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_bandwidth_content_type{zone=~\"$zone\"}[5m])",
+                        "legend": "{{content_type}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "hexbin",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "10a65b66-b1ea-48b5-ab0d-2c6c7fe7f1d5",
+                "layout": {
+                    "h": 1,
+                    "i": "10a65b66-b1ea-48b5-ab0d-2c6c7fe7f1d5",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 87
+                },
+                "name": "Regions",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "a88f87ff-c4a6-4dc0-8a6f-214c28f35497",
+                "layout": {
+                    "h": 10,
+                    "i": "a88f87ff-c4a6-4dc0-8a6f-214c28f35497",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 88
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Requests by Region / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by (region)(rate(cloudflare_zone_requests_country{zone=~\"$zone\"}[$__interval]))",
+                        "legend": "{{ region }}",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": 60
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "51157b2f-c11a-40cf-82a3-0c8b75293130",
+                "layout": {
+                    "h": 10,
+                    "i": "51157b2f-c11a-40cf-82a3-0c8b75293130",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 88
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Bandwidth by Region / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by (region)(rate(cloudflare_zone_bandwidth_country{zone=~\"$zone\"}[$__interval]))",
+                        "legend": "{{ region }}",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": 60
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "932d02f9-f374-4189-a1a5-3f1b4c92ab38",
+                "layout": {
+                    "h": 7,
+                    "i": "932d02f9-f374-4189-a1a5-3f1b4c92ab38",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 98
+                },
+                "links": [],
+                "maxPerRow": 3,
+                "name": "Requests in $regions / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "repeat": "regions",
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_requests_country{zone=~\"$zone\", region=~\"$regions\"}[$__interval]) \u003e 10",
+                        "legend": "{{ country }}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "454a7638-990d-45b6-ac29-c498be5f88ad",
+                "layout": {
+                    "h": 1,
+                    "i": "454a7638-990d-45b6-ac29-c498be5f88ad",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 105
+                },
+                "name": "Threats",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "19ccf1a9-4c9e-4a69-8b32-11c525df73a0",
+                "layout": {
+                    "h": 8,
+                    "i": "19ccf1a9-4c9e-4a69-8b32-11c525df73a0",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 106
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Threats / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_threats_total{zone=~\"$zone\"}[1m])",
+                        "legend": "{{zone}}/threats",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "817936ff-02ea-48ff-b597-6d53b5608178",
+                "layout": {
+                    "h": 8,
+                    "i": "817936ff-02ea-48ff-b597-6d53b5608178",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 106
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Threats / country",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_threats_country{zone=~\"$zone\"}[1m])",
+                        "legend": "{{country}}/threats",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "d455830d-ee27-4bf4-b20d-d3e4f9f38452",
+                "layout": {
+                    "h": 8,
+                    "i": "d455830d-ee27-4bf4-b20d-d3e4f9f38452",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 114
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Threats / type",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_threats_type{zone=~\"$zone\"}[1m])",
+                        "legend": "{{type}}/threats",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": 30
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "f202c0f2-b9c8-4422-b075-c73ef8b3608d",
+                "layout": {
+                    "h": 1,
+                    "i": "f202c0f2-b9c8-4422-b075-c73ef8b3608d",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 122
+                },
+                "name": "Colocations",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "bdba30e4-9f2d-447d-ab7e-0258d1a6d40a",
+                "layout": {
+                    "h": 8,
+                    "i": "bdba30e4-9f2d-447d-ab7e-0258d1a6d40a",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 123
+                },
+                "links": [
+                    {
+                        "targetBlank": true,
+                        "title": "colocation",
+                        "url": "https://www.feitsui.com/en/article/26"
+                    }
+                ],
+                "maxPerRow": 4,
+                "name": "Visits  by Colocations / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "repeat": "zone",
+                "targets": [
+                    {
+                        "expr": "rate(cloudflare_zone_colocation_visits{zone=\"$zone\"}[$__interval]) \u003e 0",
+                        "legend": "{{ colocation }}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "683e3d1e-05d1-4c8a-8468-ad7bcec850c1",
+                "layout": {
+                    "h": 1,
+                    "i": "683e3d1e-05d1-4c8a-8468-ad7bcec850c1",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 131
+                },
+                "name": "Firewall",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "dac88b9e-2230-4095-9845-0a46fce2c7b4",
+                "layout": {
+                    "h": 5,
+                    "i": "dac88b9e-2230-4095-9845-0a46fce2c7b4",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 132
+                },
+                "maxPerRow": 4,
+                "name": "Firewall Traffic / second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(rate(cloudflare_zone_firewall_events_count{zone=~\"$zone\"}[$__interval]))",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "87388cdf-09bd-4efe-abc3-d91bf7275d05",
+                "layout": {
+                    "h": 6,
+                    "i": "2957188c-53ba-48a1-a74b-5d894cf1e94d",
+                    "isResizable": true,
+                    "w": 11,
+                    "x": 0,
+                    "y": 137
+                },
+                "maxPerRow": 4,
+                "name": "Firewall Action Total",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(action)(increase(cloudflare_zone_firewall_events_count{zone=~\"$zone\"}[$__range]))",
+                        "legend": "{{action}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "thresholds"
+                    ],
+                    "textMode": "valueAndName",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "d900345d-c4e9-4dd0-80ea-913e8cdbf453",
+                "layout": {
+                    "h": 6,
+                    "i": "491a4ba1-8a14-429c-88e7-4dc11a791c8a",
+                    "isResizable": true,
+                    "w": 13,
+                    "x": 11,
+                    "y": 137
+                },
+                "maxPerRow": 3,
+                "name": "Firewall Block Action By Domain",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(76, 217, 124, 1)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(domain)(increase(cloudflare_zone_firewall_events_count{zone=~\"$zone\", action=\"block\"}[$__range]))",
+                        "instant": false,
+                        "legend": "{{domain}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "hexbin",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "726f8b0d-6ede-4fab-b79b-a4436d86bceb",
+                "layout": {
+                    "h": 6,
+                    "i": "a95f940f-e139-444c-a565-fb73ea9f92dc",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 143
+                },
+                "maxPerRow": 4,
+                "name": "Firewall  Block Action By Contry ",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(country)(increase(cloudflare_zone_firewall_events_count{zone=~\"$zone\", action=\"block\"}[$__range]))",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "columns": [
+                        "domain",
+                        "edge_resp_status",
+                        "value"
+                    ],
+                    "displayMode": "labelsOfSeriesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "96188480-b199-4b17-a1cf-dfd63fd7e3b1",
+                "layout": {
+                    "h": 6,
+                    "i": "024286e1-a9e3-498e-a8a4-e20010fc87b9",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 143
+                },
+                "maxPerRow": 4,
+                "name": "Firewall  Domain  Edge  Response Status",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "valueMappings": [
+                                {
+                                    "match": {},
+                                    "result": {
+                                        "color": "#000000"
+                                    },
+                                    "type": "special"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(domain, edge_resp_status)(increase(cloudflare_zone_firewall_events_count{zone=~\"$zone\"}[$__range]))",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "excludeByName": {
+                                "name": false
+                            },
+                            "indexByName": {
+                                "domain": 0,
+                                "edge_resp_status": 1,
+                                "value": 2
+                            },
+                            "renameByName": {
+                                "name": "domain",
+                                "value": ""
+                            }
+                        }
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "columns": [
+                        "domain",
+                        "value",
+                        "origin_resp_status"
+                    ],
+                    "displayMode": "labelsOfSeriesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "d529e244-2146-4e6f-bc33-dff644c46558",
+                "layout": {
+                    "h": 6,
+                    "i": "f5df49b9-392b-43aa-abd2-ea924a36b3e5",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 143
+                },
+                "maxPerRow": 4,
+                "name": "Firewall  Domain Origin  Response Status",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "valueMappings": [
+                                {
+                                    "match": {},
+                                    "result": {
+                                        "color": "#000000"
+                                    },
+                                    "type": "special"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(domain, origin_resp_status)(increase(cloudflare_zone_firewall_events_count{zone=~\"$zone\"}[$__range]))",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "excludeByName": {
+                                "name": false
+                            },
+                            "indexByName": {
+                                "domain": 0,
+                                "origin_resp_status": 1,
+                                "value": 2
+                            },
+                            "renameByName": {
+                                "edge_resp_status": "",
+                                "name": "domain",
+                                "value": ""
+                            }
+                        }
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "e606d802-9566-42b7-9ddd-9c6465434334",
+                "layout": {
+                    "h": 6,
+                    "i": "e4aca577-3b75-4e6a-b078-32e1cbb2a584",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 149
+                },
+                "maxPerRow": 4,
+                "name": "Firewall  Domain  Client Requst Scheme",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(domain, client_request_scheme)(increase(cloudflare_zone_firewall_events_count{zone=~\"$zone\"}[$__range]))",
+                        "legend": "{{client_request_scheme}}://{{domain}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "excludeByName": {
+                                "name": false
+                            },
+                            "indexByName": {
+                                "domain": 0,
+                                "edge_resp_status": 2,
+                                "value": 1
+                            },
+                            "renameByName": {
+                                "name": "domain",
+                                "value": ""
+                            }
+                        }
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "DS_PROMETHEUS",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(cloudflare_zone_requests_total, zone)",
+                "hide": false,
+                "multi": false,
+                "name": "zone",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(cloudflare_zone_requests_country, region)",
+                "hide": false,
+                "multi": true,
+                "name": "regions",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717558652032106000
+}

@@ -1,0 +1,582 @@
+{
+  "name": "Flashcat 告警统计表",
+  "tags": "",
+  "configs": {
+    "graphTooltip": "default",
+    "graphZoom": "default",
+    "panels": [
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colSpan": 0,
+          "colorMode": "background",
+          "graphMode": "none",
+          "orientation": "auto",
+          "textMode": "value",
+          "textSize": {},
+          "valueField": "count(*)"
+        },
+        "datasourceCate": "mysql",
+        "datasourceValue": "${Datasource}",
+        "id": "349eb492-5742-415c-810c-c91a3e475df7",
+        "layout": {
+          "h": 4,
+          "i": "349eb492-5742-415c-810c-c91a3e475df7",
+          "isResizable": true,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "maxPerRow": 4,
+        "name": "当前告警总数",
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "type": "base",
+                "value": null
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "match": {
+                "special": 0
+              },
+              "result": {
+                "color": "rgba(63, 196, 83, 1)"
+              },
+              "type": "special"
+            },
+            {
+              "match": {
+                "from": 1,
+                "to": 10
+              },
+              "result": {
+                "color": "rgba(255, 153, 25, 1)"
+              },
+              "type": "range"
+            },
+            {
+              "match": {
+                "from": 11,
+                "to": 100
+              },
+              "result": {
+                "color": "rgba(255, 101, 107, 1)"
+              },
+              "type": "range"
+            }
+          ]
+        },
+        "targets": [
+          {
+            "query": {
+              "mode": "raw",
+              "query": "select count(*) from n9e_v6.alert_cur_event where severity in (1,2,3); "
+            },
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "stat",
+        "version": "3.0.0"
+      },
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colSpan": 0,
+          "colorMode": "background",
+          "graphMode": "none",
+          "orientation": "auto",
+          "textMode": "value",
+          "textSize": {},
+          "valueField": "count(*)"
+        },
+        "datasourceCate": "mysql",
+        "datasourceValue": "${Datasource}",
+        "id": "d486094f-9a07-4ee0-8b79-cb97a3bdd1a8",
+        "layout": {
+          "h": 4,
+          "i": "fd3b4c0e-15ae-462f-9b3f-72618c456df4",
+          "isResizable": true,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        },
+        "maxPerRow": 4,
+        "name": "一级告警总数",
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "type": "base",
+                "value": null
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "match": {
+                "special": 0
+              },
+              "result": {
+                "color": "rgba(63, 196, 83, 1)"
+              },
+              "type": "special"
+            },
+            {
+              "match": {
+                "from": 1,
+                "to": 19
+              },
+              "result": {
+                "color": "rgba(255, 153, 25, 1)"
+              },
+              "type": "range"
+            },
+            {
+              "match": {
+                "from": 20,
+                "to": 9999
+              },
+              "result": {
+                "color": "rgba(255, 101, 107, 1)"
+              },
+              "type": "range"
+            }
+          ]
+        },
+        "targets": [
+          {
+            "query": {
+              "mode": "raw",
+              "query": "select count(*) from n9e_v6.alert_cur_event where severity=1;"
+            },
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "stat",
+        "version": "3.0.0"
+      },
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colSpan": 0,
+          "colorMode": "background",
+          "graphMode": "none",
+          "orientation": "auto",
+          "textMode": "value",
+          "textSize": {},
+          "valueField": "count(*)"
+        },
+        "datasourceCate": "mysql",
+        "datasourceValue": "${Datasource}",
+        "id": "d912b86d-8483-4dbe-8601-100a1df77d29",
+        "layout": {
+          "h": 4,
+          "i": "fa34c170-c179-40f8-a069-015c2d77316f",
+          "isResizable": true,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        },
+        "maxPerRow": 4,
+        "name": "二级告警总数",
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "type": "base",
+                "value": null
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "match": {
+                "special": 0
+              },
+              "result": {
+                "color": "rgba(63, 196, 83, 1)"
+              },
+              "type": "special"
+            },
+            {
+              "match": {
+                "from": 1,
+                "to": 19
+              },
+              "result": {
+                "color": "rgba(255, 153, 25, 1)"
+              },
+              "type": "range"
+            },
+            {
+              "match": {
+                "from": 20,
+                "to": 9999
+              },
+              "result": {
+                "color": "rgba(255, 101, 107, 1)"
+              },
+              "type": "range"
+            }
+          ]
+        },
+        "targets": [
+          {
+            "query": {
+              "mode": "raw",
+              "query": "select count(*) from n9e_v6.alert_cur_event where severity=2;"
+            },
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "stat",
+        "version": "3.0.0"
+      },
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colSpan": 0,
+          "colorMode": "background",
+          "graphMode": "none",
+          "orientation": "auto",
+          "textMode": "value",
+          "textSize": {},
+          "valueField": "count(*)"
+        },
+        "datasourceCate": "mysql",
+        "datasourceValue": "${Datasource}",
+        "id": "61098a72-f2fd-4eb1-b76b-390cafbde2e5",
+        "layout": {
+          "h": 4,
+          "i": "afddf320-96a3-41d8-9332-f8f567671fbe",
+          "isResizable": true,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        },
+        "maxPerRow": 4,
+        "name": "三级告警总数",
+        "options": {
+          "standardOptions": {},
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "type": "base",
+                "value": null
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "match": {
+                "special": 0
+              },
+              "result": {
+                "color": "rgba(63, 196, 83, 1)"
+              },
+              "type": "special"
+            },
+            {
+              "match": {
+                "from": 1,
+                "to": 19
+              },
+              "result": {
+                "color": "rgba(255, 153, 25, 1)"
+              },
+              "type": "range"
+            },
+            {
+              "match": {
+                "from": 20,
+                "to": 9999
+              },
+              "result": {
+                "color": "rgba(255, 101, 107, 1)"
+              },
+              "type": "range"
+            }
+          ]
+        },
+        "targets": [
+          {
+            "query": {
+              "mode": "raw",
+              "query": "select count(*) from n9e_v6.alert_cur_event where severity=3;"
+            },
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "stat",
+        "version": "3.0.0"
+      },
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colorMode": "value",
+          "columns": [
+            "group_name",
+            "cluster",
+            "severity",
+            "count(*)"
+          ],
+          "displayMode": "labelsOfSeriesToRows",
+          "linkMode": "appendLinkColumn",
+          "nowrap": true,
+          "showHeader": true,
+          "sortColumn": "count(*)",
+          "sortOrder": "descend",
+          "tableLayout": "auto"
+        },
+        "datasourceCate": "mysql",
+        "datasourceValue": "${Datasource}",
+        "id": "18c0bd61-6e99-481c-9f11-e30f22f6f6be",
+        "layout": {
+          "h": 8,
+          "i": "9d4adba1-6437-4ff0-a5f5-4ba2f393fb86",
+          "isResizable": true,
+          "w": 12,
+          "x": 0,
+          "y": 4
+        },
+        "maxPerRow": 4,
+        "name": "当前告警信息分业务组查看",
+        "options": {
+          "standardOptions": {},
+          "valueMappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "value": "severity"
+            },
+            "properties": {
+              "valueMappings": [
+                {
+                  "match": {
+                    "special": 1
+                  },
+                  "result": {
+                    "color": "rgba(255, 101, 107, 1)"
+                  },
+                  "type": "special"
+                },
+                {
+                  "match": {
+                    "special": 2
+                  },
+                  "result": {
+                    "color": "rgba(255, 153, 25, 1)"
+                  },
+                  "type": "special"
+                },
+                {
+                  "match": {
+                    "special": 3
+                  },
+                  "result": {
+                    "color": "rgba(206, 123, 0, 1)"
+                  },
+                  "type": "special"
+                }
+              ]
+            }
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "value": "count(*)"
+            },
+            "properties": {
+              "standardOptions": {},
+              "valueMappings": [
+                {
+                  "match": {
+                    "special": 0
+                  },
+                  "result": {
+                    "color": "rgba(63, 196, 83, 1)"
+                  },
+                  "type": "special"
+                },
+                {
+                  "match": {
+                    "from": 1,
+                    "to": 10
+                  },
+                  "result": {
+                    "color": "rgba(255, 153, 25, 1)"
+                  },
+                  "type": "range"
+                },
+                {
+                  "match": {
+                    "from": 11,
+                    "to": 30
+                  },
+                  "result": {
+                    "color": "rgba(255, 101, 107, 1)"
+                  },
+                  "type": "range"
+                }
+              ]
+            },
+            "type": "special"
+          }
+        ],
+        "targets": [
+          {
+            "legend": "",
+            "query": {
+              "mode": "raw",
+              "query": "select group_name,severity,cluster,count(*) from n9e_v6.alert_cur_event group by group_name,cluster,severity;"
+            },
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "renameByName": {
+                "cluster": "数据源",
+                "count(*)": "当前告警数",
+                "event_group_name_count": "未恢复告警数",
+                "event_rule_name_count": "未恢复告警次数",
+                "group_name": "业务组",
+                "rule_name": "告警名称",
+                "severity": "告警等级"
+              }
+            }
+          }
+        ],
+        "type": "table",
+        "version": "3.0.0"
+      },
+      {
+        "custom": {
+          "calc": "lastNotNull",
+          "colorMode": "value",
+          "columns": [
+            "rule_name",
+            "severity",
+            "group_name",
+            "event_rule_name_count"
+          ],
+          "displayMode": "labelsOfSeriesToRows",
+          "linkMode": "appendLinkColumn",
+          "nowrap": true,
+          "showHeader": true,
+          "sortColumn": "event_rule_name_count",
+          "sortOrder": "descend",
+          "tableLayout": "auto"
+        },
+        "datasourceCate": "mysql",
+        "datasourceValue": "${Datasource}",
+        "id": "cf29b2ce-934d-4768-9e90-1ea31587664e",
+        "layout": {
+          "h": 8,
+          "i": "79855fcb-8c53-47ed-9c0b-5515c3cccd5e",
+          "isResizable": true,
+          "w": 12,
+          "x": 12,
+          "y": 4
+        },
+        "maxPerRow": 4,
+        "name": "告警信息详情",
+        "options": {
+          "standardOptions": {},
+          "valueMappings": [
+            {
+              "match": {},
+              "result": {
+                "color": "#000000"
+              },
+              "type": "special"
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "legend": "",
+            "query": {
+              "mode": "raw",
+              "query": "select rule_name,severity,group_name,count(*) as event_rule_name_count from n9e_v6.alert_cur_event group by rule_name,severity,group_name;"
+            },
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "renameByName": {
+                "event_group_name_count": "未恢复告警数",
+                "event_rule_name_count": "当前告警次数",
+                "group_name": "业务组",
+                "rule_name": "告警名称",
+                "severity": "告警等级"
+              }
+            }
+          }
+        ],
+        "type": "table",
+        "version": "3.0.0"
+      }
+    ],
+    "var": [
+      {
+        "definition": "mysql",
+        "hide": false,
+        "label": "数据源",
+        "name": "Datasource",
+        "type": "datasource"
+      }
+    ],
+    "version": "3.0.0"
+  },
+  "uuid": 1720768789695615000
+}

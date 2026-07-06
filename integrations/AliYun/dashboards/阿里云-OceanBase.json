@@ -1,0 +1,2304 @@
+{
+    "name": "阿里云-OceanBase",
+    "tags": "",
+    "note": "",
+    "ident": "",
+    "uuid": 1775552402775000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "hide": true,
+                "definition": "prometheus",
+                "defaultValue": 10
+            },
+            {
+                "name": "regionId",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "reg": "",
+                "definition": "label_values(AliyunOceanbase_cpu_usage_avg_tenant{},regionId)",
+                "multi": false
+            },
+            {
+                "type": "query",
+                "name": "instanceName",
+                "label": "instanceName",
+                "allValue": ".*",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunOceanbase_cpu_usage_avg_tenant{regionId=~\"$regionId\"},instanceName)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "name": "instanceId",
+                "label": "instanceId",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "reg": "",
+                "definition": "label_values(AliyunOceanbase_cpu_usage_avg_tenant{regionId=~\"$regionId\",instanceName=~\"$instanceName\"},obClusterId)",
+                "multi": true,
+                "allOption": true
+            },
+            {
+                "type": "custom",
+                "name": "dimension",
+                "definition": "实例级 : _instance, 租户级 : _tenant",
+                "allOption": true,
+                "multi": true,
+                "hide": false
+            },
+            {
+                "type": "custom",
+                "name": "io",
+                "definition": "read_bytes,read_bytes_instance,read_bytes_tenant,read_count,read_count_instance,read_count_tenant, read_delay(ms) : read_delay, read_delay_instance(ms) : read_delay_instance, read_delay_tenant(ms) : read_delay_tenant, read_rt(ms) : read_rt, read_rt_instance(ms) : read_rt_instance, read_rt_tenant(ms) : read_rt_tenant, write_bytes,write_bytes_instance,write_bytes_tenant,write_count,write_count_instance,write_count_tenant, write_delay(ms) : write_delay, write_delay_instance(ms) : write_delay_instance, write_delay_tenant(ms) : write_delay_tenant, write_rt(ms) : write_rt, write_rt_instance(ms) : write_rt_instance, write_rt_tenant(ms) : write_rt_tenant\n",
+                "allOption": true,
+                "multi": true,
+                "hide": false
+            },
+            {
+                "type": "custom",
+                "name": "sql",
+                "definition": "delete_count,delete_count_instance,delete_count_tenant,delete_rt,delete_rt_instance,delete_rt_tenant,distributed_count,distributed_count_instance,distributed_count_tenant,dml_rt,dml_rt_instance,dml_rt_tenant,insert_count,insert_count_instance,insert_count_tenant,insert_rt,insert_rt_instance,insert_rt_tenant,remote_count,remote_count_instance,remote_count_tenant,replace_count,replace_count_instance,replace_count_tenant,replace_rt,replace_rt_instance,replace_rt_tenant,select_count,select_count_instance,select_count_tenant,select_rt,select_rt_instance,select_rt_tenant,update_count,update_count_instance,update_count_tenant,update_rt,update_rt_instance,update_rt_tenant",
+                "allOption": true,
+                "multi": true,
+                "hide": false
+            },
+            {
+                "type": "custom",
+                "name": "sql_curd",
+                "definition": "dml,distributed,remote,select,insert,replace,update,delete",
+                "allOption": true,
+                "multi": true,
+                "hide": false
+            },
+            {
+                "type": "custom",
+                "name": "sql_operation",
+                "definition": "rt,count",
+                "allOption": true,
+                "multi": true,
+                "hide": false
+            },
+            {
+                "type": "custom",
+                "name": "storage_curd",
+                "definition": "read,insert,delete,update",
+                "allOption": true,
+                "multi": true,
+                "hide": false
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.3.0",
+                "id": "dbb91c83-e82f-423f-a0f9-8b2c8d71f6d2",
+                "type": "row",
+                "name": "BASE",
+                "collapsed": false,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "dbb91c83-e82f-423f-a0f9-8b2c8d71f6d2",
+                    "isResizable": false
+                },
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "e8b76f2a-5c4b-4ed9-8d94-363e4ea06386",
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 10,
+                            "i": "e8b76f2a-5c4b-4ed9-8d94-363e4ea06386",
+                            "isResizable": true
+                        },
+                        "version": "3.3.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "active session",
+                        "links": [],
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "desc"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "columns": [
+                                    "last",
+                                    "avg",
+                                    "max"
+                                ],
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "valueMappings": [],
+                            "standardOptions": {
+                                "unit": "none"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunOceanbase_active_sessions{instanceName=~\"$instanceName\"}",
+                                "legend": "/{{instanceName}}"
+                            },
+                            {
+                                "refId": "B",
+                                "expr": "AliyunOceanbase_active_sessions_instance{instanceName=~\"$instanceName\"}",
+                                "legend": "instance/{{instanceName}}"
+                            },
+                            {
+                                "refId": "C",
+                                "expr": "AliyunOceanbase_active_sessions_max_tenant{instanceName=~\"$instanceName\"}",
+                                "legend": "max_tenant/{{instanceName}}"
+                            },
+                            {
+                                "refId": "D",
+                                "expr": "AliyunOceanbase_active_sessions_tenant{instanceName=~\"$instanceName\"}",
+                                "legend": "tenant/{{instanceName}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "6d043157-9117-4065-95ff-fe12fc740f3a",
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 8,
+                            "y": 10,
+                            "i": "6d043157-9117-4065-95ff-fe12fc740f3a",
+                            "isResizable": true
+                        },
+                        "version": "3.3.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "active memstore usage(%)",
+                        "links": [],
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "desc"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "right",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "valueMappings": [],
+                            "standardOptions": {
+                                "unit": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunOceanbase_active_memstore_percent_by_trigger_tenant{instanceName=~\"$instanceName\"}",
+                                "legend": "{{instanceName}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "08155adc-603c-4448-867c-e3a62fb9a9d8",
+                        "layout": {
+                            "h": 9,
+                            "w": 12,
+                            "x": 0,
+                            "y": 19,
+                            "i": "08155adc-603c-4448-867c-e3a62fb9a9d8",
+                            "isResizable": true
+                        },
+                        "version": "3.3.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "TPS",
+                        "links": [],
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "desc"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "columns": [
+                                    "last",
+                                    "avg",
+                                    "max"
+                                ],
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "valueMappings": [],
+                            "standardOptions": {
+                                "unit": "none",
+                                "decimals": 2
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.2,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunOceanbase_tps{instanceName=~\"$instanceName\"}",
+                                "legend": "tps总/{{instanceName}}"
+                            },
+                            {
+                                "refId": "B",
+                                "expr": "AliyunOceanbase_tps_instance{instanceName=~\"$instanceName\"}",
+                                "legend": "tps租户级别/{{instanceName}}/{{obTenantId}}",
+                                "hide": true
+                            },
+                            {
+                                "refId": "C",
+                                "expr": "AliyunOceanbase_tps_tenant{instanceName=~\"$instanceName\"}",
+                                "legend": "tps租户级别/{{instanceName}}/{{obTenantId}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "6bbce6f4-7c0c-4b69-a7c9-5763f70a9911",
+                        "layout": {
+                            "h": 9,
+                            "w": 12,
+                            "x": 12,
+                            "y": 19,
+                            "i": "6bbce6f4-7c0c-4b69-a7c9-5763f70a9911",
+                            "isResizable": true
+                        },
+                        "version": "3.3.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "TPS RT",
+                        "links": [],
+                        "description": "写请求响应时间(ms)",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "desc"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "columns": [
+                                    "last",
+                                    "avg",
+                                    "max"
+                                ],
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "valueMappings": [],
+                            "standardOptions": {
+                                "unit": "milliseconds",
+                                "decimals": 2
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.2,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunOceanbase_tps_rt{instanceName=~\"$instanceName\"}",
+                                "legend": "tps总/{{instanceName}}"
+                            },
+                            {
+                                "refId": "B",
+                                "expr": "AliyunOceanbase_tps_rt_instance{instanceName=~\"$instanceName\"}",
+                                "legend": "tps_instance/{{instanceName}}",
+                                "hide": true
+                            },
+                            {
+                                "refId": "C",
+                                "expr": "AliyunOceanbase_tps_rt_tenant{instanceName=~\"$instanceName\"}",
+                                "legend": "tps租户级别/{{instanceName}}/{{obTenantId}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "6a5cc188-2a3a-479d-98d1-7037a21163b8",
+                        "layout": {
+                            "h": 9,
+                            "w": 12,
+                            "x": 0,
+                            "y": 28,
+                            "i": "6a5cc188-2a3a-479d-98d1-7037a21163b8",
+                            "isResizable": true
+                        },
+                        "version": "3.3.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "traffic in",
+                        "links": [],
+                        "description": "机器的包流入速率(bytes/s)",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "desc"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "valueMappings": [],
+                            "standardOptions": {
+                                "unit": "bytesSecIEC",
+                                "decimals": 2
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunOceanbase_traffic_bytin_instance{instanceName=~\"$instanceName\"}",
+                                "legend": "{{obClusterId}}/{{obInstanceId}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "795b31e4-4bb9-4dbd-b96b-bd490214a8a3",
+                        "layout": {
+                            "h": 9,
+                            "w": 12,
+                            "x": 12,
+                            "y": 28,
+                            "i": "795b31e4-4bb9-4dbd-b96b-bd490214a8a3",
+                            "isResizable": true
+                        },
+                        "version": "3.3.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "traffic out",
+                        "links": [],
+                        "description": "机器的包流出速率(bytes/s)",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "valueMappings": [],
+                            "standardOptions": {
+                                "unit": "bytesSecIEC",
+                                "decimals": 2
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunOceanbase_traffic_bytout_instance{instanceName=~\"$instanceName\"}",
+                                "legend": "{{obClusterId}}/{{obInstanceId}}"
+                            }
+                        ]
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "c0c27211-2b13-4765-84f3-ac0e65e03ee5",
+                "type": "row",
+                "name": "SYSTEM",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 1,
+                    "i": "c0c27211-2b13-4765-84f3-ac0e65e03ee5",
+                    "isResizable": false
+                },
+                "panels": [],
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "8943acc7-1a9a-4e30-a47c-6a7378003882",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 2,
+                    "i": "8943acc7-1a9a-4e30-a47c-6a7378003882",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "租户cpu使用率(%)",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_cpu_usage_percent_max_tenant{instanceName=~\"$instanceName\"}",
+                        "legend": "最大使用率/{{instanceName}}/{{obTenantId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_cpu_usage_percent_tenant{instanceName=~\"$instanceName\"}",
+                        "legend": "使用率/{{instanceName}}/{{obTenantId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_cpu_util_instance{instanceName=~\"$instanceName\"}",
+                        "legend": "instance/{{instanceName}}",
+                        "hide": true
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "12439ca9-1d8d-4b7a-bab8-b4e0b7eddadd",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 2,
+                    "i": "12439ca9-1d8d-4b7a-bab8-b4e0b7eddadd",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "租户 cpu使用核数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_cpu_usage_avg_tenant{instanceName=~\"$instanceName\"}",
+                        "legend": "avg/{{instanceName}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_cpu_usage_max_tenant{instanceName=~\"$instanceName\"}",
+                        "legend": "max/{{instanceName}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.3.0",
+                "id": "ecf8644d-2cbb-4203-ab2f-2df8a584cf0d",
+                "type": "timeseries",
+                "name": "磁盘使用量(GB)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 11,
+                    "i": "ecf8644d-2cbb-4203-ab2f-2df8a584cf0d",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_disk_data_size_instance{instanceName=~\"$instanceName\"}",
+                        "legend": "disk_data_size/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_disk_genernal_size_instance{instanceName=~\"$instanceName\"}",
+                        "legend": "disk_genernal_size/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_disk_log_size_instance{instanceName=~\"$instanceName\"}",
+                        "legend": "disk_log_size/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunOceanbase_disk_ob_data_size{instanceName=~\"$instanceName\"}/1000/1000/1000",
+                        "legend": "disk_ob_data_size/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "AliyunOceanbase_disk_ob_data_size_instance{instanceName=~\"$instanceName\"}",
+                        "legend": "disk_ob_data_size_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "AliyunOceanbase_disk_ob_data_size_tenant{instanceName=~\"$instanceName\"}/1000/1000/1000",
+                        "legend": "disk_ob_data_size_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "3a0190b1-2d1b-4c15-b58b-c135d612efc1",
+                "type": "timeseries",
+                "name": "磁盘使用率(%)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 11,
+                    "i": "3a0190b1-2d1b-4c15-b58b-c135d612efc1",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_disk_data_usage_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "disk_data_size/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_disk_genernal_usage_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "disk_genernal_size/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_disk_log_usage_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "disk_log_size/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunOceanbase_disk_ob_data_usage{obClusterId=~\"$instanceId\"}",
+                        "legend": "disk_ob_data_size/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "AliyunOceanbase_disk_ob_data_usage_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "disk_ob_data_size_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "AliyunOceanbase_disk_ob_data_usage_tenant{obClusterId=~\"$instanceId\"}",
+                        "legend": "disk_ob_data_size_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "percent"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "d6e7d326-1f72-4a44-bfe2-5e6351c436ee",
+                "type": "timeseries",
+                "name": "磁盘读数据",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 20,
+                    "i": "d6e7d326-1f72-4a44-bfe2-5e6351c436ee",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_io_read_bytes{obClusterId=~\"$instanceId\"}",
+                        "legend": "read/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_io_read_bytes_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "read_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_io_read_bytes_tenant{obClusterId=~\"$instanceId\"}",
+                        "legend": "read_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "b2743a16-808c-4909-bb79-2e7e2f44bf12",
+                "type": "timeseries",
+                "name": "磁盘读次数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 20,
+                    "i": "b2743a16-808c-4909-bb79-2e7e2f44bf12",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_io_read_count{obClusterId=~\"$instanceId\"}",
+                        "legend": "read/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_io_read_count_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "read_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_io_read_count_tenant{obClusterId=~\"$instanceId\"}",
+                        "legend": "read_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "519783c9-9876-4ff7-9818-01a1fdc013de",
+                "type": "timeseries",
+                "name": "磁盘读RT",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 29,
+                    "i": "519783c9-9876-4ff7-9818-01a1fdc013de",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_io_read_rt{obClusterId=~\"$instanceId\"}",
+                        "legend": "read/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_io_read_rt_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "read_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_io_read_rt_tenant{obClusterId=~\"$instanceId\"}",
+                        "legend": "read_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "milliseconds"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "61d03e57-cf16-4c77-8b87-b11b11a62206",
+                "type": "timeseries",
+                "name": "磁盘读延迟",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 29,
+                    "i": "61d03e57-cf16-4c77-8b87-b11b11a62206",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_io_read_delay{obClusterId=~\"$instanceId\"}",
+                        "legend": "read/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_io_read_delay_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "read_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_io_read_delay_tenant{obClusterId=~\"$instanceId\"}",
+                        "legend": "read_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "milliseconds"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "56adb70b-59e8-40bb-8da0-03be8d7068cf",
+                "type": "timeseries",
+                "name": "磁盘写数据",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 38,
+                    "i": "56adb70b-59e8-40bb-8da0-03be8d7068cf",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_io_write_bytes{obClusterId=~\"$instanceId\"}",
+                        "legend": "write/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_io_write_bytes_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "write_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_io_write_bytes_tenant{obClusterId=~\"$instanceId\"}",
+                        "legend": "write_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "47a16555-4af1-4ca0-9bff-c51a5bd6e7b7",
+                "type": "timeseries",
+                "name": "磁盘写次数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 38,
+                    "i": "47a16555-4af1-4ca0-9bff-c51a5bd6e7b7",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_io_write_count{obClusterId=~\"$instanceId\"}",
+                        "legend": "write/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_io_write_count_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "write_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_io_write_count_tenant{obClusterId=~\"$instanceId\"}",
+                        "legend": "write_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "85b6b92c-33dc-416d-b732-278ea4de61c1",
+                "type": "timeseries",
+                "name": "磁盘写延迟",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 47,
+                    "i": "85b6b92c-33dc-416d-b732-278ea4de61c1",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_io_write_delay{obClusterId=~\"$instanceId\"}",
+                        "legend": "write/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_io_write_delay_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "write_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_io_write_delay_tenant{obClusterId=~\"$instanceId\"}",
+                        "legend": "write_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "milliseconds"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "77a66d01-4dfa-4a46-8a46-c62795ec5a59",
+                "type": "timeseries",
+                "name": "磁盘写RT",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 47,
+                    "i": "77a66d01-4dfa-4a46-8a46-c62795ec5a59",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunOceanbase_io_rt_delay{obClusterId=~\"$instanceId\"}",
+                        "legend": "write/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunOceanbase_io_write_rt_instance{obClusterId=~\"$instanceId\"}",
+                        "legend": "write_instance/{{obClusterId}}"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunOceanbase_io_write_rt_tenant{obClusterId=~\"$instanceId\"}",
+                        "legend": "write_tenant/{{obClusterId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "milliseconds"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "a796419a-e1e0-42c5-a501-14ef95dba579",
+                "type": "row",
+                "name": "IO",
+                "collapsed": false,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 56,
+                    "i": "a796419a-e1e0-42c5-a501-14ef95dba579",
+                    "isResizable": false
+                },
+                "panels": [
+                    {
+                        "version": "3.1.0",
+                        "id": "28fec734-fe26-425b-ba02-395f731b9777",
+                        "type": "timeseries",
+                        "name": "io_${io}",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 12,
+                            "i": "28fec734-fe26-425b-ba02-395f731b9777"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_io_${io}\", obClusterId=~\"$instanceId\"},\"name\",\"$1\",\"__name__\",\"AliyunOceanbase_io_(.+)\")",
+                                "legend": "{{name}}/{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 3,
+                        "repeat": "io",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "b8cf7589-86bf-4cdd-ae2b-e2c86dbbcb03",
+                "type": "row",
+                "name": "SQL",
+                "collapsed": false,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 57,
+                    "i": "b8cf7589-86bf-4cdd-ae2b-e2c86dbbcb03",
+                    "isResizable": false
+                },
+                "panels": [
+                    {
+                        "version": "3.1.0",
+                        "id": "8125d155-ad92-4519-abcc-3336657ca00c",
+                        "type": "timeseries",
+                        "name": "sql_${sql_operation}",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 12,
+                            "x": 0,
+                            "y": 13,
+                            "i": "8125d155-ad92-4519-abcc-3336657ca00c"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_sql_${sql_curd}_${sql_operation}${dimension}\", obClusterId=~\"$instanceId\"},\"name\",\"$1\",\"__name__\",\"AliyunOceanbase_sql_(.+)\")",
+                                "legend": "{{name}}/{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 3,
+                        "repeat": "sql_operation",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "c78255c1-1846-4827-bc83-6340c1e8c4ce",
+                "type": "row",
+                "name": "STORAGE",
+                "collapsed": false,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 58,
+                    "i": "c78255c1-1846-4827-bc83-6340c1e8c4ce",
+                    "isResizable": false
+                },
+                "panels": [
+                    {
+                        "version": "3.1.0",
+                        "id": "0aa25024-46dd-4d28-8a89-07d200fcbf48",
+                        "type": "timeseries",
+                        "name": "sql_${storage_curd}",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 12,
+                            "x": 0,
+                            "y": 14,
+                            "i": "0aa25024-46dd-4d28-8a89-07d200fcbf48"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_storage_${storage_curd}_row_count${dimension}\", obClusterId=~\"$instanceId\"},\"name\",\"$1\",\"__name__\",\"AliyunOceanbase_storage_(.+)\")",
+                                "legend": "{{name}}/{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 2,
+                        "repeat": "storage_curd",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "447df691-39e9-4236-95c8-850f18c455b4",
+                "type": "row",
+                "name": "TRASACTION",
+                "collapsed": false,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 59,
+                    "i": "447df691-39e9-4236-95c8-850f18c455b4",
+                    "isResizable": false
+                },
+                "panels": [
+                    {
+                        "version": "3.1.0",
+                        "id": "b36dbfff-2d0e-4888-a739-5d14c31be0bc",
+                        "type": "timeseries",
+                        "name": "事务提交量",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 15,
+                            "i": "b36dbfff-2d0e-4888-a739-5d14c31be0bc"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_trans_commit_count${dimension}\", obClusterId=~\"$instanceId\"},\"dimen\",\"$1\",\"__name__\",\"AliyunOceanbase_(.+)\")",
+                                "legend": "{{dimen}}/{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "f92e15a3-7085-4680-b65b-a396a03baef1",
+                        "type": "timeseries",
+                        "name": "事务回滚量",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 8,
+                            "y": 15,
+                            "i": "f92e15a3-7085-4680-b65b-a396a03baef1"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_trans_rollback_count${dimension}\", obClusterId=~\"$instanceId\"},\"dimen\",\"$1\",\"__name__\",\"AliyunOceanbase_(.+)\")",
+                                "legend": "{{dimen}}/{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "8072abc9-4583-4783-8491-43b85ea8f6ba",
+                        "type": "timeseries",
+                        "name": "事务超时量",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 16,
+                            "y": 15,
+                            "i": "8072abc9-4583-4783-8491-43b85ea8f6ba"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_trans_timeout_count${dimension}\", obClusterId=~\"$instanceId\"},\"dimen\",\"$1\",\"__name__\",\"AliyunOceanbase_(.+)\")",
+                                "legend": "{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "913a792d-c313-452c-a0b6-da033dea3896",
+                        "type": "timeseries",
+                        "name": "事务提交响应时间",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 24,
+                            "i": "913a792d-c313-452c-a0b6-da033dea3896"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_trans_commit_rt${dimension}\", obClusterId=~\"$instanceId\"},\"dimen\",\"$1\",\"__name__\",\"AliyunOceanbase_(.+)\")",
+                                "legend": "{{dimen}}/{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "milliseconds"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "97209540-2638-489a-b77f-c4f43c577115",
+                        "type": "timeseries",
+                        "name": "事务回滚响应时间",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 8,
+                            "y": 24,
+                            "i": "97209540-2638-489a-b77f-c4f43c577115"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_trans_rollback_rt${dimension}\", obClusterId=~\"$instanceId\"},\"dimen\",\"$1\",\"__name__\",\"AliyunOceanbase_(.+)\")",
+                                "legend": "{{dimen}}/{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "milliseconds"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "f12dce9f-6a22-4eea-b515-acbbe879785d",
+                        "type": "timeseries",
+                        "name": "事务单分区量",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 16,
+                            "y": 24,
+                            "i": "f12dce9f-6a22-4eea-b515-acbbe879785d"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_trans_single_partition_count${dimension}\", obClusterId=~\"$instanceId\"},\"dimen\",\"$1\",\"__name__\",\"AliyunOceanbase_(.+)\")",
+                                "legend": "{{dimen}}/{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "849feec8-59e2-43d2-8493-04a4f3d8c77f",
+                        "type": "timeseries",
+                        "name": "事务多分区量",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 33,
+                            "i": "849feec8-59e2-43d2-8493-04a4f3d8c77f"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "label_replace({__name__=~\"AliyunOceanbase_trans_multi_partition_count${dimension}\", obClusterId=~\"$instanceId\"},\"dimen\",\"$1\",\"__name__\",\"AliyunOceanbase_(.+)\")",
+                                "legend": "{{dimen}}/{{obClusterId}}"
+                            }
+                        ],
+                        "options": {
+                            "valueMappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "style": "off",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom"
+                            },
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    }
+                ],
+                "overrides": []
+            }
+        ]
+    }
+}

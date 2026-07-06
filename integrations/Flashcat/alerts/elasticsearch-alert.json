@@ -1,0 +1,271 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Elasticsearch Heap Used Percent",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 120,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_jvm_mem_heap_used_percent > 90",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Elasticsearch initializing shards of the instance",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 900,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_initializing_shards > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Elasticsearch pending tasks of the instance",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 900,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_number_of_pending_tasks > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Elasticsearch relocation shards of the instance",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 900,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_relocating_shards > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Elasticsearch unassigned shards of the instance",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 300,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "elasticsearch_cluster_health_unassigned_shards > 0",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Elasticsearch 状态异常",
+    "note": "1 green， 2 yellow， 3 red",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "inhibit": true,
+      "queries": [
+        {
+          "prom_ql": "min(elasticsearch_cluster_health_status_code{}) == 2",
+          "severity": 2,
+          "unit": "none"
+        },
+        {
+          "prom_ql": "min(elasticsearch_cluster_health_status_code{}) == 3",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  }
+]

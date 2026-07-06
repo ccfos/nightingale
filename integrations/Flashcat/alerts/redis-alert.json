@@ -1,0 +1,178 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Redis ping延时超过100ms",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 120,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "redis_ping_use_seconds > 0.1",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 120,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Redis 内存使用超过4G，注意升配",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 300,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "redis_used_memory /1024/1024/1024 > 4",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Redis 发生重启",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 0,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "redis_uptime_in_seconds < 120",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 60,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Redis 有拒接连接",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 0,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "(rate(redis_rejected_connections[5m])) > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 60,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  }
+]

@@ -1,0 +1,549 @@
+{
+    "name": "CDN全局大盘",
+    "tags": "",
+    "note": "",
+    "ident": "",
+    "uuid": 1775551694428000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "type": "datasource",
+                "name": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "type": "query",
+                "name": "domain",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunCdn_QPS, instanceId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.1.0",
+                "id": "0eac3f95-5fea-454b-b090-8c9a4e9c18ab",
+                "type": "timeseries",
+                "name": "总QPS合计",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0,
+                    "i": "0eac3f95-5fea-454b-b090-8c9a4e9c18ab"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(AliyunCdn_QPS{instanceId=~\"$domain\"})",
+                        "legend": "QPS"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "3043ffc6-16a9-4ad9-986d-4a4512f91677",
+                "type": "timeseries",
+                "name": "下行总流量(Bytes)",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0,
+                    "i": "3043ffc6-16a9-4ad9-986d-4a4512f91677"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(AliyunCdn_InternetOut{instanceId=~\"$domain\"})",
+                        "legend": "Bytes"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "type": "table",
+                "id": "36d29d19-b1df-4d2b-8dc8-2cea2e6299fc",
+                "layout": {
+                    "h": 7,
+                    "w": 24,
+                    "x": 0,
+                    "y": 8,
+                    "i": "36d29d19-b1df-4d2b-8dc8-2cea2e6299fc"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunCdn_hitRate{instanceId=~\"$domain\"}",
+                        "legend": "",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunCdn_BPS{instanceId=~\"$domain\"}",
+                        "legend": "",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunCdn_InternetOut{instanceId=~\"$domain\"}",
+                        "legend": "",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunCdn_ori_acc{instanceId=~\"$domain\"}",
+                        "legend": "",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "AliyunCdn_ori_bps{instanceId=~\"$domain\"}",
+                        "legend": "",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "AliyunCdn_QPS{instanceId=~\"$domain\"}",
+                        "legend": "",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "cdn域名5分钟性能排行",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn",
+                    "columns": [
+                        "cdnType",
+                        "cname",
+                        "coverage",
+                        "domainName",
+                        "domainStatus",
+                        "resourceGroupName",
+                        "resourceGroupId",
+                        "promInstanceId",
+                        "value"
+                    ]
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "ec6ca055-a859-4579-b319-ec4e02db14c7",
+                "type": "timeseries",
+                "name": "边缘网络带宽BPSTOP5(bits/s)",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 15,
+                    "i": "ec6ca055-a859-4579-b319-ec4e02db14c7"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(5,AliyunCdn_BPS{instanceId=~\"$domain\"})",
+                        "legend": "{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "465f6eb7-c215-4210-b45a-ea772f00aca7",
+                "type": "timeseries",
+                "name": "QPS-TOP5",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 15,
+                    "i": "465f6eb7-c215-4210-b45a-ea772f00aca7"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(5,AliyunCdn_QPS{instanceId=~\"$domain\"})",
+                        "legend": "{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "be1dcbd5-6758-45dd-80ed-af0d3484e17d",
+                "type": "timeseries",
+                "name": "下行流量(Bytes)-TOP5",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 15,
+                    "i": "be1dcbd5-6758-45dd-80ed-af0d3484e17d"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(5,AliyunCdn_InternetOut{instanceId=~\"$domain\"})",
+                        "legend": "{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "c4031baa-ae6a-4303-8de3-10b5c0255597",
+                "type": "timeseries",
+                "name": "缓存命中率TOP5(hitRate)",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 22,
+                    "i": "c4031baa-ae6a-4303-8de3-10b5c0255597"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(5,AliyunCdn_hitRate{instanceId=~\"$domain\"})",
+                        "legend": "{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "63d212d2-230e-4b1b-9623-55b8b5b44f3b",
+                "type": "timeseries",
+                "name": "回源累加请求数TOP5(ori_acc)",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 22,
+                    "i": "63d212d2-230e-4b1b-9623-55b8b5b44f3b"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(5,AliyunCdn_ori_acc{instanceId=~\"$domain\"})",
+                        "legend": "{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "935b2b6f-72d0-40a7-9e80-7aacc2706ce0",
+                "type": "timeseries",
+                "name": "回源网络带宽TOP5(ori_bps)",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 22,
+                    "i": "935b2b6f-72d0-40a7-9e80-7aacc2706ce0"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(5,AliyunCdn_ori_bps{instanceId=~\"$domain\"})",
+                        "legend": "{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            }
+        ]
+    }
+}

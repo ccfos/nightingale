@@ -1,0 +1,147 @@
+[
+    {
+        "id": 0,
+        "uuid": 1737272757000073200,
+        "collector": "Categraf",
+        "typ": "SNMP",
+        "name": "SNMP 接口管理状态",
+        "unit": "none",
+        "note": "SNMP 接口管理状态， MIB 名称为 ifAdminStatus。\nup(1)：接口在管理上是启用的，设备被配置为让该接口处于工作状态。\ndown(2)：接口在管理上是关闭的，设备被配置为不让该接口进行数据传输或工作。\ntesting(3)：接口处于测试模式。在实际应用中比较少见，但在标准定义中存在。",
+        "lang": "zh_CN",
+        "expression": "snmp_interface_admin_status",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "SNMP 接口管理状态",
+                "note": "SNMP 接口管理状态， MIB 名称为 ifAdminStatus。\nup(1)：接口在管理上是启用的，设备被配置为让该接口处于工作状态。\ndown(2)：接口在管理上是关闭的，设备被配置为不让该接口进行数据传输或工作。\ntesting(3)：接口处于测试模式。在实际应用中比较少见，但在标准定义中存在。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SNMP Interface Admin Status",
+                "note": "SNMP interface administrative status, MIB name is ifAdminStatus.\nup(1): The interface is administratively enabled, the device is configured to allow the interface to operate.\ndown(2): The interface is administratively disabled, the device is configured to prevent data transmission or operation.\ntesting(3): The interface is in testing mode. Rarely seen in practice but exists in standard definitions."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1737272976015548400,
+        "collector": "Categraf",
+        "typ": "SNMP",
+        "name": "SNMP 接口运行状态",
+        "unit": "none",
+        "note": "接口运行状态\nup(1)：接口当前处于正常工作状态，可以收发数据。\ndown(2)：接口当前无法工作，可能是物理链路断开、配置问题或硬件故障等原因。\ntesting(3)：接口在测试模式，暂时不处理正常数据流，一般较少见。",
+        "lang": "zh_CN",
+        "expression": "snmp_interface_ostatus",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "SNMP 接口运行状态",
+                "note": "接口运行状态\nup(1)：接口当前处于正常工作状态，可以收发数据。\ndown(2)：接口当前无法工作，可能是物理链路断开、配置问题或硬件故障等原因。\ntesting(3)：接口在测试模式，暂时不处理正常数据流，一般较少见。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SNMP Interface Operational Status",
+                "note": "Interface operational status\nup(1): The interface is currently in normal working state and can send/receive data.\ndown(2): The interface is currently unable to work, possibly due to physical link disconnection, configuration issues, or hardware failure.\ntesting(3): The interface is in testing mode and temporarily not processing normal data flow, generally rare."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1737275620668971000,
+        "collector": "Categraf",
+        "typ": "SNMP",
+        "name": "接口在发送方向上发送的单播数据包的总数",
+        "unit": "none",
+        "note": "接口在发送方向上发送的单播数据包的总数",
+        "lang": "zh_CN",
+        "expression": "snmp_interface_outgoing_ucastpkts",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口在发送方向上发送的单播数据包的总数",
+                "note": "接口在发送方向上发送的单播数据包的总数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Unicast Packets Sent by Interface",
+                "note": "The total number of unicast packets sent by the interface in the outgoing direction."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1737275523400580600,
+        "collector": "Categraf",
+        "typ": "SNMP",
+        "name": "接口在数据发送过程中发生的错误总数",
+        "unit": "none",
+        "note": "接口在数据发送过程中发生的错误数量。这种错误通常包括网络层或链路层的问题，如包的损坏、校验错误、或由于其他原因导致数据无法正常发送。",
+        "lang": "zh_CN",
+        "expression": "snmp_interface_outgoing_errors",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口在数据发送过程中发生的错误总数",
+                "note": "接口在数据发送过程中发生的错误数量。这种错误通常包括网络层或链路层的问题，如包的损坏、校验错误、或由于其他原因导致数据无法正常发送。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Outgoing Errors on Interface",
+                "note": "The number of errors that occurred during data transmission on the interface. These errors typically include network layer or link layer issues, such as packet corruption, checksum errors, or other reasons that prevent normal data transmission."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1737285641082018800,
+        "collector": "Categraf",
+        "typ": "SNMP",
+        "name": "接口带宽",
+        "unit": "bitsSecIEC",
+        "note": "snmp_interface_speed 是 SNMP（简单网络管理协议）中的一个对象，用于表示网络接口的速率或带宽，通常以 比特每秒（bps） 为单位。它指示网络接口的最大数据传输速率，即接口能够在理想状态下处理的最大流量。",
+        "lang": "zh_CN",
+        "expression": "snmp_interface_speed",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口带宽",
+                "note": "snmp_interface_speed 是 SNMP（简单网络管理协议）中的一个对象，用于表示网络接口的速率或带宽，通常以 比特每秒（bps） 为单位。它指示网络接口的最大数据传输速率，即接口能够在理想状态下处理的最大流量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface Bandwidth",
+                "note": "snmp_interface_speed is an object in SNMP (Simple Network Management Protocol) used to represent the speed or bandwidth of a network interface, typically in bits per second (bps). It indicates the maximum data transfer rate of the network interface, i.e., the maximum traffic the interface can handle under ideal conditions."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

@@ -1,0 +1,178 @@
+[
+    {
+      "cate": "prometheus",
+      "datasource_queries": [
+        {
+          "match_type": 0,
+          "op": "in",
+          "values": [
+            109
+          ]
+        }
+      ],
+      "name": "DNS 响应状态码异常",
+      "note": "",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 60,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "dns_query_rcode_value != 0",
+            "severity": 2,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 0,
+      "cur_event_count": 0,
+      "update_by_nickname": "超管",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 1
+    },
+    {
+      "cate": "prometheus",
+      "datasource_queries": [
+        {
+          "match_type": 0,
+          "op": "in",
+          "values": [
+            109
+          ]
+        }
+      ],
+      "name": "DNS查询响应时间大于5秒",
+      "note": "",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 60,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "dns_query_time_ms > 5000",
+            "severity": 2,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 0,
+      "cur_event_count": 0,
+      "update_by_nickname": "超管",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 1
+    },
+    {
+      "cate": "prometheus",
+      "datasource_queries": [
+        {
+          "match_type": 0,
+          "op": "in",
+          "values": [
+            109
+          ]
+        }
+      ],
+      "name": "DNS 查询超时",
+      "note": "",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 60,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "dns_query_result_value == 1",
+            "severity": 2,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 0,
+      "cur_event_count": 0,
+      "update_by_nickname": "超管",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 1
+    },
+    {
+      "cate": "prometheus",
+      "datasource_queries": [
+        {
+          "match_type": 0,
+          "op": "in",
+          "values": [
+            109
+          ]
+        }
+      ],
+      "name": "DNS 查询异常",
+      "note": "",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 60,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "dns_query_result_value == 2",
+            "severity": 2,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 0,
+      "cur_event_count": 0,
+      "update_by_nickname": "超管",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 1
+    }
+  ]

@@ -1,0 +1,706 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "阿里云-负载均衡-7层协议实例Upstream 5xx(Count/Second) 大于10",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_slb_dashboard_instance_upstream_code5xx_average \u003e 10",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651977486000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "阿里云-负载均衡-7层协议实例状态码5xx(Count/Second)大于10",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_slb_dashboard_instance_status_code5xx_average \u003e 10",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651980068000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "阿里云-负载均衡-七层实例QPS使用率大于50%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_slb_dashboard_instance_qps_utilization_average \u003e 50",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651982295000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "阿里云-负载均衡-丢弃连接数大于0",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_slb_dashboard_instance_drop_connection_average \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651984890000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "阿里云-负载均衡-入方向丢弃流量大于0",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_slb_dashboard_instance_drop_traffic_rx_average \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651988244000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "阿里云-负载均衡-出方向丢弃流量大于0",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_slb_dashboard_instance_drop_traffic_tx_average \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651991256000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "阿里云-负载均衡-实例新建连接数使用率大于50%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_slb_dashboard_instance_new_connection_utilization_average \u003e 50",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651994146000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "阿里云-负载均衡-实例最大连接数使用率大于50%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_slb_dashboard_instance_max_connection_utilization_average \u003e 50",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651997869000
+    }
+]

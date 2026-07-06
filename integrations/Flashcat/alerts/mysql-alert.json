@@ -1,0 +1,310 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "MySQL running状态的连接超过60%",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 300,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "avg by (instance) (mysql_global_status_threads_running) / avg by (instance) (mysql_global_variables_max_connections) * 100 > 60",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "MySQL 发生重启",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 0,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "mysql_global_status_uptime < 60",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 120,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "MySQL 在最近1分钟有慢查询",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 120,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "increase(mysql_global_status_slow_queries[1m]) > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 120,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "MySQL 实例异常",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 0,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "mysql_up == 0",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 60,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Mysql 打开文件数超过80%",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 120,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "avg by (instance) (mysql_global_status_open_files) / avg by (instance)(mysql_global_variables_open_files_limit) * 100 > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 120,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "MySQL 日志写入等待过多",
+    "note": "MySQL innodb log writes stalling",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 120,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "rate(mysql_global_status_innodb_log_waits[15m]) > 10",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 120,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "MySQL 连接数使用超过80%",
+    "note": "More than 80% of MySQL connections are in use",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 120,
+    "rule_config": {
+      "inhibit": false,
+      "queries": [
+        {
+          "prom_ql": "avg by (instance) (mysql_global_status_threads_connected) / avg by (instance) (mysql_global_variables_max_connections) * 100 > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 120,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 15s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  }
+]

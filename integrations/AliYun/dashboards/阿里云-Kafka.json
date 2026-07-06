@@ -1,0 +1,1198 @@
+{
+    "name": "阿里云-Kafka",
+    "tags": "",
+    "note": "",
+    "ident": "",
+    "uuid": 1775551902079000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "type": "datasource",
+                "name": "datasource",
+                "definition": "prometheus",
+                "hide": true,
+                "value": 19,
+                "defaultValue": 19
+            },
+            {
+                "type": "query",
+                "name": "instanceId",
+                "label": "InstanceId",
+                "allValue": "",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(cloud_monitor_instance_info{service=\"aliKafka\",series=\"v2\"}, instanceId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "value": []
+            },
+            {
+                "type": "query",
+                "name": "instanceName",
+                "label": "InstanceName",
+                "allValue": ".*",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(cloud_monitor_instance_info{instanceId=~\"$instanceId\",series=\"v2\"}, instanceName)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            }
+        ],
+        "panels": [
+            {
+                "type": "timeseries",
+                "id": "a0802ad2-ad4c-41d2-a5bc-cbcfc4ba60f5",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 0,
+                    "i": "a0802ad2-ad4c-41d2-a5bc-cbcfc4ba60f5",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "消费总速率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_group_message_num_output{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{consumerGroup}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3470769a-f66b-4b06-a644-cfbdbb4c9937",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 0,
+                    "i": "3470769a-f66b-4b06-a644-cfbdbb4c9937",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "消费速率（Topic级别）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_group_message_num_output_onetopic{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{consumerGroup}}/{{topic}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "294b3876-cd0d-4dff-8b7b-00bd13396f79",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 0,
+                    "i": "294b3876-cd0d-4dff-8b7b-00bd13396f79",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "实例磁盘使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_instance_disk_capacity{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5c783319-d9ba-406d-889a-d83244b71efe",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 9,
+                    "i": "5c783319-d9ba-406d-889a-d83244b71efe",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "实例业务实际流入流量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_instance_message_input{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.3.0",
+                "id": "668dae1b-b48a-4a22-a313-d19691167ce1",
+                "type": "timeseries",
+                "name": "实例消息生产条数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 9,
+                    "i": "668dae1b-b48a-4a22-a313-d19691167ce1",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_instance_message_num_input{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "cb7181fc-13f4-4bca-a5c9-1db5a7377daf",
+                "type": "timeseries",
+                "name": "实例消息消费条数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 9,
+                    "i": "cb7181fc-13f4-4bca-a5c9-1db5a7377daf",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_instance_message_num_output{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "667fddcf-3d0f-4ab1-958b-7eaa95bec6d9",
+                "type": "timeseries",
+                "name": "实例业务实际流出流量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 18,
+                    "i": "667fddcf-3d0f-4ab1-958b-7eaa95bec6d9",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_instance_message_output{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "78a88f16-4143-46f2-a576-43b34b6fbe79",
+                "type": "timeseries",
+                "name": "实例消息发送次数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 18,
+                    "i": "78a88f16-4143-46f2-a576-43b34b6fbe79",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_instance_reqs_input{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "4430a4d3-f0b0-4f7d-a058-980ab14ba188",
+                "type": "timeseries",
+                "name": "实例消息消费次数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 18,
+                    "i": "4430a4d3-f0b0-4f7d-a058-980ab14ba188",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_instance_reqs_output{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "b7e5a869-5394-443e-91bf-a228c89eff6a",
+                "type": "timeseries",
+                "name": "消息堆积量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 27,
+                    "i": "b7e5a869-5394-443e-91bf-a228c89eff6a",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_message_accumulation{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{consumerGroup}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "a7586d09-fa1b-4d79-81a1-08617555f9ba",
+                "type": "timeseries",
+                "name": "ConsumerGroup未消费此Topic消息数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 27,
+                    "i": "a7586d09-fa1b-4d79-81a1-08617555f9ba",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_message_accumulation_onetopic{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{consumerGroup}}/{{topic}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 0,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "d3137f29-7b3e-41de-9ad0-19f4308b3be7",
+                "type": "timeseries",
+                "name": "topic消息生产量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 27,
+                    "i": "d3137f29-7b3e-41de-9ad0-19f4308b3be7",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_topic_message_input{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{topic}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "09be4d70-7607-44f8-957b-e6eda4dc8b7d",
+                "type": "timeseries",
+                "name": "topic消息生产条数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 36,
+                    "i": "09be4d70-7607-44f8-957b-e6eda4dc8b7d",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_topic_message_num_input{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{topic}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "88622c41-e651-4c00-acf6-fcd80ec1b2ab",
+                "type": "timeseries",
+                "name": "topic消息消费条数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 36,
+                    "i": "88622c41-e651-4c00-acf6-fcd80ec1b2ab",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_topic_message_num_output{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{topic}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "5aab3cf8-374c-47ca-a1a7-4878018c1c9d",
+                "type": "timeseries",
+                "name": "topic消息消费量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 36,
+                    "i": "5aab3cf8-374c-47ca-a1a7-4878018c1c9d",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_topic_message_output{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{topic}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "fe8d333a-f9a6-4d79-b01b-3986156de100",
+                "type": "timeseries",
+                "name": "topic消息发送次数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 45,
+                    "i": "fe8d333a-f9a6-4d79-b01b-3986156de100",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_topic_reqs_input{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{topic}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.3.0",
+                "id": "e72717f4-c577-4e21-bf58-e0b9c4017eff",
+                "type": "timeseries",
+                "name": "topic消息消费次数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 45,
+                    "i": "e72717f4-c577-4e21-bf58-e0b9c4017eff",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlikafka_topic_reqs_output{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{topic}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            }
+        ]
+    }
+}

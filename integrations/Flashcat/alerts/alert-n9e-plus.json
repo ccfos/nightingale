@@ -1,0 +1,303 @@
+[
+    {
+        "cate": "prometheus",
+        "datasource_queries": [
+            {
+                "match_type": 0,
+                "op": "in",
+                "values": [
+                    6
+                ]
+            }
+        ],
+        "name": "N9E 写入时序库失败点数占比大于10%",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 120,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "(sum(increase(n9e_pushgw_write_error_total[1m]))  by (url))/(sum(increase(n9e_pushgw_write_total[1m])) by (url))*100>10",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 120,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {},
+        "uuid": 0,
+        "cur_event_count": 0,
+        "update_by_nickname": "",
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "notify_version": 0
+    },
+    {
+        "cate": "prometheus",
+        "datasource_queries": [
+            {
+                "match_type": 0,
+                "op": "in",
+                "values": [
+                    6
+                ]
+            }
+        ],
+        "name": "N9E 同步配置出错",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "sum(increase(n9e_plus_external_error_count[1m])) by (name) >0",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 120,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {},
+        "uuid": 0,
+        "cur_event_count": 0,
+        "update_by_nickname": "",
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "notify_version": 0
+    },
+    {
+        "cate": "prometheus",
+        "datasource_queries": [
+            {
+                "match_type": 0,
+                "op": "in",
+                "values": [
+                    6
+                ]
+            }
+        ],
+        "name": "N9E 数据内存队列写满",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "sum(increase(n9e_pushgw_push_queue_error_total[1m]))  by (ident)>0",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 120,
+        "notify_max_number": 0,
+        "recover_duration": 60,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {},
+        "uuid": 0,
+        "cur_event_count": 0,
+        "update_by_nickname": "",
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "notify_version": 0
+    },
+    {
+        "cate": "prometheus",
+        "datasource_queries": [
+            {
+                "match_type": 0,
+                "op": "in",
+                "values": [
+                    6
+                ]
+            }
+        ],
+        "name": "N9E 每分钟告警检测失败占比大于20%",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 120,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "sum(increase(n9e_alert_rule_eval_error_total[1m]))/sum(increase(n9e_alert_rule_eval_total[1m]))*100>20",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 120,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {},
+        "uuid": 0,
+        "cur_event_count": 0,
+        "update_by_nickname": "",
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "notify_version": 0
+    },
+    {
+        "cate": "prometheus",
+        "datasource_queries": [
+            {
+                "match_type": 0,
+                "op": "in",
+                "values": [
+                    6
+                ]
+            }
+        ],
+        "name": "N9E 每分钟记录规则执行失败占比大于10%",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 120,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "sum(increase(n9e_alert_record_eval_error_total[1m]))/sum(increase(n9e_alert_record_eval_total[1m]))*100>10",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 120,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {},
+        "uuid": 0,
+        "cur_event_count": 0,
+        "update_by_nickname": "",
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "notify_version": 0
+    },
+    {
+        "cate": "prometheus",
+        "datasource_queries": [
+            {
+                "match_type": 0,
+                "op": "in",
+                "values": [
+                    6
+                ]
+            }
+        ],
+        "name": "N9E 每分钟通知失败占比大于20%",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 120,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "sum(increase(n9e_alert_alert_notify_error_total[1m])) by (channel)/sum(increase(n9e_alert_alert_notify_total[1m])) by (channel)*100 >20",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 120,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {},
+        "uuid": 0,
+        "cur_event_count": 0,
+        "update_by_nickname": "",
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "notify_version": 0
+    },
+    {
+        "cate": "prometheus",
+        "datasource_queries": [
+            {
+                "match_type": 0,
+                "op": "in",
+                "values": [
+                    6
+                ]
+            }
+        ],
+        "name": "N9E每分钟发送通知失败占比大于20%",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 120,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "(sum(increase(n9e_alert_alert_notify_error_total[1m])) by (channel))/(sum(increase(n9e_alert_alert_notify_total[1m])) by (channel))*100>20",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 120,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {},
+        "uuid": 0,
+        "cur_event_count": 0,
+        "update_by_nickname": "",
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "notify_version": 0
+    }
+]

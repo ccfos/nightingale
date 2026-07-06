@@ -1,0 +1,323 @@
+{
+    "name": "SNMP 网络设备状态汇总",
+    "tags": "SNMP",
+    "configs": {
+      "graphTooltip": "default",
+      "graphZoom": "default",
+      "panels": [
+        {
+          "collapsed": true,
+          "id": "4d6de28f-4ff8-4a86-9d16-dffbb0e71263",
+          "layout": {
+            "h": 1,
+            "i": "4d6de28f-4ff8-4a86-9d16-dffbb0e71263",
+            "isResizable": false,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "name": "SNMP Status",
+          "panels": [],
+          "type": "row"
+        },
+        {
+          "custom": {
+            "calc": "lastNotNull",
+            "colSpan": 0,
+            "colorMode": "background",
+            "graphMode": "none",
+            "orientation": "auto",
+            "textMode": "valueAndName",
+            "textSize": {},
+            "valueField": "Value"
+          },
+          "datasourceCate": "prometheus",
+          "datasourceValue": 2,
+          "id": "1b1775ee-142a-49c1-95e4-9f9ab9648bc0",
+          "layout": {
+            "h": 4,
+            "i": "5456c3be-7532-49bf-8159-f18491115e79",
+            "isResizable": true,
+            "w": 5,
+            "x": 0,
+            "y": 1
+          },
+          "maxPerRow": 4,
+          "name": "SNMP Error",
+          "options": {
+            "standardOptions": {},
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "rgba(206, 79, 82, 1)",
+                  "type": "base",
+                  "value": null
+                }
+              ]
+            },
+            "valueMappings": []
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byFrameRefID"
+              },
+              "properties": {
+                "standardOptions": {
+                  "util": "none"
+                },
+                "thresholds": {
+                  "steps": [
+                    {
+                      "color": "#6C53B1",
+                      "type": "base",
+                      "value": null
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "targets": [
+            {
+              "expr": "count(max_over_time(snmp_up{}[12h]) == 0)",
+              "instant": false,
+              "legend": "",
+              "maxDataPoints": 240,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {}
+            }
+          ],
+          "type": "stat",
+          "version": "3.0.0"
+        },
+        {
+          "custom": {
+            "calc": "lastNotNull",
+            "colorMode": "value",
+            "columns": [
+              "agent_host",
+              "Brand",
+              "region",
+              "type",
+              "value"
+            ],
+            "displayMode": "labelsOfSeriesToRows",
+            "linkMode": "appendLinkColumn",
+            "nowrap": false,
+            "showHeader": true,
+            "tableLayout": "fixed"
+          },
+          "datasourceCate": "prometheus",
+          "datasourceValue": 2,
+          "id": "702de8f4-2e1f-497e-ae71-ba89bff1181c",
+          "layout": {
+            "h": 8,
+            "i": "8d635799-9196-4da5-b685-9dfa999fe0a1",
+            "isResizable": true,
+            "w": 19,
+            "x": 5,
+            "y": 1
+          },
+          "links": [],
+          "maxPerRow": 4,
+          "name": "List",
+          "options": {
+            "standardOptions": {},
+            "valueMappings": [
+              {
+                "match": {
+                  "special": 0
+                },
+                "result": {
+                  "color": "rgba(255, 101, 107, 1)",
+                  "text": "SNMP Error"
+                },
+                "type": "special"
+              }
+            ]
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byFrameRefID"
+              },
+              "properties": {
+                "rightYAxisDisplay": "off"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "expr": "max_over_time(snmp_up{}[1h]) ==1",
+              "maxDataPoints": 240,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {}
+            }
+          ],
+          "type": "table",
+          "version": "3.0.0"
+        },
+        {
+          "custom": {
+            "calc": "lastNotNull",
+            "colSpan": 0,
+            "colorMode": "background",
+            "graphMode": "none",
+            "orientation": "auto",
+            "textMode": "valueAndName",
+            "textSize": {},
+            "valueField": "Value"
+          },
+          "datasourceCate": "prometheus",
+          "datasourceValue": 2,
+          "id": "7d333cff-4768-4360-8c4f-7d7efdb3da1a",
+          "layout": {
+            "h": 4,
+            "i": "1370bce2-f729-4714-a457-d7c79d365937",
+            "isResizable": true,
+            "w": 5,
+            "x": 0,
+            "y": 5
+          },
+          "maxPerRow": 4,
+          "name": "SNMP Available",
+          "options": {
+            "standardOptions": {
+              "util": "none"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "rgba(63, 196, 83, 1)",
+                  "type": "base",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byFrameRefID"
+              },
+              "properties": {
+                "thresholds": {
+                  "steps": [
+                    {
+                      "color": "#6C53B1",
+                      "type": "base",
+                      "value": null
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "targets": [
+            {
+              "expr": "count(snmp_up{} == 1)",
+              "instant": false,
+              "legend": "",
+              "maxDataPoints": 240,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {}
+            }
+          ],
+          "type": "stat",
+          "version": "3.0.0"
+        },
+        {
+          "collapsed": true,
+          "id": "dd9ad8b0-15ac-4605-bb8a-44f13fd03fb9",
+          "layout": {
+            "h": 1,
+            "i": "dd9ad8b0-15ac-4605-bb8a-44f13fd03fb9",
+            "isResizable": false,
+            "w": 24,
+            "x": 0,
+            "y": 9
+          },
+          "name": "过去24小时内全网抖动次数最多网络设备端口",
+          "panels": [],
+          "type": "row"
+        },
+        {
+          "custom": {
+            "calc": "lastNotNull",
+            "colorMode": "value",
+            "columns": [
+              "Brand",
+              "agent_host",
+              "ident",
+              "value"
+            ],
+            "displayMode": "labelsOfSeriesToRows",
+            "linkMode": "appendLinkColumn",
+            "nowrap": false,
+            "showHeader": true,
+            "tableLayout": "fixed"
+          },
+          "datasourceCate": "prometheus",
+          "datasourceValue": 2,
+          "id": "e303b2a0-8234-4c86-ad77-35a5f51dc7d2",
+          "layout": {
+            "h": 6,
+            "i": "e303b2a0-8234-4c86-ad77-35a5f51dc7d2",
+            "isResizable": true,
+            "w": 24,
+            "x": 0,
+            "y": 10
+          },
+          "maxPerRow": 4,
+          "name": "List",
+          "options": {
+            "standardOptions": {}
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byFrameRefID"
+              },
+              "properties": {
+                "rightYAxisDisplay": "off"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "expr": "topk(10,changes(snmp_interface_ostatus{}[1d])>10) ",
+              "maxDataPoints": 240,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {}
+            }
+          ],
+          "type": "table",
+          "version": "3.0.0"
+        }
+      ],
+      "var": [],
+      "version": "3.0.0"
+    },
+    "uuid": 1737358691627000
+}

@@ -1,0 +1,475 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/CPU使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "AliyunRds_CpuUsage{engine=\"MySQL\"} > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/IOPS使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "AliyunRds_IOPSUsage{engine=\"MySQL\"} > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/QPS波动率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "100 * delta(AliyunRds_MySQL_QPS{}[5m]) / AliyunRds_MySQL_QPS{} offset 1m > 30",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/TPS波动率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "100 * delta(AliyunRds_MySQL_TPS{}[5m]) / AliyunRds_MySQL_TPS{} offset 1m > 30",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/内存使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "AliyunRds_MemoryUsage{engine=\"MySQL\"} > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/总连接数告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "AliyunRds_MySQL_ThreadsConnected{} > 1200",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/慢查询占比大于1告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "100 * max(AliyunRds_MySQL_SlowQueries) by (instanceId, instanceName, regionId) / max(AliyunRds_MySQL_QPS) by (instanceId, instanceName, regionId) > 1",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/慢查询告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "AliyunRds_MySQL_SlowQueries{} > 100",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/磁盘空间使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "AliyunRds_DiskUsage{engine=\"MySQL\"} > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/运行状态异常告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "{__name__=~\"AliyunRds_MySQL_(SlaveIO|SlaveSQL)Running\"} != 1",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          76
+        ]
+      }
+    ],
+    "name": "阿里云 RDS 数据库 MySQL/连接数使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "AliyunRds_ConnectionUsage{engine=\"MySQL\"} > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  }
+]

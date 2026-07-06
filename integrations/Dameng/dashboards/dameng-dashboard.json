@@ -1,0 +1,688 @@
+{
+    "name": "达梦DB",
+    "tags": "",
+    "ident": "",
+    "uuid": 1759680545622000,
+    "configs": {
+        "var": [
+            {
+                "name": "datasource",
+                "label": "数据源",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus",
+                "defaultValue": 2
+            },
+            {
+                "name": "address",
+                "label": "address",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(dmdb_up,address)"
+            }
+        ],
+        "panels": [
+            {
+                "type": "stat",
+                "id": "a4398ca2-ee38-478b-87ee-4976db3b4c98",
+                "layout": {
+                    "h": 4,
+                    "w": 4,
+                    "x": 0,
+                    "y": 0,
+                    "i": "a4398ca2-ee38-478b-87ee-4976db3b4c98",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "dmdb_up{address=\"$address\"}",
+                        "legend": "{{address}}"
+                    }
+                ],
+                "name": "状态",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)",
+                                "text": "UP"
+                            },
+                            "match": {
+                                "special": 1
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "rgba(255, 101, 107, 1)",
+                                "text": "DOWN"
+                            },
+                            "match": {
+                                "special": 0
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "264da72e-7c4d-4223-9e63-fcd88eae3479",
+                "layout": {
+                    "h": 4,
+                    "w": 5,
+                    "x": 4,
+                    "y": 0,
+                    "i": "573fe12a-36f2-4612-adf8-fd7eb49fae3d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "dmdb_active_threads{address=\"$address\"}",
+                        "legend": "{{address}}"
+                    }
+                ],
+                "name": "Active_threads",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "area",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "1f99b2a7-c4bb-45a6-8d54-1b6775029f7d",
+                "layout": {
+                    "h": 4,
+                    "w": 5,
+                    "x": 9,
+                    "y": 0,
+                    "i": "7fe8410f-e80c-4580-938b-75d7abc16a40",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "dmdb_latches_threads{address=\"$address\"}",
+                        "legend": "{{address}}"
+                    }
+                ],
+                "name": "Latches_threads",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "area",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(255, 101, 107)",
+                                "value": 0,
+                                "type": ""
+                            },
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b2e3fade-4bc2-432e-9106-142e1b753839",
+                "layout": {
+                    "h": 4,
+                    "w": 10,
+                    "x": 14,
+                    "y": 0,
+                    "i": "3b5db1a3-a396-4d29-bbbb-e5bb76e18b4f",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "dmdb_lock_cnt{address=\"$address\"}",
+                        "legend": "{{address}}"
+                    }
+                ],
+                "name": "Lock_count",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "c6c3ee57-f34e-4cde-8ae6-7c2c02ee46b7",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 4,
+                    "i": "bf0df8e1-efd2-44d8-8608-a654b5165554",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "dmdb_mem_total_size{address=\"$address\"}*1024*1024",
+                        "legend": "Mem-Total"
+                    },
+                    {
+                        "expr": "dmdb_mem_pool_size{address=\"$address\"}*1024*1024",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "legend": "Mem-Pool"
+                    },
+                    {
+                        "expr": "dmdb_mem_buffer_size{address=\"$address\"}*1024*1024",
+                        "__mode__": "__query__",
+                        "refId": "C",
+                        "legend": "Mem-Buffer"
+                    }
+                ],
+                "name": "MemInfo",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d131e03d-aab6-48b4-b269-f3c454d79a71",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 4,
+                    "i": "e63d1754-edf9-4038-87bb-0d69f756d8c4",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "dmdb_cache_hit_rate{address=\"$address\"}",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "name": "cache_hit",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3cc45565-268c-43c1-904c-824971014a0e",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 0,
+                    "y": 10,
+                    "i": "63adec79-cb22-4761-acc2-5b058fc965c2",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "dmdb_scrape_use_seconds{address=\"$address\"}",
+                        "legend": "{{address}}"
+                    }
+                ],
+                "name": "Scrape_seconds",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "6177e7ab-7b87-4168-a94e-deabb37dec35",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 12,
+                    "y": 10,
+                    "i": "bf996a40-e6e3-494d-8d15-b3d9a709ab6e",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "dmdb_sessions_cnt{address=\"$address\"}",
+                        "legend": "{{state}}"
+                    }
+                ],
+                "name": "Sessions",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "b1343bb3-411c-446c-bbdc-150a8f0bf83f",
+                "layout": {
+                    "h": 6,
+                    "w": 24,
+                    "x": 0,
+                    "y": 15,
+                    "i": "b1343bb3-411c-446c-bbdc-150a8f0bf83f",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "dmdb_tablespace_size{address=\"$address\"}*1024*1024"
+                    }
+                ],
+                "name": "TableSpace",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn",
+                    "columns": [
+                        "address",
+                        "tablespace",
+                        "value"
+                    ]
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "bytesSI",
+                        "decimals": 2
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ]
+            }
+        ],
+        "version": "3.1.0"
+    }
+}

@@ -1,0 +1,2113 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "Akamai analyze api v1",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "graphTooltip": "default",
+        "graphZoom": "default",
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "48893038-c1f0-4ca6-a9f3-f7c11412a46b",
+                "layout": {
+                    "h": 1,
+                    "i": "48893038-c1f0-4ca6-a9f3-f7c11412a46b",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "总览 ",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "de5c3246-3686-48dc-9096-485203e0bf9e",
+                "layout": {
+                    "h": 4,
+                    "i": "de5c3246-3686-48dc-9096-485203e0bf9e",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "总的请求",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_hits_total[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "4dea5318-8bfc-451c-914e-00f9ffb8ee88",
+                "layout": {
+                    "h": 4,
+                    "i": "a2d02ac4-91f1-4ec9-b251-92ab263ac5cf",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "总的带宽",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_bytes_total[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "d51bda87-bf01-422b-9ad2-25deabd4d7f8",
+                "layout": {
+                    "h": 4,
+                    "i": "d4de1d37-a245-4ad4-982a-3e4122d8b27a",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "总最大请求/秒 ",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_hits_per_second_max[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "5395cd65-fab0-46ac-8e7a-9d5279988810",
+                "layout": {
+                    "h": 4,
+                    "i": "5a82fb89-5709-4262-a1b4-28f31b00e875",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "总最大带宽/秒 ",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_bytes_per_second_max[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "thresholds"
+                    ],
+                    "textMode": "value",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "0aedb754-09b3-46df-a767-bb181b444165",
+                "layout": {
+                    "h": 8,
+                    "i": "30680207-caec-4aff-bd50-2fd207dd8e12",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "总的命中缓存请求与总请求占比",
+                "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 80
+                            },
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 50,
+                                "to": 79
+                            },
+                            "result": {
+                                "color": "rgba(184, 221, 133, 1)"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 10,
+                                "to": 49
+                            },
+                            "result": {
+                                "color": "rgba(245, 155, 108, 1)"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "akamai_hits_offload_total_percent[$__range]",
+                        "legend": "{{cp_code}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "hexbin",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "07ac0e49-0036-44ed-a704-00f7e2070734",
+                "layout": {
+                    "h": 4,
+                    "i": "5bdd0863-c08d-4b2b-b029-08df059c26aa",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "总的回源请求",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_origin_hits_total[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "d2e09791-7ec2-4841-b828-689024d47278",
+                "layout": {
+                    "h": 4,
+                    "i": "5dd79b0d-2bf0-46ff-ae88-9a4cd9e41c1a",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "总的最大回源请求/秒",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_origin_hits_per_second_max[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "0a0cd267-7893-44f9-9b7e-4e08e0086565",
+                "layout": {
+                    "h": 4,
+                    "i": "af2c49cb-0e29-45b6-8c6f-4d9ccf222577",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "总的回源带宽",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_origin_bytes_total[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "45547c22-483f-4a78-a118-aef39fd81a40",
+                "layout": {
+                    "h": 4,
+                    "i": "9a8b7d72-6736-47bc-87a6-563be0022cc7",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "总的最大回源带宽/秒 ",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_origin_bytes_per_second_max[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "detailName": "详情",
+                    "legengPosition": "right",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "fdec12fe-8f5c-4ada-a978-7f908c993650",
+                "layout": {
+                    "h": 5,
+                    "i": "b504df51-1a84-4f2c-b482-234b9dc54b77",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 9
+                },
+                "maxPerRow": 4,
+                "name": "总的响应状态码占比",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(response_code)(increase(akamai_edge_hits_by_response[$__range]))",
+                        "legend": "{{response_code}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "pie",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "detailName": "详情",
+                    "legengPosition": "right",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "1936384e-9353-4a0a-92f2-6057cce3229d",
+                "layout": {
+                    "h": 5,
+                    "i": "2965a9bd-e91b-4fca-8b4b-a99b3b843441",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 9
+                },
+                "maxPerRow": 4,
+                "name": "总的回源请求响应状态码占比",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(response_code)(increase(akamai_origin_hits_by_response[$__range]))",
+                        "legend": "{{response_code}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "pie",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorRange": [
+                        "thresholds"
+                    ],
+                    "textMode": "value",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "7fc0ce4e-ea95-4a02-b48f-845692e07b45",
+                "layout": {
+                    "h": 5,
+                    "i": "73422863-bc4c-4b0f-822e-2e816d60270a",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 9
+                },
+                "maxPerRow": 4,
+                "name": "总的缓存与总带宽占比",
+                "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 80,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "rgba(59, 180, 77, 1)"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 50,
+                                "textValue": "50",
+                                "to": 79
+                            },
+                            "result": {
+                                "color": "rgba(177, 206, 108, 1)"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 10,
+                                "to": 49
+                            },
+                            "result": {
+                                "color": "rgba(255, 127, 112, 1)"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "akamai_bytes_offload_total_percent[$__range]",
+                        "legend": "{{cp_code}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "hexbin",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "2b4389e6-be39-41a3-8be5-fc0ac5b4f0e5",
+                "layout": {
+                    "h": 4,
+                    "i": "a2058c22-9c8c-4448-8987-870cca13c963",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "总的请求",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_hits_total[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "888cfed8-f619-4e3f-a321-38a78a5760de",
+                "layout": {
+                    "h": 4,
+                    "i": "019a6e22-56e9-437d-80b6-0f68421e80cd",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 18
+                },
+                "maxPerRow": 4,
+                "name": "总的带宽",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_bytes_total[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "d4123c41-fc36-4179-9e2f-a885a9ce4c25",
+                "layout": {
+                    "h": 1,
+                    "i": "d4123c41-fc36-4179-9e2f-a885a9ce4c25",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 22
+                },
+                "name": "请求(CpCode=$CpCode)",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "a508256a-6e87-47e1-8305-fe71fe35fbce",
+                "layout": {
+                    "h": 4,
+                    "i": "685a1189-615f-4910-98a6-d40b12733adc",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 23
+                },
+                "maxPerRow": 4,
+                "name": "总的请求",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_hits_total{cp_code=\"$CpCode\"}[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "36b092a3-4b00-4eca-96cb-7a35c2c4b4ee",
+                "layout": {
+                    "h": 4,
+                    "i": "bb9f9021-d8a8-4f21-be18-2c2fce70ee1d",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 23
+                },
+                "maxPerRow": 4,
+                "name": "总的回源请求",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_origin_hits_total{cp_code=\"$CpCode\"}[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "5dd5e1fa-6007-4f16-8c6d-b4ec942d84dd",
+                "layout": {
+                    "h": 4,
+                    "i": "362f5c6a-8f72-4458-878f-91c5aefa00e0",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 23
+                },
+                "maxPerRow": 4,
+                "name": "命中缓存请求与总请求占比",
+                "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "akamai_hits_offload_total_percent{cp_code=\"$CpCode\"}[$__range]",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "bd064876-d82d-49c3-aa43-6ef3fc4deefa",
+                "layout": {
+                    "h": 4,
+                    "i": "72bfdc7f-cb15-47d1-b535-98671a40b34a",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 23
+                },
+                "maxPerRow": 4,
+                "name": "最大请求/秒 ",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_hits_per_second_max{cp_code=\"$CpCode\"}[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "b7ec5a8f-eb8d-4671-ac4d-342fb23e15ac",
+                "layout": {
+                    "h": 4,
+                    "i": "5e83b410-d84a-4229-be30-1c8e23d7e7ba",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 27
+                },
+                "maxPerRow": 4,
+                "name": "回源请求/秒",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_origin_hits_per_second_max{cp_code=\"$CpCode\"}[$__range]))",
+                        "legend": "Max",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(increase(akamai_origin_hits_per_second_min{cp_code=\"$Code\"}[$__range]))",
+                        "legend": "Min",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "856749bc-acbc-4c26-9902-b16904eac999",
+                "layout": {
+                    "h": 4,
+                    "i": "6f4da794-49c4-4f3d-aac8-89a0711f6bcb",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 27
+                },
+                "maxPerRow": 4,
+                "name": "命中缓存请求与总请求占比",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "akamai_hits_offload_max_percent{cp_code=\"$CpCode\"}[$__range]",
+                        "legend": "Max",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "akamai_hits_offload_min_percent{cp_code=\"$Code\"}[$__range]",
+                        "legend": "Min",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "akamai_hits_offload_avg_percent{cp_code=\"$Code\"}[$__range]",
+                        "legend": "Avg",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "11d4ef04-8730-42eb-b55a-e5898775aaf3",
+                "layout": {
+                    "h": 4,
+                    "i": "11d4ef04-8730-42eb-b55a-e5898775aaf3",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 31
+                },
+                "maxPerRow": 4,
+                "name": "响应状态码请求数",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum by (response_code)(increase(akamai_edge_hits_by_response{cp_code=\"$CpCode\"}[$__range]))",
+                        "legend": "{{response_code}}",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": 300
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "detailName": "详情",
+                    "legengPosition": "right",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "d725bf6f-bfdd-49bd-bbcb-a04dec180123",
+                "layout": {
+                    "h": 4,
+                    "i": "ba9c72b4-07f4-4407-aa69-fde0bb5f1082",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 31
+                },
+                "maxPerRow": 4,
+                "name": "响应状态码占比",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "akamai_edge_hits_percent_by_response{cp_code=\"$CpCode\"}[$__range]",
+                        "legend": "{{response_code}}",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": 300
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "pie",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "8634e402-ca65-4cf3-85e3-d65de0c3bb2a",
+                "layout": {
+                    "h": 4,
+                    "i": "5e0cb3b5-163d-454b-b412-14304bd29b4d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 35
+                },
+                "maxPerRow": 4,
+                "name": "回源请求响应状态码数",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sum by (response_code)(increase(akamai_origin_hits_by_response{cp_code=\"$CpCode\"}[$__range]))",
+                        "legend": "{{response_code}}",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": 300
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "detailName": "详情",
+                    "legengPosition": "right",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "00e62bdb-a516-45ae-bd73-3e7ec68f3b95",
+                "layout": {
+                    "h": 4,
+                    "i": "baf8a413-c446-4ab8-a562-f0507a2ad974",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 35
+                },
+                "maxPerRow": 4,
+                "name": "回源响应状态码占比",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "akamai_origin_hits_percent_by_response{cp_code=\"$CpCode\"}[$__range]",
+                        "legend": "{{response_code}}",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "step": 300
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "pie",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "0482991b-efaf-4948-b1c1-cfc40c607aa8",
+                "layout": {
+                    "h": 1,
+                    "i": "0482991b-efaf-4948-b1c1-cfc40c607aa8",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 39
+                },
+                "name": "带宽 (CpCode=$CpCode)",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "059e3923-8bd6-42ef-bfa9-a8bc2a6ff9df",
+                "layout": {
+                    "h": 4,
+                    "i": "e48eb34d-79ab-4a42-9fc3-f74009af359e",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 40
+                },
+                "maxPerRow": 4,
+                "name": "总的带宽",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_bytes_total{cp_code=\"$CpCode\"}[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "eaf9a851-c770-4da2-9439-c5b12d8581fa",
+                "layout": {
+                    "h": 4,
+                    "i": "ce8c5012-c42e-4971-89cb-a28846d5a4e2",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 40
+                },
+                "maxPerRow": 4,
+                "name": "最大带宽/秒 ",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_edge_bytes_per_second_max{cp_code=\"$CpCode\"}[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "7251c766-9fa9-488f-9c24-8fe608b30f8d",
+                "layout": {
+                    "h": 4,
+                    "i": "faf7972a-6474-449c-9f6b-d11ab4784aac",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 40
+                },
+                "maxPerRow": 4,
+                "name": "总的回源带宽",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_origin_bytes_total{cp_code=\"$CpCode\"}[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "eeba6e60-a682-4fc3-8240-95cd65e4dcb0",
+                "layout": {
+                    "h": 4,
+                    "i": "8b403bc2-d228-4764-80d2-16bb1d892ba6",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 40
+                },
+                "maxPerRow": 4,
+                "name": "最大回源带宽/秒 ",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_origin_bytes_per_second_max{cp_code=\"$CpCode\"}[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "43108845-4ba4-4919-99ea-283b4f6f278b",
+                "layout": {
+                    "h": 4,
+                    "i": "ee1f5257-f0e1-41ea-a672-8c3fa37e1ab8",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 44
+                },
+                "maxPerRow": 4,
+                "name": "总的缓存与总的带宽占比",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "akamai_bytes_offload_total_percent{cp_code=\"$CpCode\"}[$__range]",
+                        "legend": "{{cp_code}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "b44e454a-5255-41d3-a81c-10a466e50f87",
+                "layout": {
+                    "h": 4,
+                    "i": "52f77b37-f292-4ef0-a171-aa6f3e2828c7",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 44
+                },
+                "maxPerRow": 4,
+                "name": "缓存与总带宽占比",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "akamai_bytes_offload_max_percent{cp_code=\"$CpCode\"}[$__range]",
+                        "legend": "Max",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "akamai_bytes_offload_min_percent{cp_code=\"$CpCode\"}[$__range]",
+                        "legend": "Min",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "akamai_bytes_offload_avg_percent{cp_code=\"$CpCode\"}[$__range]",
+                        "legend": "Avg",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "indexByName": {
+                                "name": 0,
+                                "value": 1
+                            }
+                        }
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "e57acc02-cac8-4e71-a9bb-c8ac09661590",
+                "layout": {
+                    "h": 1,
+                    "i": "e57acc02-cac8-4e71-a9bb-c8ac09661590",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 48
+                },
+                "name": "域名 (Domain=$Domain)",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "dd15a14a-64fc-4019-a2ed-2c63054df8a2",
+                "layout": {
+                    "h": 4,
+                    "i": "dd15a14a-64fc-4019-a2ed-2c63054df8a2",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 49
+                },
+                "maxPerRow": 4,
+                "name": "域名使用带宽",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_domain_edge_bytes_total{cp_code=\"$CpCode\", domain=\"$Domain\"}[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "59ecfb9d-03e7-4678-af52-4cda1e10b978",
+                "layout": {
+                    "h": 4,
+                    "i": "784ff303-a247-4bde-a124-8ed356d19e0e",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 49
+                },
+                "maxPerRow": 4,
+                "name": "域名使用带宽/秒",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_domain_edge_bytes_per_second_max{cp_code=\"$CpCode\", domain=\"$Domain\"}[$__range]))",
+                        "legend": "Max",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(increase(akamai_domain_edge_bytes_per_second_min{cp_code=\"$CpCode\", domain=\"$Domain\"}[$__range]))",
+                        "legend": "Min",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "e81f9489-abf6-4031-811b-5845da10a350",
+                "layout": {
+                    "h": 4,
+                    "i": "faa4e7f6-6a72-45ee-843f-3b9674dcee09",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 53
+                },
+                "maxPerRow": 4,
+                "name": "域名请求量",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_domain_edge_hits_total{cp_code=\"$CpCode\", domain=\"$Domain\"}[$__range]))",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "df0d368f-64d3-473f-ad20-0ff45b75ff97",
+                "layout": {
+                    "h": 4,
+                    "i": "c21c0690-ab9e-4953-a7f8-1b6d691a9150",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 53
+                },
+                "maxPerRow": 4,
+                "name": "域名请求量/秒",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(increase(akamai_domain_edge_hits_per_second_max{cp_code=\"$CpCode\", domain=\"$Domain\"}[$__range]))",
+                        "legend": "Max",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(increase(akamai_domain_edge_hits_per_second_min{cp_code=\"$CpCode\", domain=\"$Domain\"}[$__range]))",
+                        "legend": "Min",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "Datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${Datasource}"
+                },
+                "definition": "label_values(akamai_domain_edge_bytes_total, cp_code)",
+                "name": "CpCode",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${Datasource}"
+                },
+                "definition": "label_values(akamai_domain_edge_bytes_total{cp_code=\"$CpCode\"}, domain)",
+                "name": "Domain",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717558651681405000
+}

@@ -1,0 +1,273 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "Bandwidth Usage Too High",
+        "note": "1.流量值：\ndelta(snmp_network_status_incoming [1m])\n#delta() 函数用于计算时间序列数据的增量（差值）\n/8 转换倍数\nmin_over_time(metric_name [3m])\n3 \nmax_over_time(snmp_network_status_speed [30m])/1000 * 0.7 * 1024 * 1024 * 1024 \n取物理端口的70%，90%做告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            3,
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "min_over_time(delta(snmp_network_status_incoming[3m]) * 8 / 180 / 1024 / 1024 [3m]) \u003e snmp_network_status_speed / 1000 * 0.7 * 1024 * 1024 * 1024 and snmp_network_status_speed \u003e 0",
+                    "severity": 3
+                },
+                {
+                    "prom_ql": "min_over_time(delta(snmp_network_status_incoming[3m]) * 8 / 180 / 1024 / 1024 [3m]) \u003e snmp_network_status_speed / 1000 * 0.9 * 1024 * 1024 * 1024 and snmp_network_status_speed \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 60,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652216459000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "CRC Error ",
+        "note": "incoming_errors：端口历史错包总数，incoming_ucastpkts：端口历史数据包总数\n \n1. incoming_errors[1m] 的delta值 \u003e100\n2. incoming_errors[1m] 的delta值  除以  incoming_ucastpkts[1m] 的delta值 \u003e 0.001",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            3,
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "delta(snmp_network_status_incoming_errors[1m]) \u003e 100 and delta(snmp_network_status_incoming_errors[1m]) / delta(snmp_network_status_incoming_ucastpkts[1m]) \u003e 0.001",
+                    "severity": 3
+                },
+                {
+                    "prom_ql": "delta(snmp_network_status_incoming_errors[1m]) \u003e 100 and delta(snmp_network_status_incoming_errors[1m]) / delta(snmp_network_status_incoming_ucastpkts[1m]) \u003e 0.01",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 60,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652223186000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "Interface Down",
+        "note": "1. admin == 1\n2. ops status最近3次都为2(down)，最近第四次为1(up)",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            3
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "snmp_network_status_admin_status == 1 and snmp_network_status_ostatus offset 4m == 1 and min_over_time(snmp_network_status_ostatus[3m]) == 2",
+                    "severity": 3
+                }
+            ]
+        },
+        "prom_eval_interval": 60,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652328447000
+    }
+]

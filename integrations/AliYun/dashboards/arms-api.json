@@ -1,13 +1,9 @@
 {
-    "id": 0,
-    "group_id": 0,
     "name": "ARMS-API",
+    "tags": "ARMS Aliyun",
+    "note": "",
     "ident": "",
-    "tags": "ARMS JVM",
-    "create_at": 0,
-    "create_by": "",
-    "update_at": 0,
-    "update_by": "",
+    "uuid": 1717556327083057000,
     "configs": {
         "links": [],
         "panels": [
@@ -25,22 +21,11 @@
                 "name": "指标汇总",
                 "panels": [],
                 "type": "row",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
-                "custom": {
-                    "aggrDimension": [
-                        "host"
-                    ],
-                    "calc": "lastNotNull",
-                    "colorMode": "value",
-                    "displayMode": "labelValuesToRows",
-                    "showHeader": true,
-                    "sortOrder": "ascend"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
-                "description": "展示选定时段内承载了接口R的机器指标",
+                "type": "table",
                 "id": "76a4644d-7b96-4e4c-8486-7f93b6fda1e6",
                 "layout": {
                     "h": 6,
@@ -50,14 +35,36 @@
                     "x": 0,
                     "y": 1
                 },
-                "links": [],
-                "maxPerRow": 4,
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
                 "name": "机器维度-指标列表(选定时段)",
+                "links": [],
+                "description": "展示选定时段内承载了接口R的机器指标",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": false,
+                    "tableLayout": "fixed",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelValuesToRows",
+                    "aggrDimension": [
+                        "host"
+                    ],
+                    "sortOrder": "ascend",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn"
+                },
                 "options": {
                     "standardOptions": {}
                 },
                 "overrides": [
-                    {}
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
                 ],
                 "targets": [
                     {
@@ -92,18 +99,10 @@
                     },
                     {
                         "expr": "max by (host) (max_over_time(arms_http_requests_latency_seconds{service=\"$service\",rpc=\"$rpc\",quantile=\"0.99\"}[$__range])) or on (host) (group by (host) (max_over_time(arms_app_requests_count{service=\"$service\",rpc=\"$rpc\",callType=~\"^dsf$|^http$|^dubbo$|^mq$|^user_method$|^producer$|^thrift$|^hsf$|^server$|^grpc$\",prpc=\"__all__\",ppid=\"__all__\",endpoint=\"__all__\",destId=\"__all__\"}[$__range]))-1)",
-                        "legend": "{{host}}:99分位",
+                        "legend": "99分位",
                         "refId": "F"
                     }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "type": "table",
-                "version": "3.0.0"
+                ]
             },
             {
                 "collapsed": true,
@@ -119,7 +118,8 @@
                 "name": "概览",
                 "panels": [],
                 "type": "row",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -171,20 +171,11 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.3,
-                    "gradientMode": "opacity",
-                    "lineInterpolation": "linear",
-                    "lineWidth": 2,
-                    "stack": "off",
-                    "version": "3.0.0"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
+                "type": "timeseries",
                 "id": "e2d00781-a62e-4e7e-8808-05b89c986141",
                 "layout": {
                     "h": 8,
@@ -194,36 +185,69 @@
                     "x": 12,
                     "y": 8
                 },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "响应时间/每分钟",
                 "links": [],
                 "maxPerRow": 4,
-                "name": "响应时间/每分钟",
                 "options": {
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "thresholds": {
-                        "steps": [
-                            {
-                                "color": "#634CD9",
-                                "type": "base",
-                                "value": null
-                            }
-                        ]
-                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
                     }
                 },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
                 "targets": [
                     {
-                        "expr": "sum by (callType) (sum_over_time(arms_app_requests_seconds{service=\"$service\",rpc=\"$rpc\",host=~\"$host\",callType=~\"^dsf$|^http$|^dubbo$|^mq$|^user_method$|^producer$|^thrift$|^hsf$|^server$|^grpc$\",prpc=\"__all__\",ppid=\"__all__\",endpoint=\"__all__\",destId=\"__all__\"}[1m]))/sum by (callType) (sum_over_time(arms_app_requests_count{service=\"$service\",rpc=\"$rpc\",host=~\"$host\",callType=~\"^dsf$|^http$|^dubbo$|^mq$|^user_method$|^producer$|^thrift$|^hsf$|^server$|^grpc$\",prpc=\"__all__\",ppid=\"__all__\",endpoint=\"__all__\",destId=\"__all__\"}[1m]))",
+                        "expr": "sum by (callType) (sum_over_time(arms_app_requests_seconds{service=\"$service\",rpc=\"$rpc\",host=\"$host\",callType=~\"^dsf$|^http$|^dubbo$|^mq$|^user_method$|^producer$|^thrift$|^hsf$|^server$|^grpc$\",prpc=\"__all__\",ppid=\"__all__\",endpoint=\"__all__\",destId=\"__all__\"}[1m]))/sum by (callType) (sum_over_time(arms_app_requests_count{service=\"$service\",rpc=\"$rpc\",host=\"$host\",callType=~\"^dsf$|^http$|^dubbo$|^mq$|^user_method$|^producer$|^thrift$|^hsf$|^server$|^grpc$\",prpc=\"__all__\",ppid=\"__all__\",endpoint=\"__all__\",destId=\"__all__\"}[1m]))",
                         "legend": "{{callType}}入口",
                         "refId": "A"
                     }
-                ],
-                "type": "timeseries",
-                "version": "3.0.0"
+                ]
             },
             {
                 "custom": {
@@ -275,7 +299,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -327,7 +352,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -389,7 +415,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -441,7 +468,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "collapsed": true,
@@ -457,7 +485,8 @@
                 "name": "链路上游",
                 "panels": [],
                 "type": "row",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -468,7 +497,9 @@
                     "colorMode": "value",
                     "displayMode": "labelValuesToRows",
                     "showHeader": true,
-                    "sortOrder": "ascend"
+                    "sortOrder": "ascend",
+                    "tableLayout": "fixed",
+                    "nowrap": false
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}",
@@ -515,7 +546,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "3.0.0"
+                "version": "3.3.0"
             },
             {
                 "custom": {
@@ -567,7 +598,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -619,7 +651,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -666,12 +699,13 @@
                 "targets": [
                     {
                         "expr": "sum by (parent,prpc) (sum_over_time(arms_app_requests_seconds{service=\"$service\",rpc=\"$rpc\",prpc!=\"\",prpc!=\"nil\",parent!=\"\",parent!=\"nil\",host=~\"$host\",rpc!=\"__all__\",endpoint!=\"__all__\",destId!=\"__all__\"}[1m]))/sum by (parent,prpc) (sum_over_time(arms_app_requests_count{service=\"$service\",rpc=\"$rpc\",prpc!=\"\",prpc!=\"nil\",parent!=\"\",parent!=\"nil\",host=~\"$host\",rpc!=\"__all__\",endpoint!=\"__all__\",destId!=\"__all__\"}[1m]))",
-                        "legend": "{{parent}}=\u003e{{prpc}}",
+                        "legend": "{{parent}}=>{{prpc}}",
                         "refId": "B"
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "collapsed": true,
@@ -687,7 +721,8 @@
                 "name": "链路下游",
                 "panels": [],
                 "type": "row",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -698,7 +733,9 @@
                     "colorMode": "value",
                     "displayMode": "labelValuesToRows",
                     "showHeader": true,
-                    "sortOrder": "ascend"
+                    "sortOrder": "ascend",
+                    "tableLayout": "fixed",
+                    "nowrap": false
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}",
@@ -745,20 +782,10 @@
                     }
                 ],
                 "type": "table",
-                "version": "3.0.0"
+                "version": "3.3.0"
             },
             {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.3,
-                    "gradientMode": "opacity",
-                    "lineInterpolation": "linear",
-                    "lineWidth": 2,
-                    "stack": "off",
-                    "version": "3.0.0"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${datasource}",
+                "type": "timeseries",
                 "id": "edcbe109-e76f-4730-b3d3-64a649f93c3f",
                 "layout": {
                     "h": 9,
@@ -768,36 +795,69 @@
                     "x": 0,
                     "y": 75
                 },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "请求数/每分钟",
                 "links": [],
                 "maxPerRow": 4,
-                "name": "请求数/每分钟",
                 "options": {
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "thresholds": {
-                        "steps": [
-                            {
-                                "color": "#634CD9",
-                                "type": "base",
-                                "value": null
-                            }
-                        ]
-                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
                     }
                 },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
                 "targets": [
                     {
                         "expr": "sum by (service,rpc) (sum_over_time(arms_app_requests_count{prpc=\"$rpc\",parent=\"$service\",rpc!=\"__all\",endpoint!=\"__all__\",destId!=\"__all__\"}[1m]))",
                         "legend": "{{service}}:{{rpc}}",
                         "refId": "A"
                     }
-                ],
-                "type": "timeseries",
-                "version": "3.0.0"
+                ]
             },
             {
                 "custom": {
@@ -849,7 +909,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -901,14 +962,114 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.3.0",
+                "overrides": []
             }
         ],
         "var": [
             {
                 "definition": "prometheus",
                 "name": "datasource",
-                "type": "datasource"
+                "type": "datasource",
+                "value": 14,
+                "options": [
+                    {
+                        "label": "cmee-db-polardb",
+                        "value": 64
+                    },
+                    {
+                        "label": "vm-only-yunmonitor-sg",
+                        "value": 63
+                    },
+                    {
+                        "label": "vm-only-aliyun-yunmonitor",
+                        "value": 54
+                    },
+                    {
+                        "label": "sg_vm_prom",
+                        "value": 45
+                    },
+                    {
+                        "label": "AWS新加坡Prometheus生产",
+                        "value": 44
+                    },
+                    {
+                        "label": "AWS新加坡Prometheus测试",
+                        "value": 43
+                    },
+                    {
+                        "label": "阿里云新加坡Prometheus生产",
+                        "value": 42
+                    },
+                    {
+                        "label": "火山云Prometheus生产",
+                        "value": 41
+                    },
+                    {
+                        "label": "火山云Prometheus测试",
+                        "value": 40
+                    },
+                    {
+                        "label": "国内火山云门店Prometheus生产",
+                        "value": 37
+                    },
+                    {
+                        "label": "vm_firemap",
+                        "value": 35
+                    },
+                    {
+                        "label": "vm_prod_edge",
+                        "value": 34
+                    },
+                    {
+                        "label": "宁夏AWS Prometheus生产",
+                        "value": 33
+                    },
+                    {
+                        "label": "宁夏AWS Prometheus测试",
+                        "value": 32
+                    },
+                    {
+                        "label": "国内阿里云Prometheus生产",
+                        "value": 30
+                    },
+                    {
+                        "label": "IKMS",
+                        "value": 26
+                    },
+                    {
+                        "label": "aliyun-promethus-app-k8s",
+                        "value": 24
+                    },
+                    {
+                        "label": "国内阿里云Prometheus测试",
+                        "value": 22
+                    },
+                    {
+                        "label": "aliyun-arms",
+                        "value": 14
+                    },
+                    {
+                        "label": "vm-only-ali",
+                        "value": 13
+                    },
+                    {
+                        "label": "vm_polaris",
+                        "value": 11
+                    },
+                    {
+                        "label": "Flashcat_Ops",
+                        "value": 9
+                    },
+                    {
+                        "label": "ipmi_hardware_datasorce",
+                        "value": 6
+                    },
+                    {
+                        "label": "vm_prod",
+                        "value": 4
+                    }
+                ]
             },
             {
                 "allOption": false,
@@ -920,7 +1081,562 @@
                 "multi": false,
                 "name": "service",
                 "reg": "",
-                "type": "query"
+                "type": "query",
+                "value": "hdl-active-center-dev",
+                "options": [
+                    {
+                        "label": "hdl-active-center-dev",
+                        "value": "hdl-active-center-dev"
+                    },
+                    {
+                        "label": "hdl-adminlogin-center-dev",
+                        "value": "hdl-adminlogin-center-dev"
+                    },
+                    {
+                        "label": "hdl-app-admin-dev",
+                        "value": "hdl-app-admin-dev"
+                    },
+                    {
+                        "label": "hdl-app-admin-ecs",
+                        "value": "hdl-app-admin-ecs"
+                    },
+                    {
+                        "label": "hdl-bisicdata-center-ecs",
+                        "value": "hdl-bisicdata-center-ecs"
+                    },
+                    {
+                        "label": "hdl-book-queue-saas-admin",
+                        "value": "hdl-book-queue-saas-admin"
+                    },
+                    {
+                        "label": "hdl-book-queue-saas-openapi",
+                        "value": "hdl-book-queue-saas-openapi"
+                    },
+                    {
+                        "label": "hdl-bus-admin",
+                        "value": "hdl-bus-admin"
+                    },
+                    {
+                        "label": "hdl-bus-admin-dev",
+                        "value": "hdl-bus-admin-dev"
+                    },
+                    {
+                        "label": "hdl-bus-app",
+                        "value": "hdl-bus-app"
+                    },
+                    {
+                        "label": "hdl-bus-app-dev",
+                        "value": "hdl-bus-app-dev"
+                    },
+                    {
+                        "label": "hdl-bus-center",
+                        "value": "hdl-bus-center"
+                    },
+                    {
+                        "label": "hdl-bus-center-dev",
+                        "value": "hdl-bus-center-dev"
+                    },
+                    {
+                        "label": "hdl-crm-dev",
+                        "value": "hdl-crm-dev"
+                    },
+                    {
+                        "label": "hdl-crm-es-center",
+                        "value": "hdl-crm-es-center"
+                    },
+                    {
+                        "label": "hdl-crm-es-center-dev",
+                        "value": "hdl-crm-es-center-dev"
+                    },
+                    {
+                        "label": "hdl-customize-center-dev",
+                        "value": "hdl-customize-center-dev"
+                    },
+                    {
+                        "label": "hdl-customize-interface",
+                        "value": "hdl-customize-interface"
+                    },
+                    {
+                        "label": "hdl-customize-interface-dev",
+                        "value": "hdl-customize-interface-dev"
+                    },
+                    {
+                        "label": "hdl-kiwashop-admin",
+                        "value": "hdl-kiwashop-admin"
+                    },
+                    {
+                        "label": "hdl-kiwashop-client",
+                        "value": "hdl-kiwashop-client"
+                    },
+                    {
+                        "label": "hdl-login-center-dev",
+                        "value": "hdl-login-center-dev"
+                    },
+                    {
+                        "label": "hdl-marketing-center-dev",
+                        "value": "hdl-marketing-center-dev"
+                    },
+                    {
+                        "label": "hdl-member-center-dev",
+                        "value": "hdl-member-center-dev"
+                    },
+                    {
+                        "label": "hdl-member-center-ecs",
+                        "value": "hdl-member-center-ecs"
+                    },
+                    {
+                        "label": "hdl-msg-center-hsf",
+                        "value": "hdl-msg-center-hsf"
+                    },
+                    {
+                        "label": "hdl-operator-center-dev",
+                        "value": "hdl-operator-center-dev"
+                    },
+                    {
+                        "label": "hdl-order-evaluate-center-dev",
+                        "value": "hdl-order-evaluate-center-dev"
+                    },
+                    {
+                        "label": "hdl-pay-center",
+                        "value": "hdl-pay-center"
+                    },
+                    {
+                        "label": "hdl-pay-center-ecs",
+                        "value": "hdl-pay-center-ecs"
+                    },
+                    {
+                        "label": "hdl-queue-mq",
+                        "value": "hdl-queue-mq"
+                    },
+                    {
+                        "label": "hdl-queue-store",
+                        "value": "hdl-queue-store"
+                    },
+                    {
+                        "label": "hdl-sns-center-dev",
+                        "value": "hdl-sns-center-dev"
+                    },
+                    {
+                        "label": "hdl-sns-es-center-dev",
+                        "value": "hdl-sns-es-center-dev"
+                    },
+                    {
+                        "label": "hdl-store-pay-center-ecs",
+                        "value": "hdl-store-pay-center-ecs"
+                    },
+                    {
+                        "label": "hdl-task-center",
+                        "value": "hdl-task-center"
+                    },
+                    {
+                        "label": "hdl-task-center-dev",
+                        "value": "hdl-task-center-dev"
+                    },
+                    {
+                        "label": "hdl-trade-center-dev",
+                        "value": "hdl-trade-center-dev"
+                    },
+                    {
+                        "label": "hdl-tydc-ai",
+                        "value": "hdl-tydc-ai"
+                    },
+                    {
+                        "label": "hdl-tydc-front-new",
+                        "value": "hdl-tydc-front-new"
+                    },
+                    {
+                        "label": "hdl-tydc-if-auth-front",
+                        "value": "hdl-tydc-if-auth-front"
+                    },
+                    {
+                        "label": "hdl-tydc-interface-front",
+                        "value": "hdl-tydc-interface-front"
+                    },
+                    {
+                        "label": "hdl-tydc-manager-center",
+                        "value": "hdl-tydc-manager-center"
+                    },
+                    {
+                        "label": "hdl-tydc-order-center",
+                        "value": "hdl-tydc-order-center"
+                    },
+                    {
+                        "label": "ikms2-Beijing-ckms",
+                        "value": "ikms2-Beijing-ckms"
+                    },
+                    {
+                        "label": "online-app-basicdata-center",
+                        "value": "online-app-basicdata-center"
+                    },
+                    {
+                        "label": "online-app-bus-admin",
+                        "value": "online-app-bus-admin"
+                    },
+                    {
+                        "label": "online-app-bus-app",
+                        "value": "online-app-bus-app"
+                    },
+                    {
+                        "label": "online-app-bus-center",
+                        "value": "online-app-bus-center"
+                    },
+                    {
+                        "label": "online-app-dec-dmp",
+                        "value": "online-app-dec-dmp"
+                    },
+                    {
+                        "label": "online-app-kiwashop-admin",
+                        "value": "online-app-kiwashop-admin"
+                    },
+                    {
+                        "label": "online-app-kiwashop-client",
+                        "value": "online-app-kiwashop-client"
+                    },
+                    {
+                        "label": "online-app-marketing-center",
+                        "value": "online-app-marketing-center"
+                    },
+                    {
+                        "label": "online-app-member-center",
+                        "value": "online-app-member-center"
+                    },
+                    {
+                        "label": "online-app-msg-center",
+                        "value": "online-app-msg-center"
+                    },
+                    {
+                        "label": "online-app-operator-center",
+                        "value": "online-app-operator-center"
+                    },
+                    {
+                        "label": "online-app-trade-center",
+                        "value": "online-app-trade-center"
+                    },
+                    {
+                        "label": "online-customize-center",
+                        "value": "online-customize-center"
+                    },
+                    {
+                        "label": "online-customize-interface",
+                        "value": "online-customize-interface"
+                    },
+                    {
+                        "label": "online-new-pay-center",
+                        "value": "online-new-pay-center"
+                    },
+                    {
+                        "label": "online-pay-center",
+                        "value": "online-pay-center"
+                    },
+                    {
+                        "label": "online-tydc-data-sync-queue",
+                        "value": "online-tydc-data-sync-queue"
+                    },
+                    {
+                        "label": "online-tydc-data-sync-superapp",
+                        "value": "online-tydc-data-sync-superapp"
+                    },
+                    {
+                        "label": "prod-book-queue-saas-admin",
+                        "value": "prod-book-queue-saas-admin"
+                    },
+                    {
+                        "label": "prod-book-queue-saas-openapi",
+                        "value": "prod-book-queue-saas-openapi"
+                    },
+                    {
+                        "label": "prod-certificate-center",
+                        "value": "prod-certificate-center"
+                    },
+                    {
+                        "label": "prod-ekp-web",
+                        "value": "prod-ekp-web"
+                    },
+                    {
+                        "label": "prod-franchise-center",
+                        "value": "prod-franchise-center"
+                    },
+                    {
+                        "label": "prod-hi-information",
+                        "value": "prod-hi-information"
+                    },
+                    {
+                        "label": "prod-hi-information-admin",
+                        "value": "prod-hi-information-admin"
+                    },
+                    {
+                        "label": "prod-innovate-newbizflow-server",
+                        "value": "prod-innovate-newbizflow-server"
+                    },
+                    {
+                        "label": "prod-newmall-aggregation",
+                        "value": "prod-newmall-aggregation"
+                    },
+                    {
+                        "label": "prod-newmall-auth",
+                        "value": "prod-newmall-auth"
+                    },
+                    {
+                        "label": "prod-newmall-basic",
+                        "value": "prod-newmall-basic"
+                    },
+                    {
+                        "label": "prod-newmall-gateway",
+                        "value": "prod-newmall-gateway"
+                    },
+                    {
+                        "label": "prod-newmall-goods",
+                        "value": "prod-newmall-goods"
+                    },
+                    {
+                        "label": "prod-newmall-jobquartz",
+                        "value": "prod-newmall-jobquartz"
+                    },
+                    {
+                        "label": "prod-newmall-life",
+                        "value": "prod-newmall-life"
+                    },
+                    {
+                        "label": "prod-newmall-manage",
+                        "value": "prod-newmall-manage"
+                    },
+                    {
+                        "label": "prod-newmall-marketing",
+                        "value": "prod-newmall-marketing"
+                    },
+                    {
+                        "label": "prod-newmall-member",
+                        "value": "prod-newmall-member"
+                    },
+                    {
+                        "label": "prod-newmall-merchant",
+                        "value": "prod-newmall-merchant"
+                    },
+                    {
+                        "label": "prod-newmall-order",
+                        "value": "prod-newmall-order"
+                    },
+                    {
+                        "label": "prod-newmall-wh",
+                        "value": "prod-newmall-wh"
+                    },
+                    {
+                        "label": "prod-pay-center",
+                        "value": "prod-pay-center"
+                    },
+                    {
+                        "label": "prod-pay-center-admin",
+                        "value": "prod-pay-center-admin"
+                    },
+                    {
+                        "label": "prod-queue-interface",
+                        "value": "prod-queue-interface"
+                    },
+                    {
+                        "label": "prod-queue-mq",
+                        "value": "prod-queue-mq"
+                    },
+                    {
+                        "label": "prod-queue-store",
+                        "value": "prod-queue-store"
+                    },
+                    {
+                        "label": "prod-tax-center-openapi",
+                        "value": "prod-tax-center-openapi"
+                    },
+                    {
+                        "label": "prod-tydc-ai",
+                        "value": "prod-tydc-ai"
+                    },
+                    {
+                        "label": "prod-tydc-ali-center",
+                        "value": "prod-tydc-ali-center"
+                    },
+                    {
+                        "label": "prod-tydc-basic-front",
+                        "value": "prod-tydc-basic-front"
+                    },
+                    {
+                        "label": "prod-tydc-client-gateway",
+                        "value": "prod-tydc-client-gateway"
+                    },
+                    {
+                        "label": "prod-tydc-ex-if-front",
+                        "value": "prod-tydc-ex-if-front"
+                    },
+                    {
+                        "label": "prod-tydc-front-new",
+                        "value": "prod-tydc-front-new"
+                    },
+                    {
+                        "label": "prod-tydc-interface-fron",
+                        "value": "prod-tydc-interface-fron"
+                    },
+                    {
+                        "label": "prod-tydc-manager-center",
+                        "value": "prod-tydc-manager-center"
+                    },
+                    {
+                        "label": "prod-tydc-order-center",
+                        "value": "prod-tydc-order-center"
+                    },
+                    {
+                        "label": "prod-tydc-special",
+                        "value": "prod-tydc-special"
+                    },
+                    {
+                        "label": "prod-tydc-tel-bar-front",
+                        "value": "prod-tydc-tel-bar-front"
+                    },
+                    {
+                        "label": "prod-tydc-user-center",
+                        "value": "prod-tydc-user-center"
+                    },
+                    {
+                        "label": "prod-tydc-wechat-center",
+                        "value": "prod-tydc-wechat-center"
+                    },
+                    {
+                        "label": "qcenter",
+                        "value": "qcenter"
+                    },
+                    {
+                        "label": "test-auto-init-update-1.0",
+                        "value": "test-auto-init-update-1.0"
+                    },
+                    {
+                        "label": "test-download-cloud-1.0",
+                        "value": "test-download-cloud-1.0"
+                    },
+                    {
+                        "label": "test-hdl-api-1.0",
+                        "value": "test-hdl-api-1.0"
+                    },
+                    {
+                        "label": "test-hdl-archive-1.0",
+                        "value": "test-hdl-archive-1.0"
+                    },
+                    {
+                        "label": "test-hdl-cloud-interface-1.0",
+                        "value": "test-hdl-cloud-interface-1.0"
+                    },
+                    {
+                        "label": "test-hdl-cloud-pos-helper-1.0",
+                        "value": "test-hdl-cloud-pos-helper-1.0"
+                    },
+                    {
+                        "label": "test-hdl-cloud-upload-1.0",
+                        "value": "test-hdl-cloud-upload-1.0"
+                    },
+                    {
+                        "label": "test-hdl-ps-interface-1.0",
+                        "value": "test-hdl-ps-interface-1.0"
+                    },
+                    {
+                        "label": "test-shop-cloud-report-1.0",
+                        "value": "test-shop-cloud-report-1.0"
+                    },
+                    {
+                        "label": "test-shop-manicure-interface",
+                        "value": "test-shop-manicure-interface"
+                    },
+                    {
+                        "label": "test-tydc-data-sync-superapp",
+                        "value": "test-tydc-data-sync-superapp"
+                    },
+                    {
+                        "label": "test-updownload-cloud-1.0",
+                        "value": "test-updownload-cloud-1.0"
+                    },
+                    {
+                        "label": "test-updownload-cloud-5.0",
+                        "value": "test-updownload-cloud-5.0"
+                    },
+                    {
+                        "label": "wxqyh-service-126",
+                        "value": "wxqyh-service-126"
+                    },
+                    {
+                        "label": "zfs-auth-server",
+                        "value": "zfs-auth-server"
+                    },
+                    {
+                        "label": "zfs-base",
+                        "value": "zfs-base"
+                    },
+                    {
+                        "label": "zfs-boe-server",
+                        "value": "zfs-boe-server"
+                    },
+                    {
+                        "label": "zfs-budget-server",
+                        "value": "zfs-budget-server"
+                    },
+                    {
+                        "label": "zfs-claim-server",
+                        "value": "zfs-claim-server"
+                    },
+                    {
+                        "label": "zfs-file-server",
+                        "value": "zfs-file-server"
+                    },
+                    {
+                        "label": "zfs-fmc",
+                        "value": "zfs-fmc"
+                    },
+                    {
+                        "label": "zfs-fms-server",
+                        "value": "zfs-fms-server"
+                    },
+                    {
+                        "label": "zfs-fsc-server",
+                        "value": "zfs-fsc-server"
+                    },
+                    {
+                        "label": "zfs-gateway",
+                        "value": "zfs-gateway"
+                    },
+                    {
+                        "label": "zfs-guide",
+                        "value": "zfs-guide"
+                    },
+                    {
+                        "label": "zfs-interface-internal-server",
+                        "value": "zfs-interface-internal-server"
+                    },
+                    {
+                        "label": "zfs-job-server",
+                        "value": "zfs-job-server"
+                    },
+                    {
+                        "label": "zfs-ledger-server",
+                        "value": "zfs-ledger-server"
+                    },
+                    {
+                        "label": "zfs-mqs-server",
+                        "value": "zfs-mqs-server"
+                    },
+                    {
+                        "label": "zfs-op-server",
+                        "value": "zfs-op-server"
+                    },
+                    {
+                        "label": "zfs-public-server",
+                        "value": "zfs-public-server"
+                    },
+                    {
+                        "label": "zfs-report-server",
+                        "value": "zfs-report-server"
+                    },
+                    {
+                        "label": "zfs-rule-server",
+                        "value": "zfs-rule-server"
+                    },
+                    {
+                        "label": "zfs-shop-server",
+                        "value": "zfs-shop-server"
+                    }
+                ]
             },
             {
                 "allOption": false,
@@ -932,7 +1648,14 @@
                 "multi": false,
                 "name": "rpc",
                 "reg": "",
-                "type": "query"
+                "type": "query",
+                "value": "/apiStatus",
+                "options": [
+                    {
+                        "label": "/apiStatus",
+                        "value": "/apiStatus"
+                    }
+                ]
             },
             {
                 "allOption": true,
@@ -941,19 +1664,21 @@
                     "cate": "prometheus",
                     "value": "${datasource}"
                 },
-                "definition": "label_values(arms_system_cpu_idle{service=\"$service\"},host)",
+                "definition": "label_values(arms_app_requests_count{service=\"$service\",callType=~\"^dsf$|^http$|^dubbo$|^mq$|^user_method$|^producer$|^thrift$|^hsf$|^server$|^grpc$\",rpc=\"$rpc\"},host)",
                 "multi": false,
                 "name": "host",
                 "reg": "",
-                "type": "query"
+                "type": "query",
+                "value": "172.22.39.200",
+                "options": [
+                    {
+                        "label": "172.22.39.200",
+                        "value": "172.22.39.200"
+                    }
+                ],
+                "hide": false
             }
         ],
         "version": "3.0.0"
-    },
-    "public": 0,
-    "public_cate": 0,
-    "bgids": null,
-    "built_in": 0,
-    "hide": 0,
-    "uuid": 1717556327083057000
+    }
 }

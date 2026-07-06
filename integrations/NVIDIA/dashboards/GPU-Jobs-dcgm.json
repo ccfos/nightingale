@@ -1,0 +1,2054 @@
+{
+    "name": "GPU-Jobs",
+    "tags": "",
+    "ident": "",
+    "uuid": 1766721071088000,
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "1940c33c-50c8-4e0e-b7ba-afd9b932f9a8",
+                "layout": {
+                    "h": 1,
+                    "i": "1940c33c-50c8-4e0e-b7ba-afd9b932f9a8",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "JOB GPU 指标",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.8,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "DCGM_FI_DEV_GPU_UTIL 指标参考：https://docs.nvidia.com/datacenter/dcgm/latest/dcgm-api/dcgm-api-field-ids.html?highlight=dcgm_fi_dev_gpu_util",
+                "id": "0f84e2a2-0d87-49a1-87ae-b7fc6ab61f52",
+                "layout": {
+                    "h": 8,
+                    "i": "0f84e2a2-0d87-49a1-87ae-b7fc6ab61f52",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "GPU 使用率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "standardOptions": {
+                        "unit": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_DEV_GPU_UTIL{exported_pod=\"${pod_name}\",exported_namespace=\"$namespace\"}",
+                        "legend": "{{gpu}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.8,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "id": "6807675e-f5c7-487c-b128-3e2117b334c1",
+                "layout": {
+                    "h": 8,
+                    "i": "6807675e-f5c7-487c-b128-3e2117b334c1",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 9
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "GPU 显存",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_DEV_FB_USED{exported_pod=\"${pod_name}\", exported_namespace=\"$namespace\"}",
+                        "legend": "{{ident}}-gpu -{{gpu}}_memory_used",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.46,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "id": "2af04e49-8dd7-4553-835f-b7342ecd498b",
+                "layout": {
+                    "h": 8,
+                    "i": "0a08987d-b952-4434-a298-236687d5afbd",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 17
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "GPU 温度",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_DEV_GPU_TEMP{exported_pod=\"${pod_name}\", exported_namespace=\"$namespace\"}",
+                        "legend": "{{ident}}-gpu -{{gpu}}_memory_used",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "collapsed": true,
+                "id": "debb9eb5-ba9a-4fa3-8c2d-19bfc71ae215",
+                "layout": {
+                    "h": 1,
+                    "i": "debb9eb5-ba9a-4fa3-8c2d-19bfc71ae215",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 25
+                },
+                "name": "JOB 主要相关资源",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.83,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "使用GPU的容器cpu使用率",
+                "id": "96b14a10-39e2-454b-a0ce-c49f5cf5bc80",
+                "layout": {
+                    "h": 8,
+                    "i": "96b14a10-39e2-454b-a0ce-c49f5cf5bc80",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 26
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "CPU 使用率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "(sum(irate(container_cpu_usage_seconds_total{image!=\"\",pod=\"$pod_name\"}[1m])) by(name,pod,container))/(sum(container_spec_cpu_quota{image!=\"\",pod=\"$pod_name\"}) by(name,pod,container) /100000)",
+                        "legend": "{{pod}} - {{container}}",
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.8,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "RSS，常驻内存集（Resident Set Size），是进程实际使用物理内存的大小，例如进程中的堆、栈所用空间就属于RSS的一部分。RSS用量由进程自行控制，不受内核干预。例如c++中手动回收内存，python/golang的GC机制，都会影响RSS用量。\n\ncache，物理内存中的缓存部分。cache一般为内核在内存有余量的情况下，将进程读取的一些临时文件数据保存在物理内存中，这样之后读取同一份数据可以直接从内存而不是磁盘中获取，提高读取速度。当可用内存余量不足时，内核将根据LRU算法主动回收不再使用的cache内存部分。回收后的内存可以供进程继续使用。\n\n限制内存量：进程可以使用的最大物理内存。\n\n任务OOM与RSS用量相关，当RSS用量达到限制内存后，如果仍在持续申请内存，进程可能会出现“cannot allocate memory” 或触发 oom killer机制。",
+                "id": "dd424d3c-c33c-45c8-868c-0bc788d1be5e",
+                "layout": {
+                    "h": 8,
+                    "i": "dd424d3c-c33c-45c8-868c-0bc788d1be5e",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 26
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "内存使用量",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(container_memory_rss{namespace=\"$namespace\", pod =\"$pod_name\", container !=\"POD\"}) by (container)",
+                        "legend": "rss 内存",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\", pod =\"$pod_name\", container!=\"POD\", container =\"$container\"}) by (container)",
+                        "legend": "cache 内存",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod_name\", container=\"$container\",resource=\"memory\",unit=\"byte\"})by(container)",
+                        "legend": "限制内存量",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.77,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "",
+                "id": "fb7679d4-0c02-4379-9bfb-08a59c8bcf17",
+                "layout": {
+                    "h": 8,
+                    "i": "fb7679d4-0c02-4379-9bfb-08a59c8bcf17",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 34
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "容器网络通信速率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(rate(container_network_receive_bytes_total{image!=\"\",pod=\"$pod_name\", namespace=\"$namespace\", interface=\"eth0\"}[5m]))",
+                        "legend": "接收速率",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(rate(container_network_transmit_bytes_total{cluster=\"$cluster\",image!=\"\",pod=\"$pod_name\",namespace=\"$namespace\", interface=\"eth0\"}[5m]))",
+                        "legend": "传输速率",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "包含process context switch和thread context switch",
+                "id": "854df399-78ae-4112-9cac-b33683b92272",
+                "layout": {
+                    "h": 8,
+                    "i": "854df399-78ae-4112-9cac-b33683b92272",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 34
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "打开的文件描述符(左 )/每秒上下文切换次数(右)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "node_filefd_allocated{instance=~\"$node\"}",
+                        "legend": "使用的文件描述符",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "rate(node_context_switches_total{cluster=\"$cluster\", instance=~\"$node\"}[$interval])",
+                        "legend": "每秒上下文切换次数",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "表示通过PCIe总线传输/接收的通信带宽，包括协议标头和数据有效负载。",
+                "id": "8a0a62ce-c505-4f9a-aaa8-6fcea44aa769",
+                "layout": {
+                    "h": 8,
+                    "i": "8a0a62ce-c505-4f9a-aaa8-6fcea44aa769",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 42
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "GPU PCIe通信带宽",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_DEV_PCIE_RX_THROUGHPUTDCGM{exported_namespace=\"$namespace\",exported_pod=\"$pod_name\",ident=\"$node\"}",
+                        "legend": "接收速率-gpu-{{gpu}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "DCGM_FI_DEV_PCIE_TX_THROUGHPUT{exported_namespace=\"$namespace\",exported_pod=\"$pod_name\",ident=\"$node\"}",
+                        "legend": "传输速率-gpu-{{gpu}}",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.8,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "",
+                "id": "cc8d1f41-bc55-4a37-b0c7-94466ab417d5",
+                "layout": {
+                    "h": 8,
+                    "i": "cc8d1f41-bc55-4a37-b0c7-94466ab417d5",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 42
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "容器进程数",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(container_threads{image!=\"\", namespace=\"$namespace\", pod=\"$pod_name\"}) by (container)",
+                        "legend": "{{container}}:threads",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "collapsed": true,
+                "id": "31710f33-b0ba-4bd2-b892-cc981f83c921",
+                "layout": {
+                    "h": 1,
+                    "i": "31710f33-b0ba-4bd2-b892-cc981f83c921",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 50
+                },
+                "name": "JOB 所在主机的负载监控",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.8,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "每一秒钟的自然时间内，花费在I/O上的耗时。（wall-clock time）\n\nnode_disk_io_time_seconds_total：\n磁盘花费在输入/输出操作上的秒数。该值为累加值。（Milliseconds Spent Doing I/Os）\n\nrate(node_disk_io_time_seconds_total[1m])：\n计算每秒的速率：(last值-last前一个值)/时间戳差值，即：1秒钟内磁盘花费在I/O操作的时间占比。",
+                "id": "659df69c-8a4c-4108-985d-d18a0c590099",
+                "layout": {
+                    "h": 8,
+                    "i": "659df69c-8a4c-4108-985d-d18a0c590099",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 51
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "每1秒内I/O操作耗时占比",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(node_disk_io_time_seconds_total{instance=~\"$node\"}[5m])",
+                        "legend": "{{device}}_每秒I/O操作%",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.8,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "Read bytes 每个磁盘分区每秒读取的比特数\nWritten bytes 每个磁盘分区每秒写入的比特数",
+                "id": "e77f6e5c-67ef-40b0-8982-9195601f8cbe",
+                "layout": {
+                    "h": 8,
+                    "i": "e77f6e5c-67ef-40b0-8982-9195601f8cbe",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 51
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "每秒磁盘读写容量",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(node_disk_read_bytes_total{instance=~\"$node\"}[5m])",
+                        "legend": "{{device}}_读取",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(node_disk_written_bytes_total{instance=~\"$node\"}[$interval])",
+                        "legend": "{{device}}_写入",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "id": "aac8c2b7-4004-4572-b0d4-c187f4513223",
+                "layout": {
+                    "h": 12,
+                    "i": "aac8c2b7-4004-4572-b0d4-c187f4513223",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 59
+                },
+                "links": [],
+                "maxPerRow": 6,
+                "name": "系统平均负载",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "system_load1{ident=~\"$node\"}",
+                        "legend": "1分钟负载",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "node_load5{instance=~\"$node\"}",
+                        "legend": "5分钟负载",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "node_load15{instance=~\"$node\"}",
+                        "legend": "15分钟负载",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    },
+                    {
+                        "expr": " sum(count(node_cpu_seconds_total{instance=~\"$node\", mode='system'}) by (cpu,instance)) by(instance)",
+                        "legend": "CPU总核数",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "id": "d37260c1-940c-40d9-9a1b-77ba66201d49",
+                "layout": {
+                    "h": 4,
+                    "i": "d37260c1-940c-40d9-9a1b-77ba66201d49",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 71
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "磁盘容量",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "unit": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "unit": "percent"
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "disk_used_percent{ident=~\"$node\"}",
+                        "legend": "{{device}}",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "sum by (instance,device,mountpoint ) (node_filesystem_avail_bytes{instance=~'$node',fstype=~\"ext.*|xfs\",mountpoint !~\".*pod.*\"})",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "collapsed": true,
+                "id": "b5f631c1-8d16-442b-a23f-5097e286b5cb",
+                "layout": {
+                    "h": 1,
+                    "i": "b5f631c1-8d16-442b-a23f-5097e286b5cb",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 75
+                },
+                "name": "IB网络",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "id": "e022d6e6-b1b7-4650-86de-589d64e88b77",
+                "layout": {
+                    "h": 9,
+                    "i": "e022d6e6-b1b7-4650-86de-589d64e88b77",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 76
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "IB网卡端口每秒网络带宽使用",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(node_infiniband_port_data_received_bytes_total{ident=~'$node'}[5m])*8",
+                        "legend": "{{device}}_in下载",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(node_infiniband_port_data_transmitted_bytes_total{ident=~'$node'}[5m])*8",
+                        "legend": "{{device}}_out上传",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "collapsed": true,
+                "id": "747237ba-8db4-458f-81a0-8e5a87b8f177",
+                "layout": {
+                    "h": 1,
+                    "i": "747237ba-8db4-458f-81a0-8e5a87b8f177",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 85
+                },
+                "name": "GPU Profiling Metrics",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "\t表示在一个时间间隔内，Graphics或Compute引擎处于Active的时间占比。\n该值表示所有Graphics和Compute引擎的平均值。\n\nGraphics或Compute引擎处于Active是指Graphics或Compute Context绑定到线程，并且Graphics或Compute Context处于Busy状态。",
+                "id": "3a065904-d08f-441b-94bf-851069d751c1",
+                "layout": {
+                    "h": 9,
+                    "i": "3a065904-d08f-441b-94bf-851069d751c1",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 86
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "图形引擎处于活动状态的时间百分比",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_PROF_GR_ENGINE_ACTIVE{ident=~\"$node\"}",
+                        "legend": "{{ident}}-{{gpu}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "表示Tensor（HMMA/IMMA） Pipe处于Active状态的周期分数。\n该值表示一个时间间隔内的平均值，而不是瞬时值。\n\n较高的值表示Tensor Cores的利用率较高。\n\n该值为1（100%）表示在整个时间间隔内每隔一个指令周期发出一个Tensor指令（两个周期完成一条指令）。\n\n假设该值为0.2（20%），可能有如下情况：\n在整个时间间隔内，有20%的SM的Tensor Core以100%的利用率运行。\n在整个时间间隔内，有100%的SM的Tensor Core以20%的利用率运行。\n在整个时间间隔的1/5时间内，有100%的SM上的Tensor Core以100%利用率运行。",
+                "id": "c20a8694-6625-4581-b2e1-49f39f4c9b6f",
+                "layout": {
+                    "h": 9,
+                    "i": "c20a8694-6625-4581-b2e1-49f39f4c9b6f",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 86
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "tensor (HMMA) pipline 处于活动状态的周期比率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_PROF_PIPE_TENSOR_ACTIVE{ident=~\"$node\"}",
+                        "legend": "{{ident}}-{{gpu}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "表示在一个时间间隔内，至少一个线程束在一个SM（Streaming Multiprocessor）上处于Active的时间占比。\n该值表示所有SM的平均值，且该值对每个块的线程数不敏感。\n\n线程束处于Active是指一个线程束被调度且分配资源后的状态，可能是在Computing、也可能是非Computing状态（例如等待内存请求）。\n\n该值小于0.5表示未高效利用GPU，大于0.8是必要的。\n\n假设一个GPU有N个SM：\n一个核函数在整个时间间隔内使用N个线程块运行在所有的SM上，此时该值为1（100%）。\n一个核函数在一个时间间隔内运行N/5个线程块，此时该值为0.2。\n一个核函数使用N个线程块，在一个时间间隔内，仅运行了1/5个周期的时间，此时该值为0.2。",
+                "id": "98b11b6e-3b18-48cf-85d3-724c46be4c52",
+                "layout": {
+                    "h": 9,
+                    "i": "98b11b6e-3b18-48cf-85d3-724c46be4c52",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 95
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "SM 至少分配了 1 个warp的周期比率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_PROF_SM_ACTIVE{ident=~\"$node\"}",
+                        "legend": "{{ident}}-{{gpu}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "表示在一个时间间隔内，驻留在SM上的线程束与该SM最大可驻留线程束的比例。\n该值表示一个时间间隔内的所有SM的平均值。\n\n占用率越高不代表GPU使用率越高。只有在GPU内存带宽受限的工作负载（DCGM_FI_PROF_DRAM_ACTIVE）情况下，更高的占用率表示更有效的GPU使用率。",
+                "id": "290ca1fb-5ab7-41ed-b1d9-7385302c214e",
+                "layout": {
+                    "h": 9,
+                    "i": "290ca1fb-5ab7-41ed-b1d9-7385302c214e",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 95
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "SM上驻留的warp数量的比率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_PROF_SM_OCCUPANCY{ident=~\"$node\"}",
+                        "legend": "{{ident}}-{{gpu}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "表示内存带宽利用率（Memory BW Utilization）将数据发送到设备内存或从设备内存接收数据的周期分数。\n该值表示时间间隔内的平均值，而不是瞬时值。\n\n较高的值表示设备内存的利用率较高。\n\n该值为1（100%）表示在整个时间间隔内的每个周期执行一条 DRAM 指令（实际上，峰值约为 0.8 (80%) 是可实现的最大值）。\n\n假设该值为0.2（20%），表示20%的周期在时间间隔内读取或写入设备内存。",
+                "id": "5ce6527d-7cb3-46c7-857f-681600ac90c6",
+                "layout": {
+                    "h": 9,
+                    "i": "5ce6527d-7cb3-46c7-857f-681600ac90c6",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 104
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "设备内存接口处于活动状态发送或接收数据的周期比率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_PROF_DRAM_ACTIVE{ident=~\"$node\"}",
+                        "legend": "{{ident}}-{{gpu}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "表示FP16（半精度）管道处于Active的周期分数。\n该值表示一个时间间隔内的平均值，而不是瞬时值。\n\n较高的值代表FP16 Cores有较高的利用率。\n\n该值为 1 (100%) 表示在整个时间间隔内上每两个周期（Volta类型卡为例）执行一次FP16指令。\n\n假设该值为0.2（20%），可能有如下情况：\n在整个时间间隔内，有20%的SM的FP16 Core以100%的利用率运行。\n在整个时间间隔内，有100%的SM的FP16 Core以20%的利用率运行。\n在整个时间间隔的1/5时间内，有100%的SM上的FP16 Core以100%利用率运行。",
+                "id": "b4196799-f1af-46c2-b2b8-51e7b354ec38",
+                "layout": {
+                    "h": 9,
+                    "i": "b4196799-f1af-46c2-b2b8-51e7b354ec38",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 104
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "FP16 pipeline处于活动状态的周期比率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_PROF_PIPE_FP16_ACTIVE{ident=~\"$node\"}",
+                        "legend": "{{ident}}-{{gpu}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "表示乘加操作FMA（Fused Multiply-Add）管道处于Active的周期分数，乘加操作包括FP32（单精度）和整数。\n该值表示一个时间间隔内的平均值，而不是瞬时值。\n\n较高的值代表FP32 Cores有较高的利用率。\n\n该值为1（100%）表示在整个时间间隔内上每两个周期（Volta类型卡为例）执行一次FP32指令。\n\n假设该值为0.2（20%），可能有如下情况：\n在整个时间间隔内，有20%的SM的FP32 Core以100%的利用率运行。\n在整个时间间隔内，有100%的SM的FP32 Core以20%的利用率运行。\n在整个时间间隔的1/5时间内，有100%的SM上的FP32 Core以100%利用率运行。",
+                "id": "4f140581-8c55-41fd-96c3-9df47dff9450",
+                "layout": {
+                    "h": 9,
+                    "i": "4f140581-8c55-41fd-96c3-9df47dff9450",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 113
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "FP32 pipeline处于活动状态的周期比率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_PROF_PIPE_FP32_ACTIVE{ident=~\"$node\"}",
+                        "legend": "{{ident}}-{{gpu}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Database}",
+                "description": "表示FP64（双精度）Pipe处于Active状态的周期分数。\n该值表示一个时间间隔内的平均值，而不是瞬时值。\n\n较高的值代表FP64 Cores有较高的利用率。\n\n该值为 1（100%）表示在整个时间间隔内上每四个周期（以Volta类型卡为例）执行一次FP64指令。\n\n假设该值为0.2（20%），可能有如下情况：\n在整个时间间隔内，有20%的SM的FP64 Core以100%的利用率运行。\n在整个时间间隔内，有100%的SM的FP64 Core以20%的利用率运行。\n在整个时间间隔的1/5时间内，有100%的SM上的FP64 Core以100%利用率运行。",
+                "id": "1b611415-b729-452f-8693-f74d1ed6e437",
+                "layout": {
+                    "h": 9,
+                    "i": "1b611415-b729-452f-8693-f74d1ed6e437",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 113
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "FP64 pipeline处于活动状态的周期比率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "DCGM_FI_PROF_PIPE_FP64_ACTIVE{ident=~\"$node\"}",
+                        "legend": "{{ident}}-{{gpu}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "hide": false,
+                "name": "datasource",
+                "type": "datasource",
+                "value": 129,
+                "options": [
+                    {
+                        "label": "hw",
+                        "value": 129
+                    },
+                    {
+                        "label": "test_fc_vm",
+                        "value": 125
+                    },
+                    {
+                        "label": "zj-test",
+                        "value": 123
+                    },
+                    {
+                        "label": "Default-自监控",
+                        "value": 109
+                    },
+                    {
+                        "label": "Skywalking_prom",
+                        "value": 100
+                    },
+                    {
+                        "label": "microservice",
+                        "value": 99
+                    },
+                    {
+                        "label": "云服务-cn-hangzhou",
+                        "value": 94
+                    },
+                    {
+                        "label": "arms_metrics_cn-beijing_cloud_beijing",
+                        "value": 85
+                    },
+                    {
+                        "label": "最佳实践测试-zj",
+                        "value": 83
+                    },
+                    {
+                        "label": "AOM-云服务",
+                        "value": 81
+                    },
+                    {
+                        "label": "demo_k8s_test",
+                        "value": 80
+                    },
+                    {
+                        "label": "huawei-aom-prom-test",
+                        "value": 79
+                    },
+                    {
+                        "label": "北京机房（阿里云）",
+                        "value": 42
+                    },
+                    {
+                        "label": "demo_k8s",
+                        "value": 40
+                    },
+                    {
+                        "label": "fc_1",
+                        "value": 12
+                    },
+                    {
+                        "label": "Default",
+                        "value": 11
+                    },
+                    {
+                        "label": "Flashcat_metrics",
+                        "value": 4
+                    }
+                ],
+                "label": "数据源"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(DCGM_FI_DEV_GPU_UTIL{}, exported_namespace)",
+                "hide": false,
+                "multi": false,
+                "name": "namespace",
+                "reg": "",
+                "type": "query",
+                "options": []
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(DCGM_FI_DEV_GPU_UTIL{exported_namespace=\"$namespace\"}, exported_pod)",
+                "hide": false,
+                "multi": false,
+                "name": "pod_name",
+                "reg": "",
+                "type": "query",
+                "options": []
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(DCGM_FI_DEV_GPU_UTIL{exported_pod=\"$pod_name\", exported_namespace=\"$namespace\"},  ident)",
+                "hide": false,
+                "multi": false,
+                "name": "node",
+                "reg": "",
+                "type": "query",
+                "options": []
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(DCGM_FI_DEV_GPU_UTIL{cluster=\"$cluster\", exported_pod=\"$pod_name\", exported_namespace=\"$namespace\"}, modelName)",
+                "hide": false,
+                "multi": false,
+                "name": "gpu_model",
+                "reg": "",
+                "type": "query",
+                "options": [],
+                "initialized": true
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

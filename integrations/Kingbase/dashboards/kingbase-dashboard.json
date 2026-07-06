@@ -1,0 +1,1671 @@
+{
+    "name": "KingbaseES概览",
+    "tags": "",
+    "ident": "",
+    "uuid": 1759681562942000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "type": "datasource",
+                "name": "DS_PROMETHEUS",
+                "definition": "prometheus"
+            },
+            {
+                "name": "kingbase_cluster",
+                "label": "集群名称",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 38
+                },
+                "reg": "",
+                "definition": "label_values(up{job='kingbase_kes_exporter'}, cluster)",
+                "multi": false
+            },
+            {
+                "name": "kingbase_address",
+                "label": "服务器地址",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 38
+                },
+                "reg": "",
+                "definition": "label_values(up{job='kingbase_node_exporter', cluster=~'$kingbase_cluster'}, address)",
+                "multi": false
+            },
+            {
+                "name": "kingbase_kes_instance",
+                "label": null,
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 38
+                },
+                "reg": "",
+                "definition": "label_values(up{job='kingbase_kes_exporter', cluster=~'$kingbase_cluster'}, instance)",
+                "multi": false
+            },
+            {
+                "name": "kingbase_node_instance",
+                "label": null,
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 38
+                },
+                "reg": "",
+                "definition": "label_values(up{job='kingbase_node_exporter', cluster=~'$kingbase_cluster', address=~'$kingbase_address'}, instance)",
+                "multi": false
+            },
+            {
+                "name": "kingbase_db",
+                "label": "数据库",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": 38
+                },
+                "reg": "",
+                "definition": "label_values(kingbase_sys_database_age_total{cluster=~'$kingbase_cluster', datname!='template1', datname!='template0', datname!='security'}, datname)",
+                "multi": false
+            }
+        ],
+        "panels": [
+            {
+                "type": "stat",
+                "id": "14f7fb8e-46ca-4a2f-a844-c04adb6b0303",
+                "layout": {
+                    "h": 2,
+                    "w": 4,
+                    "x": 0,
+                    "y": 0,
+                    "i": "14f7fb8e-46ca-4a2f-a844-c04adb6b0303",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "avg(time() - node_boot_time_seconds{instance=~'$kingbase_node_instance'})",
+                        "__mode__": "__query__",
+                        "refId": "A"
+                    }
+                ],
+                "name": "服务器运行",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "last",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(80, 230, 60)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 0
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "effadf20-860b-43ae-853f-7d38e2fd895a",
+                "layout": {
+                    "h": 2,
+                    "w": 4,
+                    "x": 4,
+                    "y": 0,
+                    "i": "e641a44d-18e7-4d91-8d7b-b4bfc49cc4b0",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "kingbase_sys_postmaster_start_time_seconds{instance=~'$kingbase_kes_instance'}",
+                        "__mode__": "__query__",
+                        "refId": "A"
+                    }
+                ],
+                "name": "数据库运行",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "last",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(80, 230, 60)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 0
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "d3945472-87f8-4802-bf58-4d76f2ac872f",
+                "layout": {
+                    "h": 2,
+                    "w": 4,
+                    "x": 8,
+                    "y": 0,
+                    "i": "d3945472-87f8-4802-bf58-4d76f2ac872f",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "count(node_cpu_seconds_total{instance=~'$kingbase_node_instance', mode='system'})",
+                        "__mode__": "__query__",
+                        "refId": "A"
+                    }
+                ],
+                "name": "CPU 核数",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(80, 230, 60)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "bc05cf70-2031-4b5c-9d03-7314e2b6e6f0",
+                "layout": {
+                    "h": 2,
+                    "w": 4,
+                    "x": 12,
+                    "y": 0,
+                    "i": "bc05cf70-2031-4b5c-9d03-7314e2b6e6f0",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "sum(node_memory_MemTotal_bytes{instance=~'$kingbase_node_instance'})",
+                        "__mode__": "__query__",
+                        "refId": "A"
+                    }
+                ],
+                "name": "内存",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "last",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(80, 230, 60)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "fda647ab-4908-4220-9c62-a5dac5282e51",
+                "layout": {
+                    "h": 2,
+                    "w": 3,
+                    "x": 16,
+                    "y": 0,
+                    "i": "fda647ab-4908-4220-9c62-a5dac5282e51",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "kingbase_get_license_validdays_total{instance=~'$kingbase_kes_instance'}",
+                        "__mode__": "__query__",
+                        "refId": "A"
+                    }
+                ],
+                "name": "授权有效期",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "last",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#C4162A",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "rgb(80, 230, 60)",
+                                "value": -2
+                            },
+                            {
+                                "color": "#C4162A",
+                                "value": -1
+                            },
+                            {
+                                "color": "rgb(80, 230, 60)",
+                                "value": 31
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "options": {
+                                "-2": {
+                                    "text": "永久"
+                                },
+                                "-1": {
+                                    "text": "异常"
+                                }
+                            },
+                            "match": {
+                                "special": -2
+                            },
+                            "result": {
+                                "text": "永久",
+                                "color": "rgba(63, 196, 83, 1)"
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "rgba(255, 101, 107, 1)",
+                                "text": "异常"
+                            },
+                            "match": {
+                                "special": -1
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 0
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "9f029930-878b-4f3b-b0e5-02753be2ad40",
+                "layout": {
+                    "h": 2,
+                    "w": 3,
+                    "x": 19,
+                    "y": 0,
+                    "i": "c8d8991c-9482-482a-92af-8a31cbddcd55",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "max(kingbase_sys_stat_replication_wal_lsn_diff_bytes{instance=~'$kingbase_kes_instance'})",
+                        "__mode__": "__query__",
+                        "refId": "A"
+                    }
+                ],
+                "name": "流复制状态",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "last",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(80, 230, 60)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesSecIEC",
+                        "decimals": 1
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "b40ac87f-5d05-4ef5-a190-036d3b981499",
+                "layout": {
+                    "h": 2,
+                    "w": 2,
+                    "x": 22,
+                    "y": 0,
+                    "i": "74ea8b98-f6f1-4f18-8cc6-0db8c300e178",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "sum(up{job='kingbase_kes_exporter', cluster=~'$kingbase_cluster'}) / count(up{job='kingbase_kes_exporter', cluster=~'$kingbase_cluster'})",
+                        "__mode__": "__query__",
+                        "refId": "A"
+                    }
+                ],
+                "name": "数据库状态",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "last",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#C4162A",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "type": "special",
+                            "options": {
+                                "-2": {
+                                    "text": "永久"
+                                },
+                                "-1": {
+                                    "text": "异常"
+                                }
+                            },
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "text": "正常",
+                                "color": "rgba(63, 196, 83, 1)"
+                            }
+                        },
+                        {
+                            "type": "special",
+                            "result": {
+                                "color": "rgba(255, 101, 107, 1)",
+                                "text": "异常"
+                            },
+                            "match": {
+                                "special": 0
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 0
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "barGauge",
+                "id": "8109050c-4970-487b-8972-d11fcae7b107",
+                "layout": {
+                    "h": 7,
+                    "w": 4,
+                    "x": 0,
+                    "y": 2,
+                    "i": "8109050c-4970-487b-8972-d11fcae7b107",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "100 - avg(rate(node_cpu_seconds_total{instance=~'$kingbase_node_instance', mode='idle'}[5m])) * 100",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "CPU使用率"
+                    },
+                    {
+                        "expr": "100 - sum(node_memory_MemAvailable_bytes{instance=~'$kingbase_node_instance'}) / sum(node_memory_MemTotal_bytes{instance=~'$kingbase_node_instance'}) * 100",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "legend": "内存使用率"
+                    },
+                    {
+                        "expr": "100 - sum(node_memory_SwapFree_bytes{instance=~'$kingbase_node_instance'}) / sum(node_memory_SwapTotal_bytes{instance=~'$kingbase_node_instance'}) * 100",
+                        "__mode__": "__query__",
+                        "refId": "C",
+                        "legend": "交换分区使用率"
+                    }
+                ],
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    }
+                }
+            },
+            {
+                "type": "table",
+                "id": "d7926ec4-5dc3-47f9-88d2-164a5e81f615",
+                "layout": {
+                    "h": 7,
+                    "w": 4,
+                    "x": 4,
+                    "y": 2,
+                    "i": "d7926ec4-5dc3-47f9-88d2-164a5e81f615",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "irate(node_cpu_seconds_total{instance=~'$kingbase_node_instance', mode='iowait'}[5m]) * 100",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "{{cpu}}"
+                    }
+                ],
+                "name": "CPU iowait",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "seriesToRows",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn"
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "e6c34cfd-198e-4e83-9dc4-76f7bc89cf44",
+                "layout": {
+                    "h": 7,
+                    "w": 4,
+                    "x": 8,
+                    "y": 2,
+                    "i": "e6c34cfd-198e-4e83-9dc4-76f7bc89cf44",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "node_filesystem_files_free{instance=~'$kingbase_node_instance', fstype=~'ext.?|xfs'}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "{{instance}} - {{mountpoint}}"
+                    }
+                ],
+                "name": "剩余节点数",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn",
+                    "columns": [
+                        "mountpoint",
+                        "value"
+                    ]
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "99d7c5b5-a08c-4b6c-ba5e-ca5e645386a9",
+                "layout": {
+                    "h": 7,
+                    "w": 4,
+                    "x": 12,
+                    "y": 2,
+                    "i": "99d7c5b5-a08c-4b6c-ba5e-ca5e645386a9",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "kingbase_repmgr_nodes_info{instance=~'$kingbase_kes_instance'}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "name": "数据库节点信息",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "seriesToRows",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn"
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "028b74f7-c6fb-4ca1-a725-76923540efcb",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 2,
+                    "i": "028b74f7-c6fb-4ca1-a725-76923540efcb",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "node_network_receive_bytes_total{instance=~'$kingbase_node_instance'} - node_network_receive_bytes_total{instance=~'$kingbase_node_instance'} offset 1h",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "{{device}}_in下载"
+                    },
+                    {
+                        "expr": "node_network_transmit_bytes_total{instance=~'$kingbase_node_instance'} - node_network_transmit_bytes_total{instance=~'$kingbase_node_instance'} offset 1h",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "legend": "{{device}}_out上传"
+                    }
+                ],
+                "name": "每小时流量监控",
+                "links": [],
+                "repeat": null,
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSecIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3baebd11-8940-47cb-b723-874f783a6da8",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 9,
+                    "i": "3baebd11-8940-47cb-b723-874f783a6da8",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "count(node_cpu_seconds_total{instance=~'$kingbase_node_instance', mode='system'})",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "总核数"
+                    },
+                    {
+                        "expr": "sum(node_load5{instance=~'$kingbase_node_instance'})",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "legend": "总5分钟负载"
+                    },
+                    {
+                        "expr": "100 - avg(rate(node_cpu_seconds_total{instance=~'$kingbase_node_instance', mode='idle'}[5m])) * 100",
+                        "__mode__": "__query__",
+                        "refId": "C",
+                        "legend": "总平均使用率"
+                    }
+                ],
+                "name": "整体总负载与整体平均CPU使用率",
+                "links": [],
+                "description": "",
+                "repeat": null,
+                "maxPerRow": 6,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "C"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "util": "percent",
+                                "decimals": 2
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "a910427b-a2b4-447f-b71c-8bde01f85322",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 9,
+                    "i": "a910427b-a2b4-447f-b71c-8bde01f85322",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "sum(node_memory_MemTotal_bytes{instance=~'$kingbase_node_instance'})",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "内存容量"
+                    },
+                    {
+                        "expr": "sum(node_memory_MemTotal_bytes{instance=~'$kingbase_node_instance'} - node_memory_MemAvailable_bytes{instance=~'$kingbase_node_instance'})",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "legend": "已用内存"
+                    },
+                    {
+                        "expr": "100 - sum(node_memory_MemAvailable_bytes{instance=~'$kingbase_node_instance'}) / sum(node_memory_MemTotal_bytes{instance=~'$kingbase_node_instance'}) * 100",
+                        "__mode__": "__query__",
+                        "refId": "C",
+                        "legend": "内存使用率"
+                    }
+                ],
+                "name": "整体总内存与整体平均内存使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "C"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "util": "percent",
+                                "decimals": 2
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "74c4284e-3813-45c6-85fd-cb8e2cf896d9",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 9,
+                    "i": "74c4284e-3813-45c6-85fd-cb8e2cf896d9",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "sum(node_filesystem_size_bytes{instance=~'$kingbase_node_instance', fstype=~'ext.*|xfs', mountpoint!~'.*pod.*'})",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "磁盘空间"
+                    },
+                    {
+                        "expr": "sum(node_filesystem_size_bytes{instance=~'$kingbase_node_instance', fstype=~'ext.*|xfs', mountpoint!~'.*pod.*'} - node_filesystem_free_bytes{instance=~'$kingbase_node_instance', fstype=~'ext.*|xfs', mountpoint!~'.*pod.*'})",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "legend": "已用磁盘空间"
+                    },
+                    {
+                        "expr": "100 - sum(node_filesystem_free_bytes{instance=~'$kingbase_node_instance', fstype=~'ext.*|xfs', mountpoint!~'.*pod.*'}) / sum(node_filesystem_size_bytes{instance=~'$kingbase_node_instance', fstype=~'ext.*|xfs', mountpoint!~'.*pod.*'}) * 100",
+                        "__mode__": "__query__",
+                        "refId": "C",
+                        "legend": "磁盘使用率"
+                    }
+                ],
+                "name": "整体总磁盘与整体平均磁盘使用率",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "C"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "util": "percent",
+                                "decimals": 2
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "db90e6d0-1300-4902-a618-6820e7cbcede",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 16,
+                    "i": "ac5364c5-778d-4b77-9899-c9a167bfa078",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "kingbase_perf_qps_total{instance=~'$kingbase_kes_instance'}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "查询"
+                    },
+                    {
+                        "expr": "kingbase_perf_tps_total{instance=~'$kingbase_kes_instance'}",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "legend": "事务"
+                    }
+                ],
+                "name": "QPS & TPS",
+                "links": [],
+                "description": "",
+                "repeat": null,
+                "maxPerRow": 6,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "C"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "util": "percent",
+                                "decimals": 2
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "a83e222b-6dfd-4d4b-b528-61c062b9ee7b",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 16,
+                    "i": "e7f58a16-8d2a-4dae-bc44-7965cebc110d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_returned'}) - sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_returned'} offset 1m)",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "查询返回"
+                    },
+                    {
+                        "expr": "sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_fetched'}) - sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_fetched'} offset 1m)",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "legend": "查询取出"
+                    },
+                    {
+                        "expr": "sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_inserted'}) - sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_inserted'} offset 1m)",
+                        "__mode__": "__query__",
+                        "refId": "C",
+                        "legend": "查询插入"
+                    },
+                    {
+                        "expr": "sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_updated'}) - sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_updated'} offset 1m)",
+                        "__mode__": "__query__",
+                        "refId": "D",
+                        "legend": "查询更新"
+                    },
+                    {
+                        "expr": "sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_deleted'}) - sum(kingbase_sys_stat_database_total{instance=~'$kingbase_kes_instance', type='tup_deleted'} offset 1m)",
+                        "__mode__": "__query__",
+                        "refId": "E",
+                        "legend": "查询删除"
+                    }
+                ],
+                "name": "每分钟DML语句影响行数",
+                "links": [],
+                "description": "",
+                "repeat": null,
+                "maxPerRow": 6,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "C"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "util": "percent",
+                                "decimals": 2
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "45fbb71f-e5f8-41ee-bc89-6080d0b6a9e2",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 23,
+                    "i": "2f0da22e-f813-4257-b292-146060299202",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "kingbase_sys_tablespace_bytes{instance=~'$kingbase_kes_instance', dbname=~'$kingbase_db'}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "{{spcname}}"
+                    }
+                ],
+                "name": "存储空间",
+                "links": [],
+                "description": "",
+                "repeat": null,
+                "maxPerRow": 6,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "C"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "util": "percent",
+                                "decimals": 2
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "0d60cfb7-4a79-4095-92a0-dba6d470ac1b",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 23,
+                    "i": "0d60cfb7-4a79-4095-92a0-dba6d470ac1b",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "kingbase_max_connections_total{instance=~'$kingbase_kes_instance'}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "最大连接数"
+                    },
+                    {
+                        "expr": "count(kingbase_sys_stat_activity_seconds{instance=~'$kingbase_kes_instance'}) by (state)",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "legend": "会话连接数 - {{state}}"
+                    }
+                ],
+                "name": "会话连接",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "5db27edc-88ff-4388-b192-63182a09d763",
+                "layout": {
+                    "h": 6,
+                    "w": 24,
+                    "x": 0,
+                    "y": 31,
+                    "i": "5db27edc-88ff-4388-b192-63182a09d763",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "ALERTS{cluster=~'$kingbase_cluster', alertstate='firing'}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": ""
+                    }
+                ],
+                "name": "告警信息",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn",
+                    "columns": [
+                        "alertname",
+                        "description",
+                        "severity",
+                        "value"
+                    ]
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "severity"
+                        },
+                        "properties": {
+                            "valueMappings": [
+                                {
+                                    "type": "special",
+                                    "result": {
+                                        "color": "rgba(236, 210, 69, 1)",
+                                        "text": "信息"
+                                    },
+                                    "match": {
+                                        "special": 1
+                                    }
+                                },
+                                {
+                                    "type": "special",
+                                    "result": {
+                                        "color": "rgba(255, 153, 25, 1)",
+                                        "text": "提醒"
+                                    },
+                                    "match": {
+                                        "special": 2
+                                    }
+                                },
+                                {
+                                    "type": "special",
+                                    "result": {
+                                        "color": "rgba(255, 101, 107, 1)",
+                                        "text": "警告"
+                                    },
+                                    "match": {
+                                        "special": 3
+                                    }
+                                }
+                            ],
+                            "standardOptions": {}
+                        }
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "severity": "级别",
+                                "alertname": "标题",
+                                "description": "内容"
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

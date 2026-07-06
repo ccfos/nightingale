@@ -1,0 +1,511 @@
+{
+    "name": "LLM-OpenLLMetry-Dashboard",
+    "tags": "OpenTelementry OpenLLMetry",
+    "configs": {
+        "panels": [
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 2,
+                "description": "LLM 服务请求量",
+                "id": "e14a10fa-52bb-4268-ba90-8073b501ae4c",
+                "layout": {
+                    "h": 6,
+                    "i": "e14a10fa-52bb-4268-ba90-8073b501ae4c",
+                    "isResizable": true,
+                    "w": 11,
+                    "x": 0,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "LLM 服务请求量",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "increase(gen_ai_client_operation_duration_seconds_count[1m])",
+                        "instant": false,
+                        "legend": "{{gen_ai_request_model}}",
+                        "refId": "A",
+                        "step": 60
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.4.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 2,
+                "description": "每个请求的平均Token数",
+                "id": "5c4de509-4d89-496c-906f-05eddff43cd0",
+                "layout": {
+                    "h": 6,
+                    "i": "e226ae77-eb63-4d69-8008-3d27c6cc3c63",
+                    "isResizable": true,
+                    "w": 13,
+                    "x": 11,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "每个请求的平均Token数",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "(sum without (gen_ai_token_type) (increase(gen_ai_client_token_usage_sum{gen_ai_token_type=\"output\"}[1m])) / increase(gen_ai_client_operation_duration_seconds_count[1m]) > 0 ) or \n(gen_ai_client_operation_duration_seconds_count * 0)",
+                        "legend": "{{gen_ai_request_model}}",
+                        "refId": "A",
+                        "step": 60
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.4.0"
+            },
+            {
+                "custom": {
+                    "calc": "max",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 2,
+                "description": "所选时间范围内输入Token使用量",
+                "id": "e1aa170d-9704-43c1-a1c8-789a9016c946",
+                "layout": {
+                    "h": 6,
+                    "i": "5e040c31-9f2d-4381-bc2e-11397289d3a7",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 6
+                },
+                "maxPerRow": 4,
+                "name": "所选时间范围内输入Token使用量",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(gen_ai_client_token_usage_sum{gen_ai_token_type=\"input\"}[$__range])",
+                        "instant": false,
+                        "legend": "{{gen_ai_response_model}}",
+                        "refId": "A",
+                        "step": null
+                    }
+                ],
+                "type": "stat",
+                "version": "3.4.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 2,
+                "description": "输入Token使用量趋势图",
+                "id": "45cb660d-95b8-4ef8-b478-1838417c6702",
+                "layout": {
+                    "h": 6,
+                    "i": "6fc5ec5d-cf4c-4e84-863e-242f52ee47b7",
+                    "isResizable": true,
+                    "w": 16,
+                    "x": 8,
+                    "y": 6
+                },
+                "maxPerRow": 4,
+                "name": "输入Token使用量趋势图",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(increase(gen_ai_client_token_usage_sum{gen_ai_token_type=\"input\"}[1m])) by (gen_ai_response_model)",
+                        "instant": false,
+                        "legend": "{{gen_ai_response_model}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.4.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 2,
+                "description": "所选时间范围内输出Token使用量",
+                "id": "527dd532-3aa3-413a-88b9-840e65ab2bc1",
+                "layout": {
+                    "h": 6,
+                    "i": "51198b4a-a708-40fb-99a9-d7c121f5d3e7",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 12
+                },
+                "maxPerRow": 4,
+                "name": "所选时间范围内输出Token使用量",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "increase(gen_ai_client_token_usage_sum{gen_ai_token_type=\"output\"}[$__range])",
+                        "legend": "{{gen_ai_response_model}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.4.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 2,
+                "description": "输出Token使用量趋势图",
+                "id": "db0143db-6c2f-4664-8dee-f3e86de398b0",
+                "layout": {
+                    "h": 6,
+                    "i": "3d8f26a3-f2a8-46f2-ab6c-ec3581662733",
+                    "isResizable": true,
+                    "w": 16,
+                    "x": 8,
+                    "y": 12
+                },
+                "maxPerRow": 4,
+                "name": "输出Token使用量趋势图",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(increase(gen_ai_client_token_usage_sum{gen_ai_token_type=\"output\"}[1m])) by (gen_ai_response_model)",
+                        "legend": "{{gen_ai_response_model}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.4.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "xAxisField": "gen_ai_response_model",
+                    "yAxisField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 2,
+                "description": "Token使用最多的模型",
+                "id": "3048e8b2-0907-4983-8636-7ea464fe2e2d",
+                "layout": {
+                    "h": 6,
+                    "i": "006511e0-c9d4-4c48-b746-06799e9508e4",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 18
+                },
+                "maxPerRow": 4,
+                "name": "输入Token使用最多的模型 Top3",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "topk(3, increase(gen_ai_client_token_usage_sum{gen_ai_token_type=\"input\"}[$__range]))",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barchart",
+                "version": "3.4.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "xAxisField": "gen_ai_response_model",
+                    "yAxisField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 2,
+                "description": "Token使用最多的模型",
+                "id": "aaead75f-92d2-4f34-b58c-d8293a43840a",
+                "layout": {
+                    "h": 6,
+                    "i": "6b151889-012d-489a-9f0b-a59f6047be47",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 18
+                },
+                "maxPerRow": 4,
+                "name": "输出Token使用最多的模型 Top3",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "topk(3, increase(gen_ai_client_token_usage_sum{gen_ai_token_type=\"output\"}[$__range]))",
+                        "instant": false,
+                        "refId": "A"
+                    }
+                ],
+                "type": "barchart",
+                "version": "3.4.0"
+            }
+        ],
+        "var": [],
+        "version": "3.4.0"
+    },
+    "uuid": 1775666150844000,
+    "note": ""
+}

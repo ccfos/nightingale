@@ -1,0 +1,386 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788207147196,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "请求apiserver的延迟分布",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "rest_client_request_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: histogram",
+                "name": "请求apiserver的延迟分布"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206858312,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "请求apiserver的总数 ,按照host code method 统计",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "rest_client_requests_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: counter",
+                "name": "请求apiserver的总数 ,按照host code method 统计"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206735116,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度器的选举状态，0表示backup， 1表示master",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "leader_election_master_status",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: gauge",
+                "name": "调度器的选举状态，0表示backup， 1表示master"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788207488433,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "进入调度队列的pod数",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "scheduler_queue_incoming_pods_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: counter",
+                "name": "进入调度队列的pod数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788207545647,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度器驱逐容器的次数",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "scheduler_preemption_attempts_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: counter",
+                "name": "调度器驱逐容器的次数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788207763122,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度器cache中node pod和绑定pod的数目",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "scheduler_scheduler_cache_size",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: gauge",
+                "name": "调度器cache中node pod和绑定pod的数目"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788207042401,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度pending的pod数量，按照queue type分别统计",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "scheduler_pending_pods",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: gauge",
+                "name": "调度pending的pod数量，按照queue type分别统计"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788207186743,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度插件在每个扩展点的执行时间，按照extension_point+plugin+status 分别统计",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "scheduler_plugin_execution_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: histogram",
+                "name": "调度插件在每个扩展点的执行时间，按照extension_point+plugin+status 分别统计"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788207335811,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度延迟分布，1.23.0 以后会被scheduling_attempt_duration_seconds替代",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "scheduler_e2e_scheduling_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: histogram",
+                "name": "调度延迟分布，1.23.0 以后会被scheduling_attempt_duration_seconds替代"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788207619974,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度框架的扩展点延迟分布,按extension_point(扩展点Bind Filter Permit PreBind/PostBind PreFilter/PostFilter Reseve)+profile（调度器）+ status(调度成功) 统计",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "scheduler_framework_extension_point_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: histogram",
+                "name": "调度框架的扩展点延迟分布,按extension_point(扩展点Bind Filter Permit PreBind/PostBind PreFilter/PostFilter Reseve)+profile（调度器）+ status(调度成功) 统计"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788208308297,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "pod调度成功前，调度重试的次数分布",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "scheduler_pod_scheduling_attempts",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: histogram",
+                "name": "pod调度成功前，调度重试的次数分布"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788208017685,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "按照调度结果统计的调度重试次数。 \"unschedulable\" 表示无法调度，\"error\"表示调度器内部错误",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "scheduler_schedule_attempts_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: counter",
+                "name": "按照调度结果统计的调度重试次数。 \"unschedulable\" 表示无法调度，\"error\"表示调度器内部错误"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788207954063,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "按照功能(binding filter之类)统计的goroutine数量",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "scheduler_scheduler_goroutines",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: gauge",
+                "name": "按照功能(binding filter之类)统计的goroutine数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788208402120,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度算法的耗时分布",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "scheduler_scheduling_algorithm_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: histogram",
+                "name": "调度算法的耗时分布"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788208030315,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度算法+binding的耗时分布",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "scheduler_scheduling_attempt_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: histogram",
+                "name": "调度算法+binding的耗时分布"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788208213135,
+        "collector": "Scheduler",
+        "typ": "Kubernetes",
+        "name": "调度器的goroutines数目",
+        "unit": "",
+        "note": "scheduler 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "scheduler_scheduler_goroutines",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "scheduler 服务自身指标\n类型: gauge",
+                "name": "调度器的goroutines数目"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

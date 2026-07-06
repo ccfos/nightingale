@@ -1,0 +1,4831 @@
+{
+    "name": "nightingale plus full",
+    "tags": "",
+    "ident": "",
+    "uuid": 1744070400000000,
+    "configs": {
+        "panels": [
+            {
+                "type": "row",
+                "id": "n9p-row-0001",
+                "name": "Overview · 总览",
+                "collapsed": true,
+                "panels": [],
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "n9p-row-0001",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0002",
+                "version": "3.1.0",
+                "name": "Samples Received / Sec (Total)",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 1,
+                    "i": "n9p-ts-0002",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum(rate(n9e_pushgw_samples_received_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "cps"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "所有 channel 累计的每秒接收数据点"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0003",
+                "version": "3.1.0",
+                "name": "Samples Written to TSDB / Sec (Total)",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 1,
+                    "i": "n9p-ts-0003",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum(rate(n9e_pushgw_write_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "cps"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "累计每秒写入后端 TSDB 的数据点"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0004",
+                "version": "3.1.0",
+                "name": "Alert Queue Size",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 1,
+                    "i": "n9p-ts-0004",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "n9e_alert_alert_queue_size",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "告警事件待处理队列长度"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0005",
+                "version": "3.1.0",
+                "name": "Notify Errors / Sec (All Channels)",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 1,
+                    "i": "n9p-ts-0005",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum(rate(n9e_alert_alert_notify_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "所有通知通道每秒发送失败次数"
+            },
+            {
+                "type": "row",
+                "id": "n9p-row-0006",
+                "name": "Pushgw · 数据接收",
+                "collapsed": true,
+                "panels": [],
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 6,
+                    "i": "n9p-row-0006",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0007",
+                "version": "3.1.0",
+                "name": "Samples Received / Sec by Channel",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 7,
+                    "i": "n9p-ts-0007",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (channel) (rate(n9e_pushgw_samples_received_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{channel}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "normal",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "按 channel 拆分（prometheus / opentsdb / datadog / openfalcon）"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0008",
+                "version": "3.1.0",
+                "name": "Drop Samples / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 7,
+                    "i": "n9p-ts-0008",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_drop_sample_total[$__rate_interval])",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "每秒主动丢弃的数据点（命中 Pushgw.DropSample 配置）"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0009",
+                "version": "3.1.0",
+                "name": "Push Queue Over Limit / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 7,
+                    "i": "n9p-ts-0009",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_push_queue_over_limit_error_total[$__rate_interval])",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "队列水位线触发的拒绝请求 /s"
+            },
+            {
+                "type": "barGauge",
+                "id": "n9p-bg-0010",
+                "version": "3.1.0",
+                "name": "Top 20 Hosts by Sample Push",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 10,
+                    "w": 6,
+                    "x": 18,
+                    "y": 7,
+                    "i": "n9p-bg-0010",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "topk(20, rate(n9e_pushgw_sample_received_by_ident[$__rate_interval]))",
+                        "instant": true,
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{host_ident}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    }
+                },
+                "description": "上报数据点最多的 20 台机器（每秒数据点数）"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0011",
+                "version": "3.1.0",
+                "name": "Sample Queue Size by queueid",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 12,
+                    "i": "n9p-ts-0011",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "n9e_pushgw_sample_queue_size",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{queueid}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "各写入队列当前积压数"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0012",
+                "version": "3.1.0",
+                "name": "Push Queue Error / Sec by queueid",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 12,
+                    "i": "n9p-ts-0012",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_push_queue_error_total[$__rate_interval]) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{queueid}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0013",
+                "version": "3.1.0",
+                "name": "Push HTTP P95 Latency by Path",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 12,
+                    "i": "n9p-ts-0013",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, sum by (le, path) (rate(n9e_pushgw_http_request_duration_seconds_bucket[$__rate_interval])))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{path}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "Pushgw HTTP 接口 P95 耗时"
+            },
+            {
+                "type": "row",
+                "id": "n9p-row-0014",
+                "name": "Pushgw · TSDB / Kafka 写出（第三方）",
+                "collapsed": true,
+                "panels": [],
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 17,
+                    "i": "n9p-row-0014",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0015",
+                "version": "3.1.0",
+                "name": "TSDB Write / Sec by URL",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 18,
+                    "i": "n9p-ts-0015",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (url) (rate(n9e_pushgw_write_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{url}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "normal",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "按目标 TSDB url 拆分的写入速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0016",
+                "version": "3.1.0",
+                "name": "TSDB Write Error / Sec by URL",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 18,
+                    "i": "n9p-ts-0016",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (url) (rate(n9e_pushgw_write_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{url}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "按目标 TSDB url 拆分的写入失败速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0017",
+                "version": "3.1.0",
+                "name": "TSDB Forward P95 Latency by URL",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 18,
+                    "i": "n9p-ts-0017",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, sum by (le, url) (rate(n9e_pushgw_forward_duration_seconds_bucket[$__rate_interval])))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{url}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0018",
+                "version": "3.1.0",
+                "name": "TSDB Forward P99 Latency by URL",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 18,
+                    "i": "n9p-ts-0018",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.99, sum by (le, url) (rate(n9e_pushgw_forward_duration_seconds_bucket[$__rate_interval])))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{url}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0019",
+                "version": "3.1.0",
+                "name": "Kafka Forward P95 Latency by Topic",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 0,
+                    "y": 23,
+                    "i": "n9p-ts-0019",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, sum by (le, brokers_topic) (rate(n9e_pushgw_forward_kafka_duration_seconds_bucket[$__rate_interval])))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{brokers_topic}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "Pushgw 转发到 Kafka 的 P95 时延"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0020",
+                "version": "3.1.0",
+                "name": "Kafka Producer Success / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 8,
+                    "y": 23,
+                    "i": "n9p-ts-0020",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (producer_type) (rate(kafka_producer_message_success_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{producer_type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "async / sync 两种 producer 的成功投递速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0021",
+                "version": "3.1.0",
+                "name": "Kafka Producer Error / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 16,
+                    "y": 23,
+                    "i": "n9p-ts-0021",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (producer_type) (rate(kafka_producer_message_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{producer_type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "Kafka producer 投递失败速率"
+            },
+            {
+                "type": "row",
+                "id": "n9p-row-0022",
+                "name": "Alert · 规则评估",
+                "collapsed": true,
+                "panels": [],
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 28,
+                    "i": "n9p-row-0022",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0023",
+                "version": "3.1.0",
+                "name": "Rule Eval / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 29,
+                    "i": "n9p-ts-0023",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum(rate(n9e_alert_rule_eval_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "告警规则每秒评估次数"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0024",
+                "version": "3.1.0",
+                "name": "Rule Eval Error / Sec by Stage",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 29,
+                    "i": "n9p-ts-0024",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (stage) (rate(n9e_alert_rule_eval_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{stage}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "按阶段拆分的失败：GET_CLIENT / CHECK_QUERY / QUERY_DATA / EXEC_TEMPLATE / persist_event / handle_event / push_event_queue"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0025",
+                "version": "3.1.0",
+                "name": "Rule Eval Duration ms (Top 10 by rule_id)",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 29,
+                    "i": "n9p-ts-0025",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "topk(10, n9e_alert_rule_eval_duration_ms)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{rule_id}}/{{datasource_id}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "milliseconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "耗时 Top10 的告警规则"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0026",
+                "version": "3.1.0",
+                "name": "Eval Query Series Count (Top 10 by rule_id)",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 29,
+                    "i": "n9p-ts-0026",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "topk(10, n9e_alert_eval_query_series_count)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{rule_id}}/{{ref}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "单次查询返回的 series 数量 Top10，可定位基数爆炸"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0027",
+                "version": "3.1.0",
+                "name": "Var Filling Query / Sec by Type",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 0,
+                    "y": 34,
+                    "i": "n9p-ts-0027",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (typ) (rate(n9e_alert_var_filling_query_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{typ}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "模板变量替换查询次数（按变量类型拆分）"
+            },
+            {
+                "type": "barGauge",
+                "id": "n9p-bg-0028",
+                "version": "3.1.0",
+                "name": "Top 10 Slowest Rules (eval ms)",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 8,
+                    "y": 34,
+                    "i": "n9p-bg-0028",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "topk(10, n9e_alert_rule_eval_duration_ms)",
+                        "instant": true,
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "rule {{rule_id}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    }
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "n9p-bg-0029",
+                "version": "3.1.0",
+                "name": "Top 10 High-Cardinality Rules (series)",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 16,
+                    "y": 34,
+                    "i": "n9p-bg-0029",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "topk(10, n9e_alert_eval_query_series_count)",
+                        "instant": true,
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "rule {{rule_id}}/{{ref}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    }
+                }
+            },
+            {
+                "type": "row",
+                "id": "n9p-row-0030",
+                "name": "Alert · 数据源查询（第三方）",
+                "collapsed": true,
+                "panels": [],
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 39,
+                    "i": "n9p-row-0030",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0031",
+                "version": "3.1.0",
+                "name": "Query Data / Sec by Datasource",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 40,
+                    "i": "n9p-ts-0031",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (datasource) (rate(n9e_alert_query_data_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{datasource}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "告警评估期间向各数据源发起的查询速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0032",
+                "version": "3.1.0",
+                "name": "Query Data Error / Sec by Datasource",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 40,
+                    "i": "n9p-ts-0032",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (datasource) (rate(n9e_alert_query_data_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{datasource}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "告警查询失败速率（数据源不可达 / 查询超时等）"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0033",
+                "version": "3.1.0",
+                "name": "Record Eval / Sec by Datasource",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 40,
+                    "i": "n9p-ts-0033",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (datasource) (rate(n9e_alert_record_eval_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{datasource}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "recording rule 每秒评估次数"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0034",
+                "version": "3.1.0",
+                "name": "Record Eval Error / Sec by Datasource",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 40,
+                    "i": "n9p-ts-0034",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (datasource) (rate(n9e_alert_record_eval_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{datasource}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "n9p-row-0035",
+                "name": "Alert · 通知与分发（第三方通道）",
+                "collapsed": true,
+                "panels": [],
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 45,
+                    "i": "n9p-row-0035",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0036",
+                "version": "3.1.0",
+                "name": "Alerts / Sec by busi_group",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 46,
+                    "i": "n9p-ts-0036",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (busi_group) (rate(n9e_alert_alerts_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{busi_group}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "按业务组拆分的告警事件生成速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0037",
+                "version": "3.1.0",
+                "name": "Alerts / Sec by Type",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 46,
+                    "i": "n9p-ts-0037",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (type) (rate(n9e_alert_alerts_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0038",
+                "version": "3.1.0",
+                "name": "Alert Queue Size",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 46,
+                    "i": "n9p-ts-0038",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "n9e_alert_alert_queue_size",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0039",
+                "version": "3.1.0",
+                "name": "Notify Record Queue Size",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 46,
+                    "i": "n9p-ts-0039",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "n9e_alert_notify_record_queue_size",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "通知记录待落库队列长度"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0040",
+                "version": "3.1.0",
+                "name": "Notify / Sec by Channel",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 51,
+                    "i": "n9p-ts-0040",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (channel) (rate(n9e_alert_alert_notify_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{channel}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "normal",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "按通知通道（webhook/email/sms/plugin/callback/...）拆分"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0041",
+                "version": "3.1.0",
+                "name": "Notify Error / Sec by Channel",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 51,
+                    "i": "n9p-ts-0041",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (channel) (rate(n9e_alert_alert_notify_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{channel}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "按通知通道拆分的失败速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0042",
+                "version": "3.1.0",
+                "name": "Mute / Sec by Group",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 51,
+                    "i": "n9p-ts-0042",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (group) (rate(n9e_alert_mute_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{group}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "被屏蔽规则压制的告警速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0043",
+                "version": "3.1.0",
+                "name": "Heartbeat Error / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 51,
+                    "i": "n9p-ts-0043",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "rate(n9e_alert_heartbeat_error_count[$__rate_interval]) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "alert 节点向 center 心跳失败速率"
+            },
+            {
+                "type": "row",
+                "id": "n9p-row-0044",
+                "name": "Center & Redis & 缓存同步（第三方依赖）",
+                "collapsed": true,
+                "panels": [],
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 56,
+                    "i": "n9p-row-0044",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0045",
+                "version": "3.1.0",
+                "name": "Center HTTP / Sec by Code",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 57,
+                    "i": "n9p-ts-0045",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (code) (rate(n9e_center_http_request_duration_seconds_count[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{code}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "normal",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "center API 按状态码拆分的 QPS"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0046",
+                "version": "3.1.0",
+                "name": "Center HTTP P95 by Path",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 57,
+                    "i": "n9p-ts-0046",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, sum by (le, path) (rate(n9e_center_http_request_duration_seconds_bucket[$__rate_interval])))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{path}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0047",
+                "version": "3.1.0",
+                "name": "Redis P99 Latency by Operation",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 57,
+                    "i": "n9p-ts-0047",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.99, sum by (le, operation) (rate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_bucket|n9e_center_redis_operation_latency_seconds_bucket\"}[$__rate_interval])))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{operation}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "pushgw + center 合并的 Redis 操作 P99"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0048",
+                "version": "3.1.0",
+                "name": "Redis Slow Operation (>1s) / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 57,
+                    "i": "n9p-ts-0048",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "(sum(rate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_bucket|n9e_center_redis_operation_latency_seconds_bucket\", le=\"+Inf\"}[$__rate_interval])) - sum(rate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_bucket|n9e_center_redis_operation_latency_seconds_bucket\", le=\"1\"}[$__rate_interval]))) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "操作 Redis 时耗时超过 1s 视为慢，统计每秒慢操作次数"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0049",
+                "version": "3.1.0",
+                "name": "Redis Operation / Sec by Status",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 0,
+                    "y": 62,
+                    "i": "n9p-ts-0049",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (status) (rate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_count|n9e_center_redis_operation_latency_seconds_count\"}[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{status}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "normal",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "success / fail 拆分的 Redis 操作速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0050",
+                "version": "3.1.0",
+                "name": "Cron Sync Duration ms by Name",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 8,
+                    "y": 62,
+                    "i": "n9p-ts-0050",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "n9e_cron_duration",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "milliseconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "memsto 各项缓存从 DB 同步的最近一次耗时"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0051",
+                "version": "3.1.0",
+                "name": "Cron Sync Number by Name",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 16,
+                    "y": 62,
+                    "i": "n9p-ts-0051",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "n9e_cron_sync_number",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "memsto 各项缓存最近一次同步到的记录数"
+            },
+            {
+                "type": "row",
+                "id": "n9p-row-0052",
+                "name": "Inter-component RPC · poster（内部组件互调）",
+                "collapsed": true,
+                "panels": [],
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 67,
+                    "i": "n9p-row-0052",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0053",
+                "version": "3.1.0",
+                "name": "Poster Request / Sec by Path",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 0,
+                    "y": 68,
+                    "i": "n9p-ts-0053",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (path) (rate(n9e_poster_request_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{path}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "edge ↔ center 内部 HTTP 调用速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0054",
+                "version": "3.1.0",
+                "name": "Poster P95 Latency by Path",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 8,
+                    "y": 68,
+                    "i": "n9p-ts-0054",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, sum by (le, path) (rate(n9e_poster_request_duration_seconds_bucket[$__rate_interval])))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{path}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0055",
+                "version": "3.1.0",
+                "name": "Poster Errors by Code Class",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 16,
+                    "y": 68,
+                    "i": "n9p-ts-0055",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (code) (rate(n9e_poster_request_total{code!~\"2..|3..\"}[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{code}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "非 2xx/3xx 的内部调用，code 包含 timeout / canceled / neterror / error / 4xx / 5xx"
+            },
+            {
+                "type": "row",
+                "id": "n9p-row-0056",
+                "name": "Plus · Notifyx 升级 & 聚合",
+                "collapsed": true,
+                "panels": [],
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 73,
+                    "i": "n9p-row-0056",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0057",
+                "version": "3.1.0",
+                "name": "Active Escalation Workers",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 74,
+                    "i": "n9p-ts-0057",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "n9e_plus_notifyx_active_workers",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "当前在跑的升级 worker 数量"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0058",
+                "version": "3.1.0",
+                "name": "Check Escalation / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 74,
+                    "i": "n9p-ts-0058",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum(rate(n9e_plus_notifyx_check_escalation_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0059",
+                "version": "3.1.0",
+                "name": "Check Escalation P95",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 74,
+                    "i": "n9p-ts-0059",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, sum by (le) (rate(n9e_plus_notifyx_check_escalation_duration_seconds_bucket[$__rate_interval])))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0060",
+                "version": "3.1.0",
+                "name": "Check Escalation Error / Sec by Type",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 74,
+                    "i": "n9p-ts-0060",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (error_type) (rate(n9e_plus_notifyx_check_escalation_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{error_type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0061",
+                "version": "3.1.0",
+                "name": "Events Entering Aggregation / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 79,
+                    "i": "n9p-ts-0061",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum(rate(n9e_plus_notifyx_events_entering_aggregation_process_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "进入聚合处理流程的事件速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0062",
+                "version": "3.1.0",
+                "name": "Send Aggregation Notification / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 79,
+                    "i": "n9p-ts-0062",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum(rate(n9e_plus_notifyx_send_aggregation_notification_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "聚合后发出的通知速率"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0063",
+                "version": "3.1.0",
+                "name": "Send Aggregation Notification Error / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 79,
+                    "i": "n9p-ts-0063",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (error_type) (rate(n9e_plus_notifyx_send_aggregation_notification_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{error_type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0064",
+                "version": "3.1.0",
+                "name": "Start Worker Error / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 79,
+                    "i": "n9p-ts-0064",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum by (error_type) (rate(n9e_plus_notifyx_start_worker_error_total[$__rate_interval])) or vector(0)",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{error_type}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "description": "升级 worker 启动失败次数（如 cron_add_func_failed）"
+            },
+            {
+                "type": "barGauge",
+                "id": "n9p-bg-0065",
+                "version": "3.1.0",
+                "name": "Top 10 Aggregation Queue Length",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 0,
+                    "y": 84,
+                    "i": "n9p-bg-0065",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "topk(10, n9e_plus_notifyx_aggregation_queue_length)",
+                        "instant": true,
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{rule_id}}/{{group_key}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    }
+                },
+                "description": "聚合队列积压最多的 Top10 (rule_id, group_key)"
+            },
+            {
+                "type": "barGauge",
+                "id": "n9p-bg-0066",
+                "version": "3.1.0",
+                "name": "Top 10 Events / Aggregation Notification",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 8,
+                    "y": 84,
+                    "i": "n9p-bg-0066",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "topk(10, n9e_plus_notifyx_events_count_in_aggregation_notification)",
+                        "instant": true,
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15,
+                        "legend": "{{rule_id}}/{{group_key}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    }
+                },
+                "description": "单次聚合通知打包事件数最多的 Top10"
+            },
+            {
+                "type": "timeseries",
+                "id": "n9p-ts-0067",
+                "version": "3.1.0",
+                "name": "Start Worker Total / Sec",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 16,
+                    "y": 84,
+                    "i": "n9p-ts-0067",
+                    "isResizable": true
+                },
+                "maxPerRow": 4,
+                "targets": [
+                    {
+                        "expr": "sum(rate(n9e_plus_notifyx_start_worker_total[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 720,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "label": "数据源",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus"
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

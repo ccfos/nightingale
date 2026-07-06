@@ -1,0 +1,66 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+# # executable name (ie, pgrep <search_exec_substring>)
+# search_exec_substring = "nginx"
+
+# # pattern as argument for pgrep (ie, pgrep -f <search_cmdline_substring>)
+# search_cmdline_substring = "n9e server"
+
+# # windows service name
+# search_win_service = ""
+
+# # gather all proc, default false
+# gather_all = false
+
+# # attach proc username to labels, default false
+# attach_proc_username = false
+
+# # attach proc comline to labels, default false
+# attach_cmdline = false
+
+# # search process with specific user, option with exec_substring or cmdline_substring
+# search_user = ""
+
+# # append some labels for series
+# labels = { region="cloud", product="n9e" }
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# # mode to use when calculating CPU usage. can be one of 'solaris' or 'irix'
+# mode = "irix"
+
+# sum of threads/fd/io/cpu/mem, min of uptime/limit
+gather_total = true
+
+# will append pid as tag
+gather_per_pid = false
+
+#  gather jvm metrics only when jstat is ready
+# gather_more_metrics = [
+#     "threads",
+#     "fd",
+#     "io",
+#     "uptime",
+#     "cpu",
+#     "mem",
+#     "limit",
+#     "jvm"
+# ]
+
+
+# Important Note:
+# When utilizing the 'include_top_n' configuration to filter processes,
+# it is crucial that you also set the 'gather_all' option to true.
+
+# Top n for gather all
+# These options allow you to filter out all processes that are not
+# in the top N by CPU or memory, in order to reduce the number of time series created.
+# If both the `by_cpu` and `by_memory` options are used, the union of the two sets
+# is included.
+# [instances.include_top_n]
+# enable = true
+# by_cpu = 15
+# by_memory = 15

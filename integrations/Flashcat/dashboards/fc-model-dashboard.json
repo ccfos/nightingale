@@ -1,0 +1,2524 @@
+{
+    "name": "FC-Model 仪表盘",
+    "tags": "Flashcat自监控",
+    "ident": "",
+    "uuid": 1752140417318000,
+    "configs": {
+        "var": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus",
+                "defaultValue": 889
+            }
+        ],
+        "panels": [
+            {
+                "type": "row",
+                "id": "555de5f0-881d-4be6-ba1f-c5b9844e1909",
+                "name": "任务详情",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "555de5f0-881d-4be6-ba1f-c5b9844e1909",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "table",
+                "id": "51379517-fb79-43e7-91ef-d955825bf7e0",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 1,
+                    "i": "c06f3057-cd17-4935-82c3-d82c2278a709",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Workflow 任务总数",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn",
+                    "columns": []
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(fc_model_workflow_storage_num) by (name)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "e2a76828-cc71-4327-a2b3-9a1183a19a05",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 1,
+                    "i": "e2a76828-cc71-4327-a2b3-9a1183a19a05",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_realtime_inference_cnt[1m])) by (model)",
+                        "legend": "{{model}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Inference 实时推理数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "right",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3305ed56-772a-4856-be78-1b6cb9cfe611",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 1,
+                    "i": "3305ed56-772a-4856-be78-1b6cb9cfe611",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(fc_model_workflow_task_num) by (name)",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Workflow 队列详情",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "right",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "12fd8fe4-b8a4-40bf-be4c-b23b557a8253",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 5,
+                    "i": "94298f4c-ef9e-4981-8653-b9e0b5fb7103",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Workflow 任务执行数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "right",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_task_statistic{key=~\"exec\"}[1m])) by (name)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "194800af-481b-497e-a1ea-277336c95d2f",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 5,
+                    "i": "bf947c14-97e7-4017-9442-5f1c848f4add",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Workflow 执行失败数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "right",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_task_statistic{key=~\"err\"}[1m])) by (name)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "9d64ebf7-0090-4bef-b7c6-fb00d12ee1f9",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 5,
+                    "i": "9d64ebf7-0090-4bef-b7c6-fb00d12ee1f9",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(fc_model_inference_queue_size) by (model)",
+                        "legend": "{{model}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Inference 异步队列详情",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "right",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "360c1a87-0e38-4ccd-8ef5-0907e1d7015a",
+                "name": "模型调用",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 9,
+                    "i": "360c1a87-0e38-4ccd-8ef5-0907e1d7015a",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "4f43671f-d0fe-4273-9741-61d6fba337dd",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 10,
+                    "i": "4f43671f-d0fe-4273-9741-61d6fba337dd",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_openapi_latency_count{datasource_id=~\"^[1-9][0-9]*$\"}[1m])) by (datasource_id)"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "外部模型调用量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "e5f618e2-ed22-479a-abc0-dc3130e28938",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 10,
+                    "i": "e5f618e2-ed22-479a-abc0-dc3130e28938",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_openapi_latency_sum{datasource_id=~\"^[1-9][0-9]*$\"}[5m])) by (datasource_id) /\nsum(clamp_min(increase(fc_model_openapi_latency_count{datasource_id=~\"^[1-9][0-9]*$\"}[5m]),1)) by (datasource_id)"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "外部模型调用平均耗时",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "6d84099f-0d8e-4ea8-ae2c-7810d3c15947",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 10,
+                    "i": "a8a0bfb7-dce3-4293-bc5f-21cf61fa421d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_openapi_err{datasource_id=~\"^[1-9][0-9]*$\"}[1m])) by (datasource_id)"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "外部模型调用失败量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b441bbce-8a5d-4678-a291-627f90e13997",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 14,
+                    "i": "c37b7898-aced-42d0-b598-2ecb316d8455",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_openapi_latency_count{datasource_id=~\"^-.*\"}[1m])) by (datasource_id)"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内部模型调用量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "db5f003c-48c2-4ff8-b144-d3be09e33444",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 14,
+                    "i": "3de3dff5-d345-4ddb-b1ab-61d8b4ffc2f9",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_openapi_latency_sum{datasource_id=~\"^-.*\"}[5m])) by (datasource_id) /\nsum(clamp_min(increase(fc_model_openapi_latency_count{datasource_id=~\"^-.*\"}[5m]),1)) by (datasource_id)"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内部模型调用平均耗时",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "759e3c2c-1442-4d04-ba11-bf86c1cbc391",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 14,
+                    "i": "0575201c-764d-4351-8fd4-84cfeaa1e9f4",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_openapi_err{datasource_id=~\"^-.*\"}[1m])) by (datasource_id)"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内部模型调用失败量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5a0d9e72-500c-4233-9439-ef13936204f3",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 18,
+                    "i": "4229e5b5-3278-4b9d-96fe-a75f2b7090d5",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "模型调用缓存命中次数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_openapi_cache_hit{}[1m])) by (datasource_id)"
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "887ffda0-df82-4bb6-92b8-a078b1a697ea",
+                "name": "对外接口",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 22,
+                    "i": "887ffda0-df82-4bb6-92b8-a078b1a697ea",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "05cc798e-e115-4cd9-b79d-26b23ccdcb9f",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 23,
+                    "i": "05cc798e-e115-4cd9-b79d-26b23ccdcb9f",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(delta(http_consume_request_duration_milli_count{module=\"model-server\",uri!~\"GET/metrics|GET\"}[1m]) > 0) by (uri) "
+                    }
+                ],
+                "name": "接口被调量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "05307f59-7083-4bd3-80e5-f499b4cfaf28",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 23,
+                    "i": "7c67b794-7262-4721-9c2b-5030f2ae0a23",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(delta(http_consume_request_duration_milli_count{module=\"model-server\",status!=\"200\"}[1m])) by (uri,status) "
+                    }
+                ],
+                "name": "非 200 被调接口统计",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "6fdaa8a6-3eea-424a-ad22-58171c6bc3a1",
+                "name": "接口调用",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 27,
+                    "i": "6fdaa8a6-3eea-424a-ad22-58171c6bc3a1",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "7040ab70-a9fc-442c-98d7-fad3ec2ec6c0",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 28,
+                    "i": "a8236c73-9716-48fd-b31f-082091b8dc18",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_http_request_query_count{}[1m])) by (method,target)"
+                    }
+                ],
+                "name": "http 接口调用量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "8e04c868-53e4-4f27-866e-94ad155a0c93",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 28,
+                    "i": "ddf36dbd-fd95-4c5a-9352-b2cce60ef57d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_http_request_latency_ms_sum{}[5m])) by (method,target) /\nsum(clamp_min(increase(fc_model_http_request_latency_ms_count{}[5m]),1)) by (method,target)"
+                    }
+                ],
+                "name": "http 接口调用平均耗时",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "c7853e3c-681b-4eff-8e60-14d0401f1e74",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 28,
+                    "i": "4f20cc4e-7cd1-4c94-bb3f-2c2d57f93d8b",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_http_request_err{}[1m])) by (method,target)"
+                    }
+                ],
+                "name": "http 接口调用失败量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "8fe5bc4f-d720-4a8c-958e-7fe620cdbc19",
+                "name": "数据库调用",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 32,
+                    "i": "8fe5bc4f-d720-4a8c-958e-7fe620cdbc19",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "2cd06108-4a3c-4dba-9944-8963a2cc1986",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 33,
+                    "i": "b47a98dc-35a9-4489-8c61-4430db1b970f",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "badger 调用量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_storage_query_count{storage=\"badger\"}[1m])) by (method)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "9347a7a6-3013-497e-a847-0229109e65a3",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 33,
+                    "i": "07b0c8ef-b97f-47b8-843b-2050ec56e61c",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "badger 调用平均耗时",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_storage_latency_ms_sum{storage=\"badger\"}[5m])) by (method) /\nsum(clamp_min(increase(fc_model_storage_latency_ms_count{storage=\"badger\"}[5m]),1)) by (method)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "152659bd-6c02-467a-a8e3-b219af40d377",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 33,
+                    "i": "9c4f630c-88c0-42fd-84fe-d62118704e5c",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "badger 调用失败量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_storage_err{storage=\"badger\"}[1m])) by (method)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "4d740b0d-91b5-41e0-b412-7d92655e5c69",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 37,
+                    "i": "f2eeaa84-9fd5-4776-8b83-109ea5fc5b81",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "mysql 调用量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_storage_query_count{storage=\"mysql\"}[1m])) by (method)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "11e6ae50-f29f-477f-a661-38f2300980a2",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 37,
+                    "i": "f5437f25-05ec-4f85-8864-78965379322b",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "mysql 调用平均耗时",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_storage_latency_ms_sum{storage=\"mysql\"}[5m])) by (method) /\nsum(clamp_min(increase(fc_model_storage_latency_ms_count{storage=\"mysql\"}[5m]),1)) by (method)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "cfd8942e-05b4-4847-98a2-a3e41a96b3e0",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 37,
+                    "i": "23417a9b-c51c-4666-adf8-589382744238",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "mysql 调用失败量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_storage_err{storage=\"mysql\"}[1m])) by (method)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "141d389d-24d6-475c-bd2f-f1fc63d45ca2",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 41,
+                    "i": "39792c58-2ad1-45ce-af65-0bf010768251",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "redis 调用量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_storage_query_count{storage=\"redis\"}[1m])) by (method)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "0362e101-7b89-4daf-b5cd-0e98d4fa3e56",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 41,
+                    "i": "ca2ff2ff-9b26-4e59-a360-459451434194",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "redis 调用平均耗时",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_storage_latency_ms_sum{storage=\"redis\"}[5m])) by (method) /\nsum(clamp_min(increase(fc_model_storage_latency_ms_count{storage=\"redis\"}[5m]),1)) by (method)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "240c3c81-d6c7-4ac2-a962-2e21cfa62ac3",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 41,
+                    "i": "0db48374-45ee-41db-bfc5-b97b2242ca8d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "redis 调用失败量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_storage_err{storage=\"redis\"}[1m])) by (method)"
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "d69cfa6c-4850-4eef-9115-2e93b069ff9c",
+                "name": "定时任务",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 45,
+                    "i": "d69cfa6c-4850-4eef-9115-2e93b069ff9c",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "a27e7e47-d494-40ac-a1e3-2560874206a3",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 46,
+                    "i": "a27e7e47-d494-40ac-a1e3-2560874206a3",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "巡检数据更新任务数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(fc_model_inspection_fetch_task_num)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "7adc4292-0ad2-4111-a798-046ed7134a8b",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 46,
+                    "i": "4a4f9ed0-950b-4526-bad1-88b2f2e1d110",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_inspection_fetch_task_success{}[5m]))"
+                    }
+                ],
+                "name": "巡检数据更新任务执行成功数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5d2ca46f-5d66-4798-b515-07b9a4693aeb",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 46,
+                    "i": "b6a45b62-d253-4628-98b5-ad1ca81c0b0a",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "sum(increase(fc_model_inspection_fetch_task_err{}[5m]))"
+                    }
+                ],
+                "name": "巡检数据更新任务执行失败数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "0c399fb1-b185-4c4c-bfa2-d5b054a8b3d3",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 50,
+                    "i": "a67089fc-1ebc-4d9d-934e-3d8dd30cbb89",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "巡检数据更新发生中断次数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(fc_model_inspection_fetch_drop_too_old)"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "2549a000-b2fb-42ec-b03a-89226c2881ed",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 50,
+                    "i": "b199f41f-301d-4e35-abe3-991c912a2e54",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "巡检数据更新间隔 p99",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(histogram_quantile(0.99, rate(fc_model_inspection_fetch_task_time_latency_minute_bucket[60m]))) * 60"
+                    }
+                ]
+            }
+        ],
+        "version": "3.1.0",
+        "graphTooltip": "default"
+    }
+}

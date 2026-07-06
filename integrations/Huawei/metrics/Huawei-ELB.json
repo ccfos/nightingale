@@ -1,0 +1,1970 @@
+[
+    {
+        "id": 0,
+        "uuid": 1764429775124343,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "客户端发起TLS握手失败次数",
+        "unit": "cps",
+        "note": "客户端每秒发起TLS会话失败的次数。支持的协议：HTTPS/TLS/QUIC",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_client_tls_negotiation_error",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "客户端发起TLS握手失败次数",
+                "note": "客户端每秒发起TLS会话失败的次数。支持的协议：HTTPS/TLS/QUIC"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772373350,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "丢弃连接数",
+        "unit": "cps",
+        "note": "测量对象每秒丢弃连接的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_dropped_connections",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "丢弃连接数",
+                "note": "测量对象每秒丢弃连接的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772452569,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "丢弃数据包",
+        "unit": "cps",
+        "note": "测量对象每秒丢弃数据报文的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_dropped_packets",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "丢弃数据包",
+                "note": "测量对象每秒丢弃数据报文的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772529808,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "丢弃网络带宽",
+        "unit": "none",
+        "note": "测量对象丢弃网络带宽。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_dropped_traffic",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "丢弃网络带宽",
+                "note": "测量对象丢弃网络带宽。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773666294,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码(2XX)",
+        "unit": "cps",
+        "note": "负载均衡每秒返回2XX响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_2xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码(2XX)",
+                "note": "负载均衡每秒返回2XX响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773750419,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码(3XX)",
+        "unit": "cps",
+        "note": "负载均衡每秒返回3XX响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_3xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码(3XX)",
+                "note": "负载均衡每秒返回3XX响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774005621,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码400",
+        "unit": "cps",
+        "note": "负载均衡每秒返回400响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_400",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码400",
+                "note": "负载均衡每秒返回400响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774091034,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码404",
+        "unit": "cps",
+        "note": "负载均衡每秒返回404响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_404",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码404",
+                "note": "负载均衡每秒返回404响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774171015,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码408",
+        "unit": "cps",
+        "note": "负载均衡每秒返回408响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_408",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码408",
+                "note": "负载均衡每秒返回408响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774255562,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码499",
+        "unit": "cps",
+        "note": "负载均衡每秒返回499响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_499",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码499",
+                "note": "负载均衡每秒返回499响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773835748,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码(4XX)",
+        "unit": "cps",
+        "note": "负载均衡每秒返回4XX响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_4xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码(4XX)",
+                "note": "负载均衡每秒返回4XX响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774334765,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码502",
+        "unit": "cps",
+        "note": "负载均衡每秒返回502响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_502",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码502",
+                "note": "负载均衡每秒返回502响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774409234,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码503",
+        "unit": "cps",
+        "note": "负载均衡每秒返回503响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_503",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码503",
+                "note": "负载均衡每秒返回503响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774487445,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码504",
+        "unit": "cps",
+        "note": "负载均衡每秒返回504响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_504",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码504",
+                "note": "负载均衡每秒返回504响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773912069,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡响应状态码(5XX)",
+        "unit": "cps",
+        "note": "负载均衡每秒返回5XX响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_elb_http_5xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡响应状态码(5XX)",
+                "note": "负载均衡每秒返回5XX响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772223303,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "黑白名单每秒阻断数据报文的个数",
+        "unit": "cps",
+        "note": "每秒黑白名单阻断流入测量对象数据报文的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_ipgroup_blocked_packets",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "黑白名单每秒阻断数据报文的个数",
+                "note": "每秒黑白名单阻断流入测量对象数据报文的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772298001,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "黑白名单阻断的网络带宽",
+        "unit": "none",
+        "note": "黑白名单阻断流入测量对象的网络带宽。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_ipgroup_blocked_traffic",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "黑白名单阻断的网络带宽",
+                "note": "黑白名单阻断流入测量对象的网络带宽。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771916869,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "4层并发连接使用率",
+        "unit": "percent",
+        "note": "4层的ELB实例并发连接数使用率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l4_con_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "4层并发连接使用率",
+                "note": "4层的ELB实例并发连接数使用率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771992799,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "4层入带宽使用率",
+        "unit": "percent",
+        "note": "4层的ELB实例入带宽使用率。注意：若入带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l4_in_bps_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "4层入带宽使用率",
+                "note": "4层的ELB实例入带宽使用率。注意：若入带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772145255,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "4层新建连接数使用率",
+        "unit": "percent",
+        "note": "4层的ELB实例新建连接数使用率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l4_ncps_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "4层新建连接数使用率",
+                "note": "4层的ELB实例新建连接数使用率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772069822,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "4层出带宽使用率",
+        "unit": "percent",
+        "note": "4层的ELB实例出带宽使用率。注意：若出带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l4_out_bps_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "4层出带宽使用率",
+                "note": "4层的ELB实例出带宽使用率。注意：若出带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774563509,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "七层2XX请求占比",
+        "unit": "percent",
+        "note": "七层2XX响应状态码的个数占比。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_2xx_ratio",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "七层2XX请求占比",
+                "note": "七层2XX响应状态码的个数占比。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774641519,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "七层4XX请求占比",
+        "unit": "percent",
+        "note": "七层4XX响应状态码的个数占比。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_4xx_ratio",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "七层4XX请求占比",
+                "note": "七层4XX响应状态码的个数占比。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774719548,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "七层5XX请求占比",
+        "unit": "percent",
+        "note": "七层5XX响应状态码的个数占比。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_5xx_ratio",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "七层5XX请求占比",
+                "note": "七层5XX响应状态码的个数占比。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771492172,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层并发连接使用率",
+        "unit": "percent",
+        "note": "7层的ELB实例并发连接数使用率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_con_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层并发连接使用率",
+                "note": "7层的ELB实例并发连接数使用率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771568719,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层入带宽使用率",
+        "unit": "percent",
+        "note": "7层的ELB实例入带宽使用率。注意：若入带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_in_bps_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层入带宽使用率",
+                "note": "7层的ELB实例入带宽使用率。注意：若入带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771725505,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层新建连接数使用率",
+        "unit": "percent",
+        "note": "7层的ELB实例新建连接数使用率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_ncps_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层新建连接数使用率",
+                "note": "7层的ELB实例新建连接数使用率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771640685,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层出带宽使用率",
+        "unit": "percent",
+        "note": "7层的ELB实例出带宽使用率。注意：若出带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_out_bps_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层出带宽使用率",
+                "note": "7层的ELB实例出带宽使用率。注意：若出带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771839339,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层查询速率使用率",
+        "unit": "percent",
+        "note": "7层的ELB实例查询速率使用率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_qps_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层查询速率使用率",
+                "note": "7层的ELB实例查询速率使用率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772752506,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码101",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层101响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_101",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码101",
+                "note": "测量对象的后端服务器每秒返回7层101响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772836070,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码400",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层400响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_400",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码400",
+                "note": "测量对象的后端服务器每秒返回7层400响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772920642,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码403",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层403响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_403",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码403",
+                "note": "测量对象的后端服务器每秒返回7层403响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773001306,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码404",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层404响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_404",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码404",
+                "note": "测量对象的后端服务器每秒返回7层404响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773081485,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码500",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层500响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_500",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码500",
+                "note": "测量对象的后端服务器每秒返回7层500响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773156941,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码501",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层501响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_501",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码501",
+                "note": "测量对象的后端服务器每秒返回7层501响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773346417,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码502",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层502响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_502",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码502",
+                "note": "测量对象的后端服务器每秒返回7层502响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773430612,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码503",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层503响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_503",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码503",
+                "note": "测量对象的后端服务器每秒返回7层503响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773509827,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码504",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层504响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_504",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码504",
+                "note": "测量对象的后端服务器每秒返回7层504响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429773590268,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码（Others）",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层后端其他响应状态码的个数。不包含：101、2XX、3XX、400、403、404、500、501、502、503、504。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_l7_upstream_other_status",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码（Others）",
+                "note": "测量对象的后端服务器每秒返回7层后端其他响应状态码的个数。不包含：101、2XX、3XX、400、403、404、500、501、502、503、504。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770560268,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议响应状态码(Others)",
+        "unit": "cps",
+        "note": "测量对象每秒返回7层其他响应状态码的个数。不包含：2XX、3XX、404、499、502。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m10_l7_http_other_status",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议响应状态码(Others)",
+                "note": "测量对象每秒返回7层其他响应状态码的个数。不包含：2XX、3XX、404、499、502。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770637349,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议响应状态码404",
+        "unit": "cps",
+        "note": "测量对象每秒返回7层404响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m11_l7_http_404",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议响应状态码404",
+                "note": "测量对象每秒返回7层404响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770714938,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议响应状态码499",
+        "unit": "cps",
+        "note": "测量对象每秒返回7层499响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m12_l7_http_499",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议响应状态码499",
+                "note": "测量对象每秒返回7层499响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770789661,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议响应状态码502",
+        "unit": "cps",
+        "note": "测量对象每秒返回7层502响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m13_l7_http_502",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议响应状态码502",
+                "note": "测量对象每秒返回7层502响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770869949,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议RT平均值",
+        "unit": "milliseconds",
+        "note": "测量对象7层平均响应时间。从测量对象收到客户端请求开始，到测量对象将所有响应返回给客户端为止。 说明：websocket场景下RT平均值可能会非常大，此时该指标无法作为时延指标参考。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m14_l7_rt",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议RT平均值",
+                "note": "测量对象7层平均响应时间。从测量对象收到客户端请求开始，到测量对象将所有响应返回给客户端为止。 说明：websocket场景下RT平均值可能会非常大，此时该指标无法作为时延指标参考。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770947696,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码(4XX)",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层4XX系列响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m15_l7_upstream_4xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码(4XX)",
+                "note": "测量对象的后端服务器每秒返回7层4XX系列响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771024438,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码(5XX)",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层5XX系列响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m16_l7_upstream_5xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码(5XX)",
+                "note": "测量对象的后端服务器每秒返回7层5XX系列响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771101922,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端的RT平均值",
+        "unit": "milliseconds",
+        "note": "测量对象7层后端平均响应时间。从测量对象将请求转发给后端服务器开始，到测量对象收到后端服务器返回响应为止。 说明：websocket场景下RT平均值可能会非常大，此时该指标无法作为时延指标参考。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m17_l7_upstream_rt",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端的RT平均值",
+                "note": "测量对象7层后端平均响应时间。从测量对象将请求转发给后端服务器开始，到测量对象收到后端服务器返回响应为止。 说明：websocket场景下RT平均值可能会非常大，此时该指标无法作为时延指标参考。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772604762,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码(2XX)",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层2XX系列响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m18_l7_upstream_2xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码(2XX)",
+                "note": "测量对象的后端服务器每秒返回7层2XX系列响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429772677176,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端响应状态码(3XX)",
+        "unit": "cps",
+        "note": "测量对象的后端服务器每秒返回7层3XX系列响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m19_l7_upstream_3xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端响应状态码(3XX)",
+                "note": "测量对象的后端服务器每秒返回7层3XX系列响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429768775229,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "并发连接数",
+        "unit": "none",
+        "note": "在四层负载均衡器中，指从测量对象到后端服务器建立的所有TCP和UDP连接的个数。在七层负载均衡器中，指从客户端到ELB建立的所有TCP连接的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m1_cps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "并发连接数",
+                "note": "在四层负载均衡器中，指从测量对象到后端服务器建立的所有TCP和UDP连接的个数。在七层负载均衡器中，指从客户端到ELB建立的所有TCP连接的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771181291,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端的RT最大值",
+        "unit": "milliseconds",
+        "note": "测量对象7层后端最大响应时间。从测量对象将请求转发给后端服务器开始，到测量对象收到后端服务器返回响应为止。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m1a_l7_upstream_rt_max",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端的RT最大值",
+                "note": "测量对象7层后端最大响应时间。从测量对象将请求转发给后端服务器开始，到测量对象收到后端服务器返回响应为止。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771256240,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层后端的RT最小值",
+        "unit": "milliseconds",
+        "note": "测量对象7层后端最小响应时间。从测量对象将请求转发给后端服务器开始，到测量对象收到后端服务器返回响应为止。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m1b_l7_upstream_rt_min",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层后端的RT最小值",
+                "note": "测量对象7层后端最小响应时间。从测量对象将请求转发给后端服务器开始，到测量对象收到后端服务器返回响应为止。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771332948,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议的RT最大值",
+        "unit": "milliseconds",
+        "note": "测量对象7层最大响应时间。从测量对象收到客户端请求开始，到测量对象将所有响应返回给客户端为止。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m1c_l7_rt_max",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议的RT最大值",
+                "note": "测量对象7层最大响应时间。从测量对象收到客户端请求开始，到测量对象将所有响应返回给客户端为止。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429771412675,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议的RT最小值",
+        "unit": "milliseconds",
+        "note": "测量对象7层最小响应时间。从测量对象收到客户端请求开始，到测量对象将所有响应返回给客户端为止。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m1d_l7_rt_min",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议的RT最小值",
+                "note": "测量对象7层最小响应时间。从测量对象收到客户端请求开始，到测量对象将所有响应返回给客户端为止。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769945209,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "后端服务器每秒重置报文个数",
+        "unit": "cps",
+        "note": "测量后端服务器每秒发送至客户端的重置（RST）报文个数。重置报文由后端服务器生成，然后由负载均衡器转发。支持协议：TCP",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m1e_server_rps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "后端服务器每秒重置报文个数",
+                "note": "测量后端服务器每秒发送至客户端的重置（RST）报文个数。重置报文由后端服务器生成，然后由负载均衡器转发。支持协议：TCP"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770100957,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡器每秒重置报文个数",
+        "unit": "cps",
+        "note": "测量负载均衡器每秒生成的重置（RST）报文个数。支持协议：TCP",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m1f_lvs_rps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡器每秒重置报文个数",
+                "note": "测量负载均衡器每秒生成的重置（RST）报文个数。支持协议：TCP"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770020001,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "客户端每秒重置报文个数",
+        "unit": "cps",
+        "note": "测量客户端每秒发送至后端服务器的重置（RST）报文个数。重置报文由客户端生成，然后由负载均衡器转发。支持协议：TCP",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m21_client_rps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "客户端每秒重置报文个数",
+                "note": "测量客户端每秒发送至后端服务器的重置（RST）报文个数。重置报文由客户端生成，然后由负载均衡器转发。支持协议：TCP"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769609371,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "入网带宽",
+        "unit": "none",
+        "note": "测量对象入网带宽。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m22_in_bandwidth",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "入网带宽",
+                "note": "测量对象入网带宽。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769691888,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "出网带宽",
+        "unit": "none",
+        "note": "测量对象出网带宽。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m23_out_bandwidth",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "出网带宽",
+                "note": "测量对象出网带宽。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429781005862,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层请求带宽",
+        "unit": "none",
+        "note": "测量对象后端服务器的七层请求接收带宽。 说明：当监听器开启HTTP/2时，该指标无法作为参考。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m24_l7_req_Bps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层请求带宽",
+                "note": "测量对象后端服务器的七层请求接收带宽。 说明：当监听器开启HTTP/2时，该指标无法作为参考。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429780926797,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层响应带宽",
+        "unit": "none",
+        "note": "测量对象后端服务器的七层响应发送带宽。 说明：当监听器开启HTTP/2时，该指标无法作为参考。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m25_l7_resp_Bps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层响应带宽",
+                "note": "测量对象后端服务器的七层响应发送带宽。 说明：当监听器开启HTTP/2时，该指标无法作为参考。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769782113,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "IPv6入网带宽",
+        "unit": "none",
+        "note": "流入测量对象的IPv6网络带宽。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m26_in_bandwidth_ipv6",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPv6入网带宽",
+                "note": "流入测量对象的IPv6网络带宽。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769865991,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "IPv6出网带宽",
+        "unit": "none",
+        "note": "流出测量对象的IPv6网络带宽。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m27_out_bandwidth_ipv6",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPv6出网带宽",
+                "note": "流出测量对象的IPv6网络带宽。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429768861847,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "活跃连接数",
+        "unit": "none",
+        "note": "从测量对象到后端服务器建立的活跃TCP和UDP连接的个数。Windows和Linux服务器都可以使用如下命令查看。netstat -an",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m2_act_conn",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "活跃连接数",
+                "note": "从测量对象到后端服务器建立的活跃TCP和UDP连接的个数。Windows和Linux服务器都可以使用如下命令查看。netstat -an"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429768940199,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "非活跃连接数",
+        "unit": "none",
+        "note": "从测量对象到后端服务器建立的非活跃TCP和UDP连接的个数。Windows和Linux服务器都可以使用如下命令查看。netstat -an",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m3_inact_conn",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "非活跃连接数",
+                "note": "从测量对象到后端服务器建立的非活跃TCP和UDP连接的个数。Windows和Linux服务器都可以使用如下命令查看。netstat -an"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769018550,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "新建连接数",
+        "unit": "cps",
+        "note": "从客户端到测量对象每秒新建立的连接数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m4_ncps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "新建连接数",
+                "note": "从客户端到测量对象每秒新建立的连接数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769095020,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "流入数据包数",
+        "unit": "cps",
+        "note": "测量对象每秒接收到数据包的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m5_in_pps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "流入数据包数",
+                "note": "测量对象每秒接收到数据包的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769196696,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "流出数据包数",
+        "unit": "cps",
+        "note": "测量对象每秒发出数据包的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m6_out_pps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "流出数据包数",
+                "note": "测量对象每秒发出数据包的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769280951,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "网络流入速率",
+        "unit": "none",
+        "note": "从外部访问测量对象的网络速率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m7_in_Bps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络流入速率",
+                "note": "从外部访问测量对象的网络速率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769360014,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "网络流出速率",
+        "unit": "none",
+        "note": "测量对象访问外部的网络速率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m8_out_Bps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络流出速率",
+                "note": "测量对象访问外部的网络速率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769440729,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "异常主机数",
+        "unit": "none",
+        "note": "测量对象中健康检查异常的后端服务器个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_m9_abnormal_servers",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "异常主机数",
+                "note": "测量对象中健康检查异常的后端服务器个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429769517540,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "正常主机数",
+        "unit": "none",
+        "note": "测量对象中健康检查正常的后端服务器个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_ma_normal_servers",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "正常主机数",
+                "note": "测量对象中健康检查正常的后端服务器个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770177468,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层查询速率",
+        "unit": "cps",
+        "note": "测量对象7层查询速率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_mb_l7_qps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层查询速率",
+                "note": "测量对象7层查询速率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770250722,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议响应状态码（2XX）",
+        "unit": "cps",
+        "note": "测量对象每秒返回7层2XX系列响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_mc_l7_http_2xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议响应状态码（2XX）",
+                "note": "测量对象每秒返回7层2XX系列响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770329041,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议响应状态码（3XX）",
+        "unit": "cps",
+        "note": "测量对象每秒返回7层3XX系列响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_md_l7_http_3xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议响应状态码（3XX）",
+                "note": "测量对象每秒返回7层3XX系列响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770407070,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议响应状态码（4XX）",
+        "unit": "cps",
+        "note": "测量对象每秒返回7层4XX系列响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_me_l7_http_4xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议响应状态码（4XX）",
+                "note": "测量对象每秒返回7层4XX系列响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429770483255,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "7层协议响应状态码（5XX）",
+        "unit": "cps",
+        "note": "测量对象每秒返回7层5XX系列响应状态码的个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_mf_l7_http_5xx",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "7层协议响应状态码（5XX）",
+                "note": "测量对象每秒返回7层5XX系列响应状态码的个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774971176,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "入方向流量镜像的报文速率",
+        "unit": "cps",
+        "note": "测量对象入方向流量镜像的报文速率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_mirror_in_packets",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "入方向流量镜像的报文速率",
+                "note": "测量对象入方向流量镜像的报文速率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774798026,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "入方向流量镜像的带宽",
+        "unit": "none",
+        "note": "测量对象入方向流量镜像的带宽。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_mirror_in_traffic",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "入方向流量镜像的带宽",
+                "note": "测量对象入方向流量镜像的带宽。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429775047481,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "出方向流量镜像的报文速率",
+        "unit": "cps",
+        "note": "测量对象出方向流量镜像的报文速率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_mirror_out_packets",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "出方向流量镜像的报文速率",
+                "note": "测量对象出方向流量镜像的报文速率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429774889857,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "出方向流量镜像的带宽",
+        "unit": "none",
+        "note": "测量对象出方向流量镜像的带宽。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_mirror_out_traffic",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "出方向流量镜像的带宽",
+                "note": "测量对象出方向流量镜像的带宽。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764429775202239,
+        "collector": "ELB",
+        "typ": "Huawei",
+        "name": "负载均衡器向后端服务器TLS握手失败",
+        "unit": "cps",
+        "note": "负载均衡器向后端服务器每秒发起TLS会话失败的次数。支持的协议：HTTPS/TLS/QUIC",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_elb_upstream_tls_negotiation_error",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "负载均衡器向后端服务器TLS握手失败",
+                "note": "负载均衡器向后端服务器每秒发起TLS会话失败的次数。支持的协议：HTTPS/TLS/QUIC"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

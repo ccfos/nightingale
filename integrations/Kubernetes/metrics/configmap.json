@@ -1,0 +1,74 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788201100138,
+        "collector": "Configmap",
+        "typ": "Kubernetes",
+        "name": "有关configmap的信息",
+        "unit": "",
+        "note": "kube-state-metrics 的configmap指标",
+        "lang": "zh_CN",
+        "expression": "kube_configmap_info",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的configmap指标",
+                "name": "有关configmap的信息"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788201353928,
+        "collector": "Configmap",
+        "typ": "Kubernetes",
+        "name": "Unix创建时间戳",
+        "unit": "",
+        "note": "kube-state-metrics 的configmap指标",
+        "lang": "zh_CN",
+        "expression": "kube_configmap_created",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的configmap指标",
+                "name": "Unix创建时间戳"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788202054766,
+        "collector": "Configmap",
+        "typ": "Kubernetes",
+        "name": "表示configmap特定版本的资源版本",
+        "unit": "",
+        "note": "kube-state-metrics 的configmap指标",
+        "lang": "zh_CN",
+        "expression": "kube_configmap_metadata_resource_version",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的configmap指标",
+                "name": "表示configmap特定版本的资源版本"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

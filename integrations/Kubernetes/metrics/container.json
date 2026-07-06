@@ -1,0 +1,290 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788200183153,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "cfs时间片总数, 完全公平调度的时间片总数(分配到cpu的时间片数)",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "container_cpu_cfs_periods_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: counter",
+                "name": "cfs时间片总数, 完全公平调度的时间片总数(分配到cpu的时间片数)"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200150877,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器被throttle的时间片总数",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "container_cpu_cfs_throttled_periods_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: counter",
+                "name": "容器被throttle的时间片总数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200188815,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器被throttle的时间",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "container_cpu_cfs_throttled_seconds_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: counter",
+                "name": "容器被throttle的时间"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200243648,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器打开的fd数",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "container_file_descriptors",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: gauge",
+                "name": "容器打开的fd数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200346187,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器内存使用量，单位byte",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "container_memory_usage_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: gauge",
+                "name": "容器内存使用量，单位byte"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200407900,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器入方向的流量",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "container_network_receive_bytes_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: counter",
+                "name": "容器入方向的流量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200553347,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器出方向的流量",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "container_network_transmit_bytes_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: counter",
+                "name": "容器出方向的流量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200785046,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器的cpu调度单位时间",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "container_spec_cpu_period",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: gauge",
+                "name": "容器的cpu调度单位时间"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200283303,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器的cpu规格 ，除以单位调度时间可以计算核数",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "container_spec_cpu_quota",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: gauge",
+                "name": "容器的cpu规格 ，除以单位调度时间可以计算核数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200598689,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器的内存规格，单位byte",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "container_spec_memory_limit_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: gauge",
+                "name": "容器的内存规格，单位byte"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788201065052,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "容器当前的线程数",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "container_threads",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: gauge",
+                "name": "容器当前的线程数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788200516956,
+        "collector": "Container",
+        "typ": "Kubernetes",
+        "name": "允许容器启动的最大线程数",
+        "unit": "",
+        "note": "cAdvisor暴露的容器指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "container_threads_max",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "cAdvisor暴露的容器指标\n类型: gauge",
+                "name": "允许容器启动的最大线程数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

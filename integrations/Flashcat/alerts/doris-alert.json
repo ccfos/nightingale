@@ -1,0 +1,644 @@
+[
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris BE 节点失效",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "up{group=\"be\"} != 1",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris FE 95分位查询延迟大于30",
+    "note": "默认值是1024",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_fe_query_latency_ms{quantile=\"0.95\"} > 30000",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 120,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris FE 的 MySQL 端口连接数大于1000",
+    "note": "默认值是1024",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_fe_connection_total > 1000",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris FE 节点失效",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "up{group=\"fe\"} != 1",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 120,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris Tablet 处于不健康状态但又无法被调度",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_fe_tablet_status_count{type=\"not_ready\"} > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris 查询线程已耗尽，查询会出现堆积",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "fragment_thread_pool_queue_size\t> 0",
+          "query": "doris_be_disks_avail_capacity /1024 /1024/1024 ",
+          "ref": "A",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris 磁盘可用空间小于50G或者20%",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 300,
+    "rule_config": {
+      "anomaly_trigger": {
+        "algo_params": {
+          "lower_bound": 1,
+          "lower_times_num": 1,
+          "seasonal_duration": 86400,
+          "upper_bound": 1,
+          "upper_times_num": 1
+        },
+        "severity": 2
+      },
+      "nodata_trigger": {
+        "resolve_after": 1800,
+        "severity": 2
+      },
+      "queries": [
+        {
+          "query": "doris_be_disks_avail_capacity /1024 /1024/1024 ",
+          "ref": "A",
+          "unit": "none"
+        },
+        {
+          "query": "doris_be_disks_avail_capacity / doris_be_disks_total_capacity ",
+          "ref": "B",
+          "unit": "none"
+        }
+      ],
+      "triggers": [
+        {
+          "exp": "$A < 50 || $B < 0.2",
+          "expressions": [
+            {
+              "comparisonOperator": ">",
+              "ref": "A"
+            }
+          ],
+          "join_ref": "A",
+          "mode": 1,
+          "recover_config": {
+            "judge_type": 0
+          },
+          "severity": 2
+        }
+      ],
+      "version": "v2"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris 集群不稳定",
+    "note": "连续10分钟正在迁移的 tablet 数量大于0 ",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 600,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_fe_scheduled_tablet_num > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris-BE 导入任务的接收端出现积压",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_be_add_batch_task_queue_size > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris-BE 导入时用于发送数据包的线程池的排队个数大于0",
+    "note": "默认值是1024",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_be_send_batch_thread_pool_queue_size > 0",
+          "query": "doris_be_send_batch_thread_pool_queue_size",
+          "ref": "A",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 120,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris-FE 每秒查询错误数大于0",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_fe_query_err_rate > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris-FE 清理历史元数据日志失败大于0",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_fe_edit_log_clean{type=\"failed\"} > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris-FE 清理历史元数据镜像文件失败的次数大于0（）",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 120,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_fe_image_clean{type=\"failed\"} > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  },
+  {
+    "cate": "prometheus",
+    "datasource_queries": [
+      {
+        "match_type": 0,
+        "op": "in",
+        "values": [
+          6
+        ]
+      }
+    ],
+    "name": "Doris-FE 生成元数据镜像文件失败的次数大于0",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 60,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "doris_fe_image_write{type=\"failed\"}>0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 0,
+    "cur_event_count": 0,
+    "update_by_nickname": "",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 0
+  }
+]

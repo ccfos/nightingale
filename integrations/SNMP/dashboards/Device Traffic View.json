@@ -1,0 +1,140 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "Device Traffic View",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": true,
+                    "stack": "noraml"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d169f468-e8d5-40a3-919b-211203a3e31d",
+                "layout": {
+                    "h": 9,
+                    "i": "d169f468-e8d5-40a3-919b-211203a3e31d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "maxPerRow": 2,
+                "name": "$Host-$Port",
+                "options": {
+                    "legend": {
+                        "displayMode": "table"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "max": null,
+                        "min": null,
+                        "util": "bitsSecIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "repeat": "Port",
+                "targets": [
+                    {
+                        "expr": "delta(snmp_network_status_incoming{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m])/8",
+                        "legend": "{{ifname}}:incoming",
+                        "refId": "A",
+                        "step": 60
+                    },
+                    {
+                        "expr": "delta(snmp_network_status_outgoing{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m])/8",
+                        "legend": "{{ifname}}:outgoing",
+                        "refId": "B",
+                        "step": 60
+                    },
+                    {
+                        "expr": "100*snmp_network_status_incoming_errors{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}/snmp_network_status_incoming_ucastpkts{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}",
+                        "legend": "{{ifname}}:incoming Errors",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "100*snmp_network_status_outgoing_errors{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}/snmp_network_status_incoming_ucastpkts{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}",
+                        "legend": "{{ifname}}:Outgoing Errors",
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(snmp_icmp_up,agent_host)",
+                "name": "Host",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(snmp_network_status_ostatus{agent_host =\"$Host\"}, ifname)",
+                "multi": true,
+                "name": "Port",
+                "type": "query"
+            },
+            {
+                "definition": "5,10,20,30",
+                "multi": false,
+                "name": "time_minute",
+                "type": "custom"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717558652372875000
+}

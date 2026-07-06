@@ -1,0 +1,1611 @@
+{
+    "name": "阿里云-PolarDB",
+    "tags": "",
+    "note": "阿里云采集的指标",
+    "ident": "",
+    "uuid": 1775551254592000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus",
+                "defaultValue": 3
+            },
+            {
+                "name": "clusterDesc",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "reg": "",
+                "definition": "label_values(AliyunPolardb_cluster_cpu_utilization, desc)",
+                "multi": true,
+                "allOption": true
+            },
+            {
+                "name": "clusterId",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "reg": "",
+                "definition": "label_values(AliyunPolardb_cluster_cpu_utilization{desc=~\"$clusterDesc\"}, clusterId)",
+                "multi": true,
+                "allOption": true
+            },
+            {
+                "name": "nodeId",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "reg": "",
+                "definition": "label_values(AliyunPolardb_cluster_cpu_utilization{clusterId=~\"$clusterId\"}, nodeId)",
+                "multi": true,
+                "allOption": true
+            }
+        ],
+        "panels": [
+            {
+                "type": "timeseries",
+                "id": "51c64cbe-89e2-43ca-bc8b-e82619d70cc1",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0,
+                    "i": "51c64cbe-89e2-43ca-bc8b-e82619d70cc1"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "QPS(每秒请求数)",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_qps{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "e291d287-f3e0-4068-aa29-55ee2020bc13",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0,
+                    "i": "e291d287-f3e0-4068-aa29-55ee2020bc13"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "TPS(每秒事务数)",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_tps{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "{{desc}}--{{clusterId}}---{{nodeId}}"
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "030ff995-8b48-4da2-aab3-ceb12349b471",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 9,
+                    "i": "030ff995-8b48-4da2-aab3-ceb12349b471"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "MPS(每秒数据操作数)",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_mps{clusterId=~\"$clusterId\",instanceId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{instanceId}}"
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "a7cc83fb-2ee4-4d3a-b0df-62087a99fed3",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 9,
+                    "i": "a7cc83fb-2ee4-4d3a-b0df-62087a99fed3"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_cpu_utilization{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "b11e73bd-ffc8-4e29-9fc8-c175d03d96a5",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 18,
+                    "i": "b11e73bd-ffc8-4e29-9fc8-c175d03d96a5"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_memory_utilization{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内存使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "682e5ceb-28e0-44ad-a385-19f1fd842dc7",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 18,
+                    "i": "682e5ceb-28e0-44ad-a385-19f1fd842dc7"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_active_sessions{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "活跃连接数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "e8844caa-abcd-428b-972a-0e3c58311a48",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 27,
+                    "i": "e8844caa-abcd-428b-972a-0e3c58311a48"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_total_session{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "当前总连接数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "40cd0953-1eab-4e43-84e4-c02bf896da7c",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 27,
+                    "i": "40cd0953-1eab-4e43-84e4-c02bf896da7c"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_connection_utilization{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "连接数使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "811e4290-794a-45c0-a506-dcb70879eba0",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 36,
+                    "i": "811e4290-794a-45c0-a506-dcb70879eba0"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_input_traffic{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "每秒输入流量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "d4f46990-c583-4e55-9b6c-3b3fd6a0e7b1",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 36,
+                    "i": "d4f46990-c583-4e55-9b6c-3b3fd6a0e7b1"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_output_traffic{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "每秒输出流量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "bbc26d78-c42a-476b-a16a-a8c66e5271b2",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 45,
+                    "i": "bbc26d78-c42a-476b-a16a-a8c66e5271b2"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_slow_queries_ps{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "每秒慢查询数量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "49c0dc63-5d3d-4e1e-933e-35f458a1b53d",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 45,
+                    "i": "49c0dc63-5d3d-4e1e-933e-35f458a1b53d"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_mem_hit_ratio{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内存缓冲池读命中率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "216148fb-3604-44be-8943-53f51d6ac81f",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 54,
+                    "i": "216148fb-3604-44be-8943-53f51d6ac81f"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_input_traffic{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}*1024",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "每秒网络输入流量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesSI"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "f1505047-903c-4310-a288-b027724d9f1e",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 54,
+                    "i": "f1505047-903c-4310-a288-b027724d9f1e"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_output_traffic{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}*1024",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "每秒网络输出流量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesSI"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "a66b845f-a5fb-4d92-961a-23b690ba84b2",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 63,
+                    "i": "a66b845f-a5fb-4d92-961a-23b690ba84b2"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_data_io{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}*1024",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "存储引擎每秒IO吞吐量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesSI"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "b3fbf42e-1d76-47be-89eb-ef99386d3c76",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 63,
+                    "i": "b3fbf42e-1d76-47be-89eb-ef99386d3c76"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_data_iops{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "存储引擎IOPS",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "55e04b19-ffb0-4929-8ade-4156c85170f5",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 72,
+                    "i": "55e04b19-ffb0-4929-8ade-4156c85170f5"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_iops{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "IOPS",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            },
+            {
+                "type": "timeseries",
+                "id": "7462b3d4-5bd5-431b-bcf2-b57cc50f0ead",
+                "layout": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 12,
+                    "y": 72,
+                    "i": "7462b3d4-5bd5-431b-bcf2-b57cc50f0ead"
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "AliyunPolardb_cluster_iops_usage{clusterId=~\"$clusterId\",nodeId=~\"$nodeId\"}",
+                        "__mode__": "__query__",
+                        "refId": "A",
+                        "legend": "集群:{{desc}}-{{clusterId}}--节点:{{nodeId}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "IOPS使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "maxDataPoints": 240
+            }
+        ]
+    }
+}

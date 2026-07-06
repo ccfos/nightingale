@@ -1,0 +1,2064 @@
+{
+  "name": "华为云-云搜索服务(CSS/ES)",
+  "tags": "华为云-AOM",
+  "ident": "",
+  "uuid": 1755745477400000,
+  "configs": {
+    "version": "3.1.0",
+    "links": [],
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "hide": false,
+        "definition": "prometheus",
+        "defaultValue": 22
+      },
+      {
+        "name": "EPS",
+        "label": "企业项目",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "reg": "",
+        "definition": "label_values(huaweicloud_sys_es_cpu_usage,EpID)",
+        "multi": false
+      },
+      {
+        "name": "Cluster",
+        "label": "CSS集群名称",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "reg": "",
+        "definition": "label_values(huaweicloud_sys_es_cpu_usage{EpID=~\"$EPS\"},name)",
+        "multi": true,
+        "allOption": true
+      },
+      {
+        "name": "instanceID",
+        "label": "实例ID",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "reg": "",
+        "definition": "label_values(huaweicloud_sys_es_cpu_usage{EpID=~\"$EPS\",name=~\"$Cluster\"},instance_id)",
+        "multi": true,
+        "allOption": true
+      }
+    ],
+    "panels": [
+      {
+        "version": "3.1.0",
+        "id": "5235bc59-8f97-4026-a92d-aec37c7953ec",
+        "type": "row",
+        "name": "资源总览（企业项目）企业项目：$EPS，当前选中集群：$Cluster",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "5235bc59-8f97-4026-a92d-aec37c7953ec"
+        },
+        "panels": []
+      },
+      {
+        "type": "table",
+        "id": "7d1855c6-3628-4cb3-8053-eb7271b0b40a",
+        "layout": {
+          "h": 5,
+          "w": 24,
+          "x": 0,
+          "y": 1,
+          "i": "7d1855c6-3628-4cb3-8053-eb7271b0b40a"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_status{EpID=~'$EPS'}",
+            "legend": "健康状态",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "avg(huaweicloud_sys_es_avg_cpu_usage{EpID=~'$EPS'}) by (name)",
+            "legend": "CPU使用率",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "C",
+            "expr": "avg(huaweicloud_sys_es_avg_mem_used_percent{EpID=~'$EPS'}) by (name)",
+            "legend": "内存使用率",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "D",
+            "expr": "avg(huaweicloud_sys_es_disk_util{EpID=~'$EPS'}) by (name)",
+            "legend": "磁盘使用率",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "E",
+            "expr": "avg(huaweicloud_sys_es_max_jvm_heap_usage{EpID=~'$EPS'}) by (name)",
+            "legend": "最大JVM堆使用率",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "G",
+            "expr": "avg(huaweicloud_sys_es_avg_load_average{EpID=~'$EPS'}) by (name)",
+            "legend": "平均负载",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "renameByName": {
+                "name": "集群名称"
+              }
+            }
+          }
+        ],
+        "name": "资源总览表【企业项目：$EPS】",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "custom": {
+          "showHeader": true,
+          "colorMode": "value",
+          "nowrap": true,
+          "tableLayout": "auto",
+          "calc": "lastNotNull",
+          "displayMode": "labelValuesToRows",
+          "pageLimit": 500,
+          "linkMode": "appendLinkColumn",
+          "aggrDimension": [
+            "name"
+          ]
+        },
+        "options": {
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "fa8e094b-be1e-4e27-b4ce-4aba5a981490",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 0,
+          "y": 6,
+          "i": "fa8e094b-be1e-4e27-b4ce-4aba5a981490"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_status{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_集群健康状态",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "集群健康状态",
+        "links": [],
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "2cf90cae-6749-482b-934b-0429b615de6b",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 6,
+          "y": 6,
+          "i": "2cf90cae-6749-482b-934b-0429b615de6b"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_max_cpu_usage{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_最大CPU使用率",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "集群最大CPU使用率",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "de5f230f-d139-441e-83f7-b21a6e7242a8",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 12,
+          "y": 6,
+          "i": "de5f230f-d139-441e-83f7-b21a6e7242a8"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_avg_mem_used_percent{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_内存使用率",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "集群内存使用率",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "b0f2fe3b-f827-40e1-91c1-0b19af580ece",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 18,
+          "y": 6,
+          "i": "b0f2fe3b-f827-40e1-91c1-0b19af580ece"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_disk_util{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_磁盘使用率",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "集群磁盘使用率",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "ca608f98-cbd9-4a50-b6c4-73cb6f124dd4",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 0,
+          "y": 13,
+          "i": "ca608f98-cbd9-4a50-b6c4-73cb6f124dd4"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_nodes_count{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_节点数量",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "huaweicloud_sys_es_data_nodes_count{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_数据节点数量",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "C",
+            "expr": "huaweicloud_sys_es_master_nodes_count{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_Master节点数量",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "D",
+            "expr": "huaweicloud_sys_es_ingest_nodes_count{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_Client节点数量",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "节点数量（Totle | master｜data｜client）",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "f3c95797-29a6-41a4-aad7-fd7404ffa85a",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 6,
+          "y": 13,
+          "i": "f3c95797-29a6-41a4-aad7-fd7404ffa85a"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_total_shards_count{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_分片数量",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "分片数量",
+        "links": [],
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "86ab0b94-0e9f-4f3a-b071-3e3ca862768e",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 12,
+          "y": 13,
+          "i": "86ab0b94-0e9f-4f3a-b071-3e3ca862768e"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_indices_count{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_索引数量",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "索引数量",
+        "links": [],
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "121a2308-59ab-4b8c-94a0-e081b083a489",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 18,
+          "y": 13,
+          "i": "121a2308-59ab-4b8c-94a0-e081b083a489"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_docs_count{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_集群文档数量",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "集群文档数量&删除文档数量",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "62f1eff5-e5d0-455e-90e7-7031bcbda381",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 0,
+          "y": 20,
+          "i": "62f1eff5-e5d0-455e-90e7-7031bcbda381"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_SearchRate{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_平均查询速率",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "平均（查询/索引）速率",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "6c7b6c5d-67e3-4489-9fa5-2b7ed9f144ae",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 6,
+          "y": 20,
+          "i": "6c7b6c5d-67e3-4489-9fa5-2b7ed9f144ae"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_SearchLatency{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_平均查询时延",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "平均（查询/索引）时延",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "84cce01b-f30e-493a-b3e7-7a198a8a1055",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 12,
+          "y": 20,
+          "i": "84cce01b-f30e-493a-b3e7-7a198a8a1055"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_avg_thread_pool_search_queue{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_集群Search队列平均数量",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "集群Search队列（平均/最大/总计）数量",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "bd6e2b73-7da7-4d01-a9fe-1b5aa09d8486",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 18,
+          "y": 20,
+          "i": "bd6e2b73-7da7-4d01-a9fe-1b5aa09d8486"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_avg_thread_pool_write_queue{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_集群Write队列平均数量",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "huaweicloud_sys_es_max_thread_pool_write_queue{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_集群Write队列最大数量",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "C",
+            "expr": "huaweicloud_sys_es_sum_thread_pool_write_queue{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_集群Write队列总计数量",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "集群Write队列（平均/最大/总计）数量",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "a04504c2-1d53-4119-8860-1487f0c1792f",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 0,
+          "y": 27,
+          "i": "a04504c2-1d53-4119-8860-1487f0c1792f"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_avg_jvm_young_gc_count{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_平均JVM YOUNG GC次数",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "huaweicloud_sys_es_max_jvm_young_gc_count{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_最大JVM YOUNG GC次数",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "C",
+            "expr": "huaweicloud_sys_es_sum_jvm_young_gc_count{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_总计JVM YOUNG GC次数",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "平均/最大/总计JVM YOUNG GC次数",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "622b33c3-ccad-4638-9120-63cff84c1068",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 6,
+          "y": 27,
+          "i": "622b33c3-ccad-4638-9120-63cff84c1068"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_avg_jvm_young_gc_time{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_平均JVM YOUNG GC耗时",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "huaweicloud_sys_es_max_jvm_young_gc_time{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_最大JVM YOUNG GC耗时",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "C",
+            "expr": "huaweicloud_sys_es_sum_jvm_young_gc_time{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_总计JVM YOUNG GC耗时",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "平均/最大/总计JVM YOUNG GC耗时",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "40a50dc6-cb41-4796-a816-359be412235d",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 12,
+          "y": 27,
+          "i": "40a50dc6-cb41-4796-a816-359be412235d"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_avg_jvm_old_gc_count{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_平均JVM OLD GC次数",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "huaweicloud_sys_es_max_jvm_old_gc_count{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_最大JVM OLD GC次数",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "C",
+            "expr": "huaweicloud_sys_es_sum_jvm_old_gc_count{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_总计JVM OLD GC次数",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "平均/最大/总计JVM OLD GC次数",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "2ef05a6a-1523-4deb-b99f-8551be600853",
+        "layout": {
+          "h": 7,
+          "w": 6,
+          "x": 18,
+          "y": 27,
+          "i": "2ef05a6a-1523-4deb-b99f-8551be600853"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_avg_jvm_old_gc_time{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_平均JVM OLD GC耗时",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "huaweicloud_sys_es_max_jvm_old_gc_time{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_最大JVM OLD GC耗时",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "C",
+            "expr": "huaweicloud_sys_es_sum_jvm_old_gc_time{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_总计JVM OLD GC耗时",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "平均/最大/总计JVM OLD GC耗时",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "bb943a3c-0c2c-4c90-9a5e-37004952b364",
+        "layout": {
+          "h": 6,
+          "w": 24,
+          "x": 0,
+          "y": 34,
+          "i": "bb943a3c-0c2c-4c90-9a5e-37004952b364"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_max_jvm_heap_usage{EpID=~'$EPS',name=~\"$Cluster\"}",
+            "legend": "{{name}}_最大JVM堆使用率",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "集群JVM使用率",
+        "links": [],
+        "description": "",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "right",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "valueMappings": [],
+          "standardOptions": {
+            "util": "percent"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.1,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "version": "3.1.0",
+        "id": "d5c43d4d-7509-4f7e-a958-8b7af2072d5b",
+        "type": "row",
+        "name": "资源明细：【$EPS】【$Cluster】【$privateIp】",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 40,
+          "i": "d5c43d4d-7509-4f7e-a958-8b7af2072d5b"
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "2d98fbe0-93c5-40f8-8699-5022d39068ce",
+        "layout": {
+          "h": 9,
+          "w": 24,
+          "x": 0,
+          "y": 41,
+          "i": "2d98fbe0-93c5-40f8-8699-5022d39068ce"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "avg(huaweicloud_sys_es_cpu_usage{EpID=~'$EPS',name=~\"$Cluster\"}) by (instance_id)",
+            "legend": "{{name}}_{{instance_id}}_CPU使用率",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "CPU使用率",
+        "links": [],
+        "description": "",
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "5bea32e9-571a-4580-a268-2e347cdaef41",
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 50,
+          "i": "5bea32e9-571a-4580-a268-2e347cdaef41"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_thread_pool_search_queue{EpID=~\"$EPS\", name=~\"$Cluster\"}",
+            "legend": "{{name}}_{{instance_id}}_Search队列任务数",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "0 - huaweicloud_sys_es_thread_pool_search_rejected{EpID=~\"$EPS\", name=~\"$Cluster\"}",
+            "legend": "{{name}}_{{instance_id}}_Search队列拒绝任务数",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Search队列任务数&Search队列拒绝任务数",
+        "links": [],
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "a4a6083b-198f-44f3-a089-95b24e44af60",
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 50,
+          "i": "a4a6083b-198f-44f3-a089-95b24e44af60"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_thread_pool_write_queue{EpID=~\"$EPS\", name=~\"$Cluster\"}",
+            "legend": "{{name}}_{{instance_id}}_Write队列任务数",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "0 - huaweicloud_sys_es_thread_pool_write_rejected{EpID=~\"$EPS\", name=~\"$Cluster\"}",
+            "legend": "{{name}}_{{instance_id}}_Write队列拒绝任务数",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Write队列任务数&Write队列拒绝任务数",
+        "links": [],
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "ef0f1fea-e287-4998-850f-1cb8fd5839fc",
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 60,
+          "i": "ef0f1fea-e287-4998-850f-1cb8fd5839fc"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_jvm_young_gc_count{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_{{instance_id}}_JVM YOUNG GC次数",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "huaweicloud_sys_es_jvm_old_gc_count{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_{{instance_id}}_JVM OLD GC次数",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM(YOUNG/OLD)GC次数",
+        "links": [],
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "977efca0-6c81-44c8-a7ef-6eba0bf44e0c",
+        "layout": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 60,
+          "i": "977efca0-6c81-44c8-a7ef-6eba0bf44e0c"
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_es_jvm_young_gc_time{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_{{instance_id}}_JVM YOUNG GC耗时",
+            "maxDataPoints": 240
+          },
+          {
+            "refId": "B",
+            "expr": "huaweicloud_sys_es_jvm_old_gc_time{EpID=~\"$EPS\",name=~\"$Cluster\"}",
+            "legend": "{{name}}_{{instance_id}}_JVM OLD GC耗时",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM(YOUNG/OLD)GC耗时",
+        "links": [],
+        "maxPerRow": 6,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

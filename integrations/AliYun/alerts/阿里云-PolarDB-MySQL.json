@@ -1,0 +1,794 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "PolarDB CPU使用率大于80%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_polardb_cluster_cpu_utilization_average \u003e 80",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651817460000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "PolarDB inode使用率大于80%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_polardb_cluster_inode_utilization_average \u003e 80",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651821880000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "PolarDB IOPS使用率大于80%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_polardb_cluster_iops_usage_average \u003e 80",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651826636000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "PolarDB ProxyCPU使用率大于80%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_polardb_cluster_proxy_cpu_utilization_average \u003e 80",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651833788000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "PolarDB 只读节点复制延迟大于1秒",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_polardb_cluster_replica_lag_average \u003e 1",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651856124000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "PolarDB内存使用率大于80%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_polardb_cluster_memory_utilization_average \u003e 80",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651861355000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "PolarDB慢查量突增大于100",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "delta(aliyun_acs_polardb_cluster_slow_queries_ps_average{}[2m]) \u003e 100",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651865947000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "PolarDB磁盘使用率大于80%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_polardb_cluster_disk_utilization_average \u003e 80",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651870363000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            1
+        ],
+        "cluster": "",
+        "name": "PolarDB连接数使用率大于80%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "aliyun_acs_polardb_cluster_connection_utilization_average \u003e 80",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558651878127000
+    }
+]
