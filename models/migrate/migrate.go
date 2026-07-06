@@ -403,6 +403,7 @@ type MessageTemplate struct {
 	NotifyChannelIdent string            `gorm:"column:notify_channel_ident;type:varchar(64);not null;default:''"`
 	Private            int               `gorm:"column:private;type:int;not null;default:0"`
 	Weight             int               `gorm:"column:weight;type:int;not null;default:0"`
+	Lang               string            `gorm:"column:lang;type:varchar(32);not null;default:''"`
 	CreateAt           int64             `gorm:"column:create_at;not null;default:0"`
 	CreateBy           string            `gorm:"column:create_by;type:varchar(64);not null;default:''"`
 	UpdateAt           int64             `gorm:"column:update_at;not null;default:0"`

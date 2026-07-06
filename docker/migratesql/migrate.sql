@@ -492,3 +492,6 @@ CREATE TABLE `ai_assistant_message` (
 
 /* v9 2026-06-25 es_index_pattern weight for sorting */
 ALTER TABLE `es_index_pattern` ADD COLUMN `weight` int not null default 0;
+
+/* v9 2026-07-06 message_template lang for i18n */
+ALTER TABLE `message_template` ADD COLUMN `lang` varchar(32) not null default '';

@@ -27,6 +27,7 @@ type MessageTemplate struct {
 	NotifyChannelIdent string            `json:"notify_channel_ident"` // 通知媒介 Ident
 	Private            int               `json:"private"`              // 0-公开 1-私有
 	Weight             int               `json:"weight"`               // 权重，根据此字段对内置模板进行排序
+	Lang               string            `json:"lang"`                 // 模板语言，为空视为中文（兼容存量数据）
 	CreateAt           int64             `json:"create_at"`
 	CreateBy           string            `json:"create_by"`
 	UpdateAt           int64             `json:"update_at"`
@@ -185,6 +186,50 @@ func MessageTemplatesGetBy(ctx *ctx.Context, notifyChannelIdents []string) ([]*M
 		t.DB2FE()
 	}
 	return lst, nil
+}
+
+const MsgTplLangEn = "en"
+
+// NormalizeMsgTplLang 归一化 X-Language 请求头或模板 lang 字段：
+// 空值与 zh 前缀（zh_CN、zh_HK）均视为中文，返回空串（存量模板 lang 为空）；
+// en 前缀（en、en_US）归一为 en；其他语言原样返回
+func NormalizeMsgTplLang(lang string) string {
+	switch {
+	case lang == "" || strings.HasPrefix(lang, "zh"):
+		return ""
+	case strings.HasPrefix(lang, MsgTplLangEn):
+		return MsgTplLangEn
+	default:
+		return lang
+	}
+}
+
+// FilterMsgTplsByLang 按请求语言过滤内置模板（CreateBy=="system"，有中英两套），
+// 请求语言没有对应的内置模板时回退英文。
+// 用户自建模板与语言无关，始终保留：其 lang 仅记录创建时的界面语言，若参与过滤，
+// 存量自建模板（迁移后 lang 默认为空）和跨语言团队互建的模板会对对方隐藏，
+// 导致配置通知规则时无法从列表选中。
+func FilterMsgTplsByLang(lst []*MessageTemplate, reqLang string) []*MessageTemplate {
+	want := NormalizeMsgTplLang(reqLang)
+
+	hasWant := false
+	for _, t := range lst {
+		if t.CreateBy == "system" && NormalizeMsgTplLang(t.Lang) == want {
+			hasWant = true
+			break
+		}
+	}
+	if !hasWant && want != MsgTplLangEn {
+		want = MsgTplLangEn
+	}
+
+	res := make([]*MessageTemplate, 0, len(lst))
+	for _, t := range lst {
+		if t.CreateBy != "system" || NormalizeMsgTplLang(t.Lang) == want {
+			res = append(res, t)
+		}
+	}
+	return res
 }
 
 type MsgTplList []*MessageTemplate
@@ -667,17 +712,397 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
 }
 
+// NewTplMapEn 内置模板的英文文案，仅收录与 NewTplMap 中文内容不同的模板；
+// 本身即为英文或语言无关的模板（Jira、Slack、Discord、Mattermost、语音/短信等）直接复用 NewTplMap
+var NewTplMapEn = map[string]string{
+	"tx-sms": `Level Status: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} Rule Name: {{$event.RuleName}}`,
+	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
+---
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
+- **Severity**: S{{$event.Severity}}
+{{- if $event.RuleNote}}
+	- **Rule Note**: {{$event.RuleNote}}
+{{- end}}
+{{- if not $event.IsRecovered}}
+- **Trigger Value**: {{$event.TriggerValue}}
+- **Trigger Time**: {{timeformat $event.TriggerTime}}
+- **Duration**: {{humanizeDurationInterface $time_duration}}
+{{- else}}
+{{- if $event.AnnotationsJSON.recovery_value}}
+- **Recovery Value**: {{formatDecimal $event.AnnotationsJSON.recovery_value 4}}
+{{- end}}
+- **Recovery Time**: {{timeformat $event.LastEvalTime}}
+- **Duration**: {{humanizeDurationInterface $time_duration}}
+{{- end}}
+- **Event Tags**:
+{{- range $key, $val := $event.TagsMap}}
+{{- if ne $key "rulename" }}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{- end}}
+{{if $event.AnnotationsJSON}}
+- **Annotations**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{end}}
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Mute 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Email: `<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>Nightingale Alert Notification</title>
+		<style type="text/css">
+			.wrapper {
+				background-color: #f8f8f8;
+				padding: 15px;
+				height: 100%;
+			}
+			.main {
+				width: 600px;
+				padding: 30px;
+				margin: 0 auto;
+				background-color: #fff;
+				font-size: 12px;
+				font-family: verdana,'Microsoft YaHei',Consolas,'Deja Vu Sans Mono','Bitstream Vera Sans Mono';
+			}
+			header {
+				border-radius: 2px 2px 0 0;
+			}
+			header .title {
+				font-size: 14px;
+				color: #333333;
+				margin: 0;
+			}
+			header .sub-desc {
+				color: #333;
+				font-size: 14px;
+				margin-top: 6px;
+				margin-bottom: 0;
+			}
+			hr {
+				margin: 20px 0;
+				height: 0;
+				border: none;
+				border-top: 1px solid #e5e5e5;
+			}
+			em {
+				font-weight: 600;
+			}
+			table {
+				margin: 20px 0;
+				width: 100%;
+			}
+	
+			table tbody tr{
+				font-weight: 200;
+				font-size: 12px;
+				color: #666;
+				height: 32px;
+			}
+	
+			.succ {
+				background-color: green;
+				color: #fff;
+			}
+	
+			.fail {
+				background-color: red;
+				color: #fff;
+			}
+	
+			.succ th, .succ td, .fail th, .fail td {
+				color: #fff;
+			}
+	
+			table tbody tr th {
+				width: 80px;
+				text-align: right;
+			}
+			.text-right {
+				text-align: right;
+			}
+			.body {
+				margin-top: 24px;
+			}
+			.body-text {
+				color: #666666;
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra {
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra.text-right a {
+				text-decoration: none;
+				color: #333;
+			}
+			.body-extra.text-right a:hover {
+				color: #666;
+			}
+			.button {
+				width: 200px;
+				height: 50px;
+				margin-top: 20px;
+				text-align: center;
+				border-radius: 2px;
+				background: #2D77EE;
+				line-height: 50px;
+				font-size: 20px;
+				color: #FFFFFF;
+				cursor: pointer;
+			}
+			.button:hover {
+				background: rgb(25, 115, 255);
+				border-color: rgb(25, 115, 255);
+				color: #fff;
+			}
+			footer {
+				margin-top: 10px;
+				text-align: right;
+			}
+			.footer-logo {
+				text-align: right;
+			}
+			.footer-logo-image {
+				width: 108px;
+				height: 27px;
+				margin-right: 10px;
+			}
+			.copyright {
+				margin-top: 10px;
+				font-size: 12px;
+				text-align: right;
+				color: #999;
+				-webkit-font-smoothing: antialiased;
+			}
+		</style>
+	</head>
+	<body>
+	<div class="wrapper">
+		<div class="main">
+			<header>
+				<h3 class="title">{{$event.RuleName}}</h3>
+				<p class="sub-desc"></p>
+			</header>
+	
+			<hr>
+	
+			<div class="body">
+				<table cellspacing="0" cellpadding="0" border="0">
+					<tbody>
+					{{if $event.IsRecovered}}
+					<tr class="succ">
+						<th>Level Status:</th>
+						<td>S{{$event.Severity}} Recovered</td>
+					</tr>
+					{{else}}
+					<tr class="fail">
+						<th>Level Status:</th>
+						<td>S{{$event.Severity}} Triggered</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>Rule Note:</th>
+						<td>{{$event.RuleNote}}</td>
+					</tr>
+					<tr>
+						<th>Target Note:</th>
+						<td>{{$event.TargetNote}}</td>
+					</tr>
+					{{if not $event.IsRecovered}}
+					<tr>
+						<th>Trigger Value:</th>
+						<td>{{$event.TriggerValue}}</td>
+					</tr>
+					{{end}}
+	
+					{{if $event.TargetIdent}}
+					<tr>
+						<th>Target:</th>
+						<td>{{$event.TargetIdent}}</td>
+					</tr>
+					{{end}}
+					<tr>
+						<th>Metrics:</th>
+						<td>{{$event.TagsJSON}}</td>
+					</tr>
+	
+					{{if $event.IsRecovered}}
+					<tr>
+						<th>Recovery Time:</th>
+						<td>{{timeformat $event.LastEvalTime}}</td>
+					</tr>
+					{{else}}
+					<tr>
+						<th>Trigger Time:</th>
+						<td>
+							{{timeformat $event.TriggerTime}}
+						</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>Send Time:</th>
+						<td>
+							{{timestamp}}
+						</td>
+					</tr>
+					</tbody>
+				</table>
+	
+				<hr>
+	
+				<footer>
+					<div class="copyright" style="font-style: italic">
+						Too many alerts? Try <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> for alert aggregation, noise reduction and on-call scheduling!
+					</div>
+				</footer>
+			</div>
+		</div>
+	</div>
+	</body>
+	</html>`,
+	Feishu: `Level Status: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
+Rule Name: {{$event.RuleName}}{{if $event.RuleNote}}
+Rule Note: {{$event.RuleNote}}{{end}}
+Metrics: {{$event.TagsJSON}}
+Annotations:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}
+{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
+Trigger Value: {{$event.TriggerValue}}{{end}}
+Send Time: {{timestamp}}
+Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
+Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+	FeishuCard: `{{- if $event.IsRecovered -}}
+{{- if ne $event.Cate "host" -}}
+**Cluster:** {{$event.Cluster}}{{end}}
+**Level Status:** S{{$event.Severity}} Recovered
+**Rule Name:** {{$event.RuleName}}
+**Event Tags:** {{$event.TagsJSON}}
+**Recovery Time:** {{timeformat $event.LastEvalTime}}
+**Description:** **Service recovered**
+{{- else }}
+{{- if ne $event.Cate "host"}}
+**Cluster:** {{$event.Cluster}}{{end}}
+**Level Status:** S{{$event.Severity}} Triggered
+**Rule Name:** {{$event.RuleName}}
+**Event Tags:** {{$event.TagsJSON}}
+**Trigger Time:** {{timeformat $event.TriggerTime}}
+**Send Time:** {{timestamp}}
+**Trigger Value:** {{$event.TriggerValue}}
+{{if $event.RuleNote }}**Description:** **{{$event.RuleNote}}**{{end}}
+{{- end -}}
+{{if $event.AnnotationsJSON}}
+**Annotations**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}
+{{- end}}
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Mute 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Telegram: `<b>Level Status: {{if $event.IsRecovered}}💚 S{{$event.Severity}} Recovered{{else}}⚠️ S{{$event.Severity}} Triggered{{end}}</b>
+<b>Rule Title</b>: {{$event.RuleName}}{{if $event.RuleNote}}
+<b>Rule Note</b>: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
+<b>Monitor Target</b>: {{$event.TargetIdent}}{{end}}
+<b>Metrics</b>: {{$event.TagsJSON}}{{if not $event.IsRecovered}}
+<b>Trigger Value</b>: {{$event.TriggerValue}}{{end}}
+{{if $event.IsRecovered}}<b>Recovery Time</b>: {{timeformat $event.LastEvalTime}}{{else}}<b>First Trigger Time</b>: {{timeformat $event.FirstTriggerTime}}{{end}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}<b>Time Since First Alert</b>: {{humanizeDurationInterface $time_duration}}
+<b>Send Time</b>: {{timestamp}}`,
+	Wecom: `**Level Status**: {{if $event.IsRecovered}}<font color="info">💚S{{$event.Severity}} Recovered</font>{{else}}<font color="warning">💔S{{$event.Severity}} Triggered</font>{{end}}
+**Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}
+**Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
+**Monitor Target**: {{$event.TargetIdent}}{{end}}
+**Metrics**: {{$event.TagsJSON}}
+{{if $event.AnnotationsJSON}}**Annotations**:{{range $key, $val := $event.AnnotationsJSON}}{{$key}}:{{$val}}  {{end}}   {{end}}{{if not $event.IsRecovered}}
+**Trigger Value**: {{$event.TriggerValue}}{{end}}
+{{if $event.IsRecovered}}**Recovery Time**: {{timeformat $event.LastEvalTime}}{{else}}**First Trigger Time**: {{timeformat $event.FirstTriggerTime}}{{end}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Time Since First Alert**: {{humanizeDurationInterface $time_duration}}
+**Send Time**: {{timestamp}}
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Mute 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Lark: `Level Status: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
+Rule Name: {{$event.RuleName}}{{if $event.RuleNote}}
+Rule Note: {{$event.RuleNote}}{{end}}
+Metrics: {{$event.TagsJSON}}
+{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
+Trigger Value: {{$event.TriggerValue}}{{end}}
+Send Time: {{timestamp}}
+Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
+Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+	LarkCard: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+**Cluster:** {{$event.Cluster}}{{end}}
+**Level Status:** S{{$event.Severity}} Recovered
+**Rule Name:** {{$event.RuleName}}
+**Event Tags:** {{$event.TagsJSON}}
+**Recovery Time:** {{timeformat $event.LastEvalTime}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}
+**Description:** **Service recovered**
+{{- else }}
+{{- if ne $event.Cate "host"}}
+**Cluster:** {{$event.Cluster}}{{end}}
+**Level Status:** S{{$event.Severity}} Triggered
+**Rule Name:** {{$event.RuleName}}
+**Event Tags:** {{$event.TagsJSON}}
+**Trigger Time:** {{timeformat $event.TriggerTime}}
+**Send Time:** {{timestamp}}
+**Trigger Value:** {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}
+{{if $event.RuleNote }}**Description:** **{{$event.RuleNote}}**{{end}}
+{{- end -}}
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Mute 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+}
+
+// MsgTplMapEn 内置模板的英文版本，与 MsgTplMap 一一对应；
+// ident 追加 -en 后缀与中文版在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
+var MsgTplMapEn = []MessageTemplate{
+	{Name: "Jira", Ident: Jira + "-en", NotifyChannelIdent: Jira, Lang: MsgTplLangEn, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-en", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEn, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Callback", Ident: "callback-en", NotifyChannelIdent: "callback", Lang: MsgTplLangEn, Weight: 16, Content: map[string]string{"content": ""}},
+	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-en", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangEn, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "MattermostBot", Ident: MattermostBot + "-en", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangEn, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "SlackWebhook", Ident: SlackWebhook + "-en", NotifyChannelIdent: SlackWebhook, Lang: MsgTplLangEn, Weight: 13, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "SlackBot", Ident: SlackBot + "-en", NotifyChannelIdent: SlackBot, Lang: MsgTplLangEn, Weight: 12, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "Discord", Ident: Discord + "-en", NotifyChannelIdent: Discord, Lang: MsgTplLangEn, Weight: 11, Content: map[string]string{"content": NewTplMap[Discord]}},
+	{Name: "Aliyun Voice", Ident: "ali-voice-en", NotifyChannelIdent: "ali-voice", Lang: MsgTplLangEn, Weight: 10, Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
+	{Name: "Aliyun SMS", Ident: "ali-sms-en", NotifyChannelIdent: "ali-sms", Lang: MsgTplLangEn, Weight: 9, Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
+	{Name: "Tencent Voice", Ident: "tx-voice-en", NotifyChannelIdent: "tx-voice", Lang: MsgTplLangEn, Weight: 8, Content: map[string]string{"content": NewTplMap["tx-voice"]}},
+	{Name: "Tencent SMS", Ident: "tx-sms-en", NotifyChannelIdent: "tx-sms", Lang: MsgTplLangEn, Weight: 7, Content: map[string]string{"content": NewTplMapEn["tx-sms"]}},
+	{Name: "Telegram", Ident: Telegram + "-en", NotifyChannelIdent: Telegram, Lang: MsgTplLangEn, Weight: 6, Content: map[string]string{"content": NewTplMapEn[Telegram]}},
+	{Name: "LarkCard", Ident: LarkCard + "-en", NotifyChannelIdent: LarkCard, Lang: MsgTplLangEn, Weight: 5, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMapEn[LarkCard]}},
+	{Name: "Lark", Ident: Lark + "-en", NotifyChannelIdent: Lark, Lang: MsgTplLangEn, Weight: 5, Content: map[string]string{"content": NewTplMapEn[Lark]}},
+	{Name: "Feishu", Ident: Feishu + "-en", NotifyChannelIdent: Feishu, Lang: MsgTplLangEn, Weight: 4, Content: map[string]string{"content": NewTplMapEn[Feishu]}},
+	{Name: "FeishuCard", Ident: FeishuCard + "-en", NotifyChannelIdent: FeishuCard, Lang: MsgTplLangEn, Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMapEn[FeishuCard]}},
+	{Name: "Wecom", Ident: Wecom + "-en", NotifyChannelIdent: Wecom, Lang: MsgTplLangEn, Weight: 3, Content: map[string]string{"content": NewTplMapEn[Wecom]}},
+	{Name: "Dingtalk", Ident: Dingtalk + "-en", NotifyChannelIdent: Dingtalk, Lang: MsgTplLangEn, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMapEn[Dingtalk]}},
+	{Name: "Email", Ident: Email + "-en", NotifyChannelIdent: Email, Lang: MsgTplLangEn, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMapEn[Email]}},
+}
+
 func InitMessageTemplate(ctx *ctx.Context) {
 	if !ctx.IsCenter {
 		return
 	}
 
-	for _, tpl := range MsgTplMap {
+	tpls := make([]MessageTemplate, 0, len(MsgTplMap)+len(MsgTplMapEn))
+	tpls = append(tpls, MsgTplMap...)
+	tpls = append(tpls, MsgTplMapEn...)
+
+	for _, tpl := range tpls {
+		notifyChannelIdent := tpl.NotifyChannelIdent
+		if notifyChannelIdent == "" {
+			// 中文内置模板未显式设置渠道 ident，其 ident 即渠道 ident
+			notifyChannelIdent = tpl.Ident
+		}
+
 		msgTpl := MessageTemplate{
 			Name:               tpl.Name,
 			Ident:              tpl.Ident,
 			Content:            tpl.Content,
-			NotifyChannelIdent: tpl.Ident,
+			NotifyChannelIdent: notifyChannelIdent,
+			Lang:               tpl.Lang,
 			CreateBy:           "system",
 			CreateAt:           time.Now().Unix(),
 			UpdateBy:           "system",
