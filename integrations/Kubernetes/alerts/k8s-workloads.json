@@ -1,6 +1,7 @@
 [
     {
         "id": 0,
+        "uuid": 1751793600000000000,
         "group_id": 0,
         "cate": "",
         "datasource_ids": null,
@@ -44,6 +45,7 @@
     },
     {
         "id": 1,
+        "uuid": 1751793600002111000,
         "group_id": 0,
         "cate": "",
         "datasource_ids": null,
@@ -87,6 +89,7 @@
     },
     {
         "id": 2,
+        "uuid": 1751793600004222000,
         "group_id": 0,
         "cate": "",
         "datasource_ids": null,
@@ -130,6 +133,7 @@
     },
     {
         "id": 3,
+        "uuid": 1751793600006333000,
         "group_id": 0,
         "cate": "",
         "datasource_ids": null,
@@ -173,6 +177,7 @@
     },
     {
         "id": 4,
+        "uuid": 1751793600008444000,
         "group_id": 0,
         "cate": "",
         "datasource_ids": null,
@@ -216,6 +221,7 @@
     },
     {
         "id": 5,
+        "uuid": 1751793600010555000,
         "group_id": 0,
         "cate": "",
         "datasource_ids": null,

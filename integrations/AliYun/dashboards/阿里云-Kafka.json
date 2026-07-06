@@ -13,7 +13,7 @@
                 "name": "datasource",
                 "definition": "prometheus",
                 "hide": true,
-                "value": 19,
+                "value": 0,
                 "defaultValue": ""
             },
             {

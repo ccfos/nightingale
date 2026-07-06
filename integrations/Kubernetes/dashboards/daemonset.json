@@ -829,7 +829,7 @@
                 "hide": false,
                 "name": "datasource",
                 "type": "datasource",
-                "value": 849,
+                "value": 0,
                 "options": [
                 ]
             },
@@ -864,7 +864,7 @@
                 "name": "namespace",
                 "reg": "",
                 "type": "query",
-                "value": "arms-prom",
+                "value": "",
                 "options": [
                 ],
                 "initialized": true
