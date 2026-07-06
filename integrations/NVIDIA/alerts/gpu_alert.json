@@ -1,0 +1,74 @@
+[
+    {
+      "cate": "prometheus",
+      "name": "GPU XID 错误",
+      "note": "xid错误码信息: https://docs.nvidia.com/deploy/xid-errors/analyzing-xid-catalog.html",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 180,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "DCGM_FI_DEV_XID_ERRORS == 32 or DCGM_FI_DEV_XID_ERRORS == 38 or DCGM_FI_DEV_XID_ERRORS == 48 or DCGM_FI_DEV_XID_ERRORS == 61 or DCGM_FI_DEV_XID_ERRORS == 62 or DCGM_FI_DEV_XID_ERRORS == 63 or DCGM_FI_DEV_XID_ERRORS == 64 or DCGM_FI_DEV_XID_ERRORS == 68 or DCGM_FI_DEV_XID_ERRORS == 74 or DCGM_FI_DEV_XID_ERRORS == 79 or DCGM_FI_DEV_XID_ERRORS == 92 or DCGM_FI_DEV_XID_ERRORS == 94 or DCGM_FI_DEV_XID_ERRORS == 95",
+            "query": "",
+            "ref": "A",
+            "severity": 2,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1751791234000037,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 0
+    },
+    {
+      "cate": "prometheus",
+      "name": "GPU 温度过高",
+      "note": "",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 180,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "sum by (Hostname, modelName, gpu) (DCGM_FI_DEV_GPU_TEMP > 85)",
+            "severity": 2,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1751791234000038,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 0
+    }
+  ]

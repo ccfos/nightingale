@@ -1,0 +1,410 @@
+[
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis CPU使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|ShardingProxy|Splitrw|SplitrwProxy)CpuUsage\"},\"redisType\",\"$1\",\"measure\",\"(.+)CpuUsage\") > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000012,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis QPS使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|Splitrw)QPSUsage\"},\"redisType\",\"$1\",\"measure\",\"(.+)QPSUsage\") > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000013,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 内存使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|Splitrw)MemoryUsage\"},\"redisType\",\"$1\",\"measure\",\"(.+)MemoryUsage\") > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000014,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 命中率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|Splitrw)HitRate\"},\"redisType\",\"$1\",\"measure\",\"(.+)HitRate\") < 30",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000015,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 失败次数告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_StandardFailedCount\"},\"redisType\",\"$1\",\"measure\",\"(.+)FailedCount\") > 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000016,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 平均响应时间告警",
+    "note": "单位毫秒",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|ShardingProxy|Splitrw|SplitrwProxy)AvgRt\"},\"redisType\",\"$1\",\"measure\",\"(.+)AvgRt\") > 100000",
+          "severity": 2,
+          "unit": "milliseconds"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000017,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 数据同步延迟告警",
+    "note": "单位毫秒",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|Splitrw)SyncDelayTime\"},\"redisType\",\"$1\",\"measure\",\"(.+)SyncDelayTime\") > 5",
+          "severity": 2,
+          "unit": "milliseconds"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000018,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 最大响应时间告警",
+    "note": "单位毫秒",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|ShardingProxy|Splitrw|SplitrwProxy)MaxRt\"},\"redisType\",\"$1\",\"measure\",\"(.+)MaxRt\") > 100000",
+          "severity": 2,
+          "unit": "milliseconds"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000019,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 流入带宽使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|Splitrw)IntranetInRatio\"},\"redisType\",\"$1\",\"measure\",\"(.+)IntranetInRatio\") > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000020,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 流出带宽使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|Splitrw)IntranetOutRatio\"},\"redisType\",\"$1\",\"measure\",\"(.+)IntranetOutRatio\") > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000021,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 连接数使用率告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|ShardingProxy|Splitrw|SplitrwProxy)ConnectionUsage\"},\"redisType\",\"$1\",\"measure\",\"(.+)ConnectionUsage\") ",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000022,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "cate": "prometheus",
+    "name": "阿里云 Redis 缓存内Key数量告警",
+    "note": "",
+    "prod": "metric",
+    "delay": 0,
+    "prom_for_duration": 180,
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "label_replace({__name__=~\"AliyunKvstore_(Standard|Sharding|Splitrw)Keys\"},\"redisType\",\"$1\",\"measure\",\"(.+)Keys\") > 80",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "append_tags": [],
+    "annotations": {},
+    "uuid": 1751791234000023,
+    "cur_event_count": 0,
+    "update_by_nickname": "超管",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  }
+]

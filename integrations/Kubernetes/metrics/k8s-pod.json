@@ -1,5 +1,6 @@
 [
     {
+        "id": 0,
         "uuid": 1745893024149445000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -8,6 +9,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(container_fs_inodes_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "expression_type": "promql",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -19,9 +22,14 @@
                 "name": "Number of Inodes",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024121015300,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -30,6 +38,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(container_tasks_state{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\", state=\"uninterruptible\"}) by (name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -41,9 +51,14 @@
                 "name": "Number of uninterruptible tasks",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024130551800,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -52,6 +67,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "(sum(container_memory_cache{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -63,9 +80,14 @@
                 "name": "Container cache use",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024108569900,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -74,6 +96,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\",",
         "lang": "zh_CN",
         "expression": "(sum(container_spec_cpu_quota{namespace=\"$namespace\", pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\", pod=~\"$pod_name\"}) by (name))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -85,9 +109,14 @@
                 "name": "Container CPU Limit",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"}/container _ spec _ cpu _ period {namespace = \"$namespace\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024112672500,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -96,6 +125,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(container_cpu_load_average_10s{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -107,9 +138,14 @@
                 "name": "Container CPU load 10",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024026246700,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -118,6 +154,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -129,9 +167,14 @@
                 "name": "Container CPU usage",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024029544000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -140,6 +183,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)/((sum(container_spec_cpu_quota{namespace=\"$namespace\", pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\", pod=~\"$pod_name\"}) by (name)))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -151,9 +196,14 @@
                 "name": "Container CPU usage after normalization",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024146207700,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -162,6 +212,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(container_fs_io_current{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -173,9 +225,14 @@
                 "name": "Container I/O",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024136457000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -184,6 +241,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "(sum(container_memory_rss{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -195,9 +254,14 @@
                 "name": "Container RSS memory usage",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024139900200,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -206,6 +270,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(container_spec_memory_limit_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -217,9 +283,14 @@
                 "name": "Container Memory Limit",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024032984300,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -228,6 +299,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "(sum(container_memory_usage_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -239,9 +312,14 @@
                 "name": "Container memory usage",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024127585500,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -250,6 +328,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "((sum(container_memory_usage_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)) /(sum(container_spec_memory_limit_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)))*100",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -261,9 +341,14 @@
                 "name": "Container memory usage",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024093620000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -272,6 +357,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(rate(container_cpu_system_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -283,9 +370,14 @@
                 "name": "Container kernel mode CPU usage",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024102879000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -294,6 +386,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(rate(container_cpu_cfs_throttled_periods_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m]))by(name) *100",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -305,9 +399,14 @@
                 "name": "The rate at which container CPU throttle occurs",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024143177000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -316,6 +415,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(container_oom_events_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "expression_type": "promql",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -327,9 +428,14 @@
                 "name": "Number of OOM occurrences for container",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024083942000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -338,6 +444,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum((time()-container_start_time_seconds{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"})) by (name)",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -349,9 +457,14 @@
                 "name": "Container startup time (hours)",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024152466200,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -360,6 +473,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(container_fs_usage_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -371,9 +486,14 @@
                 "name": "File system size used by the container",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024097849600,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -382,6 +502,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(rate(container_cpu_user_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -393,9 +515,14 @@
                 "name": "Container user mode CPU usage",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024036896800,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -404,6 +531,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(rate(container_fs_writes_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -415,9 +544,14 @@
                 "name": "File system write rate",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024057722000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -426,6 +560,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
         "lang": "zh_CN",
         "expression": "sum(rate(container_fs_reads_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -437,9 +573,14 @@
                 "name": "File system read rate",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024166898000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -448,6 +589,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
         "lang": "zh_CN",
         "expression": "sum(rate(container_network_transmit_packets_dropped_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -459,9 +602,14 @@
                 "name": "Number of packets lost by network transmission",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024160266500,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -470,6 +618,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
         "lang": "zh_CN",
         "expression": "sum(rate(container_network_transmit_packets_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -481,9 +631,14 @@
                 "name": "The network sends packets",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024069935000,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -492,6 +647,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
         "lang": "zh_CN",
         "expression": "sum(rate(container_network_transmit_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -503,9 +660,14 @@
                 "name": "Network transmission rate",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024163721700,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -514,6 +676,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
         "lang": "zh_CN",
         "expression": "sum(rate(container_network_transmit_errors_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -525,9 +689,14 @@
                 "name": "Number of network transmission errors",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024173485600,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -536,6 +705,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
         "lang": "zh_CN",
         "expression": "sum(rate(container_network_receive_packets_dropped_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -547,9 +718,14 @@
                 "name": "Number of packet losses received by network",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024156389600,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -558,6 +734,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
         "lang": "zh_CN",
         "expression": "sum(rate(container_network_receive_packets_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -569,9 +747,14 @@
                 "name": "Number of packets received by network",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024075864800,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -580,6 +763,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
         "lang": "zh_CN",
         "expression": "sum(rate(container_network_receive_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -591,9 +776,14 @@
                 "name": "Network reception rate",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
+        "id": 0,
         "uuid": 1745893024170233300,
         "collector": "Pod",
         "typ": "Kubernetes",
@@ -602,6 +792,8 @@
         "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
         "lang": "zh_CN",
         "expression": "sum(rate(container_network_receive_errors_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -613,6 +805,10 @@
                 "name": "Number of network reception errors",
                 "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     }
 ]

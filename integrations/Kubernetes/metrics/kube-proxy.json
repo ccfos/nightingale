@@ -1,0 +1,458 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788187767585,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "gc时间",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: summary",
+        "lang": "zh_CN",
+        "expression": "go_gc_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "summary",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: summary",
+                "name": "gc时间"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188219684,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "goroutine数量",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "go_goroutines",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "goroutine数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788187723939,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "线程数量",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "go_threads",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "线程数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188184931,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "service或者pod发生变化到kube-proxy规则同步完成时间指标含义较复杂，参照https://github.com/kubernetes/community/blob/master/sig-scalability/slos/network_programming_latency.md",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubeproxy_network_programming_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: histogram",
+                "name": "service或者pod发生变化到kube-proxy规则同步完成时间指标含义较复杂，参照https://github.com/kubernetes/community/blob/master/sig-scalability/slos/network_programming_latency.md"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188153560,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "规则同步耗时",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubeproxy_sync_proxy_rules_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: histogram",
+                "name": "规则同步耗时"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188695439,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "endpoint 发生变化后规则同步pending的次数",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubeproxy_sync_proxy_rules_endpoint_changes_pending",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "endpoint 发生变化后规则同步pending的次数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188769583,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "endpoint 发生变化后规则同步的总次数",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubeproxy_sync_proxy_rules_endpoint_changes_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: counter",
+                "name": "endpoint 发生变化后规则同步的总次数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188895155,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "本机上 iptables restore 失败的总次数",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubeproxy_sync_proxy_rules_iptables_restore_failures_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: counter",
+                "name": "本机上 iptables restore 失败的总次数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188126216,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "最近一次规则同步的请求时间戳，如果比下一个指标 kubeproxy_sync_proxy_rules_last_timestamp_seconds 大很多，那说明同步 hung 住了",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubeproxy_sync_proxy_rules_last_queued_timestamp_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "最近一次规则同步的请求时间戳，如果比下一个指标 kubeproxy_sync_proxy_rules_last_timestamp_seconds 大很多，那说明同步 hung 住了"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188610347,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "最近一次规则同步的完成时间戳",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubeproxy_sync_proxy_rules_last_timestamp_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "最近一次规则同步的完成时间戳"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188390805,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "service变化引起的规则同步pending数量",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubeproxy_sync_proxy_rules_service_changes_pending",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "service变化引起的规则同步pending数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188732791,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "service变化引起的规则同步总数",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubeproxy_sync_proxy_rules_service_changes_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: counter",
+                "name": "service变化引起的规则同步总数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188496123,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "利用这个指标统计cpu使用率",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "process_cpu_seconds_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: counter",
+                "name": "利用这个指标统计cpu使用率"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788189449726,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "进程可以打开的最大fd数",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_max_fds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "进程可以打开的最大fd数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788189070118,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "进程当前打开的fd数",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_open_fds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "进程当前打开的fd数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788188701830,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "统计内存使用大小",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_resident_memory_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "统计内存使用大小"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788189023212,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "进程启动时间戳",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_start_time_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: gauge",
+                "name": "进程启动时间戳"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788189316284,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "请求 apiserver 的耗时(按照url和verb统计)",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "rest_client_request_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: histogram",
+                "name": "请求 apiserver 的耗时(按照url和verb统计)"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788189025352,
+        "collector": "KubeProxy",
+        "typ": "Kubernetes",
+        "name": "请求 apiserver 的总数(按照code method host统计)",
+        "unit": "",
+        "note": "kube-proxy 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "rest_client_requests_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-proxy 服务自身指标\n类型: counter",
+                "name": "请求 apiserver 的总数(按照code method host统计)"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

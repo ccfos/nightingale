@@ -1,0 +1,2863 @@
+{
+    "name": "Zabbix主机详情仪表盘-增强版",
+    "tags": "zabbix host detail hardware network disk enhanced",
+    "note": "增强版 Zabbix 主机详情，使用 host_name 作为主机变量；兼容 OS 与华为 iBMC 指标，覆盖 CPU、内存、磁盘、网络、硬件和异常状态。",
+    "ident": "",
+    "uuid": 1779358746844001,
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "zbx-host-enhanced-001",
+                "layout": {
+                    "h": 1,
+                    "i": "zbx-host-enhanced-001",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Info / 总览",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-002",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-002",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 0,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "ONLINE",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "value": 30
+                    },
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#F2495C",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#73BF69",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 1,
+                                "to": 1
+                            },
+                            "result": {
+                                "text": "ONLINE",
+                                "color": "#73BF69"
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "match": {
+                                "from": 0,
+                                "to": 0
+                            },
+                            "result": {
+                                "text": "OFFLINE",
+                                "color": "#F2495C"
+                            }
+                        }
+                    ]
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_agent_ping{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-003",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-003",
+                    "isResizable": true,
+                    "w": 9,
+                    "x": 3,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Host",
+                "custom": {
+                    "textMode": "name",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "value": 30
+                    },
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#1F1F24",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name)(zabbix_agent_ping{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-004",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-004",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 12,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "System Health",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 2
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 3
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)({__name__=~\"zabbix_huawei_server_systemHealth|zabbix_system_status\",group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-005",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-005",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 15,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "CPU Usage",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 75
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "(100 - max by(host_name,host,ident)(zabbix_system_cpu_util{group=~\"$group\",host_name=~\"$host\",cpu=\"all\",mode=\"avg1\",type=\"idle\"})) or max by(host_name,host,ident)(zabbix_huawei_server_systemCpuUsage{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-006",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-006",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 18,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Memory Usage",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 75
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)({__name__=~\"zabbix_vm_memory_util|zabbix_vm_memory_utilization|zabbix_huawei_server_systemMemUsage\",group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-007",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-007",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 21,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Problems",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 1
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 5
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "count({__name__=~\"zabbix_.*(status|Status|health|Health|available|Available).*\",group=~\"$group\",host_name=~\"$host\"} != 1)",
+                        "legend": "problems",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-008",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-008",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 4
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Uptime",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "value": 30
+                    },
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "seconds",
+                        "decimals": 0
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)({__name__=~\"zabbix_system_uptime|zabbix_system_hw_uptime|zabbix_system_net_uptime\",group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-009",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-009",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 6,
+                    "y": 4
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Total Memory",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_vm_memory_size{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-010",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-010",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 10,
+                    "y": 4
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "ICMP Latency",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 0.1
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 0.3
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "seconds",
+                        "decimals": 4
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_icmppingsec{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-011",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-011",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 14,
+                    "y": 4
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "ICMP Loss",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 5
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 20
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 2
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_icmppingloss{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-012",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-012",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 18,
+                    "y": 4
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Processes",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 500
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 1000
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_proc_num{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-013",
+                "layout": {
+                    "h": 3,
+                    "i": "zbx-host-enhanced-013",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 21,
+                    "y": 4
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Users",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#5794F2",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_system_users_num{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "zbx-host-enhanced-014",
+                "layout": {
+                    "h": 1,
+                    "i": "zbx-host-enhanced-014",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 7
+                },
+                "name": "CPU / Memory / 系统负载",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-015",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-015",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU / Memory Utilization",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 75
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)({__name__=~\"zabbix_vm_memory_util|zabbix_vm_memory_utilization|zabbix_huawei_server_systemMemUsage\",group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "Memory {{host_name}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "100 - max by(host_name,host,ident)(zabbix_system_cpu_util{group=~\"$group\",host_name=~\"$host\",cpu=\"all\",mode=\"avg1\",type=\"idle\"})",
+                        "legend": "OS CPU {{host_name}}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_huawei_server_systemCpuUsage{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "iBMC CPU {{host_name}}",
+                        "refId": "C"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-016",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-016",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 8
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU Mode Breakdown",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,type)(zabbix_system_cpu_util{group=~\"$group\",host_name=~\"$host\",cpu=\"all\",mode=\"avg1\"})",
+                        "legend": "{{type}}",
+                        "refId": "A"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-017",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-017",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 8
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU Load / Processes",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_system_cpu_load{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "load {{host_name}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_proc_num{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "process {{host_name}}",
+                        "refId": "B"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-018",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-018",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 13
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Memory Utilization",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 75
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)({__name__=~\"zabbix_vm_memory_util|zabbix_vm_memory_utilization|zabbix_huawei_server_systemMemUsage\",group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-019",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-019",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 4,
+                    "y": 13
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Memory Used / Free / Total",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_vm_memory_used{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "used {{host_name}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_vm_memory_free{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "free {{host_name}}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_vm_memory_size{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "total {{host_name}}",
+                        "refId": "C"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-020",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-020",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 13
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Swap Usage",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "value": 34
+                    },
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 50
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "100 - max by(host_name,host,ident)(zabbix_system_swap_pfree{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-021",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-021",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 13
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "CPU IOWait",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "value": 34
+                    },
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 10
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 30
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_system_cpu_util{group=~\"$group\",host_name=~\"$host\",cpu=\"all\",mode=\"avg1\",type=\"iowait\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "zbx-host-enhanced-022",
+                "layout": {
+                    "h": 1,
+                    "i": "zbx-host-enhanced-022",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 18
+                },
+                "name": "Disks / 磁盘与文件系统",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-023",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-023",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 19
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Filesystem Space Utilization",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 80
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description,item_parameters)(zabbix_disk_data{group=~\"$group\",host_name=~\"$host\",description=~\".*Space utilization.*|.*utilization.*|.*使用率.*\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-024",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-024",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 19
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Filesystem Inode Utilization",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 80
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description,item_parameters)(zabbix_vfs_fs_inode{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-025",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-025",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 19
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Disk Read / Write Rate",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "Bps",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_vfs_dev_read_rate{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "read {{description}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_vfs_dev_write_rate{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "write {{description}}",
+                        "refId": "B"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-026",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-026",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 24
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Disk Await",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "ms",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 20
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 50
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_vfs_dev_read_await{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "read await {{description}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_vfs_dev_write_await{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "write await {{description}}",
+                        "refId": "B"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-027",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-027",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 24
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Disk Utilization",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 75
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_vfs_dev_util{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-028",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-028",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 24
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Disk Queue / Busy Time",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_vfs_dev_queue_size{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "queue {{description}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_vfs_dev_read_time_rate{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "read time {{description}}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_vfs_dev_write_time_rate{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "write time {{description}}",
+                        "refId": "C"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "collapsed": true,
+                "id": "zbx-host-enhanced-029",
+                "layout": {
+                    "h": 1,
+                    "i": "zbx-host-enhanced-029",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 29
+                },
+                "name": "Network / 网络",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-030",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-030",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 30
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Network IN",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "area",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "Bps",
+                        "decimals": 2
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_net_if_in{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-031",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-031",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 4,
+                    "y": 30
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Interface Traffic",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "Bps",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description,item_parameters)(zabbix_net_if_in{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "IN {{description}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident,description,item_parameters)(zabbix_net_if_out{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "OUT {{description}}",
+                        "refId": "B"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-032",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-032",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 30
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Network OUT",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "area",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 10485760
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "Bps",
+                        "decimals": 2
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_net_if_out{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-033",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-033",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 30
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Interface Speed",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "Bps",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#5794F2",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_net_if_speed{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-034",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-034",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 35
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Interface Errors / Discards",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 1
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 10
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_net_if_in_errors{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "in errors {{description}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_net_if_out_errors{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "out errors {{description}}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_net_if_in_discards{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "in discards {{description}}",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_net_if_out_discards{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "out discards {{description}}",
+                        "refId": "D"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-035",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-035",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 12,
+                    "y": 35
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "ICMP Quality",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_icmppingsec{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "latency {{host_name}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_icmppingloss{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "loss {{host_name}}",
+                        "refId": "B"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-036",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-036",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 35
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Interface Status",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 2
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 3
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description)(zabbix_net_if_status{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "collapsed": true,
+                "id": "zbx-host-enhanced-037",
+                "layout": {
+                    "h": 1,
+                    "i": "zbx-host-enhanced-037",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 40
+                },
+                "name": "Hardware / 华为服务器与传感器",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-038",
+                "layout": {
+                    "h": 4,
+                    "i": "zbx-host-enhanced-038",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 41
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Power State",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 2
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 3
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_huawei_server_systemPowerState{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "zbx-host-enhanced-039",
+                "layout": {
+                    "h": 4,
+                    "i": "zbx-host-enhanced-039",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 41
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Power Consumption",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "watt",
+                        "decimals": 1
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [],
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_huawei_server_powerConsumption{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{host_name}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "zbx-host-enhanced-040",
+                "layout": {
+                    "h": 4,
+                    "i": "zbx-host-enhanced-040",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 41
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Power Trend",
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "watt",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    },
+                    "valueMappings": []
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.12,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_huawei_server_powerConsumption{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "current {{host_name}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_huawei_server_averagePower{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "average {{host_name}}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max by(host_name,host,ident)(zabbix_huawei_server_peakPower{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "peak {{host_name}}",
+                        "refId": "C"
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-041",
+                "layout": {
+                    "h": 4,
+                    "i": "zbx-host-enhanced-041",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 41
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Fan Speed",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "rpm",
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#5794F2",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description,item_parameters)(zabbix_sensor_fan_speed{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-042",
+                "layout": {
+                    "h": 4,
+                    "i": "zbx-host-enhanced-042",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 41
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Temperature",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "celsius",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 60
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,description,item_parameters)(zabbix_sensor_temp_value{group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-043",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-043",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 45
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Hardware Overall Status",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 2
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 3
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,__name__)({__name__=~\"zabbix_huawei_server_systemHealth|zabbix_huawei_server_cpuEntireStatus|zabbix_huawei_server_fanEntireStatus|zabbix_huawei_server_hardDiskEntireStatus|zabbix_huawei_server_powerSupplyEntireStatus|zabbix_huawei_server_temperatureEntireStatus|zabbix_huawei_server_pCIeDeviceEntireStatus\",group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{__name__}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-044",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-044",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 45
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Sensor Status",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 2
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 3
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,__name__,description,item_parameters)({__name__=~\"zabbix_sensor_fan_status|zabbix_sensor_psu_status|zabbix_sensor_temp_status\",group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "type": "barGauge",
+                "id": "zbx-host-enhanced-045",
+                "layout": {
+                    "h": 5,
+                    "i": "zbx-host-enhanced-045",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 45
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Storage Hardware Status",
+                "custom": {
+                    "baseColor": "#73BF69",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 2
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 3
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max by(host_name,host,ident,__name__,description,item_parameters)({__name__=~\"zabbix_system_hw_diskarray_cache_battery_status|zabbix_system_hw_diskarray_status|zabbix_system_hw_physicaldisk_smart_status|zabbix_system_hw_physicaldisk_status|zabbix_system_hw_virtualdisk_state|zabbix_system_hw_virtualdisk_status\",group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "{{description}}",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ],
+                "overrides": []
+            },
+            {
+                "collapsed": true,
+                "id": "zbx-host-enhanced-046",
+                "layout": {
+                    "h": 1,
+                    "i": "zbx-host-enhanced-046",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 50
+                },
+                "name": "Problems / 异常与原始状态",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "tableNG",
+                "id": "zbx-host-enhanced-047",
+                "layout": {
+                    "h": 7,
+                    "i": "zbx-host-enhanced-047",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 51
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Problems / 异常状态指标",
+                "custom": {
+                    "showHeader": true,
+                    "filterable": true,
+                    "sortColumn": "指标",
+                    "cellOptions": {
+                        "type": "color-background"
+                    }
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 1
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 2
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "值"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "color-background"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 2
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "transformationsNG": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "fields": [
+                                "__time",
+                                "__name__",
+                                "host_name",
+                                "host",
+                                "description",
+                                "item_parameters",
+                                "__value_#A"
+                            ],
+                            "excludeByName": {
+                                "__time": true
+                            },
+                            "renameByName": {
+                                "__name__": "指标",
+                                "host_name": "主机",
+                                "host": "IP",
+                                "description": "问题",
+                                "item_parameters": "参数",
+                                "__value_#A": "值"
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "max by(__name__,host_name,host,ident,description,item_parameters)({__name__=~\"zabbix_.*(status|Status|health|Health|available|Available).*\",group=~\"$group\",host_name=~\"$host\"} != 1)",
+                        "legend": "__auto",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "tableNG",
+                "id": "zbx-host-enhanced-048",
+                "layout": {
+                    "h": 8,
+                    "i": "zbx-host-enhanced-048",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 58
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Hardware Raw Status / 硬件原始状态",
+                "custom": {
+                    "showHeader": true,
+                    "filterable": true,
+                    "sortColumn": "应用",
+                    "cellOptions": {
+                        "type": "color-background"
+                    }
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 1
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 2
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "值"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "color-background"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "#73BF69",
+                                        "value": null,
+                                        "type": "base"
+                                    },
+                                    {
+                                        "color": "#F2495C",
+                                        "value": 2
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "transformationsNG": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "fields": [
+                                "__time",
+                                "__name__",
+                                "Application",
+                                "host_name",
+                                "host",
+                                "description",
+                                "item_parameters",
+                                "__value_#A"
+                            ],
+                            "excludeByName": {
+                                "__time": true
+                            },
+                            "renameByName": {
+                                "__name__": "指标",
+                                "Application": "应用",
+                                "host_name": "主机",
+                                "host": "IP",
+                                "description": "描述",
+                                "item_parameters": "参数",
+                                "__value_#A": "值"
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "max by(__name__,host_name,host,ident,Application,description,item_parameters)({__name__=~\"zabbix_huawei_server|zabbix_huawei_server_cpuEntireStatus|zabbix_huawei_server_fanEntireStatus|zabbix_huawei_server_hardDiskEntireStatus|zabbix_huawei_server_pCIeDeviceEntireStatus|zabbix_huawei_server_powerSupplyEntireStatus|zabbix_huawei_server_systemHealth|zabbix_huawei_server_systemPowerState|zabbix_huawei_server_temperatureEntireStatus|zabbix_sensor_fan_status|zabbix_sensor_psu_status|zabbix_sensor_temp_status|zabbix_system_hw_diskarray_cache_battery_status|zabbix_system_hw_diskarray_status|zabbix_system_hw_physicaldisk_smart_status|zabbix_system_hw_physicaldisk_status|zabbix_system_hw_virtualdisk_state|zabbix_system_hw_virtualdisk_status\",group=~\"$group\",host_name=~\"$host\"})",
+                        "legend": "__auto",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "hide": false,
+                "name": "datasource",
+                "type": "datasource",
+                "value": 0,
+                "options": []
+            },
+            {
+                "name": "group",
+                "label": "业务组",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(zabbix_agent_ping, group)",
+                "initialized": true,
+                "options": [],
+                "multi": false,
+                "allOption": true,
+                "allValue": ".*"
+            },
+            {
+                "name": "host",
+                "label": "主机",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(zabbix_agent_ping{group=~\"$group\"}, host_name)",
+                "initialized": true,
+                "options": [],
+                "multi": false,
+                "allOption": false,
+                "allValue": "",
+                "value": ""
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

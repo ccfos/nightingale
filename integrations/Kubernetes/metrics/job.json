@@ -1,0 +1,338 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788205477802,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "有关job的信息",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_info",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "有关job的信息"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788205394598,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "Kubernetes标签转换为Prometheus标签",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_labels",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "Kubernetes标签转换为Prometheus标签"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788205702720,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "有关job所有者的信息",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_owner",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "有关job所有者的信息"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206280749,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "在任何给定时间，job应运行的pod的最大期望数量",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_spec_parallelism",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "在任何给定时间，job应运行的pod的最大期望数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206210111,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "运行job所需的成功完成的Pod数量",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_spec_completions",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "运行job所需的成功完成的Pod数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788205670006,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "在系统尝试终止job之前，作业相对于startTime的活动持续时间（以秒为单位）",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_spec_active_deadline_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "在系统尝试终止job之前，作业相对于startTime的活动持续时间（以秒为单位）"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206171286,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "正在运行的pod数",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_status_active",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "正在运行的pod数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206394865,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "成功reached Phase的pod数量",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_status_succeeded",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "成功reached Phase的pod数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206543964,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "Failed reached Phase的pod数量",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_status_failed",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "Failed reached Phase的pod数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206436633,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "StartTime表示作业Job Manager job的时间",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_status_start_time",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "StartTime表示作业Job Manager job的时间"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206635606,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "CompletionTime表示job完成的时间",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_status_completion_time",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "CompletionTime表示job完成的时间"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206623236,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "job已完成执行",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_complete",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "job已完成执行"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206275339,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "job执行失败",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_failed",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "job执行失败"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788206286510,
+        "collector": "Job",
+        "typ": "Kubernetes",
+        "name": "Unix创建时间戳",
+        "unit": "",
+        "note": "kube-state-metrics 的job指标",
+        "lang": "zh_CN",
+        "expression": "kube_job_created",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的job指标",
+                "name": "Unix创建时间戳"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

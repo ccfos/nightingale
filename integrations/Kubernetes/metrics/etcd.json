@@ -1,0 +1,530 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788197549529,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd leader 表示 ，1 leader 0 learner",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "etcd_server_is_leader",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: gauge",
+                "name": "etcd leader 表示 ，1 leader 0 learner"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198427788,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd server 健康检查成功次数",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_server_health_success",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "etcd server 健康检查成功次数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788197875179,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd server 健康检查失败次数",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_server_health_failures",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "etcd server 健康检查失败次数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788197923076,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "是否启动数据压缩，1表示压缩，0表示没有启动压缩",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "etcd_disk_defrag_inflight",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: gauge",
+                "name": "是否启动数据压缩，1表示压缩，0表示没有启动压缩"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198244446,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "是否再快照中，1 快照中，0 没有",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "etcd_server_snapshot_apply_in_progress_total",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: gauge",
+                "name": "是否再快照中，1 快照中，0 没有"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198586080,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "集群leader切换的次数",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_server_leader_changes_seen_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "集群leader切换的次数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198004445,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "grpc 调用总数",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "grpc_server_handled_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "grpc 调用总数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198325153,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd wal同步耗时",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "etcd_disk_wal_fsync_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: histogram",
+                "name": "etcd wal同步耗时"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198600458,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd proposal（提议）失败总次数(proposal就是完成raft协议的一次请求）",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_server_proposals_failed_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "etcd proposal（提议）失败总次数(proposal就是完成raft协议的一次请求）"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198401492,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd proposal（提议）pending总次数（proposal就是完成raft协议的一次请求）",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "etcd_server_proposals_pending",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: gauge",
+                "name": "etcd proposal（提议）pending总次数（proposal就是完成raft协议的一次请求）"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198768102,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "读取索引失败的次数统计(v3索引为所有key都建了索引，索引是为了加快range操作)",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_server_read_indexes_failed_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "读取索引失败的次数统计(v3索引为所有key都建了索引，索引是为了加快range操作)"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198914276,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "读取到过期索引或者读取超时的次数",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_server_slow_read_indexes_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "读取到过期索引或者读取超时的次数"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788199339744,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "当前后端的存储quota（db大小的上限）通过参数quota-backend-bytes调整大小，默认2G，官方建议不超过8G",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "etcd_server_quota_backend_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: gauge",
+                "name": "当前后端的存储quota（db大小的上限）通过参数quota-backend-bytes调整大小，默认2G，官方建议不超过8G"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788199453008,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd 分配的db大小（使用量大小+空闲大小）",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "etcd_mvcc_db_total_size_in_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: gauge",
+                "name": "etcd 分配的db大小（使用量大小+空闲大小）"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788199507273,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd db的使用量大小",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "etcd_mvcc_db_total_size_in_use_in_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: gauge",
+                "name": "etcd db的使用量大小"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198737884,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd执行range的数量",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_mvcc_range_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "etcd执行range的数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788199141639,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd执行put的数量",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_mvcc_put_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "etcd执行put的数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788199050547,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd实例执行事务的数量",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_mvcc_txn_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "etcd实例执行事务的数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198928362,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd实例执行delete操作的数量",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "etcd_mvcc_delete_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "etcd实例执行delete操作的数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198898171,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd cpu使用量",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "process_cpu_seconds_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: counter",
+                "name": "etcd cpu使用量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788198995846,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd 内存使用量",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_resident_memory_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: gauge",
+                "name": "etcd 内存使用量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788199479078,
+        "collector": "Etcd",
+        "typ": "Kubernetes",
+        "name": "etcd 打开的fd数目",
+        "unit": "",
+        "note": "etcd 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_open_fds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "etcd 服务自身指标\n类型: gauge",
+                "name": "etcd 打开的fd数目"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

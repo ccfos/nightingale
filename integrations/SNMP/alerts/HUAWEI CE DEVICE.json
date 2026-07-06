@@ -1,0 +1,452 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Abnormal fan status",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "count_over_time(snmp_h3c_system_fan_status == 1[3m]) == count_over_time(snmp_h3c_system_fan_status[3m]) or count_over_time(snmp_h3c_system_fan_present == 1[3m]) == count_over_time(snmp_h3c_system_fan_present[3m])",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "template=huawei_ce_device_status",
+            "Applications=Fans"
+        ],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652228326000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Abnormal power status",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "count_over_time(snmp_h3c_system_power_status == 1[3m]) == count_over_time(snmp_h3c_system_power_status[3m]) or count_over_time(snmp_h3c_system_power_present == 1[3m]) == count_over_time(snmp_h3c_system_power_present[3m])",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "template=huawei_ce_device_status",
+            "Applications=Power"
+        ],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652258097000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Abnormal temperature",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "min_over_time(snmp_h3c_system_temperature_value[3m]) \u003e70",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "template=huawei_ce_device_status",
+            "Applications=Temperature"
+        ],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652261489000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "CPU Usage Over 70%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "min_over_time(snmp_huawei_system_cpuuse[3m] offset 0m) \u003e70",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "template=huawei_ce_device_status",
+            "Applications=CPU"
+        ],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652273734000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Memory Usage Over 70%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "min_over_time(snmp_huawei_system_memuse[3m] offset 0m) \u003e70",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "template=huawei_ce_device_status",
+            "Applications=Memory"
+        ],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652322390000
+    }
+]

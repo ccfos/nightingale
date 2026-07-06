@@ -1,9 +1,23 @@
 # # collect interval
 # interval = 15
 
-enable=false # 设置为true 打开采集
-#unit_include=".+"
-#unit_exclude=""
-enable_start_time_metrics=true #是否采集service unit的启动时间信息 单位秒
-enable_task_metrics=true # 是否采集service unit task的metrics
-enable_restarts_metrics=true #是否采集service unit重启的次数信息
+# 是否启用 systemd 插件
+enable = true
+
+# 包含的 unit 正则表达式，默认为 ".+"（所有unit）
+unit_include = '''.+'''
+
+# 排除的 unit 正则表达式，默认排除 automount、device、mount、scope、slice 类型
+unit_exclude = '''.+\.(automount|device|mount|scope|slice)'''
+
+# 是否采集 service unit 的启动时间信息（单位：秒）
+enable_start_time_metrics = true
+
+# 是否采集 service unit task 的 metrics
+enable_task_metrics = true
+
+# 是否采集 service unit 重启次数信息
+enable_restarts_metrics = true
+
+# 是否使用私有 systemd 连接
+systemd_private = true

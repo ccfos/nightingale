@@ -1,0 +1,408 @@
+[
+    {
+        "id": 1,
+        "uuid": 1719305153888541015,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "CRC错误计数",
+        "unit": "",
+        "note": "硬盘数据传输过程中循环冗余校验（CRC）失败的次数。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_crc_error_count",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "CRC错误计数",
+                "note": "硬盘数据传输过程中循环冗余校验（CRC）失败的次数，反映数据传输链路可靠性。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART CRC Error Count",
+                "note": "The number of Cyclic Redundancy Check (CRC) failures during hard disk data transmission, reflecting the reliability of the data transmission link."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 2,
+        "uuid": 1719305153888541016,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "端到端错误检测计数",
+        "unit": "",
+        "note": "硬盘内部数据传输的端到端校验失败次数，关联固件或物理存储单元健康度。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_end_to_end_error_detection_count",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "端到端错误检测计数",
+                "note": "硬盘内部数据传输的端到端校验失败次数，关联硬盘固件或物理存储单元健康度。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART End-to-End Error Detection Count",
+                "note": "The number of end-to-end verification failures in internal hard disk data transmission, associated with the health of hard disk firmware or physical storage units."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 3,
+        "uuid": 1719305153888541017,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "擦除失败计数",
+        "unit": "",
+        "note": "固态硬盘（SSD）擦除闪存块时失败的次数，预示闪存芯片老化。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_erase_fail_count",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "擦除失败计数",
+                "note": "固态硬盘（SSD）擦除闪存块时失败的次数，过多可能预示闪存芯片老化或坏块增多。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Erase Fail Count",
+                "note": "The number of failures when a Solid State Drive (SSD) erases flash memory blocks; an excessive number may indicate flash chip aging or an increase in bad blocks."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 4,
+        "uuid": 1719305153888541018,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "主机读取次数",
+        "unit": "",
+        "note": "操作系统从硬盘读取数据的总次数，属于硬盘使用量统计指标。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_host_reads",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "主机读取次数",
+                "note": "操作系统从硬盘读取数据的总次数，属于硬盘使用量统计指标，无直接故障预警意义。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Host Reads Count",
+                "note": "The total number of times the operating system reads data from the hard disk, which is a statistical indicator of hard disk usage with no direct fault warning significance."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 5,
+        "uuid": 1719305153888541019,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "介质磨损百分比",
+        "unit": "%",
+        "note": "固态硬盘（SSD）专用指标，反映闪存芯片的磨损程度，100%表示完全磨损。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_media_wear_percentage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "介质磨损百分比",
+                "note": "固态硬盘（SSD）专用核心指标，反映闪存芯片的磨损程度，数值越接近100%寿命越短。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Media Wear Percentage",
+                "note": "A core indicator dedicated to Solid State Drives (SSDs) that reflects the wear level of flash memory chips; the closer the value is to 100%, the shorter the lifespan."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 6,
+        "uuid": 1719305153888541020,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "PLL失锁计数",
+        "unit": "",
+        "note": "锁相环（PLL）时钟同步失锁的次数，异常可能导致数据传输不稳定。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_pll_lock_loss_count",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "PLL失锁计数",
+                "note": "硬盘时钟同步模块（锁相环PLL）失锁的次数，失锁会导致数据传输时序错乱。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART PLL Lock Loss Count",
+                "note": "The number of times the hard disk clock synchronization module (Phase-Locked Loop, PLL) loses lock, which can cause data transmission timing errors."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 7,
+        "uuid": 1719305153888541021,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "编程失败计数",
+        "unit": "",
+        "note": "固态硬盘（SSD）向闪存块写入数据时失败的次数，反映闪存寿命。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_program_fail_count",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "编程失败计数",
+                "note": "固态硬盘（SSD）向闪存块写入数据（编程操作）时失败的次数，是闪存健康度核心指标。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Program Fail Count",
+                "note": "The number of failures when a Solid State Drive (SSD) writes data (program operation) to flash memory blocks, which is a core indicator of flash memory health."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 8,
+        "uuid": 1719305153888541022,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "重试缓冲区溢出计数",
+        "unit": "",
+        "note": "硬盘读写失败后重试时，缓冲区溢出的次数，预示读写性能下降。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_retry_buffer_overflow_count",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "重试缓冲区溢出计数",
+                "note": "硬盘读写操作失败后自动重试时，数据缓冲区出现溢出的次数，预示硬盘读写性能下降或硬件故障。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Retry Buffer Overflow Count",
+                "note": "The number of times the data buffer overflows when the hard disk automatically retries after a read/write failure, indicating a decline in hard disk read/write performance or hardware failure."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 9,
+        "uuid": 1719305153888541023,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "热节流状态",
+        "unit": "",
+        "note": "硬盘因温度过高触发自动降速保护的状态，1为已触发，0为未触发。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_thermal_throttle_status",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "热节流状态",
+                "note": "硬盘因温度过高触发自动降速保护的状态（1=已触发，0=未触发），触发后会导致读写速度变慢。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Thermal Throttle Status",
+                "note": "The state where the hard disk triggers automatic speed reduction protection due to high temperature (1=triggered, 0=not triggered), which will cause slow read/write speeds after triggering."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 10,
+        "uuid": 1719305153888541024,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "定时工作负载计时器",
+        "unit": "s",
+        "note": "记录硬盘在特定负载模式下的运行累计时间，评估硬盘工作强度。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_timed_workload_timer",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "定时工作负载计时器",
+                "note": "累计硬盘在预设负载模式下的运行时间，用于评估硬盘长期工作强度，辅助判断磨损速率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Timed Workload Timer",
+                "note": "Accumulates the operating time of the hard disk in a preset load mode, used to evaluate the long-term working intensity of the hard disk and assist in judging the wear rate."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 11,
+        "uuid": 1719305153888541025,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "磨损均衡计数",
+        "unit": "",
+        "note": "固态硬盘（SSD）磨损均衡算法的执行次数，延长硬盘整体寿命。",
+        "lang": "zh_CN",
+        "expression": "smart_attribute_wear_leveling_count",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "磨损均衡计数",
+                "note": "固态硬盘（SSD）专用指标，记录磨损均衡算法的执行次数，确保各闪存块磨损均匀以延长寿命。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Wear Leveling Count",
+                "note": "An indicator dedicated to Solid State Drives (SSDs) that records the number of executions of the wear leveling algorithm to ensure uniform wear of flash memory blocks and extend lifespan."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 12,
+        "uuid": 1719305153888541026,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "设备退出状态",
+        "unit": "",
+        "note": "硬盘SMART检测的退出状态码，0为正常完成，非0为检测异常。",
+        "lang": "zh_CN",
+        "expression": "smart_device_exit_status",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "设备退出状态",
+                "note": "硬盘SMART自检的退出状态码，0=自检正常完成，非0值表示自检中断或异常。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Device Exit Status",
+                "note": "The exit status code of the hard disk SMART self-test; 0 means the self-test is completed normally, and a non-zero value indicates self-test interruption or abnormality."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 13,
+        "uuid": 1719305153888541027,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "设备健康状态",
+        "unit": "",
+        "note": "硬盘整体健康状态标识，1为健康，0为不健康。",
+        "lang": "zh_CN",
+        "expression": "smart_device_health_ok",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "设备健康状态",
+                "note": "硬盘整体健康状态标识，1=健康（无故障预警），0=不健康（存在潜在故障）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Device Health Status",
+                "note": "The overall health status identifier of the hard disk; 1=healthy (no fault warning), 0=unhealthy (potential faults exist)."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 14,
+        "uuid": 1719305153888541028,
+        "collector": "categraf",
+        "typ": "SMART",
+        "name": "设备温度",
+        "unit": "℃",
+        "note": "硬盘当前运行温度，主流硬盘安全工作范围为0-60℃。",
+        "lang": "zh_CN",
+        "expression": "smart_device_temp_c",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "设备温度",
+                "note": "硬盘当前运行温度（单位℃），主流硬盘安全工作范围为0-60℃，长期超温会加速硬件老化。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SMART Device Temperature",
+                "note": "The current operating temperature of the hard disk (in ℃); the safe operating range for mainstream hard disks is 0-60℃, and prolonged overheating will accelerate hardware aging."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

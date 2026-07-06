@@ -1,0 +1,1380 @@
+{
+    "name": "Redis社区版-监控大盘-读写分离版",
+    "tags": "Redis社区版读写分离版 阿里云 云监控 Beta",
+    "ident": "",
+    "uuid": 1760978698274000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "type": "datasource",
+                "name": "datasource",
+                "definition": "prometheus",
+                "hide": false
+            },
+            {
+                "type": "custom",
+                "name": "Top_Number",
+                "definition": "5,10,20,30",
+                "allOption": false,
+                "multi": false,
+                "hide": false
+            },
+            {
+                "type": "query",
+                "name": "RegionID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_SplitrwCpuUsage, regionId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "Proxy_InstanceID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_SplitrwProxyCpuUsage{regionId=~\"$RegionID\"}, instanceId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "Proxy_NodeID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_SplitrwProxyCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"}, nodeId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "Node_InstanceID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_SplitrwCpuUsage{regionId=~\"$RegionID\"}, instanceId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "Node_NodeID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_SplitrwCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"},  nodeId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.1.0",
+                "id": "622b9e5f-cb0d-4260-8d85-2e3407769068",
+                "type": "barGauge",
+                "name": "节点资源分配一览",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "622b9e5f-cb0d-4260-8d85-2e3407769068"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "count(count by (instanceId) (AliyunKvstore_SplitrwProxyCpuUsage))",
+                        "legend": "Proxy实例数量"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "count by (userId) (AliyunKvstore_SplitrwProxyCpuUsage)",
+                        "legend": "Proxy节点数量"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "count(count by (instanceId) (AliyunKvstore_SplitrwCpuUsage))",
+                        "legend": "Node实例数量"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "count by (userId) (AliyunKvstore_SplitrwProxyCpuUsage)",
+                        "legend": "Node节点数量"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "817e6bd3-fd8a-4420-9c6e-7ad9976c95f6",
+                "type": "row",
+                "name": "Proxy监控指标-Top$Top_Number",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 6,
+                    "i": "817e6bd3-fd8a-4420-9c6e-7ad9976c95f6"
+                },
+                "panels": []
+            },
+            {
+                "version": "3.1.0",
+                "id": "12ee5f93-8bfb-4445-9e71-7f07ab790719",
+                "type": "unknown",
+                "name": "proxy-CPU使用率（%）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 7,
+                    "i": "12ee5f93-8bfb-4445-9e71-7f07ab790719"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwProxyCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 85
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {},
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "ce26b573-f567-4ecd-b1c4-90ddf4d4ad19",
+                "type": "stat",
+                "name": "proxy-总QPS（个）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 7,
+                    "i": "ce26b573-f567-4ecd-b1c4-90ddf4d4ad19"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwProxyTotalQps{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 25000
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 50000
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "textMode": "value",
+                    "calc": "last",
+                    "colorMode": "value"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "85d2f065-e20e-4550-bb8d-4d7945d49fab",
+                "type": "barGauge",
+                "name": "proxy-平均响应时间（us）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 14,
+                    "i": "85d2f065-e20e-4550-bb8d-4d7945d49fab"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwProxyAvgRt{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "44ec21c4-3596-4b47-8f6c-9508b47019aa",
+                "type": "barGauge",
+                "name": "proxy-入流量速率（bits/s）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 14,
+                    "i": "44ec21c4-3596-4b47-8f6c-9508b47019aa"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwProxyIntranetIn{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "d49c8c98-5f27-4bd4-bbb7-615c950ccdfb",
+                "type": "barGauge",
+                "name": "proxy-出流量速率（bits/s）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 14,
+                    "i": "d49c8c98-5f27-4bd4-bbb7-615c950ccdfb"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwProxyIntranetOut{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "3b78aa6b-e52d-4ea8-addd-7d9da66e4561",
+                "type": "row",
+                "name": "Node监控指标-Top$Top_Number",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 21,
+                    "i": "3b78aa6b-e52d-4ea8-addd-7d9da66e4561"
+                },
+                "panels": []
+            },
+            {
+                "version": "3.1.0",
+                "id": "1c0e06be-3891-478d-8e9d-f24bdafb80b3",
+                "type": "unknown",
+                "name": "node-CPU使用率（%）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 22,
+                    "i": "1c0e06be-3891-478d-8e9d-f24bdafb80b3"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 85
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {},
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "59fe6b63-f28a-4e4a-8f4f-a5280a719f97",
+                "type": "stat",
+                "name": "node-内存使用率（%）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 22,
+                    "i": "59fe6b63-f28a-4e4a-8f4f-a5280a719f97"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwMemoryUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 60
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 75
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "textMode": "value",
+                    "calc": "last",
+                    "colorMode": "value"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "1228006c-dc9d-4abd-8d34-01f4d8fb6c3d",
+                "type": "barGauge",
+                "name": "node-平均响应时间（us）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 28,
+                    "i": "1228006c-dc9d-4abd-8d34-01f4d8fb6c3d"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwAvgRt{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "4e366ea8-4aab-4558-8d7d-e0ab34907965",
+                "type": "barGauge",
+                "name": "node-最大响应时间（us）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 28,
+                    "i": "4e366ea8-4aab-4558-8d7d-e0ab34907965"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwMaxRt{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "06670750-8f4c-4108-b87e-f7ba23f67fd6",
+                "type": "barGauge",
+                "name": "node-QPS使用率（%）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 28,
+                    "i": "06670750-8f4c-4108-b87e-f7ba23f67fd6"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwQPSUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "3fa9f1b4-ee86-4098-a314-a8343a575b24",
+                "type": "unknown",
+                "name": "node-数据节点流入带宽情况-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 35,
+                    "i": "3fa9f1b4-ee86-4098-a314-a8343a575b24"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwIntranetIn{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwIntranetInRatio{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 50
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 75
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {},
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "6cc79719-53ae-4a08-a0ac-32b8f1664815",
+                "type": "unknown",
+                "name": "node-数据节点流出带宽情况-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 35,
+                    "i": "6cc79719-53ae-4a08-a0ac-32b8f1664815"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwIntranetOut{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "topk($Top_Number, AliyunKvstore_SplitrwIntranetOutRatio{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 50
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 75
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {},
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "8a4befcb-4180-4534-9a6b-669c7c4f69e8",
+                "type": "row",
+                "name": "详细监控指标",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 41,
+                    "i": "8a4befcb-4180-4534-9a6b-669c7c4f69e8"
+                },
+                "panels": []
+            },
+            {
+                "version": "3.1.0",
+                "id": "aa11e3da-601f-4623-9491-bea7a1b33b36",
+                "type": "timeseries",
+                "name": "CPU使用率（%）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 0,
+                    "y": 42,
+                    "i": "aa11e3da-601f-4623-9491-bea7a1b33b36"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_SplitrwCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "2984ef8a-0479-4fd6-b663-24883bfa5494",
+                "type": "timeseries",
+                "name": "内存使用率（%）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 6,
+                    "y": 42,
+                    "i": "2984ef8a-0479-4fd6-b663-24883bfa5494"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_SplitrwMemoryUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "346f1030-454a-4855-ba78-18ac7972517b",
+                "type": "timeseries",
+                "name": "响应时间（us）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 12,
+                    "y": 42,
+                    "i": "346f1030-454a-4855-ba78-18ac7972517b"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_SplitrwAvgRt{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "1502966e-c4cd-422f-8bf7-8d572d887a6a",
+                "type": "timeseries",
+                "name": "QPS（个）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 18,
+                    "y": 42,
+                    "i": "1502966e-c4cd-422f-8bf7-8d572d887a6a"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_SplitrwUsedQPS{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "ac659491-cfe9-4d91-9f69-564cc80420ab",
+                "type": "timeseries",
+                "name": "命中率（%）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 0,
+                    "y": 50,
+                    "i": "ac659491-cfe9-4d91-9f69-564cc80420ab"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_SplitrwHitRate{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "4309dc6d-7cad-4386-9148-d738c55cec22",
+                "type": "timeseries",
+                "name": "连接数使用率（%）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 6,
+                    "y": 50,
+                    "i": "4309dc6d-7cad-4386-9148-d738c55cec22"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_SplitrwConnectionUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "ab15a291-c813-49c2-803b-6e9df902a6e2",
+                "type": "timeseries",
+                "name": "流入带宽（KByte/s）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 12,
+                    "y": 50,
+                    "i": "ab15a291-c813-49c2-803b-6e9df902a6e2"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_SplitrwIntranetIn{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "4bddaffc-6f9a-45e1-a1ac-247f0a2641ff",
+                "type": "timeseries",
+                "name": "流出带宽（KByte/s）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 18,
+                    "y": 50,
+                    "i": "4bddaffc-6f9a-45e1-a1ac-247f0a2641ff"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_SplitrwIntranetOut{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "4a372aec-01a7-4ab8-b49a-e9f23f425826",
+                "type": "unknown",
+                "name": "节点详情",
+                "links": [],
+                "layout": {
+                    "h": 11,
+                    "w": 24,
+                    "x": 0,
+                    "y": 58,
+                    "i": "4a372aec-01a7-4ab8-b49a-e9f23f425826"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_SplitrwCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunKvstore_SplitrwMemoryUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunKvstore_SplitrwAvgRt{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunKvstore_SplitrwIntranetIn{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "AliyunKvstore_SplitrwIntranetOut{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {},
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            }
+        ]
+    }
+}

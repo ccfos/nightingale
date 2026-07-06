@@ -1,0 +1,248 @@
+[
+    {
+      "cate": "prometheus",
+      "name": "SMART设备健康状态异常",
+      "note": "硬盘自身检测的整体健康状态为不健康，存在严重故障风险，需立即处理",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 60,
+      "rule_config": {
+        "inhibit": false,
+        "queries": [
+          {
+            "keys": {
+              "labelKey": "",
+              "metricKey": "",
+              "valueKey": ""
+            },
+            "prom_ql": "smart_device_health_ok == 0",
+            "severity": 1,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1719305153888541029,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 30s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 0
+    },
+    {
+      "cate": "prometheus",
+      "name": "SSD介质磨损百分比≥90%",
+      "note": "SSD闪存芯片磨损程度接近耗尽，随时可能发生故障，需立即备份数据并更换硬盘",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 60,
+      "rule_config": {
+        "inhibit": false,
+        "queries": [
+          {
+            "keys": {
+              "labelKey": "",
+              "metricKey": "",
+              "valueKey": ""
+            },
+            "prom_ql": "smart_attribute_media_wear_percentage >= 90",
+            "severity": 1,
+            "unit": "%"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1719305153888541030,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 30s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 0
+    },
+    {
+      "cate": "prometheus",
+      "name": "硬盘温度超过65℃",
+      "note": "硬盘运行温度过高，会加速硬件老化甚至导致直接故障，需立即检查散热",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 180,
+      "rule_config": {
+        "inhibit": false,
+        "queries": [
+          {
+            "keys": {
+              "labelKey": "",
+              "metricKey": "",
+              "valueKey": ""
+            },
+            "prom_ql": "smart_device_temp_c > 65",
+            "severity": 1,
+            "unit": "℃"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1719305153888541031,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 30s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 0
+    },
+    {
+      "cate": "prometheus",
+      "name": "CRC错误计数1小时内持续增长",
+      "note": "数据传输链路CRC校验失败次数增加，可能是接口、线缆或硬盘控制器故障前兆",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 3600,
+      "rule_config": {
+        "inhibit": false,
+        "queries": [
+          {
+            "keys": {
+              "labelKey": "",
+              "metricKey": "",
+              "valueKey": ""
+            },
+            "prom_ql": "increase(smart_attribute_crc_error_count[1h]) > 0",
+            "severity": 1,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1719305153888541032,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 30s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 0
+    },
+    {
+      "cate": "prometheus",
+      "name": "SSD擦除失败计数增长",
+      "note": "SSD闪存块擦除失败，意味着闪存芯片老化，存在数据写入故障风险",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 60,
+      "rule_config": {
+        "inhibit": false,
+        "queries": [
+          {
+            "keys": {
+              "labelKey": "",
+              "metricKey": "",
+              "valueKey": ""
+            },
+            "prom_ql": "increase(smart_attribute_erase_fail_count[1h]) > 0",
+            "severity": 1,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1719305153888541033,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 30s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 0
+    },
+    {
+      "cate": "prometheus",
+      "name": "SSD编程失败计数增长",
+      "note": "SSD闪存块写入失败，闪存芯片健康度急剧下降，需立即备份数据",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 60,
+      "rule_config": {
+        "inhibit": false,
+        "queries": [
+          {
+            "keys": {
+              "labelKey": "",
+              "metricKey": "",
+              "valueKey": ""
+            },
+            "prom_ql": "increase(smart_attribute_program_fail_count[1h]) > 0",
+            "severity": 1,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 60,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1719305153888541034,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 30s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 0
+    }
+  ]

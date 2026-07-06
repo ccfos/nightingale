@@ -1,0 +1,3125 @@
+{
+    "name": "华为云ECS主机监控仪表盘",
+    "tags": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": false,
+                "id": "082174d2-a476-4526-9942-34e799b3f6db",
+                "layout": {
+                    "h": 1,
+                    "i": "082174d2-a476-4526-9942-34e799b3f6db",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "CPU",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象当前Nice进程CPU使用率",
+                        "id": "c4f558ca-3d91-4116-93c6-8c72217b9373",
+                        "layout": {
+                            "h": 7,
+                            "i": "c4f558ca-3d91-4116-93c6-8c72217b9373",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 1
+                        },
+                        "maxPerRow": 4,
+                        "name": "Nice进程CPU使用率",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_cpu_usage_nice{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象当前iowait状态占用CPU的比率",
+                        "id": "62f5492f-3542-4dff-8bf7-03c48fcb57b9",
+                        "layout": {
+                            "h": 7,
+                            "i": "de7179ae-050e-47b9-ba49-386b55aa71e5",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 8,
+                            "y": 1
+                        },
+                        "maxPerRow": 4,
+                        "name": "iowait状态占比",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_cpu_usage_iowait{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象当前CPU空闲时间占比",
+                        "id": "fed12bf7-d35d-43c6-b5b2-ee03faf82918",
+                        "layout": {
+                            "h": 7,
+                            "i": "a9c8541f-f9dd-48af-a193-4faeaaa4d775",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 16,
+                            "y": 1
+                        },
+                        "maxPerRow": 4,
+                        "name": "CPU空闲时间占比",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_cpu_usage_idle{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象当前用户空间占用CPU使用率",
+                        "id": "5fb91ff9-0110-466d-a41a-404a9231e23e",
+                        "layout": {
+                            "h": 7,
+                            "i": "bd5c399f-f0e3-44cf-a7cd-870a1486bf48",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 8
+                        },
+                        "maxPerRow": 4,
+                        "name": "用户空间CPU使用率",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_cpu_usage_user{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象当前内核空间占用CPU使用率",
+                        "id": "7191532c-ca72-4638-8ac6-09051e180ac4",
+                        "layout": {
+                            "h": 7,
+                            "i": "beaed6bf-7fdc-4ad7-bf26-f858a1ddf272",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 8,
+                            "y": 8
+                        },
+                        "maxPerRow": 4,
+                        "name": "内核空间CPU使用率",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_cpu_usage_system{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象其他占用CPU使用率",
+                        "id": "a00e22f7-7f0f-4fdf-9cfa-872438f688f2",
+                        "layout": {
+                            "h": 7,
+                            "i": "27a89391-86c4-48d9-a1bf-6a7123d94576",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 16,
+                            "y": 8
+                        },
+                        "maxPerRow": 4,
+                        "name": "其他CPU使用率",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_cpu_usage_other{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象当前CPU使用率",
+                        "id": "6ac07243-1253-4a7b-bd57-19219b22467f",
+                        "layout": {
+                            "h": 7,
+                            "i": "475560b8-e64d-4c67-af4a-8053bd68cf93",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 15
+                        },
+                        "maxPerRow": 4,
+                        "name": "CPU使用率",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_cpu_usage{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象当前CPU处理软中断时间占用CPU的比率.",
+                        "id": "84dd8d9b-81ed-4ef8-bb64-321fd40e1a7d",
+                        "layout": {
+                            "h": 7,
+                            "i": "92b1d1c4-e51c-4891-a217-bf1ee0688a66",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 8,
+                            "y": 15
+                        },
+                        "maxPerRow": 4,
+                        "name": "CPU软中断时间占比",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_cpu_usage_softirq{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象当前CPU处理中断用时占用CPU的比率\n",
+                        "id": "4ca467a9-3efa-4236-a637-0c329c3ce348",
+                        "layout": {
+                            "h": 7,
+                            "i": "9133d7fb-d827-4515-94df-c6d1c34efaff",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 16,
+                            "y": 15
+                        },
+                        "maxPerRow": 4,
+                        "name": "CPU中断时间占比",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_cpu_usage_irq{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象过去1分钟的CPU单核的平均负载\n",
+                        "id": "49d5d28b-aa28-4d60-8297-da889c1f7f13",
+                        "layout": {
+                            "h": 7,
+                            "i": "0478a281-0f9d-4992-83be-1632dd4153b5",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 22
+                        },
+                        "maxPerRow": 4,
+                        "name": "1分钟单核平均负载",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": ""
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_load_average1{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象过去5分钟的CPU单核的平均负载\n",
+                        "id": "a79bbc4d-c00c-4c0b-9fc3-081de4db099a",
+                        "layout": {
+                            "h": 7,
+                            "i": "b0ce690d-7952-4b7a-84db-fd2181d76aba",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 8,
+                            "y": 22
+                        },
+                        "maxPerRow": 4,
+                        "name": "5分钟单核平均负载",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": ""
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_load_average5{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象过去15分钟的CPU单核的平均负载\n",
+                        "id": "e8df3ef6-9232-4e38-b48f-6fe8419162ab",
+                        "layout": {
+                            "h": 7,
+                            "i": "bfcf9803-d0d0-474f-98bb-8c2932820570",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 16,
+                            "y": 22
+                        },
+                        "maxPerRow": 4,
+                        "name": "15分钟单核平均负载",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": ""
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_load_average15{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象过去1分钟的CPU平均负载\n",
+                        "id": "38eb7650-bb3c-4339-af68-5fe5cb487d40",
+                        "layout": {
+                            "h": 7,
+                            "i": "094570fb-bccb-4412-a289-d3198783b101",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 29
+                        },
+                        "maxPerRow": 4,
+                        "name": "1分钟平均负载",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": ""
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_load_total_average1{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象过去5分钟的CPU平均负载\n",
+                        "id": "ce8a58c9-8bc4-4eb7-bfd0-0304a7a269d4",
+                        "layout": {
+                            "h": 7,
+                            "i": "a4bccceb-6c54-452b-b800-88ed6f182b88",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 8,
+                            "y": 29
+                        },
+                        "maxPerRow": 4,
+                        "name": "5分钟平均负载",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": ""
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_load_total_average5{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象过去15分钟的CPU平均负载\n",
+                        "id": "6a70f22a-85ae-4e85-a18b-092f3528aa18",
+                        "layout": {
+                            "h": 7,
+                            "i": "3243128a-b156-4964-91e7-6ba200cee3c0",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 16,
+                            "y": 29
+                        },
+                        "maxPerRow": 4,
+                        "name": "15分钟平均负载",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "util": ""
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_load_total_average15{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "6f143fc9-f237-4b9d-8b6c-3794a8c0dbaf",
+                "layout": {
+                    "h": 1,
+                    "i": "6f143fc9-f237-4b9d-8b6c-3794a8c0dbaf",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "内存",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象的内存使用率\n",
+                        "id": "55e82383-dc37-4a93-90ad-a211cc8653eb",
+                        "layout": {
+                            "h": 7,
+                            "i": "eab2765e-129c-42f3-adf3-5d783b80f8ba",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 2
+                        },
+                        "maxPerRow": 4,
+                        "name": "内存使用率",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_mem_usedPercent{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象的Cache占用量",
+                        "id": "6fffbdcc-ea3b-4dfe-8306-bca18947815c",
+                        "layout": {
+                            "h": 7,
+                            "i": "861ecfb6-6888-4a24-840a-54f709e8eccf",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 8,
+                            "y": 2
+                        },
+                        "maxPerRow": 4,
+                        "name": "Cached占用量",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "bytesIEC"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_mem_cached{name=\"$name\",namespace=\"$namespace\"} * 1024 * 1024 * 1024",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象的可用内存\n",
+                        "id": "fc702940-bc77-4ee2-b388-4f3c4a3d28f6",
+                        "layout": {
+                            "h": 7,
+                            "i": "35839c10-d652-48df-b83b-62218372a5c2",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 16,
+                            "y": 2
+                        },
+                        "maxPerRow": 4,
+                        "name": "可用内存",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "bytesIEC"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_mem_available{name=\"$name\",namespace=\"$namespace\"} * 1024 * 1024 * 1024",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象的所有进程使用的句柄总和\n",
+                        "id": "89119e15-f534-4904-81f1-385f3a1b3bef",
+                        "layout": {
+                            "h": 7,
+                            "i": "8680115b-a143-4622-95ed-a49dca0f3864",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 9
+                        },
+                        "maxPerRow": 4,
+                        "name": "文件句柄总数",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": ""
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_total_open_files{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象的Buffer占用量\n",
+                        "id": "e6c53400-29c5-4417-aa4a-131da6443113",
+                        "layout": {
+                            "h": 7,
+                            "i": "f3d838de-b663-42b0-b7d0-6a5d317e44d7",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 8,
+                            "y": 9
+                        },
+                        "maxPerRow": 4,
+                        "name": "Buffers占用量",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "bytesIEC"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_mem_buffers{name=\"$name\",namespace=\"$namespace\"} * 1024 * 1024 * 1024",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "82b9d1b4-2c1e-47b9-a91e-e93ec37abfbb",
+                "layout": {
+                    "h": 1,
+                    "i": "82b9d1b4-2c1e-47b9-a91e-e93ec37abfbb",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 2
+                },
+                "name": "磁盘",
+                "panels": [
+                    {
+                        "custom": {
+                            "calc": "lastNotNull",
+                            "colSpan": 0,
+                            "colorMode": "value",
+                            "graphMode": "none",
+                            "orientation": "auto",
+                            "textMode": "value",
+                            "textSize": {},
+                            "valueField": "Value"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "0：可读写\n1：只读",
+                        "id": "4f367c4d-dd11-4952-a89c-545909450958",
+                        "layout": {
+                            "h": 6,
+                            "i": "a4883489-4823-48ea-8284-36243142b7c5",
+                            "isResizable": true,
+                            "w": 3,
+                            "x": 0,
+                            "y": 3
+                        },
+                        "maxPerRow": 4,
+                        "name": "磁盘文件系统读写状态",
+                        "options": {
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "thresholds": {
+                                        "steps": [
+                                            {
+                                                "color": "rgb(44, 157, 61)",
+                                                "type": "base",
+                                                "value": null
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_fs_rwstate{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "stat",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "",
+                        "id": "3079bef9-eebb-4b96-9e24-c9f6f60fabe0",
+                        "layout": {
+                            "h": 6,
+                            "i": "a958c2dc-3a04-4eca-adf3-77d3310b7e6e",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 3,
+                            "y": 3
+                        },
+                        "maxPerRow": 4,
+                        "name": "磁盘操作速率",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "reqps"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_agt_read_requests_rate{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "Read : {{name}}",
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_agt_write_requests_rate{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "Write : {{name}}",
+                                "refId": "B"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "",
+                        "id": "cdabd642-f373-4252-b4dc-7c4962e0f239",
+                        "layout": {
+                            "h": 6,
+                            "i": "e98512e5-39ac-49b2-9e76-e720d8ae2e8b",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 11,
+                            "y": 3
+                        },
+                        "maxPerRow": 4,
+                        "name": "磁盘操作平均耗时",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "cps"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_readTime{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "Read : {{name}}",
+                                "refId": "A"
+                            },
+                            {
+                                "__mode__": "__query__",
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_writeTime{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "Write : {{name}}",
+                                "refId": "B"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "\n",
+                        "id": "7d42044b-d9bb-4653-b3c7-0cd3f92d921d",
+                        "layout": {
+                            "h": 6,
+                            "i": "390ee2bf-2ef0-4c63-a9d0-eff84e4fa84a",
+                            "isResizable": true,
+                            "w": 5,
+                            "x": 19,
+                            "y": 3
+                        },
+                        "maxPerRow": 4,
+                        "name": "磁盘I/O使用率",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_ioUtils{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "该指标用于统计测量对象磁盘使用率\n",
+                        "id": "6b987c12-d683-468d-8bc7-ec3776436616",
+                        "layout": {
+                            "h": 6,
+                            "i": "c9bb45ea-64cd-4e63-90f4-170d10430c69",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 9
+                        },
+                        "maxPerRow": 4,
+                        "name": "磁盘使用率",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_usedPercent{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "",
+                        "id": "812cd384-e658-4e67-92e3-4aea800fb149",
+                        "layout": {
+                            "h": 6,
+                            "i": "5b8a475d-746a-4001-aa3d-8a63a4d531d0",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 8,
+                            "y": 9
+                        },
+                        "maxPerRow": 4,
+                        "name": "磁盘剩余存储量",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "bytesIEC"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_free{name=\"$name\",namespace=\"$namespace\"}*1024*1024*1024",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "",
+                        "id": "a909fb7b-bb09-4fc1-83cd-0a547201f9c0",
+                        "layout": {
+                            "h": 6,
+                            "i": "44bb8ace-4cae-4330-8527-47aecdd829d0",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 16,
+                            "y": 9
+                        },
+                        "maxPerRow": 4,
+                        "name": "磁盘已用存量",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "bytesIEC"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_used{name=\"$name\",namespace=\"$namespace\"}*1024*1024*1024",
+                                "legend": "{{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "",
+                        "id": "aa65645c-c172-4d9d-a1c5-f73b3d846dcb",
+                        "layout": {
+                            "h": 6,
+                            "i": "c5d8e9c2-ad86-4f73-84f2-1e5b6a0d7d07",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 15
+                        },
+                        "maxPerRow": 4,
+                        "name": "磁盘平均I/O服务时长",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "microseconds"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_io_svctm{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "Read : {{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": false,
+                "id": "59fc349f-511a-45e1-952f-54db29e580cc",
+                "layout": {
+                    "h": 1,
+                    "i": "59fc349f-511a-45e1-952f-54db29e580cc",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 3
+                },
+                "name": "文件系统",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "",
+                        "id": "d8818fdc-3060-482f-9485-3ecc702325aa",
+                        "layout": {
+                            "h": 6,
+                            "i": "fcd16ef2-2f83-4433-aa8d-b8c3e045c5ea",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 0,
+                            "y": 4
+                        },
+                        "maxPerRow": 4,
+                        "name": "inode已使用占比",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "percent"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_inodesUsedPercent{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "Read : {{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "",
+                        "id": "4d6ce6b4-e8c9-470a-9418-2c055fa95190",
+                        "layout": {
+                            "h": 6,
+                            "i": "e2f9328c-efc7-4de4-abf8-eb58c0c7611a",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 8,
+                            "y": 4
+                        },
+                        "maxPerRow": 4,
+                        "name": "inode已使用空间",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": ""
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_inodesUsed{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "Read : {{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "lineInterpolation": "smooth",
+                            "lineWidth": 2,
+                            "pointSize": 5,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "description": "",
+                        "id": "09158235-0b59-4b0e-8a49-703fc6b5a3f5",
+                        "layout": {
+                            "h": 6,
+                            "i": "22844d86-478a-4468-8c2c-d3c3c83bae8e",
+                            "isResizable": true,
+                            "w": 8,
+                            "x": 16,
+                            "y": 4
+                        },
+                        "maxPerRow": 4,
+                        "name": "inode空间大小",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": ""
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            },
+                            "tooltip": {
+                                "mode": "single"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "huaweicloud_sys_agt_SlAsH_disk_inodesTotal{name=\"$name\",namespace=\"$namespace\"}",
+                                "legend": "Read : {{name}}",
+                                "refId": "A"
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.1.0"
+                    }
+                ],
+                "type": "row"
+            },
+            {
+                "collapsed": true,
+                "id": "e36f711e-a063-429c-81ba-93bdb051ceea",
+                "layout": {
+                    "h": 1,
+                    "i": "e36f711e-a063-429c-81ba-93bdb051ceea",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 10
+                },
+                "name": "网络",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "3f8699c3-6af2-44db-90e8-ff154e3ce08e",
+                "layout": {
+                    "h": 8,
+                    "i": "ff298545-b4cf-4a9e-9585-b370fccad978",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 11
+                },
+                "maxPerRow": 4,
+                "name": "网络带宽",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "bitsSecSI"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_agt_net_bitRecv{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "Recv : {{name}}-{{network_interface_card}}",
+                        "refId": "A"
+                    },
+                    {
+                        "__mode__": "__query__",
+                        "expr": "huaweicloud_sys_agt_net_bitSent{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "Sent : {{name}}-{{network_interface_card}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "192905c1-51b5-42aa-8240-1e811bdd3623",
+                "layout": {
+                    "h": 8,
+                    "i": "258224e0-a587-4041-9851-0e08bf4f17d1",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 19
+                },
+                "maxPerRow": 4,
+                "name": "网卡速率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "cps"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_agt_net_packetRecv{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    },
+                    {
+                        "__mode__": "__query__",
+                        "expr": "huaweicloud_sys_agt_net_packetSent{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "{{name}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "5364ffd8-e29b-46af-9419-039c6f11d946",
+                "layout": {
+                    "h": 6,
+                    "i": "47452758-9e5b-4b45-9040-c9763a511afe",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 27
+                },
+                "maxPerRow": 4,
+                "name": "接收误包率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_agt_net_errin{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "2ab01486-58e7-4853-adc3-1680075a0749",
+                "layout": {
+                    "h": 6,
+                    "i": "6af944b7-c6f8-4905-9a09-d7ed8b3f7c8c",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 27
+                },
+                "maxPerRow": 4,
+                "name": "发送误包率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_agt_net_errout{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "616615c5-4c26-44b1-ac28-d8025d6fab4c",
+                "layout": {
+                    "h": 6,
+                    "i": "77b7a4b4-b83a-4e95-b557-d7a9f75c8ed5",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 27
+                },
+                "maxPerRow": 4,
+                "name": "接收丢包率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_agt_net_dropin{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "d8723b02-2b30-44dd-9629-c26333628903",
+                "layout": {
+                    "h": 6,
+                    "i": "34cc28d8-94fb-4e0b-b808-9e8f39f3bf05",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 27
+                },
+                "maxPerRow": 4,
+                "name": "发送丢包率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_agt_net_dropout{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "09dd3cbd-5382-4b3d-8880-ad1dffc8286d",
+                "layout": {
+                    "h": 6,
+                    "i": "46a82aa3-5c85-43a7-921e-4086e8367964",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 33
+                },
+                "maxPerRow": 4,
+                "name": "TCP 连接数总和",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_agt_net_tcp_total{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "f7f1422a-012b-4fb3-8405-3d2f166abd41",
+                "layout": {
+                    "h": 6,
+                    "i": "d360694b-37c5-41e3-b35a-6263a527a2b9",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 33
+                },
+                "maxPerRow": 4,
+                "name": "ESTABLISHED状态的连接数量",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_agt_net_tcp_established{name=\"$name\",namespace=\"$namespace\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            }
+        ],
+        "var": [
+            {
+                "defaultValue": "",
+                "definition": "prometheus",
+                "hide": false,
+                "label": "datasource",
+                "name": "datasource",
+                "regex": "",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_agt_cpu_usage, namespace)",
+                "hide": true,
+                "label": "namespace",
+                "name": "namespace",
+                "reg": "/AGT.ECS/",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_agt_cpu_usage{namespace=\"$namespace\"},name)",
+                "hide": false,
+                "label": "name",
+                "multi": true,
+                "name": "name",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.1.0"
+    },
+    "uuid": 1764486750476000
+}

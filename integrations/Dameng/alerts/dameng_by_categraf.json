@@ -1,0 +1,142 @@
+[
+    {
+      "cate": "prometheus",
+      "name": "Dameng 指标采集耗时过长",
+      "note": "采集耗时过长反映数据库响应慢，可能导致监控数据延迟",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 90,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "dmdb_scrape_use_seconds > 5",
+            "severity": 3,
+            "unit": "s"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 10,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1751791234000029,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 1
+    },
+    {
+      "cate": "prometheus",
+      "name": "Dameng 数据库down",
+      "note": "",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 0,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "dmdb_up != 1",
+            "severity": 1,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 10,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1751791234000030,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 1
+    },
+    {
+      "cate": "prometheus",
+      "name": "Dameng 缓存命中率过低",
+      "note": "缓存命中率低于95%会导致大量磁盘IO，性能下降",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 900,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "dmdb_cache_hit_rate < 95",
+            "severity": 3,
+            "unit": "%"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 10,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1751791234000031,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 1
+    },
+    {
+      "cate": "prometheus",
+      "name": "Dameng 锁等待线程数异常",
+      "note": "存在轻量级锁竞争，会导致SQL执行延迟",
+      "prod": "metric",
+      "delay": 0,
+      "prom_for_duration": 180,
+      "rule_config": {
+        "queries": [
+          {
+            "prom_ql": "dmdb_latches_threads > 10",
+            "severity": 3,
+            "unit": "none"
+          }
+        ],
+        "version": "v1"
+      },
+      "event_relabel_config": null,
+      "prom_eval_interval": 15,
+      "enable_in_bg": 0,
+      "notify_recovered": 1,
+      "notify_repeat_step": 10,
+      "notify_max_number": 0,
+      "recover_duration": 0,
+      "callbacks": [],
+      "append_tags": [],
+      "annotations": {},
+      "uuid": 1751791234000032,
+      "cur_event_count": 0,
+      "update_by_nickname": "",
+      "cron_pattern": "@every 60s",
+      "notify_rule_ids": [],
+      "pipeline_configs": null,
+      "notify_version": 1
+    }
+  ]

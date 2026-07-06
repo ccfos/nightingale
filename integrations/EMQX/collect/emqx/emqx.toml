@@ -1,0 +1,9 @@
+[[instances]]
+## emqx的dashboard地址，ip:port, 单个集群监控使用逗号分割多个IP,会随机挑一个可用ip进行连接请求
+## 多个集群，拆分到多个instance配置
+address="http://192.168.11.12:18083"
+## 指定emqx的版本，支持v3/v4/v5, 分别对应emqx的3.X/4.X/5.X 版本
+version="v3"
+## api需要鉴权，输入用户名和密码
+username="admin"
+password="public"

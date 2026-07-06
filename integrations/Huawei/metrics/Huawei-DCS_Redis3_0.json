@@ -1,0 +1,770 @@
+[
+    {
+        "id": 0,
+        "uuid": 1764410385002871,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "认证失败次数",
+        "unit": "none",
+        "note": "统计实例的认证失败次数。仅单机/主备实例支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_auth_errors",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "认证失败次数",
+                "note": "统计实例的认证失败次数。仅单机/主备实例支持。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383303913,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "阻塞的客户端数量",
+        "unit": "none",
+        "note": "该指标用于被阻塞操作挂起的客户端的数量。阻塞操作如BLPOP，BRPOP，BRPOPLPUSH。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_blocked_clients",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "阻塞的客户端数量",
+                "note": "该指标用于被阻塞操作挂起的客户端的数量。阻塞操作如BLPOP，BRPOP，BRPOPLPUSH。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383225200,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "客户端最大输入缓冲",
+        "unit": "bytesIEC",
+        "note": "该指标用于统计客户端所有现存连接的最大输入数据长度。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_client_biggest_in_buf",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "客户端最大输入缓冲",
+                "note": "该指标用于统计客户端所有现存连接的最大输入数据长度。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383142235,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "客户端最长输出列表",
+        "unit": "none",
+        "note": "该指标用于统计客户端所有现存连接的最长输出列表。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_client_longest_out_list",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "客户端最长输出列表",
+                "note": "该指标用于统计客户端所有现存连接的最长输出列表。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384924458,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "命令最大时延",
+        "unit": "milliseconds",
+        "note": "统计实例的命令最大时延。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_command_max_delay",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "命令最大时延",
+                "note": "统计实例的命令最大时延。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383036895,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "活跃的客户端数量",
+        "unit": "none",
+        "note": "该指标用于统计已连接的客户端数量，包括系统监控、配置同步和业务相关的连接数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_connected_clients",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "活跃的客户端数量",
+                "note": "该指标用于统计已连接的客户端数量，包括系统监控、配置同步和业务相关的连接数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410382695387,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "最大CPU使用率",
+        "unit": "percent",
+        "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的最高值。如果是单机/主备实例，该指标为主节点的CPU值。如果是Proxy集群实例，该指标为各个Proxy节点的平均值。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_cpu_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "最大CPU使用率",
+                "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的最高值。如果是单机/主备实例，该指标为主节点的CPU值。如果是Proxy集群实例，该指标为各个Proxy节点的平均值。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384463978,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "已逐出的键数量",
+        "unit": "none",
+        "note": "该指标用于统计周期内因为内存不足被删除的键数量。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_evicted_keys",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已逐出的键数量",
+                "note": "该指标用于统计周期内因为内存不足被删除的键数量。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384383791,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "已过期的键数量",
+        "unit": "none",
+        "note": "该指标用于统计周期内因过期而被删除的键数量",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_expired_keys",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已过期的键数量",
+                "note": "该指标用于统计周期内因过期而被删除的键数量"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384151593,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "网络瞬时输入流量",
+        "unit": "bitsSecIEC",
+        "note": "该指标用于统计瞬时的输入流量。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_instantaneous_input_kbps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络瞬时输入流量",
+                "note": "该指标用于统计瞬时的输入流量。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383910655,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "每秒并发操作数",
+        "unit": "none",
+        "note": "该指标用于统计每秒处理的命令数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_instantaneous_ops",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每秒并发操作数",
+                "note": "该指标用于统计每秒处理的命令数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384230962,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "网络瞬时输出流量",
+        "unit": "bitsSecIEC",
+        "note": "该指标用于统计瞬时的输出流量。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_instantaneous_output_kbps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络瞬时输出流量",
+                "note": "该指标用于统计瞬时的输出流量。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410385080870,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "是否存在慢日志",
+        "unit": "none",
+        "note": "统计实例是否存在慢日志。该监控不统计由migrate、slaveof、config、bgsave、bgrewriteaof命令导致的慢日志。仅单机/主备实例支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_is_slow_log_exist",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "是否存在慢日志",
+                "note": "统计实例是否存在慢日志。该监控不统计由migrate、slaveof、config、bgsave、bgrewriteaof命令导致的慢日志。仅单机/主备实例支持。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410385160333,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "缓存键总数",
+        "unit": "none",
+        "note": "该指标用于统计Redis缓存中键总数。仅单机/主备实例支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_keys",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "缓存键总数",
+                "note": "该指标用于统计Redis缓存中键总数。仅单机/主备实例支持。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384539281,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "Keyspace命中次数",
+        "unit": "none",
+        "note": "该指标用于统计周期内在主字典中查找命中次数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_keyspace_hits",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Keyspace命中次数",
+                "note": "该指标用于统计周期内在主字典中查找命中次数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384845345,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "缓存命中率",
+        "unit": "percent",
+        "note": "该指标用于统计Redis的缓存命中率，其命中率算法为：keyspace_hits/(keyspace_hits+keyspace_misses)",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_keyspace_hits_perc",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "缓存命中率",
+                "note": "该指标用于统计Redis的缓存命中率，其命中率算法为：keyspace_hits/(keyspace_hits+keyspace_misses)"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384613753,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "Keyspace错过次数",
+        "unit": "none",
+        "note": "该指标用于统计周期内在主字典中查找不命中次数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_keyspace_misses",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Keyspace错过次数",
+                "note": "该指标用于统计周期内在主字典中查找不命中次数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383680359,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "内存碎片率",
+        "unit": "none",
+        "note": "该指标用于统计当前的内存碎片率。其数值上等于used_memory_rss / used_memory。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_memory_frag_ratio",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存碎片率",
+                "note": "该指标用于统计当前的内存碎片率。其数值上等于used_memory_rss / used_memory。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410382781920,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "内存利用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象的内存利用率（内存利用率统计是扣除预留内存的）。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_memory_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存利用率",
+                "note": "该指标用于统计测量对象的内存利用率（内存利用率统计是扣除预留内存的）。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410382864848,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "网络输入吞吐量",
+        "unit": "bytesSecIEC",
+        "note": "该指标用于统计网口平均每秒的输入流量。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_net_in_throughput",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络输入吞吐量",
+                "note": "该指标用于统计网口平均每秒的输入流量。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410382957504,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "网络输出吞吐量",
+        "unit": "bytesSecIEC",
+        "note": "该指标用于统计网口平均每秒的输出流量。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_net_out_throughput",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络输出吞吐量",
+                "note": "该指标用于统计网口平均每秒的输出流量。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384693054,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "Pubsub通道个数",
+        "unit": "none",
+        "note": "该指标用于统计Pub/Sub通道个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_pubsub_channels",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Pubsub通道个数",
+                "note": "该指标用于统计Pub/Sub通道个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384768349,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "Pubsub模式个数",
+        "unit": "none",
+        "note": "该指标用于统计Pub/Sub模式个数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_pubsub_patterns",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Pubsub模式个数",
+                "note": "该指标用于统计Pub/Sub模式个数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384308311,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "已拒绝的连接数",
+        "unit": "none",
+        "note": "该指标用于统计周期内因为超过maxclients而拒绝的连接数量。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_rejected_connections",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已拒绝的连接数",
+                "note": "该指标用于统计周期内因为超过maxclients而拒绝的连接数量。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383834574,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "处理的命令数",
+        "unit": "none",
+        "note": "该指标用于统计周期内处理的命令数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_total_commands_processed",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "处理的命令数",
+                "note": "该指标用于统计周期内处理的命令数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383757097,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "新建连接数",
+        "unit": "none",
+        "note": "该指标用于统计周期内新建的连接数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_total_connections_received",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "新建连接数",
+                "note": "该指标用于统计周期内新建的连接数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383990907,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "网络收到字节数",
+        "unit": "bytesIEC",
+        "note": "该指标用于统计周期内收到的字节数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_total_net_input_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络收到字节数",
+                "note": "该指标用于统计周期内收到的字节数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410384070064,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "网络发送字节数",
+        "unit": "bytesIEC",
+        "note": "该指标用于统计周期内发送的字节数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_total_net_output_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络发送字节数",
+                "note": "该指标用于统计周期内发送的字节数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383379579,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "已用内存",
+        "unit": "bytesIEC",
+        "note": "该指标用于统计Redis已使用的内存字节数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_used_memory",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已用内存",
+                "note": "该指标用于统计Redis已使用的内存字节数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383605015,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "Lua已用内存",
+        "unit": "bytesIEC",
+        "note": "该指标用于统计Lua引擎已使用的内存字节。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_used_memory_lua",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Lua已用内存",
+                "note": "该指标用于统计Lua引擎已使用的内存字节。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383529570,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "已用内存峰值",
+        "unit": "bytesIEC",
+        "note": "该指标用于统计Redis服务器启动以来使用内存的峰值。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_used_memory_peak",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已用内存峰值",
+                "note": "该指标用于统计Redis服务器启动以来使用内存的峰值。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410383456250,
+        "collector": "DCS_Redis3.0",
+        "typ": "Huawei",
+        "name": "已用内存RSS",
+        "unit": "bytesIEC",
+        "note": "该指标用于统计Redis已使用的RSS内存。即实际驻留“在内存中”的内存数。包含堆内存，但不包括换出的内存。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_used_memory_rss",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已用内存RSS",
+                "note": "该指标用于统计Redis已使用的RSS内存。即实际驻留“在内存中”的内存数。包含堆内存，但不包括换出的内存。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

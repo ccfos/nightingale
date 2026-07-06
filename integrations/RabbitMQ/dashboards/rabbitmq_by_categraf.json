@@ -1,13 +1,8 @@
 {
-    "id": 0,
-    "group_id": 0,
     "name": "RabbitMQ 3.8",
-    "ident": "",
     "tags": "",
-    "create_at": 0,
-    "create_by": "",
-    "update_at": 0,
-    "update_by": "",
+    "ident": "",
+    "uuid": 1766721321244000,
     "configs": {
         "panels": [
             {
@@ -21,7 +16,9 @@
                     "y": 0
                 },
                 "name": "Overview",
-                "type": "row"
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -81,7 +78,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -123,7 +121,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -165,7 +164,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -207,7 +207,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -249,7 +250,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -309,7 +311,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -351,7 +354,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -393,7 +397,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -435,7 +440,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -487,7 +493,8 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "collapsed": true,
@@ -500,7 +507,9 @@
                     "y": 5
                 },
                 "name": "Nodes",
-                "type": "row"
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -538,7 +547,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0"
+                "version": "3.3.0"
             },
             {
                 "custom": {
@@ -581,7 +590,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -624,7 +634,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -665,7 +676,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -706,7 +718,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "collapsed": true,
@@ -719,7 +732,9 @@
                     "y": 14
                 },
                 "name": "QUEUED MESSAGES",
-                "type": "row"
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -760,7 +775,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -801,7 +817,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "collapsed": true,
@@ -814,7 +831,9 @@
                     "y": 18
                 },
                 "name": "INCOMING MESSAGES",
-                "type": "row"
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -855,7 +874,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -896,7 +916,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -937,7 +958,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -978,7 +1000,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1019,7 +1042,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1060,7 +1084,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "collapsed": true,
@@ -1073,7 +1098,9 @@
                     "y": 24
                 },
                 "name": "OUTGOING MESSAGES",
-                "type": "row"
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1114,7 +1141,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1155,7 +1183,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1196,7 +1225,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1237,7 +1267,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1278,7 +1309,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1319,7 +1351,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1360,7 +1393,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1401,7 +1435,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "collapsed": true,
@@ -1414,7 +1449,9 @@
                     "y": 31
                 },
                 "name": "QUEUES",
-                "type": "row"
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1455,7 +1492,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1494,7 +1532,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1533,7 +1572,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1572,7 +1612,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "collapsed": true,
@@ -1585,7 +1626,9 @@
                     "y": 35
                 },
                 "name": "CHANNELS",
-                "type": "row"
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1626,7 +1669,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1665,7 +1709,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1704,7 +1749,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "collapsed": true,
@@ -1717,7 +1763,9 @@
                     "y": 39
                 },
                 "name": "CONNECTIONS",
-                "type": "row"
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1756,7 +1804,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1797,7 +1846,8 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             },
             {
                 "custom": {
@@ -1836,31 +1886,30 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0"
+                "version": "3.3.0",
+                "overrides": []
             }
         ],
         "var": [
             {
                 "definition": "prometheus",
-                "name": "prom",
-                "type": "datasource"
+                "name": "datasource",
+                "type": "datasource",
+                "hide": false
             },
             {
                 "datasource": {
                     "cate": "prometheus",
-                    "value": "${prom}"
+                    "value": "${datasource}"
                 },
                 "definition": "label_values(rabbitmq_identity_info, rabbitmq_cluster)",
                 "name": "rabbitmq_cluster",
-                "type": "query"
+                "type": "query",
+                "options": [],
+                "initialized": true,
+                "hide": false
             }
         ],
         "version": "3.0.0"
-    },
-    "public": 0,
-    "public_cate": 0,
-    "bgids": null,
-    "built_in": 0,
-    "hide": 0,
-    "uuid": 1717556328323134000
+    }
 }

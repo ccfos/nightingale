@@ -1,0 +1,338 @@
+[
+    {
+        "id": 0,
+        "uuid": 1764410762277785,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "平均时延",
+        "unit": "microseconds",
+        "note": "节点从接收命令到发出响应的时延平均值。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_command_avg_rt",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "平均时延",
+                "note": "节点从接收命令到发出响应的时延平均值。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410762196127,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "最大时延",
+        "unit": "microseconds",
+        "note": "节点从接收命令到发出响应的时延最大值。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_command_max_rt",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "最大时延",
+                "note": "节点从接收命令到发出响应的时延最大值。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410762355838,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "P99时延",
+        "unit": "milliseconds",
+        "note": "执行时延99%的水位线。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_command_p99_rt",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "P99时延",
+                "note": "执行时延99%的水位线。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410761653088,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "活跃的客户端数量",
+        "unit": "none",
+        "note": "该指标用于统计已连接的客户端数量，包括系统监控、配置同步和业务相关的连接数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_connected_clients",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "活跃的客户端数量",
+                "note": "该指标用于统计已连接的客户端数量，包括系统监控、配置同步和业务相关的连接数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410762118468,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "连接数使用率",
+        "unit": "percent",
+        "note": "该指标用于统计当前连接数与最大连接数限制的百分比。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_connections_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "连接数使用率",
+                "note": "该指标用于统计当前连接数与最大连接数限制的百分比。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410761496293,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "CPU平均使用率",
+        "unit": "percent",
+        "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的平均值。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_cpu_avg_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "CPU平均使用率",
+                "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的平均值。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410761417243,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "最大CPU使用率",
+        "unit": "percent",
+        "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的最高值。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_cpu_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "最大CPU使用率",
+                "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的最高值。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410761809073,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "网络瞬时输入流量",
+        "unit": "bitsSecIEC",
+        "note": "该指标用于统计瞬时的输入流量。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_instantaneous_input_kbps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络瞬时输入流量",
+                "note": "该指标用于统计瞬时的输入流量。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410761728463,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "每秒并发操作数",
+        "unit": "none",
+        "note": "该指标用于统计每秒处理的命令数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_instantaneous_ops",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每秒并发操作数",
+                "note": "该指标用于统计每秒处理的命令数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410761884731,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "网络瞬时输出流量",
+        "unit": "bitsSecIEC",
+        "note": "该指标用于统计瞬时的输出流量。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_instantaneous_output_kbps",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络瞬时输出流量",
+                "note": "该指标用于统计瞬时的输出流量。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410761574790,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "内存利用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象的内存利用率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_memory_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存利用率",
+                "note": "该指标用于统计测量对象的内存利用率。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410761335299,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "实例节点状态",
+        "unit": "none",
+        "note": "显示Proxy节点状态是否正常。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_node_status",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "实例节点状态",
+                "note": "显示Proxy节点状态是否正常。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410761964329,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "网络收到字节数",
+        "unit": "bytesIEC",
+        "note": "该指标用于统计周期内收到的字节数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_total_net_input_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络收到字节数",
+                "note": "该指标用于统计周期内收到的字节数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764410762043377,
+        "collector": "DCS_Redis4.0及以上版本|Proxy集群|读写分离实例的Proxy节点",
+        "typ": "Huawei",
+        "name": "网络发送字节数",
+        "unit": "bytesIEC",
+        "note": "该指标用于统计周期内发送的字节数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_dcs_total_net_output_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "网络发送字节数",
+                "note": "该指标用于统计周期内发送的字节数。"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

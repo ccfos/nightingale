@@ -1,0 +1,15 @@
+# interval = 15
+
+#[[instances]]
+# # append labels
+# labels = { region="cloud", product="n9e" }
+
+# # whether to enable username label in metrics
+# # when enabled, metrics will include username labels for detailed tracking
+# # default: false
+# enable_username = false
+
+# # whether to enable client_ip label in metrics
+# # when enabled, metrics will include client_ip labels for detailed tracking
+# # default: false
+# enable_ip = false

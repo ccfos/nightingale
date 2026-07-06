@@ -1,0 +1,159 @@
+{
+    "name": "网络设备端口流量视图",
+    "tags": "SNMP 网络流量",
+    "configs": {
+      "links": [],
+      "panels": [
+        {
+          "custom": {
+            "drawStyle": "lines",
+            "fillOpacity": 0.11,
+            "gradientMode": "none",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "none",
+            "spanNulls": false,
+            "stack": "off"
+          },
+          "datasourceCate": "prometheus",
+          "datasourceValue": "${prom}",
+          "description": "",
+          "id": "f7d95040-76f1-43d8-98d2-3a968c56521f",
+          "layout": {
+            "h": 9,
+            "i": "f7d95040-76f1-43d8-98d2-3a968c56521f",
+            "isResizable": true,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "links": [],
+          "maxPerRow": 4,
+          "name": "$ifname (Current  bits/s)",
+          "options": {
+            "legend": {
+              "behaviour": "showItem",
+              "displayMode": "table",
+              "heightInPercentage": 30,
+              "placement": "bottom",
+              "selectMode": "single"
+            },
+            "standardOptions": {
+              "decimals": 3,
+              "util": "bitsSecIEC"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "#6C53B1",
+                  "type": "base",
+                  "value": null
+                }
+              ]
+            },
+            "tooltip": {
+              "mode": "all",
+              "sort": "none"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byFrameRefID",
+                "value": "C"
+              },
+              "properties": {
+                "rightYAxisDisplay": "off",
+                "standardOptions": {
+                  "decimals": 3,
+                  "displayName": "95分位",
+                  "util": "bitsSecIEC"
+                }
+              }
+            }
+          ],
+          "repeat": "ifname",
+          "targets": [
+            {
+              "expr": "rate(snmp_interface_outgoing{agent_host=\"$ident\", ifname=\"$ifname\"}[5m])*8",
+              "legend": "Outgoing {{ifname}}",
+              "maxDataPoints": 240,
+              "refId": "B",
+              "step": 60
+            },
+            {
+              "__mode__": "__query__",
+              "expr": "quantile_over_time(0.95, (rate(snmp_interface_outgoing{agent_host=\"$ident\", ifname=\"$ifname\"}[5m])*8)[1d])",
+              "legend": "过去1天Outgoing流量95分位 {{ifname}}",
+              "maxDataPoints": 240,
+              "refId": "A",
+              "step": 60
+            },
+            {
+              "__mode__": "__query__",
+              "expr": "rate(snmp_interface_incoming{agent_host=\"$ident\", ifname=\"$ifname\"}[5m])*8",
+              "legend": "Incoming {{ifname}}",
+              "maxDataPoints": 240,
+              "refId": "C",
+              "step": 60
+            },
+            {
+              "__mode__": "__query__",
+              "expr": "quantile_over_time(0.95, (rate(snmp_interface_incoming{agent_host=\"$ident\", ifname=\"$ifname\"}[5m])*8)[1d])",
+              "legend": "过去1天Incoming流量95分位 {{ifname}}",
+              "maxDataPoints": 240,
+              "refId": "D",
+              "step": 60
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {}
+            }
+          ],
+          "type": "timeseries",
+          "version": "3.0.0"
+        }
+      ],
+      "var": [
+        {
+          "definition": "prometheus",
+          "hide": false,
+          "name": "prom",
+          "type": "datasource"
+        },
+        {
+          "datasource": {
+            "cate": "prometheus",
+            "value": "${prom}"
+          },
+          "definition": "label_values(snmp_up{}, agent_host)",
+          "hide": false,
+          "multi": false,
+          "name": "ident",
+          "reg": "",
+          "type": "query"
+        },
+        {
+          "allOption": true,
+          "datasource": {
+            "cate": "prometheus",
+            "value": "${prom}"
+          },
+          "definition": "label_values(snmp_interface_incoming{agent_host =\"$ident\"}, ifname)",
+          "hide": false,
+          "multi": true,
+          "name": "ifname",
+          "reg": "",
+          "type": "query"
+        }
+      ],
+      "version": "3.0.0"
+    },
+    "uuid": 1737358959416000
+}

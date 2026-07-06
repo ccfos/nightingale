@@ -9,10 +9,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_network_io_bytes_total{direction=\"in\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -24,7 +22,11 @@
                 "name": "Broker node inbound network IO rate",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -36,10 +38,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_network_io_bytes_total{direction=\"out\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -51,7 +51,11 @@
                 "name": "Broker node outbound network IO rate",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -63,10 +67,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_partition_count",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -78,7 +80,11 @@
                 "name": "The number of partitions currently allocated to the Broker node",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -90,10 +96,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_message_count_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -105,7 +109,11 @@
                 "name": "Broker node message throughput per second",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -117,10 +125,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, consumer_group, topic) (max by(job, consumer_group, topic, partition) (kafka_group_commit_offset))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -132,7 +138,11 @@
                 "name": "Consumer Group Commit Offset Sum",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -144,10 +154,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, consumer_group, topic, partition) (rate(kafka_group_commit_offset[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -159,7 +167,11 @@
                 "name": "Consumer Group commit offset rate (per instance)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -171,10 +183,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by (job) (kafka_group_count)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -186,7 +196,11 @@
                 "name": "Consumer Group Quantity Sum",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -198,10 +212,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "max by(job, consumer_group, topic, partition) (kafka_group_commit_offset)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -213,7 +225,11 @@
                 "name": "Consumer Group Maximum commit offset",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -225,10 +241,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_request_time_50p_milliseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -240,7 +254,11 @@
                 "name": "50th quantile of Fetch request processing time",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -252,10 +270,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_request_time_99p_milliseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -267,7 +283,11 @@
                 "name": "99th quantile of Fetch request processing time",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -279,10 +299,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "avg by(job, instance) (kafka_request_time_99p_milliseconds)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -294,7 +312,11 @@
                 "name": "99th quantile of Fetch request processing time (per instance)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -306,10 +328,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_request_time_mean_milliseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -321,7 +341,11 @@
                 "name": "Average of Fetch request processing time",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -333,10 +357,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_request_time_max_milliseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -348,7 +370,11 @@
                 "name": "Maximum Fetch request processing time",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -360,10 +386,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_topic_request_failed_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -375,7 +399,11 @@
                 "name": "Fetch request failure rate (per instance)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -387,10 +415,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job) (kafka_controller_active_count)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -402,7 +428,11 @@
                 "name": "Kafka Controller active status count",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -414,10 +444,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_request_time_50p_milliseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -429,7 +457,11 @@
                 "name": "50th Quantile of Processing Time for Produce requests",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -441,10 +473,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_request_time_99p_milliseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -456,7 +486,11 @@
                 "name": "99th quantile of processing time for Produce requests",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -468,10 +502,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "avg by(job, instance) (kafka_request_time_99p_milliseconds)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -483,7 +515,11 @@
                 "name": "99th quantile of Produce request processing time (per instance)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -495,10 +531,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_request_time_mean_milliseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -510,7 +544,11 @@
                 "name": "Average Produce request processing time",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -522,10 +560,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_request_time_max_milliseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -537,7 +573,11 @@
                 "name": "The maximum processing time of the Produce request",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -549,10 +589,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_topic_request_failed_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -564,7 +602,11 @@
                 "name": "Produce request failure rate (per instance)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -576,10 +618,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "max by(job, consumer_group, topic, partition) (kafka_group_commit_offset)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -591,7 +631,11 @@
                 "name": "Maximum commit offsets for each Consumer Group and Topic",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -603,10 +647,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "max by(job, topic, partition) (kafka_log_end_offset)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -618,7 +660,11 @@
                 "name": "Maximum end of log offset for each Topic partition",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -630,10 +676,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance, topic) (rate(kafka_request_count_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -645,7 +689,11 @@
                 "name": "Fetch request rate of an instance",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -657,10 +705,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance, topic) (rate(kafka_request_count_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -672,7 +718,11 @@
                 "name": "Instance's Produce request rate",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -684,10 +734,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by (job) (kafka_group_dead_count)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -699,7 +747,11 @@
                 "name": "Total number of dead Consumer Groups",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -711,10 +763,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by (job) (max by(job, topic, partition) (kafka_log_size))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -726,7 +776,11 @@
                 "name": "Sum of log sizes",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -738,10 +792,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic) (max by(job, topic, partition) (kafka_log_end_offset{}))\n- on(job, topic) group_left(consumer_group)\nsum by(job, consumer_group, topic) (max by(job, consumer_group, topic, partition) (kafka_group_commit_offset{}))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -753,7 +805,11 @@
                 "name": "Log consumption delay lag",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -765,10 +821,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic) (max by(job, topic, partition) (kafka_log_end_offset))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -780,7 +834,11 @@
                 "name": "End of log offset sum",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -792,10 +850,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "max by(job, topic, partition) (kafka_log_end_offset)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -807,7 +863,11 @@
                 "name": "End of Log Max Offset",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -819,10 +879,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by (job) (kafka_group_preparing_rebalance_count)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -834,7 +892,11 @@
                 "name": "Sum number of Consumer Groups in preparation for rebalance",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -846,10 +908,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by (job) (kafka_group_completing_rebalance_count)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -861,7 +921,11 @@
                 "name": "Sum number of Consumer Groups waiting for status allocation by Leader",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -873,10 +937,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic) (rate(kafka_network_io_bytes_total{direction=\"in\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -888,7 +950,11 @@
                 "name": "Broker node inbound network IO rate per topic sum by (topic)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -900,10 +966,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic, instance) (rate(kafka_network_io_bytes_total{direction=\"in\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -915,7 +979,11 @@
                 "name": "Broker node inbound network IO rate per topic sum by (topic, instance)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -927,10 +995,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic) (rate(kafka_network_io_bytes_total{direction=\"out\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -942,7 +1008,11 @@
                 "name": "Broker node outbound network IO rate per topic sum by (topic)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -954,10 +1024,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic, instance) (rate(kafka_network_io_bytes_total{direction=\"out\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -969,7 +1037,11 @@
                 "name": "Broker node outbound network IO rate per topic sum by (topic, instance)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -981,10 +1053,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic, partition) (rate(kafka_network_io_bytes_total{direction=\"out\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -996,7 +1066,11 @@
                 "name": "Broker node outbound network IO rate per topic sum by (topic, partition)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1008,10 +1082,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic) (rate(kafka_message_count_total{direction=\"in\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1023,7 +1095,11 @@
                 "name": "Broker node message throughput per topic (inbound) sum by (topic)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1035,10 +1111,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic, instance) (rate(kafka_message_count_total{direction=\"in\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1050,7 +1124,11 @@
                 "name": "Broker node message throughput per topic (inbound) sum by (topic, instance)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1062,10 +1140,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job) (rate(kafka_network_io_bytes_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1077,7 +1153,11 @@
                 "name": "Broker node network IO rate per Topic (cluster level)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1089,10 +1169,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic) (kafka_log_size)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1104,7 +1182,11 @@
                 "name": "Log size per Topic",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1116,10 +1198,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic, type) (rate(kafka_message_count_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1131,7 +1211,11 @@
                 "name": "Message throughput per topic sum by (topic, type)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1143,10 +1227,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, topic, type) (rate(kafka_topic_request_count_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1158,7 +1240,11 @@
                 "name": "Request count per topic sum by (topic, type)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1170,10 +1256,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_network_io_bytes_total{direction=\"out\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1185,7 +1269,11 @@
                 "name": "Broker node outbound network IO rate per instance (instance level)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1197,10 +1285,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (kafka_partition_count)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1212,7 +1298,11 @@
                 "name": "Number of Broker node partitions per instance",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1224,10 +1314,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_message_count_total{direction=\"in\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1239,7 +1327,11 @@
                 "name": "Broker node message throughput per instance (inbound)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1251,10 +1343,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_request_count_total{type=\"Fetch\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1266,7 +1356,11 @@
                 "name": "Fetch request rate per instance",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1278,10 +1372,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_request_count_total{type=\"Produce\"}[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1293,7 +1385,11 @@
                 "name": "Produce request rate per instance",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1305,10 +1401,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (kafka_server_connection_count)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1320,7 +1414,11 @@
                 "name": "Number of connections currently established by nodes per instance",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1332,10 +1430,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_broker_active_count",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1347,7 +1443,11 @@
                 "name": "Number of active brokers",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1359,10 +1459,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by (job) (kafka_group_stable_count)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1374,7 +1472,11 @@
                 "name": "Sum of the number of steady-state Consumer Groups",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1386,10 +1488,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by (job) (kafka_group_empty_count)",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1401,7 +1501,11 @@
                 "name": "Sum number of empty Consumer Groups",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1413,10 +1517,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_server_connection_count",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1428,7 +1530,11 @@
                 "name": "Number of connections currently established by the node",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1440,10 +1546,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_broker_fenced_count",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1455,7 +1559,11 @@
                 "name": "Number of Brokers fenced",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1467,10 +1575,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by (job) (rate(kafka_request_error_count_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1482,7 +1588,11 @@
                 "name": "Request error count sum",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1494,10 +1604,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "rate(kafka_request_error_count_total[1m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1509,7 +1617,11 @@
                 "name": "Request error count rate",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1521,10 +1633,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "sum by(job, instance) (rate(kafka_request_error_count_total[1m]))",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1536,7 +1646,11 @@
                 "name": "Request error count rate (per instance)",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1548,10 +1662,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_topic_count",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1563,7 +1675,11 @@
                 "name": "Total number of cluster topics",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -1575,10 +1691,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "kafka_partition_total_count",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -1590,6 +1704,10 @@
                 "name": "Total number of cluster partitions",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     }
 ]

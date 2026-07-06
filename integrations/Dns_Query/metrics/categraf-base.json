@@ -1,0 +1,122 @@
+[
+    {
+        "id": 0,
+        "uuid": 1765105925586631,
+        "collector": "Categraf",
+        "typ": "Dns_Query",
+        "name": "DNS 响应中的状态码",
+        "unit": "none",
+        "note": "0 (NOERROR)：查询成功，没有错误\n1 (FORMERR)：格式错误，DNS 服务器无法理解查询请求\n2 (SERVFAIL)：服务器失败，DNS 服务器遇到内部错误\n3 (NXDOMAIN)：域名不存在\n4 (NOTIMP)：查询类型不被支持\n5 (REFUSED)：查询被拒绝，通常是策略原因 在监控中，RCODE 为 0 表示查询成功，其他值通常表示存在问题需要关注",
+        "lang": "zh_CN",
+        "expression": "dns_query_rcode_value",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "DNS 响应中的状态码",
+                "note": "0 (NOERROR)：查询成功，没有错误\n1 (FORMERR)：格式错误，DNS 服务器无法理解查询请求\n2 (SERVFAIL)：服务器失败，DNS 服务器遇到内部错误\n3 (NXDOMAIN)：域名不存在\n4 (NOTIMP)：查询类型不被支持\n5 (REFUSED)：查询被拒绝，通常是策略原因 在监控中，RCODE 为 0 表示查询成功，其他值通常表示存在问题需要关注"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1765105661736115,
+        "collector": "Categraf",
+        "typ": "Dns_Query",
+        "name": "自定义的查询结果",
+        "unit": "none",
+        "note": "0表示成功，1表示超时，2表示出错.",
+        "lang": "zh_CN",
+        "expression": "dns_query_result_value",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "自定义的查询结果",
+                "note": "0表示成功，1表示超时，2表示出错."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1765105812964474,
+        "collector": "Categraf",
+        "typ": "Dns_Query",
+        "name": "DNS解析状态变更",
+        "unit": "none",
+        "note": "当expect_query_ips配置了对应的域名后， categraf会对比响应的IP列表与配置的IP列表, 此时会产生这个指标,0 表示响应的IP与期望的IP一致， 1表示响应的IP与期望的IP出现差异.",
+        "lang": "zh_CN",
+        "expression": "dns_query_status_change",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "DNS解析状态变更",
+                "note": "当expect_query_ips配置了对应的域名后， categraf会对比响应的IP列表与配置的IP列表, 此时会产生这个指标,0 表示响应的IP与期望的IP一致， 1表示响应的IP与期望的IP出现差异."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1765105893583841,
+        "collector": "Categraf",
+        "typ": "Dns_Query",
+        "name": "DNS解析变更详情",
+        "unit": "none",
+        "note": "0 表示响应的IP与期望的IP一致， 1表示响应的IP与期望的IP出现差异。\n{ips=\"响应的IP列表\", diff=\"响应IP列表-期望IP列表\"}",
+        "lang": "zh_CN",
+        "expression": "dns_query_status_change_detail",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "DNS解析变更详情",
+                "note": "0 表示响应的IP与期望的IP一致， 1表示响应的IP与期望的IP出现差异。\n{ips=\"响应的IP列表\", diff=\"响应IP列表-期望IP列表\"}"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1765105604564187,
+        "collector": "Categraf",
+        "typ": "Dns_Query",
+        "name": "查询的响应时间",
+        "unit": "milliseconds",
+        "note": "",
+        "lang": "",
+        "expression": "dns_query_time_ms",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "查询的响应时间",
+                "note": ""
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]
