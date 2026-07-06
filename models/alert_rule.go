@@ -584,6 +584,28 @@ func (ar *AlertRule) Verify() error {
 		}
 	}
 
+	// 生效时段一致性校验：开始时间、结束时间、生效星期三者段数必须一致，且配了时段时星期不能为空。
+	// 否则运行时 mute 判断会因三个数组长度不一致而索引越界 panic（如只选了生效星期却没配起止时间）。
+	// 校验前端传入的原始数组，不依赖 FE2DB 的序列化结果。
+	enableStimeCount := len(ar.EnableStimesJSON)
+	if enableStimeCount == 0 && ar.EnableStimeJSON != "" {
+		enableStimeCount = 1 // 兼容旧版单时段字段
+	}
+	enableEtimeCount := len(ar.EnableEtimesJSON)
+	if enableEtimeCount == 0 && ar.EnableEtimeJSON != "" {
+		enableEtimeCount = 1
+	}
+	enableWeekCount := len(ar.EnableDaysOfWeeksJSON)
+	if enableStimeCount != enableEtimeCount || enableStimeCount != enableWeekCount {
+		return fmt.Errorf("invalid effective time span: start times(%d), end times(%d) and days-of-week groups(%d) must have the same count",
+			enableStimeCount, enableEtimeCount, enableWeekCount)
+	}
+	for _, days := range ar.EnableDaysOfWeeksJSON {
+		if len(days) == 0 {
+			return errors.New("invalid effective time span: days of week can not be empty")
+		}
+	}
+
 	if err := ar.validateCronPattern(); err != nil {
 		return err
 	}

@@ -78,6 +78,9 @@ func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) b
 	length := len(enableDaysOfWeek)
 	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
 	for i := 0; i < length; i++ {
+		if i >= len(enableStime) || i >= len(enableEtime) {
+			continue
+		}
 		enableDaysOfWeek[i] = strings.Replace(enableDaysOfWeek[i], "7", "0", 1)
 		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
 			continue
