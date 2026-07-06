@@ -80,8 +80,8 @@ func TestDefaultHistogramStep(t *testing.T) {
 }
 
 func TestVictoriaLogsFieldSuggestionTypes(t *testing.T) {
-	field := FieldName{Field: "status", Type: "string", Builtin: false}
-	if field.Field != "status" || field.Type != "string" || field.Builtin {
+	field := FieldName{Field: "status"}
+	if field.Field != "status" {
 		t.Fatalf("unexpected field name suggestion: %+v", field)
 	}
 

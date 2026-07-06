@@ -85,7 +85,6 @@ func (rt *Router) QueryVictoriaLogsFieldNames(c *gin.Context) {
 		if isVictoriaLogsBuilderSuggestionBlockedField(field.Field) {
 			continue
 		}
-		field.Builtin = false
 		ret = append(ret, field)
 	}
 	sort.Slice(ret, func(i, j int) bool {

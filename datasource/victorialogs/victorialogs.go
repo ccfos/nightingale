@@ -55,9 +55,7 @@ type HistogramValues struct {
 }
 
 type FieldName struct {
-	Field   string `json:"field"`
-	Type    string `json:"type"`
-	Builtin bool   `json:"builtin"`
+	Field string `json:"field"`
 }
 
 type FieldValue struct {
@@ -196,9 +194,7 @@ func (vl *VictoriaLogs) QueryFieldNames(ctx context.Context, query string, start
 			continue
 		}
 		ret = append(ret, FieldName{
-			Field:   value.Value,
-			Type:    "string",
-			Builtin: false,
+			Field: value.Value,
 		})
 	}
 	return ret, nil
