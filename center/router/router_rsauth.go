@@ -204,6 +204,35 @@ func (rt *Router) shouldVerifyAsRS(raw string) bool {
 	return tokenHasIssuer(raw)
 }
 
+// VerifyAgentOAuthToken verifies an agent-plane OAuth access token — builtin
+// AS first (local signature), then the external IdP Resource Server path —
+// and resolves the local user identity, provisioning a user on first sight
+// for IdP tokens exactly as tokenAuth's inline branches do.
+//
+// It exists for embedder routers (e.g. the enterprise edition): their own
+// tokenAuth copies know nothing about OAuth — the builtin-AS keys and IdP
+// config live on this Router — so for /mcp in-process dispatches (marked via
+// a2a.IsMCPInProcDispatch) they delegate verification here instead of
+// duplicating the crypto/IdP logic. Returns ok=false when neither auth mode
+// is enabled or the token fails verification.
+func (rt *Router) VerifyAgentOAuthToken(ctx context.Context, rawToken string) (userid int64, username string, ok bool) {
+	if rawToken == "" {
+		return 0, "", false
+	}
+	if rt.mcpAuthEnabled() {
+		if uid, uname, ok := rt.mcpVerifyAccessToken(rawToken); ok {
+			return uid, uname, true
+		}
+	}
+	if rt.rsAuthEnabled() && rt.shouldVerifyAsRS(rawToken) {
+		user, err := rt.authByIdPAccessToken(ctx, rawToken)
+		if err == nil && user != nil {
+			return user.Id, user.Username, true
+		}
+	}
+	return 0, "", false
+}
+
 // authByIdPAccessToken verifies an external IdP access token and resolves it to
 // a local user, provisioning one on first sight with the same defaults as SSO
 // login so an agent-token user is indistinguishable from one created by an
