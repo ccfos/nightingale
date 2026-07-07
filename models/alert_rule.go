@@ -595,15 +595,17 @@ func (ar *AlertRule) Verify() error {
 	if enableEtimeCount == 0 && ar.EnableEtimeJSON != "" {
 		enableEtimeCount = 1
 	}
-	enableWeekCount := len(ar.EnableDaysOfWeeksJSON)
+	// 只统计非空的星期分组：DB2FE 对未配置生效时段（空 EnableDaysOfWeek）会 append 一个空分组，
+	// 未配置的规则（clone 时占绝大多数）不应被误判为时段不一致而拒绝。
+	enableWeekCount := 0
+	for _, days := range ar.EnableDaysOfWeeksJSON {
+		if len(days) > 0 {
+			enableWeekCount++
+		}
+	}
 	if enableStimeCount != enableEtimeCount || enableStimeCount != enableWeekCount {
 		return fmt.Errorf("invalid effective time span: start times(%d), end times(%d) and days-of-week groups(%d) must have the same count",
 			enableStimeCount, enableEtimeCount, enableWeekCount)
-	}
-	for _, days := range ar.EnableDaysOfWeeksJSON {
-		if len(days) == 0 {
-			return errors.New("invalid effective time span: days of week can not be empty")
-		}
 	}
 
 	if err := ar.validateCronPattern(); err != nil {
