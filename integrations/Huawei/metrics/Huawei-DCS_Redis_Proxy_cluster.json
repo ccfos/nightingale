@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "name": "平均时延",
                 "note": "节点从接收命令到发出响应的时延平均值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Average Latency",
+                "note": "Average latency from when the node receives a command to when it sends a response."
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "name": "最大时延",
                 "note": "节点从接收命令到发出响应的时延最大值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Latency",
+                "note": "Maximum latency from when the node receives a command to when it sends a response."
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "name": "P99时延",
                 "note": "执行时延99%的水位线。"
+            },
+            {
+                "lang": "en_US",
+                "name": "P99 Latency",
+                "note": "99th percentile of command execution latency."
             }
         ],
         "created_at": 0,
@@ -88,6 +103,11 @@
                 "lang": "zh_CN",
                 "name": "活跃的客户端数量",
                 "note": "该指标用于统计已连接的客户端数量，包括系统监控、配置同步和业务相关的连接数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Connected Clients",
+                "note": "Number of connected clients, including connections for system monitoring, configuration synchronization, and services."
             }
         ],
         "created_at": 0,
@@ -112,6 +132,11 @@
                 "lang": "zh_CN",
                 "name": "连接数使用率",
                 "note": "该指标用于统计当前连接数与最大连接数限制的百分比。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Connection Usage",
+                "note": "Percentage of the current number of connections to the maximum number of connections allowed."
             }
         ],
         "created_at": 0,
@@ -136,6 +161,11 @@
                 "lang": "zh_CN",
                 "name": "CPU平均使用率",
                 "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的平均值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Average CPU Usage",
+                "note": "The CPU usage of the monitored object is sampled multiple times within each monitoring period. This metric indicates the average of the sampled values."
             }
         ],
         "created_at": 0,
@@ -160,6 +190,11 @@
                 "lang": "zh_CN",
                 "name": "最大CPU使用率",
                 "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的最高值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum CPU Usage",
+                "note": "The CPU usage of the monitored object is sampled multiple times within each monitoring period. This metric indicates the maximum of the sampled values."
             }
         ],
         "created_at": 0,
@@ -184,6 +219,11 @@
                 "lang": "zh_CN",
                 "name": "网络瞬时输入流量",
                 "note": "该指标用于统计瞬时的输入流量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Instantaneous Network Input Traffic",
+                "note": "Instantaneous input traffic."
             }
         ],
         "created_at": 0,
@@ -208,6 +248,11 @@
                 "lang": "zh_CN",
                 "name": "每秒并发操作数",
                 "note": "该指标用于统计每秒处理的命令数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Ops per Second",
+                "note": "Number of commands processed per second."
             }
         ],
         "created_at": 0,
@@ -232,6 +277,11 @@
                 "lang": "zh_CN",
                 "name": "网络瞬时输出流量",
                 "note": "该指标用于统计瞬时的输出流量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Instantaneous Network Output Traffic",
+                "note": "Instantaneous output traffic."
             }
         ],
         "created_at": 0,
@@ -256,6 +306,11 @@
                 "lang": "zh_CN",
                 "name": "内存利用率",
                 "note": "该指标用于统计测量对象的内存利用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Usage",
+                "note": "Memory usage of the monitored object."
             }
         ],
         "created_at": 0,
@@ -280,6 +335,11 @@
                 "lang": "zh_CN",
                 "name": "实例节点状态",
                 "note": "显示Proxy节点状态是否正常。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Instance Node Status",
+                "note": "Indicates whether the Proxy node status is normal."
             }
         ],
         "created_at": 0,
@@ -304,6 +364,11 @@
                 "lang": "zh_CN",
                 "name": "网络收到字节数",
                 "note": "该指标用于统计周期内收到的字节数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Input Bytes",
+                "note": "Number of bytes received during the monitoring period."
             }
         ],
         "created_at": 0,
@@ -328,6 +393,11 @@
                 "lang": "zh_CN",
                 "name": "网络发送字节数",
                 "note": "该指标用于统计周期内发送的字节数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Output Bytes",
+                "note": "Number of bytes sent during the monitoring period."
             }
         ],
         "created_at": 0,

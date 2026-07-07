@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "每个StatefulSet的副本数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Replicas per StatefulSet",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "每个StatefulSet的当前副本数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Current Replicas per StatefulSet",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "每个StatefulSet的就绪副本数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Ready Replicas per StatefulSet",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -88,6 +103,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "每个StatefulSet的更新副本数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Updated Replicas per StatefulSet",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -112,6 +132,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "StatefulSet控制器观察到的生成"
+            },
+            {
+                "lang": "en_US",
+                "name": "Generation Observed by StatefulSet Controller",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -136,6 +161,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "StatefulSet所需的pod数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Desired Pod Count of StatefulSet",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -160,6 +190,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "表示StatefulSet所需状态的特定生成的序列号"
+            },
+            {
+                "lang": "en_US",
+                "name": "Desired State Generation Sequence Number",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -184,6 +219,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "Unix创建时间戳"
+            },
+            {
+                "lang": "en_US",
+                "name": "Creation Unix Timestamp",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -208,6 +248,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "Kubernetes标签转换为Prometheus标签"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubernetes Labels Converted to Prometheus Labels",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -232,6 +277,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "指示用于按顺序[0，currentReplicas）生成Pod的StatefulSet的版本"
+            },
+            {
+                "lang": "en_US",
+                "name": "StatefulSet Current Revision",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -256,6 +306,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的statefulset指标",
                 "name": "指示用于按顺序[replicas-updatedReplicas，replicas]生成Pod的StatefulSet的版本"
+            },
+            {
+                "lang": "en_US",
+                "name": "StatefulSet Update Revision",
+                "note": "StatefulSet metric from kube-state-metrics"
             }
         ],
         "created_at": 0,

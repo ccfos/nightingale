@@ -1575,7 +1575,7 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 	}{
 		{
 			name:  "InitUser",
-			entry: &InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
+			entry: &InitUser{ID: 1, Username: "root", Nickname: "Admin", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
 		},
 		{
 			name:  "InitUserGroup",
@@ -1767,7 +1767,7 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 	}{
 		{
 			name:  "InitUser",
-			entry: &InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
+			entry: &InitUser{ID: 1, Username: "root", Nickname: "Admin", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
 		},
 		{
 			name:  "InitUserGroup",
@@ -1960,7 +1960,7 @@ func postgresDataBaseInit(db *gorm.DB) error {
 	}{
 		{
 			name:  "InitUser",
-			entry: &InitPostgresUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
+			entry: &InitPostgresUser{ID: 1, Username: "root", Nickname: "Admin", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
 		},
 		{
 			name:  "InitUserGroup",

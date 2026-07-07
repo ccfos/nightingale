@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: histogram",
                 "name": "请求apiserver的延迟分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "API Server Request Latency Distribution",
+                "note": "Metric of the scheduler service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: counter",
                 "name": "请求apiserver的总数 ,按照host code method 统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total API Server Requests (by Host, Code, Method)",
+                "note": "Metric of the scheduler service itself.\nType: counter"
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: gauge",
                 "name": "调度器的选举状态，0表示backup， 1表示master"
+            },
+            {
+                "lang": "en_US",
+                "name": "Scheduler Leader Election Status (0: Backup, 1: Master)",
+                "note": "Metric of the scheduler service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -88,6 +103,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: counter",
                 "name": "进入调度队列的pod数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pods Entering Scheduling Queue",
+                "note": "Metric of the scheduler service itself.\nType: counter"
             }
         ],
         "created_at": 0,
@@ -112,6 +132,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: counter",
                 "name": "调度器驱逐容器的次数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Scheduler Preemption Attempts",
+                "note": "Metric of the scheduler service itself.\nType: counter"
             }
         ],
         "created_at": 0,
@@ -136,6 +161,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: gauge",
                 "name": "调度器cache中node pod和绑定pod的数目"
+            },
+            {
+                "lang": "en_US",
+                "name": "Scheduler Cache Size (Nodes, Pods, Assumed Pods)",
+                "note": "Metric of the scheduler service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -160,6 +190,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: gauge",
                 "name": "调度pending的pod数量，按照queue type分别统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pending Pods (by Queue Type)",
+                "note": "Metric of the scheduler service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -184,6 +219,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: histogram",
                 "name": "调度插件在每个扩展点的执行时间，按照extension_point+plugin+status 分别统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Plugin Execution Duration per Extension Point (by extension_point, plugin, status)",
+                "note": "Metric of the scheduler service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -208,6 +248,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: histogram",
                 "name": "调度延迟分布，1.23.0 以后会被scheduling_attempt_duration_seconds替代"
+            },
+            {
+                "lang": "en_US",
+                "name": "E2E Scheduling Latency Distribution (Replaced by scheduling_attempt_duration_seconds Since 1.23.0)",
+                "note": "Metric of the scheduler service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -232,6 +277,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: histogram",
                 "name": "调度框架的扩展点延迟分布,按extension_point(扩展点Bind Filter Permit PreBind/PostBind PreFilter/PostFilter Reseve)+profile（调度器）+ status(调度成功) 统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Framework Extension Point Latency Distribution (by extension_point, profile, status)",
+                "note": "Metric of the scheduler service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -256,6 +306,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: histogram",
                 "name": "pod调度成功前，调度重试的次数分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "Scheduling Attempts Distribution Before Pod Scheduled Successfully",
+                "note": "Metric of the scheduler service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -280,6 +335,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: counter",
                 "name": "按照调度结果统计的调度重试次数。 \"unschedulable\" 表示无法调度，\"error\"表示调度器内部错误"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Schedule Attempts by Result (unschedulable: Cannot Be Scheduled; error: Internal Scheduler Error)",
+                "note": "Metric of the scheduler service itself.\nType: counter"
             }
         ],
         "created_at": 0,
@@ -304,6 +364,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: gauge",
                 "name": "按照功能(binding filter之类)统计的goroutine数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Goroutine Count by Function (e.g. Binding, Filter)",
+                "note": "Metric of the scheduler service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -328,6 +393,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: histogram",
                 "name": "调度算法的耗时分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "Scheduling Algorithm Latency Distribution",
+                "note": "Metric of the scheduler service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -352,6 +422,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: histogram",
                 "name": "调度算法+binding的耗时分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "Scheduling Algorithm + Binding Latency Distribution",
+                "note": "Metric of the scheduler service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -376,6 +451,11 @@
                 "lang": "zh_CN",
                 "note": "scheduler 服务自身指标\n类型: gauge",
                 "name": "调度器的goroutines数目"
+            },
+            {
+                "lang": "en_US",
+                "name": "Scheduler Goroutine Count",
+                "note": "Metric of the scheduler service itself.\nType: gauge"
             }
         ],
         "created_at": 0,

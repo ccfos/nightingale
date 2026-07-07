@@ -83,11 +83,13 @@ func buildAgentCard(endpointURL, tokenHeader, oidcDiscoveryURL string) *a2a.Agen
 			Name:        "Nightingale Assistant",
 			Description: desc,
 			Tags:        []string{"observability", "alerting", "monitoring"},
+			// AgentCard 是面向上游 agent 的公开发现端点，无请求语言上下文，
+			// 示例问句用英文（A2A 对话本身任意语言均可）。
 			Examples: []string{
-				"查看 prod 业务组当前正在告警的事件",
-				"对告警 #12345 做根因分析",
-				"总结过去 1 小时 host-01 的指标异常",
-				"帮我创建一个 CPU > 80% 的告警规则",
+				"Show the currently firing alert events in the prod business group",
+				"Run a root-cause analysis for alert #12345",
+				"Summarize metric anomalies on host-01 over the past hour",
+				"Create an alert rule for CPU > 80%",
 			},
 		}}
 	}

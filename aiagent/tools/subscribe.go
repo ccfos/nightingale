@@ -73,7 +73,7 @@ func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[st
 		groupId = resolveCreationGroupID(args, params)
 	}
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "alert-subscribe-copilot", []string{"busi_group_id"})
+		return "", creationFormInterrupt(params["lang"], deps, user, "alert-subscribe-copilot", []string{"busi_group_id"})
 	}
 	sub.GroupId = groupId
 
@@ -248,7 +248,8 @@ func updateAlertSubscribe(ctx context.Context, deps *aiagent.ToolDeps, args map[
 		TargetID:     id,
 		BaselineHash: baseline,
 		Changes:      changeDescs,
-	}, renderUpdateProposalPrompt(fmt.Sprintf("订阅规则 **%s**（id=%d）", existing.Name, id), changeDescs), map[string]interface{}{
+	}, renderUpdateProposalPrompt(params["lang"], fmt.Sprintf(aiagent.LangText(params["lang"],
+		"订阅规则 **%s**（id=%d）", "subscription rule **%s** (id=%d)"), existing.Name, id), changeDescs), map[string]interface{}{
 		"id":     id,
 		"config": configJSON,
 	})

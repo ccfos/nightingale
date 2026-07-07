@@ -112,7 +112,7 @@ func TestLintVariables_CleanBoard(t *testing.T) {
 
 func TestApplyVariablePatches_Update(t *testing.T) {
 	cfg := sampleConfigs(t)
-	changes, err := applyVariablePatches(cfg, []variablePatch{
+	changes, err := applyVariablePatches("", cfg, []variablePatch{
 		{Name: "ident", DefaultValue: ptrStr("web01"), Multi: ptrBool(false)},
 	})
 	if err != nil {
@@ -135,7 +135,7 @@ func TestApplyVariablePatches_AddAndDelete(t *testing.T) {
 	cfg := sampleConfigs(t)
 
 	// add
-	if _, err := applyVariablePatches(cfg, []variablePatch{
+	if _, err := applyVariablePatches("", cfg, []variablePatch{
 		{Name: "interface", Definition: ptrStr("label_values(net_bytes_recv, interface)"), Label: ptrStr("网卡")},
 	}); err != nil {
 		t.Fatal(err)
@@ -145,7 +145,7 @@ func TestApplyVariablePatches_AddAndDelete(t *testing.T) {
 	}
 
 	// delete
-	if _, err := applyVariablePatches(cfg, []variablePatch{{Name: "interface", Delete: true}}); err != nil {
+	if _, err := applyVariablePatches("", cfg, []variablePatch{{Name: "interface", Delete: true}}); err != nil {
 		t.Fatal(err)
 	}
 	if len(cfg["var"].([]interface{})) != 2 {
@@ -153,14 +153,14 @@ func TestApplyVariablePatches_AddAndDelete(t *testing.T) {
 	}
 
 	// delete missing → error
-	if _, err := applyVariablePatches(cfg, []variablePatch{{Name: "nope", Delete: true}}); err == nil {
+	if _, err := applyVariablePatches("", cfg, []variablePatch{{Name: "nope", Delete: true}}); err == nil {
 		t.Fatal("expected error deleting missing variable")
 	}
 }
 
 func TestApplyVariablePatches_RequiresName(t *testing.T) {
 	cfg := sampleConfigs(t)
-	if _, err := applyVariablePatches(cfg, []variablePatch{{Definition: ptrStr("x")}}); err == nil {
+	if _, err := applyVariablePatches("", cfg, []variablePatch{{Definition: ptrStr("x")}}); err == nil {
 		t.Fatal("expected error for empty name")
 	}
 }
@@ -171,14 +171,14 @@ func TestApplyVariablePatches_RequiresName(t *testing.T) {
 func TestApplyVariablePatches_AddRejectsNonQueryType(t *testing.T) {
 	cfg := sampleConfigs(t)
 	for _, typ := range []string{"custom", "textbox", "datasource"} {
-		if _, err := applyVariablePatches(cfg, []variablePatch{
+		if _, err := applyVariablePatches("", cfg, []variablePatch{
 			{Name: "env", Type: ptrStr(typ)},
 		}); err == nil {
 			t.Fatalf("expected error adding variable with type %q", typ)
 		}
 	}
 	// 显式 type=query 等价于缺省，照常新增
-	if _, err := applyVariablePatches(cfg, []variablePatch{
+	if _, err := applyVariablePatches("", cfg, []variablePatch{
 		{Name: "env", Definition: ptrStr("label_values(up, env)"), Type: ptrStr("query")},
 	}); err != nil {
 		t.Fatal(err)
@@ -199,11 +199,11 @@ func TestApplyVariablePatches_AddRequiresDefinition(t *testing.T) {
 	before := len(cfg["var"].([]interface{}))
 
 	// 全 nil patch（如 {"name":"identt","color":"red"}，color 被解码器丢弃）
-	if _, err := applyVariablePatches(cfg, []variablePatch{{Name: "identt"}}); err == nil {
+	if _, err := applyVariablePatches("", cfg, []variablePatch{{Name: "identt"}}); err == nil {
 		t.Fatal("expected error adding variable without definition")
 	}
 	// 带了其他字段但没 definition，同样拒绝
-	if _, err := applyVariablePatches(cfg, []variablePatch{{Name: "identt", Label: ptrStr("机器")}}); err == nil {
+	if _, err := applyVariablePatches("", cfg, []variablePatch{{Name: "identt", Label: ptrStr("机器")}}); err == nil {
 		t.Fatal("expected error adding variable with label but no definition")
 	}
 	if got := len(cfg["var"].([]interface{})); got != before {
@@ -279,7 +279,7 @@ func TestApplyVariablePatches_AddFollowsBoardDatasourceVar(t *testing.T) {
 	if err := json.Unmarshal([]byte(raw), &cfg); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if _, err := applyVariablePatches(cfg, []variablePatch{
+	if _, err := applyVariablePatches("", cfg, []variablePatch{
 		{Name: "ident", Definition: ptrStr("label_values(up, ident)")},
 	}); err != nil {
 		t.Fatal(err)
@@ -348,7 +348,7 @@ func TestApplyPanelPatches_ReplaceQueriesAndUnit(t *testing.T) {
 	// Edit panel-1's single existing curve by ref (refId "A"); a no-ref spec
 	// would instead add a second curve under the new no-positional semantics.
 	queries := []QuerySpec{{Ref: "A", PromQL: newPromQL, Legend: "{{ident}}"}}
-	changes, err := applyPanelPatches(cfg, []panelPatch{
+	changes, err := applyPanelPatches("", cfg, []panelPatch{
 		{ID: "panel-1", Unit: ptrStr("none"), NewName: ptrStr("CPU使用率(总)"), Queries: &queries},
 	})
 	if err != nil {
@@ -380,7 +380,7 @@ func TestApplyPanelPatches_NestedAndAddCurve(t *testing.T) {
 	queries := []QuerySpec{
 		{PromQL: "swap_used_percent{ident=~\"$ident\"}", Legend: "swap"},
 	}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-2", Queries: &queries}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-2", Queries: &queries}}); err != nil {
 		t.Fatal(err)
 	}
 	p := findPanel(cfg["panels"].([]interface{}), "panel-2", "")
@@ -399,7 +399,7 @@ func TestApplyPanelPatches_NestedAndAddCurve(t *testing.T) {
 
 func TestApplyPanelPatches_DeleteNested(t *testing.T) {
 	cfg := sampleConfigs(t)
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-2", Delete: true}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-2", Delete: true}}); err != nil {
 		t.Fatal(err)
 	}
 	if findPanel(cfg["panels"].([]interface{}), "panel-2", "") != nil {
@@ -465,7 +465,7 @@ func dupNamePanels(t *testing.T) map[string]interface{} {
 // (asking for the id) instead of editing the first match.
 func TestApplyPanelPatches_AmbiguousNameRejected(t *testing.T) {
 	cfg := dupNamePanels(t)
-	_, err := applyPanelPatches(cfg, []panelPatch{{Name: "CPU", Unit: ptrStr("percent")}})
+	_, err := applyPanelPatches("", cfg, []panelPatch{{Name: "CPU", Unit: ptrStr("percent")}})
 	if err == nil {
 		t.Fatal("expected ambiguity error updating a duplicate panel name")
 	}
@@ -486,7 +486,7 @@ func TestApplyPanelPatches_AmbiguousNameRejected(t *testing.T) {
 // match.
 func TestApplyPanelPatches_AmbiguousNameDeleteRejected(t *testing.T) {
 	cfg := dupNamePanels(t)
-	_, err := applyPanelPatches(cfg, []panelPatch{{Name: "CPU", Delete: true}})
+	_, err := applyPanelPatches("", cfg, []panelPatch{{Name: "CPU", Delete: true}})
 	if err == nil {
 		t.Fatal("expected ambiguity error deleting a duplicate panel name")
 	}
@@ -506,7 +506,7 @@ func TestApplyPanelPatches_AmbiguousNameDeleteRejected(t *testing.T) {
 // duplicate names, addressing the exact panel by id remains unambiguous.
 func TestApplyPanelPatches_DuplicateNameByIdStillWorks(t *testing.T) {
 	cfg := dupNamePanels(t)
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-2", Unit: ptrStr("percent")}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-2", Unit: ptrStr("percent")}}); err != nil {
 		t.Fatalf("id-based update on a duplicate name should succeed: %v", err)
 	}
 	if panelUnit(findPanel(cfg["panels"].([]interface{}), "panel-2", "")) != "percent" {
@@ -522,7 +522,7 @@ func TestApplyPanelPatches_DuplicateNameByIdStillWorks(t *testing.T) {
 // not-found (rather than ambiguous).
 func TestApplyPanelPatches_UnknownNameRejected(t *testing.T) {
 	cfg := dupNamePanels(t)
-	_, err := applyPanelPatches(cfg, []panelPatch{{Name: "nope", Unit: ptrStr("x")}})
+	_, err := applyPanelPatches("", cfg, []panelPatch{{Name: "nope", Unit: ptrStr("x")}})
 	if err == nil {
 		t.Fatal("expected not-found error for unknown panel name")
 	}
@@ -547,17 +547,17 @@ func TestCountPanels(t *testing.T) {
 
 func TestApplyPanelPatches_MatchByName(t *testing.T) {
 	cfg := sampleConfigs(t)
-	if _, err := applyPanelPatches(cfg, []panelPatch{{Name: "CPU使用率", Unit: ptrStr("percent")}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{Name: "CPU使用率", Unit: ptrStr("percent")}}); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestApplyPanelPatches_NotFound(t *testing.T) {
 	cfg := sampleConfigs(t)
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-99", Unit: ptrStr("x")}}); err == nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-99", Unit: ptrStr("x")}}); err == nil {
 		t.Fatal("expected not-found error")
 	}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{Unit: ptrStr("x")}}); err == nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{Unit: ptrStr("x")}}); err == nil {
 		t.Fatal("expected error when no locator given")
 	}
 }
@@ -708,13 +708,13 @@ func TestApplyPanelPatches_RejectsQueriesOnNonPromPanel(t *testing.T) {
 	p["datasourceCate"] = "mysql"
 
 	queries := []QuerySpec{{PromQL: "select 1"}}
-	_, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Queries: &queries}})
+	_, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Queries: &queries}})
 	if err == nil {
 		t.Fatal("expected error replacing queries on a MySQL panel")
 	}
 
 	// A non-query edit (e.g. unit) on the same panel must still succeed.
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Unit: ptrStr("none")}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Unit: ptrStr("none")}}); err != nil {
 		t.Fatalf("non-query edit on non-prom panel should succeed: %v", err)
 	}
 }
@@ -731,7 +731,7 @@ func TestApplyPanelPatches_TypeChangeGuards(t *testing.T) {
 	p := findPanel(cfg["panels"].([]interface{}), "panel-1", "")
 	p["type"] = "text"
 	p["custom"] = map[string]interface{}{"content": "# runbook"}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("timeseries")}}); err == nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("timeseries")}}); err == nil {
 		t.Fatal("expected error converting a text panel to a chart type")
 	}
 	if got := p["custom"].(map[string]interface{})["content"]; got != "# runbook" {
@@ -742,13 +742,13 @@ func TestApplyPanelPatches_TypeChangeGuards(t *testing.T) {
 	cfg = sampleConfigs(t)
 	p = findPanel(cfg["panels"].([]interface{}), "panel-1", "")
 	p["datasourceCate"] = "mysql"
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("stat")}}); err == nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("stat")}}); err == nil {
 		t.Fatal("expected error changing type of a MySQL panel")
 	}
 
 	// A Prometheus chart panel still converts normally.
 	cfg = sampleConfigs(t)
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("stat")}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("stat")}}); err != nil {
 		t.Fatalf("type change on a prom panel should succeed: %v", err)
 	}
 	p = findPanel(cfg["panels"].([]interface{}), "panel-1", "")
@@ -777,7 +777,7 @@ func TestApplyPanelPatches_TypeChangeClearsInstant(t *testing.T) {
 	if err := json.Unmarshal([]byte(raw), &cfg); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("timeseries")}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("timeseries")}}); err != nil {
 		t.Fatalf("stat→timeseries should succeed: %v", err)
 	}
 	p := findPanel(cfg["panels"].([]interface{}), "panel-1", "")
@@ -790,7 +790,7 @@ func TestApplyPanelPatches_TypeChangeClearsInstant(t *testing.T) {
 
 	// timeseries→stat keeps targets untouched (no instant forced on).
 	cfg2 := sampleConfigs(t)
-	if _, err := applyPanelPatches(cfg2, []panelPatch{{ID: "panel-1", Type: ptrStr("stat")}}); err != nil {
+	if _, err := applyPanelPatches("", cfg2, []panelPatch{{ID: "panel-1", Type: ptrStr("stat")}}); err != nil {
 		t.Fatalf("timeseries→stat should succeed: %v", err)
 	}
 	p2 := findPanel(cfg2["panels"].([]interface{}), "panel-1", "")
@@ -821,7 +821,7 @@ func TestApplyPanelPatches_TypeChangeWithQueriesClearsInstant(t *testing.T) {
 	// The model reads the stat panel and patches type→timeseries while echoing
 	// the curve back with its current instant:true.
 	queries := []QuerySpec{{Ref: "A", PromQL: "cpu_usage_active", Instant: ptrBool(true)}}
-	if _, err := applyPanelPatches(cfg, []panelPatch{
+	if _, err := applyPanelPatches("", cfg, []panelPatch{
 		{ID: "panel-1", Type: ptrStr("timeseries"), Queries: &queries},
 	}); err != nil {
 		t.Fatalf("stat→timeseries with queries should succeed: %v", err)
@@ -855,7 +855,7 @@ func TestApplyPanelPatches_TypelessPanelTimeseriesIsNoOp(t *testing.T) {
 		t.Fatal(err)
 	}
 	// type:timeseries on an (effectively-timeseries) type-less panel is a no-op.
-	_, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("timeseries")}})
+	_, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("timeseries")}})
 	if err == nil {
 		t.Fatal("expected a no-op error restating a type-less panel's effective type")
 	}
@@ -896,7 +896,7 @@ func TestApplyPanelPatches_PreservesTargetFields(t *testing.T) {
 		{Ref: "B", PromQL: "new_expr_b"},       // only expr changes
 		{PromQL: "brand_new", Legend: "third"}, // new target → fresh refId
 	}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Queries: &queries}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Queries: &queries}}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -955,7 +955,7 @@ func TestApplyPanelPatches_SetsStepAndHide(t *testing.T) {
 		t.Fatalf("unmarshal: %v", err)
 	}
 	queries := []QuerySpec{{Ref: "A", PromQL: "e", Hide: ptrBool(true)}} // flip hide, leave step
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "p", Queries: &queries}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "p", Queries: &queries}}); err != nil {
 		t.Fatal(err)
 	}
 	a := findPanel(cfg["panels"].([]interface{}), "p", "")["targets"].([]interface{})[0].(map[string]interface{})
@@ -988,7 +988,7 @@ func TestApplyPanelPatches_InstantTrueToFalse(t *testing.T) {
 		{Ref: "A", Instant: ptrBool(false)},
 		{Ref: "B", PromQL: "b"},
 	}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "p", Queries: &queries}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "p", Queries: &queries}}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1024,7 +1024,7 @@ func TestApplyPanelPatches_IncrementalMergeKeepsUnmentionedCurves(t *testing.T) 
 
 	// Edit only curve A; do NOT mention B. B must survive untouched.
 	queries := []QuerySpec{{Ref: "A", PromQL: "new_a"}}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Queries: &queries}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Queries: &queries}}); err != nil {
 		t.Fatal(err)
 	}
 	targets := findPanel(cfg["panels"].([]interface{}), "panel-1", "")["targets"].([]interface{})
@@ -1042,7 +1042,7 @@ func TestApplyPanelPatches_IncrementalMergeKeepsUnmentionedCurves(t *testing.T) 
 
 	// Now explicitly delete B; only A should remain.
 	del := []QuerySpec{{Ref: "B", Delete: true}}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Queries: &del}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Queries: &del}}); err != nil {
 		t.Fatal(err)
 	}
 	targets = findPanel(cfg["panels"].([]interface{}), "panel-1", "")["targets"].([]interface{})
@@ -1094,7 +1094,7 @@ func TestApplyPanelPatches_NoRefCurveIsAddedNotOverwritten(t *testing.T) {
 
 	// "给内存图表加一条 swap 曲线": a single no-ref new curve.
 	queries := []QuerySpec{{PromQL: "swap_used_percent", Legend: "swap"}}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "mem", Queries: &queries}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "mem", Queries: &queries}}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1133,7 +1133,7 @@ func TestApplyPanelPatches_FieldsOnlyPatchKeepsExpr(t *testing.T) {
 
 	// Hide curve A without resending its promql.
 	queries := []QuerySpec{{Ref: "A", Hide: ptrBool(true)}}
-	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "p", Queries: &queries}}); err != nil {
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "p", Queries: &queries}}); err != nil {
 		t.Fatal(err)
 	}
 

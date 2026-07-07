@@ -364,7 +364,7 @@ func (p *panelPatch) noEditableField() bool {
 // applyVariablePatches mutates configs["var"] per the patches and returns a list
 // of human-readable change descriptions. Patches match existing variables by
 // name; an unmatched, non-delete patch adds a new query variable.
-func applyVariablePatches(configs map[string]interface{}, patches []variablePatch) ([]string, error) {
+func applyVariablePatches(lang string, configs map[string]interface{}, patches []variablePatch) ([]string, error) {
 	changes := make([]string, 0)
 	vars, _ := configs["var"].([]interface{})
 
@@ -387,7 +387,7 @@ func applyVariablePatches(configs map[string]interface{}, patches []variablePatc
 				return nil, fmt.Errorf("cannot delete variable %q: not found", p.Name)
 			}
 			vars = append(vars[:idx], vars[idx+1:]...)
-			changes = append(changes, fmt.Sprintf("删除变量 %q", p.Name))
+			changes = append(changes, fmt.Sprintf(aiagent.LangText(lang, "删除变量 %q", "delete variable %q"), p.Name))
 
 		case idx >= 0:
 			// Same lie-prevention as panel patches: unknown fields were dropped
@@ -409,7 +409,7 @@ func applyVariablePatches(configs map[string]interface{}, patches []variablePatc
 			}
 			vm := vars[idx].(map[string]interface{})
 			applyVarFields(vm, p)
-			changes = append(changes, fmt.Sprintf("更新变量 %q", p.Name))
+			changes = append(changes, fmt.Sprintf(aiagent.LangText(lang, "更新变量 %q", "update variable %q"), p.Name))
 
 		default: // add new variable
 			// buildVariable 只会构造 query 型骨架（definition/datasource 等字段）。
@@ -451,7 +451,7 @@ func applyVariablePatches(configs map[string]interface{}, patches []variablePatc
 				nv["defaultValue"] = *p.DefaultValue
 			}
 			vars = append(vars, nv)
-			changes = append(changes, fmt.Sprintf("新增变量 %q", p.Name))
+			changes = append(changes, fmt.Sprintf(aiagent.LangText(lang, "新增变量 %q", "add variable %q"), p.Name))
 		}
 	}
 
@@ -501,7 +501,7 @@ func applyVarFields(vm map[string]interface{}, p variablePatch) {
 // applyPanelPatches mutates configs["panels"] per the patches (recursing into
 // collapsed rows) and returns human-readable change descriptions. Each patch
 // locates its target by id (preferred) or current name.
-func applyPanelPatches(configs map[string]interface{}, patches []panelPatch) ([]string, error) {
+func applyPanelPatches(lang string, configs map[string]interface{}, patches []panelPatch) ([]string, error) {
 	changes := make([]string, 0)
 	panels, _ := configs["panels"].([]interface{})
 
@@ -543,7 +543,7 @@ func applyPanelPatches(configs map[string]interface{}, patches []panelPatch) ([]
 			if !deleted {
 				return nil, fmt.Errorf("cannot delete panel %q: not found", label)
 			}
-			changes = append(changes, fmt.Sprintf("删除图表 %q", label))
+			changes = append(changes, fmt.Sprintf(aiagent.LangText(lang, "删除图表 %q", "delete panel %q"), label))
 			continue
 		}
 
@@ -581,8 +581,9 @@ func applyPanelPatches(configs map[string]interface{}, patches []panelPatch) ([]
 				return nil, err
 			}
 		}
-		parts := applyPanelFields(pm, p)
-		changes = append(changes, fmt.Sprintf("更新图表 %q（%s）", label, strings.Join(parts, "、")))
+		parts := applyPanelFields(lang, pm, p)
+		changes = append(changes, fmt.Sprintf(aiagent.LangText(lang, "更新图表 %q（%s）", "update panel %q (%s)"),
+			label, strings.Join(parts, aiagent.LangText(lang, "、", ", "))))
 	}
 
 	configs["panels"] = panels
@@ -681,28 +682,28 @@ func clearTargetsInstant(pm map[string]interface{}) {
 // human-readable fragment per field actually applied — the change list shown
 // at confirm time must describe what will really be written, never a bare
 // "更新图表" for fields the tool dropped.
-func applyPanelFields(pm map[string]interface{}, p panelPatch) []string {
+func applyPanelFields(lang string, pm map[string]interface{}, p panelPatch) []string {
 	parts := make([]string, 0, 5)
 	if p.NewName != nil {
 		pm["name"] = *p.NewName
-		parts = append(parts, fmt.Sprintf("标题→%q", *p.NewName))
+		parts = append(parts, fmt.Sprintf(aiagent.LangText(lang, "标题→%q", "title→%q"), *p.NewName))
 	}
 	if p.Desc != nil {
 		pm["description"] = *p.Desc
-		parts = append(parts, "说明")
+		parts = append(parts, aiagent.LangText(lang, "说明", "description"))
 	}
 	if p.Unit != nil {
 		setPanelUnit(pm, *p.Unit)
-		parts = append(parts, fmt.Sprintf("单位→%s", *p.Unit))
+		parts = append(parts, fmt.Sprintf(aiagent.LangText(lang, "单位→%s", "unit→%s"), *p.Unit))
 	}
 	if p.Type != nil {
-		parts = append(parts, fmt.Sprintf("类型 %s→%s", stringVal(pm, "type"), *p.Type))
+		parts = append(parts, fmt.Sprintf(aiagent.LangText(lang, "类型 %s→%s", "type %s→%s"), stringVal(pm, "type"), *p.Type))
 		changePanelType(pm, *p.Type)
 	}
 	if p.Queries != nil {
 		existing, _ := pm["targets"].([]interface{})
 		pm["targets"] = mergeTargets(existing, *p.Queries)
-		parts = append(parts, "曲线")
+		parts = append(parts, aiagent.LangText(lang, "曲线", "queries"))
 	}
 	// Clear instant AFTER the query merge: a →timeseries conversion must leave
 	// no instant targets, but a queries patch riding in the same call re-adds
@@ -1122,7 +1123,7 @@ func updateDashboard(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		if err := json.Unmarshal([]byte(varsJSON), &patches); err != nil {
 			return "", fmt.Errorf("invalid variables JSON: %v", err)
 		}
-		changes, err := applyVariablePatches(configs, patches)
+		changes, err := applyVariablePatches(params["lang"], configs, patches)
 		if err != nil {
 			return "", err
 		}
@@ -1134,7 +1135,7 @@ func updateDashboard(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		if err := json.Unmarshal([]byte(panelsJSON), &patches); err != nil {
 			return "", fmt.Errorf("invalid panels JSON: %v", err)
 		}
-		changes, err := applyPanelPatches(configs, patches)
+		changes, err := applyPanelPatches(params["lang"], configs, patches)
 		if err != nil {
 			return "", err
 		}
@@ -1153,7 +1154,9 @@ func updateDashboard(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 			return "", fmt.Errorf("fix_datasource only supports Prometheus/VictoriaMetrics dashboards, but this dashboard uses datasource type %q; aborting to avoid corrupting its datasource config", cate)
 		}
 		normalizeTemplateDatasource(configs, 0)
-		allChanges = append(allChanges, "修复数据源引用（统一重指到大盘数据源变量）")
+		allChanges = append(allChanges, aiagent.LangText(params["lang"],
+			"修复数据源引用（统一重指到大盘数据源变量）",
+			"fix datasource references (repoint to the board's datasource variable)"))
 	}
 
 	if len(allChanges) == 0 {
@@ -1184,7 +1187,8 @@ func updateDashboard(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		BaselineHash: hashConfigs(board.Configs),
 		Payload:      string(newConfigs),
 		Changes:      allChanges,
-	}, renderUpdateProposalPrompt(fmt.Sprintf("仪表盘 **%s**（id=%d）", board.Name, board.Id), allChanges), map[string]interface{}{
+	}, renderUpdateProposalPrompt(params["lang"], fmt.Sprintf(aiagent.LangText(params["lang"],
+		"仪表盘 **%s**（id=%d）", "dashboard **%s** (id=%d)"), board.Name, board.Id), allChanges), map[string]interface{}{
 		"id": board.Id,
 	})
 }

@@ -444,7 +444,7 @@ var (
                                 "tag": "button",
                                 "text": {
                                     "tag": "plain_text",
-                                    "content": "查看详情"
+                                    "content": {{ jsonMarshal (or .params.detail_btn_text "查看详情") }}
                                 },
                                 "type": "primary_filled",
                                 "width": "fill",
@@ -473,7 +473,7 @@ var (
                                 "tag": "button",
                                 "text": {
                                     "tag": "plain_text",
-                                    "content": "屏蔽"
+                                    "content": {{ jsonMarshal (or .params.mute_btn_text "屏蔽") }}
                                 },
                                 "type": "default",
                                 "width": "fill",
@@ -499,7 +499,7 @@ var (
                                 "tag": "button",
                                 "text": {
                                     "tag": "plain_text",
-                                    "content": "关闭"
+                                    "content": {{ jsonMarshal (or .params.close_btn_text "关闭") }}
                                 },
                                 "type": "default",
                                 "width": "fill",
@@ -547,7 +547,7 @@ var (
                 "tag": "text_tag",
                 "text": {
                     "tag": "plain_text",
-                    "content": "紧急"
+                    "content": {{ jsonMarshal (or .params.tag_text "紧急") }}
                 },
                 "color": "red"
             }

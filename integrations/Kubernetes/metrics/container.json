@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: counter",
                 "name": "cfs时间片总数, 完全公平调度的时间片总数(分配到cpu的时间片数)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total CFS Scheduling Periods",
+                "note": "Container metric exposed by cAdvisor\nType: counter"
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: counter",
                 "name": "容器被throttle的时间片总数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Throttled CFS Periods",
+                "note": "Container metric exposed by cAdvisor\nType: counter"
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: counter",
                 "name": "容器被throttle的时间"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total CPU Throttled Time",
+                "note": "Container metric exposed by cAdvisor\nType: counter"
             }
         ],
         "created_at": 0,
@@ -88,6 +103,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: gauge",
                 "name": "容器打开的fd数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Open File Descriptors",
+                "note": "Container metric exposed by cAdvisor\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -112,6 +132,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: gauge",
                 "name": "容器内存使用量，单位byte"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container Memory Usage (bytes)",
+                "note": "Container metric exposed by cAdvisor\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -136,6 +161,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: counter",
                 "name": "容器入方向的流量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Network Receive Bytes",
+                "note": "Container metric exposed by cAdvisor\nType: counter"
             }
         ],
         "created_at": 0,
@@ -160,6 +190,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: counter",
                 "name": "容器出方向的流量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Network Transmit Bytes",
+                "note": "Container metric exposed by cAdvisor\nType: counter"
             }
         ],
         "created_at": 0,
@@ -184,6 +219,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: gauge",
                 "name": "容器的cpu调度单位时间"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container CPU Scheduling Period",
+                "note": "Container metric exposed by cAdvisor\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -208,6 +248,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: gauge",
                 "name": "容器的cpu规格 ，除以单位调度时间可以计算核数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container CPU Quota",
+                "note": "Container metric exposed by cAdvisor\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -232,6 +277,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: gauge",
                 "name": "容器的内存规格，单位byte"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container Memory Limit (bytes)",
+                "note": "Container metric exposed by cAdvisor\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -256,6 +306,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: gauge",
                 "name": "容器当前的线程数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Current Thread Count",
+                "note": "Container metric exposed by cAdvisor\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -280,6 +335,11 @@
                 "lang": "zh_CN",
                 "note": "cAdvisor暴露的容器指标\n类型: gauge",
                 "name": "允许容器启动的最大线程数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Thread Count",
+                "note": "Container metric exposed by cAdvisor\nType: gauge"
             }
         ],
         "created_at": 0,

@@ -27,7 +27,7 @@ COMMENT ON COLUMN users.roles IS 'Admin | Standard | Guest, split by space';
 COMMENT ON COLUMN users.contacts IS 'json e.g. {wecom:xx, dingtalk_robot_token:yy}';
 COMMENT ON COLUMN users.belong IS 'belong';
 
-insert into users(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', date_part('epoch',current_timestamp)::int, 'system', date_part('epoch',current_timestamp)::int, 'system');
+insert into users(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', 'Admin', 'root.2020', 'Admin', date_part('epoch',current_timestamp)::int, 'system', date_part('epoch',current_timestamp)::int, 'system');
 
 CREATE TABLE user_group (
     id bigserial,
