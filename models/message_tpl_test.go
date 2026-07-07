@@ -56,6 +56,8 @@ func TestFilterMsgTplsByLang(t *testing.T) {
 		{"未携带 X-Language 按中文处理", "", all, []int64{1, 3, 4, 5}},
 		{"英文请求：英文内置 + 全部自建（含 lang 为空的存量自建）", "en_US", all, []int64{2, 3, 4, 5}},
 		{"其他语言无内置模板时内置回退英文，自建全保留", "ru_RU", all, []int64{2, 3, 4, 5}},
+		{"英文请求但英文内置缺失时回退中文内置", "en_US", []*MessageTemplate{sysZh, userZh}, []int64{1, 3}},
+		{"其他语言且英文内置也缺失时回退中文内置", "ja_JP", []*MessageTemplate{sysZh, userJa}, []int64{1, 5}},
 		{"仅自建模板时与语言无关全部返回", "en", []*MessageTemplate{userZh, userJa}, []int64{3, 5}},
 	}
 

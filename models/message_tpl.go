@@ -178,7 +178,8 @@ func MessageTemplatesGetBy(ctx *ctx.Context, notifyChannelIdents []string) ([]*M
 		session = session.Where("notify_channel_ident IN (?)", notifyChannelIdents)
 	}
 
-	err := session.Order("weight asc").Find(&lst).Error
+	// 内置模板中英文版 weight 相同，按 id 兜底使排序确定（调用方取首个作为默认模板）
+	err := session.Order("weight asc, id asc").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -205,22 +206,29 @@ func NormalizeMsgTplLang(lang string) string {
 }
 
 // FilterMsgTplsByLang 按请求语言过滤内置模板（CreateBy=="system"，有中英两套），
-// 请求语言没有对应的内置模板时回退英文。
+// 请求语言没有对应的内置模板时先回退英文，英文也没有则回退中文。
 // 用户自建模板与语言无关，始终保留：其 lang 仅记录创建时的界面语言，若参与过滤，
 // 存量自建模板（迁移后 lang 默认为空）和跨语言团队互建的模板会对对方隐藏，
 // 导致配置通知规则时无法从列表选中。
 func FilterMsgTplsByLang(lst []*MessageTemplate, reqLang string) []*MessageTemplate {
 	want := NormalizeMsgTplLang(reqLang)
 
-	hasWant := false
-	for _, t := range lst {
-		if t.CreateBy == "system" && NormalizeMsgTplLang(t.Lang) == want {
-			hasWant = true
-			break
+	hasSysLang := func(lang string) bool {
+		for _, t := range lst {
+			if t.CreateBy == "system" && NormalizeMsgTplLang(t.Lang) == lang {
+				return true
+			}
 		}
+		return false
 	}
-	if !hasWant && want != MsgTplLangEn {
-		want = MsgTplLangEn
+
+	// 回退兜底，避免英文模板缺失（如手工执行 SQL 迁移滞后）时内置模板整体被过滤成空
+	if !hasSysLang(want) {
+		if want != MsgTplLangEn && hasSysLang(MsgTplLangEn) {
+			want = MsgTplLangEn
+		} else {
+			want = ""
+		}
 	}
 
 	res := make([]*MessageTemplate, 0, len(lst))
