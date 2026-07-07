@@ -23,9 +23,9 @@ func TestReadEventIds(t *testing.T) {
 		want        []int64
 	}{
 		{"GET 从 query 读取", http.MethodGet, "event_ids=1,2,3", "", []int64{1, 2, 3}},
-		{"POST 从 body 读取", http.MethodPost, "", `{"event_ids":"4,5,6"}`, []int64{4, 5, 6}},
+		{"POST 从 body 读取数组", http.MethodPost, "", `{"event_ids":[4,5,6]}`, []int64{4, 5, 6}},
 		{"POST body 为空时回退 query", http.MethodPost, "event_ids=7,8", `{}`, []int64{7, 8}},
-		{"POST body 优先于 query", http.MethodPost, "event_ids=1", `{"event_ids":"9,10"}`, []int64{9, 10}},
+		{"POST body 优先于 query", http.MethodPost, "event_ids=1", `{"event_ids":[9,10]}`, []int64{9, 10}},
 		{"无参数返回空切片", http.MethodGet, "", "", []int64{}},
 	}
 
