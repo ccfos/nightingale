@@ -270,6 +270,10 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/victorialogs-histogram", rt.QueryVictoriaLogsHistogram)
 			pages.POST("/victorialogs-field-names", rt.QueryVictoriaLogsFieldNames)
 			pages.POST("/victorialogs-field-values", rt.QueryVictoriaLogsFieldValues)
+			pages.POST("/loki-label-names", rt.QueryLokiLabelNames)
+			pages.POST("/loki-label-values", rt.QueryLokiLabelValues)
+			pages.POST("/loki-parsed-fields", rt.QueryLokiParsedFields)
+			pages.POST("/loki-histogram", rt.QueryLokiHistogram)
 
 			pages.POST("/log-query-batch", rt.QueryLogBatch)
 
@@ -303,6 +307,10 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/victorialogs-histogram", rt.auth(), rt.user(), rt.QueryVictoriaLogsHistogram)
 			pages.POST("/victorialogs-field-names", rt.auth(), rt.user(), rt.QueryVictoriaLogsFieldNames)
 			pages.POST("/victorialogs-field-values", rt.auth(), rt.user(), rt.QueryVictoriaLogsFieldValues)
+			pages.POST("/loki-label-names", rt.auth(), rt.user(), rt.QueryLokiLabelNames)
+			pages.POST("/loki-label-values", rt.auth(), rt.user(), rt.QueryLokiLabelValues)
+			pages.POST("/loki-parsed-fields", rt.auth(), rt.user(), rt.QueryLokiParsedFields)
+			pages.POST("/loki-histogram", rt.auth(), rt.user(), rt.QueryLokiHistogram)
 
 			pages.POST("/log-query-batch", rt.auth(), rt.user(), rt.QueryLogBatch)
 

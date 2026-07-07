@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
+	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/dskit/victorialogs"
 	"github.com/ccfos/nightingale/v6/models"
 
@@ -171,7 +172,7 @@ func (vl *VictoriaLogs) QueryHistogram(ctx context.Context, queryParam interface
 		groupByFields = append(groupByFields, param.GroupBy)
 	}
 	if param.Step == "" {
-		param.Step = victorialogs.DefaultHistogramStep(param.Start, param.End)
+		param.Step = dskittypes.DefaultHistogramStep(param.Start, param.End)
 	}
 
 	result, err := vl.QueryHitsWithFieldsLimit(ctx, param.Query, param.Start, param.End, param.Step, param.FieldsLimit, groupByFields...)
