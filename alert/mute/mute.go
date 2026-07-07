@@ -76,7 +76,8 @@ func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) b
 	enableEtime := strings.Fields(rule.EnableEtime)
 	enableDaysOfWeek := strings.Split(rule.EnableDaysOfWeek, ";")
 	length := len(enableDaysOfWeek)
-	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
+	// 正常情况下 enableStime、enableEtime、enableDaysOfWeek 段数相同；
+	// 但历史脏数据或异常写入可能不一致，循环内已对越界做兜底跳过（见下），避免 panic
 	for i := 0; i < length; i++ {
 		if i >= len(enableStime) || i >= len(enableEtime) {
 			continue
