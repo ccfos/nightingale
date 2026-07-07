@@ -424,104 +424,6 @@ var (
                     }
                 ],
                 "margin": "0px 0px 0px 0px"
-            },
-            {
-                "tag": "hr",
-                "margin": "0px 0px 0px 0px",
-                "element_id": "e7TwGda0WH4_yR_IkeU5"
-            },
-            {
-                "tag": "column_set",
-                "flex_mode": "stretch",
-                "horizontal_spacing": "8px",
-                "horizontal_align": "left",
-                "columns": [
-                    {
-                        "tag": "column",
-                        "width": "auto",
-                        "elements": [
-                            {
-                                "tag": "button",
-                                "text": {
-                                    "tag": "plain_text",
-                                    "content": "查看详情"
-                                },
-                                "type": "primary_filled",
-                                "width": "fill",
-                                "behaviors": [
-                                    {
-                                        "type": "open_url",
-                                        "default_url": "https://example.com/alert/handle",
-                                        "pc_url": "",
-                                        "ios_url": "",
-                                        "android_url": ""
-                                    }
-                                ],
-                                "margin": "4px 0px 4px 0px",
-                                "element_id": "NVdaRT204HOQPtxfObaI"
-                            }
-                        ],
-                        "vertical_spacing": "8px",
-                        "horizontal_align": "left",
-                        "vertical_align": "top"
-                    },
-                    {
-                        "tag": "column",
-                        "width": "auto",
-                        "elements": [
-                            {
-                                "tag": "button",
-                                "text": {
-                                    "tag": "plain_text",
-                                    "content": "屏蔽"
-                                },
-                                "type": "default",
-                                "width": "fill",
-                                "behaviors": [
-                                    {
-                                        "type": "callback",
-                                        "value": ""
-                                    }
-                                ],
-                                "margin": "4px 0px 4px 0px",
-                                "element_id": "x8ODoO6HDBcViKTlnDHi"
-                            }
-                        ],
-                        "vertical_spacing": "8px",
-                        "horizontal_align": "left",
-                        "vertical_align": "top"
-                    },
-                    {
-                        "tag": "column",
-                        "width": "auto",
-                        "elements": [
-                            {
-                                "tag": "button",
-                                "text": {
-                                    "tag": "plain_text",
-                                    "content": "关闭"
-                                },
-                                "type": "default",
-                                "width": "fill",
-                                "behaviors": [
-                                    {
-                                        "type": "open_url",
-                                        "default_url": "https://example.com/alert/detail",
-                                        "pc_url": "",
-                                        "ios_url": "",
-                                        "android_url": ""
-                                    }
-                                ],
-                                "margin": "4px 0px 4px 0px",
-                                "element_id": "xwflabjVxh2qQwphn9rN"
-                            }
-                        ],
-                        "vertical_spacing": "8px",
-                        "horizontal_align": "left",
-                        "vertical_align": "top"
-                    }
-                ],
-                "margin": "0px 0px 0px 0px"
             }{{ if .shot_image_key }},
             {
                 "tag": "img",
@@ -542,16 +444,6 @@ var (
             "tag": "plain_text",
             "content": ""
         },
-        "text_tag_list": [
-            {
-                "tag": "text_tag",
-                "text": {
-                    "tag": "plain_text",
-                    "content": "紧急"
-                },
-                "color": "red"
-            }
-        ],
         "template": "red",
         "icon": {
             "tag": "standard_icon",

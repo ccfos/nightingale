@@ -1226,11 +1226,11 @@ func (InitPostgresESIndexPattern) TableName() string {
 
 type InitBuiltinMetric struct {
 	ID         uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
-	Collector  string `gorm:"size:191;not null;comment:type of collector;index:idx_collector`
-	Typ        string `gorm:"size:191;not null;comment:type of metric;index:idx_typ`
-	Name       string `gorm:"size:191;not null;comment:name of metric;index:idx_name`
+	Collector  string `gorm:"size:191;not null;comment:type of collector;index:idx_collector"`
+	Typ        string `gorm:"size:191;not null;comment:type of metric;index:idx_typ"`
+	Name       string `gorm:"size:191;not null;comment:name of metric;index:idx_builtinmetric_name"`
 	Unit       string `gorm:"size:191;not null;comment:unit of metric"`
-	Lang       string `gorm:"size:191;not null;default:'';comment:language of metric;index:idx_lang`
+	Lang       string `gorm:"size:191;not null;default:'';comment:language of metric;index:idx_lang"`
 	Note       string `gorm:"size:4096;not null;comment:description of metric in Chinese"`
 	Expression string `gorm:"size:4096;not null;comment:expression of metric"`
 	CreatedAt  int64  `gorm:"not null;default:0;comment:create time"`
@@ -1250,11 +1250,11 @@ func (InitBuiltinMetric) TableOptions() string {
 
 type InitSqliteBuiltinMetric struct {
 	ID         uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
-	Collector  string `gorm:"size:191;not null;comment:type of collector;index:idx_collector`
-	Typ        string `gorm:"size:191;not null;comment:type of metric;index:idx_typ`
-	Name       string `gorm:"size:191;not null;comment:name of metric;index:idx_name_sqlite`
+	Collector  string `gorm:"size:191;not null;comment:type of collector;index:idx_collector"`
+	Typ        string `gorm:"size:191;not null;comment:type of metric;index:idx_typ"`
+	Name       string `gorm:"size:191;not null;comment:name of metric;index:idx_builtinmetric_name"`
 	Unit       string `gorm:"size:191;not null;comment:unit of metric"`
-	Lang       string `gorm:"size:191;not null;default:'';comment:language of metric;index:idx_lang`
+	Lang       string `gorm:"size:191;not null;default:'';comment:language of metric;index:idx_lang"`
 	Note       string `gorm:"size:4096;not null;comment:description of metric in Chinese"`
 	Expression string `gorm:"size:4096;not null;comment:expression of metric"`
 	CreatedAt  int64  `gorm:"not null;default:0;comment:create time"`
@@ -1575,7 +1575,7 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 	}{
 		{
 			name:  "InitUser",
-			entry: &InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
+			entry: &InitUser{ID: 1, Username: "root", Nickname: "Admin", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
 		},
 		{
 			name:  "InitUserGroup",
@@ -1767,7 +1767,7 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 	}{
 		{
 			name:  "InitUser",
-			entry: &InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
+			entry: &InitUser{ID: 1, Username: "root", Nickname: "Admin", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
 		},
 		{
 			name:  "InitUserGroup",
@@ -1960,7 +1960,7 @@ func postgresDataBaseInit(db *gorm.DB) error {
 	}{
 		{
 			name:  "InitUser",
-			entry: &InitPostgresUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
+			entry: &InitPostgresUser{ID: 1, Username: "root", Nickname: "Admin", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
 		},
 		{
 			name:  "InitUserGroup",

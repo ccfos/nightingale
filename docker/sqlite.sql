@@ -19,7 +19,7 @@ CREATE TABLE `users` (
 
 CREATE UNIQUE INDEX idx_users_username ON `users` (username);
 
-insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', strftime('%s', 'now'), 'system', strftime('%s', 'now'), 'system');
+insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', 'Admin', 'root.2020', 'Admin', strftime('%s', 'now'), 'system', strftime('%s', 'now'), 'system');
 
 CREATE TABLE `user_group` (
     `id` integer primary key autoincrement,

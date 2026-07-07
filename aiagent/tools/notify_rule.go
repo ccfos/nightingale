@@ -99,7 +99,7 @@ func createNotifyRule(_ context.Context, deps *aiagent.ToolDeps, args map[string
 	// 而不是替用户瞎选——和 create_dashboard 的业务组缺参门同一套前端契约。
 	rule.UserGroupIds = resolveCreationTeamIDs(rule.UserGroupIds, params)
 	if len(rule.UserGroupIds) == 0 {
-		return "", creationFormInterrupt(deps, user, "notify-rule-copilot", []string{"team_ids"})
+		return "", creationFormInterrupt(params["lang"], deps, user, "notify-rule-copilot", []string{"team_ids"})
 	}
 
 	if rule.Name == "" {
@@ -207,7 +207,8 @@ func updateNotifyRule(ctx context.Context, deps *aiagent.ToolDeps, args map[stri
 			return "", fmt.Errorf("forbidden: no access to this notify rule")
 		}
 	}
-	subject := fmt.Sprintf("通知规则 **%s**（id=%d）", existing.Name, id)
+	subject := fmt.Sprintf(aiagent.LangText(params["lang"],
+		"通知规则 **%s**（id=%d）", "notification rule **%s** (id=%d)"), existing.Name, id)
 
 	configJSON := getArgString(args, "config")
 	if configJSON == "" {
@@ -288,7 +289,7 @@ func updateNotifyRule(ctx context.Context, deps *aiagent.ToolDeps, args map[stri
 		TargetID:     id,
 		BaselineHash: baseline,
 		Changes:      changeDescs,
-	}, renderUpdateProposalPrompt(subject, changeDescs), map[string]interface{}{
+	}, renderUpdateProposalPrompt(params["lang"], subject, changeDescs), map[string]interface{}{
 		"id":     id,
 		"config": configJSON,
 	})

@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: histogram",
                 "name": "请求apiserver的耗时分布，按照url+verb统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "API Server Request Latency Distribution (by URL and Verb)",
+                "note": "Metric of the controller-manager service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: histogram",
                 "name": "cronjob 创建到运行的时间分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "CronJob Creation-to-Run Time Distribution",
+                "note": "Metric of the controller-manager service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "控制器的选举状态，0表示backup， 1表示master"
+            },
+            {
+                "lang": "en_US",
+                "name": "Controller Leader Election Status (0: Backup, 1: Master)",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -88,6 +103,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "每个zone的健康node占比"
+            },
+            {
+                "lang": "en_US",
+                "name": "Healthy Node Ratio per Zone",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -112,6 +132,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "每个zone的node数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Node Count per Zone",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -136,6 +161,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: counter",
                 "name": "cpu使用量（也可以理解为cpu使用率）"
+            },
+            {
+                "lang": "en_US",
+                "name": "CPU Usage (Can Be Used as CPU Utilization)",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
             }
         ],
         "created_at": 0,
@@ -160,6 +190,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "控制器打开的fd数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Open File Descriptors of Controller",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -184,6 +219,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "当前绑定的pv数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Currently Bound PV Count",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -208,6 +248,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "当前没有绑定的pvc数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Currently Unbound PVC Count",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -232,6 +277,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "当前绑定的pvc数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Currently Bound PVC Count",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -256,6 +306,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "pv总数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total PV Count",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -280,6 +335,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: counter",
                 "name": "各个controller已接受的任务总数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Tasks Accepted by Each Controller",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
             }
         ],
         "created_at": 0,
@@ -304,6 +364,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "各个controller队列深度，表示一个controller中的任务的数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Workqueue Depth per Controller (Number of Tasks in a Controller)",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -328,6 +393,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: histogram",
                 "name": "任务在队列中的等待耗时,按照控制器分别统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Task Wait Time in Queue (by Controller)",
+                "note": "Metric of the controller-manager service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -352,6 +422,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: histogram",
                 "name": "任务出队到被处理完成的时间，按照控制分别统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Task Processing Time From Dequeue to Completion (by Controller)",
+                "note": "Metric of the controller-manager service itself.\nType: histogram"
             }
         ],
         "created_at": 0,
@@ -376,6 +451,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: counter",
                 "name": "任务进入队列重试的次数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Task Retries in Workqueue",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
             }
         ],
         "created_at": 0,
@@ -400,6 +480,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "正在处理的任务中，最长耗时任务的处理时间"
+            },
+            {
+                "lang": "en_US",
+                "name": "Longest Running Task Processing Time",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,
@@ -424,6 +509,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: counter",
                 "name": "endpoint_slice 同步的数量(1.20以上)"
+            },
+            {
+                "lang": "en_US",
+                "name": "EndpointSlice Sync Count (1.20+)",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
             }
         ],
         "created_at": 0,
@@ -448,6 +538,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: counter",
                 "name": "获取token失败的次数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Token Fetch Failure Count",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
             }
         ],
         "created_at": 0,
@@ -472,6 +567,11 @@
                 "lang": "zh_CN",
                 "note": "controller-manager服务自身指标\n类型: gauge",
                 "name": "controller gc的cpu使用率"
+            },
+            {
+                "lang": "en_US",
+                "name": "GC CPU Fraction of Controller",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
             }
         ],
         "created_at": 0,

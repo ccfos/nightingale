@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "name": "活跃连接数",
                 "note": "该指标为统计数据库当前活跃连接数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active Connections",
+                "note": "Number of active connections to the database."
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "name": "内核态CPU时间占比",
                 "note": "该指标为统计内核态CPU时间占比。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kernel-Mode CPU Time Percentage",
+                "note": "Percentage of CPU time spent in kernel mode."
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "name": "用户态CPU时间占比",
                 "note": "该指标为统计用户态CPU时间占比。"
+            },
+            {
+                "lang": "en_US",
+                "name": "User-Mode CPU Time Percentage",
+                "note": "Percentage of CPU time spent in user mode."
             }
         ],
         "created_at": 0,
@@ -88,6 +103,11 @@
                 "lang": "zh_CN",
                 "name": "硬盘IO等待时间占比",
                 "note": "该指标为统计硬盘IO等待时间占比。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk I/O Wait Time Percentage",
+                "note": "Percentage of CPU time spent waiting for disk I/O."
             }
         ],
         "created_at": 0,
@@ -112,6 +132,11 @@
                 "lang": "zh_CN",
                 "name": "inode数",
                 "note": "数据盘已使用的inode数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Used Inodes",
+                "note": "Number of inodes used on the data disk."
             }
         ],
         "created_at": 0,
@@ -136,6 +161,11 @@
                 "lang": "zh_CN",
                 "name": "最大数据库年龄",
                 "note": "该指标为统计当前数据库的最大数据库年龄(获取表pg_database中max(age(datfrozenxid))值)。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Database Age",
+                "note": "Maximum database age of the current instance, obtained as max(age(datfrozenxid)) from the pg_database table."
             }
         ],
         "created_at": 0,
@@ -160,6 +190,11 @@
                 "lang": "zh_CN",
                 "name": "数据库用户最快过期时间",
                 "note": "查询数据库用户密码过期时间，返回过期时间减去当前时间的最小值。 说明：如果没有设置用户密码过期时间，这个指标采集不到。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Earliest Database User Password Expiration Time",
+                "note": "Queries database user password expiration times and returns the minimum value of expiration time minus the current time. Note: If no user password expiration time is set, this metric cannot be collected."
             }
         ],
         "created_at": 0,
@@ -184,6 +219,11 @@
                 "lang": "zh_CN",
                 "name": "磁盘IO使用率",
                 "note": "该指标为统计磁盘IO使用率。磁盘IO使用率是指磁盘正在处理IO请求的时间与总时间的百分比。 说明：当磁盘IO使用率达到100%，只能说明在统计时间段内，磁盘一直有数据写入，磁盘性能还需要结合IOPS、磁盘的吞吐量、读写时延等多个指标共同决定。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk I/O Utilization",
+                "note": "Disk I/O utilization, which is the percentage of time the disk spends processing I/O requests out of the total time. Note: A disk I/O utilization of 100% only indicates that data was continuously written to the disk during the statistical period. Disk performance should be evaluated together with other metrics such as IOPS, disk throughput, and read/write latency."
             }
         ],
         "created_at": 0,
@@ -208,6 +248,11 @@
                 "lang": "zh_CN",
                 "name": "主备间wal日志落盘延迟",
                 "note": "该指标为获取备机刷入到磁盘的wal日志的延迟大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Primary/Standby WAL Flush Latency",
+                "note": "Latency of WAL logs flushed to disk on the standby node."
             }
         ],
         "created_at": 0,
@@ -232,6 +277,11 @@
                 "lang": "zh_CN",
                 "name": "事务空闲连接数",
                 "note": "该指标为统计数据库当前空闲连接数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Idle-in-Transaction Connections",
+                "note": "Number of idle connections in the database."
             }
         ],
         "created_at": 0,
@@ -256,6 +306,11 @@
                 "lang": "zh_CN",
                 "name": "非活跃逻辑复制槽数量",
                 "note": "该指标用于统计当前数据库中存在的非活跃逻辑复制槽数量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Inactive Logical Replication Slots",
+                "note": "Number of inactive logical replication slots in the current database."
             }
         ],
         "created_at": 0,
@@ -280,6 +335,11 @@
                 "lang": "zh_CN",
                 "name": "IO读响应延迟",
                 "note": "该指标为统计磁盘读响应平均延迟（以毫秒为单位）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "I/O Read Latency",
+                "note": "Average disk read response latency, in milliseconds."
             }
         ],
         "created_at": 0,
@@ -304,6 +364,11 @@
                 "lang": "zh_CN",
                 "name": "IO写响应延迟",
                 "note": "该指标为统计磁盘写响应平均延迟（以毫秒为单位）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "I/O Write Latency",
+                "note": "Average disk write response latency, in milliseconds."
             }
         ],
         "created_at": 0,
@@ -328,6 +393,11 @@
                 "lang": "zh_CN",
                 "name": "等待锁的会话数",
                 "note": "该指标为统计当前处于阻塞状态的会话个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Sessions Waiting for Locks",
+                "note": "Number of sessions currently in a blocked state."
             }
         ],
         "created_at": 0,
@@ -352,6 +422,11 @@
                 "lang": "zh_CN",
                 "name": "已开启5s的事务数",
                 "note": "该指标为统计数据库开启时长5秒以上的长事务个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Transactions Active for Over 5s",
+                "note": "Number of long transactions that have been active for more than 5 seconds."
             }
         ],
         "created_at": 0,
@@ -376,6 +451,11 @@
                 "lang": "zh_CN",
                 "name": "已开启1s的事务数",
                 "note": "该指标为统计数据库开启时长1秒以上的长事务个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Transactions Active for Over 1s",
+                "note": "Number of long transactions that have been active for more than 1 second."
             }
         ],
         "created_at": 0,
@@ -400,6 +480,11 @@
                 "lang": "zh_CN",
                 "name": "已开启3s的事务数",
                 "note": "该指标为统计数据库开启时长3秒以上的长事务个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Transactions Active for Over 3s",
+                "note": "Number of long transactions that have been active for more than 3 seconds."
             }
         ],
         "created_at": 0,
@@ -424,6 +509,11 @@
                 "lang": "zh_CN",
                 "name": "已空闲5s的事务数",
                 "note": "该指标为统计数据库空闲时长5秒以上的长事务个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Transactions Idle for Over 5s",
+                "note": "Number of long transactions that have been idle for more than 5 seconds."
             }
         ],
         "created_at": 0,
@@ -448,6 +538,11 @@
                 "lang": "zh_CN",
                 "name": "已空闲1s的事务数",
                 "note": "该指标为统计数据库空闲时长1秒以上的长事务个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Transactions Idle for Over 1s",
+                "note": "Number of long transactions that have been idle for more than 1 second."
             }
         ],
         "created_at": 0,
@@ -472,6 +567,11 @@
                 "lang": "zh_CN",
                 "name": "已空闲3s的事务数",
                 "note": "该指标为统计数据库空闲时长3秒以上的长事务个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Transactions Idle for Over 3s",
+                "note": "Number of long transactions that have been idle for more than 3 seconds."
             }
         ],
         "created_at": 0,
@@ -496,6 +596,11 @@
                 "lang": "zh_CN",
                 "name": "已执行5s的两阶段事务",
                 "note": "该指标为统计数据库两阶段执行时长5秒以上的长事务个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Two-Phase Transactions Running for Over 5s",
+                "note": "Number of long two-phase transactions that have been executing for more than 5 seconds."
             }
         ],
         "created_at": 0,
@@ -520,6 +625,11 @@
                 "lang": "zh_CN",
                 "name": "已执行1s的两阶段事务",
                 "note": "该指标为统计数据库两阶段执行时长1秒以上的长事务个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Two-Phase Transactions Running for Over 1s",
+                "note": "Number of long two-phase transactions that have been executing for more than 1 second."
             }
         ],
         "created_at": 0,
@@ -544,6 +654,11 @@
                 "lang": "zh_CN",
                 "name": "已执行3s的两阶段事务",
                 "note": "该指标为统计数据库两阶段执行时长3秒以上的长事务个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Two-Phase Transactions Running for Over 3s",
+                "note": "Number of long two-phase transactions that have been executing for more than 3 seconds."
             }
         ],
         "created_at": 0,
@@ -568,6 +683,11 @@
                 "lang": "zh_CN",
                 "name": "最长事务存活时长",
                 "note": "该指标为统计当前数据库中存在的最长事务存活时长。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Longest Transaction Duration",
+                "note": "Duration of the longest-running transaction in the current database."
             }
         ],
         "created_at": 0,
@@ -592,6 +712,11 @@
                 "lang": "zh_CN",
                 "name": "最长未决事务存活时长",
                 "note": "该指标为统计当前数据库存在的最长未决事务存活时长。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Longest Prepared Transaction Duration",
+                "note": "Duration of the longest-running prepared (two-phase) transaction in the current database."
             }
         ],
         "created_at": 0,
@@ -616,6 +741,11 @@
                 "lang": "zh_CN",
                 "name": "autovacuum进程cpu使用率",
                 "note": "该指标为统计autovacuum进程cpu使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "autovacuum Process CPU Usage",
+                "note": "CPU usage of the autovacuum process."
             }
         ],
         "created_at": 0,
@@ -640,6 +770,11 @@
                 "lang": "zh_CN",
                 "name": "bgwriter进程cpu使用率",
                 "note": "该指标为统计bgwriter进程cpu使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "bgwriter Process CPU Usage",
+                "note": "CPU usage of the bgwriter process."
             }
         ],
         "created_at": 0,
@@ -664,6 +799,11 @@
                 "lang": "zh_CN",
                 "name": "checkpoint进程cpu使用率",
                 "note": "该指标为统计checkpoint进程cpu使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "checkpoint Process CPU Usage",
+                "note": "CPU usage of the checkpoint process."
             }
         ],
         "created_at": 0,
@@ -688,6 +828,11 @@
                 "lang": "zh_CN",
                 "name": "logger进程cpu使用率",
                 "note": "该指标为统计logger进程cpu使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "logger Process CPU Usage",
+                "note": "CPU usage of the logger process."
             }
         ],
         "created_at": 0,
@@ -712,6 +857,11 @@
                 "lang": "zh_CN",
                 "name": "postmaster进程cpu使用率",
                 "note": "该指标为统计postmaster进程cpu使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "postmaster Process CPU Usage",
+                "note": "CPU usage of the postmaster process."
             }
         ],
         "created_at": 0,
@@ -736,6 +886,11 @@
                 "lang": "zh_CN",
                 "name": "walwriter进程cpu使用率",
                 "note": "该指标为统计walwriter进程cpu使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "walwriter Process CPU Usage",
+                "note": "CPU usage of the walwriter process."
             }
         ],
         "created_at": 0,
@@ -760,6 +915,11 @@
                 "lang": "zh_CN",
                 "name": "数据文件大小（不包含日志和wal）",
                 "note": "该指标为统计数据文件大小（不包含日志和wal）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Data File Size (Excluding Logs and WAL)",
+                "note": "Size of data files, excluding logs and WAL."
             }
         ],
         "created_at": 0,
@@ -784,6 +944,11 @@
                 "lang": "zh_CN",
                 "name": "磁盘读写吞吐量",
                 "note": "该指标为统计磁盘读写吞吐量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk Read/Write Throughput",
+                "note": "Total disk read and write throughput."
             }
         ],
         "created_at": 0,
@@ -808,6 +973,11 @@
                 "lang": "zh_CN",
                 "name": "page cache内存使用量",
                 "note": "该指标为统计page cache内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Page Cache Memory Usage",
+                "note": "Memory used by the page cache."
             }
         ],
         "created_at": 0,
@@ -832,6 +1002,11 @@
                 "lang": "zh_CN",
                 "name": "2M大页使用量",
                 "note": "该指标为统计2M大页使用量（内存32G规格以上存在）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "2 MB Huge Page Usage",
+                "note": "Usage of 2 MB huge pages (available on instances with 32 GB of memory or more)."
             }
         ],
         "created_at": 0,
@@ -856,6 +1031,11 @@
                 "lang": "zh_CN",
                 "name": "共享内存使用量",
                 "note": "该指标为统计共享内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Shared Memory Usage",
+                "note": "Shared memory usage."
             }
         ],
         "created_at": 0,
@@ -880,6 +1060,11 @@
                 "lang": "zh_CN",
                 "name": "规格内存大小",
                 "note": "该指标为统计规格内存大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Flavor Memory Size",
+                "note": "Memory size defined by the instance flavor."
             }
         ],
         "created_at": 0,
@@ -904,6 +1089,11 @@
                 "lang": "zh_CN",
                 "name": "内存使用量",
                 "note": "该指标为统计内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Usage",
+                "note": "Amount of memory used."
             }
         ],
         "created_at": 0,
@@ -928,6 +1118,11 @@
                 "lang": "zh_CN",
                 "name": "autovacuum进程内存使用量",
                 "note": "该指标为统计autovacuum进程内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "autovacuum Process Memory Usage",
+                "note": "Memory usage of the autovacuum process."
             }
         ],
         "created_at": 0,
@@ -952,6 +1147,11 @@
                 "lang": "zh_CN",
                 "name": "bgwriter进程内存使用量",
                 "note": "该指标为统计bgwriter进程内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "bgwriter Process Memory Usage",
+                "note": "Memory usage of the bgwriter process."
             }
         ],
         "created_at": 0,
@@ -976,6 +1176,11 @@
                 "lang": "zh_CN",
                 "name": "checkpoint进程内存使用量",
                 "note": "该指标为统计checkpoint进程内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "checkpoint Process Memory Usage",
+                "note": "Memory usage of the checkpoint process."
             }
         ],
         "created_at": 0,
@@ -1000,6 +1205,11 @@
                 "lang": "zh_CN",
                 "name": "logger进程内存使用量",
                 "note": "该指标为统计logger进程内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "logger Process Memory Usage",
+                "note": "Memory usage of the logger process."
             }
         ],
         "created_at": 0,
@@ -1024,6 +1234,11 @@
                 "lang": "zh_CN",
                 "name": "postmaster进程内存使用量",
                 "note": "该指标为统计postmaster进程内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "postmaster Process Memory Usage",
+                "note": "Memory usage of the postmaster process."
             }
         ],
         "created_at": 0,
@@ -1048,6 +1263,11 @@
                 "lang": "zh_CN",
                 "name": "walsender进程内存使用量",
                 "note": "该指标为统计walsender进程内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "walsender Process Memory Usage",
+                "note": "Memory usage of the walsender process."
             }
         ],
         "created_at": 0,
@@ -1072,6 +1292,11 @@
                 "lang": "zh_CN",
                 "name": "walwriter进程内存使用量",
                 "note": "该指标为统计walwriter进程内存使用量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "walwriter Process Memory Usage",
+                "note": "Memory usage of the walwriter process."
             }
         ],
         "created_at": 0,
@@ -1096,6 +1321,11 @@
                 "lang": "zh_CN",
                 "name": "主机与灾备机间丢包率",
                 "note": "该指标为统计数据库主机与灾备机间丢包率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packet Loss Rate Between Primary and DR Host",
+                "note": "Packet loss rate between the primary database host and the disaster recovery host."
             }
         ],
         "created_at": 0,
@@ -1120,6 +1350,11 @@
                 "lang": "zh_CN",
                 "name": "灾备节点复制状态",
                 "note": "灾备状态状况。各数字含义如下：异常：0startup：1catchup：2streaming：3backup：4stopping：5"
+            },
+            {
+                "lang": "en_US",
+                "name": "DR Node Replication Status",
+                "note": "Disaster recovery replication status. Values: 0: abnormal; 1: startup; 2: catchup; 3: streaming; 4: backup; 5: stopping."
             }
         ],
         "created_at": 0,
@@ -1144,6 +1379,11 @@
                 "lang": "zh_CN",
                 "name": "主机与灾备机间lsn延迟",
                 "note": "该指标为统计数据库主机当前lsn和灾备机replay lsn的延迟。"
+            },
+            {
+                "lang": "en_US",
+                "name": "LSN Lag Between Primary and DR Host",
+                "note": "Lag between the current LSN on the primary database host and the replay LSN on the disaster recovery host."
             }
         ],
         "created_at": 0,
@@ -1168,6 +1408,11 @@
                 "lang": "zh_CN",
                 "name": "审计日志大小",
                 "note": "该指标为获取当前审计日志的大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Audit Log Size",
+                "note": "Size of the current audit logs."
             }
         ],
         "created_at": 0,
@@ -1192,6 +1437,11 @@
                 "lang": "zh_CN",
                 "name": "CPU使用率",
                 "note": "该指标用于统计测量对象的CPU使用率，以比率为单位。"
+            },
+            {
+                "lang": "en_US",
+                "name": "CPU Usage",
+                "note": "CPU usage of the monitored object, expressed as a percentage."
             }
         ],
         "created_at": 0,
@@ -1216,6 +1466,11 @@
                 "lang": "zh_CN",
                 "name": "内存使用率",
                 "note": "该指标用于统计测量对象的内存使用率，以比率为单位。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Usage",
+                "note": "Memory usage of the monitored object, expressed as a percentage."
             }
         ],
         "created_at": 0,
@@ -1240,6 +1495,11 @@
                 "lang": "zh_CN",
                 "name": "IOPS",
                 "note": "该指标用于统计当前实例，单位时间内系统处理的I/O请求数量（平均值）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IOPS",
+                "note": "Average number of I/O requests processed by the system per unit time for the current instance."
             }
         ],
         "created_at": 0,
@@ -1264,6 +1524,11 @@
                 "lang": "zh_CN",
                 "name": "网络输入吞吐量",
                 "note": "该指标用于统计平均每秒从测量对象的所有网络适配器输入的流量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Input Throughput",
+                "note": "Average inbound traffic per second across all network adapters of the monitored object."
             }
         ],
         "created_at": 0,
@@ -1288,6 +1553,11 @@
                 "lang": "zh_CN",
                 "name": "网络输出吞吐量",
                 "note": "该指标用于统计平均每秒从测量对象的所有网络适配器输出的流量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Output Throughput",
+                "note": "Average outbound traffic per second across all network adapters of the monitored object."
             }
         ],
         "created_at": 0,
@@ -1312,6 +1582,11 @@
                 "lang": "zh_CN",
                 "name": "磁盘利用率",
                 "note": "该指标用于统计测量对象的磁盘利用率，以比率为单位。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk Utilization",
+                "note": "Disk utilization of the monitored object, expressed as a percentage."
             }
         ],
         "created_at": 0,
@@ -1336,6 +1611,11 @@
                 "lang": "zh_CN",
                 "name": "事务日志使用量",
                 "note": "事务日志所占用的磁盘容量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Transaction Log Usage",
+                "note": "Disk space used by transaction logs."
             }
         ],
         "created_at": 0,
@@ -1360,6 +1640,11 @@
                 "lang": "zh_CN",
                 "name": "复制插槽使用量",
                 "note": "复制插槽文件所占磁盘容量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Replication Slot Usage",
+                "note": "Disk space used by replication slot files."
             }
         ],
         "created_at": 0,
@@ -1384,6 +1669,11 @@
                 "lang": "zh_CN",
                 "name": "数据库连接数",
                 "note": "当前连接到数据库的后端量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Database Connections",
+                "note": "Number of backends currently connected to the database."
             }
         ],
         "created_at": 0,
@@ -1408,6 +1698,11 @@
                 "lang": "zh_CN",
                 "name": "事务最大已使用ID数",
                 "note": "事务最大已使用ID。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Used Transaction IDs",
+                "note": "Maximum number of transaction IDs used."
             }
         ],
         "created_at": 0,
@@ -1432,6 +1727,11 @@
                 "lang": "zh_CN",
                 "name": "事务日志生成速率",
                 "note": "平均每秒生成的事务日志大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Transaction Log Generation Rate",
+                "note": "Average size of transaction logs generated per second."
             }
         ],
         "created_at": 0,
@@ -1456,6 +1756,11 @@
                 "lang": "zh_CN",
                 "name": "最滞后副本滞后量",
                 "note": "多个副本中最滞后副本（依据接收到的WAL数据）滞后量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Oldest Replication Slot Lag",
+                "note": "Lag of the most lagging replica among multiple replicas, based on the WAL data received."
             }
         ],
         "created_at": 0,
@@ -1480,6 +1785,11 @@
                 "lang": "zh_CN",
                 "name": "复制时延",
                 "note": "副本滞后时延。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Replication Lag",
+                "note": "Replica lag time."
             }
         ],
         "created_at": 0,
@@ -1504,6 +1814,11 @@
                 "lang": "zh_CN",
                 "name": "磁盘总大小",
                 "note": "该指标用于统计测量对象的磁盘总大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Disk Size",
+                "note": "Total disk size of the monitored object."
             }
         ],
         "created_at": 0,
@@ -1528,6 +1843,11 @@
                 "lang": "zh_CN",
                 "name": "磁盘使用量",
                 "note": "该指标用于统计测量对象的磁盘使用大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Used Disk Size",
+                "note": "Used disk space of the monitored object."
             }
         ],
         "created_at": 0,
@@ -1552,6 +1872,11 @@
                 "lang": "zh_CN",
                 "name": "硬盘读吞吐量",
                 "note": "该指标用于统计每秒从硬盘读取的字节数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk Read Throughput",
+                "note": "Number of bytes read from the disk per second."
             }
         ],
         "created_at": 0,
@@ -1576,6 +1901,11 @@
                 "lang": "zh_CN",
                 "name": "硬盘写吞吐量",
                 "note": "该指标用于统计每秒写入硬盘的字节数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk Write Throughput",
+                "note": "Number of bytes written to the disk per second."
             }
         ],
         "created_at": 0,
@@ -1600,6 +1930,11 @@
                 "lang": "zh_CN",
                 "name": "TPS",
                 "note": "该指标用于统计每秒事务执行次数，含提交和回退的次数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "TPS",
+                "note": "Number of transactions executed per second, including commits and rollbacks."
             }
         ],
         "created_at": 0,
@@ -1624,6 +1959,11 @@
                 "lang": "zh_CN",
                 "name": "连接数使用率",
                 "note": "该指标用于统计当前已用的PgSQL连接数占总连接数的百分比。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Connection Usage",
+                "note": "Percentage of PgSQL connections in use relative to the total number of connections."
             }
         ],
         "created_at": 0,
@@ -1648,6 +1988,11 @@
                 "lang": "zh_CN",
                 "name": "读IOPS",
                 "note": "该指标用于统计当前实例，单位时间内系统处理的读I/O请求数量（平均值）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Read IOPS",
+                "note": "Average number of read I/O requests processed by the system per unit time for the current instance."
             }
         ],
         "created_at": 0,
@@ -1672,6 +2017,11 @@
                 "lang": "zh_CN",
                 "name": "主备间wal日志回放延迟",
                 "note": "该指标为获取备机回放wal日志的延迟大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Primary/Standby WAL Replay Latency",
+                "note": "Latency of WAL logs replayed on the standby node."
             }
         ],
         "created_at": 0,
@@ -1696,6 +2046,11 @@
                 "lang": "zh_CN",
                 "name": "主机与灾备机间网络延迟",
                 "note": "该指标为统计数据库主机与灾备机间往返时延。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Latency Between Primary and DR Host",
+                "note": "Round-trip time between the primary database host and the disaster recovery host."
             }
         ],
         "created_at": 0,
@@ -1720,6 +2075,11 @@
                 "lang": "zh_CN",
                 "name": "操作行数",
                 "note": "实例每秒增删改查操作的行数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Rows Operated per Second",
+                "note": "Number of rows inserted, deleted, updated, and queried per second on the instance."
             }
         ],
         "created_at": 0,
@@ -1744,6 +2104,11 @@
                 "lang": "zh_CN",
                 "name": "主备间wal日志发送延迟",
                 "note": "该指标为获取主机待发送wal日志延迟大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Primary/Standby WAL Send Latency",
+                "note": "Latency of WAL logs pending to be sent from the primary node."
             }
         ],
         "created_at": 0,
@@ -1768,6 +2133,11 @@
                 "lang": "zh_CN",
                 "name": "备机流复制状态",
                 "note": "该指标为获取备机流复制状态，0：备机异常，1：备机正常，2：该实例为主机。此处备机也包括只读实例。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Standby Streaming Replication Status",
+                "note": "Streaming replication status of the standby node. 0: standby abnormal; 1: standby normal; 2: this instance is the primary. Standby here also includes read replicas."
             }
         ],
         "created_at": 0,
@@ -1792,6 +2162,11 @@
                 "lang": "zh_CN",
                 "name": "已执行5s的SQL数",
                 "note": "该指标为统计数据库执行时长5秒以上的慢SQL个数。该指标为采集时刻的瞬时值，并不是一分钟内的累计值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SQL Statements Running for Over 5s",
+                "note": "Number of slow SQL statements that have been executing for more than 5 seconds. This is an instantaneous value at collection time, not a cumulative value over one minute."
             }
         ],
         "created_at": 0,
@@ -1816,6 +2191,11 @@
                 "lang": "zh_CN",
                 "name": "已执行log_min_duration_statement时长的SQL数",
                 "note": "该指标为统计数据库执行时长比参数log_min_duration_statement大的慢SQL个数，该参数大小可根据业务需要进行更改。该指标为采集时刻的瞬时值，并不是一分钟内的累计值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SQL Statements Running Longer Than log_min_duration_statement",
+                "note": "Number of slow SQL statements whose execution time exceeds the log_min_duration_statement parameter, which can be adjusted based on service requirements. This is an instantaneous value at collection time, not a cumulative value over one minute."
             }
         ],
         "created_at": 0,
@@ -1840,6 +2220,11 @@
                 "lang": "zh_CN",
                 "name": "已执行1s的SQL数",
                 "note": "该指标为统计数据库执行时长1秒以上的慢SQL个数。该指标为采集时刻的瞬时值，并不是一分钟内的累计值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SQL Statements Running for Over 1s",
+                "note": "Number of slow SQL statements that have been executing for more than 1 second. This is an instantaneous value at collection time, not a cumulative value over one minute."
             }
         ],
         "created_at": 0,
@@ -1864,6 +2249,11 @@
                 "lang": "zh_CN",
                 "name": "已执行3s的SQL数",
                 "note": "该指标为统计数据库执行时长3秒以上的慢SQL个数。该指标为采集时刻的瞬时值，并不是一分钟内的累计值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SQL Statements Running for Over 3s",
+                "note": "Number of slow SQL statements that have been executing for more than 3 seconds. This is an instantaneous value at collection time, not a cumulative value over one minute."
             }
         ],
         "created_at": 0,
@@ -1888,6 +2278,11 @@
                 "lang": "zh_CN",
                 "name": "swap in速率",
                 "note": "该指标为统计每秒从交换区写到内存的大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Swap-In Rate",
+                "note": "Amount of data written from swap space to memory per second."
             }
         ],
         "created_at": 0,
@@ -1912,6 +2307,11 @@
                 "lang": "zh_CN",
                 "name": "swap out速率",
                 "note": "该指标为统计每秒写入交换区的内存的大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Swap-Out Rate",
+                "note": "Amount of memory written to swap space per second."
             }
         ],
         "created_at": 0,
@@ -1936,6 +2336,11 @@
                 "lang": "zh_CN",
                 "name": "交换区总容量大小",
                 "note": "该指标为统计交换区总量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Swap Size",
+                "note": "Total swap space size."
             }
         ],
         "created_at": 0,
@@ -1960,6 +2365,11 @@
                 "lang": "zh_CN",
                 "name": "交换区容量使用率",
                 "note": "该指标为统计交换区使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Swap Usage",
+                "note": "Swap space usage."
             }
         ],
         "created_at": 0,
@@ -1984,6 +2394,11 @@
                 "lang": "zh_CN",
                 "name": "同步复制阻塞时间",
                 "note": "该指标为获取同步复制主备机间复制阻塞的时长。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Synchronous Replication Blocking Time",
+                "note": "Duration of replication blocking between the primary and standby nodes in synchronous replication."
             }
         ],
         "created_at": 0,
@@ -2008,6 +2423,11 @@
                 "lang": "zh_CN",
                 "name": "内存命中率",
                 "note": "该指标为统计内存命中率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Hit Ratio",
+                "note": "Memory hit ratio."
             }
         ],
         "created_at": 0,
@@ -2032,6 +2452,11 @@
                 "lang": "zh_CN",
                 "name": "每分钟临时文件生成数量",
                 "note": "该指标为获取临时文件在1分钟内生成的数量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Temporary Files Generated per Minute",
+                "note": "Number of temporary files generated within one minute."
             }
         ],
         "created_at": 0,
@@ -2056,6 +2481,11 @@
                 "lang": "zh_CN",
                 "name": "每分钟临时文件生成大小",
                 "note": "该指标为获取临时文件在1分钟内生成的大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Temporary File Size Generated per Minute",
+                "note": "Size of temporary files generated within one minute."
             }
         ],
         "created_at": 0,
@@ -2080,6 +2510,11 @@
                 "lang": "zh_CN",
                 "name": "用户活跃连接数",
                 "note": "该指标为统计用户实际使用的活跃连接数（不包括监控运维使用的内置活跃连接）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "User Active Connections",
+                "note": "Number of active connections actually used by users (excluding built-in active connections used for monitoring and O&M)."
             }
         ],
         "created_at": 0,
@@ -2104,6 +2539,11 @@
                 "lang": "zh_CN",
                 "name": "用户使用连接数",
                 "note": "该指标为统计用户实际使用的连接数（不包括监控运维使用的内置连接）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "User Connections",
+                "note": "Number of connections actually used by users (excluding built-in connections used for monitoring and O&M)."
             }
         ],
         "created_at": 0,
@@ -2128,6 +2568,11 @@
                 "lang": "zh_CN",
                 "name": "WAL日志占用空间大小",
                 "note": "该指标为获取当前WAL日志所占空间大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "WAL Space Usage",
+                "note": "Space currently occupied by WAL logs."
             }
         ],
         "created_at": 0,
@@ -2152,6 +2597,11 @@
                 "lang": "zh_CN",
                 "name": "写IOPS",
                 "note": "该指标用于统计当前实例，单位时间内系统处理的写I/O请求数量（平均值）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Write IOPS",
+                "note": "Average number of write I/O requests processed by the system per unit time for the current instance."
             }
         ],
         "created_at": 0,
@@ -2176,6 +2626,11 @@
                 "lang": "zh_CN",
                 "name": "主备间wal日志写入延迟",
                 "note": "该指标为获取备机写入到磁盘的wal日志的延迟大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Primary/Standby WAL Write Latency",
+                "note": "Latency of WAL logs written to disk on the standby node."
             }
         ],
         "created_at": 0,
