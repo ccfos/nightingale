@@ -62,6 +62,9 @@ func (rt *Router) aiSkillGitInstall(c *gin.Context) {
 			me.Username, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
 		ginx.Dangerous(err)
 	}
+	if me.Username == SYSTEM {
+		rt.aiSkillRemoteCommitCache.SetKnownCommit(result.Meta.Name, cfg, result.Commit)
+	}
 	logger.Infof("[AISkillGit] install success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
 		me.Username, id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)
@@ -142,7 +145,9 @@ func (rt *Router) aiSkillGitUpdate(c *gin.Context) {
 			me.Username, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
 		ginx.Dangerous(err)
 	}
-	rt.aiSkillRemoteCommitCache.SetKnownCommit(cfg, result.Commit)
+	if builtin {
+		rt.aiSkillRemoteCommitCache.SetKnownCommit(result.Meta.Name, cfg, result.Commit)
+	}
 	logger.Infof("[AISkillGit] update success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
 		me.Username, id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)
@@ -210,6 +215,9 @@ func (rt *Router) aiSkillAddGitByService(c *gin.Context, obj models.AISkill) {
 		logger.Warningf("[AISkillGit] service_upsert failed phase=import operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
 			"system", result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
 		ginx.Dangerous(err)
+	}
+	if current == nil || current.CreatedBy == SYSTEM {
+		rt.aiSkillRemoteCommitCache.SetKnownCommit(result.Meta.Name, cfg, result.Commit)
 	}
 	logger.Infof("[AISkillGit] service_upsert success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
 		"system", id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())

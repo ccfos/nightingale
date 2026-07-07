@@ -2,11 +2,11 @@ package skill
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"sync"
+	"strconv"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/redis/go-redis/v9"
 	"github.com/toolkits/pkg/logger"
 	"golang.org/x/sync/singleflight"
 )
@@ -14,55 +14,65 @@ import (
 type remoteCommitCacheValue struct {
 	Commit    string
 	CheckedAt time.Time
-	Err       string
 }
 
 type RemoteCommitCache struct {
-	mu              sync.Mutex
-	values          map[string]remoteCommitCacheValue
+	rds             storage.Redis
 	refreshGroup    singleflight.Group
 	refreshInterval time.Duration
 	latestCommit    func(context.Context, GitConfig) (string, error)
 }
 
-func NewRemoteCommitCache(refreshInterval time.Duration) *RemoteCommitCache {
+const (
+	remoteCommitRedisKeyPrefix = "n9e:ai:skill_git_remote_commit:"
+	remoteCommitRedisTimeout   = 2 * time.Second
+)
+
+const remoteCommitSetIfNotNewerScript = `
+local checked = redis.call("HGET", KEYS[1], "checked_at_unix_nano")
+if checked and tonumber(checked) and tonumber(checked) > tonumber(ARGV[3]) then
+	return 0
+end
+redis.call("HSET", KEYS[1],
+	"commit", ARGV[1],
+	"checked_at_unix_nano", ARGV[2])
+return 1
+`
+
+func NewRemoteCommitCache(refreshInterval time.Duration, rds storage.Redis) *RemoteCommitCache {
 	if refreshInterval <= 0 {
 		refreshInterval = 30 * time.Minute
 	}
 	return &RemoteCommitCache{
-		values:          make(map[string]remoteCommitCacheValue),
+		rds:             rds,
 		refreshInterval: refreshInterval,
 		latestCommit:    LatestGitCommit,
 	}
 }
 
-func remoteCommitCacheKey(cfg GitConfig) string {
-	tokenKey := ""
-	if cfg.AuthType == GitAuthToken && cfg.Token != "" {
-		sum := sha256.Sum256([]byte(cfg.Token))
-		tokenKey = hex.EncodeToString(sum[:])
-	}
-	return cfg.URL + "\n" + cfg.RefType + "\n" + cfg.Ref + "\n" + cfg.AuthType + "\n" + tokenKey
+func remoteCommitRedisKey(skillName string) string {
+	return remoteCommitRedisKeyPrefix + skillName
 }
 
 // Get returns the cached remote commit immediately and schedules a
 // singleflight-backed background refresh when this key has not been checked
 // recently. Cached values do not expire; refreshInterval only rate-limits
 // remote checks.
-func (c *RemoteCommitCache) Get(cfg GitConfig) (string, bool) {
-	if c == nil || cfg.RefType == GitRefCommit {
+func (c *RemoteCommitCache) Get(skillName string, cfg GitConfig) (string, bool) {
+	if c == nil || c.rds == nil || skillName == "" || cfg.RefType == GitRefCommit {
 		return "", false
 	}
-	key := remoteCommitCacheKey(cfg)
 	now := time.Now()
 
-	c.mu.Lock()
-	v, ok := c.values[key]
+	v, ok, err := c.getRedis(skillName)
+	if err != nil {
+		logger.Warningf("[AISkillGit] redis get remote commit cache failed key=%s err=%v", remoteCommitRedisKey(skillName), err)
+		return "", false
+	}
 	shouldRefresh := !ok || now.Sub(v.CheckedAt) >= c.refreshInterval
-	c.mu.Unlock()
 
 	if shouldRefresh {
-		c.refreshAsync(key, cfg)
+		c.refreshAsync(skillName, cfg)
 	}
 
 	if !ok || v.Commit == "" {
@@ -74,32 +84,33 @@ func (c *RemoteCommitCache) Get(cfg GitConfig) (string, bool) {
 // SetKnownCommit stores a commit learned from a successful fetch and marks the
 // cache key freshly checked. This keeps later Get calls from reporting stale
 // remote-commit state while the periodic refresh window is still active.
-func (c *RemoteCommitCache) SetKnownCommit(cfg GitConfig, commit string) {
-	if c == nil || cfg.RefType == GitRefCommit || commit == "" {
+func (c *RemoteCommitCache) SetKnownCommit(skillName string, cfg GitConfig, commit string) {
+	if c == nil || c.rds == nil || skillName == "" || cfg.RefType == GitRefCommit || commit == "" {
 		return
 	}
-	key := remoteCommitCacheKey(cfg)
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.values[key] = remoteCommitCacheValue{
+	v := remoteCommitCacheValue{
 		Commit:    commit,
 		CheckedAt: time.Now(),
 	}
+	if err := c.setRedis(skillName, v); err != nil {
+		logger.Warningf("[AISkillGit] redis set remote commit cache failed key=%s err=%v", remoteCommitRedisKey(skillName), err)
+	}
 }
 
-func (c *RemoteCommitCache) refreshAsync(key string, cfg GitConfig) {
+func (c *RemoteCommitCache) refreshAsync(skillName string, cfg GitConfig) {
 	// DoChan runs the refresh in the background and coalesces concurrent calls
-	// for the same key. The result is stored in c.values, so the channel can be
+	// for the same key. The result is stored in Redis, so the channel can be
 	// ignored.
-	c.refreshGroup.DoChan(key, func() (any, error) {
-		c.refresh(key, cfg)
+	c.refreshGroup.DoChan(skillName, func() (any, error) {
+		c.refresh(skillName, cfg)
 		return nil, nil
 	})
 }
 
-func (c *RemoteCommitCache) refresh(key string, cfg GitConfig) {
+func (c *RemoteCommitCache) refresh(skillName string, cfg GitConfig) {
+	if c == nil || c.rds == nil {
+		return
+	}
 	started := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -108,24 +119,70 @@ func (c *RemoteCommitCache) refresh(key string, cfg GitConfig) {
 	now := time.Now()
 	cost := time.Since(started).Milliseconds()
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	v := c.values[key]
-	if v.CheckedAt.After(started) {
-		return
-	}
-	v.CheckedAt = now
 	if err != nil {
-		v.Err = err.Error()
 		logger.Warningf("[AISkillGit] refresh remote commit failed url=%s ref_type=%s ref=%q dur=%dms err=%v",
 			RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cost, err)
-		c.values[key] = v
 		return
 	}
-	v.Commit = commit
-	v.Err = ""
-	c.values[key] = v
+	c.setRefreshResult(skillName, started, now, commit)
 	logger.Infof("[AISkillGit] refresh remote commit success url=%s ref_type=%s ref=%q commit=%s dur=%dms",
 		RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, commit, cost)
+}
+
+func (c *RemoteCommitCache) setRefreshResult(skillName string, started, checkedAt time.Time, commit string) {
+	if err := c.setRedisRefreshResult(skillName, started, checkedAt, commit); err != nil {
+		logger.Warningf("[AISkillGit] redis refresh remote commit cache failed key=%s err=%v", remoteCommitRedisKey(skillName), err)
+	}
+}
+
+func (c *RemoteCommitCache) getRedis(skillName string) (remoteCommitCacheValue, bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), remoteCommitRedisTimeout)
+	defer cancel()
+
+	fields, err := c.rds.HGetAll(ctx, remoteCommitRedisKey(skillName)).Result()
+	if err != nil {
+		return remoteCommitCacheValue{}, false, err
+	}
+	if len(fields) == 0 {
+		return remoteCommitCacheValue{}, false, nil
+	}
+	v, ok := remoteCommitValueFromRedisFields(fields)
+	return v, ok, nil
+}
+
+func remoteCommitValueFromRedisFields(fields map[string]string) (remoteCommitCacheValue, bool) {
+	var v remoteCommitCacheValue
+	v.Commit = fields["commit"]
+
+	if raw := fields["checked_at_unix_nano"]; raw != "" {
+		if ns, err := strconv.ParseInt(raw, 10, 64); err == nil {
+			v.CheckedAt = time.Unix(0, ns)
+		}
+	}
+	return v, !v.CheckedAt.IsZero() || v.Commit != ""
+}
+
+func (c *RemoteCommitCache) setRedis(skillName string, v remoteCommitCacheValue) error {
+	ctx, cancel := context.WithTimeout(context.Background(), remoteCommitRedisTimeout)
+	defer cancel()
+
+	return c.rds.HSet(ctx, remoteCommitRedisKey(skillName),
+		"commit", v.Commit,
+		"checked_at_unix_nano", v.CheckedAt.UnixNano(),
+	).Err()
+}
+
+func (c *RemoteCommitCache) setRedisRefreshResult(skillName string, started, checkedAt time.Time, commit string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), remoteCommitRedisTimeout)
+	defer cancel()
+
+	_, err := c.rds.Eval(ctx, remoteCommitSetIfNotNewerScript, []string{remoteCommitRedisKey(skillName)},
+		commit,
+		checkedAt.UnixNano(),
+		started.UnixNano(),
+	).Result()
+	if err != nil && err != redis.Nil {
+		return err
+	}
+	return nil
 }
