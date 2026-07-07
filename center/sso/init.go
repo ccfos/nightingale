@@ -79,16 +79,20 @@ DefaultRoles = ['Standard']
 UserinfoIsArray = false
 UserinfoPrefix = 'data'
 Scopes = ['profile', 'email', 'phone']
-# a2a/mcp OAuth2 Resource Server 的 access token 校验方式（HTTP.RSAuth.Provider="oauth2" 时生效）：
-#   留空（默认）/ userinfo = 复用上面的 UserInfoAddr，靠 UserInfo 调用是否成功判定 token 有效，
-#                            对接最省事（多数 OAuth2 server 都有 UserInfo）。注意：UserInfo 响应不含
-#                            aud，本模式【不校验 audience】，同一 IdP 下任意有效 token 都会被接受。
-#   introspect             = RFC 7662 内省，校验 token 的 aud，安全性更高；有安全要求时切到这个。
+# Access token verification method for the a2a/mcp OAuth2 Resource Server (effective when HTTP.RSAuth.Provider="oauth2"):
+#   empty (default) / userinfo = reuse UserInfoAddr above; the token is considered valid if the UserInfo
+#                                call succeeds. Easiest to integrate (most OAuth2 servers expose UserInfo).
+#                                Note: UserInfo responses do not carry aud, so this mode does NOT verify
+#                                the audience — any valid token issued by the same IdP will be accepted.
+#   introspect                 = RFC 7662 introspection; verifies the token's aud and is more secure.
+#                                Switch to this if you have stricter security requirements.
 RSVerifyMethod = ''
-# RFC 7662 token introspection 端点；RSVerifyMethod=introspect 时必填。IdP 的 introspection 响应
-# 必须返回 aud（须包含 HTTP.RSAuth.Audience），否则拒绝。留空/userinfo 模式则复用上面的 UserInfoAddr。
+# RFC 7662 token introspection endpoint; required when RSVerifyMethod=introspect. The IdP's introspection
+# response must include aud (which must contain HTTP.RSAuth.Audience), otherwise the token is rejected.
+# In empty/userinfo mode, UserInfoAddr above is reused instead.
 IntrospectAddr = ''
-# RS 校验结果按 token 哈希缓存的秒数（introspect 再以 token 自身 exp 封顶），0 表示不缓存。
+# Seconds to cache RS verification results keyed by token hash (for introspect, additionally capped by
+# the token's own exp). 0 disables caching.
 IntrospectCacheSeconds = 60
 
 [Attributes]
