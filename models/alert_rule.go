@@ -603,6 +603,9 @@ func (ar *AlertRule) Verify() error {
 			enableWeekCount++
 		}
 	}
+	if enableWeekCount == 0 && len(ar.EnableDaysOfWeekJSON) > 0 {
+		enableWeekCount = 1 // 兼容旧版单分组字段 enable_days_of_week（与 FE2DB 的复数优先、复数空才回退单数保持一致）
+	}
 	if enableStimeCount != enableEtimeCount || enableStimeCount != enableWeekCount {
 		return fmt.Errorf("invalid effective time span: start times(%d), end times(%d) and days-of-week groups(%d) must have the same count",
 			enableStimeCount, enableEtimeCount, enableWeekCount)

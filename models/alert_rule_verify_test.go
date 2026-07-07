@@ -48,6 +48,13 @@ func TestAlertRuleVerify_EffectiveTimeSpan(t *testing.T) {
 			ar.EnableEtimeJSON = "09:59"
 			ar.EnableDaysOfWeeksJSON = [][]string{{"1", "2"}}
 		}, false},
+		{"valid legacy singular days-of-week field", func(ar *models.AlertRule) {
+			// 内置告警模板（如 Net_Response、Kubernetes apiserver/kubelet）的形态：
+			// 只带单数 enable_stime/enable_etime/enable_days_of_week，复数数组全空。
+			ar.EnableStimeJSON = "00:00"
+			ar.EnableEtimeJSON = "23:59"
+			ar.EnableDaysOfWeekJSON = []string{"1", "2", "3", "4", "5", "6", "0"}
+		}, false},
 		{"unconfigured rule from DB2FE empty group", func(ar *models.AlertRule) {
 			ar.EnableDaysOfWeeksJSON = [][]string{{}}
 		}, false},
