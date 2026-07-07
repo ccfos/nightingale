@@ -830,6 +830,7 @@ CREATE TABLE `message_template` (
     `notify_channel_ident` varchar(64) not null default '',
     `private` int not null default 0,
     `weight` int not null default 0,
+    `lang` varchar(32) not null default '',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,

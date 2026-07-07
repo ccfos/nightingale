@@ -1003,6 +1003,7 @@ CREATE TABLE message_template (
     notify_channel_ident varchar(64) NOT NULL DEFAULT '',
     private int NOT NULL DEFAULT 0,
     weight int NOT NULL DEFAULT 0,
+    lang varchar(32) NOT NULL DEFAULT '',
     create_at bigint NOT NULL DEFAULT 0,
     create_by varchar(64) NOT NULL DEFAULT '',
     update_at bigint NOT NULL DEFAULT 0,
