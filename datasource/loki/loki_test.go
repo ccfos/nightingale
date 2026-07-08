@@ -56,8 +56,82 @@ func TestQueryLogReturnsTotalFromCountQuery(t *testing.T) {
 	if total != 42 {
 		t.Fatalf("unexpected total: %d", total)
 	}
+	log, ok := logs[0].(lokikit.NormalizedLog)
+	if !ok {
+		t.Fatalf("unexpected log type: %#v", logs[0])
+	}
+	labels, ok := log["labels"].(map[string]string)
+	if !ok || labels["app"] != "api" {
+		t.Fatalf("unexpected labels: %#v", log["labels"])
+	}
+	if _, exists := log["stream"]; exists {
+		t.Fatalf("stream should not be returned")
+	}
 	if !sawRangeQuery || !sawCountQuery {
-		t.Fatalf("expected both range and count queries, sawRange=%v sawCount=%v", sawRangeQuery, sawCountQuery)
+		t.Fatalf("expected range and count queries, sawRange=%v sawCount=%v", sawRangeQuery, sawCountQuery)
+	}
+}
+
+func TestQueryLogSplitsParsedFieldsWithCachedSelectorLabelNames(t *testing.T) {
+	labelNamesCache.Flush()
+	var labelsQueryCount int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/query_range":
+			if got := r.URL.Query().Get("query"); got != `{app="api"} | json` {
+				t.Fatalf("unexpected range query: %q", got)
+			}
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"streams","result":[{"stream":{"app":"api","trace_id":"abc"},"values":[["1710000060000000000","line"]]}]}}`))
+		case "/api/v1/labels":
+			labelsQueryCount++
+			if got := r.URL.Query().Get("query"); got != `{app="api"}` {
+				t.Fatalf("unexpected labels query: %q", got)
+			}
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"status":"success","data":["app"]}`))
+		case "/api/v1/query":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1710000060,"1"]}]}}`))
+		default:
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	vl := &Loki{
+		Loki: lokikit.Loki{
+			LokiAddr: server.URL,
+		},
+	}
+	query := Query{
+		Query: `{app="api"} | json`,
+		Start: 1710000000,
+		End:   1710000060,
+		Limit: 1,
+	}
+	logs, _, err := vl.QueryLog(context.Background(), query)
+	if err != nil {
+		t.Fatalf("QueryLog failed: %v", err)
+	}
+	if _, _, err := vl.QueryLog(context.Background(), query); err != nil {
+		t.Fatalf("second QueryLog failed: %v", err)
+	}
+	if labelsQueryCount != 1 {
+		t.Fatalf("label names should be cached, got labelsQueryCount=%d", labelsQueryCount)
+	}
+
+	log := logs[0].(lokikit.NormalizedLog)
+	labels := log["labels"].(map[string]string)
+	if got := labels["app"]; got != "api" {
+		t.Fatalf("unexpected app label: %q", got)
+	}
+	if _, exists := labels["trace_id"]; exists {
+		t.Fatalf("trace_id should not be treated as label")
+	}
+	parsedFields := log["parsed_fields"].(map[string]string)
+	if got := parsedFields["trace_id"]; got != "abc" {
+		t.Fatalf("unexpected parsed trace_id: %q", got)
 	}
 }
 
@@ -69,6 +143,27 @@ func TestBuildLogCountQueryNormalizesMillisecondRange(t *testing.T) {
 	want := `sum(count_over_time({app="api"} [3600s]))`
 	if got != want {
 		t.Fatalf("unexpected query: got %q want %q", got, want)
+	}
+}
+
+func TestDecodeQueryParamAcceptsStringNanosecondRange(t *testing.T) {
+	param := new(Query)
+	if err := decodeQueryParam(map[string]interface{}{
+		"query": `{app="api"}`,
+		"start": "1710000000000000000",
+		"end":   "1710000001000000000",
+		"limit": "30",
+	}, param); err != nil {
+		t.Fatalf("decodeQueryParam failed: %v", err)
+	}
+	if param.Start != 1710000000000000000 {
+		t.Fatalf("unexpected start: %d", param.Start)
+	}
+	if param.End != 1710000001000000000 {
+		t.Fatalf("unexpected end: %d", param.End)
+	}
+	if param.Limit != 30 {
+		t.Fatalf("unexpected limit: %d", param.Limit)
 	}
 }
 

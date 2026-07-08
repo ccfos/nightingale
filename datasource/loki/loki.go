@@ -2,6 +2,8 @@ package loki
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -16,12 +18,21 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/mitchellh/mapstructure"
+	gc "github.com/patrickmn/go-cache"
 	"github.com/prometheus/common/model"
+	"github.com/toolkits/pkg/logger"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
 	LokiType            = "loki"
 	LokiDefaultLogLimit = 500
+	labelNamesCacheTTL  = 10 * time.Minute
+)
+
+var (
+	labelNamesCache = gc.New(labelNamesCacheTTL, time.Minute)
+	labelNamesGroup singleflight.Group
 )
 
 type Loki struct {
@@ -37,6 +48,10 @@ type Query struct {
 	Limit     int    `json:"limit" mapstructure:"limit"`
 	Direction string `json:"direction" mapstructure:"direction"`
 	Ref       string `json:"ref" mapstructure:"ref"`
+	// SkipCount 为 true 时跳过独立的 count 查询，此时 QueryLog 返回的 total
+	// 等于 len(data)（即受 Limit 截断后的实际条数），并非真实总数。调用方需自行
+	// 感知这一约定（例如翻页时改用 hasMore 语义，而不是依赖 total）。
+	SkipCount bool `json:"skip_count" mapstructure:"skip_count"`
 }
 
 type HistogramQuery struct {
@@ -115,7 +130,7 @@ func (vl *Loki) Equal(other datasource.Datasource) bool {
 
 func (vl *Loki) QueryLog(ctx context.Context, queryParam interface{}) ([]interface{}, int64, error) {
 	param := new(Query)
-	if err := mapstructure.Decode(queryParam, param); err != nil {
+	if err := decodeQueryParam(queryParam, param); err != nil {
 		return nil, 0, fmt.Errorf("decode query param failed: %w", err)
 	}
 	param.Limit = vl.normalizeLogLimit(param.Limit)
@@ -128,11 +143,28 @@ func (vl *Loki) QueryLog(ctx context.Context, queryParam interface{}) ([]interfa
 		return nil, 0, err
 	}
 
+	fieldInfo := lokikit.AnalyzeLogQLForLogFields(param.Query)
 	logs := lokikit.NormalizeLogs(result)
+	if fieldInfo.NeedsLabelNames {
+		labelNames, err := vl.cachedLabelNames(ctx, fieldInfo.Selector, param.Start, param.End)
+		if err != nil {
+			// 无法可靠区分原始 stream label 与 parser 阶段字段时，选择「全归 parsed_fields」
+			// （对应 splitStreamFields 中「非 nil 空集」分支），而非退回把所有 stream key 当 label。
+			// 这样至少能保证 labels 里出现的字段一定是真正 Loki 索引的 stream label；代价是
+			// Loki `/labels` 抖动期间用户会看到 labels 暂时为空。此处仅打 warning，不做进一步兜底。
+			logger.Warningf("loki cachedLabelNames failed, fallback to empty label set: addr=%s selector=%q start=%d end=%d err=%v",
+				vl.LokiAddr, fieldInfo.Selector, param.Start, param.End, err)
+			labelNames = []string{}
+		}
+		logs = lokikit.NormalizeLogsWithLabelNames(result, labelNames)
+	}
 	sortLokiLogs(logs, param.Direction)
 	ret := make([]interface{}, 0, len(logs))
 	for _, log := range logs {
 		ret = append(ret, log)
+	}
+	if param.SkipCount {
+		return ret, int64(len(ret)), nil
 	}
 
 	total, err := vl.countLogs(ctx, param.Query, param.Start, param.End)
@@ -145,7 +177,7 @@ func (vl *Loki) QueryLog(ctx context.Context, queryParam interface{}) ([]interfa
 
 func (vl *Loki) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
 	param := new(Query)
-	if err := mapstructure.Decode(queryParam, param); err != nil {
+	if err := decodeQueryParam(queryParam, param); err != nil {
 		return nil, fmt.Errorf("decode query param failed: %w", err)
 	}
 
@@ -184,7 +216,7 @@ func (vl *Loki) QueryParsedFields(ctx context.Context, query string, start, end 
 
 func (vl *Loki) QueryHistogram(ctx context.Context, queryParam interface{}) ([]HistogramValues, error) {
 	param := new(HistogramQuery)
-	if err := mapstructure.Decode(queryParam, param); err != nil {
+	if err := decodeQueryParam(queryParam, param); err != nil {
 		return nil, fmt.Errorf("decode query param failed: %w", err)
 	}
 	if param.Step == "" {
@@ -523,7 +555,7 @@ func (vl *Loki) MakeTSQuery(ctx context.Context, query interface{}, eventTags []
 
 func (vl *Loki) QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error) {
 	param := new(Query)
-	if err := mapstructure.Decode(query, param); err != nil {
+	if err := decodeQueryParam(query, param); err != nil {
 		return nil, err
 	}
 	if param.End > 0 && param.Start > 0 {
@@ -550,6 +582,73 @@ func (vl *Loki) QueryMapData(ctx context.Context, query interface{}) ([]map[stri
 		break
 	}
 	return result, nil
+}
+
+func (vl *Loki) cachedLabelNames(ctx context.Context, selector string, start, end int64) ([]string, error) {
+	key := vl.labelNamesCacheKey(selector, start, end)
+	if value, ok := labelNamesCache.Get(key); ok {
+		if labels, ok := value.([]string); ok {
+			return labels, nil
+		}
+	}
+
+	value, err, _ := labelNamesGroup.Do(key, func() (interface{}, error) {
+		if cached, ok := labelNamesCache.Get(key); ok {
+			if labels, ok := cached.([]string); ok {
+				return labels, nil
+			}
+		}
+		labels, err := vl.LabelNames(ctx, selector, start, end, "", 0)
+		if err != nil {
+			return nil, err
+		}
+		labelNamesCache.Set(key, labels, gc.DefaultExpiration)
+		return labels, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	labels, _ := value.([]string)
+	return labels, nil
+}
+
+func (vl *Loki) labelNamesCacheKey(selector string, start, end int64) string {
+	parts := []string{
+		vl.LokiAddr,
+		vl.ClusterName,
+		vl.LokiBasic.LokiUser,
+		selector,
+		strconv.FormatInt(timestampHourBucket(start), 10),
+		strconv.FormatInt(timestampHourBucket(end), 10),
+	}
+	headerKeys := make([]string, 0, len(vl.Headers))
+	for key := range vl.Headers {
+		headerKeys = append(headerKeys, key)
+	}
+	sort.Strings(headerKeys)
+	for _, key := range headerKeys {
+		parts = append(parts, key+"="+vl.Headers[key])
+	}
+	sum := sha1.Sum([]byte(strings.Join(parts, "\x00")))
+	return "loki-label-names:" + hex.EncodeToString(sum[:])
+}
+
+func timestampHourBucket(value int64) int64 {
+	if value <= 0 {
+		return 0
+	}
+	return normalizeUnixTimestamp(float64(value)) / 3600
+}
+
+func decodeQueryParam(input interface{}, output interface{}) error {
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		WeaklyTypedInput: true,
+		Result:           output,
+	})
+	if err != nil {
+		return err
+	}
+	return decoder.Decode(input)
 }
 
 func subtractUnixSeconds(value, seconds int64) int64 {

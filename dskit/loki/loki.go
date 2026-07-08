@@ -289,12 +289,18 @@ func (vl *Loki) ParsedFields(ctx context.Context, query string, start, end int64
 }
 
 func NormalizeLogs(resp *QueryResponse) []NormalizedLog {
+	return NormalizeLogsWithLabelNames(resp, nil)
+}
+
+func NormalizeLogsWithLabelNames(resp *QueryResponse, labelNames []string) []NormalizedLog {
 	if resp == nil {
 		return nil
 	}
 
+	labelNameSet := makeLabelNameSet(labelNames)
 	ret := make([]NormalizedLog, 0)
 	for _, item := range resp.Data.Result {
+		labels, parsedFields := splitStreamFields(item.Stream, labelNameSet)
 		for _, value := range item.Values {
 			if len(value) < 2 {
 				continue
@@ -308,10 +314,59 @@ func NormalizeLogs(resp *QueryResponse) []NormalizedLog {
 				"timestamp":     tsNs / int64(time.Millisecond),
 				"__timestamp__": strconv.FormatInt(tsNs, 10),
 				"line":          line,
-				"stream":        item.Stream,
+				"labels":        copyStringMap(labels),
+				"parsed_fields": copyStringMap(parsedFields),
 			}
 			ret = append(ret, log)
 		}
+	}
+	return ret
+}
+
+func makeLabelNameSet(labelNames []string) map[string]struct{} {
+	if labelNames == nil {
+		return nil
+	}
+	ret := make(map[string]struct{}, len(labelNames))
+	for _, name := range labelNames {
+		if name == "" {
+			continue
+		}
+		ret[name] = struct{}{}
+	}
+	return ret
+}
+
+func splitStreamFields(stream map[string]string, labelNameSet map[string]struct{}) (map[string]string, map[string]string) {
+	if len(stream) == 0 {
+		return map[string]string{}, map[string]string{}
+	}
+	if labelNameSet == nil {
+		return copyStringMap(stream), map[string]string{}
+	}
+
+	labels := make(map[string]string)
+	parsedFields := make(map[string]string)
+	for key, value := range stream {
+		if _, ok := labelNameSet[key]; ok {
+			labels[key] = value
+			continue
+		}
+		if key == "__error__" || key == "__error_details__" {
+			continue
+		}
+		parsedFields[key] = value
+	}
+	return labels, parsedFields
+}
+
+func copyStringMap(src map[string]string) map[string]string {
+	if len(src) == 0 {
+		return map[string]string{}
+	}
+	ret := make(map[string]string, len(src))
+	for key, value := range src {
+		ret[key] = value
 	}
 	return ret
 }
