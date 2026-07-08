@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
@@ -289,6 +290,7 @@ func (a *Agent) appendSkillTools(base []AgentTool, skills []*SkillContent) []Age
 			for name := range toolDescriptions {
 				toolNames = append(toolNames, name)
 			}
+			sort.Strings(toolNames)
 		}
 
 		for _, toolName := range toolNames {
