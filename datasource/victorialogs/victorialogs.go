@@ -132,7 +132,9 @@ func (vl *VictoriaLogs) Equal(other datasource.Datasource) bool {
 		vl.VictorialogsTls.SkipTlsVerify == o.VictorialogsTls.SkipTlsVerify &&
 		vl.Timeout == o.Timeout &&
 		vl.MaxQueryRows == o.MaxQueryRows &&
-		reflect.DeepEqual(vl.Headers, o.Headers)
+		vl.EnableWrite == o.EnableWrite &&
+		reflect.DeepEqual(vl.Headers, o.Headers) &&
+		reflect.DeepEqual(vl.WriteAddrs, o.WriteAddrs)
 }
 
 // QueryLog 日志查询

@@ -30,6 +30,8 @@ type VictoriaLogs struct {
 	Timeout      int64             `json:"victorialogs.timeout" mapstructure:"victorialogs.timeout"` // millis
 	ClusterName  string            `json:"victorialogs.cluster_name" mapstructure:"victorialogs.cluster_name"`
 	MaxQueryRows int               `json:"victorialogs.max_query_rows" mapstructure:"victorialogs.max_query_rows"`
+	EnableWrite  bool              `json:"victorialogs.enable_write" mapstructure:"victorialogs.enable_write"`
+	WriteAddrs   []string          `json:"victorialogs.write_addrs" mapstructure:"victorialogs.write_addrs"`
 
 	HTTPClient *http.Client `json:"-" mapstructure:"-"`
 }
