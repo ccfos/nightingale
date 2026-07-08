@@ -110,8 +110,11 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 		case models.PROMETHEUS:
 			safeSettings = make(map[string]interface{})
 			for k, v := range item.SettingsJson {
-				if strings.HasPrefix(k, "prometheus.") {
+				switch {
+				case strings.HasPrefix(k, "prometheus."):
 					safeSettings[strings.TrimPrefix(k, "prometheus.")] = v
+				case k == "write_addr", k == "internal_addr":
+					safeSettings[k] = v
 				}
 			}
 		case "cloudwatch":
