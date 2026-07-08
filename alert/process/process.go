@@ -386,6 +386,17 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 	event.IsRecovered = true
 	event.LastEvalTime = now
 
+	// 恢复通知是否屏蔽，按"恢复时刻"重新判定，而不是沿用触发期写入 p.fires 的陈旧 NotifyMuted：
+	// 仅当此刻仍命中「只屏蔽通知」规则才继续静默恢复通知，屏蔽已到期/删除则正常发出恢复通知。
+	// EventMuteStrategy 的时间匹配基于 event.TriggerTime，这里临时以恢复时刻 now 判定后还原。
+	event.NotifyMuted = 0
+	triggerTime := event.TriggerTime
+	event.TriggerTime = now
+	if hit, _, muteType := mute.EventMuteStrategy(event, p.alertMuteCache); hit && muteType == models.MuteTypeNotifyOnly {
+		event.NotifyMuted = 1
+	}
+	event.TriggerTime = triggerTime
+
 	p.HandleRecoverEventHook(event)
 	p.pushEventToQueue(event)
 }
@@ -481,6 +492,15 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 		p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 		event.FirstTriggerTime = fired.FirstTriggerTime
 		p.HandleFireEventHook(event)
+
+		// 事件此前仅在「只屏蔽通知」期间产生过（fired.NotifyCurNumber==0，首次通知被 consume 跳过），
+		// 屏蔽解除后应把这次当作首次真实通知补发，避免 NotifyRepeatStep==0 的规则永远收不到第一次通知。
+		if fired.NotifyCurNumber == 0 {
+			event.NotifyCurNumber = 1
+			message = fmt.Sprintf("fired, first notify after unmute, first_trigger_time: %d", event.FirstTriggerTime)
+			p.pushEventToQueue(event)
+			return
+		}
 
 		if cachedRule.NotifyRepeatStep == 0 {
 			message = "stalled, rule.notify_repeat_step is 0, no need to repeat notify"

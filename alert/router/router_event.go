@@ -41,8 +41,10 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 
 		event.TagsMap[arr[0]] = arr[1]
 	}
+	// 恢复事件不按触发期屏蔽处理：既不丢弃也不打 NotifyMuted 标记，
+	// 避免屏蔽窗口结束后本应发出的恢复通知被陈旧屏蔽状态吞掉（与 plus 侧行为一致）。
 	hit, _, muteType := mute.EventMuteStrategy(event, rt.AlertMuteCache)
-	if hit {
+	if !event.IsRecovered && hit {
 		if muteType == models.MuteTypeNotifyOnly {
 			// 只屏蔽通知：事件照常入队产生/记录，仅打标，通知阶段据此跳过发送
 			event.NotifyMuted = 1
