@@ -41,11 +41,16 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 
 		event.TagsMap[arr[0]] = arr[1]
 	}
-	hit, _ := mute.EventMuteStrategy(event, rt.AlertMuteCache)
+	hit, _, muteType := mute.EventMuteStrategy(event, rt.AlertMuteCache)
 	if hit {
-		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
-		ginx.NewRender(c).Message(nil)
-		return
+		if muteType == models.MuteTypeNotifyOnly {
+			// 只屏蔽通知：事件照常入队产生/记录，仅打标，通知阶段据此跳过发送
+			event.NotifyMuted = 1
+		} else {
+			logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
+			ginx.NewRender(c).Message(nil)
+			return
+		}
 	}
 
 	if err := event.ParseRule("rule_name"); err != nil {

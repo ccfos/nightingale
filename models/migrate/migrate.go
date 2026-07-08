@@ -255,6 +255,7 @@ type AlertSubscribe struct {
 type AlertMute struct {
 	Severities string `gorm:"column:severities;type:varchar(32);not null;default:''"`
 	Tags       string `gorm:"column:tags;type:varchar(4096);default:'[]';comment:json,map,tagkey->regexp|value"`
+	MuteType   int    `gorm:"column:mute_type;type:int;not null;default:0;comment:0-mute event and notify,1-mute notify only"`
 }
 
 type RecordingRule struct {
@@ -283,11 +284,13 @@ type AlertHisEvent struct {
 	LastEvalTime  int64   `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
 	NotifyRuleIds []int64 `gorm:"column:notify_rule_ids;type:text;serializer:json;comment:notify rule ids"`
+	NotifyMuted   int     `gorm:"column:notify_muted;type:int;not null;default:0;comment:1-event produced but notify muted"`
 }
 
 type AlertCurEvent struct {
 	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
 	NotifyRuleIds []int64 `gorm:"column:notify_rule_ids;type:text;serializer:json;comment:notify rule ids"`
+	NotifyMuted   int     `gorm:"column:notify_muted;type:int;not null;default:0;comment:1-event produced but notify muted"`
 }
 
 type Target struct {

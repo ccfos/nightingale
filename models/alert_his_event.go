@@ -53,6 +53,7 @@ type AlertHisEvent struct {
 	Annotations        string            `json:"-"`
 	AnnotationsJSON    map[string]string `json:"annotations" gorm:"-"` // for fe
 	NotifyCurNumber    int               `json:"notify_cur_number"`    // notify: current number
+	NotifyMuted        int               `json:"notify_muted"`         // 1: 命中「只屏蔽通知」规则，事件已产生但通知被屏蔽
 	FirstTriggerTime   int64             `json:"first_trigger_time"`   // 连续告警的首次告警时间
 	ExtraConfig        interface{}       `json:"extra_config" gorm:"-"`
 	NotifyRuleIds      []int64           `json:"notify_rule_ids" gorm:"serializer:json"`
@@ -428,6 +429,7 @@ func (e *AlertHisEvent) ToCur() *AlertCurEvent {
 		OriginalTags:       e.OriginalTags,
 		LastEvalTime:       e.LastEvalTime,
 		NotifyCurNumber:    e.NotifyCurNumber,
+		NotifyMuted:        e.NotifyMuted,
 		FirstTriggerTime:   e.FirstTriggerTime,
 		IsRecovered:        e.IsRecovered == 1,
 		TriggerValues:      e.TriggerValue,

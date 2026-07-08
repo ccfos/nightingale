@@ -117,6 +117,12 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 
 	e.persist(event)
 
+	if event.NotifyMuted == 1 {
+		// 命中「只屏蔽通知」规则：事件已产生并记录，此处跳过全部通知渠道
+		LogEvent(event, "notify_muted")
+		return
+	}
+
 	e.dispatch.HandleEventNotify(event, false)
 }
 

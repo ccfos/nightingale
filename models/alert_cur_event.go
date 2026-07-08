@@ -67,6 +67,7 @@ type AlertCurEvent struct {
 	LastSentTime       int64               `json:"last_sent_time" gorm:"-"`             // 上次发送时间
 	FirstEvalTime      int64               `json:"first_eval_time" gorm:"-"`            // 首次异常检测时间
 	NotifyCurNumber    int                 `json:"notify_cur_number"`                   // notify: current number
+	NotifyMuted        int                 `json:"notify_muted"`                        // 1: 命中「只屏蔽通知」规则，事件已产生但通知被屏蔽
 	FirstTriggerTime   int64               `json:"first_trigger_time"`                  // 连续告警的首次告警时间
 	ExtraConfig        interface{}         `json:"extra_config" gorm:"-"`
 	Status             int                 `json:"status" gorm:"-"`
@@ -449,6 +450,7 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 		RecoverTime:      recoverTime,
 		LastEvalTime:     e.LastEvalTime,
 		NotifyCurNumber:  e.NotifyCurNumber,
+		NotifyMuted:      e.NotifyMuted,
 		FirstTriggerTime: e.FirstTriggerTime,
 		NotifyRuleIds:    e.NotifyRuleIds,
 	}

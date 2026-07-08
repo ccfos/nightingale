@@ -161,16 +161,22 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		}
 
 		// event mute
-		isMuted, detail, muteId := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
+		isMuted, detail, muteId, muteType := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
 		if isMuted {
-			logger.Infof("alert_eval_%d datasource_%d is muted, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
-			p.Stats.CounterMuteTotal.WithLabelValues(
-				fmt.Sprintf("%v", event.GroupName),
-				fmt.Sprintf("%v", p.rule.Id),
-				fmt.Sprintf("%v", muteId),
-				fmt.Sprintf("%v", p.datasourceId),
-			).Inc()
-			continue
+			if muteType == models.MuteTypeNotifyOnly {
+				// 只屏蔽通知：事件照常产生并记录，仅打标，后续在通知阶段据此跳过发送
+				logger.Infof("alert_eval_%d datasource_%d notify muted only, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
+				event.NotifyMuted = 1
+			} else {
+				logger.Infof("alert_eval_%d datasource_%d is muted, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
+				p.Stats.CounterMuteTotal.WithLabelValues(
+					fmt.Sprintf("%v", event.GroupName),
+					fmt.Sprintf("%v", p.rule.Id),
+					fmt.Sprintf("%v", muteId),
+					fmt.Sprintf("%v", p.datasourceId),
+				).Inc()
+				continue
+			}
 		}
 
 		if dispatch.EventMuteHook(event) {
@@ -453,6 +459,24 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 		logger.Infof("alert_eval_%d datasource_%d event-hash-%s %s", p.rule.Id, p.datasourceId, event.Hash, message)
 	}()
 
+	// 只屏蔽通知：事件要产生并落库，但不能消耗通知计数与发送时间，
+	// 否则解除屏蔽后 fired.NotifyCurNumber 会被"虚假发送"耗尽、LastSentTime 也被推进，
+	// 导致本该恢复的通知一直发不出去。这里首次触发入队持久化（consume 阶段跳过发送），
+	// 后续评估仅刷新评估时间保活，不重复入队、不推进任何通知计数。
+	if event.NotifyMuted == 1 {
+		if _, has := p.fires.Get(event.Hash); has {
+			p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+			message = "notify muted, already persisted, skip re-enqueue"
+			return
+		}
+		event.NotifyCurNumber = 0
+		event.FirstTriggerTime = event.TriggerTime
+		message = "notify muted, event persisted without notifying"
+		p.HandleFireEventHook(event)
+		p.pushEventToQueue(event)
+		return
+	}
+
 	if fired, has := p.fires.Get(event.Hash); has {
 		p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 		event.FirstTriggerTime = fired.FirstTriggerTime
@@ -495,7 +519,11 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 
 func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 	if !e.IsRecovered {
-		e.LastSentTime = e.LastEvalTime
+		// 只屏蔽通知的事件不算作已发送，保留原 LastSentTime，
+		// 使解除屏蔽后按真正的上次发送时间计算重复通知间隔。
+		if e.NotifyMuted != 1 {
+			e.LastSentTime = e.LastEvalTime
+		}
 		p.fires.Set(e.Hash, e)
 	}
 
