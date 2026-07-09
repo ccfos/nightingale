@@ -128,8 +128,9 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		// 并写一条通知记录说明被哪条屏蔽规则拦截，供事件详情「通知记录」排查（含恢复事件）。
 		LogEvent(event, "notify_muted")
 		e.recordNotifyMuted(event)
-		// 跳过发送，但仍让下游完成必要的状态清理（如恢复事件清理升级用的 Redis 记录）
-		NotifyMutedEventHook(event)
+		// 跳过发送，但仍让下游完成必要的状态清理（如恢复事件清理升级用的 Redis 记录）；
+		// 覆盖与正常 dispatch 相同的 notify rule 集合（告警规则自身 + 匹配的订阅规则）。
+		e.dispatch.CleanupNotifyMuted(event)
 		return
 	}
 
