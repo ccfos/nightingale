@@ -36,6 +36,11 @@ type EventMuteHookFunc func(event *models.AlertCurEvent) bool
 
 var EventMuteHook EventMuteHookFunc = func(event *models.AlertCurEvent) bool { return false }
 
+// NotifyMutedEventHook 在事件命中「只屏蔽通知」、跳过正常通知流程时调用，
+// 让下游（如 n9e-plus 升级）在不发送通知的前提下完成必要的状态清理
+// （例如恢复事件清理升级用的 Redis 记录，避免屏蔽结束后继续升级已恢复的告警）。
+var NotifyMutedEventHook = func(event *models.AlertCurEvent) {}
+
 func InitRegisterQueryFunc(promClients *prom.PromClientMap) {
 	tplx.RegisterQueryFunc(func(datasourceID int64, promql string) model.Value {
 		if promClients.IsNil(datasourceID) {
@@ -123,6 +128,8 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		// 并写一条通知记录说明被哪条屏蔽规则拦截，供事件详情「通知记录」排查（含恢复事件）。
 		LogEvent(event, "notify_muted")
 		e.recordNotifyMuted(event)
+		// 跳过发送，但仍让下游完成必要的状态清理（如恢复事件清理升级用的 Redis 记录）
+		NotifyMutedEventHook(event)
 		return
 	}
 
