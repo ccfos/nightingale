@@ -164,9 +164,10 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		isMuted, detail, muteId, muteType := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
 		if isMuted {
 			if muteType == models.MuteTypeNotifyOnly {
-				// 只屏蔽通知：事件照常产生并记录，仅打标，后续在通知阶段据此跳过发送
+				// 只屏蔽通知：事件照常产生并记录，仅打标，后续在通知阶段据此跳过发送并写通知记录
 				logger.Infof("alert_eval_%d datasource_%d notify muted only, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
 				event.NotifyMuted = 1
+				event.MuteId = muteId
 			} else {
 				logger.Infof("alert_eval_%d datasource_%d is muted, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
 				p.Stats.CounterMuteTotal.WithLabelValues(
@@ -390,10 +391,12 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 	// 仅当此刻仍命中「只屏蔽通知」规则才继续静默恢复通知，屏蔽已到期/删除则正常发出恢复通知。
 	// EventMuteStrategy 的时间匹配基于 event.TriggerTime，这里临时以恢复时刻 now 判定后还原。
 	event.NotifyMuted = 0
+	event.MuteId = 0
 	triggerTime := event.TriggerTime
 	event.TriggerTime = now
-	if hit, _, muteType := mute.EventMuteStrategy(event, p.alertMuteCache); hit && muteType == models.MuteTypeNotifyOnly {
+	if hit, muteId, muteType := mute.EventMuteStrategy(event, p.alertMuteCache); hit && muteType == models.MuteTypeNotifyOnly {
 		event.NotifyMuted = 1
+		event.MuteId = muteId
 	}
 	event.TriggerTime = triggerTime
 

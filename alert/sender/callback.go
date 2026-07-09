@@ -164,6 +164,23 @@ func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, notifyRuleID i
 	PushNotifyRecords(notis)
 }
 
+// RecordNotifications 落库/上报已构造好的通知记录，复用 NotifyRecord 的中心/边缘分发逻辑，
+// 但允许调用方自定义 Status（如 NotiStatusMuted）与 Details，用于「只屏蔽通知」等非发送类记录。
+func RecordNotifications(ctx *ctx.Context, notis []*models.NotificationRecord) {
+	if len(notis) == 0 {
+		return
+	}
+
+	if !ctx.IsCenter {
+		if err := poster.PostByUrls(ctx, "/v1/n9e/notify-record", notis); err != nil {
+			logger.Errorf("add notis:%v failed, err: %v", notis, err)
+		}
+		return
+	}
+
+	PushNotifyRecords(notis)
+}
+
 func doSend(url string, body interface{}, channel string, stats *astats.Stats) (string, error) {
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 

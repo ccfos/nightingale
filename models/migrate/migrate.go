@@ -284,13 +284,11 @@ type AlertHisEvent struct {
 	LastEvalTime  int64   `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
 	NotifyRuleIds []int64 `gorm:"column:notify_rule_ids;type:text;serializer:json;comment:notify rule ids"`
-	NotifyMuted   int     `gorm:"column:notify_muted;type:int;not null;default:0;comment:1-event produced but notify muted"`
 }
 
 type AlertCurEvent struct {
 	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
 	NotifyRuleIds []int64 `gorm:"column:notify_rule_ids;type:text;serializer:json;comment:notify rule ids"`
-	NotifyMuted   int     `gorm:"column:notify_muted;type:int;not null;default:0;comment:1-event produced but notify muted"`
 }
 
 type Target struct {

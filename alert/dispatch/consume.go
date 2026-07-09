@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/queue"
+	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -118,12 +119,59 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	e.persist(event)
 
 	if event.NotifyMuted == 1 {
-		// 命中「只屏蔽通知」规则：事件已产生并记录，此处跳过全部通知渠道
+		// 命中「只屏蔽通知」规则：事件已产生并记录，此处跳过全部通知渠道，
+		// 并写一条通知记录说明被哪条屏蔽规则拦截，供事件详情「通知记录」排查（含恢复事件）。
 		LogEvent(event, "notify_muted")
+		e.recordNotifyMuted(event)
 		return
 	}
 
 	e.dispatch.HandleEventNotify(event, false)
+}
+
+// recordNotifyMuted 为「只屏蔽通知」而未发送的事件（含恢复事件）写一条通知记录，
+// 说明命中的屏蔽规则，替代事件表上的持久化标记。
+func (e *Consumer) recordNotifyMuted(event *models.AlertCurEvent) {
+	if event.Id == 0 {
+		return
+	}
+
+	muteName := e.muteRuleName(event.GroupId, event.MuteId)
+	detail := fmt.Sprintf("命中「只屏蔽通知」屏蔽规则（%s），事件已产生并记录，通知被抑制", muteName)
+	if event.IsRecovered {
+		detail = fmt.Sprintf("命中「只屏蔽通知」屏蔽规则（%s），恢复事件已记录，恢复通知被抑制", muteName)
+	}
+
+	record := &models.NotificationRecord{
+		EventId:   event.Id,
+		SubId:     event.SubRuleId,
+		Channel:   "屏蔽规则",
+		Status:    models.NotiStatusMuted,
+		Target:    muteName,
+		Details:   detail,
+		CreatedAt: time.Now().Unix(),
+	}
+	sender.RecordNotifications(e.ctx, []*models.NotificationRecord{record})
+}
+
+// muteRuleName 尽力从缓存解析屏蔽规则名（note），解析不到则回退为 id。
+func (e *Consumer) muteRuleName(groupId, muteId int64) string {
+	if muteId == 0 {
+		return "-"
+	}
+
+	if mutes, has := e.alertMuteCache.Gets(groupId); has {
+		for _, m := range mutes {
+			if m.Id == muteId {
+				if m.Note != "" {
+					return fmt.Sprintf("%s(id=%d)", m.Note, muteId)
+				}
+				break
+			}
+		}
+	}
+
+	return fmt.Sprintf("id=%d", muteId)
 }
 
 func (e *Consumer) persist(event *models.AlertCurEvent) {
@@ -209,4 +257,3 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 		event.Annotations = string(b)
 	}
 }
-

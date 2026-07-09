@@ -9,6 +9,7 @@ import (
 const (
 	NotiStatusSuccess = iota + 1
 	NotiStatusFailure
+	NotiStatusMuted // 命中「只屏蔽通知」规则，事件已产生但通知被抑制
 )
 
 type NotificationRecord struct {
