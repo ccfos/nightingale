@@ -225,6 +225,20 @@ func (a *Agent) applyDefaults() {
 	}
 }
 
+// isSkillHidden 报告名为 name 的私有 skill 是否对本次请求用户不可见（未授权）。
+// 与 ToolDeps.IsSkillHidden 同源，覆盖 Agent 内部按名取用 skill 的各条路径。
+func (a *Agent) isSkillHidden(name string) bool {
+	if a.cfg == nil || a.cfg.Skills == nil {
+		return false
+	}
+	for _, n := range a.cfg.Skills.HiddenSkillNames {
+		if n == name {
+			return true
+		}
+	}
+	return false
+}
+
 // loadPinnedSkills 加载显式预载的技能（SkillNames：action RequiredSkills / agent
 // 显式绑定）。SkillNames 为空时不预载——目录常驻 + load_skill 自取路径不经过这里，
 // 由模型在循环里按需加载（无 LLM 预选环节，见 SkillConfig 注释）。
@@ -235,6 +249,11 @@ func (a *Agent) loadPinnedSkills() []*SkillContent {
 
 	var activeSkills []*SkillContent
 	for _, name := range a.cfg.Skills.SkillNames {
+		// 私有 skill 对未授权用户不可见：即便被 agent/action 显式绑定也不预载其内容。
+		if a.isSkillHidden(name) {
+			logger.Warningf("Skill '%s' hidden from current user, skip preload", name)
+			continue
+		}
 		skill := a.skillRegistry.GetByName(name)
 		if skill == nil {
 			logger.Warningf("Skill '%s' not found", name)

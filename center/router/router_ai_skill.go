@@ -92,12 +92,82 @@ func skillSearchMatch(search, name, desc string) bool {
 		strings.Contains(strings.ToLower(desc), s)
 }
 
+// ensureAISkillEditable bombs 403 unless the current user may edit obj. Every
+// skill mutation handler (edit/delete/replace/import/git) funnels through this
+// so team-based (and legacy owner-based) authorization can't be bypassed via a
+// side path.
+func (rt *Router) ensureAISkillEditable(c *gin.Context, obj *models.AISkill) {
+	me := c.MustGet("user").(*models.User)
+	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+	ginx.Dangerous(err)
+	if !obj.CanBeEditedBy(me, gids) {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+}
+
+// ensureAISkillViewable bombs 403 unless the current user may read obj. Every
+// skill read handler (detail / file content) funnels through this so private
+// content can't be pulled by guessing an incremental id.
+func (rt *Router) ensureAISkillViewable(c *gin.Context, obj *models.AISkill) {
+	me := c.MustGet("user").(*models.User)
+	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+	ginx.Dangerous(err)
+	if !obj.CanBeViewedBy(me, gids) {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+}
+
+// groupsSubset reports whether every id in sub belongs to super.
+func groupsSubset(super, sub []int64) bool {
+	if len(sub) == 0 {
+		return true
+	}
+	set := make(map[int64]struct{}, len(super))
+	for _, s := range super {
+		set[s] = struct{}{}
+	}
+	for _, x := range sub {
+		if _, ok := set[x]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// addedGroups returns the ids present in next but not in prev.
+func addedGroups(prev, next []int64) []int64 {
+	if len(next) == 0 {
+		return nil
+	}
+	set := make(map[int64]struct{}, len(prev))
+	for _, p := range prev {
+		set[p] = struct{}{}
+	}
+	var out []int64
+	for _, n := range next {
+		if _, ok := set[n]; !ok {
+			out = append(out, n)
+		}
+	}
+	return out
+}
+
 func (rt *Router) aiSkillGets(c *gin.Context) {
 	search := ginx.QueryStr(c, "search", "")
 	lst, err := models.AISkillGets(rt.Ctx, search)
 	ginx.Dangerous(err)
 
 	rt.decorateAISkills(lst)
+
+	// 可见性过滤：非管理员只看公共 skill + 自己团队授权的私有 skill。仅页面接口
+	// 有 user（service 内部接口无 user，看全量），故用 c.Get 而非 MustGet。
+	if v, exist := c.Get("user"); exist {
+		if me, ok := v.(*models.User); ok && !me.IsAdmin() {
+			gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+			ginx.Dangerous(err)
+			lst = models.FilterAISkillsVisible(lst, gids)
+		}
+	}
 
 	// overlay：把随二进制打包的内置 skill 作为只读条目追加到列表尾部。embedded FS
 	// 是内置 skill 的唯一真相源（不进 DB、不参与 dbsync），这里读取时叠加。
@@ -166,6 +236,9 @@ func (rt *Router) aiSkillGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
 
+	// 私有 skill 详情仅授权团队可读：拦住「猜 id 直接拉私有内容」。
+	rt.ensureAISkillViewable(c, obj)
+
 	if obj.CreatedBy == "system" {
 		// 内置 skill 不需要看 skill 细节，只能看 readme 文档
 		files, err := models.AISkillFileGets(rt.Ctx, id)
@@ -197,6 +270,19 @@ func (rt *Router) aiSkillAdd(c *gin.Context) {
 	ginx.Dangerous(obj.Verify())
 
 	me := c.MustGet("user").(*models.User)
+	// 授权团队必填：团队成员据此获得编辑权。非管理员只能授权给自己所在的团队——
+	// 要求提交的团队全部属于自己（子集），而非仅有交集，防止把私有 skill 授权给
+	// 自己无关的团队。
+	if len(obj.UserGroupIds) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "user group ids is required")
+	}
+	if !me.IsAdmin() {
+		gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+		ginx.Dangerous(err)
+		if !groupsSubset(gids, obj.UserGroupIds) {
+			ginx.Bomb(http.StatusForbidden, "forbidden")
+		}
+	}
 	obj.SourceType = models.AISkillSourceLocal
 	obj.CreatedBy = me.Username
 	obj.UpdatedBy = me.Username
@@ -225,6 +311,17 @@ func (rt *Router) aiSkillPut(c *gin.Context) {
 	ginx.Dangerous(ref.Verify())
 
 	me := c.MustGet("user").(*models.User)
+	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+	ginx.Dangerous(err)
+	if !obj.CanBeEditedBy(me, gids) {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+	// 非管理员可保留/移除既有授权团队，但新增的团队必须都属于自己，防止把私有
+	// skill 悄悄授权给自己无关的团队（既有团队即便自己不在其中也可原样保留，
+	// 以支持多团队 skill 由任一成员编辑/切换启用）。
+	if !me.IsAdmin() && !groupsSubset(gids, addedGroups(obj.UserGroupIds, ref.UserGroupIds)) {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
 	ref.UpdatedBy = me.Username
 
 	// enable toggle 场景：前端 pick 全部字段原样回传，仅 enabled 变。此时保留上传
@@ -261,6 +358,8 @@ func (rt *Router) aiSkillDel(c *gin.Context) {
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
+
+	rt.ensureAISkillEditable(c, obj)
 
 	// Cascade delete skill files
 	ginx.Dangerous(models.AISkillFileDeleteBySkillId(rt.Ctx, id))
@@ -414,6 +513,7 @@ func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
 	if current == nil {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
+	rt.ensureAISkillEditable(c, current)
 	meta, instructions, files := extractSkillArchive(c)
 	me := c.MustGet("user").(*models.User)
 	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, me.Username, nil))
@@ -455,6 +555,12 @@ func (rt *Router) aiSkillFileGet(c *gin.Context) {
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "file not found")
 	}
+	// 私有 skill 的文件内容仅授权团队可读：按 fileId 读取前先校验其父 skill。
+	parent, err := models.AISkillGetById(rt.Ctx, obj.SkillId)
+	ginx.Dangerous(err)
+	if parent != nil {
+		rt.ensureAISkillViewable(c, parent)
+	}
 	ginx.NewRender(c).Data(obj, nil)
 }
 
@@ -464,6 +570,12 @@ func (rt *Router) aiSkillFileDel(c *gin.Context) {
 	ginx.Dangerous(err)
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "file not found")
+	}
+	// 删除文件属修改 skill：按 fileId 删除前先校验其父 skill 的编辑权限。
+	parent, err := models.AISkillGetById(rt.Ctx, obj.SkillId)
+	ginx.Dangerous(err)
+	if parent != nil {
+		rt.ensureAISkillEditable(c, parent)
 	}
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
 }

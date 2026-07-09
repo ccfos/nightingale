@@ -227,6 +227,20 @@ type ToolDeps struct {
 	// CacheUserToken 把新建的 user token 即时注入 token 缓存（包装
 	// memsto.UserTokenCache.Inject），让 Gateway 刚建的 token 当场可认证。
 	CacheUserToken func(token string, user *models.User)
+
+	// HiddenSkillNames 本次对话请求用户无权访问的私有 skill 名集合（按用户动态
+	// 计算）。load_skill / run_skill_script 等按名取用 skill 内容或行为的工具据此
+	// 拒绝越权访问——把可见性做成真正的访问控制，而非仅目录层隐藏。
+	HiddenSkillNames map[string]struct{}
+}
+
+// IsSkillHidden 报告名为 name 的 skill 是否对本次请求用户不可见（私有且未授权）。
+func (d *ToolDeps) IsSkillHidden(name string) bool {
+	if d == nil || len(d.HiddenSkillNames) == 0 {
+		return false
+	}
+	_, hidden := d.HiddenSkillNames[name]
+	return hidden
 }
 
 // BuiltinToolFunc 内置工具处理函数（不依赖 WorkflowContext）

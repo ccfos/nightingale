@@ -59,6 +59,41 @@ func (rt *Router) resolveSkillConfig(handler *chat.ActionHandler, req *chat.AICh
 	return rt.buildSkillConfigForAgent(agent)
 }
 
+// hiddenSkillNamesForUser 算出请求用户在 AI 对话里无权访问的私有 skill 名字，用于
+// 目录展示与 load_skill / run_skill_script 加载层的统一拦截——私有 skill 只对授权
+// 团队可见/可用。
+//
+// Fail closed：只有「确定是管理员」才返回 nil（放行全部）；解析用户 / 团队的任一步
+// 出错或用户不存在，都以空团队集兜底（AISkillHiddenNames(nil) 会把所有私有 skill
+// 计为隐藏），避免把「查询失败」误当成「不过滤」而泄露私有 skill。
+func (rt *Router) hiddenSkillNamesForUser(userId int64) []string {
+	me, err := models.UserGetById(rt.Ctx, userId)
+	if err == nil && me != nil && me.IsAdmin() {
+		return nil
+	}
+
+	var gids []int64
+	switch {
+	case err != nil:
+		logger.Errorf("[AIAgent] load user=%d failed, hiding all private skills: %v", userId, err)
+	case me == nil:
+		logger.Warningf("[AIAgent] user=%d not found, hiding all private skills", userId)
+	default:
+		if g, gerr := models.MyGroupIds(rt.Ctx, userId); gerr != nil {
+			logger.Errorf("[AIAgent] load groups for user=%d failed, hiding all private skills: %v", userId, gerr)
+		} else {
+			gids = g
+		}
+	}
+
+	names, herr := models.AISkillHiddenNames(rt.Ctx, gids)
+	if herr != nil {
+		logger.Errorf("[AIAgent] list private skills for user=%d failed: %v", userId, herr)
+		return nil
+	}
+	return names
+}
+
 // buildMCPConfigForAgent translates agent.MCPServerIds into mcp.Config.
 //
 // Returns nil (not an empty Config) when the agent has no MCP bindings — the

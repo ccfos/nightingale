@@ -31,6 +31,10 @@ func loadSkill(_ context.Context, deps *aiagent.ToolDeps, args map[string]interf
 	if strings.ContainsAny(name, "/\\") || strings.HasPrefix(name, ".") {
 		return "", fmt.Errorf("invalid skill name: %q (must be a bare skill name from the catalog)", name)
 	}
+	// 私有 skill 对未授权用户不可读：按名加载前先拦截，返回「未找到」不泄露其存在。
+	if deps.IsSkillHidden(name) {
+		return "", fmt.Errorf("skill %q not found", name)
+	}
 
 	filePath, err := resolveBasePath(deps, name, "SKILL.md")
 	if err != nil {

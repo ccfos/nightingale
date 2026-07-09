@@ -87,6 +87,8 @@ func (rt *Router) aiSkillGitInstallPut(c *gin.Context) {
 	if current.CreatedBy == "system" {
 		ginx.Bomb(http.StatusBadRequest, "builtin git skill fields cannot be updated")
 	}
+	// 改 git 配置属修改 skill：授权团队/归属校验，防非授权成员篡改私有 skill。
+	rt.ensureAISkillEditable(c, current)
 
 	_, fields, err := rt.gitConfigForUpdate(current, req, false)
 	ginx.Dangerous(err)
@@ -119,6 +121,11 @@ func (rt *Router) aiSkillGitUpdate(c *gin.Context) {
 	}
 	if current.SourceType != models.AISkillSourceGit {
 		ginx.Bomb(http.StatusBadRequest, "only git source skills can be updated from git")
+	}
+	// 内置(system) git skill 的更新沿用既有行为不变；用户 git skill 从 git 拉取
+	// 更新会覆盖内容，属修改 skill，需授权团队/归属校验。
+	if current.CreatedBy != "system" {
+		rt.ensureAISkillEditable(c, current)
 	}
 
 	var req aiSkillGitRequest
