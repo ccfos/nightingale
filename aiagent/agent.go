@@ -231,6 +231,9 @@ func (a *Agent) isSkillHidden(name string) bool {
 	if a.cfg == nil || a.cfg.Skills == nil {
 		return false
 	}
+	if a.cfg.Skills.DenyAllSkills {
+		return true
+	}
 	for _, n := range a.cfg.Skills.HiddenSkillNames {
 		if n == name {
 			return true

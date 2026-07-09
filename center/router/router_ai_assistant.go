@@ -365,7 +365,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 加载层拦截（toolDeps：load_skill / run_skill_script 按名读取前校验），也用于
 	// 技能目录展示过滤（skillCfg.HiddenSkillNames，见下）。fail closed 见
 	// hiddenSkillNamesForUser。
-	hiddenSkills := rt.hiddenSkillNamesForUser(userId)
+	hiddenSkills, denySkills := rt.hiddenSkillNamesForUser(userId)
+	toolDeps.DenyAllSkills = denySkills
 	toolDeps.HiddenSkillNames = make(map[string]struct{}, len(hiddenSkills))
 	for _, n := range hiddenSkills {
 		toolDeps.HiddenSkillNames[n] = struct{}{}
@@ -440,7 +441,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	skillCfg := rt.resolveSkillConfig(handler, chatReq, agent)
 	// 私有 skill 仅对授权团队可见：把当前用户在 AI 对话里看不到的私有 skill
 	// 从常驻技能目录里过滤掉（与运行时加载层同一份名单，见上 hiddenSkills）。
+	// denySkills 为 fail-closed 兜底：无法算出名单时目录留空 + 拒绝所有预载/注入。
 	skillCfg.HiddenSkillNames = hiddenSkills
+	skillCfg.DenyAllSkills = denySkills
 
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		Tools:              tools,

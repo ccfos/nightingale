@@ -229,14 +229,25 @@ type ToolDeps struct {
 	CacheUserToken func(token string, user *models.User)
 
 	// HiddenSkillNames 本次对话请求用户无权访问的私有 skill 名集合（按用户动态
-	// 计算）。load_skill / run_skill_script 等按名取用 skill 内容或行为的工具据此
-	// 拒绝越权访问——把可见性做成真正的访问控制，而非仅目录层隐藏。
+	// 计算）。load_skill / run_skill_script / get_skill 等按名取用 skill 内容或行为
+	// 的工具据此拒绝越权访问——把可见性做成真正的访问控制，而非仅目录层隐藏。
 	HiddenSkillNames map[string]struct{}
+	// DenyAllSkills 为 fail-closed 兜底：当无法算出隐藏名单（如列举私有 skill 的
+	// DB 查询失败）时置真，此时一律按「隐藏」处理，拒绝所有按名加载/执行，避免把
+	// 「无法确定」误当成「无隐藏」而泄露私有 skill。
+	DenyAllSkills bool
 }
 
-// IsSkillHidden 报告名为 name 的 skill 是否对本次请求用户不可见（私有且未授权）。
+// IsSkillHidden 报告名为 name 的 skill 是否对本次请求用户不可见（私有且未授权，
+// 或处于 fail-closed 的 deny-all 状态）。
 func (d *ToolDeps) IsSkillHidden(name string) bool {
-	if d == nil || len(d.HiddenSkillNames) == 0 {
+	if d == nil {
+		return false
+	}
+	if d.DenyAllSkills {
+		return true
+	}
+	if len(d.HiddenSkillNames) == 0 {
 		return false
 	}
 	_, hidden := d.HiddenSkillNames[name]

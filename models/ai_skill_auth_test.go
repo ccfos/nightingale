@@ -39,6 +39,29 @@ func TestAISkillCanBeEditedBy(t *testing.T) {
 	}
 }
 
+func TestAISkillCanBeViewedBy(t *testing.T) {
+	pub := &models.AISkill{Name: "p"} // Private 0
+	priv := &models.AISkill{Name: "s", Private: 1, UserGroupIds: []int64{1}}
+
+	cases := []struct {
+		name  string
+		skill *models.AISkill
+		user  *models.User
+		gids  []int64
+		want  bool
+	}{
+		{"anyone views public", pub, normalUser("x"), nil, true},
+		{"admin views private", priv, adminUser(), nil, true},
+		{"team member views private", priv, normalUser("x"), []int64{1}, true},
+		{"non member cannot view private", priv, normalUser("x"), []int64{2}, false},
+	}
+	for _, tc := range cases {
+		if got := tc.skill.CanBeViewedBy(tc.user, tc.gids); got != tc.want {
+			t.Errorf("%s: CanBeViewedBy = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}
+
 func TestFilterAISkillsVisible(t *testing.T) {
 	lst := []*models.AISkill{
 		{Name: "public"},                                   // Private 0
