@@ -3,7 +3,15 @@ package mcp
 const (
 	// MCP 传输类型
 	MCPTransportStdio = "stdio" // 标准输入/输出传输
-	MCPTransportSSE   = "sse"   // HTTP Server-Sent Events 传输
+	// MCPTransportSSE / MCPTransportHTTP 都走 SDK 的 Streamable HTTP 客户端。
+	// 保留 "sse" 常量兼容存量配置，HTTP 是规范推荐值。
+	MCPTransportSSE  = "sse"
+	MCPTransportHTTP = "http"
+
+	// 鉴权模式（对应 models.MCPServer.AuthMode）
+	MCPAuthNone   = "none"
+	MCPAuthHeader = "header"
+	MCPAuthOAuth  = "oauth"
 
 	// 默认超时
 	DefaultMCPTimeout        = 30000 // 30 秒
@@ -29,13 +37,17 @@ type ServerConfig struct {
 	Args    []string          `json:"args,omitempty"`    // 命令参数
 	Env     map[string]string `json:"env,omitempty"`     // 环境变量（支持 ${VAR} 从系统环境变量读取）
 
-	// === SSE 传输配置 ===
-	URL           string            `json:"url,omitempty"`             // SSE 服务器 URL
+	// === HTTP (Streamable) 传输配置 ===
+	URL           string            `json:"url,omitempty"`             // MCP 服务器 URL
 	Headers       map[string]string `json:"headers,omitempty"`         // 请求头（支持 ${VAR} 从系统环境变量读取）
 	SkipSSLVerify bool              `json:"skip_ssl_verify,omitempty"` // 跳过 SSL 验证
 
-	// === 鉴权配置（SSE 传输）===
-	// 便捷鉴权配置，会自动设置对应的 Header
+	// === 鉴权配置（HTTP 传输）===
+	// AuthMode: none | header | oauth。为 oauth 时使用 OAuth 字段，忽略便捷鉴权。
+	AuthMode string       `json:"auth_mode,omitempty"`
+	OAuth    *OAuthConfig `json:"-"` // OAuth 客户端材料 + 已解密的 token（连接时用）
+
+	// 便捷鉴权配置（AuthMode=header 时生效），会自动设置对应的 Header
 	AuthType string `json:"auth_type,omitempty"` // 鉴权类型：bearer, api_key, basic
 	APIKey   string `json:"api_key,omitempty"`   // API Key（支持 ${VAR} 从系统环境变量读取）
 	Username string `json:"username,omitempty"`  // Basic Auth 用户名

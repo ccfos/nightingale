@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -69,17 +70,40 @@ func (rt *Router) mcpServerDel(c *gin.Context) {
 
 func (rt *Router) mcpServerTest(c *gin.Context) {
 	var body struct {
+		Id      int64             `json:"id"`
 		URL     string            `json:"url"`
 		Headers map[string]string `json:"headers"`
 	}
 	ginx.BindJSON(c, &body)
 
-	if body.URL == "" {
-		ginx.Bomb(http.StatusBadRequest, "url is required")
+	var cfg *mcp.ServerConfig
+	if body.Id > 0 {
+		// Saved server (may be oauth): use its stored config + tokens.
+		obj, err := models.MCPServerGetById(rt.Ctx, body.Id)
+		ginx.Dangerous(err)
+		if obj == nil {
+			ginx.Bomb(http.StatusNotFound, "mcp server not found")
+		}
+		cfg, err = rt.mcpServerConfig(obj)
+		ginx.Dangerous(err)
+	} else {
+		if body.URL == "" {
+			ginx.Bomb(http.StatusBadRequest, "url is required")
+		}
+		cfg = &mcp.ServerConfig{
+			Name:      "test",
+			Transport: mcp.MCPTransportHTTP,
+			URL:       body.URL,
+			Headers:   body.Headers,
+			AuthMode:  mcp.MCPAuthHeader,
+		}
 	}
 
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
 	start := time.Now()
-	tools, testErr := mcp.ListToolsHTTP(body.URL, body.Headers)
+	tools, testErr := mcp.ListToolsForConfig(ctx, cfg)
 	durationMs := time.Since(start).Milliseconds()
 
 	result := gin.H{
@@ -101,5 +125,11 @@ func (rt *Router) mcpServerTools(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "mcp server not found")
 	}
 
-	ginx.NewRender(c).Data(mcp.ListToolsHTTP(obj.URL, obj.Headers))
+	cfg, err := rt.mcpServerConfig(obj)
+	ginx.Dangerous(err)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	ginx.NewRender(c).Data(mcp.ListToolsForConfig(ctx, cfg))
 }

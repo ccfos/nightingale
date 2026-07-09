@@ -82,12 +82,17 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent) *mcp.Config {
 
 	out := make([]mcp.ServerConfig, 0, len(servers))
 	for _, s := range servers {
-		out = append(out, mcp.ServerConfig{
-			Name:      s.Name,
-			Transport: mcp.MCPTransportSSE,
-			URL:       s.URL,
-			Headers:   s.Headers,
-		})
+		cfg, cerr := rt.mcpServerConfig(s)
+		if cerr != nil {
+			// e.g. an oauth server that hasn't been connected yet — skip it
+			// rather than failing the whole agent.
+			logger.Warningf("[AIAgent] skip mcp server=%s id=%d: %v", s.Name, s.Id, cerr)
+			continue
+		}
+		out = append(out, *cfg)
+	}
+	if len(out) == 0 {
+		return nil
 	}
 	return &mcp.Config{Servers: out}
 }
