@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"text/template"
 	"time"
@@ -211,7 +212,14 @@ func (a *Agent) appendMCPTools(ctx context.Context, base []AgentTool) []AgentToo
 	}
 	result := base
 
-	for serverName, serverConfig := range a.mcpServers {
+	serverNames := make([]string, 0, len(a.mcpServers))
+	for name := range a.mcpServers {
+		serverNames = append(serverNames, name)
+	}
+	sort.Strings(serverNames)
+
+	for _, serverName := range serverNames {
+		serverConfig := a.mcpServers[serverName]
 		client, err := a.mcpClientManager.GetOrCreateClient(ctx, serverConfig)
 		if err != nil {
 			logger.Warningf("Failed to connect to MCP server '%s': %v", serverName, err)
