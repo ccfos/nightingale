@@ -478,6 +478,11 @@ func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontm
 			Enabled:       current.Enabled,
 			GitInfo:       gitInfo,
 			UpdatedBy:     username,
+			// 替换/导入不改变鉴权范围：带入既有授权团队与可见性，避免本地 skill 走
+			// Update（其 Select 含 user_group_ids/private）时把私有 skill 静默重置为
+			// 公共并清空授权团队（对不 Select 这两列的 git 分支无副作用）。
+			Private:      current.Private,
+			UserGroupIds: current.UserGroupIds,
 		}
 		if gitInfo != nil {
 			if err := current.UpdateWithGit(tCtx, ref); err != nil {

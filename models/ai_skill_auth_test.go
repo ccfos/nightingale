@@ -106,6 +106,47 @@ func TestAISkillVerifyPrivateScope(t *testing.T) {
 	}
 }
 
+// TestAISkillUpdateAuthColumns 锁定 Update 对 user_group_ids/private 的 GORM 契约：
+// 因 Update 显式 Select 了这两列，ref 携带则写入、不携带（零值）则会清空。替换/导入
+// 路径 doSkillImportUpdate 必须带入 current 的授权范围，否则私有 skill 会被静默转公开。
+func TestAISkillUpdateAuthColumns(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.AutoMigrate(&models.AISkill{}); err != nil {
+		t.Fatalf("migrate ai_skill: %v", err)
+	}
+	c := &ctx.Context{DB: db}
+
+	s := &models.AISkill{Name: "priv", Instructions: "x", Private: 1, UserGroupIds: []int64{7}}
+	if err := s.Create(c); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	// 带上既有授权范围（替换/导入的正确做法）→ 保持私有与授权团队不变。
+	preserve := models.AISkill{Name: "priv", Instructions: "x2", Private: s.Private, UserGroupIds: s.UserGroupIds, UpdatedBy: "u"}
+	if err := s.Update(c, preserve); err != nil {
+		t.Fatalf("update(preserve): %v", err)
+	}
+	got, _ := models.AISkillGetById(c, s.Id)
+	if got.Private != 1 || len(got.UserGroupIds) != 1 || got.UserGroupIds[0] != 7 {
+		t.Fatalf("auth scope not preserved: private=%d teams=%v", got.Private, got.UserGroupIds)
+	}
+
+	// 不带授权范围（零值）→ 被清空。这正是 doSkillImportUpdate 必须回填 current 值的原因。
+	reset := models.AISkill{Name: "priv", Instructions: "x3", UpdatedBy: "u"}
+	if err := s.Update(c, reset); err != nil {
+		t.Fatalf("update(reset): %v", err)
+	}
+	got2, _ := models.AISkillGetById(c, s.Id)
+	if got2.Private != 0 || len(got2.UserGroupIds) != 0 {
+		t.Fatalf("expected zero-value Update to clear auth scope (documents the pitfall): private=%d teams=%v", got2.Private, got2.UserGroupIds)
+	}
+}
+
 func TestAISkillHiddenNames(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
