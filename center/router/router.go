@@ -636,6 +636,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/ai-skills/git/install", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGitInstall)
 		pages.PUT("/ai-skill/:id/git/install", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGitInstallPut)
 		pages.POST("/ai-skill/:id/git/update", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGitUpdate)
+		pages.GET("/ai-skill/:id/files", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFilesGet)
+		pages.POST("/ai-skill/:id/files", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileAdd)
 		pages.GET("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileGet)
 		pages.DELETE("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileDel)
 

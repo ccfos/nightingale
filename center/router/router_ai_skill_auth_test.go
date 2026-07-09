@@ -21,6 +21,21 @@ func TestGroupsSubset(t *testing.T) {
 	}
 }
 
+func TestIsSafeSkillFileName(t *testing.T) {
+	safe := []string{"reference.md", "data.json", "a-b_c.txt", "IMG 1.png"}
+	unsafe := []string{"", "../x", "a/b.md", `a\b.md`, ".hidden", "/etc/passwd", "..", "."}
+	for _, n := range safe {
+		if !isSafeSkillFileName(n) {
+			t.Errorf("expected %q to be a safe file name", n)
+		}
+	}
+	for _, n := range unsafe {
+		if isSafeSkillFileName(n) {
+			t.Errorf("expected %q to be rejected", n)
+		}
+	}
+}
+
 func TestAddedGroups(t *testing.T) {
 	if got := addedGroups([]int64{1, 2}, []int64{1, 2, 3}); len(got) != 1 || got[0] != 3 {
 		t.Fatalf("addedGroups: got %v want [3]", got)

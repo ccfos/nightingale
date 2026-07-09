@@ -152,6 +152,14 @@ func addedGroups(prev, next []int64) []int64 {
 	return out
 }
 
+// isSafeSkillFileName rejects names that could escape the skill directory once
+// materialized to disk: empty, containing a path separator, or a leading dot
+// (hidden / relative). Subdirectory paths are intentionally disallowed for the
+// single-file upload endpoint (multi-file layouts go through zip/git import).
+func isSafeSkillFileName(name string) bool {
+	return name != "" && !strings.ContainsAny(name, `/\`) && !strings.HasPrefix(name, ".")
+}
+
 func (rt *Router) aiSkillGets(c *gin.Context) {
 	search := ginx.QueryStr(c, "search", "")
 	lst, err := models.AISkillGets(rt.Ctx, search)
@@ -583,6 +591,63 @@ func (rt *Router) aiSkillFileDel(c *gin.Context) {
 		rt.ensureAISkillEditable(c, parent)
 	}
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
+}
+
+// aiSkillFilesGet 按 skillId 列出附件（仅元数据，不含内容）。私有 skill 的文件结构
+// 仅授权团队可枚举，与详情/文件内容读取同一套可见性门。
+func (rt *Router) aiSkillFilesGet(c *gin.Context) {
+	id := ginx.UrlParamInt64(c, "id")
+	obj, err := models.AISkillGetById(rt.Ctx, id)
+	ginx.Dangerous(err)
+	if obj == nil {
+		ginx.Bomb(http.StatusNotFound, "ai skill not found")
+	}
+	rt.ensureAISkillViewable(c, obj)
+
+	files, err := models.AISkillFileGets(rt.Ctx, id)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(files, nil)
+}
+
+// aiSkillFileAdd 按 skillId 上传单个附件（同名覆盖）。属修改 skill，与编辑/替换/删除
+// 同一套编辑权限门。文件名只接受基名（拒路径分隔符 / 前导点），杜绝落盘时的路径穿越；
+// 并有大小与每 skill 文件数上限。SKILL.md 由编辑/替换流程管理，不走此通用上传口。
+func (rt *Router) aiSkillFileAdd(c *gin.Context) {
+	id := ginx.UrlParamInt64(c, "id")
+	obj, err := models.AISkillGetById(rt.Ctx, id)
+	ginx.Dangerous(err)
+	if obj == nil {
+		ginx.Bomb(http.StatusNotFound, "ai skill not found")
+	}
+	rt.ensureAISkillEditable(c, obj)
+
+	file, header, err := c.Request.FormFile("file")
+	ginx.Dangerous(err)
+	defer file.Close()
+
+	name := strings.TrimSpace(header.Filename)
+	if !isSafeSkillFileName(name) {
+		ginx.Bomb(http.StatusBadRequest, "invalid file name (must be a bare file name without path separators)")
+	}
+	if strings.EqualFold(name, "SKILL.md") {
+		ginx.Bomb(http.StatusBadRequest, "SKILL.md is managed by the skill editor; use replace/import instead")
+	}
+
+	const maxSkillFileSize = 10 * 1024 * 1024 // 10MB，与归档上传上限一致
+	data, err := io.ReadAll(io.LimitReader(file, maxSkillFileSize+1))
+	ginx.Dangerous(err)
+	if int64(len(data)) > maxSkillFileSize {
+		ginx.Bomb(http.StatusBadRequest, "file size exceeds 10MB limit")
+	}
+
+	me := c.MustGet("user").(*models.User)
+	// 复用批量 upsert：同名覆盖、遵守每 skill 文件数上限（fullSync=false 只增改不删）。
+	ginx.Dangerous(models.AISkillFileBatchUpsert(rt.Ctx, id, []*models.AISkillFile{{
+		Name:      name,
+		Content:   string(data),
+		CreatedBy: me.Username,
+	}}, false))
+	ginx.NewRender(c).Data(name, nil)
 }
 
 // aiSkillGetWithFileContents returns skill detail with all file contents included.
