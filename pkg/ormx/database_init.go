@@ -449,6 +449,7 @@ type InitAlertMute struct {
 	MuteTimeType  bool   `gorm:"type:tinyint(1);not null;default:0"`
 	PeriodicMutes string `gorm:"size:4096;not null;default:''"`
 	Severities    string `gorm:"size:32;not null;default:''"`
+	MuteType      int    `gorm:"type:int;not null;default:0;comment:0-mute event and notify,1-mute notify only"`
 	CreateAt      int64  `gorm:"not null;default:0;index"`
 	CreateBy      string `gorm:"size:64;not null;default:''"`
 	UpdateAt      int64  `gorm:"not null;default:0"`
@@ -479,6 +480,7 @@ type InitPostgresAlertMute struct {
 	MuteTimeType  int16  `gorm:"type:smallint;not null;default:0"`
 	PeriodicMutes string `gorm:"size:4096;not null;default:''"`
 	Severities    string `gorm:"size:32;not null;default:''"`
+	MuteType      int    `gorm:"type:int;not null;default:0;comment:0-mute event and notify,1-mute notify only"`
 	CreateAt      int64  `gorm:"not null;default:0;index"`
 	CreateBy      string `gorm:"size:64;not null;default:''"`
 	UpdateAt      int64  `gorm:"not null;default:0"`
