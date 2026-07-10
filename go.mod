@@ -43,10 +43,11 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/modelcontextprotocol/go-sdk v1.4.0
 	github.com/mojocn/base64Captcha v1.3.6
+	github.com/n9e/n9e-mcp-server v0.1.2-0.20260710025621-2992f7fecbf7 // commit 2992f7fecbf7: metrics = query_instant/query_range only, via the batch query APIs
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/opensearch-project/opensearch-go/v2 v2.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pelletier/go-toml/v2 v2.0.8
+	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/pingcap/tidb/pkg/parser v0.0.0-20260120034856-e15515e804da
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
@@ -87,6 +88,11 @@ require (
 )
 
 require (
+	github.com/google/jsonschema-go v0.4.2
+	golang.org/x/sync v0.19.0
+)
+
+require (
 	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
@@ -111,7 +117,6 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
