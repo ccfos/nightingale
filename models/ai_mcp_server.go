@@ -48,7 +48,7 @@ func (s *MCPServer) EffectiveAuthMode() string {
 // They are json:"-" so they never leak through API responses.
 type MCPServerOAuth struct {
 	Id                    int64  `json:"id" gorm:"primaryKey;autoIncrement"`
-	ServerId              int64  `json:"server_id" gorm:"uniqueIndex"`
+	ServerId              int64  `json:"server_id" gorm:"uniqueIndex:uk_server_id"`
 	Issuer                string `json:"issuer"`
 	AuthorizationEndpoint string `json:"authorization_endpoint"`
 	TokenEndpoint         string `json:"token_endpoint"`

@@ -149,19 +149,30 @@ func (rt *Router) loadMCPOAuthConfig(serverId int64) (*mcp.OAuthConfig, error) {
 // persistRefreshedMCPToken writes a rotated access/refresh token back to the DB
 // (encrypted). Invoked by the token source whenever the SDK refreshes.
 func (rt *Router) persistRefreshedMCPToken(serverId int64, t *oauth2.Token) {
+	// Persist failures must be loud: with refresh-token rotation the old token in
+	// the DB is already revoked, so losing the new one breaks the server for good.
 	rec, err := models.MCPServerOAuthGetByServerId(rt.Ctx, serverId)
-	if err != nil || rec == nil {
+	if err != nil {
+		logger.Warningf("[MCP-OAuth] persist refreshed token failed (server=%d): load record: %v", serverId, err)
+		return
+	}
+	if rec == nil {
+		logger.Warningf("[MCP-OAuth] persist refreshed token failed (server=%d): oauth record not found", serverId)
 		return
 	}
 	accEnc, err := rt.encryptMCPSecret(t.AccessToken)
 	if err != nil {
+		logger.Warningf("[MCP-OAuth] persist refreshed token failed (server=%d): encrypt access token: %v", serverId, err)
 		return
 	}
 	rec.AccessToken = accEnc
 	if t.RefreshToken != "" {
-		if refEnc, e := rt.encryptMCPSecret(t.RefreshToken); e == nil {
-			rec.RefreshToken = refEnc
+		refEnc, err := rt.encryptMCPSecret(t.RefreshToken)
+		if err != nil {
+			logger.Warningf("[MCP-OAuth] persist refreshed token failed (server=%d): encrypt refresh token: %v", serverId, err)
+			return
 		}
+		rec.RefreshToken = refEnc
 	}
 	if t.TokenType != "" {
 		rec.TokenType = t.TokenType
@@ -169,7 +180,9 @@ func (rt *Router) persistRefreshedMCPToken(serverId int64, t *oauth2.Token) {
 	if !t.Expiry.IsZero() {
 		rec.Expiry = t.Expiry.Unix()
 	}
-	_ = rec.Save(rt.Ctx)
+	if err := rec.Save(rt.Ctx); err != nil {
+		logger.Warningf("[MCP-OAuth] persist refreshed token failed (server=%d): save: %v", serverId, err)
+	}
 }
 
 // ---- endpoints ----
