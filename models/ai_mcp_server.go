@@ -19,11 +19,20 @@ type MCPServer struct {
 	Enabled     bool              `json:"enabled"`
 	// AuthMode: none | header | oauth. Empty (legacy rows) is treated as
 	// "header" when Headers is non-empty, else "none".
-	AuthMode  string `json:"auth_mode"`
+	AuthMode string `json:"auth_mode"`
+	// UserGroupIds are the teams that own this server: members (plus admins) may
+	// manage it, and — when Private — are the only ones who can see/use it.
+	UserGroupIds []int64 `json:"user_group_ids" gorm:"serializer:json"`
+	// Private: 0 = public (visible/usable by everyone), 1 = team-scoped (visible
+	// only to UserGroupIds members). Management is always team-scoped regardless.
+	Private   int    `json:"private"`
 	CreatedAt int64  `json:"created_at"`
 	CreatedBy string `json:"created_by"`
 	UpdatedAt int64  `json:"updated_at"`
 	UpdatedBy string `json:"updated_by"`
+	// CanManage is computed per requesting user (not persisted): whether the
+	// caller may edit/delete/test this server.
+	CanManage bool `json:"can_manage" gorm:"-"`
 }
 
 // EffectiveAuthMode normalizes the (possibly empty, legacy) AuthMode value.
@@ -84,12 +93,38 @@ func (s *MCPServer) Verify() error {
 	if s.URL == "" {
 		return fmt.Errorf("url is required")
 	}
+	if s.Private != 0 && s.Private != 1 {
+		return fmt.Errorf("private flag must be 0 or 1")
+	}
+	if s.Private == 1 && len(s.UserGroupIds) == 0 {
+		return fmt.Errorf("user group ids of private mcp server cannot be empty")
+	}
 	return nil
+}
+
+// DB2FE normalizes fields for the frontend: a nil UserGroupIds serializes as
+// null, which the multi-select cannot bind — coerce it to an empty slice.
+func (s *MCPServer) DB2FE() {
+	if s.UserGroupIds == nil {
+		s.UserGroupIds = make([]int64, 0)
+	}
+}
+
+// MaskSecrets strips credential-bearing fields before returning the server to a
+// user who may not manage it. A public server is visible to everyone, but its
+// Headers can carry an Authorization token that only managers should see — the
+// runtime reads headers server-side from the DB, so redacting them here never
+// affects usage.
+func (s *MCPServer) MaskSecrets() {
+	s.Headers = nil
 }
 
 func MCPServerGets(c *ctx.Context) ([]*MCPServer, error) {
 	var lst []*MCPServer
 	err := DB(c).Order("id").Find(&lst).Error
+	for _, s := range lst {
+		s.DB2FE()
+	}
 	return lst, err
 }
 
@@ -102,6 +137,7 @@ func MCPServerGet(c *ctx.Context, where string, args ...interface{}) (*MCPServer
 		}
 		return nil, err
 	}
+	obj.DB2FE()
 	return &obj, nil
 }
 
@@ -141,7 +177,7 @@ func (s *MCPServer) Update(c *ctx.Context, ref MCPServer) error {
 
 	ref.UpdatedAt = time.Now().Unix()
 	return DB(c).Model(s).Select("name", "url", "headers", "description",
-		"enabled", "auth_mode", "updated_at", "updated_by").Updates(ref).Error
+		"enabled", "auth_mode", "user_group_ids", "private", "updated_at", "updated_by").Updates(ref).Error
 }
 
 func (s *MCPServer) Delete(c *ctx.Context) error {

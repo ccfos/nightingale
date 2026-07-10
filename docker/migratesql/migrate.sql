@@ -521,3 +521,7 @@ CREATE TABLE `mcp_server_oauth` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_server_id` (`server_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='mcp server oauth tokens';
+
+/* v9 2026-07-10 mcp server team scope */
+ALTER TABLE `mcp_server` ADD COLUMN `user_group_ids` text COMMENT 'owner team ids (JSON)' AFTER `auth_mode`;
+ALTER TABLE `mcp_server` ADD COLUMN `private` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0=public, 1=team-scoped' AFTER `user_group_ids`;

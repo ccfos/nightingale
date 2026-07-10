@@ -59,15 +59,22 @@ func (rt *Router) resolveSkillConfig(handler *chat.ActionHandler, req *chat.AICh
 	return rt.buildSkillConfigForAgent(agent)
 }
 
-// buildMCPConfigForAgent translates agent.MCPServerIds into mcp.Config.
+// buildMCPConfigForAgent translates agent.MCPServerIds into mcp.Config for the
+// chatting user `me`.
 //
-// Returns nil (not an empty Config) when the agent has no MCP bindings — the
-// Agent's applyDefaults checks `cfg.MCP != nil && len(cfg.MCP.Servers) > 0`
+// Returns nil (not an empty Config) when the agent has no usable MCP bindings —
+// the Agent's applyDefaults checks `cfg.MCP != nil && len(cfg.MCP.Servers) > 0`
 // before standing up the MCP client manager, and we preserve that shortcut.
+//
+// Team scope (same rule as the management list): the user may only use public
+// servers plus those a team they belong to owns; admins may use all. A private
+// server bound to an agent is silently dropped for users without access so the
+// agent can't leak its tools to users who couldn't otherwise see it — the agent
+// therefore exposes different tools to different users, by design.
 //
 // Transport defaults to "sse": the DB model only stores URL/Headers, which is
 // the SSE shape. A future stdio-capable MCPServer model can diverge here.
-func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent) *mcp.Config {
+func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User) *mcp.Config {
 	if len(agent.MCPServerIds) == 0 {
 		return nil
 	}
@@ -80,8 +87,23 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent) *mcp.Config {
 		return nil
 	}
 
+	// Resolve the user's team ids once, only when a non-admin actually needs the
+	// check (admins short-circuit in mcpCanManage).
+	var gids []int64
+	if me != nil && !me.IsAdmin() {
+		gids, err = models.MyGroupIds(rt.Ctx, me.Id)
+		if err != nil {
+			logger.Warningf("[AIAgent] load group ids for user=%d failed: %v", me.Id, err)
+			return nil
+		}
+	}
+
 	out := make([]mcp.ServerConfig, 0, len(servers))
 	for _, s := range servers {
+		if !mcpCanUse(me, gids, s) {
+			logger.Infof("[AIAgent] skip private mcp server=%s id=%d for agent=%d: user has no team access", s.Name, s.Id, agent.Id)
+			continue
+		}
 		cfg, cerr := rt.mcpServerConfig(s)
 		if cerr != nil {
 			// e.g. an oauth server that hasn't been connected yet — skip it

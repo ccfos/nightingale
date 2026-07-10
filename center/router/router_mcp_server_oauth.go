@@ -198,11 +198,7 @@ func (rt *Router) mcpServerOAuthPrepare(c *gin.Context) {
 	}
 	ginx.BindJSON(c, &body)
 
-	obj, err := models.MCPServerGetById(rt.Ctx, body.Id)
-	ginx.Dangerous(err)
-	if obj == nil {
-		ginx.Bomb(http.StatusNotFound, "mcp server not found")
-	}
+	obj := rt.mcpServerLoadForManage(c, body.Id)
 
 	me := c.MustGet("user").(*models.User)
 	hc := mcp.DefaultOAuthHTTPClient()
@@ -338,6 +334,8 @@ func (rt *Router) mcpServerOAuthCallback(c *gin.Context) {
 
 func (rt *Router) mcpServerOAuthStatus(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Query("id"), 10, 64)
+	rt.mcpServerLoadForManage(c, id)
+
 	rec, err := models.MCPServerOAuthGetByServerId(rt.Ctx, id)
 	ginx.Dangerous(err)
 	if rec == nil {
@@ -359,6 +357,7 @@ func (rt *Router) mcpServerOAuthDisconnect(c *gin.Context) {
 		Id int64 `json:"id"`
 	}
 	ginx.BindJSON(c, &body)
+	rt.mcpServerLoadForManage(c, body.Id)
 	ginx.NewRender(c).Message(models.MCPServerOAuthDelByServerId(rt.Ctx, body.Id))
 }
 
