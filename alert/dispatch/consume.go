@@ -153,9 +153,9 @@ func (e *Consumer) recordNotifyMuted(event *models.AlertCurEvent) {
 	record := &models.NotificationRecord{
 		EventId:   event.Id,
 		SubId:     event.SubRuleId,
-		Channel:   "屏蔽规则",
+		Channel:   models.NotiChannelMuted,
 		Status:    models.NotiStatusMuted,
-		Target:    muteName,
+		Target:    fmt.Sprintf("id=%d", event.MuteId),
 		Details:   detail,
 		CreatedAt: time.Now().Unix(),
 	}

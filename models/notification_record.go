@@ -12,6 +12,9 @@ const (
 	NotiStatusMuted // 命中「只屏蔽通知」规则，事件已产生但通知被抑制
 )
 
+// NotiChannelMuted 「只屏蔽通知」通知记录的伪渠道名（展示层对该渠道的 Target 免脱敏）
+const NotiChannelMuted = "屏蔽规则"
+
 type NotificationRecord struct {
 	Id           int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement"`
 	NotifyRuleID int64  `json:"notify_rule_id" gorm:"type:bigint;comment:notify rule id"`

@@ -478,8 +478,12 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 	// 导致本该恢复的通知一直发不出去。这里首次触发入队持久化（consume 阶段跳过发送），
 	// 后续评估仅刷新评估时间保活，不重复入队、不推进任何通知计数。
 	if event.NotifyMuted == 1 {
-		if _, has := p.fires.Get(event.Hash); has {
+		if fired, has := p.fires.Get(event.Hash); has {
 			p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+			event.FirstTriggerTime = fired.FirstTriggerTime
+			// 与正常 fired 路径一致，每轮评估都触发 hook：下游（如 n9e-plus 抑制存储）
+			// 按时间戳过期，依赖每轮刷新感知事件仍活跃；只屏蔽通知的事件仍应参与抑制联动
+			p.HandleFireEventHook(event)
 			message = "notify muted, already persisted, skip re-enqueue"
 			return
 		}
