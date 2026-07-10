@@ -41,24 +41,26 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 
 		event.TagsMap[arr[0]] = arr[1]
 	}
-	// 触发事件按触发时刻判定屏蔽；恢复事件按恢复时刻（当前时间）重判，
-	// 避免 TriggerTime 早于「只屏蔽通知」窗口而漏判、导致窗口内的恢复通知被误发。
-	origTriggerTime := event.TriggerTime
-	if event.IsRecovered {
-		event.TriggerTime = time.Now().Unix()
-	}
+	// 完全屏蔽：保持原有行为，按事件自身的 TriggerTime 判定，触发与恢复事件命中即丢弃
 	hit, muteId, muteType := mute.EventMuteStrategy(event, rt.AlertMuteCache)
-	event.TriggerTime = origTriggerTime
-
-	if hit && muteType == models.MuteTypeNotifyOnly {
-		// 只屏蔽通知：事件照常入队产生/记录，仅打标，通知阶段据此跳过发送并写通知记录（含恢复事件）
-		event.NotifyMuted = 1
-		event.MuteId = muteId
-	} else if hit && !event.IsRecovered {
-		// 完全屏蔽：仅丢弃触发事件；恢复事件照常放行以闭环
+	if hit && muteType != models.MuteTypeNotifyOnly {
 		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
 		ginx.NewRender(c).Message(nil)
 		return
+	}
+
+	// 只屏蔽通知的判定：恢复事件按恢复时刻（当前时间）重判，
+	// 避免 TriggerTime 早于「只屏蔽通知」窗口而漏判、导致窗口内的恢复通知被误发。
+	if event.IsRecovered {
+		origTriggerTime := event.TriggerTime
+		event.TriggerTime = time.Now().Unix()
+		hit, muteId, muteType = mute.EventMuteStrategy(event, rt.AlertMuteCache)
+		event.TriggerTime = origTriggerTime
+	}
+	if hit && muteType == models.MuteTypeNotifyOnly {
+		// 事件照常入队产生/记录，仅打标，通知阶段据此跳过发送并写通知记录（含恢复事件）
+		event.NotifyMuted = 1
+		event.MuteId = muteId
 	}
 
 	if err := event.ParseRule("rule_name"); err != nil {
