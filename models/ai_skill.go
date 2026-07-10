@@ -37,6 +37,9 @@ type AISkill struct {
 	Files         []*AISkillFile `json:"files,omitempty" gorm:"-"`
 	Builtin       bool           `json:"builtin" gorm:"-"`
 	HasNewVersion bool           `json:"has_new_version,omitempty" gorm:"-"`
+	// CanEdit 按请求用户动态计算：该用户是否有权编辑/删除本 skill。由页面接口盖上，
+	// 供前端 gate 增删改按钮，与后端 CanBeEditedBy(403) 同一判定，避免前后端漂移。
+	CanEdit bool `json:"can_edit" gorm:"-"`
 }
 
 type AISkillGitInfo struct {

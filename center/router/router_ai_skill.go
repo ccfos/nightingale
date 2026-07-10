@@ -167,13 +167,19 @@ func (rt *Router) aiSkillGets(c *gin.Context) {
 
 	rt.decorateAISkills(lst)
 
-	// 可见性过滤：非管理员只看公共 skill + 自己团队授权的私有 skill。仅页面接口
-	// 有 user（service 内部接口无 user，看全量），故用 c.Get 而非 MustGet。
+	// 页面接口：非管理员按团队过滤私有可见性，并给每条盖上按请求用户的 can_edit
+	// 标记（供前端 gate 增删改按钮）。service 内部接口无 user（看全量、不盖标记），
+	// 故用 c.Get 而非 MustGet。
 	if v, exist := c.Get("user"); exist {
-		if me, ok := v.(*models.User); ok && !me.IsAdmin() {
+		if me, ok := v.(*models.User); ok {
 			gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 			ginx.Dangerous(err)
-			lst = models.FilterAISkillsVisible(lst, gids)
+			if !me.IsAdmin() {
+				lst = models.FilterAISkillsVisible(lst, gids)
+			}
+			for _, s := range lst {
+				s.CanEdit = s.CanBeEditedBy(me, gids)
+			}
 		}
 	}
 
@@ -244,8 +250,15 @@ func (rt *Router) aiSkillGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
 
-	// 私有 skill 详情仅授权团队可读：拦住「猜 id 直接拉私有内容」。
-	rt.ensureAISkillViewable(c, obj)
+	// 私有 skill 详情仅授权团队可读：拦住「猜 id 直接拉私有内容」；同时盖上按请求
+	// 用户的 can_edit 标记，供详情页 gate 增删改按钮（与后端 403 同一判定，无漂移）。
+	me := c.MustGet("user").(*models.User)
+	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+	ginx.Dangerous(err)
+	if !obj.CanBeViewedBy(me, gids) {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+	obj.CanEdit = obj.CanBeEditedBy(me, gids)
 
 	if obj.CreatedBy == "system" {
 		// 内置 skill 不需要看 skill 细节，只能看 readme 文档
@@ -329,6 +342,11 @@ func (rt *Router) aiSkillPut(c *gin.Context) {
 	// 以支持多团队 skill 由任一成员编辑/切换启用）。
 	if !me.IsAdmin() && !groupsSubset(gids, addedGroups(obj.UserGroupIds, ref.UserGroupIds)) {
 		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+	// 强制迁移：编辑任意 skill 都必须带授权团队。私有空团队已由 Verify 挡住，这里补齐
+	// 公共场景的服务端校验，防止绕过前端保存无团队 skill；旧 skill 借编辑逐步补齐授权。
+	if len(ref.UserGroupIds) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "user group ids is required")
 	}
 	ref.UpdatedBy = me.Username
 
