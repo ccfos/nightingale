@@ -356,3 +356,10 @@ func (r *responseCapture) Write(b []byte) (int, error) {
 	}
 	return r.body.Write(b)
 }
+
+// Flush implements http.Flusher as a no-op: the capture buffers the whole
+// response, so there is nothing to push downstream. Without it, gin's
+// responseWriter.Flush hard-asserts http.Flusher and panics when an internal
+// handler streams (write-flush-write, e.g. a proxy or SSE route); the
+// recovered panic would surface here as a silently truncated 200 response.
+func (r *responseCapture) Flush() {}

@@ -95,6 +95,41 @@ func TestInProcRoundTripperCapsResponseSize(t *testing.T) {
 	}
 }
 
+// TestInProcRoundTripperFlushingHandler pins the http.Flusher contract on the
+// bare capture (gin's own wrapper always satisfies the interface and
+// hard-asserts it on the writer underneath — that assert is exactly what would
+// panic): a handler that streams (write-flush-write) must yield the complete
+// body, not a body truncated at the first Flush.
+func TestInProcRoundTripperFlushingHandler(t *testing.T) {
+	dispatcher := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"dat":[1,2,3,`))
+		f, ok := w.(http.Flusher)
+		if !ok {
+			t.Error("in-proc ResponseWriter must implement http.Flusher")
+			return
+		}
+		f.Flush()
+		_, _ = w.Write([]byte(`4,5,6],"err":""}`))
+	})
+	rt := &inProcRoundTripper{dispatcher: dispatcher}
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1/api/n9e/x", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := rt.RoundTrip(req)
+	if err != nil {
+		t.Fatalf("RoundTrip: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", resp.StatusCode)
+	}
+	if body, _ := io.ReadAll(resp.Body); string(body) != `{"dat":[1,2,3,4,5,6],"err":""}` {
+		t.Fatalf("flushing handler body truncated: %q", body)
+	}
+}
+
 // TestClientForwardsTokenThroughTransport exercises the full X-User-Token path:
 // a client built with the in-process transport must reach the dispatcher with
 // the caller's token, parse the n9e envelope on success, and surface errors.
