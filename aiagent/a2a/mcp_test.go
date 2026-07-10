@@ -164,16 +164,16 @@ func TestBuildMCPServerToolsListing(t *testing.T) {
 	}
 }
 
-// TestResolveToolsets pins the whitelist semantics: empty means the center
-// default (all except the by-default-excluded metrics); the explicit "all"
-// keyword opts into everything; a valid list passes through; and an unknown
-// name is dropped — a typo must shrink the exposed set, never widen a
-// restricted whitelist to all toolsets (which would also re-expose write tools).
+// TestResolveToolsets pins the whitelist semantics: empty means every default
+// toolset; the explicit "all" keyword is a back-compat synonym for the same;
+// a valid list passes through; and an unknown name is dropped — a typo must
+// shrink the exposed set, never widen a restricted whitelist to all toolsets
+// (which would also re-expose write tools).
 func TestResolveToolsets(t *testing.T) {
 	all := len(mcptoolset.DefaultToolsets)
 
-	// Empty → every default toolset, metrics included (its tools decode the
-	// native Prometheus envelope since n9e-mcp-server's doPromGet).
+	// Empty → every default toolset, metrics included (its tools query the
+	// standard-envelope batch APIs, no datasource proxy involved).
 	if got := resolveToolsets(MCPConfig{}, mcptoolset.DefaultToolsets); len(got) != all || !contains(got, "metrics") {
 		t.Fatalf("empty whitelist should be all default toolsets incl. metrics: %v", got)
 	}

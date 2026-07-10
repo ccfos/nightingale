@@ -43,7 +43,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/modelcontextprotocol/go-sdk v1.4.0
 	github.com/mojocn/base64Captcha v1.3.6
-	github.com/n9e/n9e-mcp-server v0.1.2-0.20260706102736-e2d465e36b3a // commit e2d465e36b3a: metrics tools decode the raw Prometheus proxy envelope
+	github.com/n9e/n9e-mcp-server v0.1.2-0.20260710025621-2992f7fecbf7 // commit 2992f7fecbf7: metrics = query_instant/query_range only, via the batch query APIs
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/opensearch-project/opensearch-go/v2 v2.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible

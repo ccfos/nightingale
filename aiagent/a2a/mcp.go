@@ -39,9 +39,9 @@ const (
 )
 
 // All of n9e-mcp-server's toolsets work through the center's in-process
-// transport, including metrics: its tools decode the native Prometheus
-// envelope the /api/n9e/proxy route forwards (doPromGet in n9e-mcp-server),
-// so the empty-whitelist default is simply every default toolset.
+// transport — metrics included, whose tools go through the standard-envelope
+// /api/n9e/query-{instant,range}-batch APIs — so the empty-whitelist default
+// is simply every default toolset.
 
 // MCPToolsetRegistrar registers extra toolsets onto the /mcp tool group.
 // Embedders (e.g. the enterprise edition) use it to expose their own API
