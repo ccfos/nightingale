@@ -163,13 +163,13 @@ func TestXPackSQL_UnsupportedVersion(t *testing.T) {
 	}
 }
 
-func TestXPackSQL_NoMacroSkipsPreprocess(t *testing.T) {
-	origPreprocess := SQLPreprocess
-	SQLPreprocess = func(sql string, from, to int64) (string, error) {
-		t.Fatalf("SQLPreprocess should not be called for SQL without macros")
+func TestXPackSQL_NoMacroSkipsMacro(t *testing.T) {
+	origMacro := macros.Macro
+	macros.RegisterMacro(func(sql string, start, end int64, datasourceType macros.DatasourceType) (string, error) {
+		t.Fatalf("macros.Macro should not be called for SQL without macros")
 		return "", nil
-	}
-	defer func() { SQLPreprocess = origPreprocess }()
+	})
+	defer func() { macros.Macro = origMacro }()
 
 	sqlResp := `{"columns":[{"name":"cnt","type":"long"}],"rows":[[100]]}`
 	srv := mockESServer(t, "8.15.0", sqlResp, true)
@@ -193,7 +193,10 @@ func TestXPackSQL_MacroExpansion(t *testing.T) {
 	// Register a simple $__timeFilter macro for testing, mimicking the
 	// pattern used by fc-datasource-kit's ReplaceMacros.
 	origMacro := macros.Macro
-	macros.RegisterMacro(func(sql string, start, end int64) (string, error) {
+	macros.RegisterMacro(func(sql string, start, end int64, datasourceType macros.DatasourceType) (string, error) {
+		if datasourceType != macros.DatasourceTypeElasticsearch {
+			t.Fatalf("got datasource type %q, want %q", datasourceType, macros.DatasourceTypeElasticsearch)
+		}
 		if strings.Contains(sql, "$__timeFilter") {
 			// Simple replacement: $__timeFilter("col") to ("col" >= start AND "col" < end)
 			sql = strings.Replace(sql, `$__timeFilter("@timestamp")`,
