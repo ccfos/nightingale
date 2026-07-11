@@ -207,7 +207,7 @@ func (it *IoTDB) queryRows(ctx context.Context, queryParam *QueryParam) ([]map[s
 		if err != nil {
 			return nil, fmt.Errorf("parse to failed: %w", err)
 		}
-		sqlText, err = macros.Macro(sqlText, from, to)
+		sqlText, err = macros.Macro(sqlText, from, to, macros.DatasourceTypeIoTDB)
 		if err != nil {
 			return nil, err
 		}

@@ -179,7 +179,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 
 	if strings.Contains(dorisQueryParam.SQL, "$__") {
 		var err error
-		dorisQueryParam.SQL, err = macros.Macro(dorisQueryParam.SQL, dorisQueryParam.From, dorisQueryParam.To)
+		dorisQueryParam.SQL, err = macros.Macro(dorisQueryParam.SQL, dorisQueryParam.From, dorisQueryParam.To, macros.DatasourceTypeDoris)
 		if err != nil {
 			return nil, err
 		}
@@ -234,7 +234,7 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 
 	if strings.Contains(dorisQueryParam.SQL, "$__") {
 		var err error
-		dorisQueryParam.SQL, err = macros.Macro(dorisQueryParam.SQL, dorisQueryParam.From, dorisQueryParam.To)
+		dorisQueryParam.SQL, err = macros.Macro(dorisQueryParam.SQL, dorisQueryParam.From, dorisQueryParam.To, macros.DatasourceTypeDoris)
 		if err != nil {
 			return nil, 0, err
 		}
