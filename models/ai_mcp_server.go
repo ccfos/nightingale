@@ -33,6 +33,10 @@ type MCPServer struct {
 	// CanManage is computed per requesting user (not persisted): whether the
 	// caller may edit/delete/test this server.
 	CanManage bool `json:"can_manage" gorm:"-"`
+	// OAuthConnected is computed per request (not persisted): whether an OAuth
+	// token is stored for this server. Only meaningful when AuthMode == "oauth";
+	// lets the list page surface saved-but-not-yet-authorized servers.
+	OAuthConnected bool `json:"oauth_connected" gorm:"-"`
 }
 
 // EffectiveAuthMode normalizes the (possibly empty, legacy) AuthMode value.
@@ -246,4 +250,12 @@ func (o *MCPServerOAuth) Save(c *ctx.Context) error {
 
 func MCPServerOAuthDelByServerId(c *ctx.Context, serverId int64) error {
 	return DB(c).Where("server_id = ?", serverId).Delete(&MCPServerOAuth{}).Error
+}
+
+// MCPServerOAuthConnectedServerIds returns the ids of servers that hold a
+// non-empty access token, i.e. whose OAuth connection is established.
+func MCPServerOAuthConnectedServerIds(c *ctx.Context) ([]int64, error) {
+	var ids []int64
+	err := DB(c).Model(&MCPServerOAuth{}).Where("access_token != ''").Pluck("server_id", &ids).Error
+	return ids, err
 }

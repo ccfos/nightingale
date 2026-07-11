@@ -72,10 +72,20 @@ func (rt *Router) mcpServerGets(c *gin.Context) {
 		ginx.Dangerous(err)
 	}
 
+	// Servers with a stored OAuth token: lets the UI flag saved-but-not-yet
+	// -authorized oauth servers.
+	connectedIds, err := models.MCPServerOAuthConnectedServerIds(rt.Ctx)
+	ginx.Dangerous(err)
+	connected := make(map[int64]bool, len(connectedIds))
+	for _, id := range connectedIds {
+		connected[id] = true
+	}
+
 	// Non-admins see public servers plus those owned by a team they belong to.
 	res := make([]*models.MCPServer, 0, len(lst))
 	for _, obj := range lst {
 		obj.CanManage = mcpCanManage(me, gids, obj)
+		obj.OAuthConnected = connected[obj.Id]
 		if me.IsAdmin() || obj.Private == 0 || obj.CanManage {
 			if !obj.CanManage {
 				// Visible-but-not-manageable (a public server owned by another
