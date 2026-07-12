@@ -212,7 +212,7 @@ func (c *Clickhouse) QueryData(ctx context.Context, query interface{}) ([]models
 			ckQueryParam.Sql,
 			ckQueryParam.From,
 			ckQueryParam.To,
-			macros.DatasourceTypeClickHouse,
+			CKType,
 		)
 		if err != nil {
 			return nil, err
@@ -252,7 +252,7 @@ func (c *Clickhouse) QueryLog(ctx context.Context, query interface{}) ([]interfa
 			ckQueryParam.Sql,
 			ckQueryParam.From,
 			ckQueryParam.To,
-			macros.DatasourceTypeClickHouse,
+			CKType,
 		)
 		if err != nil {
 			return nil, 0, err

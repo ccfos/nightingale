@@ -171,7 +171,7 @@ func XPackSQL(ctx context.Context, escli *Elasticsearch, req XPackSQLRequest) (*
 	}
 
 	if strings.Contains(req.Query, "$__") && macros.Macro != nil {
-		expanded, err := macros.Macro(req.Query, req.From, req.To, macros.DatasourceTypeElasticsearch)
+		expanded, err := macros.Macro(req.Query, req.From, req.To, ESType)
 		if err != nil {
 			return nil, fmt.Errorf("macro expansion failed: %w", err)
 		}

@@ -165,7 +165,7 @@ func TestXPackSQL_UnsupportedVersion(t *testing.T) {
 
 func TestXPackSQL_NoMacroSkipsMacro(t *testing.T) {
 	origMacro := macros.Macro
-	macros.RegisterMacro(func(sql string, start, end int64, datasourceType macros.DatasourceType) (string, error) {
+	macros.RegisterMacro(func(sql string, start, end int64, datasourceType string) (string, error) {
 		t.Fatalf("macros.Macro should not be called for SQL without macros")
 		return "", nil
 	})
@@ -193,9 +193,9 @@ func TestXPackSQL_MacroExpansion(t *testing.T) {
 	// Register a simple $__timeFilter macro for testing, mimicking the
 	// pattern used by fc-datasource-kit's ReplaceMacros.
 	origMacro := macros.Macro
-	macros.RegisterMacro(func(sql string, start, end int64, datasourceType macros.DatasourceType) (string, error) {
-		if datasourceType != macros.DatasourceTypeElasticsearch {
-			t.Fatalf("got datasource type %q, want %q", datasourceType, macros.DatasourceTypeElasticsearch)
+	macros.RegisterMacro(func(sql string, start, end int64, datasourceType string) (string, error) {
+		if datasourceType != ESType {
+			t.Fatalf("got datasource type %q, want %q", datasourceType, ESType)
 		}
 		if strings.Contains(sql, "$__timeFilter") {
 			// Simple replacement: $__timeFilter("col") to ("col" >= start AND "col" < end)
