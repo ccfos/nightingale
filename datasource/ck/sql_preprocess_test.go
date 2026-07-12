@@ -10,8 +10,8 @@ func TestQueryDataPassesClickHouseDatasourceTypeToMacro(t *testing.T) {
 	origMacro := macros.Macro
 	t.Cleanup(func() { macros.Macro = origMacro })
 
-	var gotType macros.DatasourceType
-	macros.RegisterMacro(func(sql string, from, to int64, datasourceType macros.DatasourceType) (string, error) {
+	var gotType string
+	macros.RegisterMacro(func(sql string, from, to int64, datasourceType string) (string, error) {
 		gotType = datasourceType
 		return sql, nil
 	})
@@ -27,8 +27,8 @@ func TestQueryDataPassesClickHouseDatasourceTypeToMacro(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error from missing client, got nil")
 	}
-	if gotType != macros.DatasourceTypeClickHouse {
-		t.Fatalf("got datasource type %q, want %q", gotType, macros.DatasourceTypeClickHouse)
+	if gotType != CKType {
+		t.Fatalf("got datasource type %q, want %q", gotType, CKType)
 	}
 }
 
@@ -36,8 +36,8 @@ func TestQueryLogPassesClickHouseDatasourceTypeToMacro(t *testing.T) {
 	origMacro := macros.Macro
 	t.Cleanup(func() { macros.Macro = origMacro })
 
-	var gotType macros.DatasourceType
-	macros.RegisterMacro(func(sql string, from, to int64, datasourceType macros.DatasourceType) (string, error) {
+	var gotType string
+	macros.RegisterMacro(func(sql string, from, to int64, datasourceType string) (string, error) {
 		gotType = datasourceType
 		return sql, nil
 	})
@@ -52,15 +52,15 @@ func TestQueryLogPassesClickHouseDatasourceTypeToMacro(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error from missing client, got nil")
 	}
-	if gotType != macros.DatasourceTypeClickHouse {
-		t.Fatalf("got datasource type %q, want %q", gotType, macros.DatasourceTypeClickHouse)
+	if gotType != CKType {
+		t.Fatalf("got datasource type %q, want %q", gotType, CKType)
 	}
 }
 
 func TestQueryDataWithoutMacrosSkipsMacro(t *testing.T) {
 	origMacro := macros.Macro
 	t.Cleanup(func() { macros.Macro = origMacro })
-	macros.RegisterMacro(func(sql string, from, to int64, datasourceType macros.DatasourceType) (string, error) {
+	macros.RegisterMacro(func(sql string, from, to int64, datasourceType string) (string, error) {
 		t.Fatal("Macro should not be called for SQL without macros")
 		return sql, nil
 	})

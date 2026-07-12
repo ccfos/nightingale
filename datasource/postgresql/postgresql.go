@@ -167,7 +167,7 @@ func (p *PostgreSQL) QueryData(ctx context.Context, query interface{}) ([]models
 	postgresqlQueryParam.SQL = formatSQLDatabaseNameWithRegex(postgresqlQueryParam.SQL)
 	if strings.Contains(postgresqlQueryParam.SQL, "$__") {
 		var err error
-		postgresqlQueryParam.SQL, err = macros.Macro(postgresqlQueryParam.SQL, postgresqlQueryParam.From, postgresqlQueryParam.To, macros.DatasourceTypePostgreSQL)
+		postgresqlQueryParam.SQL, err = macros.Macro(postgresqlQueryParam.SQL, postgresqlQueryParam.From, postgresqlQueryParam.To, PostgreSQLType)
 		if err != nil {
 			return nil, err
 		}
@@ -235,7 +235,7 @@ func (p *PostgreSQL) QueryLog(ctx context.Context, query interface{}) ([]interfa
 	postgresqlQueryParam.SQL = formatSQLDatabaseNameWithRegex(postgresqlQueryParam.SQL)
 	if strings.Contains(postgresqlQueryParam.SQL, "$__") {
 		var err error
-		postgresqlQueryParam.SQL, err = macros.Macro(postgresqlQueryParam.SQL, postgresqlQueryParam.From, postgresqlQueryParam.To, macros.DatasourceTypePostgreSQL)
+		postgresqlQueryParam.SQL, err = macros.Macro(postgresqlQueryParam.SQL, postgresqlQueryParam.From, postgresqlQueryParam.To, PostgreSQLType)
 		if err != nil {
 			return nil, 0, err
 		}
