@@ -173,8 +173,8 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	// RFC 9728 Protected Resource Metadata — public, served only while RS auth
 	// is active (else 404). Lets OAuth-aware clients discover the trusted AS.
 	// The path-suffixed aliases match the well-known-URI-insertion form
-	// (`/.well-known/oauth-protected-resource/{a2a,mcp}`) that MCP clients derive
-	// from the endpoint they connect to; all serve the same metadata.
+	// (`/.well-known/oauth-protected-resource/a2a`, `.../mcp`) that clients
+	// derive from the endpoint they connect to.
 	r.GET("/.well-known/oauth-protected-resource", rt.oauthProtectedResource)
 	r.GET("/.well-known/oauth-protected-resource/a2a", rt.oauthProtectedResource)
 	r.GET("/.well-known/oauth-protected-resource/mcp", rt.oauthProtectedResource)
@@ -203,7 +203,6 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	// static child).
 	r.GET(a2aMountPrefix+mcpASMetaPath, rt.withMount(a2aMountPrefix, rt.MCPOAuthServerMetadata))
 	r.GET(a2aMountPrefix+mcpASMetaPath+"/a2a", rt.withMount(a2aMountPrefix, rt.MCPOAuthServerMetadata))
-	r.GET(a2aMountPrefix+mcpASMetaPath+"/mcp", rt.withMount(a2aMountPrefix, rt.MCPOAuthServerMetadata))
 	r.POST(a2aMountPrefix+mcpRegisterPath, rt.withMount(a2aMountPrefix, rt.MCPOAuthRegister))
 	r.GET(a2aMountPrefix+mcpAuthorizePath, rt.withMount(a2aMountPrefix, rt.MCPOAuthAuthorize))
 	r.POST(a2aMountPrefix+mcpTokenPath, rt.withMount(a2aMountPrefix, rt.MCPOAuthToken))
@@ -235,8 +234,25 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	a2aGroup.Any("/*proxyPath", gin.WrapH(a2aHandler))
 
 	if !rt.HTTP.A2A.DisableMCP {
-		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(backend))
+		// Pass the engine r as the in-process dispatcher: MCP tool calls are
+		// re-dispatched onto /api/n9e/... through the full middleware chain,
+		// carrying the caller's X-User-Token so RBAC applies unchanged.
+		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(r, a2a.MCPConfig{
+			Toolsets:      rt.HTTP.A2A.MCPToolsets,
+			ReadOnly:      !rt.HTTP.A2A.MCPEnableWriteTools,
+			TokenHeader:   tokenHeader,
+			ExtraToolsets: rt.MCPExtraToolsets,
+		}))
 		mcpGroup := r.Group("/mcp")
+		// /mcp accepts TokenAuth (X-User-Token) and OAuth access tokens, with the
+		// same middleware chain as /a2a: rsAuthChallenge attaches the RFC 9728
+		// WWW-Authenticate discovery pointer on 401s, agentOAuthScope marks the
+		// request as agent-plane so tokenAuth accepts OAuth tokens (builtin AS or
+		// external IdP). MCP tool calls replay the caller's raw credential onto
+		// the internal /api/n9e hop — TokenAuth tokens under the configured
+		// header, Bearer tokens under Authorization plus a2a's in-process
+		// dispatch marker that lets the internal tokenAuth treat that hop as
+		// agent-plane too (see a2a.IsMCPInProcDispatch).
 		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.rsAuthChallenge(), rt.agentOAuthScope(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 		mcpGroup.Any("", gin.WrapH(mcpHandler))
 		mcpGroup.Any("/*proxyPath", gin.WrapH(mcpHandler))

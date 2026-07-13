@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/a2a"
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/aiagent/skill"
 	aitools "github.com/ccfos/nightingale/v6/aiagent/tools"
@@ -72,6 +73,11 @@ type Router struct {
 	TargetDeleteCheck     TargetDeleteCheckFunc
 	TargetBgidChangeCheck TargetBgidChangeCheckFunc
 	AlertRuleModifyHook   AlertRuleModifyHookFunc
+
+	// MCPExtraToolsets lets an embedder (e.g. the enterprise edition) register
+	// additional MCP toolsets on /mcp beyond n9e-mcp-server's defaults. Set it
+	// before Config(r); the registrars run when the /mcp handler is built.
+	MCPExtraToolsets []a2a.MCPToolsetRegistrar
 
 	// aiSkillSyncOnce ensures the DB→FS full sync runs at most once per process
 	// lifetime (startup goroutine + first chat handler both call through the

@@ -56,6 +56,15 @@ type A2AConfig struct {
 	// BaseURL is the absolute URL advertised in the AgentCard. When empty it
 	// is derived from the incoming request (Host + X-Forwarded-Proto / TLS).
 	BaseURL string
+	// MCPToolsets is the enabled toolset whitelist for the /mcp endpoint. Empty
+	// means everything registered (all default toolsets, plus embedder extras).
+	// Valid names: alerts, targets, datasource, mutes, busi_groups, notify_rules,
+	// alert_subscribes, event_pipelines, users, metrics, logs, dashboards, roles.
+	MCPToolsets []string
+	// MCPEnableWriteTools also registers write MCP tools (create/update/delete)
+	// when true. The default (false) exposes read-only tools ONLY — mutating
+	// the system through /mcp is an explicit config opt-in.
+	MCPEnableWriteTools bool
 }
 
 type RSAConfig struct {
