@@ -179,6 +179,19 @@ func (s *MCPServer) Update(c *ctx.Context, ref MCPServer) error {
 		}
 	}
 
+	// Stored OAuth tokens are an authorization against the old config: after a
+	// URL change the runtime would keep sending the Bearer token to whatever host
+	// the row now points at, and after switching away from oauth the tokens would
+	// linger unused. Drop them first (aborting on failure, so a new URL can never
+	// reuse an old token) and require an explicit re-authorization. The oauth
+	// callback's flip-to-oauth Update keeps the URL and moves *into* oauth, so it
+	// never matches here and the freshly saved tokens survive.
+	if ref.URL != s.URL || (s.EffectiveAuthMode() == "oauth" && ref.EffectiveAuthMode() != "oauth") {
+		if err := MCPServerOAuthDelByServerId(c, s.Id); err != nil {
+			return err
+		}
+	}
+
 	ref.UpdatedAt = time.Now().Unix()
 	return DB(c).Model(s).Select("name", "url", "headers", "description",
 		"enabled", "auth_mode", "user_group_ids", "private", "updated_at", "updated_by").Updates(ref).Error
