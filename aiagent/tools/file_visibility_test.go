@@ -13,7 +13,7 @@ func seedSkillsDir(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
 	skillsPath := filepath.Join(root, "skills")
-	for _, name := range []string{"pub", "priv"} {
+	for _, name := range []string{"pub", "priv", "foo", "foo-private"} {
 		dir := filepath.Join(skillsPath, name)
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			t.Fatal(err)
@@ -31,7 +31,7 @@ func TestFileToolsSkillVisibility(t *testing.T) {
 	skillsPath := seedSkillsDir(t)
 	deps := &aiagent.ToolDeps{
 		SkillsPath:       skillsPath,
-		HiddenSkillNames: map[string]struct{}{"priv": {}},
+		HiddenSkillNames: map[string]struct{}{"priv": {}, "foo-private": {}},
 	}
 	bg := context.Background()
 	params := map[string]string{}
@@ -42,6 +42,10 @@ func TestFileToolsSkillVisibility(t *testing.T) {
 	}
 	if out, err := readFile(bg, deps, map[string]interface{}{"base": "pub", "path": "SKILL.md"}, params); err != nil || out == "" {
 		t.Errorf("read_file(pub) should succeed: %v", err)
+	}
+	// 前缀相关的可见 skill 读自身文件不受影响
+	if _, err := readFile(bg, deps, map[string]interface{}{"base": "foo", "path": "SKILL.md"}, params); err != nil {
+		t.Errorf("read_file(foo/SKILL.md) should succeed: %v", err)
 	}
 
 	// 隐藏技能 + skills 根目录：三工具均拒绝
@@ -66,6 +70,17 @@ func TestFileToolsSkillVisibility(t *testing.T) {
 		}},
 		{"list_files integrations/.. traversal to skills root", func() (string, error) {
 			return listFiles(bg, deps, map[string]interface{}{"base": "integrations/../skills"}, params)
+		}},
+		// 可见 skill 名是私有 skill 名前缀 + path 含 ../：subPath 边界不能靠字符串前缀，
+		// 否则 base="foo" + path="../foo-private/..." 会逃到私有 skills/foo-private。
+		{"read_file prefix traversal foo->foo-private", func() (string, error) {
+			return readFile(bg, deps, map[string]interface{}{"base": "foo", "path": "../foo-private/SKILL.md"}, params)
+		}},
+		{"list_files prefix traversal foo->foo-private", func() (string, error) {
+			return listFiles(bg, deps, map[string]interface{}{"base": "foo", "path": "../foo-private"}, params)
+		}},
+		{"grep_files prefix traversal foo->foo-private", func() (string, error) {
+			return grepFiles(bg, deps, map[string]interface{}{"base": "foo", "pattern": "secret", "path": "../foo-private"}, params)
 		}},
 	}
 	for _, tc := range denied {

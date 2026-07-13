@@ -86,8 +86,10 @@ func resolveBasePath(deps *aiagent.ToolDeps, base, subPath string) (string, erro
 
 	fullPath := filepath.Join(baseDir, filepath.Clean(subPath))
 
-	// 防止路径逃逸
-	if !strings.HasPrefix(fullPath, baseDir) {
+	// 防止路径逃逸：用清理后的实际路径关系判定（而非字符串前缀）——否则
+	// path="../foo-private/SKILL.md" 从已授权的 skills/foo 逃到私有 skills/foo-private，
+	// 因 "/skills/foo-private" 字符串上以 "/skills/foo" 开头而骗过前缀检查。
+	if !within(baseDir, fullPath) {
 		return "", fmt.Errorf("invalid path: %s", subPath)
 	}
 
