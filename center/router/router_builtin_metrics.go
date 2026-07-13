@@ -55,8 +55,27 @@ func (rt *Router) builtinMetricsGets(c *gin.Context) {
 	bm, total, err := integration.BuiltinPayloadInFile.BuiltinMetricGets(bmInDB, lang, collector, typ, query, unit, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
+	// BuiltinMetric stores the updater in UpdatedBy (not UpdateBy), so the generic
+	// FillUpdateByNicknames reflection helper can't be reused here; fill by hand.
+	names := make([]string, 0, len(bm))
+	for _, m := range bm {
+		names = append(names, m.UpdatedBy)
+	}
+	nm := models.UserNicknameMap(rt.Ctx, names)
+
+	// The file-based entries in bm are pointers into a shared global cache, so writing
+	// UpdateByNickname on them would race with concurrent requests serializing the same
+	// object. Fill a per-request shallow copy instead (only the string field is written;
+	// the shared slice fields stay read-only).
+	list := make([]*models.BuiltinMetric, len(bm))
+	for i, m := range bm {
+		cp := *m
+		cp.UpdateByNickname = models.NicknameOrName(nm, cp.UpdatedBy)
+		list[i] = &cp
+	}
+
 	ginx.NewRender(c).Data(gin.H{
-		"list":  bm,
+		"list":  list,
 		"total": total,
 	}, nil)
 }

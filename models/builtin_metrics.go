@@ -30,6 +30,8 @@ type BuiltinMetric struct {
 	CreatedBy      string          `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
 	UpdatedAt      int64           `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
 	UpdatedBy      string          `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	// UpdateByNickname is filled at query time from UpdatedBy; see builtinMetricsGets.
+	UpdateByNickname string `json:"update_by_nickname" gorm:"-"`
 }
 
 type Translation struct {

@@ -6,24 +6,25 @@ import (
 )
 
 type TaskRecord struct {
-	Id           int64  `json:"id" gorm:"primaryKey"`
-	EventId      int64  `json:"event_id"`
-	GroupId      int64  `json:"group_id"`
-	IbexAddress  string `json:"ibex_address"`
-	IbexAuthUser string `json:"ibex_auth_user"`
-	IbexAuthPass string `json:"ibex_auth_pass"`
-	Title        string `json:"title"`
-	Account      string `json:"account"`
-	Batch        int    `json:"batch"`
-	Tolerance    int    `json:"tolerance"`
-	Timeout      int    `json:"timeout"`
-	Pause        string `json:"pause"`
-	Script       string `json:"script"`
-	Args         string `json:"args"`
-	AuthLevel    int    `json:"auth_level"`
-	SystemCaller string `json:"system_caller"`
-	CreateAt     int64  `json:"create_at"`
-	CreateBy     string `json:"create_by"`
+	Id               int64  `json:"id" gorm:"primaryKey"`
+	EventId          int64  `json:"event_id"`
+	GroupId          int64  `json:"group_id"`
+	IbexAddress      string `json:"ibex_address"`
+	IbexAuthUser     string `json:"ibex_auth_user"`
+	IbexAuthPass     string `json:"ibex_auth_pass"`
+	Title            string `json:"title"`
+	Account          string `json:"account"`
+	Batch            int    `json:"batch"`
+	Tolerance        int    `json:"tolerance"`
+	Timeout          int    `json:"timeout"`
+	Pause            string `json:"pause"`
+	Script           string `json:"script"`
+	Args             string `json:"args"`
+	AuthLevel        int    `json:"auth_level"`
+	SystemCaller     string `json:"system_caller"`
+	CreateAt         int64  `json:"create_at"`
+	CreateBy         string `json:"create_by"`
+	CreateByNickname string `json:"create_by_nickname" gorm:"-"`
 }
 
 func (r *TaskRecord) TableName() string {

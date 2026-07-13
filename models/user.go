@@ -452,9 +452,21 @@ func UserNicknameMap(ctx *ctx.Context, names []string) map[string]string {
 	return m
 }
 
-// FillUpdateByNicknames fills the UpdateByNickname field for each element in items
-// by looking up the UpdateBy username. Supports both []T and []*T slices.
-func FillUpdateByNicknames[T any](ctx *ctx.Context, items []T) {
+// NicknameOrName returns the nickname mapped for username, falling back to the
+// username itself when the user has no nickname or does not exist. This keeps
+// *_nickname fields non-empty so callers never surface a blank operator/updater.
+func NicknameOrName(nicknames map[string]string, username string) string {
+	if nickname := nicknames[username]; nickname != "" {
+		return nickname
+	}
+	return username
+}
+
+// fillNicknames fills the dstField (a gorm:"-" nickname field) of each element by
+// looking up the username stored in srcField, falling back to the username itself
+// when it has no nickname. Supports both []T and []*T slices, and is a no-op when
+// the element type lacks either field.
+func fillNicknames[T any](ctx *ctx.Context, items []T, srcField, dstField string) {
 	if len(items) == 0 {
 		return
 	}
@@ -465,8 +477,8 @@ func FillUpdateByNicknames[T any](ctx *ctx.Context, items []T) {
 		elemType = elemType.Elem()
 	}
 
-	updateByField, ok1 := elemType.FieldByName("UpdateBy")
-	nicknameField, ok2 := elemType.FieldByName("UpdateByNickname")
+	src, ok1 := elemType.FieldByName(srcField)
+	dst, ok2 := elemType.FieldByName(dstField)
 	if !ok1 || !ok2 {
 		return
 	}
@@ -480,7 +492,7 @@ func FillUpdateByNicknames[T any](ctx *ctx.Context, items []T) {
 			}
 			v = v.Elem()
 		}
-		names = append(names, v.FieldByIndex(updateByField.Index).String())
+		names = append(names, v.FieldByIndex(src.Index).String())
 	}
 
 	nm := UserNicknameMap(ctx, names)
@@ -493,9 +505,21 @@ func FillUpdateByNicknames[T any](ctx *ctx.Context, items []T) {
 			}
 			v = v.Elem()
 		}
-		updateBy := v.FieldByIndex(updateByField.Index).String()
-		v.FieldByIndex(nicknameField.Index).SetString(nm[updateBy])
+		username := v.FieldByIndex(src.Index).String()
+		v.FieldByIndex(dst.Index).SetString(NicknameOrName(nm, username))
 	}
+}
+
+// FillUpdateByNicknames fills the UpdateByNickname field for each element in items
+// by looking up the UpdateBy username. Supports both []T and []*T slices.
+func FillUpdateByNicknames[T any](ctx *ctx.Context, items []T) {
+	fillNicknames(ctx, items, "UpdateBy", "UpdateByNickname")
+}
+
+// FillCreateByNicknames is the CreateBy/CreateByNickname counterpart of
+// FillUpdateByNicknames.
+func FillCreateByNicknames[T any](ctx *ctx.Context, items []T) {
+	fillNicknames(ctx, items, "CreateBy", "CreateByNickname")
 }
 
 func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {

@@ -58,6 +58,8 @@ func (rt *Router) taskGets(c *gin.Context) {
 	list, err := models.TaskRecordGets(rt.Ctx, []int64{bgid}, beginTime, creator, query, authLevels, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
+	models.FillCreateByNicknames(rt.Ctx, list)
+
 	ginx.NewRender(c).Data(gin.H{
 		"total": total,
 		"list":  list,
@@ -103,6 +105,8 @@ func (rt *Router) taskGetsByGids(c *gin.Context) {
 
 	list, err := models.TaskRecordGets(rt.Ctx, gids, beginTime, creator, query, authLevels, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
+
+	models.FillCreateByNicknames(rt.Ctx, list)
 
 	ginx.NewRender(c).Data(gin.H{
 		"total": total,
