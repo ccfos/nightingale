@@ -240,6 +240,23 @@ func (s *AISkill) UpdateGitFields(c *ctx.Context, ref AISkill) error {
 		"updated_at", "updated_by").Updates(ref).Error
 }
 
+// UpdateAuthScope 只更新授权团队与可见性两列（+ updated_at/by）。用于把授权范围
+// 与内容/git 更新放进同一事务里补写，避免误动内容列。
+func (s *AISkill) UpdateAuthScope(c *ctx.Context, ref AISkill) error {
+	ref.UpdatedAt = time.Now().Unix()
+	return DB(c).Model(s).Select("user_group_ids", "private",
+		"updated_at", "updated_by").Updates(ref).Error
+}
+
+// UpdateGitAndAuth 一次性更新 git 配置与授权范围两组列（+ updated_at/by）。git 配置
+// 修改路径用它把「改 git 源」与「改授权范围」原子提交，避免两次独立写入产生部分更新。
+func (s *AISkill) UpdateGitAndAuth(c *ctx.Context, ref AISkill) error {
+	ref.SetDefaultSourceType()
+	ref.UpdatedAt = time.Now().Unix()
+	return DB(c).Model(s).Select("source_type", "git_info", "user_group_ids", "private",
+		"updated_at", "updated_by").Updates(ref).Error
+}
+
 func (s *AISkill) Delete(c *ctx.Context) error {
 	return DB(c).Where("id = ?", s.Id).Delete(&AISkill{}).Error
 }

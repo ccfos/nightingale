@@ -2,10 +2,13 @@ package router
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent/skill"
@@ -16,6 +19,66 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// skillAuthScope 携带一次导入/远程安装/替换/更新请求提交的授权范围与团队。
+type skillAuthScope struct {
+	Private      int
+	UserGroupIds []int64
+}
+
+// parseSkillAuthFromForm 从 multipart 表单读取 private 与 user_group_ids（JSON 数组），
+// 用于 zip 上传/替换这类 multipart 请求。private 返回指针：nil 表示表单未提交该字段
+// （区别于显式提交的 0）；提交了但非 0/1、或 user_group_ids 非法 JSON 直接报错，绝不
+// 静默降级成公共。
+func parseSkillAuthFromForm(c *gin.Context) (*int, []int64, error) {
+	var teams []int64
+	if raw := strings.TrimSpace(c.PostForm("user_group_ids")); raw != "" {
+		if err := json.Unmarshal([]byte(raw), &teams); err != nil {
+			return nil, nil, fmt.Errorf("invalid user_group_ids")
+		}
+	}
+	var privatePtr *int
+	if raw := strings.TrimSpace(c.PostForm("private")); raw != "" {
+		p, err := strconv.Atoi(raw)
+		if err != nil {
+			return nil, nil, fmt.Errorf("private flag must be 0 or 1")
+		}
+		privatePtr = &p
+	}
+	return privatePtr, teams, nil
+}
+
+// resolveSkillAuth 把一次导入/远程安装/替换/更新的授权输入解析成可直接落库的 auth，并做
+// 与 aiSkillAdd/aiSkillPut 一致的校验（团队必填、private∈{0,1}、非管理员只能授权自己
+// 所属团队——checkTeams 为需具备授权资格的团队集：新建=全部提交团队，编辑=相对既有新增
+// 的团队）。current 非 nil 表示编辑既有 skill：privatePtr 为 nil（未提交）时沿用
+// current.Private，绝不默认成公共；current 为 nil（新建）时必须显式提交 private。
+// 校验失败直接 bomb。
+func (rt *Router) resolveSkillAuth(c *gin.Context, privatePtr *int, teams []int64, current *models.AISkill, checkTeams []int64) skillAuthScope {
+	private := 0
+	if current != nil {
+		private = current.Private
+	}
+	if privatePtr != nil {
+		if *privatePtr != 0 && *privatePtr != 1 {
+			ginx.Bomb(http.StatusBadRequest, "private flag must be 0 or 1")
+		}
+		private = *privatePtr
+	} else if current == nil {
+		ginx.Bomb(http.StatusBadRequest, "private flag is required")
+	}
+	if len(teams) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "user group ids is required")
+	}
+	if me := c.MustGet("user").(*models.User); !me.IsAdmin() {
+		gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+		ginx.Dangerous(err)
+		if !groupsSubset(gids, checkTeams) {
+			ginx.Bomb(http.StatusForbidden, "forbidden")
+		}
+	}
+	return skillAuthScope{Private: private, UserGroupIds: teams}
+}
 
 // upsertGeneratedSkillMD 把 AISkill 的字段合成一份 SKILL.md，upsert 进 ai_skill_file 表。
 // 用于 JSON 创建 / JSON 更新路径 —— 调用方没有原始 SKILL.md 字节，必须由列反向生成
@@ -455,7 +518,9 @@ func extractSkillArchive(c *gin.Context) (meta skill.Frontmatter, instructions s
 }
 
 // doSkillImport creates a new skill inside a transaction and returns the new skill ID.
-func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, files map[string]string, username string, gitInfo *models.AISkillGitInfo) (int64, error) {
+// auth 非空时设定新 skill 的授权范围与团队（导入/远程安装表单提交）；nil 时保持默认
+// （公共、无团队——内部 service 路径）。
+func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, files map[string]string, username string, gitInfo *models.AISkillGitInfo, auth *skillAuthScope) (int64, error) {
 	var skillId int64
 	err := models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
@@ -478,6 +543,10 @@ func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, fil
 			CreatedBy:     username,
 			UpdatedBy:     username,
 		}
+		if auth != nil {
+			skill.Private = auth.Private
+			skill.UserGroupIds = auth.UserGroupIds
+		}
 		if err := skill.Create(tCtx); err != nil {
 			return err
 		}
@@ -489,7 +558,9 @@ func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, fil
 }
 
 // doSkillImportUpdate updates an existing skill inside a transaction.
-func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontmatter, instructions string, files map[string]string, username string, gitInfo *models.AISkillGitInfo) error {
+// auth 非空时用它覆盖授权范围与团队（替换/更新表单显式提交）；nil 时保持既有授权
+// 不变（内部 service 路径 / 内置 git 更新）。
+func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontmatter, instructions string, files map[string]string, username string, gitInfo *models.AISkillGitInfo, auth *skillAuthScope) error {
 	return models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
 
@@ -504,11 +575,15 @@ func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontm
 			Enabled:       current.Enabled,
 			GitInfo:       gitInfo,
 			UpdatedBy:     username,
-			// 替换/导入不改变鉴权范围：带入既有授权团队与可见性，避免本地 skill 走
-			// Update（其 Select 含 user_group_ids/private）时把私有 skill 静默重置为
-			// 公共并清空授权团队（对不 Select 这两列的 git 分支无副作用）。
+			// 默认不改变鉴权范围：带入既有授权团队与可见性，避免本地 skill 走 Update
+			//（其 Select 含 user_group_ids/private）时把私有 skill 静默重置为公共并清空
+			// 授权团队（对不 Select 这两列的 git 分支无副作用）。auth 非空时下面覆盖。
 			Private:      current.Private,
 			UserGroupIds: current.UserGroupIds,
+		}
+		if auth != nil {
+			ref.Private = auth.Private
+			ref.UserGroupIds = auth.UserGroupIds
 		}
 		if gitInfo != nil {
 			if err := current.UpdateWithGit(tCtx, ref); err != nil {
@@ -525,6 +600,18 @@ func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontm
 			return err
 		}
 
+		// git 分支走 UpdateWithGit，其 Select 不含 user_group_ids/private——auth 非空时
+		// 在同一事务里单独持久化授权两列（本地 Update 分支已含这两列，无需重复）。
+		if auth != nil && (gitInfo != nil || current.GitInfo != nil) {
+			if err := current.UpdateAuthScope(tCtx, models.AISkill{
+				Private:      auth.Private,
+				UserGroupIds: auth.UserGroupIds,
+				UpdatedBy:    username,
+			}); err != nil {
+				return err
+			}
+		}
+
 		return upsertSkillFiles(tCtx, current.Id, files, username, true)
 	})
 }
@@ -532,7 +619,10 @@ func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontm
 func (rt *Router) aiSkillImport(c *gin.Context) {
 	meta, instructions, files := extractSkillArchive(c)
 	me := c.MustGet("user").(*models.User)
-	skillId, err := rt.doSkillImport(meta, instructions, files, me.Username, nil)
+	privatePtr, teams, err := parseSkillAuthFromForm(c)
+	ginx.Dangerous(err)
+	auth := rt.resolveSkillAuth(c, privatePtr, teams, nil, teams)
+	skillId, err := rt.doSkillImport(meta, instructions, files, me.Username, nil, &auth)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(skillId, nil)
 }
@@ -547,7 +637,16 @@ func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
 	rt.ensureAISkillEditable(c, current)
 	meta, instructions, files := extractSkillArchive(c)
 	me := c.MustGet("user").(*models.User)
-	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, me.Username, nil))
+	// 内置(system) skill 的替换不套用授权团队（保持既有行为，仅管理员可替换）；
+	// 用户 skill 替换可一并管理授权范围与团队。
+	var auth *skillAuthScope
+	if current.CreatedBy != "system" {
+		privatePtr, teams, err := parseSkillAuthFromForm(c)
+		ginx.Dangerous(err)
+		a := rt.resolveSkillAuth(c, privatePtr, teams, current, addedGroups(current.UserGroupIds, teams))
+		auth = &a
+	}
+	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, me.Username, nil, auth))
 	ginx.NewRender(c).Data(skillId, nil)
 }
 
@@ -586,12 +685,15 @@ func (rt *Router) aiSkillFileGet(c *gin.Context) {
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "file not found")
 	}
-	// 私有 skill 的文件内容仅授权团队可读：按 fileId 读取前先校验其父 skill。
+	// 私有 skill 的文件内容仅授权团队可读：按 fileId 读取前先校验其父 skill。父 skill
+	// 不存在（孤儿文件，AISkillGetById 对 NotFound 返回 nil,nil）时 fail-closed 拒绝，
+	// 不放行未鉴权读取。
 	parent, err := models.AISkillGetById(rt.Ctx, obj.SkillId)
 	ginx.Dangerous(err)
-	if parent != nil {
-		rt.ensureAISkillViewable(c, parent)
+	if parent == nil {
+		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
+	rt.ensureAISkillViewable(c, parent)
 	ginx.NewRender(c).Data(obj, nil)
 }
 
@@ -602,12 +704,14 @@ func (rt *Router) aiSkillFileDel(c *gin.Context) {
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "file not found")
 	}
-	// 删除文件属修改 skill：按 fileId 删除前先校验其父 skill 的编辑权限。
+	// 删除文件属修改 skill：按 fileId 删除前先校验其父 skill 的编辑权限。父 skill
+	// 不存在（孤儿文件）时 fail-closed 拒绝，不放行未鉴权删除。
 	parent, err := models.AISkillGetById(rt.Ctx, obj.SkillId)
 	ginx.Dangerous(err)
-	if parent != nil {
-		rt.ensureAISkillEditable(c, parent)
+	if parent == nil {
+		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
+	rt.ensureAISkillEditable(c, parent)
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
 }
 
@@ -690,7 +794,7 @@ func (rt *Router) aiSkillGetWithFileContents(c *gin.Context) {
 
 func (rt *Router) aiSkillImportByService(c *gin.Context) {
 	meta, instructions, files := extractSkillArchive(c)
-	skillId, err := rt.doSkillImport(meta, instructions, files, "system", nil)
+	skillId, err := rt.doSkillImport(meta, instructions, files, "system", nil, nil)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(skillId, nil)
 }
@@ -703,7 +807,7 @@ func (rt *Router) aiSkillImportUpdateByService(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
 	meta, instructions, files := extractSkillArchive(c)
-	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, "system", nil))
+	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, "system", nil, nil))
 	ginx.NewRender(c).Data(skillId, nil)
 }
 

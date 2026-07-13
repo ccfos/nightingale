@@ -147,6 +147,45 @@ func TestAISkillUpdateAuthColumns(t *testing.T) {
 	}
 }
 
+// UpdateGitAndAuth 一次原子写入 git 配置 + 授权范围两组列，供 git 配置修改路径用。
+func TestAISkillUpdateGitAndAuth(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.AutoMigrate(&models.AISkill{}); err != nil {
+		t.Fatalf("migrate ai_skill: %v", err)
+	}
+	c := &ctx.Context{DB: db}
+
+	s := &models.AISkill{
+		Name: "g", Instructions: "x", SourceType: models.AISkillSourceGit,
+		GitInfo: &models.AISkillGitInfo{URL: "u1", RefType: "branch", Ref: "main"},
+		Private: 0,
+	}
+	if err := s.Create(c); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	ref := models.AISkill{
+		SourceType: models.AISkillSourceGit,
+		GitInfo:    &models.AISkillGitInfo{URL: "u2", RefType: "branch", Ref: "dev"},
+		Private:    1, UserGroupIds: []int64{5}, UpdatedBy: "u",
+	}
+	if err := s.UpdateGitAndAuth(c, ref); err != nil {
+		t.Fatalf("UpdateGitAndAuth: %v", err)
+	}
+	got, _ := models.AISkillGetById(c, s.Id)
+	if got.Private != 1 || len(got.UserGroupIds) != 1 || got.UserGroupIds[0] != 5 {
+		t.Fatalf("auth not updated: private=%d teams=%v", got.Private, got.UserGroupIds)
+	}
+	if got.GitInfo == nil || got.GitInfo.URL != "u2" || got.GitInfo.Ref != "dev" {
+		t.Fatalf("git info not updated: %+v", got.GitInfo)
+	}
+}
+
 func TestAISkillHiddenNames(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),

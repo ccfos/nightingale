@@ -56,7 +56,7 @@ func TestDoSkillImportUpdateClearsCurrentCommitWhenArchiveImport(t *testing.T) {
 		"new.txt":  "new content",
 	}
 	meta := skill.Frontmatter{Name: "git-skill", Description: "new description"}
-	if err := rt.doSkillImportUpdate(current, meta, "new instructions", files, "bob", nil); err != nil {
+	if err := rt.doSkillImportUpdate(current, meta, "new instructions", files, "bob", nil, nil); err != nil {
 		t.Fatalf("import update: %v", err)
 	}
 
@@ -98,5 +98,48 @@ func TestDoSkillImportUpdateClearsCurrentCommitWhenArchiveImport(t *testing.T) {
 	}
 	if byName["SKILL.md"] != "updated skill markdown" || byName["new.txt"] != "new content" {
 		t.Fatalf("files were not replaced: %+v", byName)
+	}
+}
+
+// git skill 走 UpdateWithGit（其 Select 不含 user_group_ids/private），auth 必须由
+// doSkillImportUpdate 在同一事务里单独持久化，否则「改公共为私有」会被静默丢弃。
+func TestDoSkillImportUpdatePersistsAuthForGitSkill(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.AutoMigrate(&models.AISkill{}, &models.AISkillFile{}); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	c := &ctx.Context{DB: db}
+	rt := &Router{Ctx: c}
+
+	current := &models.AISkill{
+		Name:         "git-skill",
+		Instructions: "old",
+		Enabled:      true,
+		SourceType:   models.AISkillSourceGit,
+		GitInfo:      &models.AISkillGitInfo{URL: "https://x/y.git", RefType: skill.GitRefBranch, Ref: "main"},
+		Private:      0, // 原本公共、无团队
+		CreatedBy:    "alice",
+		UpdatedBy:    "alice",
+	}
+	if err := current.Create(c); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	auth := &skillAuthScope{Private: 1, UserGroupIds: []int64{7}}
+	meta := skill.Frontmatter{Name: "git-skill"}
+	if err := rt.doSkillImportUpdate(current, meta, "new", map[string]string{"SKILL.md": "md"}, "bob", current.GitInfo, auth); err != nil {
+		t.Fatalf("import update: %v", err)
+	}
+	got, err := models.AISkillGetById(c, current.Id)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.Private != 1 || len(got.UserGroupIds) != 1 || got.UserGroupIds[0] != 7 {
+		t.Fatalf("git skill auth not persisted: private=%d teams=%v", got.Private, got.UserGroupIds)
 	}
 }

@@ -33,10 +33,12 @@ func resolveBasePath(deps *aiagent.ToolDeps, base, subPath string) (string, erro
 	projectRoot := filepath.Dir(skillsPath)
 
 	var baseDir string
+	isSkill := false
 	if strings.HasPrefix(base, "integrations/") || base == "integrations" {
 		baseDir = filepath.Join(projectRoot, base)
 	} else {
 		baseDir = filepath.Join(skillsPath, base)
+		isSkill = true
 	}
 
 	baseDir = filepath.Clean(baseDir)
@@ -44,6 +46,28 @@ func resolveBasePath(deps *aiagent.ToolDeps, base, subPath string) (string, erro
 	// 安全检查：必须在项目根目录下
 	if !strings.HasPrefix(baseDir, projectRoot) {
 		return "", fmt.Errorf("invalid base: %s", base)
+	}
+
+	// skill 目录访问控制：不允许直接访问 skills 根目录（否则可用 base="." 枚举全部技能
+	// 目录），且私有/未授权的技能对当前用户不可读——与 load_skill/get_skill/run_skill_script
+	// 同一道可见性门（deps.IsSkillHidden 含 fail-closed 的 deny-all）。integrations 模板
+	// 目录不受此限。
+	if isSkill {
+		rel, err := filepath.Rel(skillsPath, baseDir)
+		if err != nil {
+			return "", fmt.Errorf("invalid base: %s", base)
+		}
+		relSlash := filepath.ToSlash(rel)
+		if relSlash == "." || strings.HasPrefix(relSlash, "..") {
+			return "", fmt.Errorf("invalid base: %s", base)
+		}
+		skillName := relSlash
+		if i := strings.IndexByte(relSlash, '/'); i >= 0 {
+			skillName = relSlash[:i]
+		}
+		if deps.IsSkillHidden(skillName) {
+			return "", fmt.Errorf("directory not found: %s", base)
+		}
 	}
 
 	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
