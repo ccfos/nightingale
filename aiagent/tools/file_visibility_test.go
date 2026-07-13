@@ -60,6 +60,13 @@ func TestFileToolsSkillVisibility(t *testing.T) {
 		{"read_file root escape", func() (string, error) {
 			return readFile(bg, deps, map[string]interface{}{"base": "..", "path": "x"}, params)
 		}},
+		// integrations 前缀 + .. 穿越回落到 skills：必须按清理后落点判定，不能因前缀跳过门。
+		{"read_file integrations/.. traversal to priv", func() (string, error) {
+			return readFile(bg, deps, map[string]interface{}{"base": "integrations/../skills/priv", "path": "SKILL.md"}, params)
+		}},
+		{"list_files integrations/.. traversal to skills root", func() (string, error) {
+			return listFiles(bg, deps, map[string]interface{}{"base": "integrations/../skills"}, params)
+		}},
 	}
 	for _, tc := range denied {
 		if _, err := tc.fn(); err == nil {
@@ -74,5 +81,8 @@ func TestFileToolsSkillVisibility(t *testing.T) {
 	}
 	if _, err := readFile(bg, denyDeps, map[string]interface{}{"base": "pub", "path": "SKILL.md"}, params); err == nil {
 		t.Errorf("read_file(pub) under deny-all should be denied")
+	}
+	if _, err := readFile(bg, denyDeps, map[string]interface{}{"base": "integrations/../skills/pub", "path": "SKILL.md"}, params); err == nil {
+		t.Errorf("read_file(traversal to pub) under deny-all should be denied")
 	}
 }

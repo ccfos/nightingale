@@ -70,7 +70,9 @@ queries.active
 .playwright-mcp
 
 /n9e-*
+/n9e_test
 n9e.sql
+*.bak
 
 # Runtime skill directory: built-in skills are extracted from embed at startup,
 # DB-synced user skills land here too. Source of truth is aiagent/skill/embedded/builtin/.
