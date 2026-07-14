@@ -1021,6 +1021,8 @@ var CreateSkill = aiagent.AgentTool{
 		{Name: "files", Type: "array", Description: "可选：附带文件数组，每项为对象 {path, content}，如 [{\"path\":\"main.py\",\"content\":\"...\"}]。脚本型技能在此放 main.py/main.sh；不要传 SKILL.md（由本工具自动生成）", Required: false},
 		{Name: "max_iterations", Type: "integer", Description: "可选：技能单轮最大工具调用次数（多步技能可设 15~30）", Required: false},
 		{Name: "compatibility", Type: "string", Description: "可选：兼容性/依赖说明（如 needs sandbox、python3）", Required: false},
+		{Name: "team_ids", Type: "array", Description: "可选：管理团队 ID 列表（数字数组）。一般由用户在弹出的表单里选择；若用户直接在回复里点名团队，先用 list_teams 把团队名解析成 ID 再传入。非管理员只能填自己所属的团队", Required: false},
+		{Name: "private", Type: "integer", Description: "可选：可见范围，0=公开（所有人可见可用），1=仅管理团队可见。仅管理员可设；非管理员固定为 1（传了也忽略）", Required: false},
 		{Name: "proposal_id", Type: "string", Description: "确认提案 id（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
 		{Name: "confirmed", Type: "boolean", Description: "是否确认创建（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
 	},
@@ -1044,5 +1046,29 @@ var UpdateSkill = aiagent.AgentTool{
 		{Name: "compatibility", Type: "string", Description: "可选：新的兼容性说明（不传则保持原样）", Required: false},
 		{Name: "proposal_id", Type: "string", Description: "确认提案 id（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
 		{Name: "confirmed", Type: "boolean", Description: "是否确认修改（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
+	},
+}
+
+// CreateMCPServer registers a new external MCP (Model Context Protocol) server
+// config so its tools become callable in AI conversations. Two-phase: the first
+// call (without confirmed) returns a proposal for the user to approve; the
+// managing team + visibility are collected via a form (non-admins pick only the
+// managing team, admins also set visibility).
+var CreateMCPServer = aiagent.AgentTool{
+	Name: "create_mcp_server",
+	Description: "创建一个新的 MCP Server（Model Context Protocol 外部服务）配置并落库（写入 mcp_server 表），接入后其工具可在 AI 对话中调用。" +
+		"需要 /ai-config/mcp-servers 权限；管理团队与可见范围由用户在弹出的表单中选择（非管理员仅选管理团队，管理员可设管理团队与可见范围），无需模型代填；" +
+		"首次调用只生成待确认提案、用户确认后才真正创建。",
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "name", Type: "string", Description: "MCP Server 名称（唯一）", Required: true},
+		{Name: "url", Type: "string", Description: "MCP Server 的访问地址（http/https URL）", Required: true},
+		{Name: "description", Type: "string", Description: "可选：用途/能力描述", Required: false},
+		{Name: "headers", Type: "object", Description: "可选：调用该 MCP Server 时附带的 HTTP 请求头（键值对，如鉴权 {\"Authorization\":\"Bearer xxx\"}）", Required: false},
+		{Name: "enabled", Type: "boolean", Description: "可选：是否启用（默认 true）", Required: false},
+		{Name: "team_ids", Type: "array", Description: "可选：管理团队 ID 列表（数字数组）。一般由用户在弹出的表单里选择；若用户直接在回复里点名团队，先用 list_teams 把团队名解析成 ID 再传入。非管理员只能填自己所属的团队", Required: false},
+		{Name: "private", Type: "integer", Description: "可选：可见范围，0=公开（所有人可见可用），1=仅管理团队可见。仅管理员可设；非管理员固定为 1（传了也忽略）", Required: false},
+		{Name: "proposal_id", Type: "string", Description: "确认提案 id（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
+		{Name: "confirmed", Type: "boolean", Description: "是否确认创建（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
 	},
 }

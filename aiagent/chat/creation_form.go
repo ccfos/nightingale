@@ -375,7 +375,7 @@ func hasCreationResult(resps []models.AssistantMessageResponse) bool {
 // value pre-selected via is_default=true on the matching candidate, so the
 // user's typical "confirm the default" path is one click.
 func emitFormSelect(deps *aiagent.ToolDeps, req *AIChatRequest, user *models.User, skillName string, required []string) (bool, []models.AssistantMessageResponse, error) {
-	body := aiagent.BuildCreationForm(deps, user, skillName, required, aiagent.FormPreselect{
+	body := aiagent.BuildCreationForm(deps, user, req.Language, skillName, required, aiagent.FormPreselect{
 		BusiGroupID:  ctxInt64Get(req.Context, "busi_group_id"),
 		DatasourceID: ctxInt64Get(req.Context, "datasource_id"),
 		TeamIDs:      ctxInt64Slice(req.Context, "team_ids"),

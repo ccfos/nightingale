@@ -152,6 +152,62 @@ func getArgInt64(args map[string]interface{}, key string) int64 {
 	return 0
 }
 
+// argInt64Slice coerces an arg into a []int64, tolerating a JSON array of numbers
+// (the LLM's team_ids), a comma-separated string, and quoted numbers. Non-positive
+// / unparseable entries are dropped — mirrors argStringSlice's tolerance.
+func argInt64Slice(args map[string]interface{}, key string) []int64 {
+	raw, ok := args[key]
+	if !ok || raw == nil {
+		return nil
+	}
+	appendID := func(out []int64, s string) []int64 {
+		if id, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64); err == nil && id > 0 {
+			return append(out, id)
+		}
+		return out
+	}
+	switch v := raw.(type) {
+	case []interface{}:
+		out := make([]int64, 0, len(v))
+		for _, e := range v {
+			switch n := e.(type) {
+			case float64:
+				if n > 0 {
+					out = append(out, int64(n))
+				}
+			case string:
+				out = appendID(out, n)
+			}
+		}
+		return out
+	case string:
+		var out []int64
+		for _, part := range strings.Split(v, ",") {
+			out = appendID(out, part)
+		}
+		return out
+	}
+	return nil
+}
+
+// argIntPresent extracts an int arg and reports presence, distinguishing a real 0
+// from "absent" — getArgInt's v>0 guard can't, which the private 0/1 flag needs.
+func argIntPresent(args map[string]interface{}, key string) (int, bool) {
+	switch v := args[key].(type) {
+	case float64:
+		return int(v), true
+	case string:
+		s := strings.TrimSpace(v)
+		if s == "" {
+			return 0, false
+		}
+		if n, err := strconv.Atoi(s); err == nil {
+			return n, true
+		}
+	}
+	return 0, false
+}
+
 // getArgFloat extracts a numeric arg, returning (value, present). It accepts
 // both JSON numbers (float64) and numeric strings — the LLM sometimes wraps
 // numbers in quotes when copying from documentation. Returns present=false
@@ -410,6 +466,24 @@ func int64SlicesOverlap(a, b []int64) bool {
 		}
 	}
 	return false
+}
+
+// int64SliceSubset 报告 sub 是否为 super 的子集（sub 中每个元素都在 super 内）。
+// 用于非 admin 授权越权校验：授权团队集必须全部落在用户所属团队内。空 sub 视为子集。
+func int64SliceSubset(super, sub []int64) bool {
+	if len(sub) == 0 {
+		return true
+	}
+	set := make(map[int64]struct{}, len(super))
+	for _, v := range super {
+		set[v] = struct{}{}
+	}
+	for _, x := range sub {
+		if _, ok := set[x]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // int64SliceIntersect 返回 a 和 b 都包含的元素（保持 b 的顺序、去重）。

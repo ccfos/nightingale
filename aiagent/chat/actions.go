@@ -210,6 +210,8 @@ func selectCreationTools(req *AIChatRequest) []string {
 		"create_notify_rule",
 		"create_alert_mute",
 		"create_alert_subscribe",
+		// MCP 接入：「创建 mcp」命中创建动词 fast-path 落到本 action，需在此挂上工具才能闭环。
+		"create_mcp_server",
 		"list_busi_groups",
 		"list_datasources",
 		"list_metrics",
@@ -283,6 +285,18 @@ func ContextForwardInputs(req *AIChatRequest) map[string]string {
 		}
 		inputs["team_ids"] = strings.Join(parts, ",")
 	}
+	// private(可见范围 0/1) 经 create_mcp_server / create_skill 的 admin 授权表单提交。
+	// 0 是合法值（公开），故按存在性转发而非 >0 判断，避免「选了公开」被当成「未选」。
+	if raw, ok := req.Context["private"]; ok {
+		switch v := raw.(type) {
+		case string:
+			if s := strings.TrimSpace(v); s != "" {
+				inputs["private"] = s
+			}
+		default:
+			inputs["private"] = fmt.Sprintf("%d", ctxInt64(req.Context, "private"))
+		}
+	}
 	return inputs
 }
 
@@ -332,5 +346,7 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		// 技能创作（skill-creator）：让用户在对话里把流程固化成可复用技能。
 		// 写工具自带 /ai-config/skills 权限门 + 两阶段确认门，只读的发现工具无副作用。
 		"list_skill_builtin_tools", "get_skill", "create_skill", "update_skill",
+		// MCP 接入：让用户在对话里注册外部 MCP Server（带 /ai-config/mcp-servers 权限门 + 两阶段确认）。
+		"create_mcp_server",
 	}
 }

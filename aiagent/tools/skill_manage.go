@@ -212,6 +212,16 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 		return "", fmt.Errorf("技能 %q 已存在；如需修改请用 update_skill", name)
 	}
 
+	// 管理团队 + 可见范围收集（非 admin 只选团队、可见范围恒为仅团队可见；admin 二者皆选）。
+	// 信息不全时中止本轮弹表单，与 create_mcp_server 共用同一条授权路径。
+	scope, authIntr, err := resolveCreationAuth(deps, user, args, params, "skill-creator")
+	if err != nil {
+		return "", err
+	}
+	if authIntr != nil {
+		return "", authIntr
+	}
+
 	skillMD, err := skillpkg.BuildSkillMD(&skillpkg.DBSkill{
 		Name:          name,
 		Description:   description,
@@ -228,7 +238,7 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 	// approval prompt; the confirm leg is replayed by the runtime with
 	// confirmed=true (zero LLM involvement) — see update_proposal.go.
 	if !getArgBool(args, "confirmed") {
-		prompt := renderSkillProposal("即将创建技能", name, description, builtinTools, files, maxIter)
+		prompt := renderSkillProposal("即将创建技能", name, description, builtinTools, files, maxIter, authScopeLines(deps, params["lang"], scope))
 		return proposeUpdate(ctx, deps, params, &updateProposal{
 			Kind:         proposalKindSkill,
 			TargetID:     0,
@@ -250,6 +260,8 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 		Instructions:  instructions,
 		Compatibility: compatibility,
 		Enabled:       true,
+		UserGroupIds:  scope.UserGroupIds,
+		Private:       scope.Private,
 		CreatedBy:     user.Username,
 		UpdatedBy:     user.Username,
 	}
@@ -377,7 +389,7 @@ func updateSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 	baseline := hashConfigs(curMD)
 
 	if !getArgBool(args, "confirmed") {
-		prompt := renderSkillProposal("即将修改技能", obj.Name, description, builtinTools, files, maxIter)
+		prompt := renderSkillProposal("即将修改技能", obj.Name, description, builtinTools, files, maxIter, nil)
 		return proposeUpdate(ctx, deps, params, &updateProposal{
 			Kind:         proposalKindSkill,
 			TargetID:     obj.Id,
@@ -603,7 +615,7 @@ func asString(v interface{}) string {
 // renderSkillProposal builds the deterministic confirmation copy shown to the
 // user before a create/update lands — the tool renders it, never the model, so
 // what the user approves is exactly what will be written.
-func renderSkillProposal(action, name, description string, builtinTools []string, files []*models.AISkillFile, maxIter int) string {
+func renderSkillProposal(action, name, description string, builtinTools []string, files []*models.AISkillFile, maxIter int, authLines []string) string {
 	kind := "知识/流程型"
 	if hasScriptFile(files) {
 		kind = "脚本型（含可执行脚本）"
@@ -624,6 +636,10 @@ func renderSkillProposal(action, name, description string, builtinTools []string
 			names = append(names, f.Name)
 		}
 		sb.WriteString(fmt.Sprintf("\n- 附带文件：%s", strings.Join(names, ", ")))
+	}
+	for _, line := range authLines {
+		sb.WriteString("\n- ")
+		sb.WriteString(line)
 	}
 	sb.WriteString("\n\n以上尚未写入。回复「确认」立即生效，回复「取消」放弃，也可以直接提出调整。")
 	return sb.String()

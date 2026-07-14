@@ -49,7 +49,9 @@ type FormPreselect struct {
 // BuildCreationForm 构造覆盖 required 全部字段的 form_select 载荷 JSON。
 // 始终弹全部 required 字段而非只弹缺失字段：页面上下文带来的值是提示不是承诺
 // （用户要建的告警规则可能指向另一个数据源），以 is_default 预选让用户确认或改选。
-func BuildCreationForm(deps *ToolDeps, user *models.User, skillName string, required []string, pre FormPreselect) string {
+// lang 仅供固定枚举字段（visibility）本地化候选名——数据类字段（业务组/数据源/团队）
+// 的候选名来自 DB，不经 lang。
+func BuildCreationForm(deps *ToolDeps, user *models.User, lang, skillName string, required []string, pre FormPreselect) string {
 	fields := make([]FormField, 0, len(required))
 	for _, key := range required {
 		switch key {
@@ -59,12 +61,35 @@ func BuildCreationForm(deps *ToolDeps, user *models.User, skillName string, requ
 			fields = append(fields, loadDatasourceField(deps, user, pre.DatasourceID))
 		case "team_ids":
 			fields = append(fields, loadTeamField(deps, user, pre.TeamIDs))
+		case "visibility":
+			fields = append(fields, loadVisibilityField(lang))
 		default:
 			logger.Warningf("[form] unknown required context key %q for skill %s", key, skillName)
 		}
 	}
 	body, _ := json.Marshal(FormPayload{SkillName: skillName, Fields: fields})
 	return string(body)
+}
+
+// 可见范围候选 ID：对齐 models 的 private 标志（0=公开，1=仅团队可见）。表单选择经
+// action.param["private"] 回传，与 MCPServer/AISkill 的 Private 列同值同义。
+const (
+	VisibilityPublic    int64 = 0
+	VisibilityTeamScope int64 = 1
+)
+
+// loadVisibilityField 构造「可见范围」单选字段（create_mcp / create_skill 的 admin
+// 授权表单用）。候选是固定枚举而非 DB 数据，故名称在此按 lang 本地化（与 BuildApprovalForm
+// 同路）；默认预选「仅团队可见」——最小暴露，admin 想公开再显式改。
+func loadVisibilityField(lang string) FormField {
+	return FormField{
+		Key:  "visibility",
+		Type: "single",
+		Candidates: []FormCandidate{
+			{ID: VisibilityPublic, Name: LangText(lang, "公开（所有人可见可用）", "Public (visible to everyone)")},
+			{ID: VisibilityTeamScope, Name: LangText(lang, "仅管理团队可见", "Team-scoped (managing teams only)"), IsDefault: true},
+		},
+	}
 }
 
 // loadBusiGroupField 列出用户可见业务组。preselectedID>0 且命中候选时该候选
