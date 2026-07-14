@@ -387,18 +387,14 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 	event.IsRecovered = true
 	event.LastEvalTime = now
 
-	// 恢复通知是否屏蔽，按"恢复时刻"重新判定，而不是沿用触发期写入 p.fires 的陈旧 NotifyMuted：
+	// 恢复通知是否屏蔽，按"恢复时刻"（clock=now）重新判定，而不是沿用触发期写入 p.fires 的陈旧 NotifyMuted：
 	// 仅当此刻仍命中「只屏蔽通知」规则才继续静默恢复通知，屏蔽已到期/删除则正常发出恢复通知。
-	// EventMuteStrategy 的时间匹配基于 event.TriggerTime，这里临时以恢复时刻 now 判定后还原。
 	event.NotifyMuted = 0
 	event.MuteId = 0
-	triggerTime := event.TriggerTime
-	event.TriggerTime = now
-	if hit, muteId, muteType := mute.EventMuteStrategy(event, p.alertMuteCache); hit && muteType == models.MuteTypeNotifyOnly {
+	if hit, muteId, muteType := mute.EventMuteStrategy(event, p.alertMuteCache, now); hit && muteType == models.MuteTypeNotifyOnly {
 		event.NotifyMuted = 1
 		event.MuteId = muteId
 	}
-	event.TriggerTime = triggerTime
 
 	p.HandleRecoverEventHook(event)
 	p.pushEventToQueue(event)

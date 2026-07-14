@@ -159,7 +159,8 @@ func BgNotMatchMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent,
 // EventMuteStrategy 判断事件是否命中业务组屏蔽规则，返回是否命中、命中规则 id、以及生效的屏蔽方式（models.MuteType*）。
 // 当事件同时命中多条规则时，更强的屏蔽方式优先：只要存在任一「屏蔽事件与通知」命中即返回 MuteTypeAll，
 // 仅当所有命中规则都是「只屏蔽通知」时才返回 MuteTypeNotifyOnly，避免结果受规则在缓存中的先后顺序影响。
-func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.AlertMuteCacheType) (bool, int64, int) {
+// clock 可选参数同 MatchMute：传入时以该时刻代替 event.TriggerTime 做时间匹配（如按恢复时刻重判恢复通知是否屏蔽）。
+func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.AlertMuteCacheType, clock ...int64) (bool, int64, int) {
 	mutes, has := alertMuteCache.Gets(event.GroupId)
 	if !has || len(mutes) == 0 {
 		return false, 0, models.MuteTypeAll
@@ -170,7 +171,7 @@ func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.Alert
 		notifyOnlyMuteId int64
 	)
 	for i := 0; i < len(mutes); i++ {
-		matched, _ := MatchMute(event, mutes[i])
+		matched, _ := MatchMute(event, mutes[i], clock...)
 		if !matched {
 			continue
 		}
@@ -203,16 +204,16 @@ func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		}
 	}
 
+	ts := event.TriggerTime
+	if len(clock) > 0 {
+		ts = clock[0]
+	}
+
 	if mute.MuteTimeType == models.TimeRange {
-		if !mute.IsWithinTimeRange(event.TriggerTime) {
+		if !mute.IsWithinTimeRange(ts) {
 			return false, errors.New("event trigger time not within mute time range")
 		}
 	} else if mute.MuteTimeType == models.Periodic {
-		ts := event.TriggerTime
-		if len(clock) > 0 {
-			ts = clock[0]
-		}
-
 		if !mute.IsWithinPeriodicMute(ts) {
 			return false, errors.New("event trigger time not within periodic mute range")
 		}

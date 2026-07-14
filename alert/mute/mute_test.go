@@ -94,3 +94,28 @@ func TestEventMuteStrategy_MuteAllWinsOverNotifyOnly(t *testing.T) {
 		}
 	}
 }
+
+// clock 可选参数应代替 event.TriggerTime 参与时间匹配（TimeRange 与 Periodic 皆然）：
+// TriggerTime 在窗口外而 clock 在窗口内应命中，clock 在窗口外则不命中。
+// 恢复通知按恢复时刻重判、升级按判定时刻重判都依赖该语义。
+func TestEventMuteStrategy_ClockOverride(t *testing.T) {
+	now := time.Now().Unix()
+	cache := &memsto.AlertMuteCacheType{}
+	cache.Set(map[int64][]*models.AlertMute{1: {{
+		GroupId:      1,
+		MuteTimeType: models.TimeRange,
+		Btime:        now - 100,
+		Etime:        now + 100,
+		MuteType:     models.MuteTypeNotifyOnly,
+	}}}, 1, now)
+
+	event := &models.AlertCurEvent{GroupId: 1, TriggerTime: now - 100000, TagsMap: map[string]string{}}
+	if hit, _, muteType := EventMuteStrategy(event, cache, now); !hit || muteType != models.MuteTypeNotifyOnly {
+		t.Fatalf("clock in window: got hit=%v muteType=%d, want hit=true muteType=%d", hit, muteType, models.MuteTypeNotifyOnly)
+	}
+
+	event.TriggerTime = now
+	if hit, _, _ := EventMuteStrategy(event, cache, now+100000); hit {
+		t.Fatalf("clock out of window: got hit=true, want hit=false")
+	}
+}

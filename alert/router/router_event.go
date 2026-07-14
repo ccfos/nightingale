@@ -49,13 +49,10 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 		return
 	}
 
-	// 只屏蔽通知的判定：恢复事件按恢复时刻（当前时间）重判，
+	// 只屏蔽通知的判定：恢复事件按恢复时刻（clock=当前时间）重判，
 	// 避免 TriggerTime 早于「只屏蔽通知」窗口而漏判、导致窗口内的恢复通知被误发。
 	if event.IsRecovered {
-		origTriggerTime := event.TriggerTime
-		event.TriggerTime = time.Now().Unix()
-		hit, muteId, muteType = mute.EventMuteStrategy(event, rt.AlertMuteCache)
-		event.TriggerTime = origTriggerTime
+		hit, muteId, muteType = mute.EventMuteStrategy(event, rt.AlertMuteCache, time.Now().Unix())
 	}
 	if hit && muteType == models.MuteTypeNotifyOnly {
 		// 事件照常入队产生/记录，仅打标，通知阶段据此跳过发送并写通知记录（含恢复事件）
