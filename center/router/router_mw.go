@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent/a2a"
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
@@ -109,7 +110,10 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 		// OAuth access token（内建 AS 与外置 IdP RS）只在 agent 面（/a2a /mcp）受理，
 		// 收敛权限：避免一个为 agent 签发的 token 被拿去调用其余 /api/n9e/* 接口。无标记
 		// 时整段跳过，token 落到下面的 session-JWT 校验并以 401 结束。
-		agentScope := c.GetBool(agentOAuthScopeKey)
+		// /mcp 工具调用的进程内回放是唯一例外：请求 ctx 带 a2a 包私有的派发标记（外部
+		// 请求无法伪造），说明该 OAuth token 已在 /mcp 边界过过一次本中间件，内部这跳
+		// 视同 agent 面继续受理，RBAC 按解析出的用户正常生效。
+		agentScope := c.GetBool(agentOAuthScopeKey) || a2a.IsMCPInProcDispatch(c.Request.Context())
 
 		// 内建 OAuth 2.1 授权服务器（builtin AS）自签发的 access token：用本服务的 MCP
 		// 签名密钥验签（与外部 IdP token、session JWT 密码学隔离，验不过即非本类 token），

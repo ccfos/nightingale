@@ -40,6 +40,7 @@ func (rt *Router) notifyRulesAdd(c *gin.Context) {
 		nr.CreateAt = now
 		nr.UpdateBy = me.Username
 		nr.UpdateAt = now
+		nr.CleanFEFields()
 
 		err := models.Insert(rt.Ctx, nr)
 		ginx.Dangerous(err)
@@ -86,6 +87,7 @@ func (rt *Router) notifyRulePut(c *gin.Context) {
 	}
 
 	f.UpdateBy = me.Username
+	f.CleanFEFields()
 	ginx.NewRender(c).Message(nr.Update(rt.Ctx, f))
 }
 
@@ -105,7 +107,65 @@ func (rt *Router) notifyRuleGet(c *gin.Context) {
 		ginx.Bomb(http.StatusForbidden, "forbidden")
 	}
 
+	rt.fillNotifyConfigNames([]*models.NotifyRule{nr})
 	ginx.NewRender(c).Data(nr, nil)
+}
+
+// fillNotifyConfigNames 为通知配置回填展示用字段：channel_id 对应的媒介 ident，
+// 以及邮件/短信/电话等 user-info 媒介按 params 里 user_ids/user_group_ids 解析出的
+// 用户昵称与用户组名，供告警规则页「选择通知规则」列表直接展示媒介与收件人摘要。
+// FlashDuty/PagerDuty 用的是 ids/pagerduty_integration_keys，不含这两个 key，天然跳过。
+func (rt *Router) fillNotifyConfigNames(rules []*models.NotifyRule) {
+	// 汇总所有 channel_id，一次查库拿到 ident 映射，避免逐条查询
+	channelIDSet := make(map[int64]struct{})
+	for _, nr := range rules {
+		for i := range nr.NotifyConfigs {
+			if id := nr.NotifyConfigs[i].ChannelID; id > 0 {
+				channelIDSet[id] = struct{}{}
+			}
+		}
+	}
+
+	var channelIdents map[int64]string
+	if len(channelIDSet) > 0 {
+		ids := make([]int64, 0, len(channelIDSet))
+		for id := range channelIDSet {
+			ids = append(ids, id)
+		}
+		var err error
+		channelIdents, err = models.NotifyChannelIdentsGet(rt.Ctx, ids)
+		if err != nil {
+			logger.Warningf("failed to get notify channel idents: %v", err)
+		}
+	}
+
+	for _, nr := range rules {
+		for i := range nr.NotifyConfigs {
+			nc := &nr.NotifyConfigs[i]
+
+			nc.ChannelIdent = channelIdents[nc.ChannelID]
+
+			if userIDs := nc.ParseUserIDs(); len(userIDs) > 0 {
+				names := make([]string, 0, len(userIDs))
+				for _, u := range rt.UserCache.GetByUserIds(userIDs) {
+					if u.Nickname != "" {
+						names = append(names, u.Nickname)
+					} else {
+						names = append(names, u.Username)
+					}
+				}
+				nc.UserNames = names
+			}
+
+			if groupIDs := nc.ParseUserGroupIDs(); len(groupIDs) > 0 {
+				names := make([]string, 0, len(groupIDs))
+				for _, g := range rt.UserGroupCache.GetByUserGroupIds(groupIDs) {
+					names = append(names, g.Name)
+				}
+				nc.UserGroupNames = names
+			}
+		}
+	}
 }
 
 func (rt *Router) notifyRulesGetByService(c *gin.Context) {
@@ -121,6 +181,7 @@ func (rt *Router) notifyRulesGet(c *gin.Context) {
 	ginx.Dangerous(err)
 	models.FillUpdateByNicknames(rt.Ctx, lst)
 	if me.IsAdmin() {
+		rt.fillNotifyConfigNames(lst)
 		ginx.NewRender(c).Data(lst, nil)
 		return
 	}
@@ -131,6 +192,7 @@ func (rt *Router) notifyRulesGet(c *gin.Context) {
 			res = append(res, nr)
 		}
 	}
+	rt.fillNotifyConfigNames(res)
 	ginx.NewRender(c).Data(res, nil)
 }
 

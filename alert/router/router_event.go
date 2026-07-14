@@ -41,11 +41,23 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 
 		event.TagsMap[arr[0]] = arr[1]
 	}
-	hit, _ := mute.EventMuteStrategy(event, rt.AlertMuteCache)
-	if hit {
+	// 完全屏蔽：保持原有行为，按事件自身的 TriggerTime 判定，触发与恢复事件命中即丢弃
+	hit, muteId, muteType := mute.EventMuteStrategy(event, rt.AlertMuteCache)
+	if hit && muteType != models.MuteTypeNotifyOnly {
 		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
 		ginx.NewRender(c).Message(nil)
 		return
+	}
+
+	// 只屏蔽通知的判定：恢复事件按恢复时刻（clock=当前时间）重判，
+	// 避免 TriggerTime 早于「只屏蔽通知」窗口而漏判、导致窗口内的恢复通知被误发。
+	if event.IsRecovered {
+		hit, muteId, muteType = mute.EventMuteStrategy(event, rt.AlertMuteCache, time.Now().Unix())
+	}
+	if hit && muteType == models.MuteTypeNotifyOnly {
+		// 事件照常入队产生/记录，仅打标，通知阶段据此跳过发送并写通知记录（含恢复事件）
+		event.NotifyMuted = 1
+		event.MuteId = muteId
 	}
 
 	if err := event.ParseRule("rule_name"); err != nil {

@@ -67,6 +67,8 @@ type AlertCurEvent struct {
 	LastSentTime       int64               `json:"last_sent_time" gorm:"-"`             // 上次发送时间
 	FirstEvalTime      int64               `json:"first_eval_time" gorm:"-"`            // 首次异常检测时间
 	NotifyCurNumber    int                 `json:"notify_cur_number"`                   // notify: current number
+	NotifyMuted        int                 `json:"-" gorm:"-"`                          // 运行时标记：命中「只屏蔽通知」规则，事件照常产生但不发通知（不落库）
+	MuteId             int64               `json:"-" gorm:"-"`                          // 运行时：命中的「只屏蔽通知」规则 id，供跳过通知时写通知记录说明
 	FirstTriggerTime   int64               `json:"first_trigger_time"`                  // 连续告警的首次告警时间
 	ExtraConfig        interface{}         `json:"extra_config" gorm:"-"`
 	Status             int                 `json:"status" gorm:"-"`

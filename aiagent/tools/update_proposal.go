@@ -310,14 +310,19 @@ func confirmUpdateGate(ctx context.Context, deps *aiagent.ToolDeps, params map[s
 
 // renderUpdateProposalPrompt 把提案改动渲染成给用户的确认文案（markdown）。
 // 由工具确定性生成，不依赖模型转述，保证用户看到的就是将要写入的全部改动。
-func renderUpdateProposalPrompt(subject string, changes []string) string {
+// lang 取 params["lang"]（router 注入的 UI 语言），文案经 aiagent.LangText 选取。
+func renderUpdateProposalPrompt(lang, subject string, changes []string) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("即将修改%s，改动如下：\n", subject))
+	sb.WriteString(fmt.Sprintf(aiagent.LangText(lang,
+		"即将修改%s，改动如下：\n",
+		"About to modify %s with the following changes:\n"), subject))
 	for _, c := range changes {
 		sb.WriteString("\n- ")
 		sb.WriteString(c)
 	}
-	sb.WriteString("\n\n以上改动尚未写入。回复「确认」立即生效，回复「取消」放弃本次修改，也可以直接提出新的调整要求。")
+	sb.WriteString(aiagent.LangText(lang,
+		"\n\n以上改动尚未写入。回复「确认」立即生效，回复「取消」放弃本次修改，也可以直接提出新的调整要求。",
+		"\n\nNothing has been written yet. Reply \"confirm\" to apply, \"cancel\" to discard, or describe further adjustments."))
 	return sb.String()
 }
 

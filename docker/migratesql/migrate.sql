@@ -525,3 +525,6 @@ CREATE TABLE `mcp_server_oauth` (
 /* v9 2026-07-10 mcp server team scope */
 ALTER TABLE `mcp_server` ADD COLUMN `user_group_ids` text COMMENT 'owner team ids (JSON)' AFTER `auth_mode`;
 ALTER TABLE `mcp_server` ADD COLUMN `private` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0=public, 1=team-scoped' AFTER `user_group_ids`;
+
+/* v9 2026-07-10 alert_mute mute_type for notify-only mute */
+ALTER TABLE `alert_mute` ADD COLUMN `mute_type` int not null default 0 comment '0-mute event and notify,1-mute notify only';

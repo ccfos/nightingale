@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "name": "客户端发起TLS握手失败次数",
                 "note": "客户端每秒发起TLS会话失败的次数。支持的协议：HTTPS/TLS/QUIC"
+            },
+            {
+                "lang": "en_US",
+                "name": "Client TLS Handshake Failures",
+                "note": "Number of failed TLS handshakes initiated by clients per second. Supported protocols: HTTPS/TLS/QUIC"
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "name": "丢弃连接数",
                 "note": "测量对象每秒丢弃连接的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Dropped Connections",
+                "note": "Number of connections dropped by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "name": "丢弃数据包",
                 "note": "测量对象每秒丢弃数据报文的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Dropped Packets",
+                "note": "Number of data packets dropped by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -88,6 +103,11 @@
                 "lang": "zh_CN",
                 "name": "丢弃网络带宽",
                 "note": "测量对象丢弃网络带宽。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Dropped Bandwidth",
+                "note": "Network bandwidth dropped by the monitored object."
             }
         ],
         "created_at": 0,
@@ -112,6 +132,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码(2XX)",
                 "note": "负载均衡每秒返回2XX响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Codes (2XX)",
+                "note": "Number of 2XX status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -136,6 +161,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码(3XX)",
                 "note": "负载均衡每秒返回3XX响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Codes (3XX)",
+                "note": "Number of 3XX status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -160,6 +190,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码400",
                 "note": "负载均衡每秒返回400响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Code 400",
+                "note": "Number of 400 status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -184,6 +219,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码404",
                 "note": "负载均衡每秒返回404响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Code 404",
+                "note": "Number of 404 status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -208,6 +248,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码408",
                 "note": "负载均衡每秒返回408响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Code 408",
+                "note": "Number of 408 status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -232,6 +277,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码499",
                 "note": "负载均衡每秒返回499响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Code 499",
+                "note": "Number of 499 status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -256,6 +306,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码(4XX)",
                 "note": "负载均衡每秒返回4XX响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Codes (4XX)",
+                "note": "Number of 4XX status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -280,6 +335,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码502",
                 "note": "负载均衡每秒返回502响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Code 502",
+                "note": "Number of 502 status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -304,6 +364,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码503",
                 "note": "负载均衡每秒返回503响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Code 503",
+                "note": "Number of 503 status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -328,6 +393,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码504",
                 "note": "负载均衡每秒返回504响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Code 504",
+                "note": "Number of 504 status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -352,6 +422,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡响应状态码(5XX)",
                 "note": "负载均衡每秒返回5XX响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Load Balancer Status Codes (5XX)",
+                "note": "Number of 5XX status codes returned by the load balancer per second."
             }
         ],
         "created_at": 0,
@@ -376,6 +451,11 @@
                 "lang": "zh_CN",
                 "name": "黑白名单每秒阻断数据报文的个数",
                 "note": "每秒黑白名单阻断流入测量对象数据报文的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Blocked by Blacklist/Whitelist",
+                "note": "Number of data packets destined for the monitored object that are blocked by the blacklist/whitelist per second."
             }
         ],
         "created_at": 0,
@@ -400,6 +480,11 @@
                 "lang": "zh_CN",
                 "name": "黑白名单阻断的网络带宽",
                 "note": "黑白名单阻断流入测量对象的网络带宽。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Bandwidth Blocked by Blacklist/Whitelist",
+                "note": "Network bandwidth destined for the monitored object that is blocked by the blacklist/whitelist."
             }
         ],
         "created_at": 0,
@@ -424,6 +509,11 @@
                 "lang": "zh_CN",
                 "name": "4层并发连接使用率",
                 "note": "4层的ELB实例并发连接数使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-4 Concurrent Connection Usage",
+                "note": "Concurrent connection usage of the Layer-4 ELB instance."
             }
         ],
         "created_at": 0,
@@ -448,6 +538,11 @@
                 "lang": "zh_CN",
                 "name": "4层入带宽使用率",
                 "note": "4层的ELB实例入带宽使用率。注意：若入带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-4 Inbound Bandwidth Usage",
+                "note": "Inbound bandwidth usage of the Layer-4 ELB instance. Note: If the inbound bandwidth usage reaches 100%, the performance guaranteed by the ELB specification has been exceeded. Your services can continue to use higher bandwidth, but ELB cannot guarantee the service availability SLA for the excess bandwidth."
             }
         ],
         "created_at": 0,
@@ -472,6 +567,11 @@
                 "lang": "zh_CN",
                 "name": "4层新建连接数使用率",
                 "note": "4层的ELB实例新建连接数使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-4 New Connection Usage",
+                "note": "New connection usage of the Layer-4 ELB instance."
             }
         ],
         "created_at": 0,
@@ -496,6 +596,11 @@
                 "lang": "zh_CN",
                 "name": "4层出带宽使用率",
                 "note": "4层的ELB实例出带宽使用率。注意：若出带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-4 Outbound Bandwidth Usage",
+                "note": "Outbound bandwidth usage of the Layer-4 ELB instance. Note: If the outbound bandwidth usage reaches 100%, the performance guaranteed by the ELB specification has been exceeded. Your services can continue to use higher bandwidth, but ELB cannot guarantee the service availability SLA for the excess bandwidth."
             }
         ],
         "created_at": 0,
@@ -520,6 +625,11 @@
                 "lang": "zh_CN",
                 "name": "七层2XX请求占比",
                 "note": "七层2XX响应状态码的个数占比。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 2XX Request Ratio",
+                "note": "Percentage of Layer-7 2XX status codes."
             }
         ],
         "created_at": 0,
@@ -544,6 +654,11 @@
                 "lang": "zh_CN",
                 "name": "七层4XX请求占比",
                 "note": "七层4XX响应状态码的个数占比。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 4XX Request Ratio",
+                "note": "Percentage of Layer-7 4XX status codes."
             }
         ],
         "created_at": 0,
@@ -568,6 +683,11 @@
                 "lang": "zh_CN",
                 "name": "七层5XX请求占比",
                 "note": "七层5XX响应状态码的个数占比。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 5XX Request Ratio",
+                "note": "Percentage of Layer-7 5XX status codes."
             }
         ],
         "created_at": 0,
@@ -592,6 +712,11 @@
                 "lang": "zh_CN",
                 "name": "7层并发连接使用率",
                 "note": "7层的ELB实例并发连接数使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Concurrent Connection Usage",
+                "note": "Concurrent connection usage of the Layer-7 ELB instance."
             }
         ],
         "created_at": 0,
@@ -616,6 +741,11 @@
                 "lang": "zh_CN",
                 "name": "7层入带宽使用率",
                 "note": "7层的ELB实例入带宽使用率。注意：若入带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Inbound Bandwidth Usage",
+                "note": "Inbound bandwidth usage of the Layer-7 ELB instance. Note: If the inbound bandwidth usage reaches 100%, the performance guaranteed by the ELB specification has been exceeded. Your services can continue to use higher bandwidth, but ELB cannot guarantee the service availability SLA for the excess bandwidth."
             }
         ],
         "created_at": 0,
@@ -640,6 +770,11 @@
                 "lang": "zh_CN",
                 "name": "7层新建连接数使用率",
                 "note": "7层的ELB实例新建连接数使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 New Connection Usage",
+                "note": "New connection usage of the Layer-7 ELB instance."
             }
         ],
         "created_at": 0,
@@ -664,6 +799,11 @@
                 "lang": "zh_CN",
                 "name": "7层出带宽使用率",
                 "note": "7层的ELB实例出带宽使用率。注意：若出带宽使用率达到100%，说明已经超出ELB规格所提供的性能保障，您的业务可以继续使用更高带宽，但对于带宽超出的部分，ELB无法承诺服务可用性指标。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Outbound Bandwidth Usage",
+                "note": "Outbound bandwidth usage of the Layer-7 ELB instance. Note: If the outbound bandwidth usage reaches 100%, the performance guaranteed by the ELB specification has been exceeded. Your services can continue to use higher bandwidth, but ELB cannot guarantee the service availability SLA for the excess bandwidth."
             }
         ],
         "created_at": 0,
@@ -688,6 +828,11 @@
                 "lang": "zh_CN",
                 "name": "7层查询速率使用率",
                 "note": "7层的ELB实例查询速率使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Query Rate Usage",
+                "note": "Query rate usage of the Layer-7 ELB instance."
             }
         ],
         "created_at": 0,
@@ -712,6 +857,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码101",
                 "note": "测量对象的后端服务器每秒返回7层101响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Code 101",
+                "note": "Number of Layer-7 101 status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -736,6 +886,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码400",
                 "note": "测量对象的后端服务器每秒返回7层400响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Code 400",
+                "note": "Number of Layer-7 400 status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -760,6 +915,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码403",
                 "note": "测量对象的后端服务器每秒返回7层403响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Code 403",
+                "note": "Number of Layer-7 403 status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -784,6 +944,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码404",
                 "note": "测量对象的后端服务器每秒返回7层404响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Code 404",
+                "note": "Number of Layer-7 404 status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -808,6 +973,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码500",
                 "note": "测量对象的后端服务器每秒返回7层500响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Code 500",
+                "note": "Number of Layer-7 500 status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -832,6 +1002,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码501",
                 "note": "测量对象的后端服务器每秒返回7层501响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Code 501",
+                "note": "Number of Layer-7 501 status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -856,6 +1031,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码502",
                 "note": "测量对象的后端服务器每秒返回7层502响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Code 502",
+                "note": "Number of Layer-7 502 status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -880,6 +1060,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码503",
                 "note": "测量对象的后端服务器每秒返回7层503响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Code 503",
+                "note": "Number of Layer-7 503 status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -904,6 +1089,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码504",
                 "note": "测量对象的后端服务器每秒返回7层504响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Code 504",
+                "note": "Number of Layer-7 504 status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -928,6 +1118,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码（Others）",
                 "note": "测量对象的后端服务器每秒返回7层后端其他响应状态码的个数。不包含：101、2XX、3XX、400、403、404、500、501、502、503、504。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Codes (Others)",
+                "note": "Number of Layer-7 other status codes returned by the backend servers of the monitored object per second. Excluding: 101, 2XX, 3XX, 400, 403, 404, 500, 501, 502, 503, and 504."
             }
         ],
         "created_at": 0,
@@ -952,6 +1147,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议响应状态码(Others)",
                 "note": "测量对象每秒返回7层其他响应状态码的个数。不包含：2XX、3XX、404、499、502。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Status Codes (Others)",
+                "note": "Number of Layer-7 other status codes returned by the monitored object per second. Excluding: 2XX, 3XX, 404, 499, and 502."
             }
         ],
         "created_at": 0,
@@ -976,6 +1176,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议响应状态码404",
                 "note": "测量对象每秒返回7层404响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Status Code 404",
+                "note": "Number of Layer-7 404 status codes returned by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1000,6 +1205,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议响应状态码499",
                 "note": "测量对象每秒返回7层499响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Status Code 499",
+                "note": "Number of Layer-7 499 status codes returned by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1024,6 +1234,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议响应状态码502",
                 "note": "测量对象每秒返回7层502响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Status Code 502",
+                "note": "Number of Layer-7 502 status codes returned by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1048,6 +1263,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议RT平均值",
                 "note": "测量对象7层平均响应时间。从测量对象收到客户端请求开始，到测量对象将所有响应返回给客户端为止。 说明：websocket场景下RT平均值可能会非常大，此时该指标无法作为时延指标参考。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Average Layer-7 Response Time",
+                "note": "Average Layer-7 response time of the monitored object, measured from when the monitored object receives a client request to when it returns all responses to the client. Note: In WebSocket scenarios, the average RT may be very large and cannot be used as a latency reference."
             }
         ],
         "created_at": 0,
@@ -1072,6 +1292,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码(4XX)",
                 "note": "测量对象的后端服务器每秒返回7层4XX系列响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Codes (4XX)",
+                "note": "Number of Layer-7 4XX series status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1096,6 +1321,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码(5XX)",
                 "note": "测量对象的后端服务器每秒返回7层5XX系列响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Codes (5XX)",
+                "note": "Number of Layer-7 5XX series status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1120,6 +1350,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端的RT平均值",
                 "note": "测量对象7层后端平均响应时间。从测量对象将请求转发给后端服务器开始，到测量对象收到后端服务器返回响应为止。 说明：websocket场景下RT平均值可能会非常大，此时该指标无法作为时延指标参考。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Average Layer-7 Backend Response Time",
+                "note": "Average Layer-7 backend response time of the monitored object, measured from when the monitored object forwards a request to a backend server to when it receives the response from the backend server. Note: In WebSocket scenarios, the average RT may be very large and cannot be used as a latency reference."
             }
         ],
         "created_at": 0,
@@ -1144,6 +1379,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码(2XX)",
                 "note": "测量对象的后端服务器每秒返回7层2XX系列响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Codes (2XX)",
+                "note": "Number of Layer-7 2XX series status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1168,6 +1408,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端响应状态码(3XX)",
                 "note": "测量对象的后端服务器每秒返回7层3XX系列响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Backend Status Codes (3XX)",
+                "note": "Number of Layer-7 3XX series status codes returned by the backend servers of the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1192,6 +1437,11 @@
                 "lang": "zh_CN",
                 "name": "并发连接数",
                 "note": "在四层负载均衡器中，指从测量对象到后端服务器建立的所有TCP和UDP连接的个数。在七层负载均衡器中，指从客户端到ELB建立的所有TCP连接的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Concurrent Connections",
+                "note": "For Layer-4 load balancers, the total number of TCP and UDP connections established from the monitored object to backend servers. For Layer-7 load balancers, the total number of TCP connections established from clients to the ELB."
             }
         ],
         "created_at": 0,
@@ -1216,6 +1466,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端的RT最大值",
                 "note": "测量对象7层后端最大响应时间。从测量对象将请求转发给后端服务器开始，到测量对象收到后端服务器返回响应为止。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Layer-7 Backend Response Time",
+                "note": "Maximum Layer-7 backend response time of the monitored object, measured from when the monitored object forwards a request to a backend server to when it receives the response from the backend server."
             }
         ],
         "created_at": 0,
@@ -1240,6 +1495,11 @@
                 "lang": "zh_CN",
                 "name": "7层后端的RT最小值",
                 "note": "测量对象7层后端最小响应时间。从测量对象将请求转发给后端服务器开始，到测量对象收到后端服务器返回响应为止。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Minimum Layer-7 Backend Response Time",
+                "note": "Minimum Layer-7 backend response time of the monitored object, measured from when the monitored object forwards a request to a backend server to when it receives the response from the backend server."
             }
         ],
         "created_at": 0,
@@ -1264,6 +1524,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议的RT最大值",
                 "note": "测量对象7层最大响应时间。从测量对象收到客户端请求开始，到测量对象将所有响应返回给客户端为止。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Layer-7 Response Time",
+                "note": "Maximum Layer-7 response time of the monitored object, measured from when the monitored object receives a client request to when it returns all responses to the client."
             }
         ],
         "created_at": 0,
@@ -1288,6 +1553,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议的RT最小值",
                 "note": "测量对象7层最小响应时间。从测量对象收到客户端请求开始，到测量对象将所有响应返回给客户端为止。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Minimum Layer-7 Response Time",
+                "note": "Minimum Layer-7 response time of the monitored object, measured from when the monitored object receives a client request to when it returns all responses to the client."
             }
         ],
         "created_at": 0,
@@ -1312,6 +1582,11 @@
                 "lang": "zh_CN",
                 "name": "后端服务器每秒重置报文个数",
                 "note": "测量后端服务器每秒发送至客户端的重置（RST）报文个数。重置报文由后端服务器生成，然后由负载均衡器转发。支持协议：TCP"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reset Packets from Backend Servers",
+                "note": "Number of reset (RST) packets sent from backend servers to clients per second. Reset packets are generated by backend servers and forwarded by the load balancer. Supported protocol: TCP"
             }
         ],
         "created_at": 0,
@@ -1336,6 +1611,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡器每秒重置报文个数",
                 "note": "测量负载均衡器每秒生成的重置（RST）报文个数。支持协议：TCP"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reset Packets from Load Balancer",
+                "note": "Number of reset (RST) packets generated by the load balancer per second. Supported protocol: TCP"
             }
         ],
         "created_at": 0,
@@ -1360,6 +1640,11 @@
                 "lang": "zh_CN",
                 "name": "客户端每秒重置报文个数",
                 "note": "测量客户端每秒发送至后端服务器的重置（RST）报文个数。重置报文由客户端生成，然后由负载均衡器转发。支持协议：TCP"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reset Packets from Clients",
+                "note": "Number of reset (RST) packets sent from clients to backend servers per second. Reset packets are generated by clients and forwarded by the load balancer. Supported protocol: TCP"
             }
         ],
         "created_at": 0,
@@ -1384,6 +1669,11 @@
                 "lang": "zh_CN",
                 "name": "入网带宽",
                 "note": "测量对象入网带宽。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Inbound Bandwidth",
+                "note": "Inbound bandwidth of the monitored object."
             }
         ],
         "created_at": 0,
@@ -1408,6 +1698,11 @@
                 "lang": "zh_CN",
                 "name": "出网带宽",
                 "note": "测量对象出网带宽。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Outbound Bandwidth",
+                "note": "Outbound bandwidth of the monitored object."
             }
         ],
         "created_at": 0,
@@ -1432,6 +1727,11 @@
                 "lang": "zh_CN",
                 "name": "7层请求带宽",
                 "note": "测量对象后端服务器的七层请求接收带宽。 说明：当监听器开启HTTP/2时，该指标无法作为参考。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Request Bandwidth",
+                "note": "Bandwidth of Layer-7 requests received by the backend servers of the monitored object. Note: This metric cannot be used as a reference when HTTP/2 is enabled on the listener."
             }
         ],
         "created_at": 0,
@@ -1456,6 +1756,11 @@
                 "lang": "zh_CN",
                 "name": "7层响应带宽",
                 "note": "测量对象后端服务器的七层响应发送带宽。 说明：当监听器开启HTTP/2时，该指标无法作为参考。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Response Bandwidth",
+                "note": "Bandwidth of Layer-7 responses sent by the backend servers of the monitored object. Note: This metric cannot be used as a reference when HTTP/2 is enabled on the listener."
             }
         ],
         "created_at": 0,
@@ -1480,6 +1785,11 @@
                 "lang": "zh_CN",
                 "name": "IPv6入网带宽",
                 "note": "流入测量对象的IPv6网络带宽。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPv6 Inbound Bandwidth",
+                "note": "IPv6 network bandwidth flowing into the monitored object."
             }
         ],
         "created_at": 0,
@@ -1504,6 +1814,11 @@
                 "lang": "zh_CN",
                 "name": "IPv6出网带宽",
                 "note": "流出测量对象的IPv6网络带宽。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPv6 Outbound Bandwidth",
+                "note": "IPv6 network bandwidth flowing out of the monitored object."
             }
         ],
         "created_at": 0,
@@ -1528,6 +1843,11 @@
                 "lang": "zh_CN",
                 "name": "活跃连接数",
                 "note": "从测量对象到后端服务器建立的活跃TCP和UDP连接的个数。Windows和Linux服务器都可以使用如下命令查看。netstat -an"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active Connections",
+                "note": "Number of active TCP and UDP connections established from the monitored object to backend servers. You can run the following command on both Windows and Linux servers to view them: netstat -an"
             }
         ],
         "created_at": 0,
@@ -1552,6 +1872,11 @@
                 "lang": "zh_CN",
                 "name": "非活跃连接数",
                 "note": "从测量对象到后端服务器建立的非活跃TCP和UDP连接的个数。Windows和Linux服务器都可以使用如下命令查看。netstat -an"
+            },
+            {
+                "lang": "en_US",
+                "name": "Inactive Connections",
+                "note": "Number of inactive TCP and UDP connections established from the monitored object to backend servers. You can run the following command on both Windows and Linux servers to view them: netstat -an"
             }
         ],
         "created_at": 0,
@@ -1576,6 +1901,11 @@
                 "lang": "zh_CN",
                 "name": "新建连接数",
                 "note": "从客户端到测量对象每秒新建立的连接数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "New Connections",
+                "note": "Number of new connections established from clients to the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1600,6 +1930,11 @@
                 "lang": "zh_CN",
                 "name": "流入数据包数",
                 "note": "测量对象每秒接收到数据包的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Incoming Packets",
+                "note": "Number of data packets received by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1624,6 +1959,11 @@
                 "lang": "zh_CN",
                 "name": "流出数据包数",
                 "note": "测量对象每秒发出数据包的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Outgoing Packets",
+                "note": "Number of data packets sent by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1648,6 +1988,11 @@
                 "lang": "zh_CN",
                 "name": "网络流入速率",
                 "note": "从外部访问测量对象的网络速率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Inbound Rate",
+                "note": "Network rate of traffic accessing the monitored object from external sources."
             }
         ],
         "created_at": 0,
@@ -1672,6 +2017,11 @@
                 "lang": "zh_CN",
                 "name": "网络流出速率",
                 "note": "测量对象访问外部的网络速率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Outbound Rate",
+                "note": "Network rate at which the monitored object accesses external sources."
             }
         ],
         "created_at": 0,
@@ -1696,6 +2046,11 @@
                 "lang": "zh_CN",
                 "name": "异常主机数",
                 "note": "测量对象中健康检查异常的后端服务器个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Unhealthy Servers",
+                "note": "Number of backend servers in the monitored object that fail health checks."
             }
         ],
         "created_at": 0,
@@ -1720,6 +2075,11 @@
                 "lang": "zh_CN",
                 "name": "正常主机数",
                 "note": "测量对象中健康检查正常的后端服务器个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Healthy Servers",
+                "note": "Number of backend servers in the monitored object that pass health checks."
             }
         ],
         "created_at": 0,
@@ -1744,6 +2104,11 @@
                 "lang": "zh_CN",
                 "name": "7层查询速率",
                 "note": "测量对象7层查询速率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Query Rate",
+                "note": "Layer-7 query rate of the monitored object."
             }
         ],
         "created_at": 0,
@@ -1768,6 +2133,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议响应状态码（2XX）",
                 "note": "测量对象每秒返回7层2XX系列响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Status Codes (2XX)",
+                "note": "Number of Layer-7 2XX series status codes returned by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1792,6 +2162,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议响应状态码（3XX）",
                 "note": "测量对象每秒返回7层3XX系列响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Status Codes (3XX)",
+                "note": "Number of Layer-7 3XX series status codes returned by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1816,6 +2191,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议响应状态码（4XX）",
                 "note": "测量对象每秒返回7层4XX系列响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Status Codes (4XX)",
+                "note": "Number of Layer-7 4XX series status codes returned by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1840,6 +2220,11 @@
                 "lang": "zh_CN",
                 "name": "7层协议响应状态码（5XX）",
                 "note": "测量对象每秒返回7层5XX系列响应状态码的个数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Layer-7 Status Codes (5XX)",
+                "note": "Number of Layer-7 5XX series status codes returned by the monitored object per second."
             }
         ],
         "created_at": 0,
@@ -1864,6 +2249,11 @@
                 "lang": "zh_CN",
                 "name": "入方向流量镜像的报文速率",
                 "note": "测量对象入方向流量镜像的报文速率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Inbound Traffic Mirroring Packet Rate",
+                "note": "Packet rate of inbound traffic mirroring on the monitored object."
             }
         ],
         "created_at": 0,
@@ -1888,6 +2278,11 @@
                 "lang": "zh_CN",
                 "name": "入方向流量镜像的带宽",
                 "note": "测量对象入方向流量镜像的带宽。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Inbound Traffic Mirroring Bandwidth",
+                "note": "Bandwidth of inbound traffic mirroring on the monitored object."
             }
         ],
         "created_at": 0,
@@ -1912,6 +2307,11 @@
                 "lang": "zh_CN",
                 "name": "出方向流量镜像的报文速率",
                 "note": "测量对象出方向流量镜像的报文速率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Outbound Traffic Mirroring Packet Rate",
+                "note": "Packet rate of outbound traffic mirroring on the monitored object."
             }
         ],
         "created_at": 0,
@@ -1936,6 +2336,11 @@
                 "lang": "zh_CN",
                 "name": "出方向流量镜像的带宽",
                 "note": "测量对象出方向流量镜像的带宽。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Outbound Traffic Mirroring Bandwidth",
+                "note": "Bandwidth of outbound traffic mirroring on the monitored object."
             }
         ],
         "created_at": 0,
@@ -1960,6 +2365,11 @@
                 "lang": "zh_CN",
                 "name": "负载均衡器向后端服务器TLS握手失败",
                 "note": "负载均衡器向后端服务器每秒发起TLS会话失败的次数。支持的协议：HTTPS/TLS/QUIC"
+            },
+            {
+                "lang": "en_US",
+                "name": "Backend TLS Handshake Failures",
+                "note": "Number of failed TLS sessions initiated by the load balancer to backend servers per second. Supported protocols: HTTPS/TLS/QUIC"
             }
         ],
         "created_at": 0,

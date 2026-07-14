@@ -19,7 +19,7 @@ CREATE TABLE `users` (
 
 CREATE UNIQUE INDEX idx_users_username ON `users` (username);
 
-insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', strftime('%s', 'now'), 'system', strftime('%s', 'now'), 'system');
+insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', 'Admin', 'root.2020', 'Admin', strftime('%s', 'now'), 'system', strftime('%s', 'now'), 'system');
 
 CREATE TABLE `user_group` (
     `id` integer primary key autoincrement,
@@ -275,6 +275,7 @@ CREATE TABLE `alert_mute` (
     `mute_time_type` tinyint(1) not null default 0,
     `periodic_mutes` varchar(4096) not null default '',
     `severities` varchar(32) not null default '',
+    `mute_type` int not null default 0,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,

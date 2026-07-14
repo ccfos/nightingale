@@ -75,6 +75,22 @@ Enable = true
 # open RSA
 OpenRSA = false
 
+[HTTP.A2A]
+# The /a2a and /mcp endpoints are enabled by default and reuse HTTP.TokenAuth (X-User-Token).
+# Both also accept OAuth access tokens (Authorization: Bearer) when the built-in
+# authorization server (MCPAuth) or external-IdP resource-server auth (RSAuth) is enabled.
+# Disable = false
+# DisableMCP = false
+# MCPToolsets: enabled toolset whitelist for the /mcp endpoint. Empty = all
+# default toolsets (metrics included). Valid names:
+#   alerts, targets, datasource, mutes, busi_groups, notify_rules,
+#   alert_subscribes, event_pipelines, users, metrics, logs, dashboards, roles
+# List names explicitly to restrict (unknown names are ignored, never widened).
+# MCPToolsets = ["alerts", "dashboards"]
+# MCPEnableWriteTools: /mcp exposes read-only tools by default; set true to
+# also register write tools (create/update/delete) — an explicit opt-in.
+# MCPEnableWriteTools = false
+
 [DB]
 # mysql postgres sqlite
 DBType = "sqlite"

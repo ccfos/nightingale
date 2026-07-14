@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的node指标",
                 "name": "有关群集节点的信息"
+            },
+            {
+                "lang": "en_US",
+                "name": "Cluster Node Information",
+                "note": "Node metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的node指标",
                 "name": "Kubernetes标签转换为Prometheus标签"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubernetes Labels Converted to Prometheus Labels",
+                "note": "Node metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的node指标",
                 "name": "集群节点的角色"
+            },
+            {
+                "lang": "en_US",
+                "name": "Cluster Node Role",
+                "note": "Node metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -88,6 +103,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的node指标",
                 "name": "节点是否可以调度新的Pod"
+            },
+            {
+                "lang": "en_US",
+                "name": "Whether Node Can Schedule New Pods",
+                "note": "Node metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -112,6 +132,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的node指标",
                 "name": "群集节点的污点"
+            },
+            {
+                "lang": "en_US",
+                "name": "Cluster Node Taints",
+                "note": "Node metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -136,6 +161,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的node指标",
                 "name": "节点不同资源的容量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Node Resource Capacity",
+                "note": "Node metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -160,6 +190,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的node指标",
                 "name": "可用于调度的节点的不同资源的可分配资源"
+            },
+            {
+                "lang": "en_US",
+                "name": "Node Allocatable Resources",
+                "note": "Node metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -184,6 +219,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的node指标",
                 "name": "群集节点的状况"
+            },
+            {
+                "lang": "en_US",
+                "name": "Cluster Node Condition",
+                "note": "Node metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -208,6 +248,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的node指标",
                 "name": "Unix创建时间戳"
+            },
+            {
+                "lang": "en_US",
+                "name": "Creation Unix Timestamp",
+                "note": "Node metric from kube-state-metrics"
             }
         ],
         "created_at": 0,

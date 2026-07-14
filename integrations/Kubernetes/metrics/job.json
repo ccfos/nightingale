@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "有关job的信息"
+            },
+            {
+                "lang": "en_US",
+                "name": "Job Information",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "Kubernetes标签转换为Prometheus标签"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubernetes Labels Converted to Prometheus Labels",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "有关job所有者的信息"
+            },
+            {
+                "lang": "en_US",
+                "name": "Job Owner Information",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -88,6 +103,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "在任何给定时间，job应运行的pod的最大期望数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Desired Pods Running at Any Given Time",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -112,6 +132,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "运行job所需的成功完成的Pod数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Desired Successful Pod Completions",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -136,6 +161,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "在系统尝试终止job之前，作业相对于startTime的活动持续时间（以秒为单位）"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active Deadline Relative to StartTime Before Termination (Seconds)",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -160,6 +190,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "正在运行的pod数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Actively Running Pods",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -184,6 +219,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "成功reached Phase的pod数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pods That Reached Succeeded Phase",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -208,6 +248,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "Failed reached Phase的pod数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pods That Reached Failed Phase",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -232,6 +277,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "StartTime表示作业Job Manager job的时间"
+            },
+            {
+                "lang": "en_US",
+                "name": "Job Start Time (Acknowledged by the Job Manager)",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -256,6 +306,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "CompletionTime表示job完成的时间"
+            },
+            {
+                "lang": "en_US",
+                "name": "Job Completion Time",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -280,6 +335,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "job已完成执行"
+            },
+            {
+                "lang": "en_US",
+                "name": "Job Completed",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -304,6 +364,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "job执行失败"
+            },
+            {
+                "lang": "en_US",
+                "name": "Job Failed",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,
@@ -328,6 +393,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的job指标",
                 "name": "Unix创建时间戳"
+            },
+            {
+                "lang": "en_US",
+                "name": "Creation Unix Timestamp",
+                "note": "Job metric from kube-state-metrics."
             }
         ],
         "created_at": 0,

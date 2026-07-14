@@ -3,6 +3,7 @@ package models
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -50,6 +51,49 @@ type NotifyConfig struct {
 	TimeRanges []TimeRanges `json:"time_ranges"` // 适用时段
 	LabelKeys  []TagFilter  `json:"label_keys"`  // 适用标签
 	Attributes []TagFilter  `json:"attributes"`  // 适用属性
+
+	// 仅用于前端展示，不持久化：读接口按 params 里的 user_ids/user_group_ids
+	// 解析出的用户昵称与用户组名（邮件/短信/电话等 user-info 媒介），以及 channel_id
+	// 对应的媒介标识 ident。写接口会清空，避免回显数据被序列化进 DB。
+	ChannelIdent   string   `json:"channel_ident,omitempty" gorm:"-"`
+	UserNames      []string `json:"user_names,omitempty" gorm:"-"`
+	UserGroupNames []string `json:"user_group_names,omitempty" gorm:"-"`
+}
+
+// CleanFEFields 清除仅用于前端展示的计算字段，写库前调用。
+// NotifyConfigs 以 serializer:json 整体入库，gorm:"-" 对其内部字段无效，
+// 故需显式清空，防止前端回显的 channel_ident/user_names/user_group_names 被持久化。
+func (r *NotifyRule) CleanFEFields() {
+	for i := range r.NotifyConfigs {
+		r.NotifyConfigs[i].ChannelIdent = ""
+		r.NotifyConfigs[i].UserNames = nil
+		r.NotifyConfigs[i].UserGroupNames = nil
+	}
+}
+
+// ParseUserIDs 从 params 中解析 user_ids（邮件/短信/电话等 user-info 媒介）。
+func (n *NotifyConfig) ParseUserIDs() []int64 {
+	return parseInt64IDs(n.Params["user_ids"])
+}
+
+// ParseUserGroupIDs 从 params 中解析 user_group_ids。
+func (n *NotifyConfig) ParseUserGroupIDs() []int64 {
+	return parseInt64IDs(n.Params["user_group_ids"])
+}
+
+func parseInt64IDs(value interface{}) []int64 {
+	if value == nil {
+		return nil
+	}
+	data, err := json.Marshal(value)
+	if err != nil {
+		return nil
+	}
+	var ids []int64
+	if json.Unmarshal(data, &ids) != nil {
+		return nil
+	}
+	return ids
 }
 
 func (n *NotifyConfig) Hash() string {

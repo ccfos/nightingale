@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/dskit/types"
@@ -11,6 +12,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+type DatasourceMetaHookFunc func(c *gin.Context, request *models.QueryParam, response []string) ([]string, error)
+
+var DatasourceMetaHook DatasourceMetaHookFunc = func(c *gin.Context, request *models.QueryParam, response []string) ([]string, error) {
+	if response == nil {
+		return make([]string, 0), nil
+	}
+	return response, nil
+}
+
+type DatasourceDescribeHookFunc func(c *gin.Context, request *models.QueryParam) error
+
+var DatasourceDescribeHook DatasourceDescribeHookFunc = func(c *gin.Context, request *models.QueryParam) error {
+	return nil
+}
 
 func (rt *Router) ShowDatabases(c *gin.Context) {
 	var f models.QueryParam
@@ -35,8 +51,9 @@ func (rt *Router) ShowDatabases(c *gin.Context) {
 		ginx.Bomb(200, "datasource not exists")
 	}
 
-	if len(databases) == 0 {
-		databases = make([]string, 0)
+	databases, hookErr := DatasourceMetaHook(c, &f, databases)
+	if hookErr != nil {
+		ginx.Bomb(http.StatusForbidden, "%s", hookErr.Error())
 	}
 
 	ginx.NewRender(c).Data(databases, nil)
@@ -52,24 +69,37 @@ func (rt *Router) ShowTables(c *gin.Context) {
 		ginx.Bomb(200, "cluster not exists")
 	}
 
-	// 只接受一个入参
-	tables := make([]string, 0)
-	var err error
 	type TableShower interface {
 		ShowTables(ctx context.Context, database string) ([]string, error)
 	}
-	switch plug.(type) {
-	case TableShower:
-		if len(f.Queries) > 0 {
-			database, ok := f.Queries[0].(string)
-			if ok {
-				tables, err = plug.(TableShower).ShowTables(c.Request.Context(), database)
-			}
-		}
-	default:
+	shower, ok := plug.(TableShower)
+	if !ok {
 		ginx.Bomb(200, "datasource not exists")
 	}
-	ginx.NewRender(c).Data(tables, err)
+
+	// 只接受一个入参
+	if len(f.Queries) == 0 {
+		ginx.NewRender(c).Data(make([]string, 0), nil)
+		return
+	}
+	database, ok := f.Queries[0].(string)
+	if !ok {
+		ginx.NewRender(c).Data(make([]string, 0), nil)
+		return
+	}
+
+	tables, err := shower.ShowTables(c.Request.Context(), database)
+	if err != nil {
+		ginx.NewRender(c).Data(tables, err)
+		return
+	}
+
+	tables, hookErr := DatasourceMetaHook(c, &f, tables)
+	if hookErr != nil {
+		ginx.Bomb(http.StatusForbidden, "%s", hookErr.Error())
+	}
+
+	ginx.NewRender(c).Data(tables, nil)
 }
 
 func (rt *Router) DescribeTable(c *gin.Context) {
@@ -91,6 +121,9 @@ func (rt *Router) DescribeTable(c *gin.Context) {
 	case TableDescriber:
 		client := plug.(TableDescriber)
 		if len(f.Queries) > 0 {
+			if hookErr := DatasourceDescribeHook(c, &f); hookErr != nil {
+				ginx.Bomb(http.StatusForbidden, "%s", hookErr.Error())
+			}
 			columns, err = client.DescribeTable(c.Request.Context(), f.Queries[0])
 		}
 	default:

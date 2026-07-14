@@ -3,6 +3,8 @@ package chat
 import (
 	"regexp"
 	"strings"
+
+	"github.com/ccfos/nightingale/v6/aiagent"
 )
 
 // general_chat 后置校验的禁词正则。LLM 凭记忆答 n9e 问题时会把相邻产品
@@ -56,11 +58,13 @@ func ValidateRestrictedGCOutput(answer string) (clean bool, hits []string) {
 
 // BuildHallucinationStamp 生成追加到 LLM 原文末尾的警告 stamp。
 // 追加而非替换: 流式已发出, 替换骗不了用户; 且 Turn 2 LLM 看原文+警告才能
-// 定位自己上次错在哪。
-func BuildHallucinationStamp(hits []string) string {
+// 定位自己上次错在哪。lang 为 UI 语言（X-Language），文案经 aiagent.LangText 选取。
+func BuildHallucinationStamp(lang string, hits []string) string {
 	var sb strings.Builder
 	sb.WriteString("\n\n---\n\n")
-	sb.WriteString("⚠️ **后置校验提示**：上述回答命中已知 hallucination 模式")
+	sb.WriteString(aiagent.LangText(lang,
+		"⚠️ **后置校验提示**：上述回答命中已知 hallucination 模式",
+		"⚠️ **Post-check warning**: the answer above matches known hallucination patterns"))
 	if len(hits) > 0 {
 		seen := make(map[string]struct{}, len(hits))
 		uniq := make([]string, 0, len(hits))
@@ -71,11 +75,15 @@ func BuildHallucinationStamp(hits []string) string {
 			seen[h] = struct{}{}
 			uniq = append(uniq, h)
 		}
-		sb.WriteString("（`")
+		sb.WriteString(aiagent.LangText(lang, "（`", " (`"))
 		sb.WriteString(strings.Join(uniq, "`, `"))
-		sb.WriteString("`）")
+		sb.WriteString(aiagent.LangText(lang, "`）", "`)"))
 	}
-	sb.WriteString("，未经 n9e 官方文档验证，请到 [V9 文档](https://flashcat.cloud/docs/) 或 [GitHub Issues](https://github.com/ccfos/nightingale/issues) 核对。\n\n")
-	sb.WriteString("**下一轮请勿基于上述具体标识符继续。**\n")
+	sb.WriteString(aiagent.LangText(lang,
+		"，未经 n9e 官方文档验证，请到 [V9 文档](https://flashcat.cloud/docs/) 或 [GitHub Issues](https://github.com/ccfos/nightingale/issues) 核对。\n\n",
+		". It has not been verified against the official n9e docs — please double-check with the [V9 docs](https://flashcat.cloud/docs/) or [GitHub Issues](https://github.com/ccfos/nightingale/issues).\n\n"))
+	sb.WriteString(aiagent.LangText(lang,
+		"**下一轮请勿基于上述具体标识符继续。**\n",
+		"**Do not build on the identifiers above in the next turn.**\n"))
 	return sb.String()
 }

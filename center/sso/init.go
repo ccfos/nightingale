@@ -65,7 +65,7 @@ Email = 'mail'
 
 const OAuth2 = `
 Enable = false
-DisplayName = 'OAuth2登录'
+DisplayName = 'Sign in with OAuth2'
 RedirectURL = 'http://n9e.com/callback/oauth'
 SsoAddr = 'https://sso.example.com/oauth2/authorize'
 SsoLogoutAddr = 'https://sso.example.com/oauth2/authorize/session/end'
@@ -100,7 +100,7 @@ Email = 'email'
 
 const CAS = `
 Enable = false
-DisplayName = 'CAS登录'
+DisplayName = 'Sign in with CAS'
 RedirectURL = 'http://n9e.com/callback/cas'
 SsoAddr = 'https://cas.example.com/cas/'
 SsoLogoutAddr = 'https://cas.example.com/cas/session/end'
@@ -117,7 +117,7 @@ Email = 'email'
 
 const OIDC = `
 Enable = false
-DisplayName = 'OIDC登录'
+DisplayName = 'Sign in with OIDC'
 RedirectURL = 'http://n9e.com/callback'
 SsoAddr = 'http://sso.example.org'
 SsoLogoutAddr = 'http://sso.example.org/session/end'

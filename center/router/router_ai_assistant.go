@@ -681,7 +681,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		if clean, hits := chat.ValidateRestrictedGCOutput(markdown); !clean {
 			logger.Warningf("[Assistant] general_chat post-check hit forbidden patterns: %v, appending stamp (chat=%s seq=%d)",
 				hits, msg.ChatID, msg.SeqID)
-			markdown += chat.BuildHallucinationStamp(hits)
+			markdown += chat.BuildHallucinationStamp(lang, hits)
 		}
 	}
 
@@ -898,6 +898,9 @@ func buildAgentInputs(chatReq *chat.AIChatRequest, userId int64, chatID string, 
 	inputs["user_id"] = fmt.Sprintf("%d", userId)
 	inputs["chat_id"] = chatID
 	inputs["seq_id"] = fmt.Sprintf("%d", seqID)
+	// UI 语言直达工具层：update_* 等工具的确定性确认文案（不经 LLM 转述）按此
+	// 选取 zh/en 预制文案（aiagent.LangText），与审批按钮/resume 提示语言一致。
+	inputs["lang"] = chatReq.Language
 	return inputs
 }
 

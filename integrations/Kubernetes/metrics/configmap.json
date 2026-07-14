@@ -16,6 +16,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的configmap指标",
                 "name": "有关configmap的信息"
+            },
+            {
+                "lang": "en_US",
+                "name": "ConfigMap Information",
+                "note": "ConfigMap metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -40,6 +45,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的configmap指标",
                 "name": "Unix创建时间戳"
+            },
+            {
+                "lang": "en_US",
+                "name": "Creation Unix Timestamp",
+                "note": "ConfigMap metric from kube-state-metrics"
             }
         ],
         "created_at": 0,
@@ -64,6 +74,11 @@
                 "lang": "zh_CN",
                 "note": "kube-state-metrics 的configmap指标",
                 "name": "表示configmap特定版本的资源版本"
+            },
+            {
+                "lang": "en_US",
+                "name": "ConfigMap Resource Version",
+                "note": "ConfigMap metric from kube-state-metrics"
             }
         ],
         "created_at": 0,

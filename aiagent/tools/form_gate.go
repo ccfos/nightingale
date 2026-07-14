@@ -58,10 +58,13 @@ func resolveCreationTeamIDs(fromConfig []int64, params map[string]string) []int6
 
 // creationFormInterrupt 构造创建类工具的 input 中断：Form 为与 preflight 字节级
 // 同构的 form_select 载荷，Prompt 为纯文本客户端（A2A）的兜底文案。
-func creationFormInterrupt(deps *aiagent.ToolDeps, user *models.User, skillName string, required []string) *aiagent.ToolInterrupt {
+// lang 取 params["lang"]（router 注入的 UI 语言）。
+func creationFormInterrupt(lang string, deps *aiagent.ToolDeps, user *models.User, skillName string, required []string) *aiagent.ToolInterrupt {
 	return &aiagent.ToolInterrupt{
-		Kind:   aiagent.InterruptKindInput,
-		Prompt: "创建前需要先确认目标业务组等必填信息。请在下方表单中选择后提交（也可以直接在回复里写明业务组名称或 ID），我会接着完成创建。",
-		Form:   aiagent.BuildCreationForm(deps, user, skillName, required, aiagent.FormPreselect{}),
+		Kind: aiagent.InterruptKindInput,
+		Prompt: aiagent.LangText(lang,
+			"创建前需要先确认目标业务组等必填信息。请在下方表单中选择后提交（也可以直接在回复里写明业务组名称或 ID），我会接着完成创建。",
+			"Before creating, the required fields (e.g. the target business group) need to be confirmed. Please pick and submit in the form below (or just state the business group name or ID in your reply), and I'll continue with the creation."),
+		Form: aiagent.BuildCreationForm(deps, user, skillName, required, aiagent.FormPreselect{}),
 	}
 }

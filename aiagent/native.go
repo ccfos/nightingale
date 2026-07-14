@@ -80,7 +80,7 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 		default:
 		}
 
-		content, calls, thinking, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID)
+		content, calls, thinking, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID, req.Params["lang"])
 		if err != nil {
 			resp.Error = fmt.Sprintf("LLM call failed at iteration %d: %v", iteration, err)
 			resp.Iterations = iteration
@@ -219,7 +219,7 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 // 工具调用由各 provider 在流内聚合完整后整块抛出（OpenAI 按 index 归槽、
 // Claude 在 content_block_stop 收尾），这里直接累积即可；
 // Anthropic 系的完整思考块（含签名）在块收尾时整块到达，累积后随 assistant 轮回填。
-func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolDefs []llm.ToolDefinition, streamChan chan *StreamChunk, requestID string) (string, []llm.ToolCall, []llm.ThinkingBlock, error) {
+func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolDefs []llm.ToolDefinition, streamChan chan *StreamChunk, requestID, lang string) (string, []llm.ToolCall, []llm.ThinkingBlock, error) {
 	if err := a.checkLLMClient(); err != nil {
 		return "", nil, nil, err
 	}
@@ -232,7 +232,7 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 		if err != nil {
 			return "", nil, nil, err
 		}
-		content, err := applyFinishReason(genResp.Content, genResp.ToolCalls, genResp.FinishReason, nil)
+		content, err := applyFinishReason(genResp.Content, genResp.ToolCalls, genResp.FinishReason, lang, nil)
 		return content, genResp.ToolCalls, genResp.ThinkingBlocks, err
 	}
 
@@ -279,7 +279,7 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 		}
 	}
 
-	finalContent, err := applyFinishReason(content.String(), calls, finishReason,
+	finalContent, err := applyFinishReason(content.String(), calls, finishReason, lang,
 		func(note string) { emit(StreamTypeContent, note) })
 	return finalContent, calls, thinking, err
 }
@@ -289,7 +289,8 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 // 截断类（max_tokens/length）在正文尾部追加可见提示，半截答案仍有价值。
 // 有 tool_calls 时不干预：截断的调用参数本就靠工具执行报错喂回模型重试
 // （见 openai.go finish 的注释），整轮报错反而打断该机制。
-func applyFinishReason(content string, calls []llm.ToolCall, reason string, emitNote func(string)) (string, error) {
+// lang 取 req.Params["lang"]（router 注入的 UI 语言），截断提示按其选取 zh/en。
+func applyFinishReason(content string, calls []llm.ToolCall, reason, lang string, emitNote func(string)) (string, error) {
 	if len(calls) > 0 {
 		return content, nil
 	}
@@ -297,7 +298,9 @@ func applyFinishReason(content string, calls []llm.ToolCall, reason string, emit
 	case llm.FinishBlocked:
 		return content, fmt.Errorf("LLM output blocked by provider (finish_reason=%s)", reason)
 	case llm.FinishTruncated:
-		note := "\n\n（输出达到长度上限，回答被截断）"
+		note := LangText(lang,
+			"\n\n（输出达到长度上限，回答被截断）",
+			"\n\n(The output hit the length limit and the answer was truncated.)")
 		if emitNote != nil {
 			emitNote(note)
 		}

@@ -242,6 +242,8 @@ func (rt *Router) tryResumePending(state *MessageState, streamID string, pending
 		params["chat_id"] = msg.ChatID
 		params["seq_id"] = fmt.Sprintf("%d", msg.SeqID)
 		params["user_input"] = msg.Query.Content
+		// 语言用本轮的（而非提案轮快照），confirm 腿的回执文案跟随当前 UI 语言。
+		params["lang"] = lang
 
 		out, handled, err := aiagent.ExecuteBuiltinTool(context.Background(), rt.buildToolDeps(), pending.Tool, params, pending.ResumeArgs)
 		switch {
