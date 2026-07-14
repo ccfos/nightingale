@@ -111,7 +111,8 @@ func (a *Agent) appendSkillCatalog(sb *strings.Builder, rc *runCtx) {
 	}
 	var lines []string
 	for _, m := range a.skillRegistry.ListAll() {
-		if m == nil || loaded[m.Name] {
+		// 私有 skill 对非授权用户不可见（含 fail-closed 的 deny-all）：从目录里剔除。
+		if m == nil || loaded[m.Name] || a.isSkillHidden(m.Name) {
 			continue
 		}
 		desc := m.Description

@@ -24,6 +24,11 @@ func (a *Agent) injectSkillTools(tools []AgentTool, skillName string) ([]AgentTo
 	if a.skillRegistry == nil || skillName == "" {
 		return tools, nil
 	}
+	// 私有 skill 对未授权用户不可见：其声明的 builtin_tools 一律不注入（含跨轮
+	// 历史回放场景——历史里若残留该 skill 的 load 结果也不再据此放行其工具）。
+	if a.isSkillHidden(skillName) {
+		return tools, nil
+	}
 	meta := a.skillRegistry.GetByName(skillName)
 	if meta == nil || len(meta.BuiltinTools) == 0 {
 		return tools, nil

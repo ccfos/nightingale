@@ -32,6 +32,12 @@ const (
 //     利于 prompt cache，加载结果作为工具结果轮 append-only 进上下文。
 type SkillConfig struct {
 	SkillNames []string `json:"skill_names,omitempty"` // 直接指定预载技能名列表；空 = 目录 + load_skill 自取
+	// HiddenSkillNames 从「可用技能目录」里过滤掉的技能名——私有 skill 对非授权
+	// 用户不可见。按请求用户动态计算，nil = 不过滤（不改变既有行为）。
+	HiddenSkillNames []string `json:"-"`
+	// DenyAllSkills 为 fail-closed 兜底：无法算出隐藏名单时置真，此时目录留空、
+	// 预载/注入一律跳过，把「无法确定隐藏名单」按「全部隐藏」处理。
+	DenyAllSkills bool `json:"-"`
 }
 
 // SkillMetadata 技能元数据（Level 1 - 总是在内存中）

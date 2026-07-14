@@ -118,6 +118,11 @@ func getSkill(_ context.Context, deps *aiagent.ToolDeps, args map[string]interfa
 	if name == "" {
 		return "", fmt.Errorf("name is required")
 	}
+	// 私有 skill 对未授权用户不可读：与 load_skill 共用同一份隐藏名单（含 fail-closed
+	// 的 deny-all），命中即当作不存在，避免 AI 工具面成为读私有内容的绕过口。
+	if deps.IsSkillHidden(name) {
+		return fmt.Sprintf("技能 %q 不存在。用 create_skill 新建，或确认技能名拼写。", name), nil
+	}
 
 	obj, err := models.AISkillGetByName(deps.DBCtx, name)
 	if err != nil {
@@ -295,6 +300,18 @@ func updateSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 	}
 	if obj.CreatedBy == "system" {
 		return fmt.Sprintf("技能 %q 是内置技能，不可修改。", name), nil
+	}
+	// AI 工具面与 HTTP 路由共用同一套编辑授权，避免成为绕过入口：私有 skill 对未授权
+	// 用户当作不存在；可见但不在授权团队的（如他人团队的公共 skill）也拒绝修改。
+	if deps.IsSkillHidden(name) {
+		return fmt.Sprintf("技能 %q 不存在；如需新建请用 create_skill。", name), nil
+	}
+	gids, err := getUserGroupIds(deps, user.Id)
+	if err != nil {
+		return "", fmt.Errorf("failed to load user groups: %v", err)
+	}
+	if !obj.CanBeEditedBy(user, gids) {
+		return fmt.Sprintf("技能 %q 无权修改：仅授权团队成员、创建人或更新人可编辑。", name), nil
 	}
 
 	// Read current frontmatter so unspecified fields keep their value. The stored

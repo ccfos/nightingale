@@ -26,6 +26,10 @@ func runSkillScript(ctx context.Context, deps *aiagent.ToolDeps, args map[string
 	if skillName == "" {
 		return "", fmt.Errorf("skill_name is required")
 	}
+	// 私有 skill 对未授权用户不可用：按名执行前先拦截，返回「未找到」不泄露其存在。
+	if deps.IsSkillHidden(skillName) {
+		return "", fmt.Errorf("skill %q not found", skillName)
+	}
 
 	if deps.Sandbox == nil || !deps.Sandbox.Enabled() {
 		reason := "skill 脚本执行未在本服务端启用"
