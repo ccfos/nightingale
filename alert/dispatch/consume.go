@@ -145,9 +145,9 @@ func (e *Consumer) recordNotifyMuted(event *models.AlertCurEvent) {
 	}
 
 	muteName := e.muteRuleName(event.GroupId, event.MuteId)
-	detail := fmt.Sprintf("命中「只屏蔽通知」屏蔽规则（%s），事件已产生并记录，通知被抑制", muteName)
+	detail := fmt.Sprintf("notification suppressed by notify-only mute rule %s, event still recorded", muteName)
 	if event.IsRecovered {
-		detail = fmt.Sprintf("命中「只屏蔽通知」屏蔽规则（%s），恢复事件已记录，恢复通知被抑制", muteName)
+		detail = fmt.Sprintf("recovery notification suppressed by notify-only mute rule %s, recovery event still recorded", muteName)
 	}
 
 	record := &models.NotificationRecord{
