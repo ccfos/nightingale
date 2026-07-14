@@ -495,3 +495,6 @@ ALTER TABLE `es_index_pattern` ADD COLUMN `weight` int not null default 0;
 
 /* v9 2026-07-06 message_template lang for i18n */
 ALTER TABLE `message_template` ADD COLUMN `lang` varchar(32) not null default '';
+
+/* v9 2026-07-10 alert_mute mute_type for notify-only mute */
+ALTER TABLE `alert_mute` ADD COLUMN `mute_type` int not null default 0 comment '0-mute event and notify,1-mute notify only';

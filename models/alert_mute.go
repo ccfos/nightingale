@@ -175,6 +175,14 @@ func GetTagFilters(jsonArr ormx.JSONArr) ([]TagFilter, error) {
 const TimeRange int = 0
 const Periodic int = 1
 
+// MuteType 屏蔽方式
+const (
+	// MuteTypeAll 屏蔽事件与通知：命中后事件不产生、也不通知（默认，兼容存量）
+	MuteTypeAll int = 0
+	// MuteTypeNotifyOnly 只屏蔽通知：命中后事件照常产生并记录，仅不发送通知
+	MuteTypeNotifyOnly int = 1
+)
+
 type AlertMute struct {
 	Id                int64          `json:"id" gorm:"primaryKey"`
 	GroupId           int64          `json:"group_id"`
@@ -201,6 +209,7 @@ type AlertMute struct {
 	PeriodicMutesJson []PeriodicMute `json:"periodic_mutes" gorm:"-"`
 	Severities        string         `json:"-" gorm:"severities"`
 	SeveritiesJson    []int          `json:"severities" gorm:"-"`
+	MuteType          int            `json:"mute_type"` // 0: 屏蔽事件与通知（默认）; 1: 只屏蔽通知
 }
 
 type PeriodicMute struct {

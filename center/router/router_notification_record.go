@@ -159,10 +159,11 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificationRecord
 	return response
 }
 
-// check channel is one of the following:  tx-sms, tx-voice, ali-sms, ali-voice, email, script
+// check channel is one of the following: tx-sms, tx-voice, ali-sms, ali-voice, email, script,
+// or the notify-muted pseudo channel (its target is a mute rule id, no need to mask)
 func checkChannel(channel string) bool {
 	switch channel {
-	case "tx-sms", "tx-voice", "ali-sms", "ali-voice", "email", "script":
+	case "tx-sms", "tx-voice", "ali-sms", "ali-voice", "email", "script", models.NotiChannelMuted:
 		return true
 	}
 	return false
