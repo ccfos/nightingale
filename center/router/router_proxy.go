@@ -1,8 +1,10 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -118,6 +120,8 @@ func (rt *Router) dsProxy(c *gin.Context) {
 		return
 	}
 
+	logProxyAccess(c, ds.Id, ds.PluginType, ds.Category)
+
 	target, err := ds.HTTPJson.ParseUrl()
 	if err != nil {
 		c.String(http.StatusInternalServerError, "invalid urls: %s", ds.HTTPJson.GetUrls())
@@ -209,6 +213,37 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 	proxy.ServeHTTP(c.Writer, c.Request)
 
+}
+
+// logProxyAccess audits datasource reverse-proxy requests (VictoriaLogs / ES /
+// Loki log queries and the like) with the caller's username and query payload,
+// so operators can see who queried what before tightening permissions. See
+// logQueryAccess.
+//
+// dsProxy sits on several Any("/proxy/...") / Any("/prometheus/...") routes, so
+// this must not defeat httputil.ReverseProxy's streaming: it peeks at most
+// maxLogBody bytes for the log line, then splices that prefix back in front of
+// the untouched remainder via io.MultiReader so the proxy keeps streaming the
+// rest of the body instead of buffering it whole. A mid-read error is not
+// swallowed — the prefix is still spliced back (so the proxy forwards the same,
+// still-failing body rather than a silently truncated one) and the body is
+// reported as an error in the log rather than logged as if complete.
+func logProxyAccess(c *gin.Context, dsID int64, cate, category string) {
+	const maxLogBody = 2048
+	var body string
+	if c.Request.Body != nil {
+		orig := c.Request.Body
+		// Read one extra byte so an over-limit body still renders as truncated.
+		prefix, err := io.ReadAll(io.LimitReader(orig, maxLogBody+1))
+		c.Request.Body = io.NopCloser(io.MultiReader(bytes.NewReader(prefix), orig))
+		if err != nil {
+			body = fmt.Sprintf("<body read error: %v>", err)
+		} else {
+			body = marshalForLog(string(prefix))
+		}
+	}
+	logx.Infof(c.Request.Context(), "[log_query_access] user=%s client=%s ds_id=%d cate=%s category=%s path=%s rawquery=%s body=%s",
+		queryAccessUser(c), c.ClientIP(), dsID, cate, category, c.Request.URL.Path, c.Request.URL.RawQuery, body)
 }
 
 var (
