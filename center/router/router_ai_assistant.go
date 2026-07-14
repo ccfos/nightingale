@@ -361,6 +361,14 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// (e.g. ask the user to pick a busi group before a creation skill runs).
 	toolDeps := rt.buildToolDeps()
 
+	// Resolve the requesting user once: preflight needs it, and MCP-server team
+	// scoping (buildMCPConfigForAgent) filters bound servers per this user.
+	me, uerr := models.UserGetById(rt.Ctx, userId)
+	if uerr != nil || me == nil {
+		rt.finishMessage(state, streamID, 500, "failed to resolve user")
+		return
+	}
+
 	// 私有 skill 可见性：一次算出当前用户无权访问的私有 skill 名单，既用于运行时
 	// 加载层拦截（toolDeps：load_skill / run_skill_script 按名读取前校验），也用于
 	// 技能目录展示过滤（skillCfg.HiddenSkillNames，见下）。fail closed 见
@@ -373,12 +381,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	}
 
 	if handler.Preflight != nil {
-		user, uerr := models.UserGetById(rt.Ctx, userId)
-		if uerr != nil || user == nil {
-			rt.finishMessage(state, streamID, 500, "failed to resolve user for preflight")
-			return
-		}
-		halt, preResps, perr := handler.Preflight(parentCtx, toolDeps, chatReq, user)
+		halt, preResps, perr := handler.Preflight(parentCtx, toolDeps, chatReq, me)
 		if perr != nil {
 			logger.Warningf("[Assistant] preflight error for action_key=%s: %v", actionKey, perr)
 		}
@@ -452,7 +455,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		UserPromptRendered: userPrompt,
 		GuidedFollowup:     true, // 交互式 chat：末尾给可点选的"下一步"建议
 		Skills:             skillCfg,
-		MCP:                rt.buildMCPConfigForAgent(agent),
+		MCP:                rt.buildMCPConfigForAgent(agent, me),
 		HistoryBudgetBytes: historyBudgetFromContextLength(llmCfg.ExtraConfig.ContextLength),
 	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
 

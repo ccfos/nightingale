@@ -364,6 +364,7 @@ CREATE TABLE alert_mute (
     mute_time_type smallint not null default 0,
     periodic_mutes varchar(4096) not null default '',
     severities varchar(32) not null default '',
+    mute_type int not null default 0,
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
@@ -378,6 +379,7 @@ COMMENT ON COLUMN alert_mute.tags IS 'json,map,tagkey->regexp|value';
 COMMENT ON COLUMN alert_mute.btime IS 'begin time';
 COMMENT ON COLUMN alert_mute.etime IS 'end time';
 COMMENT ON COLUMN alert_mute.disabled IS '0:enabled 1:disabled';
+COMMENT ON COLUMN alert_mute.mute_type IS '0-mute event and notify,1-mute notify only';
 
 
 CREATE TABLE alert_subscribe (

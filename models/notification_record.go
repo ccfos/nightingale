@@ -9,7 +9,12 @@ import (
 const (
 	NotiStatusSuccess = iota + 1
 	NotiStatusFailure
+	NotiStatusMuted // 命中「只屏蔽通知」规则，事件已产生但通知被抑制
 )
+
+// NotiChannelMuted 「只屏蔽通知」通知记录的伪渠道标识：稳定英文 key，
+// 落库与 API 响应均用它，由前端按 key 翻译展示；展示层对该渠道的 Target 免脱敏。
+const NotiChannelMuted = "mute"
 
 type NotificationRecord struct {
 	Id           int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement"`

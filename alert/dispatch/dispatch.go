@@ -724,6 +724,13 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 
 func (e *Dispatch) handleSubs(event *models.AlertCurEvent) {
 	// handle alert subscribes
+	for _, sub := range e.collectSubscribes(event) {
+		e.handleSub(sub, *event)
+	}
+}
+
+// collectSubscribes 收集与该事件相关的订阅规则（规则维度 + 全局），供发送与清理路径复用。
+func (e *Dispatch) collectSubscribes(event *models.AlertCurEvent) []*models.AlertSubscribe {
 	subscribes := make([]*models.AlertSubscribe, 0)
 	// rule specific subscribes
 	if subs, has := e.alertSubscribeCache.Get(event.RuleId); has {
@@ -733,41 +740,33 @@ func (e *Dispatch) handleSubs(event *models.AlertCurEvent) {
 	if subs, has := e.alertSubscribeCache.Get(0); has {
 		subscribes = append(subscribes, subs...)
 	}
-
-	for _, sub := range subscribes {
-		e.handleSub(sub, *event)
-	}
+	return subscribes
 }
 
-// handleSub 处理订阅规则的event,注意这里event要使用值传递,因为后面会修改event的状态
-func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEvent) {
+// subMatches 判断订阅规则是否匹配该事件（过滤条件与 handleSub 一致），供发送与清理路径复用。
+func (e *Dispatch) subMatches(sub *models.AlertSubscribe, event *models.AlertCurEvent) bool {
 	if sub.IsDisabled() {
-		return
+		return false
 	}
-
 	if !sub.MatchCluster(event.DatasourceId) {
-		return
+		return false
 	}
-
 	if !sub.MatchProd(event.RuleProd) {
-		return
+		return false
 	}
-
 	if !sub.MatchCate(event.Cate) {
-		return
+		return false
 	}
-
 	if !common.MatchTags(event.TagsMap, sub.ITags) {
-		return
+		return false
 	}
 	// event BusiGroups filter
 	if !common.MatchGroupsName(event.GroupName, sub.IBusiGroups) {
-		return
+		return false
 	}
 	if sub.ForDuration > (event.TriggerTime - event.FirstTriggerTime) {
-		return
+		return false
 	}
-
 	if len(sub.SeveritiesJson) != 0 {
 		match := false
 		for _, s := range sub.SeveritiesJson {
@@ -777,8 +776,16 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 			}
 		}
 		if !match {
-			return
+			return false
 		}
+	}
+	return true
+}
+
+// handleSub 处理订阅规则的event,注意这里event要使用值传递,因为后面会修改event的状态
+func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEvent) {
+	if !e.subMatches(sub, &event) {
+		return
 	}
 
 	e.Astats.CounterSubEventTotal.WithLabelValues(event.GroupName).Inc()
@@ -787,6 +794,27 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 
 	LogEvent(&event, "subscribe")
 	e.HandleEventNotify(&event, true)
+}
+
+// CleanupNotifyMuted 命中「只屏蔽通知」跳过发送时，对与正常 dispatch 相同的 notify rule 集合
+// （告警规则自身 + 匹配的订阅规则）逐个触发下游清理（如恢复事件清理升级 Redis 记录），但不发送任何通知。
+func (e *Dispatch) CleanupNotifyMuted(event *models.AlertCurEvent) {
+	// 告警规则自身的 notify rules
+	NotifyMutedEventHook(event)
+
+	// 恢复事件还需覆盖订阅规则的 notify rules：正常路径经 handleSubs → sub.ModifyEvent 会把订阅的
+	// notify rule 也写入升级 Redis，这里对匹配的订阅同样清理，避免残留。
+	if !event.IsRecovered {
+		return
+	}
+	for _, sub := range e.collectSubscribes(event) {
+		if !e.subMatches(sub, event) {
+			continue
+		}
+		subEvent := *event
+		sub.ModifyEvent(&subEvent)
+		NotifyMutedEventHook(&subEvent)
+	}
 }
 
 func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, notifyTarget *NotifyTarget, isSubscribe bool) {

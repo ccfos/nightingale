@@ -497,3 +497,36 @@ ALTER TABLE `es_index_pattern` ADD COLUMN `weight` int not null default 0;
 
 /* v9 2026-07-06 message_template lang for i18n */
 ALTER TABLE `message_template` ADD COLUMN `lang` varchar(32) not null default '';
+
+/* v9 2026-07-09 mcp server oauth support */
+ALTER TABLE `mcp_server` ADD COLUMN `auth_mode` varchar(16) NOT NULL DEFAULT '' COMMENT 'auth mode: none/header/oauth' AFTER `enabled`;
+
+CREATE TABLE `mcp_server_oauth` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `server_id` bigint NOT NULL DEFAULT 0 COMMENT 'mcp_server id',
+    `issuer` varchar(1024) NOT NULL DEFAULT '' COMMENT 'oauth issuer',
+    `authorization_endpoint` varchar(1024) NOT NULL DEFAULT '' COMMENT 'authorization endpoint',
+    `token_endpoint` varchar(1024) NOT NULL DEFAULT '' COMMENT 'token endpoint',
+    `registration_endpoint` varchar(1024) NOT NULL DEFAULT '' COMMENT 'dynamic client registration endpoint',
+    `scope` varchar(1024) NOT NULL DEFAULT '' COMMENT 'oauth scope',
+    `resource` varchar(1024) NOT NULL DEFAULT '' COMMENT 'resource indicator (RFC 8707)',
+    `redirect_uri` varchar(1024) NOT NULL DEFAULT '' COMMENT 'oauth redirect uri',
+    `client_id` varchar(255) NOT NULL DEFAULT '' COMMENT 'oauth client id',
+    `client_secret` text COMMENT 'encrypted client secret',
+    `access_token` text COMMENT 'encrypted access token',
+    `refresh_token` text COMMENT 'encrypted refresh token',
+    `token_type` varchar(64) NOT NULL DEFAULT '' COMMENT 'token type, e.g. Bearer',
+    `expiry` bigint NOT NULL DEFAULT 0 COMMENT 'access token expiry, unix seconds; 0=unknown',
+    `connected_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'user who connected',
+    `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'create time',
+    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_server_id` (`server_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='mcp server oauth tokens';
+
+/* v9 2026-07-10 mcp server team scope */
+ALTER TABLE `mcp_server` ADD COLUMN `user_group_ids` text COMMENT 'owner team ids (JSON)' AFTER `auth_mode`;
+ALTER TABLE `mcp_server` ADD COLUMN `private` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0=public, 1=team-scoped' AFTER `user_group_ids`;
+
+/* v9 2026-07-10 alert_mute mute_type for notify-only mute */
+ALTER TABLE `alert_mute` ADD COLUMN `mute_type` int not null default 0 comment '0-mute event and notify,1-mute notify only';

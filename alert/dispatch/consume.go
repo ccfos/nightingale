@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/queue"
+	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -34,6 +35,11 @@ type Consumer struct {
 type EventMuteHookFunc func(event *models.AlertCurEvent) bool
 
 var EventMuteHook EventMuteHookFunc = func(event *models.AlertCurEvent) bool { return false }
+
+// NotifyMutedEventHook 在事件命中「只屏蔽通知」、跳过正常通知流程时调用，
+// 让下游（如 n9e-plus 升级）在不发送通知的前提下完成必要的状态清理
+// （例如恢复事件清理升级用的 Redis 记录，避免屏蔽结束后继续升级已恢复的告警）。
+var NotifyMutedEventHook = func(event *models.AlertCurEvent) {}
 
 func InitRegisterQueryFunc(promClients *prom.PromClientMap) {
 	tplx.RegisterQueryFunc(func(datasourceID int64, promql string) model.Value {
@@ -117,7 +123,63 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 
 	e.persist(event)
 
+	if event.NotifyMuted == 1 {
+		// 命中「只屏蔽通知」规则：事件已产生并记录，此处跳过全部通知渠道，
+		// 并写一条通知记录说明被哪条屏蔽规则拦截，供事件详情「通知记录」排查（含恢复事件）。
+		LogEvent(event, "notify_muted")
+		e.recordNotifyMuted(event)
+		// 跳过发送，但仍让下游完成必要的状态清理（如恢复事件清理升级用的 Redis 记录）；
+		// 覆盖与正常 dispatch 相同的 notify rule 集合（告警规则自身 + 匹配的订阅规则）。
+		e.dispatch.CleanupNotifyMuted(event)
+		return
+	}
+
 	e.dispatch.HandleEventNotify(event, false)
+}
+
+// recordNotifyMuted 为「只屏蔽通知」而未发送的事件（含恢复事件）写一条通知记录，
+// 说明命中的屏蔽规则，替代事件表上的持久化标记。
+func (e *Consumer) recordNotifyMuted(event *models.AlertCurEvent) {
+	if event.Id == 0 {
+		return
+	}
+
+	muteName := e.muteRuleName(event.GroupId, event.MuteId)
+	detail := fmt.Sprintf("notification suppressed by notify-only mute rule %s, event still recorded", muteName)
+	if event.IsRecovered {
+		detail = fmt.Sprintf("recovery notification suppressed by notify-only mute rule %s, recovery event still recorded", muteName)
+	}
+
+	record := &models.NotificationRecord{
+		EventId:   event.Id,
+		SubId:     event.SubRuleId,
+		Channel:   models.NotiChannelMuted,
+		Status:    models.NotiStatusMuted,
+		Target:    fmt.Sprintf("id=%d", event.MuteId),
+		Details:   detail,
+		CreatedAt: time.Now().Unix(),
+	}
+	sender.RecordNotifications(e.ctx, []*models.NotificationRecord{record})
+}
+
+// muteRuleName 尽力从缓存解析屏蔽规则名（note），解析不到则回退为 id。
+func (e *Consumer) muteRuleName(groupId, muteId int64) string {
+	if muteId == 0 {
+		return "-"
+	}
+
+	if mutes, has := e.alertMuteCache.Gets(groupId); has {
+		for _, m := range mutes {
+			if m.Id == muteId {
+				if m.Note != "" {
+					return fmt.Sprintf("%s(id=%d)", m.Note, muteId)
+				}
+				break
+			}
+		}
+	}
+
+	return fmt.Sprintf("id=%d", muteId)
 }
 
 func (e *Consumer) persist(event *models.AlertCurEvent) {
@@ -203,4 +265,3 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 		event.Annotations = string(b)
 	}
 }
-
