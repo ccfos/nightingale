@@ -645,13 +645,21 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileGet)
 		pages.DELETE("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileDel)
 
-		pages.GET("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerGets)
-		pages.GET("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerGet)
-		pages.POST("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerAdd)
-		pages.PUT("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerPut)
-		pages.DELETE("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerDel)
-		pages.POST("/mcp-server/test", rt.auth(), rt.admin(), rt.mcpServerTest)
-		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.admin(), rt.mcpServerTools)
+		pages.GET("/mcp-servers", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerGets)
+		pages.GET("/mcp-server/:id", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerGet)
+		pages.POST("/mcp-servers", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerAdd)
+		pages.PUT("/mcp-server/:id", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerPut)
+		pages.DELETE("/mcp-server/:id", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerDel)
+		pages.POST("/mcp-server/test", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerTest)
+		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerTools)
+
+		// Outbound MCP client OAuth. The callback is the vendor's browser redirect
+		// target, so it is public (no session token); it is guarded by the signed
+		// one-time state stored at prepare time.
+		pages.POST("/mcp-server-oauth/prepare", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerOAuthPrepare)
+		pages.GET("/mcp-server-oauth/status", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerOAuthStatus)
+		pages.POST("/mcp-server-oauth/disconnect", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerOAuthDisconnect)
+		pages.GET("/mcp-server-oauth/callback", rt.mcpServerOAuthCallback)
 
 		// AI Assistant Chat
 		pages.POST("/assistant/chat/new", rt.auth(), rt.user(), rt.assistantChatNew)
