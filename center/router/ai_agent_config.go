@@ -71,9 +71,6 @@ func (rt *Router) resolveSkillConfig(handler *chat.ActionHandler, req *chat.AICh
 // server bound to an agent is silently dropped for users without access so the
 // agent can't leak its tools to users who couldn't otherwise see it — the agent
 // therefore exposes different tools to different users, by design.
-//
-// Transport defaults to "sse": the DB model only stores URL/Headers, which is
-// the SSE shape. A future stdio-capable MCPServer model can diverge here.
 func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User) *mcp.Config {
 	if len(agent.MCPServerIds) == 0 {
 		return nil
