@@ -3,6 +3,7 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -152,60 +153,105 @@ func getArgInt64(args map[string]interface{}, key string) int64 {
 	return 0
 }
 
+// float64ToInt64 converts a JSON number to int64, REJECTING non-integers instead
+// of truncating them. Silent truncation on an authorization field flips the stored
+// value to something the caller never asked for — `private:0.5`→`int(0.5)`=0="public",
+// or `team_ids:[1.9]`→team 1 — quietly widening who can see the resource. The JSON
+// Schema on a tool arg is a hint the model/provider may ignore, so this must be
+// validated server-side. NaN/Inf/out-of-int64-range are rejected too.
+func float64ToInt64(v float64) (int64, error) {
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return 0, fmt.Errorf("%v is not a finite integer", v)
+	}
+	if math.Trunc(v) != v {
+		return 0, fmt.Errorf("%v is not an integer", v)
+	}
+	if v < float64(math.MinInt64) || v >= float64(math.MaxInt64) {
+		return 0, fmt.Errorf("%v is out of range", v)
+	}
+	return int64(v), nil
+}
+
 // argInt64Slice coerces an arg into a []int64, tolerating a JSON array of numbers
-// (the LLM's team_ids), a comma-separated string, and quoted numbers. Non-positive
-// / unparseable entries are dropped — mirrors argStringSlice's tolerance.
-func argInt64Slice(args map[string]interface{}, key string) []int64 {
+// (the LLM's team_ids), a comma-separated string, and quoted numbers. A non-integer
+// number (1.9) or an unparseable string is a HARD ERROR — never silently truncated,
+// since callers gate authorization on these ids. Non-positive integers are dropped
+// (never a valid team id, so they can't mis-authorize).
+func argInt64Slice(args map[string]interface{}, key string) ([]int64, error) {
 	raw, ok := args[key]
 	if !ok || raw == nil {
-		return nil
+		return nil, nil
 	}
-	appendID := func(out []int64, s string) []int64 {
-		if id, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64); err == nil && id > 0 {
-			return append(out, id)
+	var out []int64
+	addStr := func(s string) error {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			return nil
 		}
-		return out
+		id, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return fmt.Errorf("%s contains a non-integer value %q", key, s)
+		}
+		if id > 0 {
+			out = append(out, id)
+		}
+		return nil
 	}
 	switch v := raw.(type) {
 	case []interface{}:
-		out := make([]int64, 0, len(v))
 		for _, e := range v {
 			switch n := e.(type) {
 			case float64:
-				if n > 0 {
-					out = append(out, int64(n))
+				id, err := float64ToInt64(n)
+				if err != nil {
+					return nil, fmt.Errorf("%s contains %v", key, err)
+				}
+				if id > 0 {
+					out = append(out, id)
 				}
 			case string:
-				out = appendID(out, n)
+				if err := addStr(n); err != nil {
+					return nil, err
+				}
+			default:
+				return nil, fmt.Errorf("%s contains an unsupported value type", key)
 			}
 		}
-		return out
 	case string:
-		var out []int64
 		for _, part := range strings.Split(v, ",") {
-			out = appendID(out, part)
+			if err := addStr(part); err != nil {
+				return nil, err
+			}
 		}
-		return out
+	default:
+		return nil, fmt.Errorf("%s must be an array of integer ids", key)
 	}
-	return nil
+	return out, nil
 }
 
 // argIntPresent extracts an int arg and reports presence, distinguishing a real 0
 // from "absent" — getArgInt's v>0 guard can't, which the private 0/1 flag needs.
-func argIntPresent(args map[string]interface{}, key string) (int, bool) {
+// A present-but-non-integer value (0.5, "abc", NaN) is an error, not a silent 0.
+func argIntPresent(args map[string]interface{}, key string) (int, bool, error) {
 	switch v := args[key].(type) {
 	case float64:
-		return int(v), true
+		n, err := float64ToInt64(v)
+		if err != nil {
+			return 0, false, fmt.Errorf("%s %v", key, err)
+		}
+		return int(n), true, nil
 	case string:
 		s := strings.TrimSpace(v)
 		if s == "" {
-			return 0, false
+			return 0, false, nil
 		}
-		if n, err := strconv.Atoi(s); err == nil {
-			return n, true
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			return 0, false, fmt.Errorf("%s must be an integer, got %q", key, s)
 		}
+		return n, true, nil
 	}
-	return 0, false
+	return 0, false, nil
 }
 
 // getArgFloat extracts a numeric arg, returning (value, present). It accepts

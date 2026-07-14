@@ -100,7 +100,11 @@ type creationAuthScope struct {
 // 返回约定：intr != nil 表示需要用户补选（团队/可见范围缺失）；err != nil 表示鉴权
 // 失败（如非 admin 越权授权别的团队）；两者皆 nil 时 scope 可用。
 func resolveCreationAuth(deps *aiagent.ToolDeps, user *models.User, args map[string]interface{}, params map[string]string, formSkillName string) (creationAuthScope, *aiagent.ToolInterrupt, error) {
-	teamIDs := resolveCreationTeamIDs(argInt64Slice(args, "team_ids"), params)
+	argTeams, err := argInt64Slice(args, "team_ids")
+	if err != nil {
+		return creationAuthScope{}, nil, err
+	}
+	teamIDs := resolveCreationTeamIDs(argTeams, params)
 	isAdmin := user.IsAdmin()
 
 	// 非 admin 恒为「仅团队可见」（也是缺省），绝不读 args/params——防止越权放开可见性；
@@ -108,7 +112,9 @@ func resolveCreationAuth(deps *aiagent.ToolDeps, user *models.User, args map[str
 	private := int(aiagent.VisibilityTeamScope)
 	privateProvided := true
 	if isAdmin {
-		private, privateProvided = resolveCreationPrivate(args, params)
+		if private, privateProvided, err = resolveCreationPrivate(args, params); err != nil {
+			return creationAuthScope{}, nil, err
+		}
 	}
 
 	// 始终弹全部 required 字段（与 BuildCreationForm 的哲学一致）：非 admin 只需团队，
@@ -144,19 +150,23 @@ func resolveCreationAuth(deps *aiagent.ToolDeps, user *models.User, args map[str
 // resolveCreationPrivate 解析可见范围：优先工具参数 args["private"]（模型据用户回复
 // 回填），回退表单经 params 注入的 private("0"/"1")。第二个返回值报告是否已提交（区分
 // "未提交"与"显式提交 0"——getArgInt 那套 v>0 语义会把 0 当缺省，这里必须按存在性判断）。
-func resolveCreationPrivate(args map[string]interface{}, params map[string]string) (int, bool) {
-	if p, ok := argIntPresent(args, "private"); ok {
-		return p, true
+func resolveCreationPrivate(args map[string]interface{}, params map[string]string) (int, bool, error) {
+	p, present, err := argIntPresent(args, "private")
+	if err != nil {
+		return 0, false, err
+	}
+	if present {
+		return p, true, nil
 	}
 	s, ok := params["private"]
 	if !ok || strings.TrimSpace(s) == "" {
-		return 0, false
+		return 0, false, nil
 	}
-	p, err := strconv.Atoi(strings.TrimSpace(s))
+	n, err := strconv.Atoi(strings.TrimSpace(s))
 	if err != nil {
-		return 0, false
+		return 0, false, fmt.Errorf("private flag must be an integer")
 	}
-	return p, true
+	return n, true, nil
 }
 
 // creationAuthInterrupt 构造 create_mcp_server / create_skill 的授权补选中断：Form 是
