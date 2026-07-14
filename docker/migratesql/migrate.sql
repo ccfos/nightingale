@@ -434,7 +434,7 @@ CREATE TABLE `ai_skill` (
 
 ALTER TABLE `ai_skill` ADD COLUMN `source_type` varchar(16) NOT NULL DEFAULT 'local' COMMENT 'skill source type: local/git' AFTER `enabled`;
 ALTER TABLE `ai_skill` ADD COLUMN `git_info` text COMMENT 'git source info (JSON)' AFTER `source_type`;
-ALTER TABLE `ai_skill` ADD COLUMN `user_group_ids` varchar(512) COMMENT 'authorized team ids (JSON array)' AFTER `enabled`;
+ALTER TABLE `ai_skill` ADD COLUMN `user_group_ids` text COMMENT 'authorized team ids (JSON array)' AFTER `enabled`;
 ALTER TABLE `ai_skill` ADD COLUMN `private` int NOT NULL DEFAULT 0 COMMENT 'auth scope: 0-public 1-private' AFTER `user_group_ids`;
 
 CREATE TABLE `mcp_server` (
