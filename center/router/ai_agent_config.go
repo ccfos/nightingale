@@ -1,6 +1,8 @@
 package router
 
 import (
+	"sync"
+
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/chat"
 	"github.com/ccfos/nightingale/v6/aiagent/mcp"
@@ -123,17 +125,18 @@ func (rt *Router) hiddenSkillNamesForUser(userId int64) (hidden []string, denyAl
 // scope, so every member of an owning team passes it, but the chat entry point
 // requires no RBAC permission at all; handing those users a button would only
 // yield a 403 they can't act on.
-func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User) (*mcp.Config, []*models.MCPServer) {
+func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User) (*mcp.Config, *mcpOAuthWatch) {
+	watch := newMCPOAuthWatch()
 	if len(agent.MCPServerIds) == 0 {
-		return nil, nil
+		return nil, watch
 	}
 	servers, err := models.MCPServersByIds(rt.Ctx, agent.MCPServerIds)
 	if err != nil {
 		logger.Warningf("[AIAgent] load mcp servers for agent=%d failed: %v", agent.Id, err)
-		return nil, nil
+		return nil, watch
 	}
 	if len(servers) == 0 {
-		return nil, nil
+		return nil, watch
 	}
 
 	// Resolve the user's team ids once, only when a non-admin actually needs the
@@ -143,7 +146,7 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User)
 		gids, err = models.MyGroupIds(rt.Ctx, me.Id)
 		if err != nil {
 			logger.Warningf("[AIAgent] load group ids for user=%d failed: %v", me.Id, err)
-			return nil, nil
+			return nil, watch
 		}
 	}
 
@@ -158,21 +161,23 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User)
 		}
 	}
 
-	var needsOAuth []*models.MCPServer
 	out := make([]mcp.ServerConfig, 0, len(servers))
 	for _, s := range servers {
 		if !mcpCanUse(me, gids, s) {
 			logger.Infof("[AIAgent] skip private mcp server=%s id=%d for agent=%d: user has no team access", s.Name, s.Id, agent.Id)
 			continue
 		}
-		// Same "is this authorization usable" definition the status API and
-		// list_mcp_servers use (mcpOAuthUsable) — missing record, empty token,
-		// undecryptable ciphertext, or expired-with-no-refresh all mean the user
-		// must go (re)authorize.
-		if s.EffectiveAuthMode() == mcp.MCPAuthOAuth {
+		isOAuth := s.EffectiveAuthMode() == mcp.MCPAuthOAuth
+		canAuthorize := isOAuth && canPrepareOAuth && mcpCanManage(me, gids, s)
+
+		// Local pre-check, same definition the status API and list_mcp_servers use:
+		// missing record, empty token, undecryptable ciphertext, or expired with no
+		// refresh token. It is only a pre-check — a revoked-but-decryptable token
+		// passes here and is caught at connect time by the watch wired below.
+		if isOAuth {
 			if uerr := rt.mcpOAuthUsable(s.Id); uerr != nil {
-				if canPrepareOAuth && mcpCanManage(me, gids, s) {
-					needsOAuth = append(needsOAuth, s)
+				if canAuthorize {
+					watch.track(s, true)
 				}
 				logger.Infof("[AIAgent] mcp server=%s id=%d awaits oauth authorization: %v", s.Name, s.Id, uerr)
 				continue
@@ -184,10 +189,106 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User)
 			logger.Warningf("[AIAgent] skip mcp server=%s id=%d: %v", s.Name, s.Id, cerr)
 			continue
 		}
+		// Runtime watch: the credential looks fine locally, but the provider may
+		// still reject it (revoked token, refresh answered invalid_grant). That only
+		// surfaces once the MCP client connects/refreshes — inside the agent run,
+		// after this function returned. Wire a callback so such a server still lands
+		// in the OAuth card instead of having its tools silently disappear.
+		// cfg is copied into `out` by value, but OAuth is a pointer, so the callback
+		// survives.
+		if cfg.OAuth != nil && canAuthorize {
+			sid := s.Id
+			name := s.Name
+			watch.track(s, false)
+			cfg.OAuth.OnAuthInvalid = func(reason error) {
+				if watch.markFailed(sid) {
+					logger.Infof("[AIAgent] mcp server=%s id=%d credential rejected at runtime, needs reauthorization: %v", name, sid, reason)
+					rt.invalidateMCPOAuthToken(sid)
+				}
+			}
+		}
 		out = append(out, *cfg)
 	}
 	if len(out) == 0 {
-		return nil, needsOAuth
+		return nil, watch
 	}
-	return &mcp.Config{Servers: out}, needsOAuth
+	return &mcp.Config{Servers: out}, watch
+}
+
+// mcpOAuthWatch collects the MCP servers whose OAuth authorization the user must
+// (re)establish — both the ones a local pre-check already ruled out, and the ones
+// the provider only rejects once the client actually connects. Only servers the
+// caller may actually authorize are tracked, so the card never offers a button
+// that would 403. Safe for concurrent marking: the token source may be exercised
+// from the SDK's goroutines.
+type mcpOAuthWatch struct {
+	mu   sync.Mutex
+	seen []*models.MCPServer // stable order = the agent's binding order
+	need map[int64]struct{}
+}
+
+func newMCPOAuthWatch() *mcpOAuthWatch {
+	return &mcpOAuthWatch{need: make(map[int64]struct{})}
+}
+
+// track registers a server the caller could authorize. needNow marks it as already
+// known to need authorization (the local pre-check failed); otherwise it's merely
+// a candidate that markFailed may promote later.
+func (w *mcpOAuthWatch) track(s *models.MCPServer, needNow bool) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.seen = append(w.seen, s)
+	if needNow {
+		w.need[s.Id] = struct{}{}
+	}
+}
+
+// markFailed records a runtime credential rejection, reporting whether this is the
+// first one for the server so the caller invalidates the stored token only once.
+func (w *mcpOAuthWatch) markFailed(serverId int64) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if _, dup := w.need[serverId]; dup {
+		return false
+	}
+	w.need[serverId] = struct{}{}
+	return true
+}
+
+// servers returns the servers needing (re)authorization, in binding order. Called
+// after the agent run so runtime-detected failures are included.
+func (w *mcpOAuthWatch) servers() []*models.MCPServer {
+	if w == nil {
+		return nil
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	out := make([]*models.MCPServer, 0, len(w.need))
+	for _, s := range w.seen {
+		if _, ok := w.need[s.Id]; ok {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// invalidateMCPOAuthToken clears the stored tokens of a server whose credential the
+// provider definitively rejected, keeping the client registration so re-consent
+// doesn't need a fresh DCR. Without this the local checks (status API,
+// list_mcp_servers, the next turn's pre-check) would go on reporting "connected"
+// off a token we already know is dead.
+func (rt *Router) invalidateMCPOAuthToken(serverId int64) {
+	rec, err := models.MCPServerOAuthGetByServerId(rt.Ctx, serverId)
+	if err != nil {
+		logger.Warningf("[AIAgent] load oauth record to invalidate server=%d failed: %v", serverId, err)
+		return
+	}
+	if rec == nil {
+		return
+	}
+	rec.AccessToken = ""
+	rec.RefreshToken = ""
+	if err := rec.Save(rt.Ctx); err != nil {
+		logger.Warningf("[AIAgent] invalidate oauth token for server=%d failed: %v", serverId, err)
+	}
 }

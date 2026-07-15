@@ -448,9 +448,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	skillCfg.HiddenSkillNames = hiddenSkills
 	skillCfg.DenyAllSkills = denySkills
 
-	// mcpNeedsOAuth: 绑定了但尚未完成 OAuth 授权的 MCP —— 本轮用不上，末尾以授权
-	// 按钮提示用户（否则这些 server 的工具只是静默消失，用户无从知道该去授权）。
-	mcpCfg, mcpNeedsOAuth := rt.buildMCPConfigForAgent(agent, me)
+	// mcpOAuthWatch: 收集需要（重新）授权的 MCP —— 既有装配前本地预检就判定不可用的，
+	// 也有凭据被服务端撤销、要等 agent 真正连接才暴露的。本轮用不上它们的工具，末尾以
+	// 授权按钮提示用户（否则工具只是静默消失，用户无从知道该去授权）。必须在 agent
+	// 跑完之后再读，运行时发现的那批才在里面。
+	mcpCfg, mcpOAuthWatch := rt.buildMCPConfigForAgent(agent, me)
 
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		Tools:              tools,
@@ -731,9 +733,10 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		})
 	}
 
-	// 绑定了但未完成 OAuth 授权的 MCP：给出授权按钮。这些 server 的工具本轮不可用，
-	// 而失败是静默的（装配时跳过），不提示的话用户只会觉得"工具凭空没了"。
-	if len(mcpNeedsOAuth) > 0 {
+	// 需要（重新）授权的 MCP：给出授权按钮。此处才读 watch —— agent 已跑完，运行时
+	// 才暴露的凭据失效（被撤销的 token、refresh 返回 invalid_grant）也已并入。这些
+	// server 的工具本轮不可用，而失败是静默的，不提示的话用户只会觉得「工具凭空没了」。
+	if mcpNeedsOAuth := mcpOAuthWatch.servers(); len(mcpNeedsOAuth) > 0 {
 		responses = append(responses, models.AssistantMessageResponse{
 			ContentType: models.ContentTypeMcpOAuth,
 			Content:     buildMCPOAuthPayload(mcpNeedsOAuth),

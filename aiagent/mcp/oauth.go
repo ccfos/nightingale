@@ -17,6 +17,7 @@ package mcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -55,6 +56,17 @@ type OAuthConfig struct {
 	// OnRefresh, if set, is invoked whenever the token source mints a new token,
 	// so the caller can persist it (encrypted) back to the DB.
 	OnRefresh func(*oauth2.Token)
+
+	// OnAuthInvalid, if set, is invoked when the stored credential is DEFINITIVELY
+	// rejected: the token endpoint answers invalid_grant/invalid_client, or the
+	// resource server answers a 401/403 that refreshing could not resolve. Callers
+	// use it to mark the authorization dead and ask the user to reconnect — a local
+	// pre-check can't see either case (the ciphertext decrypts, the stored expiry
+	// looks fine), so without this the server's tools silently vanish mid-turn.
+	//
+	// It is deliberately NOT fired for transient trouble (network errors, 5xx):
+	// a false positive would discard a credential that still works.
+	OnAuthInvalid func(reason error)
 }
 
 // DefaultOAuthHTTPClient is the http.Client used for discovery/DCR/exchange.
@@ -240,23 +252,34 @@ func (h *oauthHandler) TokenSource(ctx context.Context) (oauth2.TokenSource, err
 			Expiry:       h.cfg.Expiry,
 		}
 		base := h.cfg.oauth2Config().TokenSource(ctx, tok)
-		h.src = &persistingTokenSource{src: base, onRefresh: h.cfg.OnRefresh, last: tok}
+		h.src = &persistingTokenSource{src: base, onRefresh: h.cfg.OnRefresh, onAuthInvalid: h.cfg.OnAuthInvalid, last: tok}
 	}
 	return h.src, nil
 }
 
 // Authorize is called by the SDK on a 401/403 that the refreshing token source
 // could not resolve. Interactive re-consent is out-of-band (prepare/callback),
-// so we can only report that the server needs to be reconnected.
+// so we can only report that the server needs to be reconnected — and tell the
+// caller the credential is dead, so it can offer the user an authorize button
+// instead of just dropping this server's tools.
 func (h *oauthHandler) Authorize(ctx context.Context, req *http.Request, resp *http.Response) error {
-	return fmt.Errorf("mcp oauth: authorization required, please reconnect the server")
+	err := fmt.Errorf("mcp oauth: authorization required, please reconnect the server")
+	// The SDK reaches us only after refreshing already failed to resolve the
+	// 401/403 — that's a definitive rejection, not a transient blip.
+	if h.cfg.OnAuthInvalid != nil {
+		h.cfg.OnAuthInvalid(err)
+	}
+	return err
 }
 
 // persistingTokenSource wraps a refreshing oauth2.TokenSource and calls onRefresh
-// whenever the token changes, so callers can persist the rotated token.
+// whenever the token changes, so callers can persist the rotated token. A refresh
+// rejected as invalid_grant (revoked/expired refresh token) is reported via
+// onAuthInvalid — that failure is otherwise invisible to any local pre-check.
 type persistingTokenSource struct {
-	src       oauth2.TokenSource
-	onRefresh func(*oauth2.Token)
+	src           oauth2.TokenSource
+	onRefresh     func(*oauth2.Token)
+	onAuthInvalid func(error)
 
 	mu   sync.Mutex
 	last *oauth2.Token
@@ -265,6 +288,9 @@ type persistingTokenSource struct {
 func (p *persistingTokenSource) Token() (*oauth2.Token, error) {
 	tok, err := p.src.Token()
 	if err != nil {
+		if p.onAuthInvalid != nil && isCredentialInvalid(err) {
+			p.onAuthInvalid(err)
+		}
 		return nil, err
 	}
 	p.mu.Lock()
@@ -276,6 +302,27 @@ func (p *persistingTokenSource) Token() (*oauth2.Token, error) {
 		onRefresh(tok)
 	}
 	return tok, nil
+}
+
+// isCredentialInvalid reports whether a token-endpoint failure definitively means
+// the stored credential is dead, as opposed to a transient blip a retry could
+// resolve. Only the RFC 6749 error codes that say "this grant/client is no longer
+// valid", plus an outright 401/403 from the token endpoint, qualify — a network
+// error or a 5xx must NOT, since acting on it would discard a working credential.
+// x/oauth2 surfaces token-endpoint errors as *oauth2.RetrieveError.
+func isCredentialInvalid(err error) bool {
+	var re *oauth2.RetrieveError
+	if !errors.As(err, &re) {
+		return false
+	}
+	switch re.ErrorCode {
+	case "invalid_grant", "invalid_client", "unauthorized_client":
+		return true
+	}
+	if re.Response != nil {
+		return re.Response.StatusCode == http.StatusUnauthorized || re.Response.StatusCode == http.StatusForbidden
+	}
+	return false
 }
 
 // probeForChallenge sends an initialize request and returns the response so the
