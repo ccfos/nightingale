@@ -332,6 +332,33 @@ func (rt *Router) mcpServerOAuthCallback(c *gin.Context) {
 	rt.mcpOAuthCallbackHTML(c, "success", st.ServerId, "")
 }
 
+// mcpOAuthUsable reports whether an oauth server's stored authorization is
+// actually usable, returning the reason it isn't so callers can say "go
+// (re)authorize". This is THE single definition of "connected", shared by the
+// runtime assembly (buildMCPConfigForAgent), this status API, and the
+// list_mcp_servers tool — they must not be able to disagree.
+//
+// Judging by a non-empty access_token (what every caller used to do) is wrong in
+// both directions that matter: a token we can no longer decrypt after a key
+// rotation, or one that expired with no refresh token, is a non-empty string that
+// reads as "connected" while the runtime cannot use it at all — so the tools
+// vanish AND the authorize button hides, which is exactly the situation the button
+// exists to fix.
+func (rt *Router) mcpOAuthUsable(serverId int64) error {
+	cfg, err := rt.loadMCPOAuthConfig(serverId)
+	if err != nil {
+		// Record missing, token empty, or ciphertext undecryptable.
+		return err
+	}
+	// Expired with nothing to refresh with: the token source has no way back, so
+	// the next call is a guaranteed 401. Treat it as needing reauthorization now
+	// rather than after the user watches the tools silently disappear.
+	if !cfg.Expiry.IsZero() && cfg.Expiry.Before(time.Now()) && cfg.RefreshToken == "" {
+		return fmt.Errorf("oauth token expired and no refresh token is stored; reauthorization required")
+	}
+	return nil
+}
+
 func (rt *Router) mcpServerOAuthStatus(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Query("id"), 10, 64)
 	rt.mcpServerLoadForManage(c, id)
@@ -342,8 +369,14 @@ func (rt *Router) mcpServerOAuthStatus(c *gin.Context) {
 		ginx.NewRender(c).Data(gin.H{"connected": false}, nil)
 		return
 	}
+	// connected 必须与运行时「能不能真的用」同义：非空但解密不出/已过期且无 refresh
+	// 的 token 一律算未连接，否则前端会显示「已连接」并藏起授权按钮，而工具其实用不了。
+	usable := rt.mcpOAuthUsable(id)
+	if usable != nil {
+		logger.Infof("[MCP] server=%d oauth stored but unusable, reporting disconnected: %v", id, usable)
+	}
 	ginx.NewRender(c).Data(gin.H{
-		"connected":    rec.AccessToken != "",
+		"connected":    usable == nil,
 		"expiry":       rec.Expiry,
 		"scope":        rec.Scope,
 		"client_id":    rec.ClientId,

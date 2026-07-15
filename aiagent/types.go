@@ -228,6 +228,13 @@ type ToolDeps struct {
 	// memsto.UserTokenCache.Inject），让 Gateway 刚建的 token 当场可认证。
 	CacheUserToken func(token string, user *models.User)
 
+	// MCPOAuthUsable 报告一个 oauth 模式 MCP Server 的授权当前是否真的可用（记录存在、
+	// 密文可解、未过期或尚可续期）。由 center 路由注入（包装 mcpOAuthUsable），与运行时
+	// 装配和 /mcp-server-oauth/status 共用同一判定：list_mcp_servers 绝不能按「token 非空」
+	// 报「已连接」——那会让模型对着一个根本用不了的 server 告诉用户一切正常。
+	// 未注入（CLI/单测）时调用方保守按「未连接」处理。
+	MCPOAuthUsable func(serverId int64) bool
+
 	// HiddenSkillNames 本次对话请求用户无权访问的私有 skill 名集合（按用户动态
 	// 计算）。load_skill / run_skill_script / get_skill 等按名取用 skill 内容或行为
 	// 的工具据此拒绝越权访问——把可见性做成真正的访问控制，而非仅目录层隐藏。

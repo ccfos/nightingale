@@ -60,6 +60,7 @@ Call **`update_mcp_server`** with `name` (which server) plus **only the fields t
 `new_name` / `url` / `description` / `headers` / `enabled` / `team_ids` / `private`.
 
 - `headers` is **replaced wholesale**, not merged. Since you can only see `header_keys`, never "preserve" headers by re-sending values you don't have — if the user wants to keep existing headers and add one, they must restate the full set, so ask.
+- **`headers` is not available on an `auth_mode: oauth` server** — the runtime sends only the Authorization the OAuth flow issued and drops configured headers entirely, so the tool rejects the attempt rather than saving a header that would never be sent. If the user needs a custom header (e.g. `X-Tenant-ID`), tell them it means switching that server's auth mode to 自定义 Header on the "AI 配置 → MCP" page — which gives up OAuth.
 - `private` can only be changed by admins.
 - `team_ids` must stay within the user's own teams unless they're an admin.
 - Same double confirmation as create.

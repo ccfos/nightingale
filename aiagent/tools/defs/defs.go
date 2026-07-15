@@ -1099,7 +1099,7 @@ var UpdateMCPServer = aiagent.AgentTool{
 		{Name: "new_name", Type: "string", Description: "可选：新名称（不传则不改名）", Required: false},
 		{Name: "url", Type: "string", Description: "可选：新的访问地址（http/https URL）", Required: false},
 		{Name: "description", Type: "string", Description: "可选：新的用途/能力描述", Required: false},
-		{Name: "headers", Type: "object", Description: "可选：新的 HTTP 请求头（键值对，整体替换而非合并）", Required: false},
+		{Name: "headers", Type: "object", Description: "可选：新的 HTTP 请求头（键值对，整体替换而非合并）。注意 OAuth 授权模式的 Server 不支持自定义请求头（运行时只发授权流程颁发的 Authorization），对其传入会被拒绝", Required: false},
 		{Name: "enabled", Type: "boolean", Description: "可选：启用/停用", Required: false},
 		{Name: "team_ids", Type: "array", Description: "可选：新的管理团队 ID 列表（数字数组，整体替换）。可先用 list_teams 把团队名解析成 ID。非管理员只能填自己所属的团队", Required: false},
 		{Name: "private", Type: "integer", Description: "可选：新的可见范围，0=公开（所有人可见可用），1=仅管理团队可见。仅管理员可改", Required: false},

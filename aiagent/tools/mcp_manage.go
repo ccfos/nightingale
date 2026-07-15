@@ -77,12 +77,6 @@ func listMCPServers(_ context.Context, deps *aiagent.ToolDeps, args map[string]i
 	if err != nil {
 		return "", fmt.Errorf("failed to load user groups: %v", err)
 	}
-	// OAuth 连接态查询失败不致命：退化成"未连接"，宁可多提示一次授权也不谎报已连接。
-	connected, cerr := models.MCPServerOAuthConnectedServerIds(deps.DBCtx)
-	if cerr != nil {
-		logger.Warningf("list_mcp_servers: load oauth connected ids failed: %v", cerr)
-	}
-
 	query := strings.TrimSpace(getArgString(args, "query"))
 	results := make([]mcpServerResult, 0, len(lst))
 	for _, s := range lst {
@@ -102,7 +96,7 @@ func listMCPServers(_ context.Context, deps *aiagent.ToolDeps, args map[string]i
 			Private:        s.Private,
 			UserGroupIds:   s.UserGroupIds,
 			CanManage:      s.CanBeManagedBy(user, gids),
-			OAuthConnected: int64SliceContains(connected, s.Id),
+			OAuthConnected: mcpOAuthConnected(deps, s),
 		})
 	}
 	return marshalList(len(results), results), nil
@@ -162,17 +156,18 @@ func updateMCPServer(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		}
 	}
 	if _, ok := args["headers"]; ok {
+		// oauth 模式的 server 根本不会带上这些头：mcp.Client.buildHTTPClient 在
+		// AuthMode==oauth 时整个跳过 staticHeaders（Authorization 由 OAuthHandler 设）。
+		// 存下去只会给用户一个「改成功了」的回执、而请求永远不带这些头——宁可明确拒绝。
+		if obj.EffectiveAuthMode() == "oauth" {
+			return "", fmt.Errorf("MCP Server %q 是 OAuth 授权模式，不支持自定义请求头：OAuth 模式下运行时只发送授权流程颁发的 Authorization，配置的请求头不会被携带。如确实需要自定义头，请到「AI 配置 → MCP」把认证方式改为「自定义 Header」", name)
+		}
 		h, herr := parseMCPHeaders(args)
 		if herr != nil {
 			return "", herr
 		}
 		ref.Headers = h
-		// oauth 模式下鉴权由授权流程负责，headers 只是附加头：不能因为改 headers 就把
-		// auth_mode 推回 header/none —— 那会触发 MCPServer.Update 里的 token 清理，
-		// 把已完成的授权悄悄作废。
-		if obj.EffectiveAuthMode() != "oauth" {
-			ref.AuthMode = deriveMCPAuthMode(h)
-		}
+		ref.AuthMode = deriveMCPAuthMode(h)
 		changes = append(changes, fmt.Sprintf("请求头 → %d 项（整体替换）", len(h)))
 	}
 	if _, ok := args["enabled"]; ok {
@@ -244,6 +239,18 @@ func updateMCPServer(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 	logger.Infof("update_mcp_server: user=%s name=%s id=%d changes=%v", user.Username, obj.Name, obj.Id, changes)
 
 	return fmt.Sprintf("已更新 MCP Server **%s**。\n\n你可以在「AI 配置 → MCP」里查看它。", ref.Name), nil
+}
+
+// mcpOAuthConnected reports whether an oauth server's authorization is usable,
+// via the host-injected checker (same definition the runtime assembly and the
+// status API use — it actually decrypts the token rather than trusting a non-empty
+// column). Non-oauth servers are never "connected"; a missing checker (CLI/tests)
+// reads as not connected, so we never claim an unverified server works.
+func mcpOAuthConnected(deps *aiagent.ToolDeps, s *models.MCPServer) bool {
+	if s.EffectiveAuthMode() != "oauth" || deps.MCPOAuthUsable == nil {
+		return false
+	}
+	return deps.MCPOAuthUsable(s.Id)
 }
 
 // headerKeys returns the sorted header names (values withheld — they're secrets).

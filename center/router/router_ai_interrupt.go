@@ -362,6 +362,7 @@ func (rt *Router) buildToolDeps() *aiagent.ToolDeps {
 			return dscache.DsCache.Get(dsType, dsId)
 		},
 		FilterDatasources:      rt.DatasourceCache.DatasourceFilter,
+		MCPOAuthUsable:         func(serverId int64) bool { return rt.mcpOAuthUsable(serverId) == nil },
 		GetAlertEvalLogs:       rt.getAlertEvalLogs,
 		GetEventProcessingLogs: rt.getEventLogs,
 		Redis:                  rt.Redis,

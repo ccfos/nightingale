@@ -165,22 +165,23 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User)
 			logger.Infof("[AIAgent] skip private mcp server=%s id=%d for agent=%d: user has no team access", s.Name, s.Id, agent.Id)
 			continue
 		}
-		cfg, cerr := rt.mcpServerConfig(s)
-		if cerr != nil {
-			// For an oauth server, EVERY config failure means the same thing to the
-			// user: go (re)authorize. Missing record, empty token, or ciphertext we
-			// can no longer decrypt after a key rotation all land here. Judging by a
-			// non-empty access_token instead would make the tools AND the button
-			// vanish together exactly when the token is unusable — the very case this
-			// button exists for. Non-oauth config errors stay a silent skip.
-			if s.EffectiveAuthMode() == mcp.MCPAuthOAuth {
+		// Same "is this authorization usable" definition the status API and
+		// list_mcp_servers use (mcpOAuthUsable) — missing record, empty token,
+		// undecryptable ciphertext, or expired-with-no-refresh all mean the user
+		// must go (re)authorize.
+		if s.EffectiveAuthMode() == mcp.MCPAuthOAuth {
+			if uerr := rt.mcpOAuthUsable(s.Id); uerr != nil {
 				if canPrepareOAuth && mcpCanManage(me, gids, s) {
 					needsOAuth = append(needsOAuth, s)
 				}
-				logger.Infof("[AIAgent] mcp server=%s id=%d awaits oauth authorization: %v", s.Name, s.Id, cerr)
-			} else {
-				logger.Warningf("[AIAgent] skip mcp server=%s id=%d: %v", s.Name, s.Id, cerr)
+				logger.Infof("[AIAgent] mcp server=%s id=%d awaits oauth authorization: %v", s.Name, s.Id, uerr)
+				continue
 			}
+		}
+		cfg, cerr := rt.mcpServerConfig(s)
+		if cerr != nil {
+			// A malformed config unrelated to oauth — skip rather than fail the run.
+			logger.Warningf("[AIAgent] skip mcp server=%s id=%d: %v", s.Name, s.Id, cerr)
 			continue
 		}
 		out = append(out, *cfg)
