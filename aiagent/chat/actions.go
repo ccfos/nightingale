@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
@@ -287,14 +288,31 @@ func ContextForwardInputs(req *AIChatRequest) map[string]string {
 	}
 	// private(可见范围 0/1) 经 create_mcp_server / create_skill 的 admin 授权表单提交。
 	// 0 是合法值（公开），故按存在性转发而非 >0 判断，避免「选了公开」被当成「未选」。
+	//
+	// 只认确定的整数类型：其余（nil/bool/数组/对象/非整数）一律不转发，交给下游
+	// resolveCreationPrivate 的「未提交」语义去弹表单。授权字段绝不 fail-open——
+	// 兜底成 0 恰好就是「公开」，等于替用户把资源放开给所有人。这与同批 diff 里
+	// tools.float64ToInt64 拒绝 private:0.5 的理由是同一条：同一个值不能经 args 通道
+	// 被拒、经 Context 通道却静默变公开。
 	if raw, ok := req.Context["private"]; ok {
 		switch v := raw.(type) {
 		case string:
 			if s := strings.TrimSpace(v); s != "" {
 				inputs["private"] = s
 			}
-		default:
-			inputs["private"] = fmt.Sprintf("%d", ctxInt64(req.Context, "private"))
+		case float64:
+			if v == math.Trunc(v) {
+				inputs["private"] = fmt.Sprintf("%d", int64(v))
+			}
+		case int:
+			inputs["private"] = fmt.Sprintf("%d", v)
+		case int64:
+			inputs["private"] = fmt.Sprintf("%d", v)
+		case json.Number:
+			// Int64() 对 "0.5" 报错——报错就不转发，不能落成 0。
+			if n, err := v.Int64(); err == nil {
+				inputs["private"] = fmt.Sprintf("%d", n)
+			}
 		}
 	}
 	return inputs
@@ -346,7 +364,9 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		// 技能创作（skill-creator）：让用户在对话里把流程固化成可复用技能。
 		// 写工具自带 /ai-config/skills 权限门 + 两阶段确认门，只读的发现工具无副作用。
 		"list_skill_builtin_tools", "get_skill", "create_skill", "update_skill",
-		// MCP 接入：让用户在对话里注册外部 MCP Server（带 /ai-config/mcp-servers 权限门 + 两阶段确认）。
-		"create_mcp_server",
+		// MCP 接入与管理（mcp-server-copilot）：让用户在对话里注册/修改外部 MCP Server。
+		// 写工具自带 /ai-config/mcp-servers 权限门 + 管理团队校验 + 两阶段确认；
+		// list 只读且按可见范围过滤，不暴露请求头的值。
+		"list_mcp_servers", "create_mcp_server", "update_mcp_server",
 	}
 }

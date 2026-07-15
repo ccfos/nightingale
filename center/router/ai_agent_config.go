@@ -111,17 +111,29 @@ func (rt *Router) hiddenSkillNamesForUser(userId int64) (hidden []string, denyAl
 // server bound to an agent is silently dropped for users without access so the
 // agent can't leak its tools to users who couldn't otherwise see it — the agent
 // therefore exposes different tools to different users, by design.
-func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User) *mcp.Config {
+// The second return value lists the bound servers that are waiting on their OAuth
+// authorization. They're reported instead of being silently dropped: their tools
+// would just vanish from the turn and the user would have no way to learn that the
+// fix is "go authorize it". The caller surfaces them as an authorize button.
+//
+// A server is reported only to users who can actually complete the authorization,
+// which takes BOTH conditions the /mcp-server-oauth/prepare route enforces:
+// membership of a managing team AND the /ai-config/mcp-servers RBAC permission.
+// The team check alone is not enough — UserGroupIds doubles as the visibility
+// scope, so every member of an owning team passes it, but the chat entry point
+// requires no RBAC permission at all; handing those users a button would only
+// yield a 403 they can't act on.
+func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User) (*mcp.Config, []*models.MCPServer) {
 	if len(agent.MCPServerIds) == 0 {
-		return nil
+		return nil, nil
 	}
 	servers, err := models.MCPServersByIds(rt.Ctx, agent.MCPServerIds)
 	if err != nil {
 		logger.Warningf("[AIAgent] load mcp servers for agent=%d failed: %v", agent.Id, err)
-		return nil
+		return nil, nil
 	}
 	if len(servers) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// Resolve the user's team ids once, only when a non-admin actually needs the
@@ -131,10 +143,22 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User)
 		gids, err = models.MyGroupIds(rt.Ctx, me.Id)
 		if err != nil {
 			logger.Warningf("[AIAgent] load group ids for user=%d failed: %v", me.Id, err)
-			return nil
+			return nil, nil
 		}
 	}
 
+	// Resolved once, outside the loop: the same RBAC gate /mcp-server-oauth/prepare
+	// hangs off (rt.perm). CheckPerm short-circuits to true for admins.
+	canPrepareOAuth := false
+	if me != nil {
+		if ok, perr := me.CheckPerm(rt.Ctx, "/ai-config/mcp-servers"); perr != nil {
+			logger.Warningf("[AIAgent] check mcp-servers perm for user=%d failed: %v", me.Id, perr)
+		} else {
+			canPrepareOAuth = ok
+		}
+	}
+
+	var needsOAuth []*models.MCPServer
 	out := make([]mcp.ServerConfig, 0, len(servers))
 	for _, s := range servers {
 		if !mcpCanUse(me, gids, s) {
@@ -143,15 +167,26 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User)
 		}
 		cfg, cerr := rt.mcpServerConfig(s)
 		if cerr != nil {
-			// e.g. an oauth server that hasn't been connected yet — skip it
-			// rather than failing the whole agent.
-			logger.Warningf("[AIAgent] skip mcp server=%s id=%d: %v", s.Name, s.Id, cerr)
+			// For an oauth server, EVERY config failure means the same thing to the
+			// user: go (re)authorize. Missing record, empty token, or ciphertext we
+			// can no longer decrypt after a key rotation all land here. Judging by a
+			// non-empty access_token instead would make the tools AND the button
+			// vanish together exactly when the token is unusable — the very case this
+			// button exists for. Non-oauth config errors stay a silent skip.
+			if s.EffectiveAuthMode() == mcp.MCPAuthOAuth {
+				if canPrepareOAuth && mcpCanManage(me, gids, s) {
+					needsOAuth = append(needsOAuth, s)
+				}
+				logger.Infof("[AIAgent] mcp server=%s id=%d awaits oauth authorization: %v", s.Name, s.Id, cerr)
+			} else {
+				logger.Warningf("[AIAgent] skip mcp server=%s id=%d: %v", s.Name, s.Id, cerr)
+			}
 			continue
 		}
 		out = append(out, *cfg)
 	}
 	if len(out) == 0 {
-		return nil
+		return nil, needsOAuth
 	}
-	return &mcp.Config{Servers: out}
+	return &mcp.Config{Servers: out}, needsOAuth
 }

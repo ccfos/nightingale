@@ -1072,3 +1072,38 @@ var CreateMCPServer = aiagent.AgentTool{
 		{Name: "confirmed", Type: "boolean", Description: "是否确认创建（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
 	},
 }
+
+// ListMCPServers lists the MCP servers the caller may see. Read-only; the entry
+// point for editing one (find it, then update_mcp_server) and for spotting an
+// oauth server that still needs authorizing (oauth_connected=false).
+var ListMCPServers = aiagent.AgentTool{
+	Name: "list_mcp_servers",
+	Description: "列出当前用户可见的 MCP Server 配置（名称/地址/描述/启用状态/鉴权模式/管理团队/可见范围/是否有权管理/OAuth 是否已授权）。" +
+		"用户要查看、修改某个 MCP，或想知道某个 MCP 是否还需要 OAuth 授权时，先用它定位。出于安全，只返回请求头的键名，不返回其值。",
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "query", Type: "string", Description: "可选：按名称/描述关键字过滤", Required: false},
+	},
+}
+
+// UpdateMCPServer patches an existing MCP server. Same two-phase confirmation as
+// create_mcp_server; only the provided fields change.
+var UpdateMCPServer = aiagent.AgentTool{
+	Name: "update_mcp_server",
+	Description: "修改一个已存在的 MCP Server 配置（改地址/描述/请求头/启用状态/管理团队/可见范围）。" +
+		"只改你传入的字段，其余保持原样。需要 /ai-config/mcp-servers 权限且只有管理团队成员（或管理员）可改；" +
+		"首次调用只生成待确认提案、用户确认后才真正写入。先用 list_mcp_servers 确认要改的是哪一个。",
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "name", Type: "string", Description: "要修改的 MCP Server 名称（已存在的配置名）", Required: true},
+		{Name: "new_name", Type: "string", Description: "可选：新名称（不传则不改名）", Required: false},
+		{Name: "url", Type: "string", Description: "可选：新的访问地址（http/https URL）", Required: false},
+		{Name: "description", Type: "string", Description: "可选：新的用途/能力描述", Required: false},
+		{Name: "headers", Type: "object", Description: "可选：新的 HTTP 请求头（键值对，整体替换而非合并）", Required: false},
+		{Name: "enabled", Type: "boolean", Description: "可选：启用/停用", Required: false},
+		{Name: "team_ids", Type: "array", Description: "可选：新的管理团队 ID 列表（数字数组，整体替换）。可先用 list_teams 把团队名解析成 ID。非管理员只能填自己所属的团队", Required: false},
+		{Name: "private", Type: "integer", Description: "可选：新的可见范围，0=公开（所有人可见可用），1=仅管理团队可见。仅管理员可改", Required: false},
+		{Name: "proposal_id", Type: "string", Description: "确认提案 id（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
+		{Name: "confirmed", Type: "boolean", Description: "是否确认修改（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
+	},
+}

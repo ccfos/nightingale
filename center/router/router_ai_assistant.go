@@ -448,6 +448,10 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	skillCfg.HiddenSkillNames = hiddenSkills
 	skillCfg.DenyAllSkills = denySkills
 
+	// mcpNeedsOAuth: 绑定了但尚未完成 OAuth 授权的 MCP —— 本轮用不上，末尾以授权
+	// 按钮提示用户（否则这些 server 的工具只是静默消失，用户无从知道该去授权）。
+	mcpCfg, mcpNeedsOAuth := rt.buildMCPConfigForAgent(agent, me)
+
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		Tools:              tools,
 		Timeout:            agentTotalTimeout,
@@ -455,7 +459,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		UserPromptRendered: userPrompt,
 		GuidedFollowup:     true, // 交互式 chat：末尾给可点选的"下一步"建议
 		Skills:             skillCfg,
-		MCP:                rt.buildMCPConfigForAgent(agent, me),
+		MCP:                mcpCfg,
 		HistoryBudgetBytes: historyBudgetFromContextLength(llmCfg.ExtraConfig.ContextLength),
 	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
 
@@ -727,6 +731,17 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		})
 	}
 
+	// 绑定了但未完成 OAuth 授权的 MCP：给出授权按钮。这些 server 的工具本轮不可用，
+	// 而失败是静默的（装配时跳过），不提示的话用户只会觉得"工具凭空没了"。
+	if len(mcpNeedsOAuth) > 0 {
+		responses = append(responses, models.AssistantMessageResponse{
+			ContentType: models.ContentTypeMcpOAuth,
+			Content:     buildMCPOAuthPayload(mcpNeedsOAuth),
+			IsFinish:    true,
+			IsFromAI:    true,
+		})
+	}
+
 	// input 类工具中断：把工具产出的 form_select
 	// 载荷渲染为结构化表单 response——与 preflight 表单同一前端契约。markdown
 	// 正文（中断 Prompt）已在上面作为兜底文案存在，纯文本客户端（A2A）读它。
@@ -920,6 +935,22 @@ func buildAgentInputs(chatReq *chat.AIChatRequest, userId int64, chatID string, 
 	// 选取 zh/en 预制文案（aiagent.LangText），与审批按钮/resume 提示语言一致。
 	inputs["lang"] = chatReq.Language
 	return inputs
+}
+
+// buildMCPOAuthPayload 渲染 mcp_oauth 载荷：尚待用户完成 OAuth 授权的 MCP。id 是
+// 前端 POST /mcp-server-oauth/prepare 换取厂商授权页 URL 所需的键。
+func buildMCPOAuthPayload(servers []*models.MCPServer) string {
+	type item struct {
+		Id   int64  `json:"id"`
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	}
+	items := make([]item, 0, len(servers))
+	for _, s := range servers {
+		items = append(items, item{Id: s.Id, Name: s.Name, URL: s.URL})
+	}
+	body, _ := json.Marshal(map[string]interface{}{"servers": items})
+	return string(body)
 }
 
 // hasFormSelect 报告响应集是否含 form_select 表单（用于 AwaitingForm 路由标记）。

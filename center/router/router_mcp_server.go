@@ -8,7 +8,6 @@ import (
 	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
-	"github.com/ccfos/nightingale/v6/pkg/slice"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,20 +15,14 @@ import (
 // mcpCanManage reports whether the user may manage (edit/delete/test/oauth) the
 // server: admins always can; others need a team in common with UserGroupIds.
 func mcpCanManage(me *models.User, myGroupIds []int64, obj *models.MCPServer) bool {
-	if me.IsAdmin() {
-		return true
-	}
-	return slice.HaveIntersection(myGroupIds, obj.UserGroupIds)
+	return obj.CanBeManagedBy(me, myGroupIds)
 }
 
 // mcpCanUse reports whether the user may use the server's tools in a
 // conversation: public servers (Private==0) are usable by everyone; private
 // ones only by those who may manage them (admins + owning-team members).
 func mcpCanUse(me *models.User, myGroupIds []int64, obj *models.MCPServer) bool {
-	if obj.Private == 0 {
-		return true
-	}
-	return me != nil && mcpCanManage(me, myGroupIds, obj)
+	return obj.CanBeUsedBy(me, myGroupIds)
 }
 
 // mcpCallerCanManage resolves the request's user (and, for non-admins, their

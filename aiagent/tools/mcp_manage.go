@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
@@ -35,7 +36,237 @@ const PermAIMCPServers = "/ai-config/mcp-servers"
 const proposalKindMCP = "mcp_server"
 
 func init() {
+	register(defs.ListMCPServers, listMCPServers)
 	register(defs.CreateMCPServer, createMCPServer)
+	register(defs.UpdateMCPServer, updateMCPServer)
+}
+
+// mcpServerResult is the AI-surface projection of an MCP server. Header VALUES are
+// deliberately absent — they carry credentials (Authorization: Bearer …) and the
+// runtime reads them server-side from the DB, so the model never needs them; only
+// the key names are surfaced, enough for the author to reason about an edit.
+type mcpServerResult struct {
+	Name           string   `json:"name"`
+	URL            string   `json:"url"`
+	Description    string   `json:"description,omitempty"`
+	Enabled        bool     `json:"enabled"`
+	AuthMode       string   `json:"auth_mode"`
+	HeaderKeys     []string `json:"header_keys,omitempty"`
+	Private        int      `json:"private"`
+	UserGroupIds   []int64  `json:"user_group_ids"`
+	CanManage      bool     `json:"can_manage"`
+	OAuthConnected bool     `json:"oauth_connected"`
+}
+
+// listMCPServers returns the MCP servers the user may see, so the author can find
+// the one to edit (and spot an oauth server that still needs authorizing).
+func listMCPServers(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	if err := checkPerm(deps, user, PermAIMCPServers); err != nil {
+		return "", err
+	}
+
+	lst, err := models.MCPServerGets(deps.DBCtx)
+	if err != nil {
+		return "", fmt.Errorf("failed to query mcp servers: %v", err)
+	}
+	gids, err := getUserGroupIds(deps, user.Id)
+	if err != nil {
+		return "", fmt.Errorf("failed to load user groups: %v", err)
+	}
+	// OAuth 连接态查询失败不致命：退化成"未连接"，宁可多提示一次授权也不谎报已连接。
+	connected, cerr := models.MCPServerOAuthConnectedServerIds(deps.DBCtx)
+	if cerr != nil {
+		logger.Warningf("list_mcp_servers: load oauth connected ids failed: %v", cerr)
+	}
+
+	query := strings.TrimSpace(getArgString(args, "query"))
+	results := make([]mcpServerResult, 0, len(lst))
+	for _, s := range lst {
+		if !s.CanBeUsedBy(user, gids) {
+			continue
+		}
+		if query != "" && !containsIgnoreCase(s.Name, query) && !containsIgnoreCase(s.Description, query) {
+			continue
+		}
+		results = append(results, mcpServerResult{
+			Name:           s.Name,
+			URL:            s.URL,
+			Description:    s.Description,
+			Enabled:        s.Enabled,
+			AuthMode:       s.EffectiveAuthMode(),
+			HeaderKeys:     headerKeys(s.Headers),
+			Private:        s.Private,
+			UserGroupIds:   s.UserGroupIds,
+			CanManage:      s.CanBeManagedBy(user, gids),
+			OAuthConnected: int64SliceContains(connected, s.Id),
+		})
+	}
+	return marshalList(len(results), results), nil
+}
+
+// updateMCPServer patches an existing MCP server config (two-phase confirmed).
+// Only the provided fields change. Unlike create it never pops the auth form —
+// team/visibility move only when the user explicitly asks — but it enforces the
+// same rules: non-admins may only authorize their own teams and may not change
+// visibility at all.
+func updateMCPServer(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	if err := checkPerm(deps, user, PermAIMCPServers); err != nil {
+		return "", err
+	}
+
+	name := strings.TrimSpace(getArgString(args, "name"))
+	if name == "" {
+		return "", fmt.Errorf("name is required: 要修改的 MCP Server 名称（用 list_mcp_servers 查）")
+	}
+	obj, err := models.MCPServerGetByName(deps.DBCtx, name)
+	if err != nil {
+		return "", fmt.Errorf("failed to load mcp server: %v", err)
+	}
+	gids, err := getUserGroupIds(deps, user.Id)
+	if err != nil {
+		return "", fmt.Errorf("failed to load user groups: %v", err)
+	}
+	// 不可见的 server 一律当作不存在：AI 工具面不能成为探测私有配置是否存在的旁路。
+	if obj == nil || !obj.CanBeUsedBy(user, gids) {
+		return fmt.Sprintf("MCP Server %q 不存在；如需新建请用 create_mcp_server。", name), nil
+	}
+	if !obj.CanBeManagedBy(user, gids) {
+		return fmt.Sprintf("MCP Server %q 无权修改：仅管理团队成员可编辑。", name), nil
+	}
+
+	// 冲突基线必须在 merge 前取：确认腿据此拒绝已被他人改过的陈旧提案。
+	baseline := updateBaselineHash(obj)
+
+	ref := *obj
+	var changes []string
+	if v := strings.TrimSpace(getArgString(args, "new_name")); v != "" && v != obj.Name {
+		ref.Name = v
+		changes = append(changes, fmt.Sprintf("名称 → %s", v))
+	}
+	if v := strings.TrimSpace(getArgString(args, "url")); v != "" && v != obj.URL {
+		ref.URL = v
+		changes = append(changes, fmt.Sprintf("地址 → %s", v))
+	}
+	if _, ok := args["description"]; ok {
+		if v := strings.TrimSpace(getArgString(args, "description")); v != obj.Description {
+			ref.Description = v
+			changes = append(changes, "用途描述")
+		}
+	}
+	if _, ok := args["headers"]; ok {
+		h, herr := parseMCPHeaders(args)
+		if herr != nil {
+			return "", herr
+		}
+		ref.Headers = h
+		// oauth 模式下鉴权由授权流程负责，headers 只是附加头：不能因为改 headers 就把
+		// auth_mode 推回 header/none —— 那会触发 MCPServer.Update 里的 token 清理，
+		// 把已完成的授权悄悄作废。
+		if obj.EffectiveAuthMode() != "oauth" {
+			ref.AuthMode = deriveMCPAuthMode(h)
+		}
+		changes = append(changes, fmt.Sprintf("请求头 → %d 项（整体替换）", len(h)))
+	}
+	if _, ok := args["enabled"]; ok {
+		if v := getArgBool(args, "enabled"); v != obj.Enabled {
+			ref.Enabled = v
+			changes = append(changes, fmt.Sprintf("启用 → %v", v))
+		}
+	}
+	if _, ok := args["team_ids"]; ok {
+		teams, terr := argInt64Slice(args, "team_ids")
+		if terr != nil {
+			return "", terr
+		}
+		if len(teams) == 0 {
+			return "", fmt.Errorf("team_ids 不能为空：MCP Server 必须有管理团队")
+		}
+		// 与 create 同一条越权闸：非 admin 只能授权自己所属团队（子集），既防越权授权
+		// 给外部团队，也防把自己踢出管理范围。
+		if !user.IsAdmin() && !int64SliceSubset(gids, teams) {
+			return "", fmt.Errorf("forbidden: you can only authorize teams you belong to")
+		}
+		ref.UserGroupIds = teams
+		changes = append(changes, "管理团队 → "+strings.Join(teamNamesByIds(deps, teams), "、"))
+	}
+	if _, ok := args["private"]; ok {
+		p, present, perr := argIntPresent(args, "private")
+		if perr != nil {
+			return "", perr
+		}
+		if present {
+			// 可见范围是管理员特权（与 create 一致：非 admin 建的资源恒为仅团队可见）。
+			if !user.IsAdmin() {
+				return "", fmt.Errorf("forbidden: only admins can change the visibility of an mcp server")
+			}
+			if p != int(aiagent.VisibilityPublic) && p != int(aiagent.VisibilityTeamScope) {
+				return "", fmt.Errorf("private flag must be 0 or 1")
+			}
+			if p != obj.Private {
+				ref.Private = p
+				changes = append(changes, "可见范围 → "+visibilityLabel(params["lang"], p))
+			}
+		}
+	}
+
+	if len(changes) == 0 {
+		return "", fmt.Errorf("nothing to update: 没有提供任何要修改的字段（可改 new_name/url/description/headers/enabled/team_ids/private）")
+	}
+
+	ref.UpdatedBy = user.Username
+	if err := ref.Verify(); err != nil {
+		return "", err
+	}
+
+	if !getArgBool(args, "confirmed") {
+		return proposeUpdate(ctx, deps, params, &updateProposal{
+			Kind:         proposalKindMCP,
+			TargetID:     obj.Id,
+			BaselineHash: baseline,
+			Changes:      changes,
+		}, renderUpdateProposalPrompt(params["lang"], fmt.Sprintf("MCP Server **%s**", obj.Name), changes), args)
+	}
+	if _, err := confirmUpdateGate(ctx, deps, params, "update_mcp_server", proposalKindMCP, obj.Id, getArgString(args, "proposal_id"), true, baseline); err != nil {
+		return "", err
+	}
+
+	if err := obj.Update(deps.DBCtx, ref); err != nil {
+		return "", fmt.Errorf("failed to update mcp server: %v", err)
+	}
+	logger.Infof("update_mcp_server: user=%s name=%s id=%d changes=%v", user.Username, obj.Name, obj.Id, changes)
+
+	return fmt.Sprintf("已更新 MCP Server **%s**。\n\n你可以在「AI 配置 → MCP」里查看它。", ref.Name), nil
+}
+
+// headerKeys returns the sorted header names (values withheld — they're secrets).
+func headerKeys(h map[string]string) []string {
+	if len(h) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(h))
+	for k := range h {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// deriveMCPAuthMode picks the auth mode implied by the headers: bearing auth
+// headers means "header" mode, otherwise "none". oauth is never derived — it
+// requires the separate authorization flow (see router_mcp_server_oauth.go).
+func deriveMCPAuthMode(headers map[string]string) string {
+	if len(headers) > 0 {
+		return "header"
+	}
+	return "none"
 }
 
 // createMCPServer persists a brand-new MCP server config (two-phase confirmed).
@@ -56,6 +287,11 @@ func createMCPServer(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 	if url == "" {
 		return "", fmt.Errorf("url is required: MCP Server 的 http/https 访问地址")
 	}
+	// 提案生成前就校验地址：obj.Verify() 要等到确认腿才跑，不在这里拦的话用户会先
+	// 批准一个注定写不进去的提案。与 MCPServer.Verify 同一份校验。
+	if err := models.ValidateMCPServerURL(url); err != nil {
+		return "", err
+	}
 	description := strings.TrimSpace(getArgString(args, "description"))
 	headers, err := parseMCPHeaders(args)
 	if err != nil {
@@ -75,7 +311,7 @@ func createMCPServer(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 
 	// 管理团队 + 可见范围收集：非 admin 只选团队（可见范围恒为仅团队可见），admin 二者皆选。
 	// 信息不全时中止本轮弹表单，与 create_skill 共用同一条授权路径。
-	scope, authIntr, err := resolveCreationAuth(deps, user, args, params, "mcp-server")
+	scope, authIntr, err := resolveCreationAuth(deps, user, args, params, "mcp-server-copilot")
 	if err != nil {
 		return "", err
 	}
@@ -83,12 +319,9 @@ func createMCPServer(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		return "", authIntr
 	}
 
-	// auth_mode 由 headers 是否存在推导：带鉴权头即 header 模式，否则 none。oauth 模式需
-	// 独立的授权连接流程（见 router_mcp_server_oauth.go），不在对话创建路径内暴露。
-	authMode := "none"
-	if len(headers) > 0 {
-		authMode = "header"
-	}
+	// auth_mode 由 headers 是否存在推导。oauth 模式需独立的授权连接流程
+	// （见 router_mcp_server_oauth.go），不在对话创建路径内暴露。
+	authMode := deriveMCPAuthMode(headers)
 
 	// Two-phase confirmation. Propose leg ends the turn with a deterministic
 	// approval prompt; the confirm leg is replayed with confirmed=true (zero LLM
@@ -172,5 +405,10 @@ func renderMCPProposal(deps *aiagent.ToolDeps, lang, name, url, description stri
 }
 
 func renderMCPResult(name string, enabled bool) string {
-	return fmt.Sprintf("已创建 MCP Server **%s**（已启用：%v）。\n\n你可以在「AI 配置 → MCP」里查看和管理它。", name, enabled)
+	// 明确点出「还要绑定」：创建只是注册，运行时只加载绑定到当前 Agent 的 server
+	// （buildMCPConfigForAgent 只看 agent.MCPServerIds），不说的话用户会等一个永远
+	// 不出现的工具。本工具无权代改 Agent 配置，只能指路。
+	return fmt.Sprintf("已创建 MCP Server **%s**（已启用：%v）。\n\n"+
+		"注意：注册完成后它还**没有绑定到任何 AI Agent**，其工具暂时不会出现在对话里。"+
+		"请到「AI 配置 → Agent」里把它绑定到需要用它的 Agent 上；也可以在「AI 配置 → MCP」里查看和管理它。", name, enabled)
 }

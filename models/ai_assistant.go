@@ -116,6 +116,10 @@ const (
 	// before a halted creation flow can continue. Payload is a creationFormPayload
 	// JSON. Frontend renders fields progressively and submits all picks at once.
 	ContentTypeFormSelect AssistantContentType = "form_select"
+	// ContentTypeMcpOAuth carries the MCP servers bound to this conversation whose
+	// OAuth authorization is still pending. The frontend renders an authorize
+	// button per server; without it their tools just silently go missing.
+	ContentTypeMcpOAuth AssistantContentType = "mcp_oauth"
 )
 
 // IsStructuredPayload reports whether Content carries a machine-readable JSON
@@ -126,7 +130,7 @@ const (
 // character. New JSON card types MUST be added to this whitelist.
 func (t AssistantContentType) IsStructuredPayload() bool {
 	switch t {
-	case ContentTypeAlertRule, ContentTypeDashboard, ContentTypeFormSelect:
+	case ContentTypeAlertRule, ContentTypeDashboard, ContentTypeFormSelect, ContentTypeMcpOAuth:
 		return true
 	}
 	return false

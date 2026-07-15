@@ -195,14 +195,18 @@ func creationAuthInterrupt(lang string, deps *aiagent.ToolDeps, user *models.Use
 // 资源最终归属与可见性。
 func authScopeLines(deps *aiagent.ToolDeps, lang string, scope creationAuthScope) []string {
 	sep := aiagent.LangText(lang, "、", ", ")
-	visibility := aiagent.LangText(lang, "仅管理团队可见", "team-scoped (managing teams only)")
-	if scope.Private == int(aiagent.VisibilityPublic) {
-		visibility = aiagent.LangText(lang, "公开（所有人可见可用）", "public (visible to everyone)")
-	}
 	return []string{
 		aiagent.LangText(lang, "管理团队：", "Managing teams: ") + strings.Join(teamNamesByIds(deps, scope.UserGroupIds), sep),
-		aiagent.LangText(lang, "可见范围：", "Visibility: ") + visibility,
+		aiagent.LangText(lang, "可见范围：", "Visibility: ") + visibilityLabel(lang, scope.Private),
 	}
+}
+
+// visibilityLabel 把 private 标志渲染成人类可读的可见范围（create/update 的确认文案共用）。
+func visibilityLabel(lang string, private int) string {
+	if private == int(aiagent.VisibilityPublic) {
+		return aiagent.LangText(lang, "公开（所有人可见可用）", "public (visible to everyone)")
+	}
+	return aiagent.LangText(lang, "仅管理团队可见", "team-scoped (managing teams only)")
 }
 
 // teamNamesByIds 把团队 ID 反查成名称（保持入参顺序）；查不到的 ID 退化为数字，

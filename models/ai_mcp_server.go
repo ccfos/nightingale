@@ -3,10 +3,12 @@ package models
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/slice"
 	"gorm.io/gorm"
 )
 
@@ -97,6 +99,9 @@ func (s *MCPServer) Verify() error {
 	if s.URL == "" {
 		return fmt.Errorf("url is required")
 	}
+	if err := ValidateMCPServerURL(s.URL); err != nil {
+		return err
+	}
 	if s.Private != 0 && s.Private != 1 {
 		return fmt.Errorf("private flag must be 0 or 1")
 	}
@@ -104,6 +109,50 @@ func (s *MCPServer) Verify() error {
 		return fmt.Errorf("user group ids of private mcp server cannot be empty")
 	}
 	return nil
+}
+
+// ValidateMCPServerURL requires an absolute http/https URL carrying a host. The
+// runtime always speaks Streamable HTTP to this address (mcpServerConfig pins
+// MCPTransportHTTP), so a scheme-less "mcp.example.com" or an "ftp://…" address
+// can never connect. Reject it at write time — every caller goes through Verify —
+// rather than letting it land and then fail silently at tool-discovery time, where
+// the only symptom is the server's tools quietly never showing up.
+func ValidateMCPServerURL(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("invalid url: %v", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("url must start with http:// or https://")
+	}
+	if u.Host == "" {
+		return fmt.Errorf("url must include a host, e.g. https://mcp.example.com/mcp")
+	}
+	return nil
+}
+
+// CanBeManagedBy reports whether the user may manage (edit/delete/test/authorize)
+// this server: admins always can; others need a team in common with UserGroupIds.
+// Management is team-scoped regardless of Private. Single source of truth for the
+// HTTP routes and the AI-chat tools, so the two surfaces can't drift apart.
+func (s *MCPServer) CanBeManagedBy(u *User, gids []int64) bool {
+	if u == nil {
+		return false
+	}
+	if u.IsAdmin() {
+		return true
+	}
+	return slice.HaveIntersection(gids, s.UserGroupIds)
+}
+
+// CanBeUsedBy reports whether the user may use this server's tools in a
+// conversation: public servers (Private==0) are usable by everyone; private ones
+// only by those who may manage them.
+func (s *MCPServer) CanBeUsedBy(u *User, gids []int64) bool {
+	if s.Private == 0 {
+		return true
+	}
+	return s.CanBeManagedBy(u, gids)
 }
 
 // DB2FE normalizes fields for the frontend: a nil UserGroupIds serializes as
