@@ -18,7 +18,7 @@ import (
 // （写工具的缺参门产出字节级同构的表单）。
 
 // PreflightCreation is the preflight hook for the "creation" action_key.
-// It keyword-matches the user input to an n9e-create-* skill and, if ANY
+// It keyword-matches the user input to an create-* skill and, if ANY
 // required context key is missing, emits a single form_select response
 // containing EVERY required field — not just the missing ones.
 //

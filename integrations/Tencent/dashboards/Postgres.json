@@ -1,0 +1,3834 @@
+{
+    "name": "Postgres",
+    "tags": "腾讯云 云数据库 PG",
+    "note": "",
+    "ident": "",
+    "uuid": 1764899604388000,
+    "configs": {
+        "var": [
+            {
+                "name": "datasource",
+                "label": "DataSource",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus"
+            },
+            {
+                "name": "region",
+                "label": "Region",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_postgres_cpu_max,instance_region)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "d_b_instance_name",
+                "label": "实例名",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_postgres_cpu_max{instance_region=\"$region\"},d_b_instance_name)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "instance_id",
+                "label": "实例ID",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_postgres_cpu_max{instance_region=~\"$region\",d_b_instance_name=~\"$d_b_instance_name\"},resource_id)",
+                "initialized": true,
+                "options": []
+            }
+        ],
+        "panels": [
+            {
+                "type": "timeseries",
+                "id": "7821703b-0f99-48ca-bf35-34c704acf224",
+                "layout": {
+                    "h": 4,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "dd14f2a3-7d19-474c-b607-891b2cf65ca9",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU利用率",
+                "description": "CPU实际利用率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_cpu_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "69d54de6-411c-4f9d-b2e6-496f2e1f1159",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8,
+                    "i": "7c529dd5-69b9-42d7-8fad-7b117fe779c4",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "内存占用量",
+                "description": "内存实际使用量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_memory_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b2f02ac5-6511-4824-aabf-d97665d853e6",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8,
+                    "i": "95a11d56-e9e1-4aeb-b841-9a7103e41855",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "内存使用率",
+                "description": "内存实际使用率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_memoryrate_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d64eb39c-9ce7-4a9f-8e43-941daf8d3b2e",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 16,
+                    "i": "8eaa58ad-a53f-4ec2-8651-6dd5c242eb47",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "已用存储空间",
+                "description": "整实例空间占用大小",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_storage_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d8b48520-66cd-4556-adbe-e3590cefdc96",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 16,
+                    "i": "96a9e2db-c0c2-4602-9bd8-81df0c04850e",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "存储空间使用率",
+                "description": "总的存储空间使用率，包括临时文件、数据文件、日志文件以及其他类型的数据库文件",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_storagerate_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "c9a23081-58d9-451e-be10-43a220206274",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 24,
+                    "i": "fbb40f11-f99f-45a1-bc6a-8d38918d2234",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "连接数",
+                "description": "对数据库发起采集时，数据库当前总连接数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_connections_avg{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "cfb1ddcb-e13e-4c7d-9e87-87bab3a857c2",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 24,
+                    "i": "b0d53cad-4b9b-4e78-a570-b2871f6b216d",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "连接利用率",
+                "description": "当前实例连接数 / 最大连接数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_connutilization_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "8a4dffad-a394-4c5c-befb-bf41b3356015",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 32,
+                    "i": "9731b0f7-6323-4e20-80e1-84478504e384",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "活跃连接数",
+                "description": "对数据库发起采集时，数据库瞬时活跃连接（非 idle 连接）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_activeconns_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "51f35073-3a05-49c4-abd1-a390e4a9806b",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 32,
+                    "i": "663dcd3a-1d83-4452-aae9-336b83c9aa27",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "空闲连接数",
+                "description": "对数据库发起采集时，查询出来的数据库瞬时空闲连接（idle 连接）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_idleconns_avg{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "781559c6-aca3-4b21-bba4-8fbe45ed8a87",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 32,
+                    "i": "38583df9-00f4-4b1c-8ac9-635cc410dddc",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "5秒内新建的连接数",
+                "description": "对数据库发起采集时，查询出最近5秒内建立的所有连接数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_newconnin5s_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "e2c0cf9c-3abf-4abc-967d-ec0c679d154b",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 40,
+                    "i": "62a169ea-4d23-42ba-b7bf-39e44b40ff1d",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "每秒查询数",
+                "description": "平均每秒执行的 SQL 语句数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_qps_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "4b789da7-68a2-4429-8be8-11adebc02448",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 40,
+                    "i": "8ef40707-2b26-4232-bca4-49fe06b6b174",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "慢查询数量",
+                "description": "一个统计周期内的慢查询个数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_slowquerycnt_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "450a28a7-8465-4f33-934e-ad2d87e7400f",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 48,
+                    "i": "d9a3c2f1-ca73-498e-8830-b91f0a1a65ed",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "读写请求数",
+                "description": "一个统计周期(1min)内的读写请求数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_readwritecalls_sum{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "4cc42152-b71d-4808-bea0-33c684ebd301",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 48,
+                    "i": "f1225899-fa81-49e8-987b-c9af151b2407",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "读请求数",
+                "description": "一个统计周期(1min)内的读请求数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_readcalls_sum{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3b67c874-9c1f-4fb7-a9b4-de6d0ab38bbb",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 48,
+                    "i": "6649fcf2-79a1-40aa-83a6-40157acdab5a",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "写请求数",
+                "description": "一个统计周期(1min)内的写请求数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_writecalls_sum{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "612702e2-a364-498d-8170-6d8c939e1274",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 56,
+                    "i": "da2260cc-7fb6-4922-8f47-e5498926d8b2",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "其他请求数",
+                "description": "一个统计周期(1min)内的其他请求数（除 SELECT, INSERT, UPDATE, DELETE 以外的请求数）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_othercalls_sum{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "42fc3e79-d20a-4bbe-878e-01479eedf061",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 56,
+                    "i": "a518e818-8f1f-4500-9ad8-2e9b2812cf0a",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "缓冲区缓存命中率",
+                "description": "一个统计周期内的所有 SQL 语句执行的命中率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_hitpercent_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3178fef4-e029-42fc-98b4-d6fb6a1206dd",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 64,
+                    "i": "b360bb8d-40f4-486d-b08c-799b921fe1ba",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "平均执行时延",
+                "description": "一次统计周期内所有 SQL 语句的平均执行时延",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_sqlruntimeavg_avg{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5953ee18-470a-4893-94a7-51108ff07b23",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 64,
+                    "i": "e205e9dd-d16a-4c52-84e2-69150f2f501f",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "最长TOP10执行时延",
+                "description": "一次统计周期内最长 TOP10 的 SQL 平均执行时延",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_sqlruntimemax_avg{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "9c284674-ef37-4d65-8abe-3520b7718e22",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 64,
+                    "i": "880c276e-f663-4e1f-9346-c478354450f6",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "最短TOP10执行时延",
+                "description": "一次统计周期内最短 TOP10 的 SQL 平均执行时延",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_sqlruntimemin_avg{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "176d5cf6-b17f-4f58-b199-d3ca872d70a2",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 72,
+                    "i": "fb2767ff-2c2b-4412-9cd0-a5d8d4a9b9fc",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "剩余XID数量",
+                "description": "对数据库发起采集时，显示当前剩余 xid 最少的库的剩余 xid 数量。只读实例无此指标",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_remainxid_min{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "f3a8e682-e4f0-4285-aff5-4565b7dcf720",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 72,
+                    "i": "384c460e-a26b-456a-b969-253229af82b4",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "备库日志发送与回放位置差异",
+                "description": "日志从主库发送至备库与备库回放完成之间的大小差异，主要反映了备库日志应用的速度，主要能够通过此指标查看出备库的性能、网络传输的速度。只读实例无此指标",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_xlogdiff_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "36e61ed6-05c5-46b0-a665-0580bf906809",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 80,
+                    "i": "89e634cd-f1df-4127-888b-23f464321d57",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "备库日志落盘延迟",
+                "description": "备库落盘LSN与主实例当前LSN之间的大小差异，对于主实例而言，此指标可以体现出故障切换的数据丢失大小，对于只读实例而言，此指标可以体现出数据延迟大小",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_flushlatency_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "23ece091-4004-44d4-9fda-1df0d596aaf4",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 80,
+                    "i": "35f8760a-e0ad-4d51-8d5f-ae456391403b",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "备库日志落盘时间延迟",
+                "description": "日志从主库发送至备库与备库接收到日志并落盘之间的时间差异。只读实例无此指标，且实例版本在10.x以上版本才有此指标",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_xlogdifftime_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d3a381ad-3458-4eda-9875-4ed8ec62ea80",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 88,
+                    "i": "a56211a9-1a97-4876-87e5-2a0c8389d1bd",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "主备数据同步延迟 ",
+                "description": "备库回放 LSN 与主实例当前 LSN 之间的大小差异，对于主实例而言，此指标可以体现出故障切换的 RTO，对于只读实例而言，此指标可以体现出数据延迟大小",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_slaveapplydelay_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "1cbdb047-79fb-4137-b222-3a62ccca37d8",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 88,
+                    "i": "f224eb2a-573d-4869-8b44-f5cd2b428f85",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "主备数据同步延迟时间",
+                "description": "日志从主库发送至备库与备库接收到日志并回放之间的时间差异。实例版本在10.x以上版本才有此指标",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_replaylag_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "116e528b-b9e6-48bd-a74e-060af9bc67db",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 96,
+                    "i": "670f1b83-2bd9-4a94-957b-ef97501b5b21",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "执行时长超过1秒的事务数目",
+                "description": "对数据库发起采集时，执行时间超过1秒的事务数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_longxact_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "45465ed6-a3bf-42d6-8f3c-abc6e07f4042",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 96,
+                    "i": "e4b102e2-adf9-428d-a88f-62fa09161cf9",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "执行时长超过1秒的SQL数",
+                "description": "对数据库发起采集时，正在执行且执行时间超过1s的 SQL 数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_longquery_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "36cd5f9e-6cf1-4bfc-bd1a-1ef820c9d308",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 104,
+                    "i": "e418afbc-f8eb-49ff-b0d7-507efe9c0210",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "每秒事务数",
+                "description": "平均每秒执行成功的事务数（包括回滚和提交）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_tps_avg{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "0f4a3c47-af13-44ad-855b-59ac04fc44ba",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 104,
+                    "i": "21e636ba-217b-4b2e-baf9-fbb4ab91b201",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "事务提交数",
+                "description": "一个统计周期内的平均每秒提交事务数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_xactcommit_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3c18f335-4145-4d10-b13e-172903004f2d",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 104,
+                    "i": "43943418-76a4-4cc8-aa9d-5f6df7e9f5f2",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "事务回滚数",
+                "description": "一个统计周期内的平均每秒回滚事务数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_xactrollback_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "c72e8d95-e5f4-4469-8e82-173324d2eb73",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 112,
+                    "i": "bf14b1a5-9721-42c4-b25a-0d17f4a599e8",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "空闲事务数",
+                "description": "对数据库发起采集时，数据库正在处于 idle in transaction 状态的事务数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_idleinxact_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3960bfd5-a774-4307-8868-e53e15ca2835",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 112,
+                    "i": "81ab0e48-3f64-420b-8f6c-5e1958b30eac",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "超过5秒的空闲事务数",
+                "description": "对数据库发起采集时，状态处于idle in transaction且时间超过5秒的事务数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_longidleinxact_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "ea39284f-bb1c-488a-a9f4-0df8ce1adc9d",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 120,
+                    "i": "b8fda4b5-322f-49c2-894c-292e2f69c5a8",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "2PC事务数",
+                "description": "对数据库发起采集时，当前的2pc事务数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_2pc_sum{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "f239d383-5b17-43a3-ad73-30521820bca6",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 120,
+                    "i": "f1ed8215-1707-4fa0-9549-3cd91d9c867f",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "超过5秒未提交的2PC事务数",
+                "description": "对数据库发起采集时，当前执行时间超过5s的2pc事务数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_long2pc_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "efb2216e-af4c-4bb9-a026-a22ebdc282bd",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 128,
+                    "i": "5e64dabc-11b7-476d-bdcf-d52016846b0b",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "等待会话数",
+                "description": "对数据库发起采集时，数据库正在等待的会话数量（状态为 waiting）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_waiting_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5c26170c-f061-4a3c-a889-178811173426",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 128,
+                    "i": "4c762a8b-f74e-4b61-8ec1-a97ff17cbb1f",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "等待超过5秒的会话数",
+                "description": "对数据库发起采集时，数据库正在等待且超过5秒的会话数量（状态为 waiting）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_longwaiting_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "fe3165f8-5fca-4391-b9fb-c6751cbb25d3",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 136,
+                    "i": "f8ad45f2-b431-4690-93c8-51385cd04e26",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "每秒删除记录数",
+                "description": "一个统计周期内的平均每秒删除的 tuple 数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_tupdeleted_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "93084a44-f7d2-461b-9a93-0784acef4e16",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 136,
+                    "i": "4733791d-e10a-45ef-8f27-d15b0d8f37f5",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "每秒插入记录数",
+                "description": "一个统计周期内的平均每秒插入的 tuple 数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_tupinserted_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "69211caf-0515-447b-9122-5eadd0923bf6",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 136,
+                    "i": "0f9f08e9-1006-473e-9a69-7d457e5925f7",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "每秒更新记录数",
+                "description": "一个统计周期内的平均每秒更新的 tupe 数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_tupupdated_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5f784301-0e3a-4440-9d76-64cf1d784d54",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 144,
+                    "i": "1583ac8f-7839-48e4-af82-6384f17e2394",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "每秒索引扫描记录数",
+                "description": "一个统计周期内的平均每秒索引扫描的 tuple 数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_tupfetched_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "62a3db91-6017-490f-a181-90a4cc1eeca4",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 144,
+                    "i": "eb7c95b1-8493-45d0-b837-53c8790b7745",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "每秒全表扫描记录数",
+                "description": "一个统计周期内的平均每秒全表扫描的 tuple 数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_tupreturned_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "4e5aed2e-cd3f-4184-a580-743e056813b8",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 152,
+                    "i": "de8ca68b-ace4-48c2-bb26-cb5718f5d774",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "死锁数",
+                "description": "一个统计周期内的所有死锁数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_deadlocks_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "8d586da3-3ea2-43a1-8de7-a236fae40bbc",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 152,
+                    "i": "b9a4daea-cb33-4c82-be56-e4f12fc57e99",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "日志文件大小",
+                "description": "wal 日志文件占用空间大小",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_logfilesize_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d4517efc-35c0-42b2-a880-c0cd92688ed9",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 160,
+                    "i": "ccd81154-d2c8-40c9-8e53-7f0d3b9720b2",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "临时文件大小",
+                "description": "临时文件大小",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_tempfilesize_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "4ec632f4-f64d-4d03-afa2-b7bb2690a272",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 160,
+                    "i": "7fb521b5-bf43-4ef2-ba0d-a5efed9889d7",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "数据文件大小",
+                "description": "数据文件占用空间大小",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_datafilesize_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "176a44b8-fd78-4970-9076-2395f91a0c6e",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 168,
+                    "i": "e7db5194-50ef-4d04-bc54-b5dfdd67287e",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "吞吐率",
+                "description": "实例每秒读写磁盘速度",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_throughput_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "25c445be-a5ba-4e63-99eb-4b3a80ef1387",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 168,
+                    "i": "b8b14b8a-5b46-4e5a-8aad-152e08059238",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "读取吞吐率",
+                "description": "实例每秒读磁盘速度",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_throughputread_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "fc0d04c4-0010-429f-8ba0-27b98f6bf135",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 168,
+                    "i": "897e66b9-2c5d-4a5a-8d8c-c6ea5536e98b",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "写入吞吐率",
+                "description": "实例每秒写磁盘速度",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_throughputwrite_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "ff5e0616-10cc-445a-93fc-853a1629b6b7",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 176,
+                    "i": "a22d429b-9a47-4a55-814c-2d1b45d45370",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "实例端口输入流量",
+                "description": "数据库实例监听端口上的入流量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_clusterinflow_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "dd944df9-8c8f-4303-bd01-5c1864a44ed6",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 176,
+                    "i": "b07a2bec-b4cf-4e77-91b0-e66d1b2865a7",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "实例端口输出流量",
+                "description": "数据库实例监听端口上的出流量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_postgres_clusteroutflow_max{resource_id=~\"$instance_id\"}",
+                        "legend": "{{d_b_instance_name}} | {{resource_id}}"
+                    }
+                ]
+            }
+        ],
+        "version": "3.2.0"
+    }
+}

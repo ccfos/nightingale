@@ -1,0 +1,582 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788183997372,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "请求apiserver的耗时分布，按照url+verb统计",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "rest_client_request_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: histogram",
+                "name": "请求apiserver的耗时分布，按照url+verb统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "API Server Request Latency Distribution (by URL and Verb)",
+                "note": "Metric of the controller-manager service itself.\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788183756860,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "cronjob 创建到运行的时间分布",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "cronjob_controller_cronjob_job_creation_skew_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: histogram",
+                "name": "cronjob 创建到运行的时间分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "CronJob Creation-to-Run Time Distribution",
+                "note": "Metric of the controller-manager service itself.\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788183653132,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "控制器的选举状态，0表示backup， 1表示master",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "leader_election_master_status",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "控制器的选举状态，0表示backup， 1表示master"
+            },
+            {
+                "lang": "en_US",
+                "name": "Controller Leader Election Status (0: Backup, 1: Master)",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184631692,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "每个zone的健康node占比",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "node_collector_zone_health",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "每个zone的健康node占比"
+            },
+            {
+                "lang": "en_US",
+                "name": "Healthy Node Ratio per Zone",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184287620,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "每个zone的node数",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "node_collector_zone_size",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "每个zone的node数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Node Count per Zone",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788183887099,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "cpu使用量（也可以理解为cpu使用率）",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "process_cpu_seconds_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: counter",
+                "name": "cpu使用量（也可以理解为cpu使用率）"
+            },
+            {
+                "lang": "en_US",
+                "name": "CPU Usage (Can Be Used as CPU Utilization)",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184408102,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "控制器打开的fd数",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_open_fds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "控制器打开的fd数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Open File Descriptors of Controller",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184597417,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "当前绑定的pv数量",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "pv_collector_bound_pv_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "当前绑定的pv数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Currently Bound PV Count",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184204277,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "当前没有绑定的pvc数量",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "pv_collector_unbound_pvc_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "当前没有绑定的pvc数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Currently Unbound PVC Count",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184410503,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "当前绑定的pvc数量",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "pv_collector_bound_pvc_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "当前绑定的pvc数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Currently Bound PVC Count",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184372149,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "pv总数量",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "pv_collector_total_pv_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "pv总数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total PV Count",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184793080,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "各个controller已接受的任务总数",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "workqueue_adds_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: counter",
+                "name": "各个controller已接受的任务总数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Tasks Accepted by Each Controller",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788185073111,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "各个controller队列深度，表示一个controller中的任务的数量",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "workqueue_depth",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "各个controller队列深度，表示一个controller中的任务的数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Workqueue Depth per Controller (Number of Tasks in a Controller)",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184410769,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "任务在队列中的等待耗时,按照控制器分别统计",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "workqueue_queue_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: histogram",
+                "name": "任务在队列中的等待耗时,按照控制器分别统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Task Wait Time in Queue (by Controller)",
+                "note": "Metric of the controller-manager service itself.\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184741281,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "任务出队到被处理完成的时间，按照控制分别统计",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "workqueue_work_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: histogram",
+                "name": "任务出队到被处理完成的时间，按照控制分别统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Task Processing Time From Dequeue to Completion (by Controller)",
+                "note": "Metric of the controller-manager service itself.\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788185378852,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "任务进入队列重试的次数",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "workqueue_retries_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: counter",
+                "name": "任务进入队列重试的次数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Task Retries in Workqueue",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788184652143,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "正在处理的任务中，最长耗时任务的处理时间",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "workqueue_longest_running_processor_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "正在处理的任务中，最长耗时任务的处理时间"
+            },
+            {
+                "lang": "en_US",
+                "name": "Longest Running Task Processing Time",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788185225977,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "endpoint_slice 同步的数量(1.20以上)",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "endpoint_slice_controller_syncs",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: counter",
+                "name": "endpoint_slice 同步的数量(1.20以上)"
+            },
+            {
+                "lang": "en_US",
+                "name": "EndpointSlice Sync Count (1.20+)",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788185375635,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "获取token失败的次数",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "get_token_fail_count",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: counter",
+                "name": "获取token失败的次数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Token Fetch Failure Count",
+                "note": "Metric of the controller-manager service itself.\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788185376933,
+        "collector": "ControllerManager",
+        "typ": "Kubernetes",
+        "name": "controller gc的cpu使用率",
+        "unit": "",
+        "note": "controller-manager服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "go_memstats_gc_cpu_fraction",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "controller-manager服务自身指标\n类型: gauge",
+                "name": "controller gc的cpu使用率"
+            },
+            {
+                "lang": "en_US",
+                "name": "GC CPU Fraction of Controller",
+                "note": "Metric of the controller-manager service itself.\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

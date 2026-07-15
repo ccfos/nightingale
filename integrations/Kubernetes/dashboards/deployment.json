@@ -1,0 +1,2692 @@
+{
+    "name": "Kubernetes / Deployment",
+    "tags": "阿里ACK K8s",
+    "note": "",
+    "ident": "",
+    "uuid": 1743070543872000,
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "de7dacfc-6a85-4e1d-81bf-4181f3efee23",
+                "layout": {
+                    "h": 1,
+                    "i": "de7dacfc-6a85-4e1d-81bf-4181f3efee23",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Overview",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "stat",
+                "id": "419b3093-601d-4a18-8234-de98e0256ef6",
+                "layout": {
+                    "h": 4,
+                    "i": "419b3093-601d-4a18-8234-de98e0256ef6",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Namespace",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#5794F2",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "max(kube_namespace_labels{namespace=\"$namespace\",cluster=~\"$cluster\"})by(namespace)",
+                        "legend": "{{namespace}}",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "046290da-f822-4809-9069-333f9d3d60cc",
+                "layout": {
+                    "h": 4,
+                    "i": "046290da-f822-4809-9069-333f9d3d60cc",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Age",
+                "links": [],
+                "description": "Time since deployment created.",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#B877D9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "seconds",
+                        "decimals": 3
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "time() - max(kube_deployment_created{namespace=\"$namespace\",deployment=\"$name\",cluster=~\"$cluster\"})",
+                        "legend": "__auto",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "cfdc11bc-3c28-4202-a739-8454ac3c04b6",
+                "layout": {
+                    "h": 4,
+                    "i": "cfdc11bc-3c28-4202-a739-8454ac3c04b6",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Replicas(Pods)",
+                "links": [],
+                "description": "工作副本数量统计",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(97, 208, 113, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "B"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "unit": "percentUnit"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "valueMappings": []
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "A"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgba(255, 174, 57, 1)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "standardOptions": {}
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "max(kube_deployment_spec_replicas{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"})",
+                        "legend": "Request",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "max(kube_deployment_status_replicas_ready{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"})",
+                        "legend": "Ready",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(kube_deployment_status_replicas_ready{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"}) / max(kube_deployment_spec_replicas{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"}) ",
+                        "legend": "Ready Percent",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "63244f5e-f08c-4ce3-b073-2b12392b3f62",
+                "layout": {
+                    "h": 4,
+                    "i": "63244f5e-f08c-4ce3-b073-2b12392b3f62",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Available Percent",
+                "links": [],
+                "description": "pod存活率",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "unit": "percent",
+                        "decimals": 2
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "A"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "unit": "percent",
+                                "decimals": 2
+                            },
+                            "valueMappings": [
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "rgba(63, 196, 83, 1)"
+                                    },
+                                    "match": {
+                                        "from": 95.1,
+                                        "to": null
+                                    }
+                                },
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "rgba(255, 174, 57, 1)"
+                                    },
+                                    "match": {
+                                        "to": 95,
+                                        "from": 50
+                                    }
+                                },
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "rgba(206, 57, 0, 1)"
+                                    },
+                                    "match": {
+                                        "to": 50,
+                                        "from": null
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kube_deployment_status_replicas_available{namespace=\"$namespace\",deployment=\"$name\",cluster=~\"$cluster\"}/kube_deployment_spec_replicas{namespace=\"$namespace\",deployment=\"$name\",cluster=~\"$cluster\"}*100",
+                        "legend": "",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "aee40411-2f9a-466a-ac23-0e97bca1e265",
+                "layout": {
+                    "h": 4,
+                    "i": "aee40411-2f9a-466a-ac23-0e97bca1e265",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 1
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "ReplicaSet Count",
+                "links": [],
+                "description": "Deployment 历史更新保留版本的数量",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#B877D9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "count(kube_resource_relationship{name=\"$name\", namespace=\"$namespace\", target_kind=\"ReplicaSet\",cluster=~\"$cluster\"}>0)",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "2960a9b9-e543-426d-bef8-7cce5d744470",
+                "layout": {
+                    "h": 4,
+                    "i": "2960a9b9-e543-426d-bef8-7cce5d744470",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 5
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Replica  Trend",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "line+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5,
+                    "lineInterpolation": "linear"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "max(kube_deployment_spec_replicas{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"}) without (instance, pod)",
+                        "legend": "Desired",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(kube_deployment_status_replicas{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"}) without (instance, pod)",
+                        "legend": "Current",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "min(kube_deployment_status_replicas_ready{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"}) without (instance, pod)",
+                        "legend": "Ready",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "min(kube_deployment_status_replicas_available{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"}) without (instance, pod)",
+                        "legend": "Available",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "min(kube_deployment_status_replicas_updated{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"}) without (instance, pod)",
+                        "legend": "Updated",
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "min(kube_deployment_status_replicas_unavailable{deployment=\"$name\",namespace=\"$namespace\",cluster=~\"$cluster\"}) without (instance, pod)",
+                        "legend": "Unavailable",
+                        "refId": "F"
+                    }
+                ]
+            },
+            {
+                "type": "tableNG",
+                "id": "014def3f-6ba6-49ca-bbec-b74c24122284",
+                "layout": {
+                    "h": 5,
+                    "i": "014def3f-6ba6-49ca-bbec-b74c24122284",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 9
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "transformationsNG": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "fields": [
+                                "__time",
+                                "condition",
+                                "created_by_name",
+                                "node",
+                                "phase",
+                                "pod",
+                                "pod_ip",
+                                "replicaset",
+                                "uid",
+                                "__value_#A"
+                            ],
+                            "excludeByName": {
+                                "__time": true,
+                                "condition": false,
+                                "uid": true,
+                                "replicaset": true,
+                                "created_by_name": true,
+                                "__value_#A": true
+                            },
+                            "indexByName": {
+                                "__time": 0,
+                                "created_by_name": 1,
+                                "pod": 2,
+                                "pod_ip": 3,
+                                "condition": 4,
+                                "phase": 5,
+                                "node": 6,
+                                "replicaset": 7,
+                                "uid": 8,
+                                "__value_#A": 9
+                            },
+                            "renameByName": {
+                                "pod_ip": "PodIP",
+                                "phase": "Status",
+                                "node": "Node",
+                                "condition": "Ready"
+                            }
+                        }
+                    }
+                ],
+                "name": "Pods",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "filterable": true,
+                    "sortColumn": "pod",
+                    "cellOptions": {
+                        "type": "color-background"
+                    }
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgba(148, 112, 255, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "pod"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "color-background"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgba(144, 112, 255, 1)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "valueMappings": [
+                                {
+                                    "type": "special",
+                                    "result": {
+                                        "color": "#000000"
+                                    },
+                                    "match": {}
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "Ready"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "color-background"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "valueMappings": [
+                                {
+                                    "type": "textValue",
+                                    "result": {
+                                        "color": "rgba(206, 79, 82, 1)"
+                                    },
+                                    "match": {
+                                        "textValue": "false"
+                                    }
+                                },
+                                {
+                                    "type": "special",
+                                    "result": {
+                                        "color": "rgba(63, 196, 83, 1)"
+                                    },
+                                    "match": {}
+                                }
+                            ],
+                            "standardOptions": {}
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "Status"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "color-background"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgba(206, 79, 82, 1)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "valueMappings": [
+                                {
+                                    "type": "textValue",
+                                    "result": {
+                                        "color": "rgba(63, 196, 83, 1)"
+                                    },
+                                    "match": {
+                                        "textValue": "Running"
+                                    }
+                                }
+                            ],
+                            "standardOptions": {}
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset) * on (uid) group_left(phase) sum(kube_pod_status_phase{namespace=\"$namespace\",cluster=~\"$cluster\"} * (kube_pod_status_phase{namespace=\"$namespace\",cluster=~\"$cluster\"} > 0)) by (pod,uid, phase) * on(uid) group_left(condition)sum(kube_pod_status_ready{namespace=\"$namespace\",cluster=~\"$cluster\"} * (kube_pod_status_ready{namespace=\"$namespace\",cluster=~\"$cluster\"} > 0)) by (uid, pod,condition)",
+                        "legend": "__auto",
+                        "refId": "A",
+                        "instant": true
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "77703156-ea4f-496b-b0ee-e617bdd4ba3d",
+                "layout": {
+                    "h": 5,
+                    "i": "77703156-ea4f-496b-b0ee-e617bdd4ba3d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 14
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Services",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "background",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "columns": [
+                        "service",
+                        "cluster_ip"
+                    ],
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn"
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "group by (service) (label_replace(group by (name) (group by(target_name) (label_replace(group by(target_name) (kube_resource_relationship{namespace=\"$namespace\", kind=\"Deployment\", name=\"$name\", target_kind=\"ReplicaSet\",cluster=~\"$cluster\"}>0), \"name\", \"$1\", \"target_name\", \"(.*)\") * on(name) group_right() group by (name, target_name)(kube_resource_relationship{namespace=\"$namespace\", target_kind=\"Pod\",cluster=~\"$cluster\"}>0)) * on(target_name) group_right() kube_resource_relationship{kind=\"Endpoints\", target_kind=\"Pod\",cluster=~\"$cluster\"}), \"service\", \"$1\", \"name\", \"(.*)\")>0) * on(service) group_right() group by (cluster_ip, uid, service) (kube_service_info{namespace=\"$namespace\",cluster=~\"$cluster\"})",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "custom": {},
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "f3485517-8c13-4b0e-b79f-491a239a9c02",
+                "layout": {
+                    "h": 5,
+                    "i": "f3485517-8c13-4b0e-b79f-491a239a9c02",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 14
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "PersistentVolumeClaim",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "group by (persistentvolumeclaim, storageclass, node, volumename) (group by (persistentvolumeclaim) (label_replace(group by (target_name) (kube_resource_relationship{namespace=\"$namespace\", kind=\"Deployment\", name=\"$name\", target_kind=\"PersistentVolumeClaim\",cluster=~\"$cluster\"}>0), \"persistentvolumeclaim\", \"$1\", \"target_name\", \"(.*)\")) * on (persistentvolumeclaim) group_right() kube_persistentvolumeclaim_info{namespace=\"$namespace\",cluster=~\"$cluster\"}) * on (persistentvolumeclaim) group_left() kube_persistentvolumeclaim_status_phase{phase=\"Bound\", namespace=\"$namespace\",cluster=~\"$cluster\"}",
+                        "legend": "__auto",
+                        "refId": "A"
+                    }
+                ],
+                "type": "unknown",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "nowrap": true,
+                    "pageLimit": 500,
+                    "showHeader": true,
+                    "tableLayout": "auto"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "8da19c7f-b57b-426f-a57c-f59d2a39723b",
+                "layout": {
+                    "h": 5,
+                    "i": "8da19c7f-b57b-426f-a57c-f59d2a39723b",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 14
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Error Events",
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "ceil(sum(increase(eventer_events_error_total{namespace='$namespace', kind=\"Deployment\", name=\"$name\",cluster=~\"$cluster\"}[1h])) by (kind, name, reason)) > 0",
+                        "legend": "__auto",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "ceil(sum(label_replace(label_replace(group by (target_kind, target_name)(kube_resource_relationship{namespace=\"$namespace\", kind=\"Deployment\", name=\"$name\",cluster=~\"$cluster\"}>0), \"name\", \"$1\", \"target_name\", \"(.*)\"), \"kind\", \"$1\", \"target_kind\", \"(.*)\") * on(name, kind)  group_right() increase(eventer_events_error_total{namespace='$namespace',cluster=~\"$cluster\"}[1h])) by (reason, kind, name)>0 or sum(group(label_replace(label_replace(label_replace(label_replace(group by (target_kind, target_name)(kube_resource_relationship{namespace=\"$namespace\", kind=\"Deployment\", name=\"$name\",cluster=~\"$cluster\"}>0), \"name\", \"$1\", \"target_name\", \"(.*)\"), \"kind\", \"$1\", \"target_kind\", \"(.*)\") * on(name, kind) group_right() kube_resource_relationship{namespace=\"$namespace\",cluster=~\"$cluster\"}>0, \"name\", \"$1\", \"target_name\", \"(.*)\"), \"kind\", \"$1\", \"target_kind\", \"(.*)\")) by (name, kind) * on(name, kind)  group_right() increase(eventer_events_error_total{namespace='$namespace',cluster=~\"$cluster\"}[1h])) by (reason, kind, name))>0",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "table",
+                "version": "3.3.0",
+                "maxDataPoints": 240
+            },
+            {
+                "collapsed": true,
+                "id": "dda98ebd-e4e6-4728-9d7c-6af0923606dd",
+                "layout": {
+                    "h": 1,
+                    "i": "dda98ebd-e4e6-4728-9d7c-6af0923606dd",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 19
+                },
+                "name": "CPU Resource",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "stat",
+                "id": "22fd3ff2-6582-4086-80b4-eb975d5cb2c1",
+                "layout": {
+                    "h": 3,
+                    "i": "22fd3ff2-6582-4086-80b4-eb975d5cb2c1",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 20
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "CPU Request Core",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#B877D9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "0"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "A"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgba(83, 177, 167, 1)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(kube_pod_container_resource_requests{resource=\"cpu\", namespace=\"$namespace\",cluster=~\"$cluster\"}) by (pod))",
+                        "legend": "Total",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(kube_pod_container_resource_requests{resource=\"cpu\", namespace=\"$namespace\",cluster=~\"$cluster\"}) by (pod))",
+                        "legend": "Single Pod",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "51e1f7a2-600d-4ec7-ac96-3156ed13cb2a",
+                "layout": {
+                    "h": 6,
+                    "i": "51e1f7a2-600d-4ec7-ac96-3156ed13cb2a",
+                    "isResizable": true,
+                    "w": 18,
+                    "x": 6,
+                    "y": 20
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU Info",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "core",
+                        "decimals": null
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 0.7
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 0.85
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\",cluster=~\"$cluster\"}[5m])) by (pod, container)",
+                        "legend": "Usage: {{pod}}/{{container}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max(kube_pod_container_resource_requests_cpu_cores{namespace=\"$namespace\",container!=\"\",container!=\"POD\",cluster=~\"$cluster\"}) by (pod, container))by(container)",
+                        "legend": "Request: {{container}}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max(kube_pod_container_resource_limits_cpu_cores{namespace=\"$namespace\",container!=\"\",container!=\"POD\",cluster=~\"$cluster\"}) by (pod, container))by(container)",
+                        "legend": "Limit: {{container}}",
+                        "refId": "C"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "110aa294-2315-44c0-98d9-b81547c6225c",
+                "layout": {
+                    "h": 3,
+                    "i": "110aa294-2315-44c0-98d9-b81547c6225c",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 23
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "CPU Limit Core",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#B877D9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "0"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "B"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgba(230, 198, 39, 1)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(kube_pod_container_resource_limits{resource=\"cpu\", namespace=\"$namespace\",cluster=~\"$cluster\"}) by (pod))",
+                        "legend": "Total",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(kube_pod_container_resource_limits{resource=\"cpu\", namespace=\"$namespace\",cluster=~\"$cluster\"}) by (pod))",
+                        "legend": "Single Pod",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "aa533dca-2d31-4684-ad2c-bcd4be9b0b64",
+                "layout": {
+                    "h": 6,
+                    "i": "aa533dca-2d31-4684-ad2c-bcd4be9b0b64",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 26
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU Usage/Limit (%)",
+                "links": [],
+                "description": "CPU 使用量除以 CPU 限制量。若没有数据需要检查相应容器是否进行了 CPU Limit 的配置。",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 0.7
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 0.85
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\",cluster=~\"$cluster\"}[5m])) by (pod, container) / max by(container, pod) (kube_pod_container_resource_limits{resource=\"cpu\", namespace=\"$namespace\",cluster=~\"$cluster\"})",
+                        "legend": "{{pod}}/{{container}}(Limit)",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "52b1adc3-9329-4541-9fec-dd666d13ea1a",
+                "layout": {
+                    "h": 6,
+                    "i": "52b1adc3-9329-4541-9fec-dd666d13ea1a",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 26
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU Usage/Request (%)",
+                "links": [],
+                "description": "CPU 使用量除以 CPU 请求量。若没有数据需要检查相应容器是否进行了 CPU Request 的配置。",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 0.7
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 0.85
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\",cluster=~\"$cluster\"}[5m])) by (pod, container) / max by(container, pod) (kube_pod_container_resource_requests{resource=\"cpu\", namespace=\"$namespace\",cluster=~\"$cluster\"})",
+                        "legend": "{{pod}}/{{container}}(Request)",
+                        "refId": "B"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "fbaacaf8-7e71-4fa0-abd3-a7f1d8a705bb",
+                "layout": {
+                    "h": 6,
+                    "i": "fbaacaf8-7e71-4fa0-abd3-a7f1d8a705bb",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 26
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU User Time (%)",
+                "links": [],
+                "description": "用户级 CPU 消耗占整体 CPU 消耗量的比例",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "0"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 0.7
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 0.85
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() (max(rate(container_cpu_user_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\",cluster=~\"$cluster\"}[5m])) by (pod,container) / max(rate(container_cpu_user_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\",cluster=~\"$cluster\"}[5m])+rate(container_cpu_system_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\",cluster=~\"$cluster\"}[5m])) by (pod,container))) by (pod,container)",
+                        "legend": "{{pod}}/{{container}}",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "d2ae24b2-18df-4e9d-8b4d-624dd0aa1300",
+                "layout": {
+                    "h": 1,
+                    "i": "d2ae24b2-18df-4e9d-8b4d-624dd0aa1300",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 32
+                },
+                "name": "Memory Resource",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "stat",
+                "id": "ae66adc7-1ca3-41d7-ba73-fb9155cdf2b8",
+                "layout": {
+                    "h": 3,
+                    "i": "ae66adc7-1ca3-41d7-ba73-fb9155cdf2b8",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 33
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Memory Request",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "0"
+                                }
+                            },
+                            "type": "special",
+                            "result": {
+                                "text": ""
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 2
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "B"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgba(148, 112, 255, 1)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "decimals": 2
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(kube_pod_container_resource_requests{resource=\"memory\", namespace=\"$namespace\",cluster=~\"$cluster\"}) by (pod))",
+                        "legend": "Total",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(kube_pod_container_resource_requests{resource=\"memory\", namespace=\"$namespace\",cluster=~\"$cluster\"}) by (pod))",
+                        "legend": "Single Pod",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5034f07b-8c21-4ccb-9685-aae0af263d50",
+                "layout": {
+                    "h": 6,
+                    "i": "5034f07b-8c21-4ccb-9685-aae0af263d50",
+                    "isResizable": true,
+                    "w": 18,
+                    "x": 6,
+                    "y": 33
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Memory Info",
+                "links": [],
+                "description": "每个容器的内存使用量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#73BF69"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.13,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max by(container, pod) (container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\", image!=\"\", container!=\"POD\",cluster=~\"$cluster\"})\n",
+                        "legend": "Usage: {{pod}}/{{container}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max by(container, pod) (kube_pod_container_resource_limits_memory_bytes{namespace=\"$namespace\",cluster=~\"$cluster\"}))by(container)",
+                        "legend": "Limit: {{container}}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max by(container, pod) (kube_pod_container_resource_requests_memory_bytes{namespace=\"$namespace\",cluster=~\"$cluster\"}))by(container)",
+                        "legend": "Request: {{container}}",
+                        "refId": "C"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "33658f0c-8fb1-4df9-bb69-fae4ddbadb5c",
+                "layout": {
+                    "h": 3,
+                    "i": "33658f0c-8fb1-4df9-bb69-fae4ddbadb5c",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 36
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Memory Limit",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#B877D9"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "0"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "bytesIEC"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "A"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgba(177, 152, 83, 1)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "decimals": 2
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(container_spec_memory_limit_bytes{namespace=\"$namespace\",container!=\"\",cluster=~\"$cluster\"}) by (pod))",
+                        "legend": "Total",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(container_spec_memory_limit_bytes{namespace=\"$namespace\",container!=\"\",cluster=~\"$cluster\"}) by (pod))",
+                        "legend": "Single Pod",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "ec7b46df-e986-4801-8677-a42730e902e5",
+                "layout": {
+                    "h": 6,
+                    "i": "ec7b46df-e986-4801-8677-a42730e902e5",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 39
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Memory Usage/Limit (%)",
+                "links": [],
+                "description": "内存使用量除以内存限制量。若没有数据需要检查相应容器是否进行了 Memory Limit 的配置。",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 0.7
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 0.85
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.13,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max by(container, pod) (container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\", image!=\"\", container!=\"POD\",cluster=~\"$cluster\"})/max by(container, pod) (kube_pod_container_resource_limits{resource=\"memory\", namespace=\"$namespace\",cluster=~\"$cluster\"})\n",
+                        "legend": "{{pod}}/{{container}}(Limit)",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b8ffde72-810c-4f59-b204-1a68484af3ca",
+                "layout": {
+                    "h": 6,
+                    "i": "b8ffde72-810c-4f59-b204-1a68484af3ca",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 39
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Memory Usage/Request (%)",
+                "links": [],
+                "description": "内存使用量除以内存请求量。若没有数据需要检查相应容器是否进行了 Memory Request 的配置。",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 0.7
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 0.85
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.13,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max by(container, pod) (container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\", image!=\"\", container!=\"POD\",cluster=~\"$cluster\"})/max by(container, pod) (kube_pod_container_resource_requests{resource=\"memory\", namespace=\"$namespace\",cluster=~\"$cluster\"})\n",
+                        "legend": "{{pod}}/{{container}}(Request)",
+                        "refId": "B"
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "9add9f15-d19c-4b54-8146-1513ffc6d467",
+                "layout": {
+                    "h": 1,
+                    "i": "9add9f15-d19c-4b54-8146-1513ffc6d467",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 45
+                },
+                "name": "Network & File System",
+                "panels": [],
+                "type": "row",
+                "version": "3.3.0",
+                "overrides": []
+            },
+            {
+                "type": "stat",
+                "id": "2c0a4f7f-042c-4a8c-acfc-fa62c4ef1648",
+                "layout": {
+                    "h": 4,
+                    "i": "2c0a4f7f-042c-4a8c-acfc-fa62c4ef1648",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 46
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Sockets",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(255, 153, 25, 1)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 1024
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "0"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(container_sockets{namespace=\"$namespace\",container!=\"\",cluster=~\"$cluster\"}) by (pod))",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "4a9443a9-1dca-4594-8236-d52fd1d42f05",
+                "layout": {
+                    "h": 4,
+                    "i": "4a9443a9-1dca-4594-8236-d52fd1d42f05",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 46
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Network Errors",
+                "links": [],
+                "description": "The number of network errors including receiving and transmitting.",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(115, 191, 105, 1)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 0
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "A"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "valueMappings": [
+                                {
+                                    "type": "special",
+                                    "result": {
+                                        "color": "rgba(115, 191, 105, 1)"
+                                    },
+                                    "match": {
+                                        "special": 0
+                                    }
+                                },
+                                {
+                                    "type": "range",
+                                    "result": {
+                                        "color": "rgba(206, 79, 82, 1)"
+                                    },
+                                    "match": {
+                                        "from": 1
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() (sum(container_network_receive_errors_total{namespace=\"$namespace\",cluster=~\"$cluster\"}) by (pod) + sum(container_network_transmit_errors_total{namespace=\"$namespace\",cluster=~\"$cluster\"}) by (pod)))",
+                        "legend": "__auto",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "2189733e-8bba-4f9e-b039-9ecb038cd16c",
+                "layout": {
+                    "h": 4,
+                    "i": "2189733e-8bba-4f9e-b039-9ecb038cd16c",
+                    "isResizable": true,
+                    "w": 16,
+                    "x": 8,
+                    "y": 46
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Network Output",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#73BF69"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max(rate(container_network_transmit_bytes_total{namespace=\"$namespace\",cluster=~\"$cluster\"}[5m])) by (pod)",
+                        "legend": "{{pod}}-Out",
+                        "refId": "B"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "9cb4e2d6-2f78-4561-95d2-1d4e63639631",
+                "layout": {
+                    "h": 4,
+                    "i": "9cb4e2d6-2f78-4561-95d2-1d4e63639631",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 50
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Network Out",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(108, 83, 177, 1)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 1048576
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "0"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 2
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(rate(container_network_transmit_bytes_total{namespace=\"$namespace\",cluster=~\"$cluster\"}[5m])) by (pod))",
+                        "legend": "__auto",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "bc74d511-d8d1-4bb5-88b4-777cc8f31ab1",
+                "layout": {
+                    "h": 4,
+                    "i": "bc74d511-d8d1-4bb5-88b4-777cc8f31ab1",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 50
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Network In",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(178, 105, 191, 1)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 1048576
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "0"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 2
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() sum(rate(container_network_receive_bytes_total{namespace=\"$namespace\",cluster=~\"$cluster\"}[5m])) by (pod))",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "6cd77bd1-ff29-4c45-a60d-060680faa392",
+                "layout": {
+                    "h": 4,
+                    "i": "6cd77bd1-ff29-4c45-a60d-060680faa392",
+                    "isResizable": true,
+                    "w": 16,
+                    "x": 8,
+                    "y": 50
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "File System Write",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#73BF69"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max(rate(container_fs_writes_bytes_total{namespace=\"$namespace\", container!=\"POD\", container!=\"\",cluster=~\"$cluster\"}[5m])) by (pod,container)",
+                        "legend": "{{pod}}/{{container}}(Write)",
+                        "refId": "B"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "1d75dc49-e755-40f7-a9c3-eb5642ea72c1",
+                "layout": {
+                    "h": 6,
+                    "i": "1d75dc49-e755-40f7-a9c3-eb5642ea72c1",
+                    "isResizable": true,
+                    "w": 11,
+                    "x": 0,
+                    "y": 54
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Network Input",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#73BF69"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max(rate(container_network_receive_bytes_total{namespace=\"$namespace\",cluster=~\"$cluster\"}[5m])) by (pod)",
+                        "legend": "{{pod}}-In",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "a35d9025-61a7-4e92-b53f-7ca2fbb3f927",
+                "layout": {
+                    "h": 6,
+                    "i": "a35d9025-61a7-4e92-b53f-7ca2fbb3f927",
+                    "isResizable": true,
+                    "w": 13,
+                    "x": 11,
+                    "y": 54
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "File System Read",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#73BF69"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "label_replace(\n  max(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"ReplicaSet\", pod_ip!=\"\",cluster=~\"$cluster\"}) by (created_by_name, uid, pod, pod_ip, node),\n  \"replicaset\",\n  \"$1\",\n  \"created_by_name\",\n  \"(.+)\"\n) * on(replicaset) group_left() max(kube_replicaset_owner{namespace=\"$namespace\",owner_kind=\"Deployment\",owner_name=\"$name\",cluster=~\"$cluster\"}) by (replicaset)\n* on(pod) group_right() max(rate(container_fs_reads_bytes_total{namespace=\"$namespace\", container!=\"POD\", container!=\"\",cluster=~\"$cluster\"}[5m])) by (pod,container)",
+                        "legend": "{{pod}}/{{container}}(Read)",
+                        "refId": "A"
+                    }
+                ]
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "hide": false,
+                "name": "datasource",
+                "type": "datasource",
+                "value": 0,
+                "options": []
+            },
+            {
+                "name": "cluster",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(kube_deployment_created, cluster)",
+                "initialized": true,
+                "options": [],
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*"
+            },
+            {
+                "allOption": false,
+                "allValue": "",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(kube_deployment_created{cluster=~\"$cluster\"}, namespace)",
+                "hide": false,
+                "label": "Namespace",
+                "multi": false,
+                "name": "namespace",
+                "reg": "",
+                "type": "query",
+                "value": "",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "allOption": false,
+                "allValue": "",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(kube_deployment_created{namespace=\"$namespace\",cluster=~\"$cluster\"}, deployment)",
+                "hide": false,
+                "label": "Deployment",
+                "multi": false,
+                "name": "name",
+                "reg": "",
+                "type": "query",
+                "value": "",
+                "initialized": true,
+                "options": []
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

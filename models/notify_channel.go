@@ -255,6 +255,26 @@ func NotifyChannelGets(ctx *ctx.Context, id int64, name, ident string, enabled i
 	return channels, err
 }
 
+// NotifyChannelIdentsGet 按 id 批量查出 channelID -> ident 映射，供读接口回填展示。
+// 不过滤 enable，避免通知规则引用了已停用媒介时展示为空。
+func NotifyChannelIdentsGet(ctx *ctx.Context, ids []int64) (map[int64]string, error) {
+	ret := make(map[int64]string, len(ids))
+	if len(ids) == 0 {
+		return ret, nil
+	}
+
+	var channels []*NotifyChannelConfig
+	err := DB(ctx).Select("id", "ident").Where("id in ?", ids).Find(&channels).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for _, c := range channels {
+		ret[c.ID] = c.Ident
+	}
+	return ret, nil
+}
+
 func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	if nc.RequestConfig == nil {
 		return nil, fmt.Errorf("%+v request config not found", nc)

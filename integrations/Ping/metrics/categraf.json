@@ -9,10 +9,8 @@
         "note": "Time To Live，指的是报文在网络中能够“存活”的限制时间",
         "lang": "zh_CN",
         "expression": "ping_ttl",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -24,7 +22,11 @@
                 "name": "Ping ttl time",
                 "note": "Time To Live refers to the limited time that a packet can \"survive\" in the network"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -36,10 +38,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "ping_percent_packet_loss",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -51,7 +51,11 @@
                 "name": "Ping packet loss rate",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -63,10 +67,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "ping_average_response_ms",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -78,7 +80,11 @@
                 "name": "Ping average time consumed",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -90,10 +96,8 @@
         "note": "值为 0 就是正常，非 0 值就是异常。如果 Ping 失败，Categraf 日志中理应会有异常日志",
         "lang": "zh_CN",
         "expression": "ping_result_code",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -105,7 +109,11 @@
                 "name": "Ping probe result status code",
                 "note": "A value of 0 is normal, and a non-0 value is abnormal. If the Ping fails, there should be an exception log in the Categraf log"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -117,10 +125,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "ping_maximum_response_ms",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -132,7 +138,11 @@
                 "name": "Ping maximum time consumption",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -144,10 +154,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "ping_minimum_response_ms",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -159,6 +167,10 @@
                 "name": "Ping minimum time consumption",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     }
 ]

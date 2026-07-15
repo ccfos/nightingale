@@ -1,0 +1,276 @@
+[
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "RocketMQ broker down",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "huaweicloud_sys_dms_broker_alive == 0",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "network_device_config": {}
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1750414791718278,
+    "cur_event_count": 0,
+    "update_by_nickname": "技术支持",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "RocketMQ CPU核均负载大于1.5",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "huaweicloud_sys_dms_broker_cpu_core_load > 1.5",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "network_device_config": {}
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1750414791763424,
+    "cur_event_count": 0,
+    "update_by_nickname": "技术支持",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "RocketMQ 内存使用率大于85%",
+    "note": "",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 1,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "huaweicloud_sys_dms_broker_memory_usage > 85",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "network_device_config": {}
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1750414791822144,
+    "cur_event_count": 0,
+    "update_by_nickname": "技术支持",
+    "cron_pattern": "@every 60s",
+    "notify_rule_ids": [],
+    "notify_version": 1
+  }
+]

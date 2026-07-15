@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/a2a"
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/aiagent/skill"
+	aitools "github.com/ccfos/nightingale/v6/aiagent/tools"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cstats"
@@ -25,6 +27,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/sandbox"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
@@ -57,6 +60,11 @@ type Router struct {
 	Ctx               *ctx.Context
 	LogDir            string
 
+	// Sandbox is the Skill script-execution isolation controller (pkg/sandbox).
+	// Built once at New() from the configured capabilities; nil-safe (a disabled
+	// sandbox simply makes run_skill_script report "execution unavailable").
+	Sandbox *sandbox.Sandbox
+
 	HeartbeatHook         HeartbeatHookFunc
 	streamBus             aiagent.StreamBus
 	pubsubBus             storage.PubsubBus
@@ -65,6 +73,11 @@ type Router struct {
 	TargetDeleteCheck     TargetDeleteCheckFunc
 	TargetBgidChangeCheck TargetBgidChangeCheckFunc
 	AlertRuleModifyHook   AlertRuleModifyHookFunc
+
+	// MCPExtraToolsets lets an embedder (e.g. the enterprise edition) register
+	// additional MCP toolsets on /mcp beyond n9e-mcp-server's defaults. Set it
+	// before Config(r); the registrars run when the /mcp handler is built.
+	MCPExtraToolsets []a2a.MCPToolsetRegistrar
 
 	// aiSkillSyncOnce ensures the DB→FS full sync runs at most once per process
 	// lifetime (startup goroutine + first chat handler both call through the
@@ -124,6 +137,10 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	// models 包级权威值，供 DB 写入(ai_skill_file) 与归档解压(aiagent/skill) 共用。
 	models.MaxFilesPerSkill = rt.Center.AIAgent.MaxFilesPerSkill
 
+	// Skill 脚本执行的隔离 sandbox：启动期探测宿主能力、选定引擎（或在能力不足/
+	// 非 Linux 时禁用），全程只构建一次。run_skill_script 工具经 ToolDeps.Sandbox 用它。
+	rt.Sandbox = sandbox.New(rt.Center.Sandbox)
+
 	// 内置 skill 的磁盘解压只在进程启动时做一次——之前是在每条 assistant
 	// 消息的 InitSkills 里 destructive re-extract，多 chat 并发时 Step 1 删目录
 	// 和 Step 2 重写之间会被别的请求读到空目录，引发偶发 "file not found"。
@@ -141,6 +158,9 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	// re-syncs on the configured cadence. See runAISkillSyncLoop for the
 	// design rationale.
 	go rt.runAISkillSyncLoop(rt.Center.AIAgent.SkillSyncInterval)
+
+	// Reap stale http_fetch(save_to_file=true) temp files (startup sweep + hourly).
+	go aitools.StartFetchTempReaper()
 
 	return rt
 }
@@ -499,6 +519,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
+		pages.POST("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
 		pages.GET("/alert-cur-events/card", rt.auth(), rt.user(), rt.alertCurEventsCard)
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.user(), rt.alertHisEventsList)
@@ -624,13 +645,21 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileGet)
 		pages.DELETE("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileDel)
 
-		pages.GET("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerGets)
-		pages.GET("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerGet)
-		pages.POST("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerAdd)
-		pages.PUT("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerPut)
-		pages.DELETE("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerDel)
-		pages.POST("/mcp-server/test", rt.auth(), rt.admin(), rt.mcpServerTest)
-		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.admin(), rt.mcpServerTools)
+		pages.GET("/mcp-servers", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerGets)
+		pages.GET("/mcp-server/:id", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerGet)
+		pages.POST("/mcp-servers", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerAdd)
+		pages.PUT("/mcp-server/:id", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerPut)
+		pages.DELETE("/mcp-server/:id", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerDel)
+		pages.POST("/mcp-server/test", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerTest)
+		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerTools)
+
+		// Outbound MCP client OAuth. The callback is the vendor's browser redirect
+		// target, so it is public (no session token); it is guarded by the signed
+		// one-time state stored at prepare time.
+		pages.POST("/mcp-server-oauth/prepare", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerOAuthPrepare)
+		pages.GET("/mcp-server-oauth/status", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerOAuthStatus)
+		pages.POST("/mcp-server-oauth/disconnect", rt.auth(), rt.user(), rt.perm("/ai-config/mcp-servers"), rt.mcpServerOAuthDisconnect)
+		pages.GET("/mcp-server-oauth/callback", rt.mcpServerOAuthCallback)
 
 		// AI Assistant Chat
 		pages.POST("/assistant/chat/new", rt.auth(), rt.user(), rt.assistantChatNew)

@@ -1,0 +1,2603 @@
+{
+  "name": "HUATUO-指标-容器视图",
+  "tags": "HUATUO 容器",
+  "note": "",
+  "ident": "",
+  "uuid": 1764910540686000,
+  "configs": {
+    "var": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "definition": "prometheus"
+      },
+      {
+        "name": "datasource",
+        "label": "DataSource",
+        "type": "datasource",
+        "hide": false,
+        "definition": "prometheus"
+      },
+      {
+        "name": "region",
+        "label": "region",
+        "type": "query",
+        "hide": false,
+        "defaultValue": "",
+        "value": "",
+        "options": [],
+        "definition": "label_values(huatuo_bamai_arp_entries, region)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "initialized": true
+      },
+      {
+        "name": "ns",
+        "label": "ns",
+        "type": "query",
+        "hide": false,
+        "defaultValue": "",
+        "value": "",
+        "options": [],
+        "definition": "label_values(huatuo_bamai_arp_container_entries{region=\"$region\"}, container_hostnamespace)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "initialized": true
+      },
+      {
+        "name": "container_host",
+        "label": "container_host",
+        "type": "query",
+        "hide": false,
+        "defaultValue": "",
+        "value": "",
+        "options": [],
+        "definition": "label_values(huatuo_bamai_arp_container_entries{container_hostnamespace =~\"$ns\"}, container_host)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "initialized": true
+      },
+      {
+        "name": "metric",
+        "label": "metric",
+        "type": "query",
+        "hide": false,
+        "defaultValue": "",
+        "value": "",
+        "options": [],
+        "definition": "metrics(huatuo_bamai_)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${datasource}"
+        },
+        "initialized": true
+      }
+    ],
+    "panels": [
+      {
+        "type": "timeseries",
+        "id": "faa3d7f1-e68d-4fb5-8a76-da691182c502",
+        "layout": {
+          "h": 6,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "47ab9578-11e3-40a4-95d0-ffc67f7ec698",
+          "isResizable": true
+        },
+        "version": "3.2.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${datasource}",
+        "name": "指标：$metric",
+        "description": "",
+        "options": {
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "multi",
+            "sort": "desc"
+          },
+          "legend": {
+            "calcs": [
+              "mean",
+              "max",
+              "min"
+            ],
+            "displayMode": "table",
+            "placement": "right",
+            "showLegend": true
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "custom": {
+          "drawStyle": "line",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "none",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "never",
+          "pointSize": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "$metric{container_host=~\"$container_host\",region=\"$region\",container_type!=\"Sidecar\"}",
+            "legend": "{{host}}/{{container_host}}:{{container_type}}"
+          }
+        ],
+        "overrides": []
+      },
+      {
+        "type": "row",
+        "id": "8730d1a7-92f3-41fc-bc35-b759d6ed5641",
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 6,
+          "i": "a500d968-e7ca-415b-bb2c-fc53ea31ab53",
+          "isResizable": false
+        },
+        "name": "IO",
+        "collapsed": false,
+        "panels": [
+          {
+            "type": "timeseries",
+            "id": "f9931718-c06d-4b8f-8ba1-86b2dcf41ada",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 7,
+              "i": "3f162c60-38a7-4572-b216-476c4104b8d7",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "容器访问磁盘q2c延迟超过20ms的IO个数统计（5分钟增量）",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "single",
+                "sort": "none"
+              },
+              "legend": {
+                "calcs": [
+                  "max",
+                  "mean"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true,
+                "sortBy": "Mean",
+                "sortDesc": false
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "increase(huatuo_bamai_iolatency_container_q2c{container_host=~\"$container_host\",region=\"$region\"}[5m])",
+                "legend": "{{container_host}} [{{latency}}]"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "7642972f-33c7-4137-aac7-0342945009a0",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 11,
+              "i": "7e6cda44-97ae-4e61-9f34-e72f8ec2d451",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "容器访问磁盘d2c延迟超过20ms的IO个数统计（5分钟增量）",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "single",
+                "sort": "none"
+              },
+              "legend": {
+                "calcs": [
+                  "max",
+                  "mean"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true,
+                "sortBy": "Max",
+                "sortDesc": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "increase(huatuo_bamai_iolatency_container_d2c{container_host=~\"$container_host\",region=\"$region\"}[5m])",
+                "legend": "{{container_host}} [{{latency}}]"
+              }
+            ],
+            "overrides": []
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "b3ae6c4f-d687-4d56-9041-aafe5ea7319b",
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 7,
+          "i": "99239251-c965-4f95-a572-d39345e886bc",
+          "isResizable": false
+        },
+        "name": "Memory",
+        "collapsed": false,
+        "panels": [
+          {
+            "type": "timeseries",
+            "id": "7dad0532-fb99-433f-86ab-e282b8a6c56a",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 8,
+              "i": "02e81342-d146-4f8d-a240-0ffd10f81e8c",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "$container_host 异步回收耗时(ms)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_memory_others_container_asyncreclaim_time{container_host=~\"$container_host\",region=\"$region\"}/1000000",
+                "legend": "{{host}}/{{container_host}}:{{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "ef35c81f-a1de-42f6-af33-98894c6bee57",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 12,
+              "i": "9b96eda5-fd69-4545-b6af-d41d07eb5422",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "$container_host try_charge 直接回收耗时",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_memory_others_container_directstall_time{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "{{host}}/{{container_host}}:{{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "d7fecf93-03dc-43b6-8291-a1913c95c6cd",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 16,
+              "i": "8f586869-da39-4e7b-90e1-b146c7afc5ef",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "$container_host 异步回收量（累计值）",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_memory_stat_container_pgsteal_cswapd{container_host=~\"$container_host\",region=\"$region\"}/1024/1024",
+                "legend": "{{host}}/{{container_host}}:{{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "a2ada50f-3e2d-4e87-a995-ddcaf8ff35ce",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 20,
+              "i": "0095d26c-42d1-4eb4-b746-0f15d5f6ed10",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "宿主直接回收和 try_charge 对 $container_host 直接回收的总量（累计值）",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_memory_stat_container_pgsteal_direct{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "{{host}}/{{container_host}}:{{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "684bc73d-04b7-43ed-be6e-e1754182353c",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 24,
+              "i": "ed2d58de-7774-4b19-88b0-854fe200f1bc",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "宿主kswapd和容器cswapd 对 $container_host 的异步回收的总量（累计值）",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_memory_stat_container_pgsteal_kswapd{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "{{host}}/{{container_host}}:{{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "5cb2a42e-dd00-4b5d-998e-43b6e46f54fb",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 28,
+              "i": "6321aba5-fe14-484e-b964-0af20c80ec8f",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "宿主直接回收对 $container_host 容器的回收量(累计值)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_memory_stat_container_pgsteal_globaldirect{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "{{host}}/{{container_host}}:{{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "3ed2cf81-2825-4612-a2f3-16b20c8e3c02",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 32,
+              "i": "5bd82315-73db-430f-8afa-aaeb9aef4d37",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "宿主kswapd回收对 $container_host 容器的回收量(累计值)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_memory_stat_container_pgsteal_globalkswapd{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "{{host}}/{{container_host}}:{{container_type}}"
+              }
+            ],
+            "overrides": []
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "7316e219-5a6d-4c33-a381-db0189230711",
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 8,
+          "i": "ed5cbfe0-97ce-44a3-9b79-cfceb206aee4",
+          "isResizable": false
+        },
+        "name": "CPU",
+        "collapsed": false,
+        "panels": [
+          {
+            "type": "timeseries",
+            "id": "035a673b-8707-4df6-99f6-e4218c53dbba",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 9,
+              "i": "462a961a-4c23-4088-9704-3aa1c02d0301",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "容器usr",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_cpu_util_container_usr{container_host=~\"$container_host\",region=\"$region\", container_type != \"sidecar\"}",
+                "legend": "{{host}}/{{container_host}}: {{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "d2f26ff2-f8d9-4124-a13b-c1a50ae6ccd2",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 13,
+              "i": "cd9510f1-9ab0-46bd-a71d-0409913b87e8",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "容器sys",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_cpu_util_container_sys{container_host=~\"$container_host\",region=\"$region\", container_type != \"sidecar\"}",
+                "legend": "{{host}}/{{container_host}}: {{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "3fec64c0-c1fa-4579-9438-7979a567f485",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 17,
+              "i": "6ad4b0c8-d51e-409f-a4ae-d3b110f7b911",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "容器内部争抢",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_cpu_stat_container_inner_wait_rate{container_host=~\"$container_host\",region=\"$region\", container_type != \"sidecar\"}",
+                "legend": "{{host}}/{{container_host}}: {{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "33df08ed-6050-4051-b073-78984fd35857",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 21,
+              "i": "1a90aee1-5757-4c2c-9ed8-f070759e9ff9",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "容器外部争抢",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_cpu_stat_container_exter_wait_rate{container_host=~\"$container_host\",region=\"$region\", container_type != \"sidecar\"}",
+                "legend": "{{host}}/{{container_host}}: {{container_type}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "f31690c6-a932-48d4-9dd7-f7d806a652ee",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 25,
+              "i": "91a0e65a-737c-4d76-9209-f19eaa6641dc",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "容器throttle",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "huatuo_bamai_cpu_stat_container_throttle_wait_rate{container_host=~\"$container_host\",region=\"$region\", container_type != \"sidecar\"}",
+                "legend": "{{host}}/{{container_host}}: {{container_type}}"
+              }
+            ],
+            "overrides": []
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "d7369bf3-e692-4b89-9fe6-f4e3b3ef39d6",
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 29,
+          "i": "23ba6a3c-7e1b-4991-862f-6ab9538ec2eb",
+          "isResizable": false
+        },
+        "name": "Network",
+        "collapsed": false,
+        "panels": [
+          {
+            "type": "timeseries",
+            "id": "c327dc51-c37c-4d79-a5e8-e08aca36dafd",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 8,
+              "i": "4d4782e9-9c2b-45c6-892b-217ecd4099e6",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "receive_bytes_total(Byte/s)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netdev_container_receive_bytes_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "{{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "1981c18e-27d7-4e38-8af9-42a2153c42c9",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 12,
+              "i": "0060fd45-e260-4d8d-aa38-a0ba6789778a",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "receive_packets_total(packets/s)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netdev_container_receive_packets_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "{{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "d9832f6d-5a9e-45be-ac54-6dc991052d91",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 16,
+              "i": "14ff44da-6210-43e0-ab7a-ce3e571cbc38",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "transmit_bytes_total(Byte/s)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netdev_container_transmit_bytes_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "{{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "13eaff91-6414-40b3-8ae8-e4ff245a3387",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 20,
+              "i": "6a9e58b9-f654-45fd-a5c4-f8e86420d301",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "transmit_packets_total(packets/s)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netdev_container_transmit_packets_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "{{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "90d73825-0ea5-46ab-946e-6cb409d43ae2",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 24,
+              "i": "b137a744-f5d9-4891-8f42-71c4cf98aa0b",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "接收方向异常统计(packets/s)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "rate(huatuo_bamai_netdev_container_receive_dropped_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "dropped: {{container_host}}"
+              },
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netdev_container_receive_errors_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "errors: {{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "89ede8a0-b82c-4ce4-9239-d0e2bf7684f6",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 28,
+              "i": "28ab850b-e0ff-4c70-949e-c2dfa6cb7458",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "发送方向异常统计(packets/s)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "rate(huatuo_bamai_netdev_container_transmit_dropped_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "dropped: {{container_host}}"
+              },
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netdev_container_transmit_errors_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "errors: {{container_host}}"
+              },
+              {
+                "refId": "C",
+                "expr": "rate(huatuo_bamai_netdev_contianer_transmit_carrier_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "carrier: {{container_host}}"
+              },
+              {
+                "refId": "D",
+                "expr": "rate(huatuo_bamai_netdev_container_transmit_colls_total{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "colls: {{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "dd43f991-d717-492c-86f3-379dad265a86",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 32,
+              "i": "c4bc8c7f-9c7e-47af-b581-c46b860a5ff7",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "arp",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "B",
+                "expr": "huatuo_bamai_arp_container_entries{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "{{container_host}}"
+              }
+            ],
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byValue",
+                  "options": {
+                    "op": "gte",
+                    "reducer": "allIsZero",
+                    "value": 0
+                  }
+                },
+                "properties": [
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": true,
+                      "tooltip": true,
+                      "viz": false
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "timeseries",
+            "id": "ddc71bfb-5c96-4bc2-83c4-2c6dd528f607",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 36,
+              "i": "d5c9a658-a429-4a43-9591-df20bc0bd525",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "TCP inuse(sockets)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "B",
+                "expr": "huatuo_bamai_sockstat_container_TCP_inuse{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "{{container_host}}"
+              }
+            ],
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byValue",
+                  "options": {
+                    "op": "gte",
+                    "reducer": "allIsZero",
+                    "value": 0
+                  }
+                },
+                "properties": [
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": true,
+                      "tooltip": true,
+                      "viz": false
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "timeseries",
+            "id": "6ad41321-26df-438b-b389-a13458c7d154",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 40,
+              "i": "3c38b09c-b653-4c79-83c4-d71f89bfb385",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "TCP tw(sockets)",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "B",
+                "expr": "huatuo_bamai_sockstat_container_TCP_tw{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "{{container_host}}"
+              }
+            ],
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byValue",
+                  "options": {
+                    "op": "gte",
+                    "reducer": "allIsZero",
+                    "value": 0
+                  }
+                },
+                "properties": [
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": true,
+                      "tooltip": true,
+                      "viz": false
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "timeseries",
+            "id": "8bd41b0b-fcae-4e87-928c-49d10e2dbd0f",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 44,
+              "i": "acef2079-224d-4495-a968-4ab804989417",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "容器socket总量",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "B",
+                "expr": "huatuo_bamai_sockstat_container_sockets_used{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "{{container_host}}"
+              }
+            ],
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byValue",
+                  "options": {
+                    "op": "gte",
+                    "reducer": "allIsZero",
+                    "value": 0
+                  }
+                },
+                "properties": [
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": true,
+                      "tooltip": true,
+                      "viz": false
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "timeseries",
+            "id": "2be06459-9dec-4ae0-8b1b-563ff503a2cb",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 48,
+              "i": "4fd5a8e5-3cae-413d-95da-52785b7f2aa9",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "netstat 指标",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "F",
+                "expr": "rate(huatuo_bamai_netstat_container_Tcp_InSegs{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "InSegs: {{container_host}}"
+              },
+              {
+                "refId": "G",
+                "expr": "rate(huatuo_bamai_netstat_container_Tcp_OutSegs{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "OutSegs: {{container_host}}"
+              },
+              {
+                "refId": "C",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPDelivered{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPDelivered: {{container_host}}"
+              },
+              {
+                "refId": "A",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPOrigDataSent{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPOrigDataSent: {{container_host}}"
+              },
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netstat_container_Tcp_ActiveOpens{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "ActiveOpens: {{container_host}}"
+              },
+              {
+                "refId": "D",
+                "expr": "huatuo_bamai_netstat_container_Tcp_CurrEstab{container_host=~\"$container_host\",region=\"$region\"}",
+                "legend": "CurrEstab: {{container_host}}"
+              },
+              {
+                "refId": "E",
+                "expr": "rate(huatuo_bamai_netstat_container_Tcp_PassiveOpens{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "PassiveOpens: {{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "471a7457-09c7-46ea-a34f-13da940c40d0",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 52,
+              "i": "5e019387-eb67-4a8a-b39b-2ddd43ad82f6",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "netstat 丢包",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "C",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_ListenDrops{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "ListenDrops: {{container_host}}"
+              },
+              {
+                "refId": "A",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_ListenOverflows{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "ListenOverflows: {{container_host}}"
+              },
+              {
+                "refId": "J",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPReqQFullDoCookies{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPReqQFullDoCookies: {{container_host}}"
+              },
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_PFMemallocDrop{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "PFMemallocDrop: {{container_host}}"
+              },
+              {
+                "refId": "D",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPBacklogDrop{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPBacklogDrop: {{container_host}}"
+              },
+              {
+                "refId": "I",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPRcvQDrop{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPRcvQDrop: {{container_host}}"
+              },
+              {
+                "refId": "L",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPTimeouts{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPTimeouts: {{container_host}}"
+              },
+              {
+                "refId": "E",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPLossFailures{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPLossFailures: {{container_host}}"
+              },
+              {
+                "refId": "F",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPSACKDiscard{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPSACKDiscard: {{container_host}}"
+              },
+              {
+                "refId": "G",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPMemoryPressures{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPMemoryPressures: {{container_host}}"
+              },
+              {
+                "refId": "H",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPMinTTLDrop{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPMinTTLDrop: {{container_host}}"
+              },
+              {
+                "refId": "K",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPMinTTLDrop{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPMinTTLDrop: {{container_host}}"
+              },
+              {
+                "refId": "M",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPTimeWaitOverflow{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPTimeWaitOverflow: {{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "988e5609-c3f8-4a53-a56d-818d5f3b2cbe",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 56,
+              "i": "dd33dc5d-3797-4905-b3a3-0ab129aa9b5b",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "netstat 错误",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "J",
+                "expr": "rate(huatuo_bamai_netstat_container_Tcp_InErrs{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "InErrs: {{container_host}}"
+              },
+              {
+                "refId": "I",
+                "expr": "rate(huatuo_bamai_netstat_container_Tcp_InCsumErrors{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "InCsumErrors: {{container_host}}"
+              },
+              {
+                "refId": "C",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPAbortOnMemory{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPAbortOnMemory: {{container_host}}"
+              },
+              {
+                "refId": "A",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPAbortOnTimeout{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPAbortOnTimeout: {{container_host}}"
+              },
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPRetransFail{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPRetransFail: {{container_host}}"
+              },
+              {
+                "refId": "D",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPSackFailures{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPSackFailures: {{container_host}}"
+              },
+              {
+                "refId": "E",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPSackFailures{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPSackRecoveryFail: {{container_host}}"
+              },
+              {
+                "refId": "F",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_SyncookiesFailed{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "SyncookiesFailed: {{container_host}}"
+              },
+              {
+                "refId": "G",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPWqueueTooBig{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPWqueueTooBig: {{container_host}}"
+              },
+              {
+                "refId": "H",
+                "expr": "rate(huatuo_bamai_netstat_container_Tcp_AttemptFails{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "AttemptFails: {{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "aece4754-811e-45b7-a499-25b7c874cd16",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 60,
+              "i": "a45bbdb1-05b6-427d-a488-97f1741e7e2e",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "netstat 重传",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "F",
+                "expr": "rate(huatuo_bamai_netstat_container_Tcp_RetransSegs{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "RetransSegs: {{container_host}}"
+              },
+              {
+                "refId": "E",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPSynRetrans{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPSynRetrans: {{container_host}}"
+              },
+              {
+                "refId": "C",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPFastRetrans{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPFastRetrans: {{container_host}}"
+              },
+              {
+                "refId": "A",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPSlowStartRetrans{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPSlowStartRetrans: {{container_host}}"
+              },
+              {
+                "refId": "B",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPSpuriousRTOs{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPSpuriousRTOs: {{container_host}}"
+              },
+              {
+                "refId": "D",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_TCPSpuriousRtxHostQueues{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "TCPSpuriousRtxHostQueues: {{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "df4a5e61-09a0-4733-adc3-c0a0f1f2f144",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 64,
+              "i": "c7bd6c61-acbc-4306-b288-ae86302d83e3",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "netstat 因缓存区不足导致丢包",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "C",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_PruneCalled{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "PruneCalled: {{container_host}}"
+              },
+              {
+                "refId": "A",
+                "expr": "rate(huatuo_bamai_netstat_container_TcpExt_RcvPruned{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "RcvPruned: {{container_host}}"
+              }
+            ],
+            "overrides": []
+          },
+          {
+            "type": "timeseries",
+            "id": "bd7d0235-7887-4ca6-be46-c392904b2461",
+            "layout": {
+              "h": 4,
+              "w": 24,
+              "x": 0,
+              "y": 68,
+              "i": "f9fa799d-db27-457f-a0a8-de5f96cf77fc",
+              "isResizable": true
+            },
+            "version": "3.2.0",
+            "datasourceCate": "prometheus",
+            "datasourceValue": "${datasource}",
+            "name": "TCP SYN 包全量统计（包括接收/发送/重传）",
+            "description": "",
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "calcs": [
+                  "mean",
+                  "max",
+                  "min"
+                ],
+                "displayMode": "table",
+                "placement": "right",
+                "showLegend": true
+              },
+              "standardOptions": {},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "spanNulls": false,
+              "lineWidth": 2,
+              "fillOpacity": 0.01,
+              "gradientMode": "none",
+              "stack": "none",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "pointSize": 5
+            },
+            "targets": [
+              {
+                "refId": "C",
+                "expr": "rate(huatuo_bamai_netstat_container_Tcp_ActiveOpens{container_host=~\"$container_host\",region=\"$region\"}[30s])+rate(huatuo_bamai_netstat_container_Tcp_PassiveOpens{container_host=~\"$container_host\",region=\"$region\"}[30s])+rate(huatuo_bamai_netstat_container_TcpExt_ListenDrops{container_host=~\"$container_host\",region=\"$region\"}[30s])+rate(huatuo_bamai_netstat_container_TcpExt_TCPSynRetrans{container_host=~\"$container_host\",region=\"$region\"}[30s])",
+                "legend": "{{container_host}}"
+              }
+            ],
+            "overrides": []
+          }
+        ]
+      }
+    ],
+    "version": "3.0.0"
+  }
+}

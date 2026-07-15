@@ -61,12 +61,12 @@ func (e *ProbeError) Unwrap() error {
 // Test sends a real chat request to the target LLM provider to verify connectivity,
 // credentials, and model availability. Returns a ProbeError for classified failures.
 func Test(p *models.AILLMConfig) error {
-	client, err := llm.New(buildLLMConfig(p))
+	client, err := llm.New(BuildLLMConfig(p))
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), probeTimeout(p.ExtraConfig))
+	ctx, cancel := context.WithTimeout(context.Background(), ProbeTimeout(p.ExtraConfig))
 	defer cancel()
 
 	maxTokens := 5
@@ -85,14 +85,18 @@ func Test(p *models.AILLMConfig) error {
 
 var providerStatusErrPattern = regexp.MustCompile(`(?i)^(?:[a-z0-9_ -]+) API error \(status (\d+)\):\s*(.*)$`)
 
-func buildLLMConfig(p *models.AILLMConfig) *llm.Config {
+// BuildLLMConfig maps a stored AILLMConfig into an llm.Config usable by the
+// unified aiagent/llm client. Exported so other consumers (e.g. the workflow
+// AI summary processor) can reuse a centrally-managed LLM config instead of
+// re-implementing the mapping.
+func BuildLLMConfig(p *models.AILLMConfig) *llm.Config {
 	return &llm.Config{
 		Provider:      p.APIType,
 		BaseURL:       p.APIURL,
 		APIKey:        p.APIKey,
 		Model:         p.Model,
 		Headers:       cloneStringMap(p.ExtraConfig.CustomHeaders),
-		Timeout:       int(probeTimeout(p.ExtraConfig) / time.Millisecond),
+		Timeout:       int(ProbeTimeout(p.ExtraConfig) / time.Millisecond),
 		SkipSSLVerify: p.ExtraConfig.SkipTLSVerify,
 		Proxy:         p.ExtraConfig.Proxy,
 		Temperature:   p.ExtraConfig.Temperature,
@@ -101,7 +105,9 @@ func buildLLMConfig(p *models.AILLMConfig) *llm.Config {
 	}
 }
 
-func probeTimeout(extra models.LLMExtraConfig) time.Duration {
+// ProbeTimeout resolves the request timeout from a config's extra settings,
+// defaulting to 30s when unset.
+func ProbeTimeout(extra models.LLMExtraConfig) time.Duration {
 	timeout := 30 * time.Second
 	if extra.TimeoutSeconds > 0 {
 		timeout = time.Duration(extra.TimeoutSeconds) * time.Second

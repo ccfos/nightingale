@@ -1,0 +1,528 @@
+{
+    "name": "Sytemd 监控仪表盘",
+    "tags": "type=categraf",
+    "configs": {
+        "panels": [
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "97faccd0-eb4a-4857-b7ff-66998df0fb7a",
+                "layout": {
+                    "h": 4,
+                    "i": "97faccd0-eb4a-4857-b7ff-66998df0fb7a",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "systemd 版本信息",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "systemd_version{ident=\"$ident\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "9820ea6c-7412-4b23-a569-11d88d71a156",
+                "layout": {
+                    "h": 4,
+                    "i": "71c909b2-0c2c-402d-a7b9-e8af5a47a794",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 4,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "系统运行状态",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)",
+                                "text": "正常"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "rgba(255, 101, 107, 1)",
+                                "text": "异常"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "systemd_system_running{ident=\"$ident\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "1a8c4b53-c5b0-4229-98a5-5ffd203c47af",
+                "layout": {
+                    "h": 4,
+                    "i": "a554d067-b7b5-4a30-89d4-8c41636c9e18",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "服务重启总次数",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "systemd_service_restart_total{ident=\"$ident\",name=\"$name\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d9cee75c-c171-407f-82e7-b67cb815fc5f",
+                "layout": {
+                    "h": 4,
+                    "i": "408c0ab9-666b-4987-a6b8-a9786c24c31e",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "当前任务数量",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "systemd_unit_tasks_current{ident=\"$ident\",name=\"$name\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "37bee70b-c399-40c5-ba18-03c0dd4be9ea",
+                "layout": {
+                    "h": 4,
+                    "i": "b8166882-4cc4-4038-acaa-4e7a60bfab09",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "最大任务数量限制",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "systemd_unit_tasks_max{ident=\"$ident\",name=\"$name\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "195bdb10-4a84-4078-bc9b-de19506d1426",
+                "layout": {
+                    "h": 4,
+                    "i": "20d380db-a4af-44f7-9aea-b83700ec20bf",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "服务运行时间",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "systemd_unit_start_time_seconds{ident=\"$ident\",name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "efcab6cf-e28a-47d0-a4f7-b1d713b1cfe0",
+                "layout": {
+                    "h": 9,
+                    "i": "2da6fef4-db13-4428-b1e1-d9fb2cbac01d",
+                    "isResizable": true,
+                    "w": 10,
+                    "x": 0,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "服务状态信息",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(state,name)(systemd_unit_state{ident=\"$ident\",name=\"$name\"})",
+                        "legend": "{{name}} : {{state}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            }
+        ],
+        "var": [
+            {
+                "defaultValue": "",
+                "definition": "prometheus",
+                "hide": false,
+                "label": "datasource",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(systemd_unit_state,ident)",
+                "hide": false,
+                "label": "ident",
+                "multi": false,
+                "name": "ident",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(systemd_unit_state{ident=\"$ident\"},name)",
+                "hide": false,
+                "label": "name",
+                "multi": true,
+                "name": "name",
+                "type": "query"
+            }
+        ],
+        "version": "3.1.0"
+    },
+    "uuid": 1764509657018000
+}

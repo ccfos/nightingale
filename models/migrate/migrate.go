@@ -120,6 +120,7 @@ func MigrateTables(db *gorm.DB) error {
 		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{},
 		&models.SavedView{}, &models.UserViewFavorite{},
 		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{}, &models.MCPServer{},
+		&models.MCPServerOAuth{},
 		&models.AssistantChatRow{}}
 
 	if isPostgres(db) {
@@ -255,6 +256,7 @@ type AlertSubscribe struct {
 type AlertMute struct {
 	Severities string `gorm:"column:severities;type:varchar(32);not null;default:''"`
 	Tags       string `gorm:"column:tags;type:varchar(4096);default:'[]';comment:json,map,tagkey->regexp|value"`
+	MuteType   int    `gorm:"column:mute_type;type:int;not null;default:0;comment:0-mute event and notify,1-mute notify only"`
 }
 
 type RecordingRule struct {
@@ -403,6 +405,7 @@ type MessageTemplate struct {
 	NotifyChannelIdent string            `gorm:"column:notify_channel_ident;type:varchar(64);not null;default:''"`
 	Private            int               `gorm:"column:private;type:int;not null;default:0"`
 	Weight             int               `gorm:"column:weight;type:int;not null;default:0"`
+	Lang               string            `gorm:"column:lang;type:varchar(32);not null;default:''"`
 	CreateAt           int64             `gorm:"column:create_at;not null;default:0"`
 	CreateBy           string            `gorm:"column:create_by;type:varchar(64);not null;default:''"`
 	UpdateAt           int64             `gorm:"column:update_at;not null;default:0"`

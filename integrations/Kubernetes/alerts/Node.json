@@ -1,0 +1,354 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Node CPU使用率超过90%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            3
+        ],
+        "disabled": 1,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100-cpu_usage_idle{cpu=\"cpu-total\"} \u003e 90",
+                    "severity": 3
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652205088000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Node内存使用率超过90%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "mem_used_percent \u003e 90",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652207321000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Node状态异常",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            1
+        ],
+        "disabled": 1,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "kube_node_status_condition{condition=\"Ready\",status=\"true\"} == 0",
+                    "severity": 1
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652209686000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Node磁盘使用率超过90%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            3
+        ],
+        "disabled": 1,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "disk_used_percent \u003e 90",
+                    "severity": 3
+                }
+            ]
+        },
+        "prom_eval_interval": 30,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {},
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652211912000
+    }
+]

@@ -5,20 +5,82 @@ on:
     tags:
       - 'v*'
 env:
-  GO_VERSION: 1.23
+  # Must satisfy the `go 1.25.0` directive in go.mod, otherwise the toolchain is
+  # auto-downloaded on every release (or the build fails on older setup-go).
+  GO_VERSION: "1.25"
+  BWRAP_VERSION: "0.11.0"
 
 jobs:
+  # Build the per-arch sandbox assets (static bwrap + python-base + init) on a
+  # NATIVE runner for that arch — no QEMU emulation, so the meson/ninja bwrap
+  # compile and python-slim strip run at native speed and don't flake.
+  sandbox-assets:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      # Skip the rebuild when neither the build recipe nor the bwrap version moved.
+      - name: Cache sandbox assets
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: pkg/sandbox/embedassets/linux_${{ matrix.arch }}
+          key: sandbox-${{ matrix.arch }}-bwrap${{ env.BWRAP_VERSION }}-${{ hashFiles('scripts/build-sandbox-assets.sh', 'cmd/n9e-sandbox-init/**') }}
+      - name: Build sandbox assets (native, no QEMU)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          for i in 1 2 3; do
+            bash scripts/build-sandbox-assets.sh ${{ matrix.arch }} && exit 0
+            echo "asset build attempt $i failed; retrying in 15s" >&2
+            sleep 15
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-assets-${{ matrix.arch }}
+          path: pkg/sandbox/embedassets/linux_${{ matrix.arch }}
+          retention-days: 1
+          if-no-files-found: error
+
   goreleaser:
+    needs: sandbox-assets
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup Go Environment
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+      # Stage the pre-built per-arch assets so the -tags=sandbox_embed center
+      # build can bake them in. No QEMU compile happens in this job anymore.
+      - name: Download amd64 sandbox assets
+        uses: actions/download-artifact@v4
+        with:
+          name: sandbox-assets-amd64
+          path: pkg/sandbox/embedassets/linux_amd64
+      - name: Download arm64 sandbox assets
+        uses: actions/download-artifact@v4
+        with:
+          name: sandbox-assets-arm64
+          path: pkg/sandbox/embedassets/linux_arm64
+      # Still needed for the multi-arch docker image / manifest publish below.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}

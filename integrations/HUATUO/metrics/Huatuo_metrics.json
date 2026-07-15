@@ -1,0 +1,6779 @@
+[
+    {
+        "id": 0,
+        "uuid": 1767589615851115,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "cpu 系统态利用率",
+        "unit": "percent",
+        "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_util_sys",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "cpu 系统态利用率",
+                "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "CPU System Mode Utilization",
+                "note": "Calculated from cgroup cpuacct.stat and cpuacct.usage"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851116,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "cpu 用户态利用率",
+        "unit": "percent",
+        "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_util_usr",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "cpu 用户态利用率",
+                "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "CPU User Mode Utilization",
+                "note": "Calculated from cgroup cpuacct.stat and cpuacct.usage"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851117,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器 cpu 总利用率",
+        "unit": "percent",
+        "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_util_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器 cpu 总利用率",
+                "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container CPU Total Utilization",
+                "note": "Calculated from cgroup cpuacct.stat and cpuacct.usage"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851118,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器 cpu 系统态利用率",
+        "unit": "percent",
+        "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_util_container_sys",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器 cpu 系统态利用率",
+                "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container CPU System Mode Utilization",
+                "note": "Calculated from cgroup cpuacct.stat and cpuacct.usage"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851119,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器 cpu 用户态利用率",
+        "unit": "percent",
+        "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_util_container_usr",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器 cpu 用户态利用率",
+                "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container CPU User Mode Utilization",
+                "note": "Calculated from cgroup cpuacct.stat and cpuacct.usage"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851120,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器 cpu 总利用率",
+        "unit": "percent",
+        "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_util_container_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器 cpu 总利用率",
+                "note": "基于 cgroup cpuacct.stat 和 cpuacct.usage 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container CPU Total Utilization",
+                "note": "Calculated from cgroup cpuacct.stat and cpuacct.usage"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851121,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "累计墙时（以纳秒为单位），周期内突发超出配额的时间",
+        "unit": "nanoseconds",
+        "note": "基于 cpu.stat 读取",
+        "lang": "zh_CN",
+        "expression": "cpu_stat_container_burst_time",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "累计墙时（以纳秒为单位），周期内突发超出配额的时间",
+                "note": "基于 cpu.stat 读取"
+            },
+            {
+                "lang": "en_US",
+                "name": "Cumulative Burst Wall Time Beyond Quota (Nanoseconds)",
+                "note": "Read from cpu.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851122,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "周期内突发次数",
+        "unit": "none",
+        "note": "基于 cpu.stat 读取",
+        "lang": "zh_CN",
+        "expression": "cpu_stat_container_nr_bursts",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "周期内突发次数",
+                "note": "基于 cpu.stat 读取"
+            },
+            {
+                "lang": "en_US",
+                "name": "Burst Count Within Periods",
+                "note": "Read from cpu.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851123,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "cgroup 被 throttled/limited 的次数",
+        "unit": "none",
+        "note": "基于 cpu.stat 读取",
+        "lang": "zh_CN",
+        "expression": "cpu_stat_container_nr_throttled",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "cgroup 被 throttled/limited 的次数",
+                "note": "基于 cpu.stat 读取"
+            },
+            {
+                "lang": "en_US",
+                "name": "Cgroup Throttled/Limited Count",
+                "note": "Read from cpu.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851124,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器外进程导致的等待率",
+        "unit": "percent",
+        "note": "基于 cpu.stat 读取的 throttled_time hierarchy_wait_sum inner_wait_sum 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_stat_container_exter_wait_rate",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器外进程导致的等待率",
+                "note": "基于 cpu.stat 读取的 throttled_time hierarchy_wait_sum inner_wait_sum 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "Wait Rate Caused by Processes Outside the Container",
+                "note": "Calculated from throttled_time, hierarchy_wait_sum and inner_wait_sum read from cpu.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851125,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器内部进程导致的等待率",
+        "unit": "percent",
+        "note": "基于 cpu.stat 读取的 throttled_time hierarchy_wait_sum inner_wait_sum 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_stat_container_inner_wait_rate",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器内部进程导致的等待率",
+                "note": "基于 cpu.stat 读取的 throttled_time hierarchy_wait_sum inner_wait_sum 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "Wait Rate Caused by Processes Inside the Container",
+                "note": "Calculated from throttled_time, hierarchy_wait_sum and inner_wait_sum read from cpu.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851126,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器被限制而引起的等待率",
+        "unit": "percent",
+        "note": "基于 cpu.stat 读取的 throttled_time hierarchy_wait_sum inner_wait_sum 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_stat_container_throttle_wait_rate",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器被限制而引起的等待率",
+                "note": "基于 cpu.stat 读取的 throttled_time hierarchy_wait_sum inner_wait_sum 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "Wait Rate Caused by Container Throttling",
+                "note": "Calculated from throttled_time, hierarchy_wait_sum and inner_wait_sum read from cpu.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851127,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "总的等待率: exter_wait_rate + inner_wait_rate + throttle_wait_rate",
+        "unit": "percent",
+        "note": "基于 cpu.stat 读取的 throttled_time hierarchy_wait_sum inner_wait_sum 计算",
+        "lang": "zh_CN",
+        "expression": "cpu_stat_container_wait_rate",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "总的等待率: exter_wait_rate + inner_wait_rate + throttle_wait_rate",
+                "note": "基于 cpu.stat 读取的 throttled_time hierarchy_wait_sum inner_wait_sum 计算"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Wait Rate: exter_wait_rate + inner_wait_rate + throttle_wait_rate",
+                "note": "Calculated from throttled_time, hierarchy_wait_sum and inner_wait_sum read from cpu.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851128,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器中运行的任务数量",
+        "unit": "none",
+        "note": "从内核通过 netlink 获取",
+        "lang": "zh_CN",
+        "expression": "loadavg_container_container_nr_running",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器中运行的任务数量",
+                "note": "从内核通过 netlink 获取"
+            },
+            {
+                "lang": "en_US",
+                "name": "Running Tasks in Container",
+                "note": "Fetched from the kernel via netlink"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851129,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器中不可中断任务的数量",
+        "unit": "none",
+        "note": "从内核通过 netlink 获取",
+        "lang": "zh_CN",
+        "expression": "loadavg_container_container_nr_uninterruptible",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器中不可中断任务的数量",
+                "note": "从内核通过 netlink 获取"
+            },
+            {
+                "lang": "en_US",
+                "name": "Uninterruptible Tasks in Container",
+                "note": "Fetched from the kernel via netlink"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851130,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "系统过去 1 分钟的平均负载",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "loadavg_load1",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统过去 1 分钟的平均负载",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "System Load Average Over the Last 1 Minute",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851131,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "系统过去 5 分钟的平均负载",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "loadavg_load5",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统过去 5 分钟的平均负载",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "System Load Average Over the Last 5 Minutes",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851132,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "系统过去 15 分钟的平均负载",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "loadavg_load15",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统过去 15 分钟的平均负载",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "System Load Average Over the Last 15 Minutes",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851133,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "在不同时间域发生的 NET_RX/NET_TX 中断延迟次数： 0~10 us 100us ~ 1ms 10us ~ 100us 1ms ~ inf",
+        "unit": "none",
+        "note": "BPF 软中断埋点统计",
+        "lang": "zh_CN",
+        "expression": "softirq_latency",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "在不同时间域发生的 NET_RX/NET_TX 中断延迟次数： 0~10 us 100us ~ 1ms 10us ~ 100us 1ms ~ inf",
+                "note": "BPF 软中断埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "NET_RX/NET_TX Interrupt Latency Counts by Time Range (0-10us, 10us-100us, 100us-1ms, 1ms-inf)",
+                "note": "Collected via BPF softirq tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851134,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器中进程调度延迟在 0~10 毫秒内的次数",
+        "unit": "none",
+        "note": "bpf 调度切换埋点统计",
+        "lang": "zh_CN",
+        "expression": "runqlat_container_nlat_01",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器中进程调度延迟在 0~10 毫秒内的次数",
+                "note": "bpf 调度切换埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container Scheduling Latency Count (0-10 ms)",
+                "note": "Collected via BPF sched switch tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851135,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器中进程调度延迟在 10~20 毫秒之间的次数",
+        "unit": "none",
+        "note": "bpf 调度切换埋点统计",
+        "lang": "zh_CN",
+        "expression": "runqlat_container_nlat_02",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器中进程调度延迟在 10~20 毫秒之间的次数",
+                "note": "bpf 调度切换埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container Scheduling Latency Count (10-20 ms)",
+                "note": "Collected via BPF sched switch tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851136,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器中进程调度延迟在 20~50 毫秒之间的次数",
+        "unit": "none",
+        "note": "bpf 调度切换埋点统计",
+        "lang": "zh_CN",
+        "expression": "runqlat_container_nlat_03",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器中进程调度延迟在 20~50 毫秒之间的次数",
+                "note": "bpf 调度切换埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container Scheduling Latency Count (20-50 ms)",
+                "note": "Collected via BPF sched switch tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851137,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "容器中进程调度延迟超过 50 毫秒的次数",
+        "unit": "none",
+        "note": "bpf 调度切换埋点统计",
+        "lang": "zh_CN",
+        "expression": "runqlat_container_nlat_04",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "容器中进程调度延迟超过 50 毫秒的次数",
+                "note": "bpf 调度切换埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container Scheduling Latency Count (Over 50 ms)",
+                "note": "Collected via BPF sched switch tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851138,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "宿主中进程调度延迟在范围内 0～10 毫秒的次数",
+        "unit": "none",
+        "note": "bpf 调度切换埋点统计",
+        "lang": "zh_CN",
+        "expression": "runqlat_g_nlat_01",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "宿主中进程调度延迟在范围内 0～10 毫秒的次数",
+                "note": "bpf 调度切换埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Host Scheduling Latency Count (0-10 ms)",
+                "note": "Collected via BPF sched switch tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851139,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "宿主中进程调度延迟在范围内 10～20 毫秒的次数",
+        "unit": "none",
+        "note": "bpf 调度切换埋点统计",
+        "lang": "zh_CN",
+        "expression": "runqlat_g_nlat_02",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "宿主中进程调度延迟在范围内 10～20 毫秒的次数",
+                "note": "bpf 调度切换埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Host Scheduling Latency Count (10-20 ms)",
+                "note": "Collected via BPF sched switch tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851140,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "宿主中进程调度延迟在范围内 20～50 毫秒的次数",
+        "unit": "none",
+        "note": "bpf 调度切换埋点统计",
+        "lang": "zh_CN",
+        "expression": "runqlat_g_nlat_03",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "宿主中进程调度延迟在范围内 20～50 毫秒的次数",
+                "note": "bpf 调度切换埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Host Scheduling Latency Count (20-50 ms)",
+                "note": "Collected via BPF sched switch tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851141,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "宿主中进程调度延迟超过 50 毫秒的次数",
+        "unit": "none",
+        "note": "bpf 调度切换埋点统计",
+        "lang": "zh_CN",
+        "expression": "runqlat_g_nlat_04",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "宿主中进程调度延迟超过 50 毫秒的次数",
+                "note": "bpf 调度切换埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Host Scheduling Latency Count (Over 50 ms)",
+                "note": "Collected via BPF sched switch tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851142,
+        "collector": "cpu",
+        "typ": "HUATUO",
+        "name": "vm 中 cpu 超卖检测",
+        "unit": "none",
+        "note": "bpf 调度 ipi 埋点统计",
+        "lang": "zh_CN",
+        "expression": "reschedipi_oversell_probability",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "vm 中 cpu 超卖检测",
+                "note": "bpf 调度 ipi 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "VM CPU Oversell Detection",
+                "note": "Collected via BPF sched IPI tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851143,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "内核伙伴系统内存分配",
+        "unit": "pages",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "buddyinfo_blocks",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内核伙伴系统内存分配",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kernel Buddy System Memory Allocation",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851144,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "内存水位计数",
+        "unit": "none",
+        "note": "memory.events",
+        "lang": "zh_CN",
+        "expression": "memory_events_container_watermark_inc",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存水位计数",
+                "note": "memory.events"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Watermark Increase Count",
+                "note": "memory.events"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851145,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "内存水位计数",
+        "unit": "none",
+        "note": "memory.events",
+        "lang": "zh_CN",
+        "expression": "memory_events_container_watermark_dec",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存水位计数",
+                "note": "memory.events"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Watermark Decrease Count",
+                "note": "memory.events"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851146,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "cgroup 中页分配速度",
+        "unit": "nanoseconds",
+        "note": "memory.local_direct_reclaim_time",
+        "lang": "zh_CN",
+        "expression": "memory_others_container_local_direct_reclaim_time",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "cgroup 中页分配速度",
+                "note": "memory.local_direct_reclaim_time"
+            },
+            {
+                "lang": "en_US",
+                "name": "Cgroup Local Direct Reclaim Time During Page Allocation",
+                "note": "memory.local_direct_reclaim_time"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851147,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "直接回收时间",
+        "unit": "nanoseconds",
+        "note": "memory.directstall_stat",
+        "lang": "zh_CN",
+        "expression": "memory_others_container_directstall_time",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "直接回收时间",
+                "note": "memory.directstall_stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Direct Reclaim Stall Time",
+                "note": "memory.directstall_stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851148,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "异步回收时间",
+        "unit": "nanoseconds",
+        "note": "memory.asynreclaim_stat",
+        "lang": "zh_CN",
+        "expression": "memory_others_container_asyncreclaim_time",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "异步回收时间",
+                "note": "memory.asynreclaim_stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Async Reclaim Time",
+                "note": "memory.asynreclaim_stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851149,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "匿名/文件 cache sync 到磁盘排队字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_writeback",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "匿名/文件 cache sync 到磁盘排队字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Anonymous/File Cache Bytes Queued for Sync to Disk",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851150,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "无法回收的内存（如 mlocked）",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_unevictable",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "无法回收的内存（如 mlocked）",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Unreclaimable Memory (e.g. mlocked)",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851151,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "共享内存字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_shmem",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "共享内存字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Shared Memory Bytes",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851152,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "kswapd 和 cswapd 回收的内存字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgsteal_kswapd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "kswapd 和 cswapd 回收的内存字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Reclaimed by kswapd and cswapd",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851153,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "由 kswapd 回收的字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgsteal_globalkswapd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "由 kswapd 回收的字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Reclaimed by kswapd",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851154,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "过页面分配直接回收的内存字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgsteal_globaldirect",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "过页面分配直接回收的内存字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Directly Reclaimed During Page Allocation",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851155,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "页分配和 try_charge 期间直接回收的内存字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgsteal_direct",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "页分配和 try_charge 期间直接回收的内存字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Directly Reclaimed During Page Allocation and try_charge",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851156,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "由 cswapd 回收的字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgsteal_cswapd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "由 cswapd 回收的字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Reclaimed by cswapd",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851157,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "kswapd 和 cswapd 扫描的内存字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgscan_kswapd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "kswapd 和 cswapd 扫描的内存字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Scanned by kswapd and cswapd",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851158,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "kswapd 扫描的内存字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgscan_globalkswapd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "kswapd 扫描的内存字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Scanned by kswapd",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851159,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "扫描内存中通过直接回收在页面分配期间的字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgscan_globaldirect",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "扫描内存中通过直接回收在页面分配期间的字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Scanned via Direct Reclaim During Page Allocation",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851160,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "扫描内存的字节数，在页面分配和 try_charge 期间通过直接回收的字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgscan_direct",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "扫描内存的字节数，在页面分配和 try_charge 期间通过直接回收的字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Scanned via Direct Reclaim During Page Allocation and try_charge",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851161,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "由 cswapd 扫描内存的字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgscan_cswapd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "由 cswapd 扫描内存的字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Scanned by cswapd",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851162,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "内存中扫描的字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgrefill",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存中扫描的字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Scanned (pgrefill)",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851163,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "内存中未激活的部分被添加到非活动列表中",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_pgdeactivate",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存中未激活的部分被添加到非活动列表中",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bytes Deactivated onto the Inactive List",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851164,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "文件内存中不活跃的 LRU 列表的字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_inactive_file",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "文件内存中不活跃的 LRU 列表的字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Bytes on the Inactive File LRU List",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851165,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "匿名和交换缓存内存中不活跃的 LRU 列表的字节数",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_inactive_anon",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "匿名和交换缓存内存中不活跃的 LRU 列表的字节数",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Bytes on the Inactive Anonymous and Swap Cache LRU List",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851166,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "等待写入磁盘的字节",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_dirty",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "等待写入磁盘的字节",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Bytes Waiting to Be Written to Disk",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851167,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "活跃内存中文件内存的大小",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_active_file",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "活跃内存中文件内存的大小",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active File Memory Size",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851168,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "活跃内存中匿名和交换内存的大小",
+        "unit": "bytesIEC",
+        "note": "memory.stat",
+        "lang": "zh_CN",
+        "expression": "memory_stat_container_active_anon",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "活跃内存中匿名和交换内存的大小",
+                "note": "memory.stat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active Anonymous and Swap Memory Size",
+                "note": "memory.stat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851169,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "挂在点是否为只读",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "mountpoint_perm_ro",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "挂在点是否为只读",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Mountpoint Read-Only Status",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851170,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "宿主在 normal 域直接回收",
+        "unit": "none",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_allocstall_normal",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "宿主在 normal 域直接回收",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Host Direct Reclaim in Normal Zone",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851171,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "宿主在 movable 域直接回收",
+        "unit": "none",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_allocstall_movable",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "宿主在 movable 域直接回收",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Host Direct Reclaim in Movable Zone",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851172,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "内存压缩计数",
+        "unit": "none",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_compact_stall",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存压缩计数",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Compaction Count",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851173,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "活跃的匿名页数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_active_anon",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "活跃的匿名页数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active Anonymous Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851174,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "活跃的文件页数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_active_file",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "活跃的文件页数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active File Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851175,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "kswapd boosting 页数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_boost_pages",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "kswapd boosting 页数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "kswapd Boosting Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851176,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "脏页数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_dirty",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "脏页数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Dirty Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851177,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "释放的页数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_free_pages",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "释放的页数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Free Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851178,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "非活跃的匿名页数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_inactive_anon",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "非活跃的匿名页数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Inactive Anonymous Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851179,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "非活跃的文件页数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_inactive_file",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "非活跃的文件页数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Inactive File Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851180,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "kswapd boosting 次数计数",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_kswapd_boost",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "kswapd boosting 次数计数",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "kswapd Boosting Count",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851181,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "锁定的页面数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_mlock",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "锁定的页面数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Mlocked Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851182,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "共享内存页面数",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_shmem",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "共享内存页面数",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Shared Memory Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851183,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "可回收的 slab 页数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_slab_reclaimable",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "可回收的 slab 页数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reclaimable Slab Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851184,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "无法回收的 slab 页数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_slab_unreclaimable",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "无法回收的 slab 页数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Unreclaimable Slab Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851185,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "不可驱逐页面数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_unevictable",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "不可驱逐页面数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Unevictable Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851186,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "写入页面数",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_nr_writeback",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "写入页面数",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Writeback Pages",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851187,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "NUMA 迁移中的页面数",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_numa_pages_migrated",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "NUMA 迁移中的页面数",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pages Migrated by NUMA",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851188,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "页数被停用进入非活动 LRU",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_pgdeactivate",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "页数被停用进入非活动 LRU",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pages Deactivated onto the Inactive LRU",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851189,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "扫描的活跃 LRU 页面数",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_pgrefill",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "扫描的活跃 LRU 页面数",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active LRU Pages Scanned",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851190,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "扫描的页数",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_pgscan_direct",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "扫描的页数",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pages Scanned via Direct Reclaim",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851191,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "扫描的页面数量，由 kswapd 回收的数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_pgscan_kswapd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "扫描的页面数量，由 kswapd 回收的数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pages Scanned by kswapd",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851192,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "直接回收的页面",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_pgsteal_direct",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "直接回收的页面",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pages Reclaimed via Direct Reclaim",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851193,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "被 kswapd 回收的数量",
+        "unit": "pages",
+        "note": "/proc/vmstat",
+        "lang": "zh_CN",
+        "expression": "vmstat_pgsteal_kswapd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "被 kswapd 回收的数量",
+                "note": "/proc/vmstat"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pages Reclaimed by kswapd",
+                "note": "/proc/vmstat"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851194,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "hungtask 事件计数",
+        "unit": "none",
+        "note": "BPF 埋点统计",
+        "lang": "zh_CN",
+        "expression": "hungtask_counter",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "hungtask 事件计数",
+                "note": "BPF 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Hung Task Event Count",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851195,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "oom 事件计数",
+        "unit": "none",
+        "note": "BPF 埋点统计",
+        "lang": "zh_CN",
+        "expression": "oom_host_counter",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "oom 事件计数",
+                "note": "BPF 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Host OOM Event Count",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851196,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "oom 事件计数",
+        "unit": "none",
+        "note": "BPF 埋点统计",
+        "lang": "zh_CN",
+        "expression": "oom_container_counter",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "oom 事件计数",
+                "note": "BPF 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container OOM Event Count",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851197,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "softlockup 事件计数",
+        "unit": "none",
+        "note": "BPF 埋点统计",
+        "lang": "zh_CN",
+        "expression": "softlockup_counter",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "softlockup 事件计数",
+                "note": "BPF 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Soft Lockup Event Count",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851198,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "内存压缩的速度",
+        "unit": "nanoseconds",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "memory_free_compaction",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存压缩的速度",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Compaction Speed",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851199,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "内存中主机直接回收速度",
+        "unit": "nanoseconds",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "memory_free_allocstall",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存中主机直接回收速度",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Host Direct Reclaim Speed",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851200,
+        "collector": "memory",
+        "typ": "HUATUO",
+        "name": "cgroup 尝试直接回收的计数",
+        "unit": "none",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "memory_cgroup_container_directstall",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "cgroup 尝试直接回收的计数",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Cgroup Direct Reclaim Attempt Count",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851201,
+        "collector": "IO",
+        "typ": "HUATUO",
+        "name": "磁盘访问时的 io 延迟统计，包括驱动程序和硬件组件消耗的时间",
+        "unit": "none",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "iolatency_disk_d2c",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "磁盘访问时的 io 延迟统计，包括驱动程序和硬件组件消耗的时间",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk I/O Latency (D2C, Driver and Hardware Time)",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851202,
+        "collector": "IO",
+        "typ": "HUATUO",
+        "name": "磁盘访问整个 I/O 生命周期时的 I/O 延迟统计",
+        "unit": "none",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "iolatency_disk_q2c",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "磁盘访问整个 I/O 生命周期时的 I/O 延迟统计",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk I/O Latency (Q2C, Full I/O Lifecycle)",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851203,
+        "collector": "IO",
+        "typ": "HUATUO",
+        "name": "磁盘访问时的 I/O 延迟统计，包括驱动程序和硬件组件消耗的时间",
+        "unit": "none",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "iolatency_container_d2c",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "磁盘访问时的 I/O 延迟统计，包括驱动程序和硬件组件消耗的时间",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container I/O Latency (D2C, Driver and Hardware Time)",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851204,
+        "collector": "IO",
+        "typ": "HUATUO",
+        "name": "磁盘访问整个 I/O 生命周期时的 I/O 延迟统计",
+        "unit": "none",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "iolatency_container_q2c",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "磁盘访问整个 I/O 生命周期时的 I/O 延迟统计",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container I/O Latency (Q2C, Full I/O Lifecycle)",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851205,
+        "collector": "IO",
+        "typ": "HUATUO",
+        "name": "磁盘 RAID 设备刷新操作延迟统计",
+        "unit": "none",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "iolatency_disk_flush",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "磁盘 RAID 设备刷新操作延迟统计",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk RAID Flush Operation Latency",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851206,
+        "collector": "IO",
+        "typ": "HUATUO",
+        "name": "磁盘 RAID 设备上由容器引起的刷新操作延迟统计",
+        "unit": "none",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "iolatency_container_flush",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "磁盘 RAID 设备上由容器引起的刷新操作延迟统计",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container-Induced RAID Flush Operation Latency",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851207,
+        "collector": "IO",
+        "typ": "HUATUO",
+        "name": "磁盘 freese 事件",
+        "unit": "none",
+        "note": "bpf 埋点统计",
+        "lang": "zh_CN",
+        "expression": "iolatency_disk_freeze",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "磁盘 freese 事件",
+                "note": "bpf 埋点统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Disk Freeze Events",
+                "note": "Collected via BPF tracepoints"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851208,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "系统 TCP 总内存大小限制",
+        "unit": "pages",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "tcp_mem_limit_pages",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统 TCP 总内存大小限制",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "System TCP Memory Limit",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851209,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "系统使用的 TCP 内存总字节数",
+        "unit": "bytesIEC",
+        "note": "tcp_mem_usage_pages * page_size",
+        "lang": "zh_CN",
+        "expression": "tcp_mem_usage_bytes",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统使用的 TCP 内存总字节数",
+                "note": "tcp_mem_usage_pages * page_size"
+            },
+            {
+                "lang": "en_US",
+                "name": "System TCP Memory Usage in Bytes",
+                "note": "tcp_mem_usage_pages * page_size"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851210,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "系统使用的 TCP 内存总量",
+        "unit": "pages",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "tcp_mem_usage_pages",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统使用的 TCP 内存总量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "System TCP Memory Usage in Pages",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851211,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "系统使用的 TCP 内存百分比（相对 TCP 内存总限制）",
+        "unit": "percent",
+        "note": "tcp_mem_usage_pages / tcp_mem_limit_pages",
+        "lang": "zh_CN",
+        "expression": "tcp_mem_usage_percent",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统使用的 TCP 内存百分比（相对 TCP 内存总限制）",
+                "note": "tcp_mem_usage_pages / tcp_mem_limit_pages"
+            },
+            {
+                "lang": "en_US",
+                "name": "System TCP Memory Usage Percentage (of TCP Memory Limit)",
+                "note": "tcp_mem_usage_pages / tcp_mem_limit_pages"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851212,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "arp 缓存条目数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "arp_entries",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "arp 缓存条目数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ARP Cache Entries",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851213,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "总 arp 缓存条目数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "arp_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "总 arp 缓存条目数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total ARP Cache Entries",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851214,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "待发送的字节数",
+        "unit": "bytesIEC",
+        "note": "netlink qdisc 统计",
+        "lang": "zh_CN",
+        "expression": "qdisc_backlog",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "待发送的字节数",
+                "note": "netlink qdisc 统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Bytes Pending Transmission",
+                "note": "netlink qdisc statistics"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851215,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "已发送的字节数",
+        "unit": "bytesIEC",
+        "note": "netlink qdisc 统计",
+        "lang": "zh_CN",
+        "expression": "qdisc_bytes_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已发送的字节数",
+                "note": "netlink qdisc 统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Bytes Transmitted",
+                "note": "netlink qdisc statistics"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851216,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "排队等待发送的包数量",
+        "unit": "none",
+        "note": "netlink qdisc 统计",
+        "lang": "zh_CN",
+        "expression": "qdisc_current_queue_length",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "排队等待发送的包数量",
+                "note": "netlink qdisc 统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Queued for Transmission",
+                "note": "netlink qdisc statistics"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851217,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "丢弃的数据包数量",
+        "unit": "none",
+        "note": "netlink qdisc 统计",
+        "lang": "zh_CN",
+        "expression": "qdisc_drops_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "丢弃的数据包数量",
+                "note": "netlink qdisc 统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Dropped Packets",
+                "note": "netlink qdisc statistics"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851218,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "排队数据包里超限的数量",
+        "unit": "none",
+        "note": "netlink qdisc 统计",
+        "lang": "zh_CN",
+        "expression": "qdisc_overlimits_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "排队数据包里超限的数量",
+                "note": "netlink qdisc 统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Over-Limit Packets Among Queued Packets",
+                "note": "netlink qdisc statistics"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851219,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "已发送的包数量",
+        "unit": "none",
+        "note": "netlink qdisc 统计",
+        "lang": "zh_CN",
+        "expression": "qdisc_packets_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已发送的包数量",
+                "note": "netlink qdisc 统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Transmitted",
+                "note": "netlink qdisc statistics"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851220,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "重新入队的数量",
+        "unit": "none",
+        "note": "netlink qdisc 统计",
+        "lang": "zh_CN",
+        "expression": "qdisc_requeues_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "重新入队的数量",
+                "note": "netlink qdisc 统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Requeue Count",
+                "note": "netlink qdisc statistics"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851221,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口接收丢包统计",
+        "unit": "none",
+        "note": "硬件驱动相关, 如 mlx, ixgbe, bnxt_en, etc.",
+        "lang": "zh_CN",
+        "expression": "ethtool_hardware_rx_dropped_errors",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口接收丢包统计",
+                "note": "硬件驱动相关, 如 mlx, ixgbe, bnxt_en, etc."
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface RX Dropped Packet Statistics",
+                "note": "Hardware driver specific, e.g. mlx, ixgbe, bnxt_en, etc."
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851222,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口接收的字节数",
+        "unit": "bytesIEC",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_receive_bytes_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口接收的字节数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface Received Bytes",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851223,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口接收的压缩包数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_receive_compressed_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口接收的压缩包数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface Received Compressed Packets",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851224,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口接收丢弃的包数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_receive_dropped_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口接收丢弃的包数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface RX Dropped Packets",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851225,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口接收检测到错误的包数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_receive_errors_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口接收检测到错误的包数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface RX Error Packets",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851226,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口接收 fifo 缓冲区错误数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_receive_fifo_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口接收 fifo 缓冲区错误数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface RX FIFO Buffer Errors",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851227,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口接收帧对齐错误",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_receive_frame_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口接收帧对齐错误",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface RX Frame Alignment Errors",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851228,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "多播数据包已接收的包数量，对于硬件接口，此统计通常在设备层计算（与 rx_packets 不同），因此可能包括未到达的数据包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_receive_multicast_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "多播数据包已接收的包数量，对于硬件接口，此统计通常在设备层计算（与 rx_packets 不同），因此可能包括未到达的数据包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface RX Multicast Packets (Counted at Device Level, May Include Undelivered Packets)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851229,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口接收到的有效数据包数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_receive_packets_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口接收到的有效数据包数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface Received Valid Packets",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851230,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口发送的字节数",
+        "unit": "bytesIEC",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_transmit_bytes_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口发送的字节数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface Transmitted Bytes",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851231,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口发送过程中由于载波丢失导致的帧传输错误数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_transmit_carrier_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口发送过程中由于载波丢失导致的帧传输错误数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface TX Carrier Loss Frame Errors",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851232,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口发送碰撞计数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_transmit_colls_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口发送碰撞计数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface TX Collisions",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851233,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接口发送压缩数据包数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_transmit_compressed_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接口发送压缩数据包数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface Transmitted Compressed Packets",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851234,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "数据包在传输过程中丢失的数量，如资源不足",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_transmit_dropped_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "数据包在传输过程中丢失的数量，如资源不足",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Dropped During Transmission (e.g. Out of Resources)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851235,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "发送错误计数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_transmit_errors_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "发送错误计数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface TX Error Count",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851236,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "帧传输错误数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_transmit_fifo_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "帧传输错误数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface TX FIFO Frame Errors",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851237,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "发送数据包计数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netdev_transmit_packets_total",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "发送数据包计数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Interface Transmitted Packets",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851238,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "因 ARP 过滤规则而被拒绝的 ARP 请求/响应包数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_ArpFilter",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "因 ARP 过滤规则而被拒绝的 ARP 请求/响应包数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ARP Requests/Replies Rejected by ARP Filter Rules",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851239,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "通过 busy polling​​ 机制接收到的网络数据包数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_BusyPollRxPackets",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "通过 busy polling​​ 机制接收到的网络数据包数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Received via Busy Polling",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851240,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "由于用户态锁住了sock，而无法发送delayed ack的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_DelayedACKLocked",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "由于用户态锁住了sock，而无法发送delayed ack的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Delayed ACKs Blocked by Locked Socket",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851241,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当收到已确认的包时，它将被更新。延迟 ACK 丢失可能会引起这个问题，但其他原因也可能触发，例如网络中重复的包。",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_DelayedACKLost",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当收到已确认的包时，它将被更新。延迟 ACK 丢失可能会引起这个问题，但其他原因也可能触发，例如网络中重复的包。",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Delayed ACKs Lost",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851242,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "延迟的 ACK 定时器已过期。TCP 堆栈将发送一个纯 ACK 数据包并退出延迟 ACK 模式",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_DelayedACKs",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "延迟的 ACK 定时器已过期。TCP 堆栈将发送一个纯 ACK 数据包并退出延迟 ACK 模式",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Delayed ACK Timer Expirations",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851243,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "收到初始 SYN_RECV 套接字的重置",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_EmbryonicRsts",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "收到初始 SYN_RECV 套接字的重置",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Resets Received in SYN_RECV State",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851245,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP SYN 包丢弃",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_ListenDrops",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP SYN 包丢弃",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP SYN Packets Dropped",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851246,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 队列满丢包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_ListenOverflows",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 队列满丢包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Listen Queue Overflow Drops",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851247,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "由于套接字被锁定，ICMP 数据包被丢弃",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_LockDroppedIcmps",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "由于套接字被锁定，ICMP 数据包被丢弃",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ICMP Packets Dropped Due to Locked Socket",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851248,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "协议栈尝试在乱序队列中丢弃数据包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_OfoPruned",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "协议栈尝试在乱序队列中丢弃数据包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Pruned from Out-of-Order Queue",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851249,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "ICMP 数据包因超出窗口而被丢弃",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_OutOfWindowIcmps",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "ICMP 数据包因超出窗口而被丢弃",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ICMP Packets Dropped as Out of Window",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851250,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "数据包在 Syn-Sent 状态被 PAWS 丢弃",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_PAWSActive",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "数据包在 Syn-Sent 状态被 PAWS 丢弃",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Dropped by PAWS in SYN-SENT State",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851251,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "数据包在除 Syn-Sent 之外的所有状态下都会被 PAWS 丢弃",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_PAWSEstab",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "数据包在除 Syn-Sent 之外的所有状态下都会被 PAWS 丢弃",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Dropped by PAWS Outside SYN-SENT State",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851252,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "由于内存分配失败导致的 TCP 数据包丢弃",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_PFMemallocDrop",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "由于内存分配失败导致的 TCP 数据包丢弃",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Packets Dropped Due to Memory Allocation Failure",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851253,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "协议栈尝试回收套接字内存。更新此计数器后，将尝试合并乱序队列和接收队列。如果内存仍然不足，将尝试丢弃乱序队列中的数据包（并更新 TcpExtOfoPruned 计数器）。",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_PruneCalled",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "协议栈尝试回收套接字内存。更新此计数器后，将尝试合并乱序队列和接收队列。如果内存仍然不足，将尝试丢弃乱序队列中的数据包（并更新 TcpExtOfoPruned 计数器）。",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Socket Memory Reclaim (Prune) Attempts",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851254,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "在从顺序错误的队列中‘collapse’和丢弃数据包后，如果实际使用的内存仍然大于最大允许内存，则此计数器将被更新。这意味着‘prune’失败",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_RcvPruned",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "在从顺序错误的队列中‘collapse’和丢弃数据包后，如果实际使用的内存仍然大于最大允许内存，则此计数器将被更新。这意味着‘prune’失败",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Receive Queue Prune Failures",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851255,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "MSS 从 SYN cookie 解码出来的无效。当这个计数器更新时，接收到的数据包不会被当作 SYN cookie 处理，并且 TcpExtSyncookiesRecv 计数器不会更新",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_SyncookiesFailed",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "MSS 从 SYN cookie 解码出来的无效。当这个计数器更新时，接收到的数据包不会被当作 SYN cookie 处理，并且 TcpExtSyncookiesRecv 计数器不会更新",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Invalid SYN Cookies Received",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851256,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接收了多少个 SYN cookies 的回复数据包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_SyncookiesRecv",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接收了多少个 SYN cookies 的回复数据包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SYN Cookie Reply Packets Received",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851257,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "发送了多少个 SYN cookies",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_SyncookiesSent",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "发送了多少个 SYN cookies",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SYN Cookies Sent",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851258,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "ACK 为 challenge ACK 时，将跳过 ACK",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPACKSkippedChallenge",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "ACK 为 challenge ACK 时，将跳过 ACK",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ACKs Skipped for Challenge ACKs",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851259,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "ACK 在 Fin-Wait-2 状态被跳过，原因可能是 PAWS 检查失败或接收到的序列号超出窗口",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPACKSkippedFinWait2",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "ACK 在 Fin-Wait-2 状态被跳过，原因可能是 PAWS 检查失败或接收到的序列号超出窗口",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ACKs Skipped in FIN-WAIT-2 State",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851260,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "由于 PAWS（保护包装序列号）检查失败，ACK 被跳过",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPACKSkippedPAWS",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "由于 PAWS（保护包装序列号）检查失败，ACK 被跳过",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ACKs Skipped Due to PAWS Check Failure",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851261,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "序列号超出窗口范围，时间戳通过 PAWS 检查，TCP 状态不是 Syn-Recv、Fin-Wait-2 和 Time-Wait",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPACKSkippedSeq",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "序列号超出窗口范围，时间戳通过 PAWS 检查，TCP 状态不是 Syn-Recv、Fin-Wait-2 和 Time-Wait",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ACKs Skipped Due to Out-of-Window Sequence",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851262,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "ACK 在 Syn-Recv 状态中被跳过。Syn-Recv 状态表示协议栈收到一个 SYN 并回复 SYN+ACK",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPACKSkippedSynRecv",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "ACK 在 Syn-Recv 状态中被跳过。Syn-Recv 状态表示协议栈收到一个 SYN 并回复 SYN+ACK",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ACKs Skipped in SYN-RECV State",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851263,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "CK 在 Time-Wait 状态中被跳过，原因可能是 PAWS 检查失败或接收到的序列号超出窗口",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPACKSkippedTimeWait",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "CK 在 Time-Wait 状态中被跳过，原因可能是 PAWS 检查失败或接收到的序列号超出窗口",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "ACKs Skipped in TIME-WAIT State",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851264,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "内核 TCP 层将在满足 RFC2525 2.17 节时发送 RST。如果在处理过程中发生内部错误，TcpExtTCPAbortFailed 将增加",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPAbortFailed",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内核 TCP 层将在满足 RFC2525 2.17 节时发送 RST。如果在处理过程中发生内部错误，TcpExtTCPAbortFailed 将增加",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Abort Failures",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851265,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "用户模式程序缓冲区中有数据时关闭的套接字数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPAbortOnClose",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "用户模式程序缓冲区中有数据时关闭的套接字数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Sockets Closed with Unread Data in Buffer",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851266,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 层有正在传输的数据，但需要关闭连接",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPAbortOnData",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 层有正在传输的数据，但需要关闭连接",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Connections Aborted with In-Flight Data",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851267,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当 TCP 连接进入 FIN_WAIT_2 状态时，内核不会等待来自另一侧的 fin 包，而是发送 RST 并立即删除套接字",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPAbortOnLinger",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当 TCP 连接进入 FIN_WAIT_2 状态时，内核不会等待来自另一侧的 fin 包，而是发送 RST 并立即删除套接字",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Connections Aborted on Linger (RST in FIN-WAIT-2)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851268,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当一个应用程序关闭 TCP 连接时，内核仍然需要跟踪该连接，让它完成 TCP 断开过程",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPAbortOnMemory",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当一个应用程序关闭 TCP 连接时，内核仍然需要跟踪该连接，让它完成 TCP 断开过程",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Connections Aborted Due to Memory",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851269,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "此计数器将在任何 TCP 计时器到期时增加。在这种情况下，内核不会发送 RST，而是放弃连接",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPAbortOnTimeout",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "此计数器将在任何 TCP 计时器到期时增加。在这种情况下，内核不会发送 RST，而是放弃连接",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Connections Aborted on Timer Expiry",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851271,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "发送数据包时，TCP 层会尝试将小数据包合并成更大的一个",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPAutoCorking",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "发送数据包时，TCP 层会尝试将小数据包合并成更大的一个",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Auto-Corking Events",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851273,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "challenge ack 发送的数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPChallengeACK",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "challenge ack 发送的数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Challenge ACKs Sent",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851274,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当 DSACK 块无效时，这两个计数器中的一个将被更新。哪个计数器将被更新取决于 TCP 套接字的 undo_marker 标志",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPDSACKIgnoredNoUndo",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当 DSACK 块无效时，这两个计数器中的一个将被更新。哪个计数器将被更新取决于 TCP 套接字的 undo_marker 标志",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Invalid DSACKs Ignored (No Undo Marker)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851275,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当 DSACK 块无效时，这两个计数器中的一个将被更新。哪个计数器将被更新取决于 TCP 套接字的 undo_marker 标志",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPDSACKIgnoredOld",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当 DSACK 块无效时，这两个计数器中的一个将被更新。哪个计数器将被更新取决于 TCP 套接字的 undo_marker 标志",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Invalid DSACKs Ignored (Old)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851276,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "收到一个 DSACK，表示收到一个顺序错误的重复数据包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPDSACKOfoRecv",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "收到一个 DSACK，表示收到一个顺序错误的重复数据包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "DSACKs Received for Out-of-Order Duplicates",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851277,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "收到一个乱序的重复数据包，因此向发送者发送 DSACK",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPDSACKOfoSent",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "收到一个乱序的重复数据包，因此向发送者发送 DSACK",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "DSACKs Sent for Out-of-Order Duplicates",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851278,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "收到一个已确认的重复数据包，因此向发送者发送 DSACK",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPDSACKOldSent",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "收到一个已确认的重复数据包，因此向发送者发送 DSACK",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "DSACKs Sent for Already-ACKed Duplicates",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851279,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "收到一个 DSACK，表示收到了一个已确认的重复数据包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPDSACKRecv",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "收到一个 DSACK，表示收到了一个已确认的重复数据包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "DSACKs Received for Already-ACKed Duplicates",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851281,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "由于 TCP Defer Accept 机制导致的数据包丢弃",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPDeferAcceptDrop",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "由于 TCP Defer Accept 机制导致的数据包丢弃",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Dropped by TCP Defer Accept",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851284,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当 TCP 栈在 SYN-SENT 状态接收到一个 ACK 包，并且 ACK 包确认了 SYN 包中的数据，理解 TFO cookie 已被对方接受，然后它更新这个计数器",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPFastOpenActive",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当 TCP 栈在 SYN-SENT 状态接收到一个 ACK 包，并且 ACK 包确认了 SYN 包中的数据，理解 TFO cookie 已被对方接受，然后它更新这个计数器",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active TCP Fast Open Successes",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851285,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "Fast Open 失败",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPFastOpenActiveFail",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Fast Open 失败",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active TCP Fast Open Failures",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851287,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "客户端想要请求 TFO cookie 的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPFastOpenCookieReqd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "客户端想要请求 TFO cookie 的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TFO Cookie Requests from Client",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851288,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "挂起的 Fast Open 请求数量大于 fastopenq->max_qlen 时，协议栈将拒绝 Fast Open 请求并更新此计数器",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPFastOpenListenOverflow",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "挂起的 Fast Open 请求数量大于 fastopenq->max_qlen 时，协议栈将拒绝 Fast Open 请求并更新此计数器",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Fast Open Listen Queue Overflows",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851289,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "指示 TCP 堆栈接受 Fast Open 请求的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPFastOpenPassive",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "指示 TCP 堆栈接受 Fast Open 请求的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Passive TCP Fast Open Accepts",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851290,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "协议栈拒绝 Fast Open 的次数，这是由于 TFO cookie 无效或 在创建套接字过程中发现错误所引起的",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPFastOpenPassiveFail",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "协议栈拒绝 Fast Open 的次数，这是由于 TFO cookie 无效或 在创建套接字过程中发现错误所引起的",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Passive TCP Fast Open Failures",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851291,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "快速重传",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPFastRetrans",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "快速重传",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Fast Retransmissions",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851292,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 接收窗口设置为非零值",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPFromZeroWindowAdv",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 接收窗口设置为非零值",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Receive Window Raised from Zero",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851294,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "如果数据包设置了 ACK 标志且没有数据，则是一个纯 ACK 数据包，如果内核在快速路径中处理它，TcpExtTCPHPAcks 将增加 1",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPHPAcks",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "如果数据包设置了 ACK 标志且没有数据，则是一个纯 ACK 数据包，如果内核在快速路径中处理它，TcpExtTCPHPAcks 将增加 1",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pure ACKs Processed in Fast Path",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851295,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "如果 TCP 数据包包含数据（这意味着它不是一个纯 ACK 数据包），并且此数据包在快速路径中处理，TcpExtTCPHPHits 将增加 1",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPHPHits",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "如果 TCP 数据包包含数据（这意味着它不是一个纯 ACK 数据包），并且此数据包在快速路径中处理，TcpExtTCPHPHits 将增加 1",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Data Packets Processed in Fast Path",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851296,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "CWND 检测到的包延迟总和。将此值除以 TcpExtTCPHystartDelayDetect，即为通过包延迟检测到的平均 CWND",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPHystartDelayCwnd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "CWND 检测到的包延迟总和。将此值除以 TcpExtTCPHystartDelayDetect，即为通过包延迟检测到的平均 CWND",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Hystart Delay-Detected CWND Sum",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851297,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "检测到数据包延迟阈值次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPHystartDelayDetect",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "检测到数据包延迟阈值次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Hystart Packet Delay Detections",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851298,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP Hystart 训练中使用的拥塞窗口大小，将此值除以 TcpExtTCPHystartTrainDetect 得到由 ACK 训练长度检测到的平均 CWND",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPHystartTrainCwnd",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP Hystart 训练中使用的拥塞窗口大小，将此值除以 TcpExtTCPHystartTrainDetect 得到由 ACK 训练长度检测到的平均 CWND",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Hystart ACK Train CWND Sum",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851299,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP Hystart 训练检测的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPHystartTrainDetect",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP Hystart 训练检测的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Hystart ACK Train Detections",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851300,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "此计数器指示已发送的保活数据包。默认情况下不会启用保活功能。用户空间程序可以通过设置 SO_KEEPALIVE 套接字选项来启用它。",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPKeepAlive",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "此计数器指示已发送的保活数据包。默认情况下不会启用保活功能。用户空间程序可以通过设置 SO_KEEPALIVE 套接字选项来启用它。",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Keepalive Packets Sent",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851301,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "丢失数据包而进行恢复失败的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPLossFailures",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "丢失数据包而进行恢复失败的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Loss Recovery Failures",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851302,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "检测到丢失的数据包恢复的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPLossProbeRecovery",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "检测到丢失的数据包恢复的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Loss Probe Recoveries",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851303,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 检测到丢失的数据包数量，通常用于检测网络拥塞或丢包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPLossProbes",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 检测到丢失的数据包数量，通常用于检测网络拥塞或丢包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Loss Probes",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851304,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP重传数据包成功到达目标端口，但之前已经由于超时或拥塞丢失，因此被视为“撤销”丢失的数据包数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPLossUndo",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP重传数据包成功到达目标端口，但之前已经由于超时或拥塞丢失，因此被视为“撤销”丢失的数据包数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Loss Undo Events",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851305,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "丢包重传个数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPLostRetransmit",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "丢包重传个数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Lost Retransmissions",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851306,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "校验错误",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPMD5Failure",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "校验错误",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP MD5 Verification Failures",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851307,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "校验错误",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPMD5NotFound",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "校验错误",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP MD5 Not Found Errors",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851308,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "校验错误",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPMD5Unexpected",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "校验错误",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP MD5 Unexpected Errors",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851309,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "使用 DSACK 无需慢启动即可恢复拥塞窗口",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPMTUPFail",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "使用 DSACK 无需慢启动即可恢复拥塞窗口",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "CWND Recovered via DSACK Without Slow Start",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851311,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "到达 tcp 内存压力位 low 的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPMemoryPressures",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "到达 tcp 内存压力位 low 的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Memory Pressure Events",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851313,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "数据包 TTL 过小而被丢弃的数据包数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPMinTTLDrop",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "数据包 TTL 过小而被丢弃的数据包数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Packets Dropped Due to Low TTL",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851314,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 层接收到一个乱序的数据包，但内存不足，因此丢弃它。此类数据包不会计入 TcpExtTCPOFOQueue 计数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPOFODrop",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 层接收到一个乱序的数据包，但内存不足，因此丢弃它。此类数据包不会计入 TcpExtTCPOFOQueue 计数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Out-of-Order Packets Dropped (Out of Memory)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851315,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "接收到的顺序错误的包与上一个包有重叠。重叠部分将被丢弃。所有 TcpExtTCPOFOMerge 包也将计入 TcpExtTCPOFOQueue",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPOFOMerge",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "接收到的顺序错误的包与上一个包有重叠。重叠部分将被丢弃。所有 TcpExtTCPOFOMerge 包也将计入 TcpExtTCPOFOQueue",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Overlapping Out-of-Order Packets Merged",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851316,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 层接收到一个乱序的数据包，并且有足够的内存来排队它",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPOFOQueue",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 层接收到一个乱序的数据包，并且有足够的内存来排队它",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Out-of-Order Packets Queued",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851317,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "发送原始数据（不包括重传但包括 SYN 中的数据）的包数量。此计数器与 TcpOutSegs 不同，因为 TcpOutSegs 还跟踪纯 ACK。TCPOrigDataSent 更有助于跟踪 TCP 重传率",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPOrigDataSent",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "发送原始数据（不包括重传但包括 SYN 中的数据）的包数量。此计数器与 TcpOutSegs 不同，因为 TcpOutSegs 还跟踪纯 ACK。TCPOrigDataSent 更有助于跟踪 TCP 重传率",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Original Data Packets Sent",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851318,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "检测到一些错误的重传，在我们快速重传的同时，收到了部分确认，因此能够部分撤销我们的一些 CWND 减少",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPPartialUndo",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "检测到一些错误的重传，在我们快速重传的同时，收到了部分确认，因此能够部分撤销我们的一些 CWND 减少",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Partial CWND Reduction Undo Events",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851319,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "如果数据包设置了 ACK 标志且没有数据，则是一个纯 ACK 数据包，如果内核在快速路径中处理它，TcpExtTCPHPAcks 将增加 1，如果内核在慢速路径中处理它，TcpExtTCPPureAcks 将增加 1",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPPureAcks",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "如果数据包设置了 ACK 标志且没有数据，则是一个纯 ACK 数据包，如果内核在快速路径中处理它，TcpExtTCPHPAcks 将增加 1，如果内核在慢速路径中处理它，TcpExtTCPPureAcks 将增加 1",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pure ACKs Processed in Slow Path",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851320,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当数据包被 TCP 层接收但未被应用程序读取时，TCP 层会尝试合并它们。这个计数器表示在这种情况下合并了多少个数据包。如果启用了 GRO，GRO 会合并大量数据包，这些数据包不会被计算到 TcpExtTCPRcvCoalesce 中",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPRcvCoalesce",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当数据包被 TCP 层接收但未被应用程序读取时，TCP 层会尝试合并它们。这个计数器表示在这种情况下合并了多少个数据包。如果启用了 GRO，GRO 会合并大量数据包，这些数据包不会被计算到 TcpExtTCPRcvCoalesce 中",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Received Packets Coalesced",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851321,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "在“崩溃”过程中释放了多少个 skbs",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPRcvCollapsed",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "在“崩溃”过程中释放了多少个 skbs",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SKBs Freed by Receive Queue Collapse",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851322,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP_CA_Disorder 阶段进入并经历 RTO 的重传失败次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPRenoFailures",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP_CA_Disorder 阶段进入并经历 RTO 的重传失败次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reno Retransmit Failures (RTO from Disorder State)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851323,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当拥塞控制进入恢复状态时，如果使用 sack，TcpExtTCPSackRecovery 增加 1，如果不使用 sack，TcpExtTCPRenoRecovery 增加 1。这两个计数器意味着协议栈开始重传丢失的数据包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPRenoRecovery",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当拥塞控制进入恢复状态时，如果使用 sack，TcpExtTCPSackRecovery 增加 1，如果不使用 sack，TcpExtTCPRenoRecovery 增加 1。这两个计数器意味着协议栈开始重传丢失的数据包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reno Recovery Events",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851324,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "进入恢复阶段并 RTO 的连接数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPRenoRecoveryFail",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进入恢复阶段并 RTO 的连接数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reno Recovery Failures (RTO)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851325,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "重排序数据包被快速恢复检测到。只有在 SACK 被禁用时才会使用",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPRenoReorder",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "重排序数据包被快速恢复检测到。只有在 SACK 被禁用时才会使用",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reordering Detected by Reno Fast Recovery",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851328,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "尝试将重传数据包发送到下层，但下层返回错误",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPRetransFail",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "尝试将重传数据包发送到下层，但下层返回错误",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Retransmit Failures at Lower Layer",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851329,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "有多少个 SACK 块无效。如果无效的 SACK 块是由 ACK 记录引起的，tcp 栈只会忽略它，而不会更新此计数器",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSACKDiscard",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "有多少个 SACK 块无效。如果无效的 SACK 块是由 ACK 记录引起的，tcp 栈只会忽略它，而不会更新此计数器",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Invalid SACK Blocks Discarded",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851330,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "一个数据包被 SACK 确认，但接收方已丢弃此数据包，因此发送方需要重传此数据包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSACKReneging",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "一个数据包被 SACK 确认，但接收方已丢弃此数据包，因此发送方需要重传此数据包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SACK Reneging Events",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851331,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "SACK 检测到的重排序数据包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSACKReorder",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "SACK 检测到的重排序数据包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reordering Detected by SACK",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851332,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "响应 SYN 数据包发送的 Challenge ack 数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSYNChallenge",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "响应 SYN 数据包发送的 Challenge ack 数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Challenge ACKs Sent in Response to SYN",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851333,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP_CA_Disorder 阶段进入并经历 RTO 的重传失败次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSackFailures",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP_CA_Disorder 阶段进入并经历 RTO 的重传失败次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SACK Retransmit Failures (RTO from Disorder State)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851334,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "skb 已合并计数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSackMerged",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "skb 已合并计数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SACKed SKBs Merged",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851335,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当拥塞控制进入恢复状态时，如果使用 sack，TcpExtTCPSackRecovery 增加 1，如果不使用 sack，TcpExtTCPRenoRecovery 增加 1。这两个计数器意味着 TCP 栈开始重传丢失的数据包",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSackRecovery",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当拥塞控制进入恢复状态时，如果使用 sack，TcpExtTCPSackRecovery 增加 1，如果不使用 sack，TcpExtTCPRenoRecovery 增加 1。这两个计数器意味着 TCP 栈开始重传丢失的数据包",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SACK Recovery Events",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851336,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "SACK 恢复失败的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSackRecoveryFail",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "SACK 恢复失败的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SACK Recovery Failures",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851337,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "skb 应该被移动或合并，但由于某些原因，TCP 堆栈没有这样做",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSackShiftFallback",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "skb 应该被移动或合并，但由于某些原因，TCP 堆栈没有这样做",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SACK Shift/Merge Fallbacks",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851338,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "skb 被移位",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSackShifted",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "skb 被移位",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SACKed SKBs Shifted",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851339,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "重新传输一个数据包，拥塞控制状态为“丢失”",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSlowStartRetrans",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "重新传输一个数据包，拥塞控制状态为“丢失”",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Retransmissions in Loss State",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851340,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "虚假重传超时",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSpuriousRTOs",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "虚假重传超时",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Spurious Retransmission Timeouts",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851341,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "当 TCP 栈想要重传一个数据包，发现该数据包并未在网络中丢失，但数据包尚未发送，TCP 栈将放弃重传并更新此计数器。这可能会发生在数据包在 qdisc 或驱动程序队列中停留时间过长的情况下",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSpuriousRtxHostQueues",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当 TCP 栈想要重传一个数据包，发现该数据包并未在网络中丢失，但数据包尚未发送，TCP 栈将放弃重传并更新此计数器。这可能会发生在数据包在 qdisc 或驱动程序队列中停留时间过长的情况下",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Spurious Retransmits Skipped (Packet Still in Host Queue)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851342,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "SYN 和 SYN/ACK 重传次数，将重传分解为 SYN、快速重传、超时重传等",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPSynRetrans",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "SYN 和 SYN/ACK 重传次数，将重传分解为 SYN、快速重传、超时重传等",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "SYN and SYN/ACK Retransmissions",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851343,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "tcp 栈在接收到时间截包而进行乱序包阀值调整的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPTSReorder",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "tcp 栈在接收到时间截包而进行乱序包阀值调整的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Reordering Threshold Adjustments via Timestamps",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851344,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TIME_WAIT 状态的套接字因超出限制而无法分配的数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPTimeWaitOverflow",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TIME_WAIT 状态的套接字因超出限制而无法分配的数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TIME-WAIT Socket Allocation Failures (Limit Exceeded)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851345,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 超时事件",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPTimeouts",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 超时事件",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Timeout Events",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851346,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 接收窗口从非零值设置为零",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPToZeroWindowAdv",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 接收窗口从非零值设置为零",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Receive Window Dropped to Zero",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851347,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "根据当前内存使用情况，TCP 栈尝试将接收窗口设置为零。但接收窗口可能仍然是一个非零值",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPWantZeroWindowAdv",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "根据当前内存使用情况，TCP 栈尝试将接收窗口设置为零。但接收窗口可能仍然是一个非零值",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Zero Receive Window Attempts",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851348,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "定期发送的 ACK 数据包数量，以确保打开窗口的反向 ACK 数据包没有丢失",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TCPWinProbe",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "定期发送的 ACK 数据包数量，以确保打开窗口的反向 ACK 数据包没有丢失",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Window Probes Sent",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851350,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 套接字在快速计时器中完成 time wait 状态",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TW",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 套接字在快速计时器中完成 time wait 状态",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TIME-WAIT Sockets Finished via Fast Timer",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851351,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 套接字在慢速计时器中完成 time wait 状态",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TWKilled",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 套接字在慢速计时器中完成 time wait 状态",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TIME-WAIT Sockets Finished via Slow Timer",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851352,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "等待套接字通过时间戳回收",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_TcpExt_TWRecycled",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "等待套接字通过时间戳回收",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TIME-WAIT Sockets Recycled via Timestamp",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851353,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 层发送一个 SYN，进入 SYN-SENT 状态。每当 TcpActiveOpens 增加 1 时，TcpOutSegs 应该始终增加 1",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_ActiveOpens",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 层发送一个 SYN，进入 SYN-SENT 状态。每当 TcpActiveOpens 增加 1 时，TcpOutSegs 应该始终增加 1",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Active TCP Opens",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851354,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 连接从 SYN-SENT 状态或 SYN-RCVD 状态直接过渡到 CLOSED 状态次数，加上 TCP 连接从 SYN-RCVD 状态直接过渡到 LISTEN 状态次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_AttemptFails",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 连接从 SYN-SENT 状态或 SYN-RCVD 状态直接过渡到 CLOSED 状态次数，加上 TCP 连接从 SYN-RCVD 状态直接过渡到 LISTEN 状态次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Failed TCP Connection Attempts",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851355,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 连接数，当前状态为 ESTABLISHED 或 CLOSE-WAIT",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_CurrEstab",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 连接数，当前状态为 ESTABLISHED 或 CLOSE-WAIT",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Current Established TCP Connections",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851356,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 连接从 ESTABLISHED 状态或 CLOSE-WAIT 状态直接过渡到 CLOSED 状态次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_EstabResets",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 连接从 ESTABLISHED 状态或 CLOSE-WAIT 状态直接过渡到 CLOSED 状态次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Established Connection Resets",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851357,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 校验和错误",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_InCsumErrors",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 校验和错误",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Checksum Errors",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851358,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "错误接收到的段总数（例如，错误的 TCP 校验和）",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_InErrs",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "错误接收到的段总数（例如，错误的 TCP 校验和）",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Segments Received in Error",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851359,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 层接收到的数据包数量。如 RFC1213 所述，包括接收到的错误数据包，如校验和错误、无效 TCP 头等",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_InSegs",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 层接收到的数据包数量。如 RFC1213 所述，包括接收到的错误数据包，如校验和错误、无效 TCP 头等",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Segments Received",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851360,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "可以支持的总 TCP 连接数限制，在最大连接数动态的实体中，此对象应包含值-1",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_MaxConn",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "可以支持的总 TCP 连接数限制，在最大连接数动态的实体中，此对象应包含值-1",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum TCP Connections",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851361,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 段中包含 RST 标志的数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_OutRsts",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 段中包含 RST 标志的数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP RST Segments Sent",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851362,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "发送的总段数，包括当前连接上的段，但不包括仅包含重传字节的段",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_OutSegs",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "发送的总段数，包括当前连接上的段，但不包括仅包含重传字节的段",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Segments Sent",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851363,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 连接从监听状态直接过渡到 SYN-RCVD 状态的次数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_PassiveOpens",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 连接从监听状态直接过渡到 SYN-RCVD 状态的次数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Passive TCP Opens",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851364,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "总重传段数 - 即包含一个或多个先前已传输字节的 TCP 段传输的数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_RetransSegs",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "总重传段数 - 即包含一个或多个先前已传输字节的 TCP 段传输的数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Segments Retransmitted",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851365,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "The algorithm used to determine the timeout value used for retransmitting unacknowledged octets",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_RtoAlgorithm",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "The algorithm used to determine the timeout value used for retransmitting unacknowledged octets",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Retransmission Timeout Algorithm",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851366,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 实现允许的重传超时最大值，以毫秒为单位",
+        "unit": "milliseconds",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_RtoMax",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 实现允许的重传超时最大值，以毫秒为单位",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Retransmission Timeout (ms)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851367,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 实现允许的重传超时最小值，以毫秒为单位",
+        "unit": "milliseconds",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "netstat_Tcp_RtoMin",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 实现允许的重传超时最小值，以毫秒为单位",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Minimum Retransmission Timeout (ms)",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851370,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "使用的 RAW 套接字数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "sockstat_RAW_inuse",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "使用的 RAW 套接字数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "RAW Sockets In Use",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851371,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 已分配的套接字数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "sockstat_TCP_alloc",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 已分配的套接字数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TCP Sockets Allocated",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851372,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "已建立的 TCP 套接字数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "sockstat_TCP_inuse",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已建立的 TCP 套接字数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Established TCP Sockets",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851373,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "系统使用的 TCP 内存总量",
+        "unit": "pages",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "sockstat_TCP_mem",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统使用的 TCP 内存总量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total TCP Memory Usage",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851374,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "系统使用的 TCP 内存总量",
+        "unit": "bytesIEC",
+        "note": "sockstat_TCP_mem * page_size",
+        "lang": "zh_CN",
+        "expression": "sockstat_TCP_mem_bytes",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统使用的 TCP 内存总量",
+                "note": "sockstat_TCP_mem * page_size"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total TCP Memory Usage in Bytes",
+                "note": "sockstat_TCP_mem * page_size"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851375,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 等待关闭的连接数",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "sockstat_TCP_orphan",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 等待关闭的连接数",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Orphaned TCP Connections Awaiting Close",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851376,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "TCP 套接字终止数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "sockstat_TCP_tw",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "TCP 套接字终止数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "TIME-WAIT TCP Sockets",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851378,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "使用的 UDP 套接字数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "sockstat_UDP_inuse",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "使用的 UDP 套接字数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "UDP Sockets In Use",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851379,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "系统使用的 UDP 内存总量",
+        "unit": "pages",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "sockstat_UDP_mem",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统使用的 UDP 内存总量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total UDP Memory Usage",
+                "note": "procfs"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851380,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "系统使用的 UDP 内存字节数总和",
+        "unit": "bytesIEC",
+        "note": "sockstat_UDP_mem * page_size",
+        "lang": "zh_CN",
+        "expression": "sockstat_UDP_mem_bytes",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统使用的 UDP 内存字节数总和",
+                "note": "sockstat_UDP_mem * page_size"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total UDP Memory Usage in Bytes",
+                "note": "sockstat_UDP_mem * page_size"
+            }
+        ]
+    },
+    {
+        "id": 0,
+        "uuid": 1767589615851381,
+        "collector": "network",
+        "typ": "HUATUO",
+        "name": "系统使用 socket 数量",
+        "unit": "none",
+        "note": "procfs",
+        "lang": "zh_CN",
+        "expression": "sockstat_sockets_used",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "系统使用 socket 数量",
+                "note": "procfs"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Sockets In Use",
+                "note": "procfs"
+            }
+        ]
+    }
+]

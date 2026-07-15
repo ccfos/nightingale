@@ -73,7 +73,7 @@ func init() {
 }
 
 // createNotifyRule 落库一条通知规则。入参 config 是与前端/HTTP API 同构的 NotifyRule
-// JSON（n9e-notify-rule-copilot skill 文档化了字段形状），直接反序列化进 models.NotifyRule，
+// JSON（notify-rule-copilot skill 文档化了字段形状），直接反序列化进 models.NotifyRule，
 // 由 NotifyRule.Verify 做业务校验。通知规则没有业务组维度，权限挂在团队(UserGroup)上：
 // config 未带 user_group_ids 时回退表单注入的 team_ids，仍缺则经缺参门弹团队选择表单。
 func createNotifyRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
@@ -87,7 +87,7 @@ func createNotifyRule(_ context.Context, deps *aiagent.ToolDeps, args map[string
 
 	configJSON := getArgString(args, "config")
 	if configJSON == "" {
-		return "", fmt.Errorf("config is required: a JSON object describing the notify rule (name, user_group_ids, notify_configs); load the n9e-notify-rule-copilot skill for the exact shape")
+		return "", fmt.Errorf("config is required: a JSON object describing the notify rule (name, user_group_ids, notify_configs); load the notify-rule-copilot skill for the exact shape")
 	}
 
 	var rule models.NotifyRule
@@ -99,7 +99,7 @@ func createNotifyRule(_ context.Context, deps *aiagent.ToolDeps, args map[string
 	// 而不是替用户瞎选——和 create_dashboard 的业务组缺参门同一套前端契约。
 	rule.UserGroupIds = resolveCreationTeamIDs(rule.UserGroupIds, params)
 	if len(rule.UserGroupIds) == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-notify-rule-copilot", []string{"team_ids"})
+		return "", creationFormInterrupt(params["lang"], deps, user, "notify-rule-copilot", []string{"team_ids"})
 	}
 
 	if rule.Name == "" {
@@ -207,7 +207,8 @@ func updateNotifyRule(ctx context.Context, deps *aiagent.ToolDeps, args map[stri
 			return "", fmt.Errorf("forbidden: no access to this notify rule")
 		}
 	}
-	subject := fmt.Sprintf("通知规则 **%s**（id=%d）", existing.Name, id)
+	subject := fmt.Sprintf(aiagent.LangText(params["lang"],
+		"通知规则 **%s**（id=%d）", "notification rule **%s** (id=%d)"), existing.Name, id)
 
 	configJSON := getArgString(args, "config")
 	if configJSON == "" {
@@ -288,7 +289,7 @@ func updateNotifyRule(ctx context.Context, deps *aiagent.ToolDeps, args map[stri
 		TargetID:     id,
 		BaselineHash: baseline,
 		Changes:      changeDescs,
-	}, renderUpdateProposalPrompt(subject, changeDescs), map[string]interface{}{
+	}, renderUpdateProposalPrompt(params["lang"], subject, changeDescs), map[string]interface{}{
 		"id":     id,
 		"config": configJSON,
 	})

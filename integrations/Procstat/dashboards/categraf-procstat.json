@@ -2,7 +2,7 @@
     "name": "Procstat",
     "tags": "Categraf OS",
     "ident": "",
-    "uuid": 1717556328263679000,
+    "uuid": 1766721621350000,
     "configs": {
         "panels": [
             {
@@ -16,7 +16,7 @@
                     "x": 0,
                     "y": 0
                 },
-                "version": "3.1.0",
+                "version": "3.3.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${Datasource}",
                 "targets": [
@@ -24,8 +24,7 @@
                         "expr": "procstat_lookup_count{ident=~\"$ident\", search_string=~\"$search_string\"}",
                         "instant": true,
                         "legend": "{{ident}} {{search_string}}",
-                        "refId": "A",
-                        "maxDataPoints": 240
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -75,7 +74,8 @@
                             }
                         }
                     }
-                ]
+                ],
+                "maxDataPoints": 240
             },
             {
                 "custom": {
@@ -146,7 +146,7 @@
                     }
                 ],
                 "type": "table",
-                "version": "3.0.0"
+                "version": "3.3.0"
             },
             {
                 "type": "timeseries",
@@ -159,7 +159,7 @@
                     "x": 14,
                     "y": 0
                 },
-                "version": "3.1.0",
+                "version": "3.3.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${Datasource}",
                 "targets": [
@@ -167,8 +167,7 @@
                         "expr": "procstat_lookup_count{ident=~\"$ident\", search_string=~\"$search_string\"}",
                         "instant": false,
                         "legend": "{{ident}} {{search_string}}",
-                        "refId": "A",
-                        "maxDataPoints": 240
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -228,7 +227,8 @@
                             "rightYAxisDisplay": "off"
                         }
                     }
-                ]
+                ],
+                "maxDataPoints": 240
             },
             {
                 "type": "stat",
@@ -241,7 +241,7 @@
                     "x": 0,
                     "y": 4
                 },
-                "version": "3.1.0",
+                "version": "3.3.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${Datasource}",
                 "targets": [
@@ -249,8 +249,7 @@
                         "expr": "procstat_uptime_minimum{ident=~\"$ident\", search_string=~\"$search_string\"}",
                         "instant": true,
                         "legend": "{{ident}} {{search_string}}",
-                        "refId": "A",
-                        "maxDataPoints": 240
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -282,8 +281,8 @@
                         ]
                     },
                     "standardOptions": {
-                        "util": "seconds",
-                        "decimals": 2
+                        "decimals": 2,
+                        "unit": "seconds"
                     }
                 },
                 "overrides": [
@@ -303,7 +302,8 @@
                             }
                         }
                     }
-                ]
+                ],
+                "maxDataPoints": 240
             },
             {
                 "type": "timeseries",
@@ -316,14 +316,13 @@
                     "x": 5,
                     "y": 4
                 },
-                "version": "3.1.0",
+                "version": "3.3.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${Datasource}",
                 "targets": [
                     {
                         "expr": "procstat_cpu_usage_total{ident=~\"$ident\", search_string=~\"$search_string\"}",
-                        "refId": "A",
-                        "maxDataPoints": 240
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -346,8 +345,8 @@
                         "selectMode": "single"
                     },
                     "standardOptions": {
-                        "util": "percent",
-                        "decimals": 2
+                        "decimals": 2,
+                        "unit": "percent"
                     },
                     "thresholds": {
                         "mode": "absolute",
@@ -386,7 +385,8 @@
                             "rightYAxisDisplay": "off"
                         }
                     }
-                ]
+                ],
+                "maxDataPoints": 240
             },
             {
                 "type": "timeseries",
@@ -399,14 +399,13 @@
                     "x": 14,
                     "y": 4
                 },
-                "version": "3.1.0",
+                "version": "3.3.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${Datasource}",
                 "targets": [
                     {
                         "expr": "procstat_mem_usage_total{ident=~\"$ident\", search_string=~\"$search_string\"}",
-                        "refId": "A",
-                        "maxDataPoints": 240
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -429,8 +428,8 @@
                         "selectMode": "single"
                     },
                     "standardOptions": {
-                        "util": "percent",
-                        "decimals": 2
+                        "decimals": 2,
+                        "unit": "percent"
                     },
                     "thresholds": {
                         "mode": "absolute",
@@ -469,7 +468,8 @@
                             "rightYAxisDisplay": "off"
                         }
                     }
-                ]
+                ],
+                "maxDataPoints": 240
             },
             {
                 "type": "timeseries",
@@ -482,14 +482,13 @@
                     "x": 0,
                     "y": 8
                 },
-                "version": "3.1.0",
+                "version": "3.3.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${Datasource}",
                 "targets": [
                     {
                         "expr": "procstat_num_fds_total{ident=~\"$ident\", search_string=~\"$search_string\"}/procstat_rlimit_num_fds_soft_minimum{ident=~\"$ident\", search_string=~\"$search_string\"}*100",
-                        "refId": "A",
-                        "maxDataPoints": 240
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -512,8 +511,8 @@
                         "selectMode": "single"
                     },
                     "standardOptions": {
-                        "util": "percent",
-                        "decimals": 2
+                        "decimals": 2,
+                        "unit": "percent"
                     },
                     "thresholds": {
                         "mode": "absolute",
@@ -552,7 +551,8 @@
                             "rightYAxisDisplay": "off"
                         }
                     }
-                ]
+                ],
+                "maxDataPoints": 240
             },
             {
                 "type": "timeseries",
@@ -565,14 +565,13 @@
                     "x": 12,
                     "y": 8
                 },
-                "version": "3.1.0",
+                "version": "3.3.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${Datasource}",
                 "targets": [
                     {
                         "expr": "procstat_num_fds_total{ident=~\"$ident\", search_string=~\"$search_string\"}/procstat_rlimit_num_fds_hard_minimum{ident=~\"$ident\", search_string=~\"$search_string\"}*100",
-                        "refId": "A",
-                        "maxDataPoints": 240
+                        "refId": "A"
                     }
                 ],
                 "transformations": [
@@ -595,8 +594,8 @@
                         "selectMode": "single"
                     },
                     "standardOptions": {
-                        "util": "percent",
-                        "decimals": 2
+                        "decimals": 2,
+                        "unit": "percent"
                     },
                     "thresholds": {
                         "mode": "absolute",
@@ -635,7 +634,8 @@
                             "rightYAxisDisplay": "off"
                         }
                     }
-                ]
+                ],
+                "maxDataPoints": 240
             },
             {
                 "type": "timeseries",
@@ -648,14 +648,13 @@
                     "x": 0,
                     "y": 12
                 },
-                "version": "3.1.0",
+                "version": "3.3.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${Datasource}",
                 "targets": [
                     {
                         "expr": "rate(procstat_read_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}[$__rate_interval])",
                         "refId": "A",
-                        "maxDataPoints": 240,
                         "step": 15
                     }
                 ],
@@ -679,8 +678,8 @@
                         "selectMode": "single"
                     },
                     "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 1
+                        "decimals": 1,
+                        "unit": "bytesIEC"
                     },
                     "thresholds": {
                         "mode": "absolute",
@@ -719,7 +718,8 @@
                             "rightYAxisDisplay": "off"
                         }
                     }
-                ]
+                ],
+                "maxDataPoints": 240
             },
             {
                 "type": "timeseries",
@@ -732,14 +732,13 @@
                     "x": 12,
                     "y": 12
                 },
-                "version": "3.1.0",
+                "version": "3.3.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${Datasource}",
                 "targets": [
                     {
                         "expr": "rate(procstat_write_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}[$__rate_interval])",
                         "refId": "A",
-                        "maxDataPoints": 240,
                         "step": 15
                     }
                 ],
@@ -763,8 +762,8 @@
                         "selectMode": "single"
                     },
                     "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 1
+                        "decimals": 1,
+                        "unit": "bytesIEC"
                     },
                     "thresholds": {
                         "mode": "absolute",
@@ -803,38 +802,50 @@
                             "rightYAxisDisplay": "off"
                         }
                     }
-                ]
+                ],
+                "maxDataPoints": 240
             }
         ],
         "var": [
             {
                 "definition": "prometheus",
-                "name": "Datasource",
-                "type": "datasource"
+                "name": "datasource",
+                "type": "datasource",
+                "hide": false
             },
             {
                 "allOption": true,
                 "datasource": {
                     "cate": "prometheus",
-                    "value": "${Datasource}"
+                    "value": "${datasource}"
                 },
                 "definition": "label_values(system_load_norm_1, ident)",
                 "label": "Host",
                 "multi": true,
                 "name": "ident",
-                "type": "query"
+                "type": "query",
+                "value": [
+                    "all"
+                ],
+                "options": [],
+                "hide": false
             },
             {
                 "allOption": true,
                 "datasource": {
                     "cate": "prometheus",
-                    "value": "${Datasource}"
+                    "value": "${datasource}"
                 },
                 "definition": "label_values(procstat_lookup_count{ident=~\"$ident\"}, search_string)",
                 "label": "Proc",
                 "multi": true,
                 "name": "search_string",
-                "type": "query"
+                "type": "query",
+                "value": [
+                    "all"
+                ],
+                "options": [],
+                "hide": false
             }
         ],
         "version": "3.0.0"

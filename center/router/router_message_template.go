@@ -31,9 +31,12 @@ func (rt *Router) messageTemplatesAdd(c *gin.Context) {
 	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 	ginx.Dangerous(err)
 	now := time.Now().Unix()
+	lang := models.NormalizeMsgTplLang(c.GetHeader("X-Language"))
 	for _, tpl := range lst {
 		// 生成一个唯一的标识符，以后也不允许修改，前端不需要传这个参数
 		tpl.Ident = uuid.New().String()
+		// 模板语言由后端按请求语言写入，前端不需要传这个参数
+		tpl.Lang = lang
 
 		ginx.Dangerous(tpl.Verify())
 		if !isAdmin && !slice.HaveIntersection(gids, tpl.UserGroupIds) {
@@ -115,6 +118,8 @@ func (rt *Router) messageTemplatePut(c *gin.Context) {
 		}
 	}
 
+	// 前端编辑时不回传 lang，模板语言保持不变
+	f.Lang = mt.Lang
 	f.UpdateBy = me.Username
 	ginx.NewRender(c).Message(mt.Update(rt.Ctx, f))
 }
@@ -157,6 +162,8 @@ func (rt *Router) messageTemplatesGet(c *gin.Context) {
 
 	lst, err := models.MessageTemplatesGetBy(rt.Ctx, notifyChannelIdents)
 	ginx.Dangerous(err)
+	// 仅对内置模板按语言过滤，用户自建模板始终保留（避免跨语言/存量自建模板被隐藏）
+	lst = models.FilterMsgTplsByLang(lst, c.GetHeader("X-Language"))
 	models.FillUpdateByNicknames(rt.Ctx, lst)
 
 	if me.IsAdmin() {

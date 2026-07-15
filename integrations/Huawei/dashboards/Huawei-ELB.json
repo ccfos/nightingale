@@ -1,0 +1,1968 @@
+{
+    "name": "华为云-弹性负载均衡（ELB）",
+    "tags": "华为云-AOM",
+    "ident": "",
+    "uuid": 1755745594664000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "name": "DS_PROMETHEUS",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus"
+            },
+            {
+                "name": "hostname",
+                "label": "实例名",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "reg": "",
+                "definition": "label_values(huaweicloud_sys_elb_m2_act_conn,name)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".+"
+            },
+            {
+                "name": "listener",
+                "label": "监听器",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "reg": "",
+                "definition": "label_values(huaweicloud_sys_elb_m2_act_conn{name=\"$hostname\"}, lbaas_listener_id)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".+"
+            },
+            {
+                "name": "available_zone",
+                "label": "可用区",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "reg": "",
+                "definition": "label_values(huaweicloud_sys_elb_m1_cps{name=~\"$hostname\"},available_zone)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".+"
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.1.0",
+                "id": "fd60905f-122a-479c-8b08-5fa7a982dc7d",
+                "type": "row",
+                "name": "资源总览",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "fd60905f-122a-479c-8b08-5fa7a982dc7d"
+                },
+                "panels": []
+            },
+            {
+                "type": "table",
+                "id": "b65d942f-f044-408f-a245-83f8c266626b",
+                "layout": {
+                    "h": 9,
+                    "w": 24,
+                    "x": 0,
+                    "y": 1,
+                    "i": "b65d942f-f044-408f-a245-83f8c266626b"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m1_cps{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"} -0",
+                        "legend": "并发连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "huaweicloud_sys_elb_m2_act_conn{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"} - 0",
+                        "legend": "活跃连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "huaweicloud_sys_elb_m3_inact_conn{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"} - 0",
+                        "legend": "非活跃连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "huaweicloud_sys_elb_m4_ncps{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"} - 0",
+                        "legend": "新建连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "huaweicloud_sys_elb_m7_in_Bps{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"} - 0",
+                        "legend": "网络流入速率",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "huaweicloud_sys_elb_m8_out_Bps{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "网络流出速率",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "G",
+                        "expr": "huaweicloud_sys_elb_m15_l7_upstream_4xx{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "七层后端返回码（4xx）",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "H",
+                        "expr": "huaweicloud_sys_elb_m16_l7_upstream_5xx{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "七层后端返回码（5xx）",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "name": "实例名"
+                            }
+                        }
+                    }
+                ],
+                "name": "ELB资源（实例）总览表",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelValuesToRows",
+                    "aggrDimension": [
+                        "name"
+                    ],
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn"
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "E"
+                        },
+                        "properties": {
+                            "valueMappings": [],
+                            "standardOptions": {
+                                "util": "bytesSecSI"
+                            }
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "F"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "bytesSecSI"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "4cbd02ba-9ea4-4185-b737-86257689640c",
+                "layout": {
+                    "h": 9,
+                    "w": 24,
+                    "x": 0,
+                    "y": 10,
+                    "i": "4cbd02ba-9ea4-4185-b737-86257689640c"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m1_cps{name=~\"$hostname\",lbaas_listener_id=~\".+\"} -0",
+                        "legend": "并发连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "huaweicloud_sys_elb_m2_act_conn{name=~\"$hostname\", lbaas_listener_id=~\".+\"} - 0",
+                        "legend": "活跃连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "huaweicloud_sys_elb_m3_inact_conn{name=~\"$hostname\", lbaas_listener_id=~\".+\"} - 0",
+                        "legend": "非活跃连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "huaweicloud_sys_elb_m4_ncps{name=~\"$hostname\", lbaas_listener_id=~\".+\"} - 0",
+                        "legend": "新建连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "huaweicloud_sys_elb_m7_in_Bps{name=~\"$hostname\", lbaas_listener_id=~\".+\"} - 0",
+                        "legend": "网络流入速率",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "huaweicloud_sys_elb_m8_out_Bps{name=~\"$hostname\", lbaas_listener_id=~\".+\"}",
+                        "legend": "网络流出速率",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "G",
+                        "expr": "huaweicloud_sys_elb_m15_l7_upstream_4xx{name=~\"$hostname\", lbaas_listener_id=~\".+\"}",
+                        "legend": "七层后端返回码（4xx）",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "H",
+                        "expr": "huaweicloud_sys_elb_m16_l7_upstream_5xx{name=~\"$hostname\", lbaas_listener_id=~\".+\"}",
+                        "legend": "七层后端返回码（5xx）",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "name": "实例名"
+                            }
+                        }
+                    }
+                ],
+                "name": "ELB资源（监听器）总览表",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelValuesToRows",
+                    "aggrDimension": [
+                        "name"
+                    ],
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn"
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "E"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "bytesSecSI"
+                            }
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "F"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "bytesSecSI"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "74f74f55-d66b-4c4f-a6df-18d4110b1d99",
+                "layout": {
+                    "h": 9,
+                    "w": 24,
+                    "x": 0,
+                    "y": 19,
+                    "i": "74f74f55-d66b-4c4f-a6df-18d4110b1d99"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m1_cps{name=~\"$hostname\", available_zone=~\".+\"} -0",
+                        "legend": "并发连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "huaweicloud_sys_elb_m2_act_conn{name=~\"$hostname\", available_zone=~\".+\"} - 0",
+                        "legend": "活跃连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "huaweicloud_sys_elb_m3_inact_conn{name=~\"$hostname\", available_zone=~\".+\"} - 0",
+                        "legend": "非活跃连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "huaweicloud_sys_elb_m4_ncps{name=~\"$hostname\", available_zone=~\".+\"} - 0",
+                        "legend": "新建连接数",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "huaweicloud_sys_elb_m7_in_Bps{name=~\"$hostname\", available_zone=~\".+\"} - 0",
+                        "legend": "网络流入速率",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "F",
+                        "expr": "huaweicloud_sys_elb_m8_out_Bps{name=~\"$hostname\", available_zone=~\".+\"}",
+                        "legend": "网络流出速率",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "ELB资源（可用区）总览表",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelValuesToRows",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn",
+                    "aggrDimension": [
+                        "name"
+                    ]
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "689c6e18-08cf-4c56-82a5-0acb684e6f8b",
+                "type": "row",
+                "name": "ELB实例资源明细",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 28,
+                    "i": "689c6e18-08cf-4c56-82a5-0acb684e6f8b"
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "c4a54083-2077-4385-96d2-3caf7fdb7395",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 29,
+                    "i": "c4a54083-2077-4385-96d2-3caf7fdb7395"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_ma_normal_servers{name=~\"$hostname\",lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}}（正常主机数）",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "正常主机数量（弹性负载均衡器实例）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "00a29c23-e83b-4d37-a660-1955b9b0dec3",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 29,
+                    "i": "00a29c23-e83b-4d37-a660-1955b9b0dec3"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_l4_con_usage{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}} （L4并发连接使用率）",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "huaweicloud_sys_elb_l7_con_usage{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}} （L7并发连接使用率）",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "并发连接使用率（弹性负载均衡器实例）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "762e7463-790b-496d-91f1-a53698072726",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 37,
+                    "i": "762e7463-790b-496d-91f1-a53698072726"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_l4_ncps_usage{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}}（L4新建连接使用率）",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "huaweicloud_sys_elb_l7_ncps_usage{name=~\"$hostname\",lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}}（L7新建连接使用率）",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "新建连接使用率（弹性负载均衡器实例）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d6503f93-35df-4dda-9e62-c792eb96e641",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 37,
+                    "i": "d6503f93-35df-4dda-9e62-c792eb96e641"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_l4_in_bps_usage{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}}（4层入带宽使用率）",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "0 - huaweicloud_sys_elb_l4_out_bps_usage{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}}（4层出带宽使用率）",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "huaweicloud_sys_elb_l7_in_bps_usage{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}}（7层入带宽使用率）",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "0 - huaweicloud_sys_elb_l7_out_bps_usage{name=~\"$hostname\",lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}}（7层出带宽使用率）",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "网络流入流出带宽使用率（弹性负载均衡器实例）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "93d9b406-97bf-4c89-bdda-42eb42bd3b8f",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 45,
+                    "i": "93d9b406-97bf-4c89-bdda-42eb42bd3b8f"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m9_abnormal_servers{name=~\"$hostname\", lbaas_listener_id!~\".+\", available_zone!~\".+\", lbaas_pool_id!~\".+\"}",
+                        "legend": "实例名：{{name}}（异常主机数）",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "异常主机数量（弹性负载均衡器实例）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "4dcdef95-6362-4f5a-bb97-54ebcb2a00d7",
+                "type": "row",
+                "name": "ELB监听器资源明细：",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 125,
+                    "i": "4dcdef95-6362-4f5a-bb97-54ebcb2a00d7"
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "ee2bcba0-0ac1-4915-a769-e5e60edb3fe4",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 126,
+                    "i": "ee2bcba0-0ac1-4915-a769-e5e60edb3fe4"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m2_act_conn{name=~\"$hostname\",lbaas_listener_id=~\"$listener\"}",
+                        "legend": "实例名：{{name}}，监听器ID：{{lbaas_listener_id}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "活跃连接数（负载均衡监听器）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "0eeeb8a1-8e25-4292-a992-55b05012a0a2",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 126,
+                    "i": "0eeeb8a1-8e25-4292-a992-55b05012a0a2"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m3_inact_conn{name=~\"$hostname\",lbaas_listener_id=~\"$listener\"}",
+                        "legend": "实例名：{{name}}，监听器ID：{{lbaas_listener_id}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "非活跃连接数（负载均衡监听器）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "1e517226-a13a-4637-938a-767b5c79b192",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 134,
+                    "i": "1e517226-a13a-4637-938a-767b5c79b192"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m1_cps{name=~\"$hostname\", lbaas_listener_id=~\"$listener\"}",
+                        "legend": "实例名：{{name}}，监听器ID：{{lbaas_listener_id}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "并发连接数（负载均衡监听器）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "32282ab1-f344-4862-923a-8a3550155788",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 134,
+                    "i": "32282ab1-f344-4862-923a-8a3550155788"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m4_ncps{name=~\"$hostname\",lbaas_listener_id=~\"$listener\"}",
+                        "legend": "实例名：{{name}}，监听器名称：{{lbaas_listener_id}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "新建连接数（负载均衡监听器）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "51f5312b-4e66-4630-963b-84146238b208",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 142,
+                    "i": "51f5312b-4e66-4630-963b-84146238b208"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m7_in_Bps{name=~\"$hostname\",lbaas_listener_id=~\"$listener\"}",
+                        "legend": "实例名：{{name}}，监听器ID：{{lbaas_listener_id}}（网络流入速率）",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "0 - huaweicloud_sys_elb_m8_out_Bps{name=~\"$hostname\",lbaas_listener_id=~\"$listener\", available_zone=~\"$available_zone\"}",
+                        "legend": "实例名：{{name}}，监听器ID：{{lbaas_listener_id}}（网络流出速率），可用区: {{available_zone}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "网络流入/流出速率（负载均衡监听器）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "0e5697c6-2559-4f88-b941-790047278436",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 142,
+                    "i": "0e5697c6-2559-4f88-b941-790047278436"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m15_l7_upstream_4xx{name=~\"$hostname\",lbaas_listener_id=~\"$listener\"}",
+                        "legend": "实例名：{{name}}，监听器ID：{{lbaas_listener_id}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "后端返回码4xx（负载均衡监听器）",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "f47aa0d2-8472-4640-baa6-2ccb8ffb460c",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 150,
+                    "i": "f47aa0d2-8472-4640-baa6-2ccb8ffb460c"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m16_l7_upstream_5xx{name=~\"$hostname\",lbaas_listener_id=~\"$listener\"}",
+                        "legend": "实例名：{{name}}，监听器ID：{{lbaas_listener_id}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "后端返回码5xx（负载均衡监听器）",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "d32dca95-8a8b-4526-a804-4e8d2a32cf0e",
+                "type": "row",
+                "name": "ELB可用区资源明细：【$hostname】【$available_zone】",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 190,
+                    "i": "d32dca95-8a8b-4526-a804-4e8d2a32cf0e"
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "2978d10e-911f-4aee-94bf-f72efb0ca068",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 191,
+                    "i": "2978d10e-911f-4aee-94bf-f72efb0ca068"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m1_cps{name=~\"$hostname\", available_zone=~\"$available_zone\"} -0",
+                        "legend": "实例名：{{name}}，可用区名称：{{available_zone}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "并发连接数（可用区）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "a62cef7b-5a14-4374-8a1f-db0b754b0323",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 191,
+                    "i": "a62cef7b-5a14-4374-8a1f-db0b754b0323"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m2_act_conn{name=~\"$hostname\", available_zone=~\"$available_zone\"} - 0",
+                        "legend": "实例名：{{name}}，可用区名称：{{available_zone}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "活跃连接数（可用区）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "6a009112-3926-483c-92b3-bdfcd29d8250",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 199,
+                    "i": "6a009112-3926-483c-92b3-bdfcd29d8250"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m3_inact_conn{name=~\"$hostname\",available_zone=~\"$available_zone\"} - 0",
+                        "legend": "实例名：{{name}}，可用区名称：{{available_zone}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "非活跃连接数（可用区）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "216e795f-24ab-4232-8d57-e872ff2fb3b7",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 199,
+                    "i": "216e795f-24ab-4232-8d57-e872ff2fb3b7"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m4_ncps{name=~\"$hostname\", available_zone=~\"$available_zone\"} - 0",
+                        "legend": "实例名：{{name}}，可用区名称：{{available_zone}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "新建连接数（可用区）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d8578921-7af4-4fcc-a705-0b45f615af2a",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 207,
+                    "i": "d8578921-7af4-4fcc-a705-0b45f615af2a"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "huaweicloud_sys_elb_m7_in_Bps{name=~\"$hostname\", available_zone=~\"$available_zone\"}",
+                        "legend": "实例名：{{name}}，可用区名称：{{available_zone}}（网络流入速率）",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "0 - huaweicloud_sys_elb_m8_out_Bps{name=~\"$hostname\", available_zone=~\"$available_zone\"}",
+                        "legend": "实例名：{{name}}，可用区名称：{{available_zone}}（网络流出速率）",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "网络流入/流出速率（可用区）",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

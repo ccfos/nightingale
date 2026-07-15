@@ -1,0 +1,147 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788193448754,
+        "collector": "Endpoint",
+        "typ": "Kubernetes",
+        "name": "endpoint中not ready的addresses数",
+        "unit": "",
+        "note": "kube-state-metrics 的endpoint指标",
+        "lang": "zh_CN",
+        "expression": "kube_endpoint_address_not_ready",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的endpoint指标",
+                "name": "endpoint中not ready的addresses数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Not Ready Addresses in Endpoint",
+                "note": "Endpoint metric from kube-state-metrics"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788192676685,
+        "collector": "Endpoint",
+        "typ": "Kubernetes",
+        "name": "endpoint中可用的addresses数",
+        "unit": "",
+        "note": "kube-state-metrics 的endpoint指标",
+        "lang": "zh_CN",
+        "expression": "kube_endpoint_address_available",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的endpoint指标",
+                "name": "endpoint中可用的addresses数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Available Addresses in Endpoint",
+                "note": "Endpoint metric from kube-state-metrics"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788193501726,
+        "collector": "Endpoint",
+        "typ": "Kubernetes",
+        "name": "有关endpoint的信息",
+        "unit": "",
+        "note": "kube-state-metrics 的endpoint指标",
+        "lang": "zh_CN",
+        "expression": "kube_endpoint_info",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的endpoint指标",
+                "name": "有关endpoint的信息"
+            },
+            {
+                "lang": "en_US",
+                "name": "Endpoint Information",
+                "note": "Endpoint metric from kube-state-metrics"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788193417385,
+        "collector": "Endpoint",
+        "typ": "Kubernetes",
+        "name": "Kubernetes标签转换为Prometheus标签",
+        "unit": "",
+        "note": "kube-state-metrics 的endpoint指标",
+        "lang": "zh_CN",
+        "expression": "kube_endpoint_labels",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的endpoint指标",
+                "name": "Kubernetes标签转换为Prometheus标签"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubernetes Labels Converted to Prometheus Labels",
+                "note": "Endpoint metric from kube-state-metrics"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788193079684,
+        "collector": "Endpoint",
+        "typ": "Kubernetes",
+        "name": "Unix创建时间戳",
+        "unit": "",
+        "note": "kube-state-metrics 的endpoint指标",
+        "lang": "zh_CN",
+        "expression": "kube_endpoint_created",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kube-state-metrics 的endpoint指标",
+                "name": "Unix创建时间戳"
+            },
+            {
+                "lang": "en_US",
+                "name": "Creation Unix Timestamp",
+                "note": "Endpoint metric from kube-state-metrics"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

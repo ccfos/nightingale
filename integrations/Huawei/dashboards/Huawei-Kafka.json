@@ -1,0 +1,2017 @@
+{
+    "name": "华为云-分布式消息服务(Kafka)",
+    "tags": "华为云-AOM",
+    "ident": "",
+    "uuid": 1755745525507000,
+    "configs": {
+        "var": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus",
+                "defaultValue": ""
+            },
+            {
+                "name": "instanceName",
+                "label": "Kafka实例名称",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_dms_current_partitions,name)"
+            },
+            {
+                "name": "kafka_instance_id",
+                "label": "kafka_instance_id",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_dms_current_partitions{name=\"$instanceName\"}, kafka_instance_id)"
+            },
+            {
+                "name": "kafka_broker",
+                "label": "broker节点",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_dms_broker_data_size{kafka_instance_id=\"$kafka_instance_id\"}, kafka_broker)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*"
+            },
+            {
+                "name": "kafka_groups",
+                "label": "消费组",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_dms_messages_consumed{kafka_instance_id=\"$kafka_instance_id\"}, kafka_groups)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*"
+            },
+            {
+                "name": "kafka_topics",
+                "label": "topic",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_dms_topic_bytes_in_rate{kafka_instance_id=\"$kafka_instance_id\"}, kafka_topics)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*"
+            }
+        ],
+        "panels": [
+            {
+                "type": "row",
+                "id": "39f9b1cd-f32d-48cc-98a2-3f6e4365be38",
+                "name": "实例资源总览",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "39f9b1cd-f32d-48cc-98a2-3f6e4365be38",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "stat",
+                "id": "12536497-7024-480c-ac33-fea53411b91f",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 0,
+                    "y": 1,
+                    "i": "296e7bd0-6b97-40ff-821b-4fa774b6e99c",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_current_partitions{kafka_instance_id=~\".+\", kafka_instance_id=~\"$kafka_instance_id\"}",
+                        "legend": "分区数",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "name": "Kafka实例名称"
+                            }
+                        }
+                    }
+                ],
+                "name": "分区数",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "6db88df4-d8fc-4a4f-88ba-f38104ca6e3d",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 8,
+                    "y": 1,
+                    "i": "9ba3de08-8416-4be9-9618-2a9730226f38",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_current_topics{kafka_instance_id=~\"$kafka_instance_id\"}",
+                        "legend": "主题数",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "name": "Kafka实例名称"
+                            }
+                        }
+                    }
+                ],
+                "name": "主题数",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "638f2e29-5528-442f-bfdd-84ed1d02c05a",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 16,
+                    "y": 1,
+                    "i": "2a7d57d7-25cf-4862-9d12-8dc3c46c7f47",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_group_msgs{kafka_instance_id=~\"$kafka_instance_id\"}",
+                        "legend": "消息堆积数",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "name": "Kafka实例名称"
+                            }
+                        }
+                    }
+                ],
+                "name": "消息堆积数",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "bdc77fcf-144a-4fd8-953c-b036063cf955",
+                "name": "Broker节点监控",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 6,
+                    "i": "bdc77fcf-144a-4fd8-953c-b036063cf955",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "93381fec-463a-4c8c-b701-764948cd6e8e",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 7,
+                    "i": "93381fec-463a-4c8c-b701-764948cd6e8e",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_broker_cpu_usage{kafka_instance_id=~\"$kafka_instance_id\", kafka_broker=~\"$kafka_broker\"}",
+                        "legend": "kafka实例名称：{{name}}，Broker名称：{{kafka_broker}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU使用率",
+                "description": "统计Kafka节点虚拟机的CPU使用率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "last",
+                            "avg"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d620d806-5d60-4222-aca2-5bf0a4198a87",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 7,
+                    "i": "d620d806-5d60-4222-aca2-5bf0a4198a87",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_broker_memory_usage{kafka_instance_id=~\"$kafka_instance_id\", kafka_broker=~\"$kafka_broker\"}",
+                        "legend": "Kafka实例名称：{{name}}，Broker名称：{{kafka_broker}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内存使用率",
+                "description": "该指标为Kafka节点虚拟机层面采集的内存使用率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "de47fd6e-4b31-48bf-8817-9b6dfc4b29f3",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 13,
+                    "i": "6521c33b-5112-40d8-b8f1-c602fd7ad92d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_broker_disk_usage{kafka_instance_id=~\"$kafka_instance_id\", kafka_broker=~\"$kafka_broker\"}",
+                        "legend": "Kafka实例名称：{{name}}，Broker名称：{{kafka_broker}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "磁盘使用率",
+                "description": "该指标为从Kafka节点虚拟机层面采集的磁盘容量使用率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3195eec6-cd9b-4d69-b8e7-97b055689fca",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 13,
+                    "i": "14d285ff-ccf4-48ca-959a-617ff26575df",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_broker_connections{kafka_instance_id=~\"$kafka_instance_id\", kafka_broker=~\"$kafka_broker\"}",
+                        "legend": "Kafka实例名称：{{name}}，Broker名称：{{kafka_broker}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "broker连接数",
+                "description": "统计Kafka节点当前所有TCP连接数量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "个"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "81b4c2ec-d963-4544-823d-06482d305f88",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 19,
+                    "i": "aa158900-0ce5-4894-b2f2-48017f96f9cf",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_broker_bytes_in_rate{kafka_instance_id=~\"$kafka_instance_id\", kafka_broker=~\"$kafka_broker\"}",
+                        "legend": "Kafka实例名称：{{name}}，Broker名称：{{kafka_broker}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "生产流量",
+                "description": "该指标用于统计每秒生产的字节数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSecIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "028db56e-3db9-45f3-ad4f-3f42566c3688",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 19,
+                    "i": "cc6571c4-c4db-4e2c-9c39-6b5e9a0708c3",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_broker_bytes_out_rate{kafka_instance_id=~\"$kafka_instance_id\", kafka_broker=~\"$kafka_broker\"}",
+                        "legend": "Kafka实例名称：{{name}}，Broker名称：{{kafka_broker}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "消费流量",
+                "description": "该指标用于统计每秒消费的字节数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSecIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "547f43b8-cdde-4114-adfd-2031cbd95eeb",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 25,
+                    "i": "3b2c1a8c-ccc3-421f-9124-08cabdaf161a",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_broker_produce_mean{kafka_instance_id=~\"$kafka_instance_id\", kafka_broker=~\"$kafka_broker\"}",
+                        "legend": "Kafka实例名称：{{name}}，Broker名称：{{kafka_broker}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "生产请求平均处理时长",
+                "description": "统计Broker节点处理生产请求平均时长",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "a633b60d-48a4-4cce-995f-f7a89bdb4ad2",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 25,
+                    "i": "527b4c2b-fda9-4c7c-9bbd-e604f9cfeff4",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_broker_fetch_mean{kafka_instance_id=~\"$kafka_instance_id\", kafka_broker=~\"$kafka_broker\"}",
+                        "legend": "Kafka实例名称：{{name}}，Broker名称：{{kafka_broker}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "消费请求平均处理时长",
+                "description": "统计Broker节点处理消费请求平均时长",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "7b4d0056-ecc1-4986-8723-50548351c68e",
+                "layout": {
+                    "h": 5,
+                    "w": 24,
+                    "x": 0,
+                    "y": 31,
+                    "i": "ac464e4a-b21c-4fad-a927-b87838cf0d53",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_broker_heap_usage{kafka_instance_id=~\"$kafka_instance_id\", kafka_broker=~\"$kafka_broker\"}",
+                        "legend": "Kafka实例名称：{{name}}，Broker名称：{{kafka_broker}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Kafka进程JVM堆内存使用率",
+                "description": "该指标从Kafka节点Kafka进程JVM中采集的堆内存使用率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "51dd3e0d-8286-453c-8464-5d9fefe8d244",
+                "name": "Topic监控",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 36,
+                    "i": "51dd3e0d-8286-453c-8464-5d9fefe8d244",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "00483cd0-09f3-4c44-84bf-ae9fbecbeb91",
+                "layout": {
+                    "h": 6,
+                    "w": 24,
+                    "x": 0,
+                    "y": 37,
+                    "i": "eef24b6d-17cb-410b-8fed-8baa939eed8f",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_topic_bytes_in_rate{kafka_instance_id=~\"$kafka_instance_id\", kafka_topics=~\"$kafka_topics\"} - 0",
+                        "legend": "实例名称：{{name}}，Topic名称：{{kafka_topics}}-生产流量"
+                    },
+                    {
+                        "expr": "0-huaweicloud_sys_dms_topic_bytes_out_rate{kafka_instance_id=~\"$kafka_instance_id\", kafka_topics=~\"$kafka_topics\"}",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "maxDataPoints": 240,
+                        "legend": "实例名称：{{name}}，Topic名称：{{kafka_topics}}-消费流量"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "消息生产/消费流量",
+                "description": "该指标用于统计每秒生产/消费的字节数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSecIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "57d98a91-a2f0-4edd-af79-b31ca34d70e9",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 43,
+                    "i": "57d98a91-a2f0-4edd-af79-b31ca34d70e9",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_topic_data_size{kafka_instance_id=~\"$kafka_instance_id\",  kafka_topics=~\"$kafka_topics\"}",
+                        "legend": "实例名称：{{name}}，Topic名称：{{kafka_topics}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "队列数据容量",
+                "description": "该指标用于统计队列当前的消息数据大小",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "146dbc5c-be06-4044-9b15-af3258da47e6",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 43,
+                    "i": "44ee0a8e-533f-4308-b085-3e6cd3a46440",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_topic_messages{kafka_instance_id=~\"$kafka_instance_id\",  kafka_topics=~\"$kafka_topics\"}",
+                        "legend": "实例名称：{{name}}，Topic名称：{{kafka_topics}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "队列消息总数",
+                "description": "该指标用于统计队列当前的消息总数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "个",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "eff17353-d0d7-47f9-8acc-85eb6ff6bba5",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 50,
+                    "i": "a3bf80a4-7928-4f57-98ee-622e5fa2f2bf",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "count(huaweicloud_sys_dms_partition_messages{kafka_instance_id=~\"$kafka_instance_id\",kafka_topics=~\"$kafka_topics\"}) by (instanceName, kafka_topics)",
+                        "legend": "",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "value": "关联队列数量"
+                            }
+                        }
+                    }
+                ],
+                "name": "队列数据容量",
+                "description": "该指标用于统计队列当前的消息数据大小",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "columns": [
+                        "kafka_topics",
+                        "value"
+                    ],
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn"
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "valueMappings": [
+                                {
+                                    "type": "special",
+                                    "result": {
+                                        "color": "#000000"
+                                    },
+                                    "match": {}
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "f6af97d8-f10c-4daf-90da-9898a0460b61",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 50,
+                    "i": "f6af97d8-f10c-4daf-90da-9898a0460b61",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_topic_messages{kafka_instance_id=~\"$kafka_instance_id\", kafka_topics=~\"$kafka_topics\"}",
+                        "legend": "实例名称：{{instanceName}}，Topic名称：{{kafka_topics}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "队列消息总数",
+                "description": "该指标用于统计队列当前的消息总数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "个"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "table",
+                "id": "b77e3f20-a9e7-4458-ac68-bc866997ce2d",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 56,
+                    "i": "b77e3f20-a9e7-4458-ac68-bc866997ce2d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "count(huaweicloud_sys_dms_partition_messages{kafka_instance_id=~\"$kafka_instance_id\", kafka_topics=~\"$kafka_topics\"}) by (instanceName, kafka_topics)"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "value": "关联队列数量"
+                            }
+                        }
+                    }
+                ],
+                "name": "队列关联分区数",
+                "description": "用于标识各个topic下的分区数量",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn",
+                    "columns": [
+                        "kafka_topics",
+                        "value"
+                    ]
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d7b33098-6c5a-49b4-a698-8161486b295f",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 56,
+                    "i": "d7b33098-6c5a-49b4-a698-8161486b295f",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_partition_messages{kafka_instance_id=~\"$kafka_instance_id\", kafka_topics=~\"$kafka_topics\"} > 10000"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "分区消息数（只显示消息数大于10000的分区）",
+                "description": "该指标用于统计队列当前的消息总数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "cd03d6c1-10e2-4ea0-9863-57dd267fd742",
+                "name": "消费组监控",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 62,
+                    "i": "cd03d6c1-10e2-4ea0-9863-57dd267fd742",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "5d171f9e-4bf9-4a7e-9232-a6d8a07ecfcd",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 63,
+                    "i": "5d171f9e-4bf9-4a7e-9232-a6d8a07ecfcd",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_consumer_messages_remained{kafka_instance_id=~\"$kafka_instance_id\", kafka_groups=~\"$kafka_groups\"}",
+                        "legend": "实例名称：{{name}}，消费组名称：{{kafka_groups}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "消息堆积数（消费组可消费消息数）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "个"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "032e184b-1993-4593-beef-bea14108177a",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 63,
+                    "i": "00ece582-163f-48ca-9f92-1ccac55482f7",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_consumer_messages_consumed{kafka_instance_id=~\"$kafka_instance_id\", kafka_groups=~\"$kafka_groups\"}",
+                        "legend": "实例名称：{{name}}，消费组名称：{{kafka_groups}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "消费组已消费消息数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "个"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "9cd6d702-70b4-451a-841c-aa4e542e14a7",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 70,
+                    "i": "2e8e48ba-4684-4289-82ca-3bb4a748eb69",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dms_consumer_messages_consumed_per_min{kafka_instance_id=~\"$kafka_instance_id\", kafka_groups=~\"$kafka_groups\"}",
+                        "legend": "实例名称：{{name}}，消费组名称：{{kafka_groups}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "消费组消费速率",
+                "description": "统计消费组每分钟的消费数。",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "avg",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "个/分钟"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            }
+        ],
+        "version": "3.1.0"
+    }
+}

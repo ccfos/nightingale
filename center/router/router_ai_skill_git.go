@@ -25,6 +25,10 @@ type aiSkillGitRequest struct {
 	GitToken    *string `json:"git_token"`
 	GitSubdir   *string `json:"git_subdir"`
 	Enabled     *bool   `json:"enabled"`
+	// 授权范围与团队（远程安装/更新/修改配置时提交）。private 用指针以区分「未提交」
+	// 与「显式提交 0（公共）」——编辑既有 skill 时未提交则沿用其原值。
+	Private      *int    `json:"private"`
+	UserGroupIds []int64 `json:"user_group_ids"`
 }
 
 type aiSkillGitFields struct {
@@ -45,6 +49,9 @@ func (rt *Router) aiSkillGitInstall(c *gin.Context) {
 	cfg, fields, err := rt.gitConfigForInstall(req)
 	ginx.Dangerous(err)
 
+	// 远程安装即新建 skill：授权团队必填、必须提交 private、非管理员只能授权自己所属团队。
+	auth := rt.resolveSkillAuth(c, req.Private, req.UserGroupIds, nil, req.UserGroupIds)
+
 	started := time.Now()
 	logger.Infof("[AISkillGit] install start operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q auth_type=%s",
 		me.Username, "", skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, cfg.AuthType)
@@ -56,13 +63,15 @@ func (rt *Router) aiSkillGitInstall(c *gin.Context) {
 	}
 	fields.Commit = result.Commit
 
-	id, err := rt.doSkillImport(result.Meta, result.Instructions, result.Files, me.Username, aiSkillGitInfoFromFields(fields))
+	id, err := rt.doSkillImport(result.Meta, result.Instructions, result.Files, me.Username, aiSkillGitInfoFromFields(fields), &auth)
 	if err != nil {
 		logger.Warningf("[AISkillGit] install failed phase=import operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
 			me.Username, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
 		ginx.Dangerous(err)
 	}
-	rt.aiSkillRemoteCommitCache.SetKnownCommit(result.Meta.Name, cfg, result.Commit)
+	if me.Username == SYSTEM {
+		rt.aiSkillRemoteCommitCache.SetKnownCommit(result.Meta.Name, cfg, result.Commit)
+	}
 	logger.Infof("[AISkillGit] install success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
 		me.Username, id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)
@@ -85,6 +94,9 @@ func (rt *Router) aiSkillGitInstallPut(c *gin.Context) {
 	if current.CreatedBy == "system" {
 		ginx.Bomb(http.StatusBadRequest, "builtin git skill fields cannot be updated")
 	}
+	// 改 git 配置属修改 skill：授权团队/归属校验，防非授权成员篡改私有 skill。
+	rt.ensureAISkillEditable(c, current)
+	auth := rt.resolveSkillAuth(c, req.Private, req.UserGroupIds, current, addedGroups(current.UserGroupIds, req.UserGroupIds))
 
 	_, fields, err := rt.gitConfigForUpdate(current, req, false)
 	ginx.Dangerous(err)
@@ -93,12 +105,15 @@ func (rt *Router) aiSkillGitInstallPut(c *gin.Context) {
 	started := time.Now()
 	logger.Infof("[AISkillGit] install_config_update start operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q auth_type=%s",
 		me.Username, current.Name, skill.RedactedGitURL(fields.URL), fields.RefType, fields.Ref, fields.Subdir, fields.AuthType)
+	// git 配置与授权范围一次 Updates 原子提交，避免两次独立写入产生部分更新。
 	ref := models.AISkill{
-		SourceType: models.AISkillSourceGit,
-		GitInfo:    aiSkillGitInfoFromFields(fields),
-		UpdatedBy:  me.Username,
+		SourceType:   models.AISkillSourceGit,
+		GitInfo:      aiSkillGitInfoFromFields(fields),
+		Private:      auth.Private,
+		UserGroupIds: auth.UserGroupIds,
+		UpdatedBy:    me.Username,
 	}
-	if err := current.UpdateGitFields(rt.Ctx, ref); err != nil {
+	if err := current.UpdateGitAndAuth(rt.Ctx, ref); err != nil {
 		logger.Warningf("[AISkillGit] install_config_update failed phase=update_fields operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
 			me.Username, current.Name, skill.RedactedGitURL(fields.URL), fields.RefType, fields.Ref, fields.Subdir, time.Since(started).Milliseconds(), err)
 		ginx.Dangerous(err)
@@ -118,11 +133,23 @@ func (rt *Router) aiSkillGitUpdate(c *gin.Context) {
 	if current.SourceType != models.AISkillSourceGit {
 		ginx.Bomb(http.StatusBadRequest, "only git source skills can be updated from git")
 	}
+	// 内置(system) git skill 的更新沿用既有行为不变；用户 git skill 从 git 拉取
+	// 更新会覆盖内容，属修改 skill，需授权团队/归属校验。
+	if current.CreatedBy != "system" {
+		rt.ensureAISkillEditable(c, current)
+	}
 
 	var req aiSkillGitRequest
 	ginx.BindJSON(c, &req)
 
 	builtin := current.CreatedBy == "system"
+	// 用户 git skill 从 git 拉取更新会覆盖内容：一并管理授权范围与团队（内置 skill
+	// 沿用既有行为不带授权）。
+	var auth *skillAuthScope
+	if !builtin {
+		a := rt.resolveSkillAuth(c, req.Private, req.UserGroupIds, current, addedGroups(current.UserGroupIds, req.UserGroupIds))
+		auth = &a
+	}
 	cfg, fields, err := rt.gitConfigForUpdate(current, req, builtin)
 	ginx.Dangerous(err)
 
@@ -138,12 +165,14 @@ func (rt *Router) aiSkillGitUpdate(c *gin.Context) {
 	}
 	fields.Commit = result.Commit
 
-	if err := rt.doSkillImportUpdate(current, result.Meta, result.Instructions, result.Files, me.Username, aiSkillGitInfoFromFields(fields)); err != nil {
+	if err := rt.doSkillImportUpdate(current, result.Meta, result.Instructions, result.Files, me.Username, aiSkillGitInfoFromFields(fields), auth); err != nil {
 		logger.Warningf("[AISkillGit] update failed phase=import operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
 			me.Username, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
 		ginx.Dangerous(err)
 	}
-	rt.aiSkillRemoteCommitCache.SetKnownCommit(result.Meta.Name, cfg, result.Commit)
+	if builtin {
+		rt.aiSkillRemoteCommitCache.SetKnownCommit(result.Meta.Name, cfg, result.Commit)
+	}
 	logger.Infof("[AISkillGit] update success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
 		me.Username, id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)
@@ -202,17 +231,19 @@ func (rt *Router) aiSkillAddGitByService(c *gin.Context, obj models.AISkill) {
 
 	var id int64
 	if current != nil {
-		err = rt.doSkillImportUpdate(current, result.Meta, result.Instructions, result.Files, "system", aiSkillGitInfoFromFields(fields))
+		err = rt.doSkillImportUpdate(current, result.Meta, result.Instructions, result.Files, "system", aiSkillGitInfoFromFields(fields), nil)
 		id = current.Id
 	} else {
-		id, err = rt.doSkillImport(result.Meta, result.Instructions, result.Files, "system", aiSkillGitInfoFromFields(fields))
+		id, err = rt.doSkillImport(result.Meta, result.Instructions, result.Files, "system", aiSkillGitInfoFromFields(fields), nil)
 	}
 	if err != nil {
 		logger.Warningf("[AISkillGit] service_upsert failed phase=import operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
 			"system", result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
 		ginx.Dangerous(err)
 	}
-	rt.aiSkillRemoteCommitCache.SetKnownCommit(result.Meta.Name, cfg, result.Commit)
+	if current == nil || current.CreatedBy == SYSTEM {
+		rt.aiSkillRemoteCommitCache.SetKnownCommit(result.Meta.Name, cfg, result.Commit)
+	}
 	logger.Infof("[AISkillGit] service_upsert success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
 		"system", id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)

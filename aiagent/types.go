@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
+	"github.com/ccfos/nightingale/v6/pkg/sandbox"
 	"github.com/ccfos/nightingale/v6/storage"
 )
 
@@ -131,11 +132,11 @@ type AgentRequest struct {
 
 // AgentResponse Agent 执行结果
 type AgentResponse struct {
-	Content    string      `json:"content"`         // 最终结果文本
+	Content    string     `json:"content"`         // 最终结果文本
 	Steps      []ToolStep `json:"steps"`           // 执行轨迹
-	Iterations int         `json:"iterations"`      // 迭代次数
-	Success    bool        `json:"success"`         // 是否成功
-	Error      string      `json:"error,omitempty"` // 错误信息
+	Iterations int        `json:"iterations"`      // 迭代次数
+	Success    bool       `json:"success"`         // 是否成功
+	Error      string     `json:"error,omitempty"` // 错误信息
 
 	// contentStreamed（仅包内）：流式模式下正文已逐 token 经 StreamTypeContent
 	// 下发。executeNativeWithDone 据此给 Done chunk 打标，路由层只把 Done.Content
@@ -215,6 +216,42 @@ type ToolDeps struct {
 	// Redis 用于读取主机心跳 (n9e_meta_update_time_*) 和 HostMeta (n9e_meta_*)。
 	// host-health-diagnose skill 的实时态判断（BeatTime / Offset / CpuUtil / MemUtil）从这里来。
 	Redis storage.Redis
+
+	// Sandbox 是 Skill Python/Bash 脚本执行的隔离控制器（pkg/sandbox）。run_skill_script
+	// 工具据此执行某 skill 的入口脚本。nil 或未启用时，工具回报「执行未开启」而非报错。
+	Sandbox *sandbox.Sandbox
+
+	// N9eAPIBaseURL 是 Skill Gateway 回环自调 n9e 自身 API 的基址（如
+	// "http://127.0.0.1:17000"）。空则 Gateway 不启用。
+	N9eAPIBaseURL string
+	// CacheUserToken 把新建的 user token 即时注入 token 缓存（包装
+	// memsto.UserTokenCache.Inject），让 Gateway 刚建的 token 当场可认证。
+	CacheUserToken func(token string, user *models.User)
+
+	// HiddenSkillNames 本次对话请求用户无权访问的私有 skill 名集合（按用户动态
+	// 计算）。load_skill / run_skill_script / get_skill 等按名取用 skill 内容或行为
+	// 的工具据此拒绝越权访问——把可见性做成真正的访问控制，而非仅目录层隐藏。
+	HiddenSkillNames map[string]struct{}
+	// DenyAllSkills 为 fail-closed 兜底：当无法算出隐藏名单（如列举私有 skill 的
+	// DB 查询失败）时置真，此时一律按「隐藏」处理，拒绝所有按名加载/执行，避免把
+	// 「无法确定」误当成「无隐藏」而泄露私有 skill。
+	DenyAllSkills bool
+}
+
+// IsSkillHidden 报告名为 name 的 skill 是否对本次请求用户不可见（私有且未授权，
+// 或处于 fail-closed 的 deny-all 状态）。
+func (d *ToolDeps) IsSkillHidden(name string) bool {
+	if d == nil {
+		return false
+	}
+	if d.DenyAllSkills {
+		return true
+	}
+	if len(d.HiddenSkillNames) == 0 {
+		return false
+	}
+	_, hidden := d.HiddenSkillNames[name]
+	return hidden
 }
 
 // BuiltinToolFunc 内置工具处理函数（不依赖 WorkflowContext）

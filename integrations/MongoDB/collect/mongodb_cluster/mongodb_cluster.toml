@@ -1,0 +1,54 @@
+[[instances]]
+# 日志级别，枚举值：panic, fatal, error, warn, warning, info, debug, trace，默认为 info。
+log_level = "info"
+
+# 为指标附加一些常量标签
+# 注意！instance 标签是仪表板所必需的
+labels = { instance="mongo-cluster-02" }
+
+# MongoDB 的数据源名称（DSN），请参考 https://www.mongodb.com/docs/manual/reference/connection-string/
+mongodb_uri = "mongodb://127.0.0.1:27017"
+#mongodb_uri = ""
+# 如果你没有在 mongodb_uri 中指定用户名或密码，可以在这里设置。
+# 这将覆盖 dsn，当用户名或密码中存在特殊字符时，设置这里会很有用，避免手动编码它们。
+# 注意！该用户必须被授予足够的权限来查询所需的统计数据，详见 ../inputs/mongodb/README.md
+#username = "root"
+#password = "123456"
+# 如果设置为 true，将使用直接连接方式。
+# 如果希望采集集群每个实例的 mongodb_rs_myState 指标，需要开启 direct_connect
+direct_connect = true
+
+# 如果设置为 true，则采集所有指标。 如果设置此项，下面所有的 enable_xxx 标志将会被忽略。
+collect_all = true
+
+# 如果设置为 true，采集数据库的统计数据
+#enable_db_stats = true
+
+# 如果设置为 true，采集 MongoDB 的诊断数据
+enable_diagnostic_data = true
+
+# 如果设置为 true，采集副本集状态的相关指标
+#enable_replicaset_status = true
+
+# 如果设置为 true，采集通过 admin 命令获得的 top 相关指标
+#enable_top_metrics = true
+
+# 如果设置为 true，采集与索引相关的指标。需要指定集合的命名空间和发现模式。你需要指定其中一个 coll_stats_namespaces 和 discovering_mode 标志。
+#enable_index_stats = true
+
+# 如果设置为 true，采集集合相关的指标。你需要指定其中一个 coll_stats_namespaces 和 discovering_mode 标志。
+#enable_coll_stats = true
+
+# 仅获取与此列表匹配的集合统计信息。如果未设置，将启用 discovering_mode。
+# 示例：db1.col1,db.col1
+# coll_stats_namespaces = []
+
+# 仅获取与此列表匹配的集合中的索引统计信息。
+# 示例：db1.col1,db.col1
+# index_stats_collections = []
+
+# 如果设置为 true，将在降序索引的 label key_name 中用 DESC 替代 -1
+# enable_override_descending_index = true
+
+# 启用兼容模式，暴露的指标名称符合 0.1x 版本的兼容性命名规则，简化了从旧版本到当前版本的迁移。
+# compatible_mode = true

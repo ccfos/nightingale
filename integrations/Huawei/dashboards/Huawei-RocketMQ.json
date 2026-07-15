@@ -1,0 +1,1288 @@
+{
+  "name": "Huawei-RocketMQ监控",
+  "tags": "",
+  "ident": "",
+  "uuid": 1750323686261000,
+  "configs": {
+    "version": "3.0.0",
+    "links": [],
+    "var": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "数据源",
+        "type": "datasource",
+        "hide": false,
+        "definition": "prometheus"
+      },
+      {
+        "name": "name",
+        "label": "Name",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(huaweicloud_sys_dms_broker_alive{}, name)",
+        "multi": false
+      },
+      {
+        "name": "broker",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(huaweicloud_sys_dms_broker_alive{name=\"$name\"}, reliablemq_broker)",
+        "multi": true,
+        "allOption": true
+      }
+    ],
+    "panels": [
+      {
+        "type": "row",
+        "id": "609f5f54-22b1-40f4-b944-7c336360dc02",
+        "name": "实例信息",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "609f5f54-22b1-40f4-b944-7c336360dc02",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "stat",
+        "id": "b1c41d56-2d6d-4a68-81da-63ace2d76de7",
+        "layout": {
+          "h": 4,
+          "w": 5,
+          "x": 0,
+          "y": 1,
+          "i": "c0192bb3-3f0d-4d98-a33b-eeaf62f558a0",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_current_topics{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{name}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "$name Topic数量",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "valueAndName",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "e5afa30f-78c3-4620-88c3-e8616aecf8b0",
+        "layout": {
+          "h": 4,
+          "w": 5,
+          "x": 5,
+          "y": 1,
+          "i": "75e60584-9b7f-454b-a189-3c682c7e54d1",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_current_queues{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{name}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "$name 队列数量",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "valueAndName",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "1acf9e73-7b0f-45b0-9b7d-820510a28bae",
+        "layout": {
+          "h": 4,
+          "w": 5,
+          "x": 10,
+          "y": 1,
+          "i": "188c256c-3b09-4274-be6f-62a20bf9ad95",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_instance_accumulation{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{name}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "$name 消息堆积数",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "valueAndName",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "ae878b9e-798b-4120-9213-e241fb231684",
+        "layout": {
+          "h": 4,
+          "w": 9,
+          "x": 15,
+          "y": 1,
+          "i": "f494311e-883d-4eeb-a352-f1e7514ad573",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_instance_produce_rate{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "实例生产速率: {{name}}"
+          },
+          {
+            "expr": "huaweicloud_sys_dms_instance_consume_rate{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "B",
+            "maxDataPoints": 240,
+            "legend": "实例消费速率: {{name}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "$name 生产/消费速率",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": true,
+          "lineWidth": 2,
+          "fillOpacity": 0.03,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "1475be5a-15ea-4665-a989-458cd6f94c9b",
+        "name": "broker",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 5,
+          "i": "1475be5a-15ea-4665-a989-458cd6f94c9b",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "table",
+        "id": "079684b1-5b3f-48d3-affd-cc41b84cbe67",
+        "layout": {
+          "h": 5,
+          "w": 24,
+          "x": 0,
+          "y": 6,
+          "i": "079684b1-5b3f-48d3-affd-cc41b84cbe67",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_broker_alive{name=\"$name\"}",
+            "legend": ""
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "renameByName": {
+                "value": "up/down"
+              }
+            }
+          }
+        ],
+        "name": "brokerInfo",
+        "maxPerRow": 4,
+        "custom": {
+          "showHeader": true,
+          "colorMode": "background",
+          "nowrap": true,
+          "tableLayout": "auto",
+          "calc": "lastNotNull",
+          "displayMode": "labelsOfSeriesToRows",
+          "columns": [
+            "name",
+            "project_id",
+            "reliablemq_broker",
+            "reliablemq_instance_id",
+            "namespace",
+            "value"
+          ],
+          "pageLimit": 500,
+          "linkMode": "appendLinkColumn"
+        },
+        "options": {
+          "valueMappings": [
+            {
+              "type": "special",
+              "result": {
+                "color": "rgba(63, 196, 83, 1)",
+                "text": "UP"
+              },
+              "match": {
+                "special": 1
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "rgba(255, 101, 107, 1)",
+                "text": "DOWN"
+              },
+              "match": {
+                "special": 0
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "id": "d9788ec2-2a30-45ed-82cb-740c3a0094d7",
+        "layout": {
+          "h": 5,
+          "w": 24,
+          "x": 0,
+          "y": 11,
+          "i": "30bd1a43-67a0-4a38-8e5b-2bacadaefafc",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_broker_cpu_usage{name=\"$name\",reliablemq_broker=~\"$broker\"}",
+            "legend": "CPU Usage"
+          },
+          {
+            "expr": "huaweicloud_sys_dms_broker_memory_usage{name=\"$name\",reliablemq_broker=~\"$broker\"}",
+            "__mode__": "__query__",
+            "refId": "B",
+            "maxDataPoints": 240,
+            "legend": "Memory Usage"
+          },
+          {
+            "expr": "huaweicloud_sys_dms_broker_disk_usage{name=\"$name\",reliablemq_broker=~\"$broker\"}",
+            "__mode__": "__query__",
+            "refId": "C",
+            "maxDataPoints": 240,
+            "legend": "Disk Usage"
+          },
+          {
+            "expr": "huaweicloud_sys_dms_broker_disk_read_rate{name=\"$name\",reliablemq_broker=~\"$broker\"}",
+            "__mode__": "__query__",
+            "refId": "D",
+            "maxDataPoints": 240,
+            "legend": "Read_Rate"
+          },
+          {
+            "expr": "huaweicloud_sys_dms_broker_disk_write_rate{name=\"$name\",reliablemq_broker=~\"$broker\"}",
+            "__mode__": "__query__",
+            "refId": "E",
+            "maxDataPoints": 240,
+            "legend": "Write_Rate"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "renameByName": {
+                "value": "up/down",
+                "reliablemq_broker": "Broker"
+              }
+            }
+          }
+        ],
+        "name": "brokerStats",
+        "maxPerRow": 4,
+        "custom": {
+          "showHeader": true,
+          "colorMode": "background",
+          "nowrap": true,
+          "tableLayout": "auto",
+          "calc": "lastNotNull",
+          "displayMode": "labelValuesToRows",
+          "aggrDimension": [
+            "reliablemq_broker"
+          ],
+          "pageLimit": 500,
+          "linkMode": "appendLinkColumn"
+        },
+        "options": {
+          "valueMappings": [],
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "A"
+            },
+            "properties": {
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              },
+              "valueMappings": [
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "rgba(63, 196, 83, 1)"
+                  },
+                  "match": {
+                    "to": 80
+                  }
+                }
+              ],
+              "standardOptions": {
+                "util": "percent"
+              }
+            }
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "B"
+            },
+            "properties": {
+              "standardOptions": {
+                "util": "percent",
+                "decimals": 2
+              },
+              "valueMappings": [
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "rgba(63, 196, 83, 1)"
+                  },
+                  "match": {
+                    "to": 80
+                  }
+                },
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "rgba(255, 174, 57, 1)"
+                  },
+                  "match": {
+                    "from": 80,
+                    "to": 95
+                  }
+                },
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "rgba(255, 101, 107, 1)"
+                  },
+                  "match": {
+                    "from": 95,
+                    "to": 99
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "C"
+            },
+            "properties": {
+              "standardOptions": {
+                "util": "percent"
+              },
+              "valueMappings": [
+                {
+                  "type": "range",
+                  "result": {
+                    "color": "rgba(63, 196, 83, 1)"
+                  },
+                  "match": {
+                    "to": 80
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "D"
+            },
+            "properties": {
+              "standardOptions": {
+                "util": "bytesSecIEC"
+              }
+            }
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "value": "E"
+            },
+            "properties": {
+              "standardOptions": {
+                "util": "bytesSecIEC"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "1a8ab71c-3a8b-4c40-a017-aee8a26e23e9",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 16,
+          "i": "1a8ab71c-3a8b-4c40-a017-aee8a26e23e9",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_broker_connections{name=\"$name\",reliablemq_broker=~\"$broker\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{reliablemq_broker}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Broker 连接数",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "027254dd-4faa-4e0a-aada-dd533656f1fb",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 16,
+          "i": "027254dd-4faa-4e0a-aada-dd533656f1fb",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_broker_produce_p99{name=\"$name\",reliablemq_broker=~\"$broker\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{reliablemq_broker}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "生产请求P99处理时长",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "d9f26527-9cf5-4fe6-b2b6-d8588ef3c065",
+        "name": "Topic",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 23,
+          "i": "d9f26527-9cf5-4fe6-b2b6-d8588ef3c065",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "6456e11d-20e5-4dd7-aa1d-d13623e5fdc1",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 24,
+          "i": "bf01e196-ab79-4af5-9594-6d2575fcffc3",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_group_accumulation{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{reliablemq_groups}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消费组消息堆积数",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "68ab300b-1b9b-4172-b8c9-1a6c66795786",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 24,
+          "i": "46943dbe-e971-4011-8210-8d48b8f02104",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_group_accumulation{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{reliablemq_groups}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消息堆积数",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "a1946d13-d377-4fe8-bab0-822fe4ec928a",
+        "layout": {
+          "h": 11,
+          "w": 12,
+          "x": 0,
+          "y": 31,
+          "i": "a1946d13-d377-4fe8-bab0-822fe4ec928a",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_topic_produce_rate{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{reliablemq_topics}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "生产速率",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "6f55731e-4ef3-4404-be1d-6feb1ad3e4fc",
+        "layout": {
+          "h": 11,
+          "w": 12,
+          "x": 12,
+          "y": 31,
+          "i": "6f55731e-4ef3-4404-be1d-6feb1ad3e4fc",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_topic_consume_rate{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "消息消费速率: {{reliablemq_topics}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消费速率",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "0c1f73bb-c58c-472f-a6de-b44318668d57",
+        "layout": {
+          "h": 9,
+          "w": 24,
+          "x": 0,
+          "y": 42,
+          "i": "0c1f73bb-c58c-472f-a6de-b44318668d57",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "huaweicloud_sys_dms_dlq_accumulation{name=\"$name\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{reliablemq_dlq_topics}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "死信主题消息量",
+        "links": [],
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6C53B1",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -51,67 +50,4 @@ func (c *Client) connectStdio(ctx context.Context) error {
 
 	logger.Infof("MCP stdio server started: %s", c.config.Name)
 	return nil
-}
-
-// callToolStdio 通过 stdio 调用工具（使用官方 SDK）
-func (c *Client) callToolStdio(ctx context.Context, name string, arguments map[string]interface{}) (*ToolsCallResult, error) {
-	if c.session == nil {
-		return nil, fmt.Errorf("MCP session not initialized")
-	}
-
-	// 调用工具
-	result, err := c.session.CallTool(ctx, &sdkmcp.CallToolParams{
-		Name:      name,
-		Arguments: arguments,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("tool call failed: %v", err)
-	}
-
-	// 转换结果
-	mcpResult := &ToolsCallResult{
-		IsError: result.IsError,
-	}
-
-	for _, content := range result.Content {
-		mc := Content{}
-
-		// 根据具体类型提取内容
-		switch c := content.(type) {
-		case *sdkmcp.TextContent:
-			mc.Type = "text"
-			mc.Text = c.Text
-		case *sdkmcp.ImageContent:
-			mc.Type = "image"
-			mc.Data = string(c.Data)
-			mc.MimeType = c.MIMEType
-		case *sdkmcp.AudioContent:
-			mc.Type = "audio"
-			mc.Data = string(c.Data)
-			mc.MimeType = c.MIMEType
-		case *sdkmcp.EmbeddedResource:
-			mc.Type = "resource"
-			if c.Resource != nil {
-				if c.Resource.Text != "" {
-					mc.Text = c.Resource.Text
-				} else if c.Resource.Blob != nil {
-					mc.Data = string(c.Resource.Blob)
-				}
-				mc.MimeType = c.Resource.MIMEType
-			}
-		case *sdkmcp.ResourceLink:
-			mc.Type = "resource_link"
-			mc.Text = c.URI
-		default:
-			// 尝试通过 JSON 序列化获取内容
-			if data, err := json.Marshal(content); err == nil {
-				mc.Type = "unknown"
-				mc.Text = string(data)
-			}
-		}
-
-		mcpResult.Content = append(mcpResult.Content, mc)
-	}
-
-	return mcpResult, nil
 }

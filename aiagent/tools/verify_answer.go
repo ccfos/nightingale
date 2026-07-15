@@ -23,7 +23,7 @@ import (
 // 由 SKILL.md 规定流程: 草稿 → verify_answer → 命中就用 search_n9e_docs 重搜 → 重写。
 //
 // 取舍:
-//   - ✅ 域知识 (具体哪些字符串是错的) 完全封闭在 n9e-doc-qa skill 目录的 landmines.yaml
+//   - ✅ 域知识 (具体哪些字符串是错的) 完全封闭在 doc-qa skill 目录的 landmines.yaml
 //   - ✅ router / chat / aiagent 通用层零 n9e 字面量, 高内聚低耦合
 //   - ❌ 失去确定性 — LLM 没调本工具就直接 Final Answer 的话, 编造的字段名会直接到用户面前
 //
@@ -58,7 +58,7 @@ var (
 	loadedRule []landmineRule
 )
 
-// loadRules 从 <skillsPath>/n9e-doc-qa/landmines.yaml 加载规则。
+// loadRules 从 <skillsPath>/doc-qa/landmines.yaml 加载规则。
 // 找不到文件 / 文件空 / yaml 解析失败 → 返回空切片 + 打 warning, 不阻塞工具调用
 // (返回 "clean: true" 给 LLM, 至少不报错; 等运维补 yaml)。
 func loadRules(skillsPath string) []landmineRule {
@@ -68,7 +68,7 @@ func loadRules(skillsPath string) []landmineRule {
 			return
 		}
 		// 跟 SKILL.md 同目录的 landmines.yaml
-		path := filepath.Join(skillsPath, "n9e-doc-qa", "landmines.yaml")
+		path := filepath.Join(skillsPath, "doc-qa", "landmines.yaml")
 		data, err := os.ReadFile(path)
 		if err != nil {
 			logger.Warningf("verify_answer: read %s failed: %v", path, err)

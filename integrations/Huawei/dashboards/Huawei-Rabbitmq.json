@@ -1,0 +1,4141 @@
+{
+  "name": "华为云-Rabbitmq",
+  "tags": "华为云-AOM",
+  "ident": "",
+  "uuid": 1755745235162000,
+  "configs": {
+    "var": [
+      {
+        "name": "Dasource",
+        "type": "datasource",
+        "hide": false,
+        "definition": "prometheus",
+        "defaultValue": ""
+      },
+      {
+        "name": "name",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${Dasource}"
+        },
+        "definition": "label_values(huaweicloud_sys_dms_rabbitmq_alive, name)"
+      },
+      {
+        "name": "rabbitmq_instance_id",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${Dasource}"
+        },
+        "definition": "label_values(huaweicloud_sys_dms_rabbitmq_alive{name=\"$name\"}, rabbitmq_instance_id)"
+      },
+      {
+        "name": "rabbitmq_node",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${Dasource}"
+        },
+        "definition": "label_values(huaweicloud_sys_dms_rabbitmq_alive{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"},rabbitmq_node)"
+      }
+    ],
+    "panels": [
+      {
+        "type": "row",
+        "id": "5d119867-4cbd-4137-8c18-363e3e34425c",
+        "name": "资源指标",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "5d119867-4cbd-4137-8c18-363e3e34425c",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "stat",
+        "id": "11cd9bba-fbe5-49ea-bd88-c1eefd843cd5",
+        "layout": {
+          "h": 4,
+          "w": 3,
+          "x": 0,
+          "y": 1,
+          "i": "3ad41f27-cbc2-4fc1-afaa-b0a65d40c128",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_channels{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "通道数",
+        "description": "统计RabbitMQ实例中的总通道数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "8a016078-bc77-4b20-878e-2d448755d9bb",
+        "layout": {
+          "h": 4,
+          "w": 2,
+          "x": 3,
+          "y": 1,
+          "i": "12fc1c6e-ae19-4999-961c-c368d80db895",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_channels_states_running{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "运行状态的通道数",
+        "description": "该指标用于统计整个实例中的channel，状态是starting/tuning/opening/running状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "d84d905d-ab23-4c58-b078-cb1f708cca4f",
+        "layout": {
+          "h": 4,
+          "w": 2,
+          "x": 5,
+          "y": 1,
+          "i": "f09fdde0-f558-4dd9-b990-f4f48d0dcb91",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_channels_states_close{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "close状态的通道数",
+        "description": "该指标用于统计整个实例中的channel，状态是closing/closed状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgba(44, 157, 61, 1)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "type": "special",
+              "result": {
+                "color": "rgba(44, 157, 61, 1)"
+              },
+              "match": {
+                "special": 0
+              }
+            },
+            {
+              "type": "range",
+              "result": {
+                "color": "rgba(255, 153, 25, 1)"
+              },
+              "match": {
+                "from": 1,
+                "to": 10
+              }
+            },
+            {
+              "type": "range",
+              "result": {
+                "color": "rgba(255, 101, 107, 1)"
+              },
+              "match": {
+                "from": 11
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "17ceb780-7927-43e4-b0d3-c63308576d17",
+        "layout": {
+          "h": 4,
+          "w": 3,
+          "x": 7,
+          "y": 1,
+          "i": "41d68a55-8419-42ed-8ca6-592730af464c",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_connections{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "连接数",
+        "description": "统计RabbitMQ实例中的总连接数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "title": 500,
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "9b2d0408-b38b-46d7-9be8-9c75beafc12b",
+        "layout": {
+          "h": 4,
+          "w": 2,
+          "x": 10,
+          "y": 1,
+          "i": "82392d05-2fa8-4807-ba00-8f78ed3f2d40",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_connections_states_running{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "运行状态的连接数",
+        "description": "该指标用于统计整个实例中的connection，状态是starting/tuning/opening/running状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "9cdbb721-21a2-41dd-81cc-aba876cbf221",
+        "layout": {
+          "h": 4,
+          "w": 2,
+          "x": 12,
+          "y": 1,
+          "i": "4947452c-30cf-4255-bd80-8d4f2d955409",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_cconnections_states_close{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "close状态的连接数",
+        "description": "该指标用于统计整个实例中的connection，状态是closing/closed状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "type": "specialValue",
+              "result": {
+                "color": "rgba(44, 157, 61, 1)",
+                "text": "0"
+              },
+              "match": {
+                "specialValue": "null"
+              }
+            },
+            {
+              "type": "range",
+              "result": {
+                "color": "rgba(255, 153, 25, 1)"
+              },
+              "match": {
+                "from": 1,
+                "to": 10
+              }
+            },
+            {
+              "type": "range",
+              "result": {
+                "color": "rgba(255, 101, 107, 1)"
+              },
+              "match": {
+                "from": 11
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "e195733b-d908-441d-bdd5-8954e4b42eb1",
+        "layout": {
+          "h": 4,
+          "w": 4,
+          "x": 14,
+          "y": 1,
+          "i": "633caebe-5333-4631-bc49-d5ef3d1d38d6",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queues{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "队列数",
+        "description": "统计RabbitMQ实例中的总队列数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "0274d3cc-2ccc-464f-9d77-c5e7202309ad",
+        "layout": {
+          "h": 4,
+          "w": 4,
+          "x": 18,
+          "y": 1,
+          "i": "63199bb4-8616-49d9-933d-034d5e8bdee4",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queues_states_running{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "运行状态的队列数",
+        "description": "该指标用于统计整个实例中的queue，状态是running状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "fdce65c9-3062-4104-aa8d-862277ab3cd3",
+        "layout": {
+          "h": 4,
+          "w": 2,
+          "x": 22,
+          "y": 1,
+          "i": "c11237e8-65c9-415a-b0f9-1b0feb18dc90",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_connections_states_full{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "达到channel上限连接数",
+        "description": "统计实例中达到channel使用上限连接数量。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "type": "specialValue",
+              "result": {
+                "color": "rgba(44, 157, 61, 1)",
+                "text": "0"
+              },
+              "match": {
+                "specialValue": "null"
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "e7196d67-7cee-4817-ac98-57b7a35d2143",
+        "layout": {
+          "h": 4,
+          "w": 4,
+          "x": 0,
+          "y": 5,
+          "i": "e7196d67-7cee-4817-ac98-57b7a35d2143",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_connections_states_flow{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "flow状态的连接数",
+        "description": "该指标用于统计整个实例中的connection，状态是flow状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "24c89592-7fb5-4edc-a78c-5faadbba91e1",
+        "layout": {
+          "h": 4,
+          "w": 4,
+          "x": 4,
+          "y": 5,
+          "i": "2473e07f-2881-47b2-a484-f2cfd82d1f9e",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_channels_states_flow{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "flow状态的通道数",
+        "description": "该指标用于统计整个实例中的channel，状态是flow状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "4ae4866f-d39f-482d-8814-2df07f6d62dc",
+        "layout": {
+          "h": 4,
+          "w": 4,
+          "x": 8,
+          "y": 5,
+          "i": "d2c34bd0-13df-4a48-9506-99a9b01ff267",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queues_states_flow{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "flow状态的队列数",
+        "description": "该指标用于统计整个实例中的queue，状态是flow状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "97780417-d1bd-4d97-935c-cb7f20cfa212",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 5,
+          "i": "38aa0393-a469-4e7f-93f4-eb5e3991cbef",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_connections_states_block{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "block状态的连接数",
+        "description": "该指标用于统计整个实例中的connection，状态是blocking/blocked状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "8b962d5a-4750-4516-8e3a-603483a7f570",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 5,
+          "i": "6442ecd4-2304-4df2-93ca-d0734d6cb414",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_channels_states_block{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "block状态的通道数",
+        "description": "该指标用于统计整个实例中的channel，状态是blocking/blocked状态的总数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "1f6c51a4-cb5d-4a27-ba8c-6784f4cbe426",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 0,
+          "y": 9,
+          "i": "16404e89-c809-4cab-a299-3c2b6dce1ec0",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_publish{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "生产速率",
+        "description": "统计RabbitMQ实例中实时消息生产速率。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "cps"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "e6a0f77f-c68e-46ca-a998-dcf17003b02d",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 8,
+          "y": 9,
+          "i": "8cb57774-53f4-4780-8a6c-e4efb6074f48",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_messages_ready{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "可消费消息数",
+        "description": "统计RabbitMQ实例中总可消费消息数量。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": ""
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "005a1e65-9aa7-4d3f-b64d-27b8e5578670",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 16,
+          "y": 9,
+          "i": "fe794784-5048-485c-8e69-6435baa7c985",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_messages_unacknowledged{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "未确认消息数",
+        "description": "统计RabbitMQ实例中总已经消费但还未确认的消息数量。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "ba6ffdc9-9701-4d5a-878e-b66bbebb07ea",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 0,
+          "y": 15,
+          "i": "30066274-44d7-45f1-86e3-c57ccdc87e06",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_consumers{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消费者数",
+        "description": "统计RabbitMQ实例中的总消费者数。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "a2a3105e-d3ae-4bfa-86cf-fe88bbae2b34",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 8,
+          "y": 15,
+          "i": "41adf4f9-405a-4a9c-b603-5cdc1a2d4976",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_deliver{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消费速率（手工确认）",
+        "description": "统计RabbitMQ实例中实时消息消费速率（手工确认）。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "cps"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "fe83c12b-ef4e-415f-83ae-6c6b948d6f8a",
+        "layout": {
+          "h": 6,
+          "w": 8,
+          "x": 16,
+          "y": 15,
+          "i": "a72a29b1-1bd7-4ba9-818a-d9c2a344f107",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_deliver_no_ack{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_instance_id}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消费速率（自动确认）",
+        "description": "统计RabbitMQ实例中实时消息消费速率（自动确认）。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "cps"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "c264baec-627c-4088-a74f-187a56fa862e",
+        "name": "节点指标",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 41,
+          "i": "c264baec-627c-4088-a74f-187a56fa862e",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "stat",
+        "id": "8053ed76-f9c2-43ce-b7b4-966fb9f12a72",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 0,
+          "y": 42,
+          "i": "28aad933-22ce-4512-ba52-6c51462655b3",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_alive{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "节点存活状态",
+        "description": "表示Rabbitmq节点是否存活。\n1：存活\n0：离线",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "type": "special",
+              "result": {
+                "color": "rgba(255, 101, 107, 1)",
+                "text": "离线"
+              },
+              "match": {
+                "special": 0
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "rgba(44, 157, 61, 1)",
+                "text": "存活"
+              },
+              "match": {
+                "special": 1
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "485cd4cb-0547-4d09-a43b-396d973b0dc7",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 4,
+          "y": 42,
+          "i": "d1635601-d3f5-47fd-8399-f1dcd6995ae8",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_memory_high_watermark{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "内存高水位状态",
+        "description": "表示Rabbitmq节点是否触发内存高水位，如果触发，会阻塞集群的所有生产者。\n1：内存高水位\n0：正常",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "type": "special",
+              "result": {
+                "color": "rgba(44, 157, 61, 1)",
+                "text": "正常"
+              },
+              "match": {
+                "special": 0
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "rgba(255, 101, 107, 1)",
+                "text": "内存高水位"
+              },
+              "match": {
+                "special": 1
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "0bd062a5-fab2-49fa-a453-c6b4ecb9fbd4",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 8,
+          "y": 42,
+          "i": "2f8bf2bb-753d-4c5f-9c8d-691030faf1a5",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_disk_insufficient{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "磁盘高水位状态",
+        "description": "表示Rabbitmq节点是否触发磁盘高水位，如果触发，会阻塞集群的所有生产者。\n1：磁盘高水位\n0：正常",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "valueMappings": [
+            {
+              "type": "special",
+              "result": {
+                "color": "rgba(44, 157, 61, 1)",
+                "text": "正常"
+              },
+              "match": {
+                "special": 0
+              }
+            },
+            {
+              "type": "special",
+              "result": {
+                "color": "rgba(255, 101, 107, 1)",
+                "text": "内存高水位"
+              },
+              "match": {
+                "special": 1
+              }
+            }
+          ],
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "6a43223f-e57e-498b-b73a-e59c539c65a3",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 12,
+          "y": 42,
+          "i": "38a84688-07f8-4195-96dd-f159ef647e1e",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_node_queues{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "节点队列数",
+        "description": "该指标用于统计Rabbitmq节点队列个数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "302fbe3d-d2cb-4a2f-96f7-45ae9a484f47",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 16,
+          "y": 42,
+          "i": "73ce509d-b50f-41be-a7b0-801f40e7faa9",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_proc_used{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Erlang进程数",
+        "description": "统计当前节点RabbitMQ所使用的Erlang进程数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "629cfbd2-5407-4e56-aae0-fbccd8985bd8",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 20,
+          "y": 42,
+          "i": "f11450cd-1c38-452c-9f74-0070500482c4",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_fd_used{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "文件句柄数",
+        "description": "统计当前节点RabbitMQ所占用的文件句柄数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "gauge",
+        "id": "85820aed-1086-4562-b19a-1517bfab4838",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 0,
+          "y": 47,
+          "i": "d00076f8-2181-40cb-8949-eaed5db1eaea",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_cpu_usage{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "CPU使用率",
+        "description": "统计Rabbitmq节点虚拟机的CPU使用率。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#3FC453",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#FF9919",
+                "value": 60
+              },
+              {
+                "color": "#FF656B",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "type": "gauge",
+        "id": "0043b0e1-1903-40a7-b867-a47a3bf108f0",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 4,
+          "y": 47,
+          "i": "2870b887-1d9b-4e16-812d-5aa574254b5d",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_memory_usage{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "内存使用率",
+        "description": "统计Rabbitmq节点虚拟机的内存使用率。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#3FC453",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#FF9919",
+                "value": 60
+              },
+              {
+                "color": "#FF656B",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "percent",
+            "min": 0,
+            "max": 100,
+            "decimals": 2
+          }
+        }
+      },
+      {
+        "type": "gauge",
+        "id": "bf2aa2a5-702a-4a34-b030-45a5d23e440c",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 8,
+          "y": 47,
+          "i": "2047a403-b6e6-4067-bb99-03556829143f",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_disk_usage{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "磁盘容量使用率",
+        "description": "统计Rabbitmq节点虚拟机的磁盘容量使用率。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#3FC453",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#FF9919",
+                "value": 60
+              },
+              {
+                "color": "#FF656B",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "type": "timeseries",
+        "id": "3061c177-5d69-4aca-9a13-b031b4c083e2",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 12,
+          "y": 47,
+          "i": "0ce284d0-df22-4859-ba84-c6436ab46210",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_cpu_core_load{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "CPU核均负载",
+        "description": "统计Rabbitmq节点虚拟机CPU每个核的平均负载。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": ""
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "98422a53-9053-4b75-bb0c-eb723a3c39ba",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 20,
+          "y": 47,
+          "i": "2d94db18-8aeb-4fc3-ab49-6adb589e5d12",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_socket_used{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Socket连接数",
+        "description": "统计当前节点RabbitMQ所使用的Socket连接数。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": 90
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "3fa639e1-3278-4eb6-85dd-45d1655e9775",
+        "layout": {
+          "h": 5,
+          "w": 5,
+          "x": 0,
+          "y": 52,
+          "i": "9a2a8a42-def3-4e5b-aacc-3c2d5f9e353c",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_mem_used{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "内存使用量",
+        "description": "统计当前节点RabbitMQ内存占用。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "f1c73875-c149-44f0-87e0-d2cb9a2b59e5",
+        "layout": {
+          "h": 5,
+          "w": 5,
+          "x": 5,
+          "y": 52,
+          "i": "019ffbfa-5a32-4fe4-8b88-19bcc0633fa7",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_disk_free{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "可用存储空间",
+        "description": "统计当前节点可使用的存储空间。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "f7f623a1-0866-4cce-ae94-c50fbb55f167",
+        "layout": {
+          "h": 5,
+          "w": 5,
+          "x": 10,
+          "y": 52,
+          "i": "88490d5e-6a49-41d6-975d-ee716bd5767d",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_disk_read_rate{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "磁盘读流量",
+        "description": "统计节点磁盘每秒的读字节大小。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesSecIEC"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "dbf1640a-29ec-4008-bf18-9a7e16a83070",
+        "layout": {
+          "h": 5,
+          "w": 5,
+          "x": 15,
+          "y": 52,
+          "i": "1d64834a-dca8-4ee1-aa1c-b4ef8cd404e2",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_disk_write_rate{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "磁盘写流量",
+        "description": "统计节点磁盘每秒的写字节大小。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesSecIEC"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "2db7fa69-c3f3-4713-8e6e-75a4aa0f4599",
+        "layout": {
+          "h": 5,
+          "w": 2,
+          "x": 20,
+          "y": 52,
+          "i": "65b1ec1a-f9e0-40f6-9acf-a3e8225f9411",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_disk_write_await{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "磁盘平均写操作耗时",
+        "description": "该指标用于统计磁盘在测量周期内平均每个写IO的操作时长。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {
+            "value": null
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "ebea253f-762b-4786-b7d5-45211e3b7ae0",
+        "layout": {
+          "h": 5,
+          "w": 2,
+          "x": 22,
+          "y": 52,
+          "i": "1a0fdf61-805b-442c-8228-ec01f7200974",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_disk_read_await{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "磁盘平均读操作耗时",
+        "description": "该指标用于统计磁盘在测量周期内平均每个读IO的操作时长。",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "milliseconds"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "e1c2ed75-e255-4290-a303-89b3e2900d92",
+        "layout": {
+          "h": 5,
+          "w": 12,
+          "x": 0,
+          "y": 57,
+          "i": "1c6599e2-a8db-4ec9-b898-d01e7d7119a8",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_node_bytes_in_rate{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "网络入流量",
+        "description": "统计Rabbitmq节点每秒网络访问流入流量。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesSecIEC",
+            "decimals": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "08250181-88b7-499e-92f2-d291b38bec16",
+        "layout": {
+          "h": 5,
+          "w": 12,
+          "x": 12,
+          "y": 57,
+          "i": "8595e996-b0a5-4e26-9ece-ee1c96cbdea0",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_rabbitmq_node_bytes_out_rate{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\",rabbitmq_node=\"$rabbitmq_node\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "网络出流量",
+        "description": "统计Rabbitmq节点每秒网络访问流出流量。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesSecIEC",
+            "decimals": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "11a0e6be-acf5-48a6-890b-74af54bac2b9",
+        "name": "队列监控指标",
+        "collapsed": true,
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 82,
+          "i": "11a0e6be-acf5-48a6-890b-74af54bac2b9",
+          "isResizable": false
+        },
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "6ac42246-98f7-434b-be19-37426d87309c",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 0,
+          "y": 83,
+          "i": "9d6ba035-bad0-4455-8142-798ac2f11af9",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_messages_unacknowledged{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "队列未确认消息数",
+        "description": "该指标用于统计队列中已消费未确认消息数。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": ""
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "f707a2a3-4530-48eb-b7b2-ac50f23f756b",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 8,
+          "y": 83,
+          "i": "40969f1d-1915-4115-bec5-9706d400647e",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_messages_ready{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "队列可消费消息数",
+        "description": "该指标用于统计队列中可消费的消息数。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": ""
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "5097075c-2308-43ac-8406-980be061b776",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 16,
+          "y": 83,
+          "i": "f0ca1efc-9c30-4fe8-8064-204b2e452925",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_consumers{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消费者数量",
+        "description": "该指标用于统计订阅该队列的消费者个数。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off",
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "5f4e274e-f43d-499b-b6e0-e8e73f64f7e3",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 0,
+          "y": 88,
+          "i": "ec6f5449-85e0-4865-8572-da38d6683cc3",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_messages_publish_rate{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "生产速率",
+        "description": "该指标用于统计每秒该队列的消息流入数。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "cps"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "8a215e42-a6d6-4d32-9f0a-3b6e350d8b71",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 8,
+          "y": 88,
+          "i": "7afa232c-920c-45a2-bd3a-e0a8626aa8c9",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_messages_ack_rate{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消费速率（手工确认）",
+        "description": "该指标用于统计该队列每秒传递给客户端并确认的消息数。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "cps"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "5ea37d89-96ee-4ba7-a3fc-97346f6c7155",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 16,
+          "y": 88,
+          "i": "029aec31-8b29-4a79-bee3-c49137134663",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_messages_deliver_get_rate{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消费速率",
+        "description": "该指标用于统计该队列每秒的消息流出数。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "cps"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "9a450e37-fb04-4f53-b59c-74c6f2cdf8a5",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 0,
+          "y": 93,
+          "i": "04c86257-c3d7-43b5-ab1f-c1a039d28f0f",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_messages_redeliver_rate{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "重传速率",
+        "description": "该指标用于统计该队列每秒的重传消息数。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "cps"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "dd3ce856-e3f0-4750-a76f-3ee077d3e8c4",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 8,
+          "y": 93,
+          "i": "cb640b7f-4853-4442-83ed-a55279663c22",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_messages_persistent{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消息总数（持久化）",
+        "description": "该指标用来统计该队列中持久消息的总数（对于瞬时队列始终为0）。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": ""
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "09d90670-baab-457d-befc-cb51ba67cd38",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 16,
+          "y": 93,
+          "i": "3d851f94-cd7d-4fe0-8cd7-5179110b9f28",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_messages_ram{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消息总数（内存）",
+        "description": "该指标用于统计该队列中驻留在内存中的消息总数。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": ""
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "c0cdb88f-5de6-4559-89ee-8a87b5e28192",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 0,
+          "y": 98,
+          "i": "0f78fed0-3c5f-4da1-a7fe-895ddf1052e9",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_memory{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Erlang进程消耗字",
+        "description": "该指标用于统计与队列关联的Erlang进程消耗的内存字节数，包括堆栈、堆和内部结构。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "2a9312ab-2d01-404b-bb80-b6662d0605a2",
+        "layout": {
+          "h": 5,
+          "w": 8,
+          "x": 8,
+          "y": 98,
+          "i": "91bf31cb-977b-45d1-be54-c6e50c2ddb26",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Dasource}",
+        "targets": [
+          {
+            "refId": "A",
+            "maxDataPoints": 240,
+            "expr": "huaweicloud_sys_dms_queue_message_bytes{name=\"$name\",rabbitmq_instance_id=\"$rabbitmq_instance_id\"}",
+            "legend": "{{name}}:{{rabbitmq_node}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "消息大小总和",
+        "description": "该指标用于统计该队列中所有消息的大小总和（字节）。",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      }
+    ],
+    "version": "3.1.0"
+  }
+}

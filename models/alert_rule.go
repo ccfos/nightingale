@@ -584,6 +584,33 @@ func (ar *AlertRule) Verify() error {
 		}
 	}
 
+	// 生效时段一致性校验：开始时间、结束时间、生效星期三者段数必须一致，且配了时段时星期不能为空。
+	// 否则运行时 mute 判断会因三个数组长度不一致而索引越界 panic（如只选了生效星期却没配起止时间）。
+	// 校验前端传入的原始数组，不依赖 FE2DB 的序列化结果。
+	enableStimeCount := len(ar.EnableStimesJSON)
+	if enableStimeCount == 0 && ar.EnableStimeJSON != "" {
+		enableStimeCount = 1 // 兼容旧版单时段字段
+	}
+	enableEtimeCount := len(ar.EnableEtimesJSON)
+	if enableEtimeCount == 0 && ar.EnableEtimeJSON != "" {
+		enableEtimeCount = 1
+	}
+	// 只统计非空的星期分组：DB2FE 对未配置生效时段（空 EnableDaysOfWeek）会 append 一个空分组，
+	// 未配置的规则（clone 时占绝大多数）不应被误判为时段不一致而拒绝。
+	enableWeekCount := 0
+	for _, days := range ar.EnableDaysOfWeeksJSON {
+		if len(days) > 0 {
+			enableWeekCount++
+		}
+	}
+	if enableWeekCount == 0 && len(ar.EnableDaysOfWeekJSON) > 0 {
+		enableWeekCount = 1 // 兼容旧版单分组字段 enable_days_of_week（与 FE2DB 的复数优先、复数空才回退单数保持一致）
+	}
+	if enableStimeCount != enableEtimeCount || enableStimeCount != enableWeekCount {
+		return fmt.Errorf("invalid effective time span: start times(%d), end times(%d) and days-of-week groups(%d) must have the same count",
+			enableStimeCount, enableEtimeCount, enableWeekCount)
+	}
+
 	if err := ar.validateCronPattern(); err != nil {
 		return err
 	}

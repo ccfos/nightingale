@@ -25,7 +25,7 @@ CREATE TABLE `users` (
     UNIQUE KEY (`username`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', unix_timestamp(now()), 'system', unix_timestamp(now()), 'system');
+insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', 'Admin', 'root.2020', 'Admin', unix_timestamp(now()), 'system', unix_timestamp(now()), 'system');
 
 CREATE TABLE `user_group` (
     `id` bigint unsigned not null auto_increment,
@@ -316,6 +316,7 @@ CREATE TABLE `alert_mute` (
     `mute_time_type` tinyint(1) not null default 0,
     `periodic_mutes` varchar(4096) not null default '',
     `severities` varchar(32) not null default '',
+    `mute_type` int not null default 0 comment '0-mute event and notify,1-mute notify only',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
@@ -830,6 +831,7 @@ CREATE TABLE `message_template` (
     `notify_channel_ident` varchar(64) not null default '',
     `private` int not null default 0,
     `weight` int not null default 0,
+    `lang` varchar(32) not null default '',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,

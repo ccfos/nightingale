@@ -161,16 +161,23 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		}
 
 		// event mute
-		isMuted, detail, muteId := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
+		isMuted, detail, muteId, muteType := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
 		if isMuted {
-			logger.Infof("alert_eval_%d datasource_%d is muted, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
-			p.Stats.CounterMuteTotal.WithLabelValues(
-				fmt.Sprintf("%v", event.GroupName),
-				fmt.Sprintf("%v", p.rule.Id),
-				fmt.Sprintf("%v", muteId),
-				fmt.Sprintf("%v", p.datasourceId),
-			).Inc()
-			continue
+			if muteType == models.MuteTypeNotifyOnly {
+				// 只屏蔽通知：事件照常产生并记录，仅打标，后续在通知阶段据此跳过发送并写通知记录
+				logger.Infof("alert_eval_%d datasource_%d notify muted only, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
+				event.NotifyMuted = 1
+				event.MuteId = muteId
+			} else {
+				logger.Infof("alert_eval_%d datasource_%d is muted, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
+				p.Stats.CounterMuteTotal.WithLabelValues(
+					fmt.Sprintf("%v", event.GroupName),
+					fmt.Sprintf("%v", p.rule.Id),
+					fmt.Sprintf("%v", muteId),
+					fmt.Sprintf("%v", p.datasourceId),
+				).Inc()
+				continue
+			}
 		}
 
 		if dispatch.EventMuteHook(event) {
@@ -380,6 +387,15 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 	event.IsRecovered = true
 	event.LastEvalTime = now
 
+	// 恢复通知是否屏蔽，按"恢复时刻"（clock=now）重新判定，而不是沿用触发期写入 p.fires 的陈旧 NotifyMuted：
+	// 仅当此刻仍命中「只屏蔽通知」规则才继续静默恢复通知，屏蔽已到期/删除则正常发出恢复通知。
+	event.NotifyMuted = 0
+	event.MuteId = 0
+	if hit, muteId, muteType := mute.EventMuteStrategy(event, p.alertMuteCache, now); hit && muteType == models.MuteTypeNotifyOnly {
+		event.NotifyMuted = 1
+		event.MuteId = muteId
+	}
+
 	p.HandleRecoverEventHook(event)
 	p.pushEventToQueue(event)
 }
@@ -453,10 +469,41 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 		logger.Infof("alert_eval_%d datasource_%d event-hash-%s %s", p.rule.Id, p.datasourceId, event.Hash, message)
 	}()
 
+	// 只屏蔽通知：事件要产生并落库，但不能消耗通知计数与发送时间，
+	// 否则解除屏蔽后 fired.NotifyCurNumber 会被"虚假发送"耗尽、LastSentTime 也被推进，
+	// 导致本该恢复的通知一直发不出去。这里首次触发入队持久化（consume 阶段跳过发送），
+	// 后续评估仅刷新评估时间保活，不重复入队、不推进任何通知计数。
+	if event.NotifyMuted == 1 {
+		if fired, has := p.fires.Get(event.Hash); has {
+			p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+			event.FirstTriggerTime = fired.FirstTriggerTime
+			// 与正常 fired 路径一致，每轮评估都触发 hook：下游（如 n9e-plus 抑制存储）
+			// 按时间戳过期，依赖每轮刷新感知事件仍活跃；只屏蔽通知的事件仍应参与抑制联动
+			p.HandleFireEventHook(event)
+			message = "notify muted, already persisted, skip re-enqueue"
+			return
+		}
+		event.NotifyCurNumber = 0
+		event.FirstTriggerTime = event.TriggerTime
+		message = "notify muted, event persisted without notifying"
+		p.HandleFireEventHook(event)
+		p.pushEventToQueue(event)
+		return
+	}
+
 	if fired, has := p.fires.Get(event.Hash); has {
 		p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 		event.FirstTriggerTime = fired.FirstTriggerTime
 		p.HandleFireEventHook(event)
+
+		// 事件此前仅在「只屏蔽通知」期间产生过（fired.NotifyCurNumber==0，首次通知被 consume 跳过），
+		// 屏蔽解除后应把这次当作首次真实通知补发，避免 NotifyRepeatStep==0 的规则永远收不到第一次通知。
+		if fired.NotifyCurNumber == 0 {
+			event.NotifyCurNumber = 1
+			message = fmt.Sprintf("fired, first notify after unmute, first_trigger_time: %d", event.FirstTriggerTime)
+			p.pushEventToQueue(event)
+			return
+		}
 
 		if cachedRule.NotifyRepeatStep == 0 {
 			message = "stalled, rule.notify_repeat_step is 0, no need to repeat notify"
@@ -495,7 +542,11 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 
 func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 	if !e.IsRecovered {
-		e.LastSentTime = e.LastEvalTime
+		// 只屏蔽通知的事件不算作已发送，保留原 LastSentTime，
+		// 使解除屏蔽后按真正的上次发送时间计算重复通知间隔。
+		if e.NotifyMuted != 1 {
+			e.LastSentTime = e.LastEvalTime
+		}
 		p.fires.Set(e.Hash, e)
 	}
 

@@ -49,7 +49,7 @@ func init() {
 }
 
 // createAlertMute 落库一条屏蔽规则。入参 config 是与前端/HTTP API 同构的 AlertMute JSON
-// （n9e-alert-mute-copilot skill 文档化了字段形状），直接反序列化进 models.AlertMute，由
+// （alert-mute-copilot skill 文档化了字段形状），直接反序列化进 models.AlertMute，由
 // AlertMute.Add 内部做 Verify(etime>btime、标签解析) + FE2DB(datasource/periodic/severities
 // 序列化) + 落库。业务组缺参门同 create_dashboard：config 未带 group_id 时回退表单注入的
 // busi_group_id，仍缺则弹业务组选择表单。
@@ -64,7 +64,7 @@ func createAlertMute(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 
 	configJSON := getArgString(args, "config")
 	if configJSON == "" {
-		return "", fmt.Errorf("config is required: a JSON object describing the mute (cause, tags, btime, etime, ...); load the n9e-alert-mute-copilot skill for the exact shape")
+		return "", fmt.Errorf("config is required: a JSON object describing the mute (cause, tags, btime, etime, ...); load the alert-mute-copilot skill for the exact shape")
 	}
 
 	var mute models.AlertMute
@@ -78,7 +78,7 @@ func createAlertMute(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		groupId = resolveCreationGroupID(args, params)
 	}
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-alert-mute-copilot", []string{"busi_group_id"})
+		return "", creationFormInterrupt(params["lang"], deps, user, "alert-mute-copilot", []string{"busi_group_id"})
 	}
 	mute.GroupId = groupId
 
@@ -233,7 +233,10 @@ func updateAlertMute(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		// patch 里的 etime 已被上面的互斥守卫拒掉，这里不会重复。
 		changed = append(changed, "etime")
 		slices.Sort(changed)
-		changeDescs = append(changeDescs, fmt.Sprintf("`etime` → 约 %s（再屏蔽 %s，自确认时刻起算）", formatUnixTime(merged.Etime), durStr))
+		changeDescs = append(changeDescs, fmt.Sprintf(aiagent.LangText(params["lang"],
+			"`etime` → 约 %s（再屏蔽 %s，自确认时刻起算）",
+			"`etime` → approx. %s (mute for another %s, counted from confirmation time)"),
+			formatUnixTime(merged.Etime), durStr))
 	}
 	// configPatch 滤掉了 id/group_id：config 只含这俩（或为 {}）且没传 duration 时是零改动。
 	if len(changed) == 0 {
@@ -309,7 +312,8 @@ func updateAlertMute(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		TargetID:     id,
 		BaselineHash: baseline,
 		Changes:      changeDescs,
-	}, renderUpdateProposalPrompt(fmt.Sprintf("屏蔽规则 **%s**（id=%d）", title, id), changeDescs), resumeArgs)
+	}, renderUpdateProposalPrompt(params["lang"], fmt.Sprintf(aiagent.LangText(params["lang"],
+		"屏蔽规则 **%s**（id=%d）", "mute rule **%s** (id=%d)"), title, id), changeDescs), resumeArgs)
 }
 
 // fillMuteTime 给屏蔽规则补时间，把"算 Unix 时间戳"这件 LLM 容易错的活搬到服务端：

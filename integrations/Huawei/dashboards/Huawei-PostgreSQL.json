@@ -1,0 +1,1391 @@
+{
+    "name": "华为云 RDS for PostgreSQL实例",
+    "tags": "Prometheus MySQL",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "fe0e2a5d-4e82-4eaf-b13a-6d98aa6b6860",
+                "layout": {
+                    "h": 1,
+                    "i": "fe0e2a5d-4e82-4eaf-b13a-6d98aa6b6860",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Basic Info",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "Execution times of submitted and rollback transactions per second\n\n",
+                "id": "3b7d3904-8023-4aa3-9ce7-c08433cd7c6f",
+                "layout": {
+                    "h": 4,
+                    "i": "ae8ee52f-fdee-4e8a-b818-31bb4656e974",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "Current TPS",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds082_tps{project_id=\"$project_id\",name=\"$name\"}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "Average number of I/O requests processed by the system in a specified period\n",
+                "id": "6698c570-3f64-498b-b73b-6978c0c5317d",
+                "layout": {
+                    "h": 4,
+                    "i": "b843ee33-7d10-4e92-a476-de7af6e51cf0",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "iops",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds003_iops{project_id=\"$project_id\", name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "bc7c559c-a172-4ae9-8549-addb671c94ce",
+                "layout": {
+                    "h": 4,
+                    "i": "875dd361-26b7-472a-ada1-dc2d53e8c8bd",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "磁盘使用率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds039_disk_util{project_id=\"$project_id\", name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "dc29efbf-d567-4b26-8d07-65995cb4333e",
+                "layout": {
+                    "h": 4,
+                    "i": "dc29efbf-d567-4b26-8d07-65995cb4333e",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "CPU使用率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds001_cpu_util{project_id=\"$project_id\", name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "b27de9b5-9fe9-4795-8da3-b0af379e708a",
+                "layout": {
+                    "h": 4,
+                    "i": "56d752ff-5c32-4552-9ebc-68a6397838be",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "内存使用率",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds002_mem_util{project_id=\"$project_id\", name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "collapsed": true,
+                "id": "ca82d30f-8e0d-4caa-8a00-2ed9efe4ad85",
+                "layout": {
+                    "h": 1,
+                    "i": "ca82d30f-8e0d-4caa-8a00-2ed9efe4ad85",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 9
+                },
+                "name": "Connections",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "Total number of connections that attempt to connect to the MySQL server\n\n",
+                "id": "8cfd63ec-23a1-4396-ac2a-cfec3b968046",
+                "layout": {
+                    "h": 4,
+                    "i": "6b589594-6cb4-4920-91a4-df4d8baf01f0",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "Total Row",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_row_per_second{project_id=\"$project_id\", name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "Number of current active connections\n",
+                "id": "8c08dc52-377f-49bd-9915-691261b32034",
+                "layout": {
+                    "h": 4,
+                    "i": "f298d66a-04f2-45a7-acab-6818fa707cb2",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "Current Active Connections",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_active_connections{project_id=\"$project_id\", name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "",
+                "id": "e2c85e72-0286-49bc-8ddb-5fba5f449b53",
+                "layout": {
+                    "h": 4,
+                    "i": "e2c85e72-0286-49bc-8ddb-5fba5f449b53",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "Connection Usage",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds083_conn_usage{project_id=\"$project_id\",name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "collapsed": true,
+                "id": "cb81def4-ac63-4d42-b66e-440f9061794b",
+                "layout": {
+                    "h": 1,
+                    "i": "cb81def4-ac63-4d42-b66e-440f9061794b",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 14
+                },
+                "name": "Query Performance",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "",
+                "id": "3b500175-ed05-42d7-b955-04261cca7727",
+                "layout": {
+                    "h": 7,
+                    "i": "5a390524-db47-4dd0-84bd-1db358c7a243",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 15
+                },
+                "maxPerRow": 4,
+                "name": "Memory Hit",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_sys_memory_hit_rate{project_id=\"$project_id\",name=\"$name\"}",
+                        "legend": "innodb_buf_hit-{{name}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "Ratio of idle pages to the total number of buffer pool pages in the InnoDB buffer",
+                "id": "5fa65a30-a49b-457f-b46a-11d2029188bd",
+                "layout": {
+                    "h": 7,
+                    "i": "5fa65a30-a49b-457f-b46a-11d2029188bd",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 15
+                },
+                "maxPerRow": 4,
+                "name": "Slow SQL",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_slow_sql_one_second{project_id=\"$project_id\",name=\"$name\"}",
+                        "legend": "innodb_buf_usage-{{name}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "collapsed": true,
+                "id": "c9df805c-8ae7-41d7-b28b-575f478fd9ce",
+                "layout": {
+                    "h": 1,
+                    "i": "c9df805c-8ae7-41d7-b28b-575f478fd9ce",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 22
+                },
+                "name": "Network",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "Incoming traffic in bytes per second\n\n",
+                "id": "47bf281b-eee0-4b42-9879-cf8d6a69aa4c",
+                "layout": {
+                    "h": 4,
+                    "i": "5523a84d-094d-4648-bb4e-2f6d91d61860",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 23
+                },
+                "maxPerRow": 4,
+                "name": "Network Input Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSecIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds004_bytes_in{project_id=\"$project_id\", name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "Outgoing traffic in bytes per second\n\n",
+                "id": "3c16f22b-b984-40cb-8e00-6e20a1e2dcd0",
+                "layout": {
+                    "h": 4,
+                    "i": "c334e620-b059-4078-8169-947e0bde9f58",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 23
+                },
+                "maxPerRow": 4,
+                "name": "Network Output Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSecIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds005_bytes_out{project_id=\"$project_id\", name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "collapsed": true,
+                "id": "00fd2b70-a133-4ad7-bd56-69a3c91ecf0c",
+                "layout": {
+                    "h": 1,
+                    "i": "00fd2b70-a133-4ad7-bd56-69a3c91ecf0c",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 27
+                },
+                "name": "事务",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "",
+                "id": "8972e4c2-c099-4591-8e8e-1752bbcac5f6",
+                "layout": {
+                    "h": 5,
+                    "i": "8adee2bf-5e03-4f9c-914f-aeb37905e68a",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 28
+                },
+                "maxPerRow": 4,
+                "name": "事务日志使用量",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 3,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds040_transaction_logs_usage{project_id=\"$project_id\",name=\"$name\"}*1024",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "",
+                "id": "fa4fbb23-5ef8-4300-a723-8a49d7d72dc7",
+                "layout": {
+                    "h": 5,
+                    "i": "0f7f3518-ac61-42e3-a0ea-633a67a0e50b",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 28
+                },
+                "maxPerRow": 4,
+                "name": "复制插槽使用量",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 3,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds041_replication_slot_usage{project_id=\"$project_id\",name=\"$name\"}*1024",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "Number of UPDATE statements executed per second\n",
+                "id": "5fa873fa-01ce-4425-a3e5-8303f2a2f60c",
+                "layout": {
+                    "h": 5,
+                    "i": "86f243df-e72d-4755-9c2d-7bae1d6aaa4b",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 33
+                },
+                "maxPerRow": 4,
+                "name": "UPDATE Statements per Second",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 3,
+                        "util": "bytesSecIEC"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_rds044_transaction_logs_generations{project_id=\"$project_id\",name=\"$name\"}*1024",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "",
+                "id": "74e1844d-a918-48fa-a29f-6535dc087dac",
+                "layout": {
+                    "h": 5,
+                    "i": "74e1844d-a918-48fa-a29f-6535dc087dac",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 33
+                },
+                "maxPerRow": 4,
+                "name": "等待锁的会话数",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "huaweicloud_sys_rds_lock_waiting_sessions{project_id=\"$project_id\",name=\"$name\"}",
+                        "legend": "{{name}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.1.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "prom",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
+                "definition": "label_values(huaweicloud_sys_rds_os_cpu_process_autovacuum, postgresql_cluster_id)",
+                "hide": false,
+                "name": "postgresql_cluster_id",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
+                "definition": "label_values(huaweicloud_sys_rds_rds001_cpu_util{postgresql_cluster_id =\"$postgresql_cluster_id\"},project_id)",
+                "hide": false,
+                "name": "project_id",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
+                "definition": "label_values(huaweicloud_sys_rds_rds001_cpu_util{project_id=\"$project_id\", postgresql_cluster_id =\"$postgresql_cluster_id\"},name)",
+                "hide": false,
+                "name": "name",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "uuid": 1763996349597000
+}

@@ -39,16 +39,12 @@ redis.call("HSET", KEYS[1],
 return 1
 `
 
-func NewRemoteCommitCache(refreshInterval time.Duration, rds ...storage.Redis) *RemoteCommitCache {
+func NewRemoteCommitCache(refreshInterval time.Duration, rds storage.Redis) *RemoteCommitCache {
 	if refreshInterval <= 0 {
 		refreshInterval = 30 * time.Minute
 	}
-	var redisClient storage.Redis
-	if len(rds) > 0 {
-		redisClient = rds[0]
-	}
 	return &RemoteCommitCache{
-		rds:             redisClient,
+		rds:             rds,
 		refreshInterval: refreshInterval,
 		latestCommit:    LatestGitCommit,
 	}

@@ -79,7 +79,7 @@
 | 2 | Create a host down alert rule based on target heartbeat loss | 创建一条主机失联的告警规则 |
 | 3 | Create a disk usage alert rule with a threshold above 85% | 创建一条机器磁盘使用率超过 85% 的告警规则 |
 
-> 与 `dashboards` 一样会命中 creation fast-path 并走 preflight；`n9e-create-alert-rule` skill 同时要求 `busi_group_id` 与 `datasource_id`。
+> 与 `dashboards` 一样会命中 creation fast-path 并走 preflight；`create-alert-rule` skill 同时要求 `busi_group_id` 与 `datasource_id`。
 
 ### `alert_history` — 历史告警列表
 

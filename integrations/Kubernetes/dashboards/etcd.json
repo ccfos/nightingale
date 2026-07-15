@@ -1,0 +1,1156 @@
+{
+    "name": "Kubernetes / Etcd",
+    "tags": "Categraf",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd健康状态",
+                "id": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d",
+                "layout": {
+                    "h": 6,
+                    "i": "5d6560c5-6137-4632-bb88-ff8c9cf42e9d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Etcd - Health Status",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "DOWN"
+                                },
+                                "1": {
+                                    "text": "UP"
+                                }
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#3fc453",
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#000000",
+                                "text": "DOWN"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {}
+                ],
+                "targets": [
+                    {
+                        "expr": "up{job=\"$job\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "columns": [
+                        "instance",
+                        "server_id",
+                        "value"
+                    ],
+                    "displayMode": "labelsOfSeriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd snapshot 状态",
+                "id": "7480f8ad-c5a5-48e8-aec1-c6347beb3f38",
+                "layout": {
+                    "h": 6,
+                    "i": "2d6c513d-5553-4635-a3f7-ec5955deb009",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "links": [],
+                "name": "Etcd - Member Status",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "DOWN"
+                                },
+                                "1": {
+                                    "text": "UP"
+                                }
+                            },
+                            "result": {
+                                "text": ""
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#3fc453",
+                                "text": "LEADER"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#e90e17",
+                                "text": "LERANER"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {
+                        "properties": {
+                            "valueMappings": []
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "etcd_server_is_leader{job=\"$job\"} * on (instance) group_left(server_id) etcd_server_id{job=\"$job\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd 健康检查状态",
+                "id": "db5575c1-0859-4b42-b327-5dd57f1e1225",
+                "layout": {
+                    "h": 8,
+                    "i": "e8794091-aff6-4dbf-9876-685a6f277794",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 6
+                },
+                "links": [],
+                "name": "Etcd - Health Check Stats",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "properties": {
+                            "valueMappings": []
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "etcd_server_health_success{job=\"$job\"}",
+                        "legend": "{{ instance }} - check success",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "etcd_server_health_failures{job=\"$job\"}",
+                        "legend": "{{ instance }} - check failure",
+                        "refId": "B"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd defrag（压缩） 状态",
+                "id": "69d1bab4-1b37-4ece-9630-d8e3e105ce4e",
+                "layout": {
+                    "h": 8,
+                    "i": "ce4a873d-65f0-4071-868c-e67d6b723ab6",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 6
+                },
+                "links": [],
+                "name": "Etcd - Defrag Status",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "DOWN"
+                                },
+                                "1": {
+                                    "text": "UP"
+                                }
+                            },
+                            "result": {
+                                "text": ""
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#3fc453",
+                                "text": "DEFRAG"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#9470ff",
+                                "text": "-"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {
+                        "properties": {
+                            "valueMappings": []
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "etcd_disk_defrag_inflight{job=\"$job\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd snapshot（快照） 状态",
+                "id": "62e3b249-fefe-4f32-8baf-394eac053f2a",
+                "layout": {
+                    "h": 8,
+                    "i": "a5d1ef0c-83e3-4194-b242-d5c51ba4bdd2",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 14
+                },
+                "links": [],
+                "name": "Etcd - Snapshot Status",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "DOWN"
+                                },
+                                "1": {
+                                    "text": "UP"
+                                }
+                            },
+                            "result": {
+                                "text": ""
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#3fc453",
+                                "text": "APPLYING"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#9470ff",
+                                "text": "-"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {
+                        "properties": {
+                            "valueMappings": []
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "etcd_server_snapshot_apply_in_progress_total{job=\"$job\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "seriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd leader切换统计",
+                "id": "be940718-c4ac-4f6f-a966-dd1961a9e019",
+                "layout": {
+                    "h": 8,
+                    "i": "25b5262d-a318-4489-9dae-152d31906704",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 14
+                },
+                "links": [],
+                "name": "Etcd - Leader Change Stats",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "properties": {
+                            "valueMappings": []
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "etcd_server_leader_changes_seen_total{job=\"$job\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd 处理的请求数，按响应码统计",
+                "id": "94713dc3-acb7-43b5-ae2f-399b2da61763",
+                "layout": {
+                    "h": 8,
+                    "i": "94713dc3-acb7-43b5-ae2f-399b2da61763",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 22
+                },
+                "links": [],
+                "name": "Etcd - Requests by code",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(grpc_server_handled_total{job=\"$job\"}[5m])) by (instance,grpc_code)",
+                        "legend": "{{ instance }} {{ grpc_code }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd处理的请求数， 按实例统计",
+                "id": "69690063-d044-4547-9f5f-126e5f8bf55a",
+                "layout": {
+                    "h": 8,
+                    "i": "69690063-d044-4547-9f5f-126e5f8bf55a",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 22
+                },
+                "links": [],
+                "name": "Etcd -Requests by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(grpc_server_handled_total{job=\"$job\"}[5m])) by (instance)",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd处理的请求数，按请求类型统计",
+                "id": "a6928b49-cf0a-443e-a8fd-b999685df0be",
+                "layout": {
+                    "h": 8,
+                    "i": "a6928b49-cf0a-443e-a8fd-b999685df0be",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 30
+                },
+                "links": [],
+                "name": "Etcd - Requests by verb",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(grpc_server_handled_total{job=\"$job\",grpc_method=~\"Compact|Defrag.*|Member.*|Put|Watch|Lease.*|Range|Snapshot|Txn|Hash.*|Status|Auth.*\"}[5m])) by (instance,grpc_method)",
+                        "legend": "{{ instance }} {{ grpc_method }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd 90分位WAL fsync耗时",
+                "id": "80bd434e-21dc-4864-97c6-bfd1e2e27bbe",
+                "layout": {
+                    "h": 8,
+                    "i": "75671720-bca1-449f-9c68-bf562f105b66",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 30
+                },
+                "links": [],
+                "name": "Etcd - WAL Fsync Latancy by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum(rate(etcd_disk_wal_fsync_duration_seconds_bucket{job=\"$job\"}[5m])) by (instance,le))*1000",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd 90分位commit耗时",
+                "id": "053d10f3-1113-40e0-85aa-dfbabb706995",
+                "layout": {
+                    "h": 8,
+                    "i": "d5a67103-9930-46e0-97e1-296e0d71e30e",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 38
+                },
+                "links": [],
+                "name": "Etcd - Commit Latancy by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum(rate(etcd_disk_backend_commit_duration_seconds_bucket{job=\"$job\"}[5m])) by (instance,le))*1000",
+                        "legend": "{{ instance }} ",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd 90分位defrag耗时",
+                "id": "c86ed101-a91c-4478-b67a-7182a5e856d1",
+                "layout": {
+                    "h": 8,
+                    "i": "2924bb3f-20c3-4f56-96ff-76d473743d8b",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 38
+                },
+                "links": [],
+                "name": "Etcd - Defrag Latancy by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum(rate(etcd_disk_backend_defrag_duration_seconds_bucket{job=\"$job\"}[5m])) by (instance,le))*1000",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd 90分位snapshot耗时",
+                "id": "5c6c48fd-b12b-49d7-86df-b86d90134339",
+                "layout": {
+                    "h": 8,
+                    "i": "e4ec9053-5700-4ede-abfa-35f115597665",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 46
+                },
+                "links": [],
+                "name": "Etcd - Snapshot Latancy by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.9, sum(rate(etcd_disk_backend_snapshot_duration_seconds_bucket{job=\"$job\"}[5m])) by (instance,le))*1000",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd协商失败/pending次数",
+                "id": "b6931f1f-6c43-478e-bcc7-26d1b121bceb",
+                "layout": {
+                    "h": 8,
+                    "i": "152b5817-ad87-44d0-a71f-5fbd0fc10ca3",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 46
+                },
+                "links": [],
+                "name": "Etcd - Proposal Failures/Pending by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(instance) (rate(etcd_server_proposals_failed_total{job=\"$job\"}[5m]))",
+                        "legend": "{{ instance }} failure",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "etcd_server_proposals_pending{job=\"$job\"}",
+                        "legend": "{{ instance }} pending",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd读取索引失败 读取索引慢（过期索引或者超时）次数",
+                "id": "369af7f4-9851-4c8c-a186-04db4fa7f90f",
+                "layout": {
+                    "h": 8,
+                    "i": "784d72f7-fb4e-46e3-b632-e70df6dde0a7",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 54
+                },
+                "links": [],
+                "name": "Etcd - Server Read Indexes Failure / Slow Read",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum (rate(etcd_server_read_indexes_failed_total{job=\"$job\"}[5m])) by (instance)",
+                        "legend": "{{ instance }} failure read",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(rate(etcd_server_slow_read_indexes_total{job=\"$job\"}[5m])) by (instance)",
+                        "legend": "{{ instance }} slow read",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd 存储quota/total/in use大小",
+                "id": "ed72c89c-9732-4fb0-9187-0cabe9a4a81c",
+                "layout": {
+                    "h": 8,
+                    "i": "730be715-cfdd-4f2a-b878-1b2fb9a9be45",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 54
+                },
+                "links": [],
+                "name": "Etcd - MVCC DB Size",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "etcd_server_quota_backend_bytes{job=\"$job\"}",
+                        "legend": "{{ instance }} quota",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "etcd_mvcc_db_total_size_in_bytes{job=\"$job\"}",
+                        "legend": "{{ instance }} total size",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "etcd_mvcc_db_total_size_in_use_in_bytes",
+                        "legend": "{{ instance }} in use",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd操作类型统计",
+                "id": "32a09298-d0f8-4d54-808e-d223d0a428ff",
+                "layout": {
+                    "h": 8,
+                    "i": "cfc389ad-5648-4107-a5bd-1680f6ede2ed",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 62
+                },
+                "links": [],
+                "name": "Etcd - Operations Stats by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(etcd_mvcc_range_total{job=\"$job\"}[5m])) by (instance)",
+                        "legend": "{{ instance }} range",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(rate(etcd_mvcc_put_total{job=\"$job\"}[5m])) by (instance)",
+                        "legend": "{{ instance }} put",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum(rate(etcd_mvcc_delete_total{job=\"$job\"}[5m])) by (instance)",
+                        "legend": "{{ instance }} delete",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "sum(rate(etcd_mvcc_txn_total{job=\"$job\"}[5m])) by (instance)",
+                        "legend": "{{ instance }} txn",
+                        "refId": "D"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd cpu使用率",
+                "id": "9c187c1c-f5cd-4aab-af81-09169948ab82",
+                "layout": {
+                    "h": 8,
+                    "i": "9c187c1c-f5cd-4aab-af81-09169948ab82",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 62
+                },
+                "links": [],
+                "name": "Etcd - CPU Usage by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(process_cpu_seconds_total{job=\"$job\"}[5m])",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd 内存使用量",
+                "id": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c",
+                "layout": {
+                    "h": 8,
+                    "i": "8cff2618-b2d4-4fb4-bfc2-d1d4c4f1b35c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 70
+                },
+                "links": [],
+                "name": "Etcd - Memory Usage by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "process_resident_memory_bytes{job=\"$job\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.25,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "etcd打开的fd数量",
+                "id": "94bb09a7-dbf7-41d8-b6a4-16b262365474",
+                "layout": {
+                    "h": 8,
+                    "i": "e438aed2-6d4a-4254-a8ec-26752385dc74",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 70
+                },
+                "links": [],
+                "name": "Etcd - Open fds by instance",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": []
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "process_open_fds{job=\"$job\"}",
+                        "legend": "{{ instance }}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            }
+        ],
+        "var": [
+            {
+                "defaultValue": "",
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(etcd_server_is_leader, job)",
+                "name": "job",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "uuid": 1740228855352000
+}

@@ -361,13 +361,27 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// (e.g. ask the user to pick a busi group before a creation skill runs).
 	toolDeps := rt.buildToolDeps()
 
+	// Resolve the requesting user once: preflight needs it, and MCP-server team
+	// scoping (buildMCPConfigForAgent) filters bound servers per this user.
+	me, uerr := models.UserGetById(rt.Ctx, userId)
+	if uerr != nil || me == nil {
+		rt.finishMessage(state, streamID, 500, "failed to resolve user")
+		return
+	}
+
+	// 私有 skill 可见性：一次算出当前用户无权访问的私有 skill 名单，既用于运行时
+	// 加载层拦截（toolDeps：load_skill / run_skill_script 按名读取前校验），也用于
+	// 技能目录展示过滤（skillCfg.HiddenSkillNames，见下）。fail closed 见
+	// hiddenSkillNamesForUser。
+	hiddenSkills, denySkills := rt.hiddenSkillNamesForUser(userId)
+	toolDeps.DenyAllSkills = denySkills
+	toolDeps.HiddenSkillNames = make(map[string]struct{}, len(hiddenSkills))
+	for _, n := range hiddenSkills {
+		toolDeps.HiddenSkillNames[n] = struct{}{}
+	}
+
 	if handler.Preflight != nil {
-		user, uerr := models.UserGetById(rt.Ctx, userId)
-		if uerr != nil || user == nil {
-			rt.finishMessage(state, streamID, 500, "failed to resolve user for preflight")
-			return
-		}
-		halt, preResps, perr := handler.Preflight(parentCtx, toolDeps, chatReq, user)
+		halt, preResps, perr := handler.Preflight(parentCtx, toolDeps, chatReq, me)
 		if perr != nil {
 			logger.Warningf("[Assistant] preflight error for action_key=%s: %v", actionKey, perr)
 		}
@@ -427,14 +441,21 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// Skills / MCP 绑定：agent.SkillIds/MCPServerIds 非空时走"精确注入"路径
 	// （SkillNames + 固定 MCP server 列表），空则不预载——系统提示词常驻技能目录，
 	// 模型经 load_skill 自取。action handler 若声明了 RequiredSkills，则覆盖上述两者——见 resolveSkillConfig。
+	skillCfg := rt.resolveSkillConfig(handler, chatReq, agent)
+	// 私有 skill 仅对授权团队可见：把当前用户在 AI 对话里看不到的私有 skill
+	// 从常驻技能目录里过滤掉（与运行时加载层同一份名单，见上 hiddenSkills）。
+	// denySkills 为 fail-closed 兜底：无法算出名单时目录留空 + 拒绝所有预载/注入。
+	skillCfg.HiddenSkillNames = hiddenSkills
+	skillCfg.DenyAllSkills = denySkills
+
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		Tools:              tools,
 		Timeout:            agentTotalTimeout,
 		Stream:             true,
 		UserPromptRendered: userPrompt,
 		GuidedFollowup:     true, // 交互式 chat：末尾给可点选的"下一步"建议
-		Skills:             rt.resolveSkillConfig(handler, chatReq, agent),
-		MCP:                rt.buildMCPConfigForAgent(agent),
+		Skills:             skillCfg,
+		MCP:                rt.buildMCPConfigForAgent(agent, me),
 		HistoryBudgetBytes: historyBudgetFromContextLength(llmCfg.ExtraConfig.ContextLength),
 	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
 
@@ -678,7 +699,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		if clean, hits := chat.ValidateRestrictedGCOutput(markdown); !clean {
 			logger.Warningf("[Assistant] general_chat post-check hit forbidden patterns: %v, appending stamp (chat=%s seq=%d)",
 				hits, msg.ChatID, msg.SeqID)
-			markdown += chat.BuildHallucinationStamp(hits)
+			markdown += chat.BuildHallucinationStamp(lang, hits)
 		}
 	}
 
@@ -895,6 +916,9 @@ func buildAgentInputs(chatReq *chat.AIChatRequest, userId int64, chatID string, 
 	inputs["user_id"] = fmt.Sprintf("%d", userId)
 	inputs["chat_id"] = chatID
 	inputs["seq_id"] = fmt.Sprintf("%d", seqID)
+	// UI 语言直达工具层：update_* 等工具的确定性确认文案（不经 LLM 转述）按此
+	// 选取 zh/en 预制文案（aiagent.LangText），与审批按钮/resume 提示语言一致。
+	inputs["lang"] = chatReq.Language
 	return inputs
 }
 

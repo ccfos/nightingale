@@ -59,15 +59,59 @@ func (rt *Router) resolveSkillConfig(handler *chat.ActionHandler, req *chat.AICh
 	return rt.buildSkillConfigForAgent(agent)
 }
 
-// buildMCPConfigForAgent translates agent.MCPServerIds into mcp.Config.
+// hiddenSkillNamesForUser 算出请求用户在 AI 对话里无权访问的私有 skill 名字，用于
+// 目录展示与 load_skill / run_skill_script / get_skill 加载层的统一拦截——私有
+// skill 只对授权团队可见/可用。
 //
-// Returns nil (not an empty Config) when the agent has no MCP bindings — the
-// Agent's applyDefaults checks `cfg.MCP != nil && len(cfg.MCP.Servers) > 0`
+// 返回 denyAll=true 表示无法算出隐藏名单（fail closed 兜底）：调用方应据此拒绝本轮
+// 所有 skill（目录留空 + 拒绝所有按名加载/执行）。
+//
+// Fail closed 分层：只有「确定是管理员」才返回 (nil,false)（放行全部）；解析用户 /
+// 团队的任一步出错或用户不存在，都以空团队集兜底（AISkillHiddenNames(nil) 会把所有
+// 私有 skill 计为隐藏）；连私有 skill 列表本身都查不出来时，返回 denyAll=true，绝不
+// 把「查询失败」误当成「不过滤」而泄露私有 skill。
+func (rt *Router) hiddenSkillNamesForUser(userId int64) (hidden []string, denyAll bool) {
+	me, err := models.UserGetById(rt.Ctx, userId)
+	if err == nil && me != nil && me.IsAdmin() {
+		return nil, false
+	}
+
+	var gids []int64
+	switch {
+	case err != nil:
+		logger.Errorf("[AIAgent] load user=%d failed, hiding all private skills: %v", userId, err)
+	case me == nil:
+		logger.Warningf("[AIAgent] user=%d not found, hiding all private skills", userId)
+	default:
+		if g, gerr := models.MyGroupIds(rt.Ctx, userId); gerr != nil {
+			logger.Errorf("[AIAgent] load groups for user=%d failed, hiding all private skills: %v", userId, gerr)
+		} else {
+			gids = g
+		}
+	}
+
+	names, herr := models.AISkillHiddenNames(rt.Ctx, gids)
+	if herr != nil {
+		// 无法枚举私有 skill：fail closed —— 本轮拒绝所有 skill，而不是放行。
+		logger.Errorf("[AIAgent] list private skills for user=%d failed, denying all skills this turn: %v", userId, herr)
+		return nil, true
+	}
+	return names, false
+}
+
+// buildMCPConfigForAgent translates agent.MCPServerIds into mcp.Config for the
+// chatting user `me`.
+//
+// Returns nil (not an empty Config) when the agent has no usable MCP bindings —
+// the Agent's applyDefaults checks `cfg.MCP != nil && len(cfg.MCP.Servers) > 0`
 // before standing up the MCP client manager, and we preserve that shortcut.
 //
-// Transport defaults to "sse": the DB model only stores URL/Headers, which is
-// the SSE shape. A future stdio-capable MCPServer model can diverge here.
-func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent) *mcp.Config {
+// Team scope (same rule as the management list): the user may only use public
+// servers plus those a team they belong to owns; admins may use all. A private
+// server bound to an agent is silently dropped for users without access so the
+// agent can't leak its tools to users who couldn't otherwise see it — the agent
+// therefore exposes different tools to different users, by design.
+func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User) *mcp.Config {
 	if len(agent.MCPServerIds) == 0 {
 		return nil
 	}
@@ -80,14 +124,34 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent) *mcp.Config {
 		return nil
 	}
 
+	// Resolve the user's team ids once, only when a non-admin actually needs the
+	// check (admins short-circuit in mcpCanManage).
+	var gids []int64
+	if me != nil && !me.IsAdmin() {
+		gids, err = models.MyGroupIds(rt.Ctx, me.Id)
+		if err != nil {
+			logger.Warningf("[AIAgent] load group ids for user=%d failed: %v", me.Id, err)
+			return nil
+		}
+	}
+
 	out := make([]mcp.ServerConfig, 0, len(servers))
 	for _, s := range servers {
-		out = append(out, mcp.ServerConfig{
-			Name:      s.Name,
-			Transport: mcp.MCPTransportSSE,
-			URL:       s.URL,
-			Headers:   s.Headers,
-		})
+		if !mcpCanUse(me, gids, s) {
+			logger.Infof("[AIAgent] skip private mcp server=%s id=%d for agent=%d: user has no team access", s.Name, s.Id, agent.Id)
+			continue
+		}
+		cfg, cerr := rt.mcpServerConfig(s)
+		if cerr != nil {
+			// e.g. an oauth server that hasn't been connected yet — skip it
+			// rather than failing the whole agent.
+			logger.Warningf("[AIAgent] skip mcp server=%s id=%d: %v", s.Name, s.Id, cerr)
+			continue
+		}
+		out = append(out, *cfg)
+	}
+	if len(out) == 0 {
+		return nil
 	}
 	return &mcp.Config{Servers: out}
 }

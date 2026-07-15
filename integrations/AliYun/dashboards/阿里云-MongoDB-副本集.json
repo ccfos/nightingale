@@ -1,0 +1,2439 @@
+{
+    "name": "阿里云-MongoDB-副本集",
+    "tags": "",
+    "note": "",
+    "ident": "",
+    "uuid": 1775552294655000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "hide": true,
+                "definition": "prometheus",
+                "defaultValue": ""
+            },
+            {
+                "name": "instanceName",
+                "label": "InstanceName",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "reg": "",
+                "definition": "label_values(AliyunMongodb_replicaset_CPUUtilization, instanceName)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*"
+            },
+            {
+                "name": "instanceId",
+                "label": "InstanceId",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "reg": "",
+                "definition": "label_values(AliyunMongodb_replicaset_CPUUtilization{instanceName=~\"$instanceName\"}, id)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*"
+            }
+        ],
+        "panels": [
+            {
+                "type": "table",
+                "id": "201cd278-c688-4803-9e61-a0dba76dc9e2",
+                "layout": {
+                    "h": 9,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "201cd278-c688-4803-9e61-a0dba76dc9e2"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "cloud_monitor_instance_info{service=\"mongodb_replicaset\",instanceId=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "实例列表",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "columns": [
+                        "instanceId",
+                        "instanceName",
+                        "namespace",
+                        "regionId",
+                        "status",
+                        "zoneId",
+                        "engineVersion",
+                        "value"
+                    ],
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn"
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "dd74b4ec-3eaf-4eb5-b964-db7cb476a3b6",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 9,
+                    "i": "dd74b4ec-3eaf-4eb5-b964-db7cb476a3b6"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_CPUUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5f61b8f2-fab2-410b-ab66-cfa719f6d8e6",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 9,
+                    "i": "5f61b8f2-fab2-410b-ab66-cfa719f6d8e6"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "连接数使用量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_ConnectionAmount{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3ab6472a-8ad3-4da9-a427-aa2e13aba6f0",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 9,
+                    "i": "3ab6472a-8ad3-4da9-a427-aa2e13aba6f0"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "连接数使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_ConnectionUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "f36c7ff0-b8ef-42cf-a987-09daace57bc8",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 18,
+                    "i": "f36c7ff0-b8ef-42cf-a987-09daace57bc8"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "数据占用磁盘空间量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_DataDiskAmount{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "62dddd43-ac71-40f3-a8c4-2a3ba154b3ab",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 18,
+                    "i": "62dddd43-ac71-40f3-a8c4-2a3ba154b3ab"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "磁盘使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_DiskUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "034b85a5-efc2-4de4-968f-32b67d2b4991",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 18,
+                    "i": "034b85a5-efc2-4de4-968f-32b67d2b4991"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "应用分组CPU使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_GroupCPUUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "a19c2a32-0de1-42b5-b26d-55a76a913332",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 27,
+                    "i": "a19c2a32-0de1-42b5-b26d-55a76a913332"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "应用分组连接数使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_GroupConnectionUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "08da9084-553d-4719-b606-3ac3ef0cfca3",
+                "type": "timeseries",
+                "name": "应用分组磁盘使用率",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 27,
+                    "i": "08da9084-553d-4719-b606-3ac3ef0cfca3"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_GroupDiskUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "79126824-e150-44a1-a3af-294a9dfed8ea",
+                "type": "timeseries",
+                "name": "应用分组IOPS使用率",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 27,
+                    "i": "79126824-e150-44a1-a3af-294a9dfed8ea"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_GroupIOPSUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "7483dbf9-3cf0-493a-ab4e-ae492d7fbe39",
+                "type": "timeseries",
+                "name": "应用分组内存使用率",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 36,
+                    "i": "7483dbf9-3cf0-493a-ab4e-ae492d7fbe39"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_GroupMemoryUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "type": "timeseries",
+                "id": "71109a4f-e19b-4486-a5c8-e1f26c4f68d7",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 36,
+                    "i": "71109a4f-e19b-4486-a5c8-e1f26c4f68d7"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "IOPS使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_IOPSUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d7c59fac-be79-4793-83e4-c8e52da1b87d",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 36,
+                    "i": "d7c59fac-be79-4793-83e4-c8e52da1b87d"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "实例占用磁盘空间量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_InstanceDiskAmount{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "2d7f3683-ec14-4487-870b-f137e916626a",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 45,
+                    "i": "2d7f3683-ec14-4487-870b-f137e916626a"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "网络入流量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_IntranetIn{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "4850c682-c827-47f9-9ebd-e912b95d2a09",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 45,
+                    "i": "4850c682-c827-47f9-9ebd-e912b95d2a09"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "网络出流量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_IntranetOut{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "6ce7d599-58f4-40f4-85e9-77a8ee95a408",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 45,
+                    "i": "6ce7d599-58f4-40f4-85e9-77a8ee95a408"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "日志占用磁盘空间量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_LogDiskAmount{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "1879c8e4-660a-4c1d-a3d1-45baebbb42c1",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 54,
+                    "i": "1879c8e4-660a-4c1d-a3d1-45baebbb42c1"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "内存使用率",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_MemoryUtilization{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "03e95118-4121-4ff9-9028-b0c627d643c6",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 54,
+                    "i": "03e95118-4121-4ff9-9028-b0c627d643c6"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "请求数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_NumberRequests{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "e0e9ca02-685b-4a43-b737-b9007992f798",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 54,
+                    "i": "e0e9ca02-685b-4a43-b737-b9007992f798"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Command操作次数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_OpCommand{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "a6d440d1-9958-4c72-b6dc-514a0fc90fbf",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 63,
+                    "i": "a6d440d1-9958-4c72-b6dc-514a0fc90fbf"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Delete操作次数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_OpDelete{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d7c0baf2-d4e1-4a78-ad80-07c726fb42b6",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 63,
+                    "i": "d7c0baf2-d4e1-4a78-ad80-07c726fb42b6"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Getmore操作次数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_OpGetmore{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b0c4ba20-f3c2-4c9b-a1bd-8c9350a27ba9",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 63,
+                    "i": "b0c4ba20-f3c2-4c9b-a1bd-8c9350a27ba9"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Insert操作次数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_OpInsert{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d0be85ea-f081-47fd-941f-8aa060f75856",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 72,
+                    "i": "d0be85ea-f081-47fd-941f-8aa060f75856"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Query操作次数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_OpQuery{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5b09f604-2b35-4cea-9c5c-be534a642fdf",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 72,
+                    "i": "5b09f604-2b35-4cea-9c5c-be534a642fdf"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Update操作次数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_OpUpdate{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "64dee2b6-ef41-4324-b42a-aca015cf01cc",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 72,
+                    "i": "64dee2b6-ef41-4324-b42a-aca015cf01cc"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "oplog 保留时长",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_OplogTimeInterval{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "50873ab8-c7a9-40e7-acf6-eddb3140059f",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 81,
+                    "i": "50873ab8-c7a9-40e7-acf6-eddb3140059f"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "平均每秒SQL查询数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_QPS{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "35b4117a-9579-4d6d-b153-7bf9da488180",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 81,
+                    "i": "35b4117a-9579-4d6d-b153-7bf9da488180"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "复制延迟",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_ReplicationLag{id=~\"$instanceId\",instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b3f2d89c-9bde-41ee-9e6f-e78a84b23d00",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 81,
+                    "i": "b3f2d89c-9bde-41ee-9e6f-e78a84b23d00"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "写操作平均响应时间",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_WriteAvgRt{id=~\"$instanceId\",instanceName=~\"$instanceName\"} / 1000000",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "f5b028a6-54c6-4e67-8000-0304f02f95b9",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 90,
+                    "i": "f5b028a6-54c6-4e67-8000-0304f02f95b9"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "读操作平均响应时间",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last",
+                            "avg",
+                            "max"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunMongodb_replicaset_ReadAvgRt{id=~\"$instanceId\",instanceName=~\"$instanceName\"}  / 1000000",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ]
+            }
+        ]
+    }
+}

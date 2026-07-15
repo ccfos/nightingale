@@ -359,7 +359,7 @@ func getAlertRuleDetail(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 //
 //  2. Generic path — caller supplies cate (e.g. "mysql", "loki", "host")
 //     and a pre-built rule_config_json string. The LLM is expected to
-//     read skill/n9e-create-alert-rule/datasources/<cate>.md via the
+//     read skill/create-alert-rule/datasources/<cate>.md via the
 //     read_file builtin tool to get the exact structure for that type,
 //     assemble it, and pass it through. This keeps the tool small while
 //     covering every datasource type the platform supports.
@@ -380,7 +380,7 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	// 告警规则表单同时带出数据源字段（页面默认是提示不是承诺，让用户确认或改选）。
 	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-create-alert-rule", []string{"busi_group_id", "datasource_id"})
+		return "", creationFormInterrupt(params["lang"], deps, user, "create-alert-rule", []string{"busi_group_id", "datasource_id"})
 	}
 
 	name := getArgString(args, "name")
@@ -446,7 +446,7 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		// FE2DB can re-marshal it consistently.
 		var rc map[string]interface{}
 		if err := json.Unmarshal([]byte(rawRuleConfig), &rc); err != nil {
-			return "", fmt.Errorf("rule_config_json must be a valid JSON object (got parse error: %v). Re-check the structure against skill/n9e-create-alert-rule/datasources/%s.md", err, cate)
+			return "", fmt.Errorf("rule_config_json must be a valid JSON object (got parse error: %v). Re-check the structure against skill/create-alert-rule/datasources/%s.md", err, cate)
 		}
 		// Normalize query interval fields. The frontend expects
 		// queries[i].interval to be a total number of seconds and does
@@ -465,7 +465,7 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		if cate != "prometheus" {
 			return "", fmt.Errorf(
 				"for cate=%s, rule_config_json is required. "+
-					"First call read_file(base=\"n9e-create-alert-rule\", path=\"datasources/%s.md\") "+
+					"First call read_file(base=\"create-alert-rule\", path=\"datasources/%s.md\") "+
 					"to fetch the exact rule_config structure, then pass it as rule_config_json",
 				cate, cate)
 		}
@@ -869,7 +869,9 @@ func updateAlertRule(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		case "threshold", "prom_ql", "operator":
 			queryEdited = true
 		case "rule_config":
-			changeDescs = append(changeDescs, "`rule_config` → 整体替换查询/触发结构")
+			changeDescs = append(changeDescs, aiagent.LangText(params["lang"],
+				"`rule_config` → 整体替换查询/触发结构",
+				"`rule_config` → replace the whole query/trigger structure"))
 		default:
 			if v, ok := args[k]; ok {
 				changeDescs = append(changeDescs, fmt.Sprintf("`%s` → %v", k, v))
@@ -880,7 +882,8 @@ func updateAlertRule(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 	}
 	if queryEdited {
 		if baked := currentBakedPromQL(updated.RuleConfigJson); baked != "" {
-			changeDescs = append(changeDescs, fmt.Sprintf("查询条件 → `%s`", baked))
+			changeDescs = append(changeDescs, fmt.Sprintf(aiagent.LangText(params["lang"],
+				"查询条件 → `%s`", "query condition → `%s`"), baked))
 		}
 	}
 
@@ -899,7 +902,8 @@ func updateAlertRule(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 			TargetID:     id,
 			BaselineHash: baseline,
 			Changes:      changeDescs,
-		}, renderUpdateProposalPrompt(fmt.Sprintf("告警规则 **%s**（id=%d）", existing.Name, id), changeDescs), resumeArgs)
+		}, renderUpdateProposalPrompt(params["lang"], fmt.Sprintf(aiagent.LangText(params["lang"],
+			"告警规则 **%s**（id=%d）", "alert rule **%s** (id=%d)"), existing.Name, id), changeDescs), resumeArgs)
 	}
 
 	// confirm 腿：基线哈希保证此刻基于当前规则重算出的 updated 与提案时展示的一致。
@@ -1331,7 +1335,7 @@ func importAlertRuleTemplate(_ context.Context, deps *aiagent.ToolDeps, args map
 	// 缺参门：同 create_alert_rule。
 	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-create-alert-rule", []string{"busi_group_id", "datasource_id"})
+		return "", creationFormInterrupt(params["lang"], deps, user, "create-alert-rule", []string{"busi_group_id", "datasource_id"})
 	}
 
 	component := strings.TrimSpace(getArgString(args, "component"))

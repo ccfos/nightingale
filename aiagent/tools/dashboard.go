@@ -107,7 +107,7 @@ func createDashboard(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	// 缺参门：缺业务组时以表单中断向用户取值，而非纯错误回给模型让它替用户瞎选。
 	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-create-dashboard", []string{"busi_group_id"})
+		return "", creationFormInterrupt(params["lang"], deps, user, "create-dashboard", []string{"busi_group_id"})
 	}
 
 	name := getArgString(args, "name")
@@ -221,7 +221,7 @@ func importDashboardTemplate(_ context.Context, deps *aiagent.ToolDeps, args map
 	// 缺参门：同 create_dashboard。
 	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-create-dashboard", []string{"busi_group_id"})
+		return "", creationFormInterrupt(params["lang"], deps, user, "create-dashboard", []string{"busi_group_id"})
 	}
 
 	component := strings.TrimSpace(getArgString(args, "component"))
