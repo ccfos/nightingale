@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/slice"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,9 +27,12 @@ func mcpCanUse(me *models.User, myGroupIds []int64, obj *models.MCPServer) bool 
 }
 
 // mcpCallerCanManage resolves the request's user (and, for non-admins, their
-// team ids) and reports whether they may manage obj. obj may be an incoming
-// payload, so the same check gates both loading an existing server and
-// (re)assigning its ownership on add/update.
+// team ids) and reports whether they may manage an EXISTING obj.
+//
+// Do NOT reuse it to vet an incoming payload's ownership: it is an intersection
+// test, so a payload mixing one team of the caller's own into the list would pass
+// while smuggling in teams they don't belong to. Assignment goes through
+// mcpEnsureCanAssignTeams (subset).
 func (rt *Router) mcpCallerCanManage(c *gin.Context, obj *models.MCPServer) bool {
 	me := c.MustGet("user").(*models.User)
 	var gids []int64
@@ -38,6 +42,43 @@ func (rt *Router) mcpCallerCanManage(c *gin.Context, obj *models.MCPServer) bool
 		ginx.Dangerous(err)
 	}
 	return mcpCanManage(me, gids, obj)
+}
+
+// mcpTeamAssignmentAllowed reports whether a non-admin holding gids may move a
+// server's owning teams from prev to next (prev nil = a fresh create).
+//
+// This is a DIFFERENT question from mcpCanManage. "May I manage this server" is
+// rightly an INTERSECTION — being in any one owning team is enough. But "may I hand
+// this server to these teams" must be a SUBSET: with an intersection test, mixing a
+// single team of one's own into the list smuggles in any number of teams the caller
+// doesn't belong to (user in team 2 posting [2,3] passed, and team 3's members then
+// really did receive a team-scoped server from an outsider). Same rule the skill
+// routes already enforce via resolveSkillAuth.
+//
+// Only the ADDED teams must be the caller's, mirroring resolveSkillAuth's use of
+// addedGroups: a server co-owned by another team can still be edited by a member of
+// one owning team without being forced to drop the co-owner.
+//
+// The trailing intersection check is the anti-lockout rule the previous code had:
+// after the change the caller must still be in at least one owning team, so a single
+// edit can't hand the server away and leave the caller unable to manage it. It also
+// keeps rejecting an empty team list from a non-admin, as before.
+func mcpTeamAssignmentAllowed(gids, prev, next []int64) bool {
+	return groupsSubset(gids, addedGroups(prev, next)) && slice.HaveIntersection(gids, next)
+}
+
+// mcpEnsureCanAssignTeams 403s unless the caller may assign `next` as the owning
+// teams (admins bypass). prev is the current ownership; nil for a create.
+func (rt *Router) mcpEnsureCanAssignTeams(c *gin.Context, prev, next []int64) {
+	me := c.MustGet("user").(*models.User)
+	if me.IsAdmin() {
+		return
+	}
+	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+	ginx.Dangerous(err)
+	if !mcpTeamAssignmentAllowed(gids, prev, next) {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
 }
 
 // mcpServerLoadForManage loads a server by id and 403s unless the caller may
@@ -104,10 +145,9 @@ func (rt *Router) mcpServerAdd(c *gin.Context) {
 	ginx.Dangerous(obj.Verify())
 
 	me := c.MustGet("user").(*models.User)
-	// Non-admins may only create servers owned by a team they belong to.
-	if !rt.mcpCallerCanManage(c, &obj) {
-		ginx.Bomb(http.StatusForbidden, "forbidden")
-	}
+	// Non-admins may only authorize teams they belong to — every one of them, not
+	// merely one (see mcpTeamAssignmentAllowed).
+	rt.mcpEnsureCanAssignTeams(c, nil, obj.UserGroupIds)
 	obj.CreatedBy = me.Username
 	obj.UpdatedBy = me.Username
 
@@ -123,11 +163,9 @@ func (rt *Router) mcpServerPut(c *gin.Context) {
 	ginx.Dangerous(ref.Verify())
 
 	me := c.MustGet("user").(*models.User)
-	// A non-admin must keep the server owned by at least one of their teams, so
-	// they can't hand it off to a team they don't belong to and lose control.
-	if !rt.mcpCallerCanManage(c, &ref) {
-		ginx.Bomb(http.StatusForbidden, "forbidden")
-	}
+	// A non-admin may only ADD teams they belong to, and must keep at least one of
+	// their own so they don't hand the server away and lose control.
+	rt.mcpEnsureCanAssignTeams(c, obj.UserGroupIds, ref.UserGroupIds)
 	ref.UpdatedBy = me.Username
 
 	ginx.NewRender(c).Message(obj.Update(rt.Ctx, ref))
