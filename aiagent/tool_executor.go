@@ -9,12 +9,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
-	"strings"
 	"text/template"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/toolkits/pkg/logger"
@@ -61,12 +58,12 @@ func (a *Agent) executeToolI(ctx context.Context, toolName string, input string,
 		}
 	}
 
-	// 3. 根据工具类型执行（HTTP/MCP/外部处理器不支持中断——中断是内置工具专属能力）
+	// 3. 根据工具类型执行（HTTP/外部工具源/外部处理器不支持中断——中断是内置工具专属能力）
 	switch tool.Type {
 	case ToolTypeHTTP:
 		return a.executeHTTPTool(ctx, tool, args, req), nil
-	case ToolTypeMCP:
-		return a.executeMCPTool(ctx, tool, args), nil
+	case ToolTypeExternal:
+		return a.executeExternalTool(ctx, tool, args), nil
 	case ToolTypeProcessor, ToolTypeSkill:
 		// 委托给外部工具处理器（由适配层注入）
 		if a.externalToolHandler != nil {
@@ -171,176 +168,53 @@ func (a *Agent) executeHTTPTool(ctx context.Context, tool *AgentTool, args map[s
 	return result
 }
 
-// executeMCPTool 执行 MCP 工具
-func (a *Agent) executeMCPTool(ctx context.Context, tool *AgentTool, args map[string]interface{}) string {
-	if tool.MCPConfig == nil {
-		return "Error: mcp_config not configured"
+// executeExternalTool 执行外部工具源提供的工具
+func (a *Agent) executeExternalTool(ctx context.Context, tool *AgentTool, args map[string]interface{}) string {
+	if tool.source == nil {
+		return fmt.Sprintf("Error: external tool '%s' has no source bound", tool.Name)
 	}
 
-	if a.mcpClientManager == nil {
-		return "Error: MCP client manager not initialized"
-	}
-
-	serverConfig, ok := a.mcpServers[tool.MCPConfig.ServerName]
-	if !ok {
-		return fmt.Sprintf("Error: MCP server '%s' not found", tool.MCPConfig.ServerName)
-	}
-
-	client, err := a.mcpClientManager.GetOrCreateClient(ctx, serverConfig)
+	result, err := tool.source.CallTool(ctx, tool, args)
 	if err != nil {
-		return fmt.Sprintf("Error: failed to connect to MCP server '%s': %v", tool.MCPConfig.ServerName, err)
+		return fmt.Sprintf("Error: %v", err)
 	}
 
-	result, err := client.CallTool(ctx, tool.MCPConfig.ToolName, args)
-	if err != nil {
-		return fmt.Sprintf("Error: MCP tool call failed: %v", err)
+	if len(result) > ToolOutputMaxBytes {
+		result = result[:ToolOutputMaxBytes] + "\n... (truncated)"
 	}
-
-	return a.formatMCPResult(result)
+	return result
 }
 
-// appendMCPTools 自动发现 MCP 服务器提供的工具并追加到 base
+// appendSourceTools 逐源发现外部工具并追加到 base：工具统一置为 ToolTypeExternal
+// 并绑定回产出它的源；Name 与已有工具冲突时先到先得。单源失败只降级跳过该源。
 // 纯函数：不写 a.cfg，返回新切片（供 runCtx 使用）
-func (a *Agent) appendMCPTools(ctx context.Context, base []AgentTool) []AgentTool {
-	if a.mcpClientManager == nil || len(a.mcpServers) == 0 {
-		return base
-	}
-
+func (a *Agent) appendSourceTools(ctx context.Context, base []AgentTool) []AgentTool {
 	seen := make(map[string]bool, len(base))
 	for _, tool := range base {
 		seen[tool.Name] = true
 	}
 	result := base
 
-	serverNames := make([]string, 0, len(a.mcpServers))
-	for name := range a.mcpServers {
-		serverNames = append(serverNames, name)
-	}
-	sort.Strings(serverNames)
-
-	for _, serverName := range serverNames {
-		serverConfig := a.mcpServers[serverName]
-		client, err := a.mcpClientManager.GetOrCreateClient(ctx, serverConfig)
+	for _, source := range a.cfg.ToolSources {
+		tools, err := source.DiscoverTools(ctx)
 		if err != nil {
-			logger.Warningf("Failed to connect to MCP server '%s': %v", serverName, err)
+			logger.Warningf("Failed to discover tools from external source: %v", err)
 			continue
 		}
 
-		tools, err := client.ListTools(ctx)
-		if err != nil {
-			logger.Warningf("Failed to list tools from MCP server '%s': %v", serverName, err)
-			continue
-		}
-
-		for _, mcpTool := range tools {
-			if seen[mcpTool.Name] {
+		added := 0
+		for _, tool := range tools {
+			if seen[tool.Name] {
 				continue
 			}
-
-			var params []ToolParameter
-			if mcpTool.InputSchema != nil {
-				params = a.convertMCPSchemaToParams(mcpTool.InputSchema)
-			}
-
-			result = append(result, AgentTool{
-				Name:        mcpTool.Name,
-				Description: mcpTool.Description,
-				Type:        ToolTypeMCP,
-				MCPConfig: &mcp.ToolConfig{
-					ServerName: serverName,
-					ToolName:   mcpTool.Name,
-				},
-				Parameters: params,
-			})
-			seen[mcpTool.Name] = true
-
-			logger.Debugf("Discovered MCP tool: %s (from server: %s)", mcpTool.Name, serverName)
+			tool.Type = ToolTypeExternal
+			tool.source = source
+			result = append(result, tool)
+			seen[tool.Name] = true
+			added++
 		}
-
-		logger.Infof("Discovered %d tools from MCP server '%s'", len(tools), serverName)
+		logger.Infof("Discovered %d tools from external source (added=%d)", len(tools), added)
 	}
 
 	return result
-}
-
-func (a *Agent) convertMCPSchemaToParams(schema map[string]interface{}) []ToolParameter {
-	var params []ToolParameter
-
-	properties, ok := schema["properties"].(map[string]interface{})
-	if !ok {
-		return params
-	}
-
-	requiredFields := make(map[string]bool)
-	if required, ok := schema["required"].([]interface{}); ok {
-		for _, r := range required {
-			if name, ok := r.(string); ok {
-				requiredFields[name] = true
-			}
-		}
-	}
-
-	for name, propRaw := range properties {
-		prop, ok := propRaw.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		param := ToolParameter{
-			Name:     name,
-			Required: requiredFields[name],
-		}
-
-		if t, ok := prop["type"].(string); ok {
-			param.Type = t
-		}
-		if desc, ok := prop["description"].(string); ok {
-			param.Description = desc
-		}
-
-		params = append(params, param)
-	}
-
-	return params
-}
-
-func (a *Agent) formatMCPResult(result *mcp.ToolsCallResult) string {
-	if result == nil {
-		return "No result returned"
-	}
-
-	if result.IsError {
-		var errMsg strings.Builder
-		errMsg.WriteString("Error: ")
-		for _, content := range result.Content {
-			if content.Text != "" {
-				errMsg.WriteString(content.Text)
-			}
-		}
-		return errMsg.String()
-	}
-
-	var output strings.Builder
-	for _, content := range result.Content {
-		switch content.Type {
-		case "text":
-			output.WriteString(content.Text)
-		case "image":
-			output.WriteString(fmt.Sprintf("[Image: %s]", content.MimeType))
-		case "resource":
-			output.WriteString(fmt.Sprintf("[Resource: %s]", content.MimeType))
-		default:
-			if content.Text != "" {
-				output.WriteString(content.Text)
-			}
-		}
-		output.WriteString("\n")
-	}
-
-	outputStr := strings.TrimSpace(output.String())
-	if len(outputStr) > ToolOutputMaxBytes {
-		outputStr = outputStr[:ToolOutputMaxBytes] + "\n... (truncated)"
-	}
-
-	return outputStr
 }

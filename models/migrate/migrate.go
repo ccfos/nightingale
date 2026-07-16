@@ -119,8 +119,7 @@ func MigrateTables(db *gorm.DB) error {
 		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
 		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{},
 		&models.SavedView{}, &models.UserViewFavorite{},
-		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{}, &models.MCPServer{},
-		&models.MCPServerOAuth{},
+		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{},
 		&models.AssistantChatRow{}}
 
 	if isPostgres(db) {

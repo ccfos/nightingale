@@ -20,7 +20,7 @@ const (
 	// HTTPStatusSuccessMax HTTP 工具视为成功的状态码上界（含），超出视为错误。
 	HTTPStatusSuccessMax = 299
 
-	// ToolOutputMaxBytes 工具（HTTP / MCP）单次返回给 LLM 的最大字节数。
+	// ToolOutputMaxBytes 工具（HTTP / 外部工具源）单次返回给 LLM 的最大字节数。
 	// 超出会在尾部追加 "... (truncated)" 截断，防止长响应占爆上下文 token。
 	ToolOutputMaxBytes = 4000
 

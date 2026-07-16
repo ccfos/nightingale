@@ -361,8 +361,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// (e.g. ask the user to pick a busi group before a creation skill runs).
 	toolDeps := rt.buildToolDeps()
 
-	// Resolve the requesting user once: preflight needs it, and MCP-server team
-	// scoping (buildMCPConfigForAgent) filters bound servers per this user.
+	// Resolve the requesting user once: preflight needs it, and the external
+	// tool-source hook (agentToolSources) scopes its sources per this user.
 	me, uerr := models.UserGetById(rt.Ctx, userId)
 	if uerr != nil || me == nil {
 		rt.finishMessage(state, streamID, 500, "failed to resolve user")
@@ -438,9 +438,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// fmt.Sprintf 把 msg.Query.Content 原样拼进 userPrompt，不能再经 text/template
 	// 解析——否则用户问 "告警模板怎么写 {{ .Alertname }}" 会让 Parse 失败，整轮 500。
 	//
-	// Skills / MCP 绑定：agent.SkillIds/MCPServerIds 非空时走"精确注入"路径
-	// （SkillNames + 固定 MCP server 列表），空则不预载——系统提示词常驻技能目录，
-	// 模型经 load_skill 自取。action handler 若声明了 RequiredSkills，则覆盖上述两者——见 resolveSkillConfig。
+	// Skills 绑定：agent.SkillIds 非空时走"精确注入"路径（SkillNames），空则不
+	// 预载——系统提示词常驻技能目录，模型经 load_skill 自取。action handler 若
+	// 声明了 RequiredSkills，则覆盖上述两者——见 resolveSkillConfig。
 	skillCfg := rt.resolveSkillConfig(handler, chatReq, agent)
 	// 私有 skill 仅对授权团队可见：把当前用户在 AI 对话里看不到的私有 skill
 	// 从常驻技能目录里过滤掉（与运行时加载层同一份名单，见上 hiddenSkills）。
@@ -455,7 +455,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		UserPromptRendered: userPrompt,
 		GuidedFollowup:     true, // 交互式 chat：末尾给可点选的"下一步"建议
 		Skills:             skillCfg,
-		MCP:                rt.buildMCPConfigForAgent(agent, me),
+		ToolSources:        rt.agentToolSources(agent, me),
 		HistoryBudgetBytes: historyBudgetFromContextLength(llmCfg.ExtraConfig.ContextLength),
 	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
 

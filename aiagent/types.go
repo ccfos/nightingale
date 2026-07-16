@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
-	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -19,7 +18,7 @@ const (
 	// 工具类型
 	ToolTypeHTTP      = "http"      // HTTP 请求工具
 	ToolTypeBuiltin   = "builtin"   // 内置工具
-	ToolTypeMCP       = "mcp"       // MCP 工具
+	ToolTypeExternal  = "external"  // 外部工具源提供的工具（见 ToolSource）
 	ToolTypeProcessor = "processor" // 夜莺处理器工具（需 ExternalToolHandler）
 	ToolTypeSkill     = "skill"     // Skill 专用工具（需 ExternalToolHandler）
 
@@ -54,10 +53,6 @@ type Agent struct {
 	// Skills
 	skillRegistry *SkillRegistry
 
-	// MCP
-	mcpClientManager *mcp.ClientManager
-	mcpServers       map[string]*mcp.ServerConfig
-
 	// 外部工具处理器（用于 processor/skill 类型工具，由适配层注入）
 	externalToolHandler ExternalToolHandler
 
@@ -77,8 +72,11 @@ type AgentConfig struct {
 
 	// 可选能力
 	Skills *SkillConfig `json:"skills,omitempty"`
-	MCP    *mcp.Config  `json:"mcp,omitempty"`
 	Stream bool         `json:"stream,omitempty"`
+
+	// ToolSources 外部工具源（由适配层注入，如企业版的 MCP client）。每个源在
+	// Run 开头经 DiscoverTools 动态贡献一批工具，执行时回调 CallTool。
+	ToolSources []ToolSource `json:"-"`
 
 	// HistoryBudgetBytes 历史投影预算（字节），0 = DefaultHistoryBudgetBytes。
 	// router 从 LLM 配置 ExtraConfig.context_length 粗略折算（token×3）。
@@ -183,11 +181,12 @@ type AgentTool struct {
 	// Skill 工具配置（type=skill，由 ExternalToolHandler 处理）
 	SkillName string `json:"skill_name,omitempty"`
 
-	// MCP 工具配置
-	MCPConfig *mcp.ToolConfig `json:"mcp_config,omitempty"`
-
 	// 参数定义
 	Parameters []ToolParameter `json:"parameters,omitempty"`
+
+	// source 仅 ToolTypeExternal：产出本工具的外部工具源，执行时回调其 CallTool。
+	// 由 appendSourceTools 在发现阶段绑定，不参与序列化。
+	source ToolSource
 }
 
 // ToolParameter 工具参数定义
@@ -261,6 +260,20 @@ type BuiltinToolFunc func(ctx context.Context, deps *ToolDeps, args map[string]i
 // 由适配层注入，核心 Agent 不关心具体实现
 type ExternalToolHandler func(ctx context.Context, tool *AgentTool, args map[string]interface{}, req *AgentRequest) (string, error)
 
+// ToolSource 外部工具源：为单次 Run 动态提供一批工具及其执行实现，由适配层经
+// AgentConfig.ToolSources 注入（如企业版把外部 MCP 服务器包装成一个源）。核心
+// Agent 不关心工具背后的协议——发现到的工具统一置为 ToolTypeExternal 并绑定回
+// 产出它的源，执行时回调该源的 CallTool。
+type ToolSource interface {
+	// DiscoverTools 返回该源当前提供的工具列表（Run 开头调用一次）。返回工具的
+	// Name/Description/Parameters 会原样进 LLM 工具表；Name 与已有工具冲突时
+	// 先到先得（该工具被丢弃）。
+	DiscoverTools(ctx context.Context) ([]AgentTool, error)
+	// CallTool 执行本源中名为 tool.Name 的工具，返回给 LLM 的文本结果。
+	// 超长截断由 Agent 统一处理（ToolOutputMaxBytes），实现方无需关心。
+	CallTool(ctx context.Context, tool *AgentTool, args map[string]interface{}) (string, error)
+}
+
 // ==================== 工具循环类型 ====================
 
 // ToolStep 工具循环执行轨迹中的一步（思考 → 调工具 → 观测）。
@@ -297,7 +310,7 @@ type ToolLoopConfig struct {
 // 把 skills 和动态工具表从 AgentConfig 里剥离，让 Agent 可并发/重复 Run
 type runCtx struct {
 	skills []*SkillContent
-	tools  []AgentTool // 静态（cfg.Tools）+ skill + MCP，按本次选中的 skills 装配
+	tools  []AgentTool // 静态（cfg.Tools）+ skill + 外部工具源，按本次选中的 skills 装配
 }
 
 // ==================== LLM 消息类型 ====================
