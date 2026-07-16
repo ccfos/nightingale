@@ -70,16 +70,17 @@ type OAuthConfig struct {
 	// would destroy a working refresh token — see OnCredentialInvalid.
 	OnAuthRequired func(reason error)
 
-	// OnCredentialInvalid, if set, is invoked only when the stored credential is
-	// DEFINITIVELY rejected by the token endpoint — invalid_grant / invalid_client /
-	// unauthorized_client, i.e. the refresh token itself is dead (see
-	// isCredentialInvalid). DESTRUCTIVE: callers may clear the stored tokens on it.
+	// OnCredentialInvalid, if set, is invoked only when the token endpoint answers
+	// with an explicit RFC 6749 code saying the stored credential is dead (see
+	// classifyCredentialInvalid). DESTRUCTIVE: callers may clear stored material on
+	// it, and kind says how much — the grant only, or the client registration too.
 	//
-	// Deliberately NOT fired for transient trouble (network errors, 5xx) nor for a
-	// resource-server 401/403: a false positive discards a credential that still
-	// works, and mcp_server_oauth is a server-level, org-wide record — everyone
-	// would have to redo the browser consent flow.
-	OnCredentialInvalid func(reason error)
+	// Deliberately NOT fired for transient trouble (network errors, 5xx), for a
+	// resource-server 401/403, nor for a bare 401/403 from the token endpoint with
+	// no OAuth error body: a false positive discards a credential that still works,
+	// and mcp_server_oauth is a server-level, org-wide record — everyone would have
+	// to redo the browser consent flow.
+	OnCredentialInvalid func(kind CredentialInvalidKind, reason error)
 }
 
 // DefaultOAuthHTTPClient is the http.Client used for discovery/DCR/exchange.
@@ -283,8 +284,8 @@ func (h *oauthHandler) TokenSource(ctx context.Context) (oauth2.TokenSource, err
 // us here whenever the resource server 403s for an unrelated reason:
 // insufficient_scope on one tool, a gateway/WAF, an IP allowlist. Destroying the
 // org-wide refresh token on that would be unrecoverable — only the token endpoint
-// saying invalid_grant proves the credential itself is dead (see
-// persistingTokenSource.Token / isCredentialInvalid).
+// answering with an explicit OAuth error code proves the credential itself is dead
+// (see persistingTokenSource.Token / classifyCredentialInvalid).
 func (h *oauthHandler) Authorize(ctx context.Context, req *http.Request, resp *http.Response) error {
 	err := fmt.Errorf("mcp oauth: authorization required, please reconnect the server")
 	if h.cfg.OnAuthRequired != nil {
@@ -300,7 +301,7 @@ func (h *oauthHandler) Authorize(ctx context.Context, req *http.Request, resp *h
 type persistingTokenSource struct {
 	src                 oauth2.TokenSource
 	onRefresh           func(*oauth2.Token)
-	onCredentialInvalid func(error)
+	onCredentialInvalid func(CredentialInvalidKind, error)
 
 	mu   sync.Mutex
 	last *oauth2.Token
@@ -309,8 +310,10 @@ type persistingTokenSource struct {
 func (p *persistingTokenSource) Token() (*oauth2.Token, error) {
 	tok, err := p.src.Token()
 	if err != nil {
-		if p.onCredentialInvalid != nil && isCredentialInvalid(err) {
-			p.onCredentialInvalid(err)
+		if p.onCredentialInvalid != nil {
+			if kind, dead := classifyCredentialInvalid(err); dead {
+				p.onCredentialInvalid(kind, err)
+			}
 		}
 		return nil, err
 	}
@@ -325,25 +328,41 @@ func (p *persistingTokenSource) Token() (*oauth2.Token, error) {
 	return tok, nil
 }
 
-// isCredentialInvalid reports whether a token-endpoint failure definitively means
-// the stored credential is dead, as opposed to a transient blip a retry could
-// resolve. Only the RFC 6749 error codes that say "this grant/client is no longer
-// valid", plus an outright 401/403 from the token endpoint, qualify — a network
-// error or a 5xx must NOT, since acting on it would discard a working credential.
+// CredentialInvalidKind says WHICH part of the stored credential the token
+// endpoint rejected, because that decides how much has to be thrown away.
+type CredentialInvalidKind int
+
+const (
+	// CredentialInvalidGrant: the refresh token is dead (invalid_grant). The client
+	// registration is still good, so re-consent can reuse it.
+	CredentialInvalidGrant CredentialInvalidKind = iota
+	// CredentialInvalidClient: the CLIENT itself was rejected (invalid_client /
+	// unauthorized_client). Keeping the registration would make every retry — and
+	// every press of the authorize button — fail identically, so it has to go too.
+	CredentialInvalidClient
+)
+
+// classifyCredentialInvalid reports whether a token-endpoint failure definitively
+// means the stored credential is dead, and which part of it.
+//
+// ONLY an explicitly parsed RFC 6749 error code counts. There is deliberately no
+// fallback on the HTTP status: a WAF, IP allowlist or a hiccuping gateway sitting
+// in front of the token endpoint can answer a bare 401/403 with no OAuth error
+// body, and acting on that would irreversibly wipe an org-wide refresh token that
+// was never the problem. Same reason a network error or a 5xx never counts.
 // x/oauth2 surfaces token-endpoint errors as *oauth2.RetrieveError.
-func isCredentialInvalid(err error) bool {
+func classifyCredentialInvalid(err error) (CredentialInvalidKind, bool) {
 	var re *oauth2.RetrieveError
 	if !errors.As(err, &re) {
-		return false
+		return 0, false
 	}
 	switch re.ErrorCode {
-	case "invalid_grant", "invalid_client", "unauthorized_client":
-		return true
+	case "invalid_grant":
+		return CredentialInvalidGrant, true
+	case "invalid_client", "unauthorized_client":
+		return CredentialInvalidClient, true
 	}
-	if re.Response != nil {
-		return re.Response.StatusCode == http.StatusUnauthorized || re.Response.StatusCode == http.StatusForbidden
-	}
-	return false
+	return 0, false
 }
 
 // probeForChallenge sends an initialize request and returns the response so the

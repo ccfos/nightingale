@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent/mcp"
@@ -84,7 +85,41 @@ func (rt *Router) decryptMCPSecret(v string) (string, error) {
 
 // ---- runtime config: DB row -> mcp.ServerConfig (loads+decrypts OAuth) ----
 
-func (rt *Router) mcpServerConfig(obj *models.MCPServer) (*mcp.ServerConfig, error) {
+// mcpCredVersion pins the exact stored access-token ciphertext a running MCP
+// client is using, so a later "this credential is dead" verdict can be applied
+// with a conditional UPDATE that touches only that version. It MUST be captured
+// from the same DB read that produced the OAuthConfig — a second query could
+// straddle a concurrent OAuth callback and pin a token the client never used,
+// which is precisely how a stale rejection ends up wiping a fresh authorization.
+// Refreshes rotate the stored ciphertext, so persistRefreshedMCPToken moves the
+// pin along with them; otherwise a genuinely dead credential would stop matching
+// and never get cleaned up.
+type mcpCredVersion struct {
+	mu     sync.Mutex
+	cipher string
+}
+
+func (v *mcpCredVersion) get() string {
+	if v == nil {
+		return ""
+	}
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	return v.cipher
+}
+
+func (v *mcpCredVersion) set(cipher string) {
+	if v == nil {
+		return
+	}
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.cipher = cipher
+}
+
+// mcpServerConfig builds the client config. For oauth servers it also returns the
+// credential version pinned by the same read (nil for non-oauth servers).
+func (rt *Router) mcpServerConfig(obj *models.MCPServer) (*mcp.ServerConfig, *mcpCredVersion, error) {
 	cfg := &mcp.ServerConfig{
 		Name:      obj.Name,
 		Transport: mcp.MCPTransportHTTP,
@@ -93,39 +128,43 @@ func (rt *Router) mcpServerConfig(obj *models.MCPServer) (*mcp.ServerConfig, err
 		AuthMode:  obj.EffectiveAuthMode(),
 	}
 	if cfg.AuthMode == mcp.MCPAuthOAuth {
-		oc, err := rt.loadMCPOAuthConfig(obj.Id)
+		oc, ver, err := rt.loadMCPOAuthConfig(obj.Id)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		cfg.OAuth = oc
+		return cfg, ver, nil
 	}
-	return cfg, nil
+	return cfg, nil, nil
 }
 
-func (rt *Router) loadMCPOAuthConfig(serverId int64) (*mcp.OAuthConfig, error) {
+func (rt *Router) loadMCPOAuthConfig(serverId int64) (*mcp.OAuthConfig, *mcpCredVersion, error) {
 	rec, err := models.MCPServerOAuthGetByServerId(rt.Ctx, serverId)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if rec == nil || rec.AccessToken == "" {
-		return nil, fmt.Errorf("mcp server is not connected; complete the OAuth authorization first")
+		return nil, nil, fmt.Errorf("mcp server is not connected; complete the OAuth authorization first")
 	}
 	sec, err := rt.decryptMCPSecret(rec.ClientSecret)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	acc, err := rt.decryptMCPSecret(rec.AccessToken)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	ref, err := rt.decryptMCPSecret(rec.RefreshToken)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var expiry time.Time
 	if rec.Expiry > 0 {
 		expiry = time.Unix(rec.Expiry, 0)
 	}
+	// Pinned from THIS read — the very record whose token we're about to hand to
+	// the client. No second query.
+	ver := &mcpCredVersion{cipher: rec.AccessToken}
 	return &mcp.OAuthConfig{
 		Endpoints: mcp.OAuthEndpoints{
 			Issuer:                rec.Issuer,
@@ -142,13 +181,13 @@ func (rt *Router) loadMCPOAuthConfig(serverId int64) (*mcp.OAuthConfig, error) {
 		RefreshToken: ref,
 		TokenType:    rec.TokenType,
 		Expiry:       expiry,
-		OnRefresh:    func(t *oauth2.Token) { rt.persistRefreshedMCPToken(serverId, t) },
-	}, nil
+		OnRefresh:    func(t *oauth2.Token) { rt.persistRefreshedMCPToken(serverId, t, ver) },
+	}, ver, nil
 }
 
 // persistRefreshedMCPToken writes a rotated access/refresh token back to the DB
 // (encrypted). Invoked by the token source whenever the SDK refreshes.
-func (rt *Router) persistRefreshedMCPToken(serverId int64, t *oauth2.Token) {
+func (rt *Router) persistRefreshedMCPToken(serverId int64, t *oauth2.Token, ver *mcpCredVersion) {
 	// Persist failures must be loud: with refresh-token rotation the old token in
 	// the DB is already revoked, so losing the new one breaks the server for good.
 	rec, err := models.MCPServerOAuthGetByServerId(rt.Ctx, serverId)
@@ -182,7 +221,11 @@ func (rt *Router) persistRefreshedMCPToken(serverId int64, t *oauth2.Token) {
 	}
 	if err := rec.Save(rt.Ctx); err != nil {
 		logger.Warningf("[MCP-OAuth] persist refreshed token failed (server=%d): save: %v", serverId, err)
+		return
 	}
+	// The stored ciphertext just rotated — move the pin, or a later invalidation
+	// would target a version that no longer exists and silently skip.
+	ver.set(accEnc)
 }
 
 // ---- endpoints ----
@@ -217,8 +260,12 @@ func (rt *Router) mcpServerOAuthPrepare(c *gin.Context) {
 	// before considering DCR: a server that never supported DCR — whose client was
 	// configured by hand on the management page — would otherwise fail here with
 	// "does not support dynamic client registration", i.e. the button could never
-	// work for exactly the servers that need it most. invalidateMCPOAuthToken
-	// deliberately keeps this registration when it clears dead tokens.
+	// work for exactly the servers that need it most.
+	//
+	// Reuse is safe because invalidateMCPOAuthCredential only keeps the registration
+	// when the verdict was invalid_grant (the client was never at fault). When the
+	// token endpoint rejected the CLIENT it clears client_id too, so we fall through
+	// to DCR below instead of handing back a client already known to be refused.
 	if clientID == "" {
 		if rec, rerr := models.MCPServerOAuthGetByServerId(rt.Ctx, obj.Id); rerr == nil && rec != nil && rec.ClientId != "" {
 			clientID = rec.ClientId
@@ -367,7 +414,7 @@ func (rt *Router) mcpServerOAuthCallback(c *gin.Context) {
 // vanish AND the authorize button hides, which is exactly the situation the button
 // exists to fix.
 func (rt *Router) mcpOAuthUsable(serverId int64) error {
-	cfg, err := rt.loadMCPOAuthConfig(serverId)
+	cfg, _, err := rt.loadMCPOAuthConfig(serverId)
 	if err != nil {
 		// Record missing, token empty, or ciphertext undecryptable.
 		return err

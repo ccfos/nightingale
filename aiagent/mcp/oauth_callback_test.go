@@ -20,7 +20,7 @@ func TestAuthorizeNeverDestroysCredential(t *testing.T) {
 			credentialInvalid := 0
 			h := &oauthHandler{cfg: &OAuthConfig{
 				OnAuthRequired:      func(error) { authRequired++ },
-				OnCredentialInvalid: func(error) { credentialInvalid++ },
+				OnCredentialInvalid: func(CredentialInvalidKind, error) { credentialInvalid++ },
 			}}
 
 			err := h.Authorize(context.Background(), &http.Request{}, &http.Response{StatusCode: status})

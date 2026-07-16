@@ -314,28 +314,39 @@ func MCPServerOAuthDelByServerId(c *ctx.Context, serverId int64) error {
 	return DB(c).Where("server_id = ?", serverId).Delete(&MCPServerOAuth{}).Error
 }
 
-// MCPServerOAuthInvalidateTokens clears the stored access/refresh tokens of a
-// server whose credential the provider definitively rejected, keeping the client
-// registration so re-consent doesn't need a fresh DCR (a server that never
-// supported DCR could not be re-registered at all).
+// MCPServerOAuthInvalidateTokens clears the stored credential of a server the
+// token endpoint definitively rejected.
+//
+// alsoClearClient distinguishes the two verdicts. invalid_grant only kills the
+// grant, so the client registration is kept and re-consent can reuse it (a server
+// that never supported DCR could not be re-registered at all). invalid_client /
+// unauthorized_client rejects the CLIENT, so it must go too — otherwise prepare
+// would hand the very same rejected client back to the next authorize attempt and
+// the user could never escape the loop; with it cleared, prepare falls back to DCR,
+// or tells them to supply a valid client by hand.
 //
 // expectAccessToken is the exact stored ciphertext the failing request was using;
 // the update is conditional on it still being there. Returns rows affected: 0 means
 // a newer authorization landed in the meantime (a concurrent OAuth callback saved
 // fresh tokens) and a late "your token is dead" response from the OLD credential
-// must not destroy it — otherwise one stale 401 would knock the server offline for
-// everyone right after someone successfully reconnected it.
-func MCPServerOAuthInvalidateTokens(c *ctx.Context, serverId int64, expectAccessToken string) (int64, error) {
+// must not destroy it — otherwise one stale rejection would knock the server
+// offline for everyone right after someone successfully reconnected it.
+func MCPServerOAuthInvalidateTokens(c *ctx.Context, serverId int64, expectAccessToken string, alsoClearClient bool) (int64, error) {
 	if expectAccessToken == "" {
 		return 0, nil
 	}
+	updates := map[string]interface{}{
+		"access_token":  "",
+		"refresh_token": "",
+		"updated_at":    time.Now().Unix(),
+	}
+	if alsoClearClient {
+		updates["client_id"] = ""
+		updates["client_secret"] = ""
+	}
 	res := DB(c).Model(&MCPServerOAuth{}).
 		Where("server_id = ? AND access_token = ?", serverId, expectAccessToken).
-		Updates(map[string]interface{}{
-			"access_token":  "",
-			"refresh_token": "",
-			"updated_at":    time.Now().Unix(),
-		})
+		Updates(updates)
 	return res.RowsAffected, res.Error
 }
 

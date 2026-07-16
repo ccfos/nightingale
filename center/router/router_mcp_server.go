@@ -151,7 +151,7 @@ func (rt *Router) mcpServerTest(c *gin.Context) {
 		// Saved server (may be oauth): use its stored config + tokens.
 		obj := rt.mcpServerLoadForManage(c, body.Id)
 		var err error
-		cfg, err = rt.mcpServerConfig(obj)
+		cfg, _, err = rt.mcpServerConfig(obj)
 		ginx.Dangerous(err)
 	} else {
 		if body.URL == "" {
@@ -187,7 +187,7 @@ func (rt *Router) mcpServerTest(c *gin.Context) {
 func (rt *Router) mcpServerTools(c *gin.Context) {
 	obj := rt.mcpServerLoadForManage(c, ginx.UrlParamInt64(c, "id"))
 
-	cfg, err := rt.mcpServerConfig(obj)
+	cfg, _, err := rt.mcpServerConfig(obj)
 	ginx.Dangerous(err)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
