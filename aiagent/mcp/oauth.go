@@ -57,16 +57,29 @@ type OAuthConfig struct {
 	// so the caller can persist it (encrypted) back to the DB.
 	OnRefresh func(*oauth2.Token)
 
-	// OnAuthInvalid, if set, is invoked when the stored credential is DEFINITIVELY
-	// rejected: the token endpoint answers invalid_grant/invalid_client, or the
-	// resource server answers a 401/403 that refreshing could not resolve. Callers
-	// use it to mark the authorization dead and ask the user to reconnect — a local
-	// pre-check can't see either case (the ciphertext decrypts, the stored expiry
-	// looks fine), so without this the server's tools silently vanish mid-turn.
+	// OnAuthRequired, if set, is invoked when this server's tools could not be used
+	// this turn for an authorization-shaped reason — the resource server answered
+	// 401/403. NON-DESTRUCTIVE by contract: callers may surface an "authorize"
+	// prompt, but must NOT discard the stored credential on it.
 	//
-	// It is deliberately NOT fired for transient trouble (network errors, 5xx):
-	// a false positive would discard a credential that still works.
-	OnAuthInvalid func(reason error)
+	// A bare 401/403 says nothing about the credential itself. The SDK calls
+	// Authorize() on any 401/403 (mcp/streamable.go: `if resp.StatusCode == 401 ||
+	// resp.StatusCode == 403`), with no refresh attempted in between, so this fires
+	// just as readily for reasons unrelated to the token: insufficient_scope on one
+	// tool, a gateway/WAF, an IP allowlist. Treating those as "credential dead"
+	// would destroy a working refresh token — see OnCredentialInvalid.
+	OnAuthRequired func(reason error)
+
+	// OnCredentialInvalid, if set, is invoked only when the stored credential is
+	// DEFINITIVELY rejected by the token endpoint — invalid_grant / invalid_client /
+	// unauthorized_client, i.e. the refresh token itself is dead (see
+	// isCredentialInvalid). DESTRUCTIVE: callers may clear the stored tokens on it.
+	//
+	// Deliberately NOT fired for transient trouble (network errors, 5xx) nor for a
+	// resource-server 401/403: a false positive discards a credential that still
+	// works, and mcp_server_oauth is a server-level, org-wide record — everyone
+	// would have to redo the browser consent flow.
+	OnCredentialInvalid func(reason error)
 }
 
 // DefaultOAuthHTTPClient is the http.Client used for discovery/DCR/exchange.
@@ -252,34 +265,42 @@ func (h *oauthHandler) TokenSource(ctx context.Context) (oauth2.TokenSource, err
 			Expiry:       h.cfg.Expiry,
 		}
 		base := h.cfg.oauth2Config().TokenSource(ctx, tok)
-		h.src = &persistingTokenSource{src: base, onRefresh: h.cfg.OnRefresh, onAuthInvalid: h.cfg.OnAuthInvalid, last: tok}
+		h.src = &persistingTokenSource{src: base, onRefresh: h.cfg.OnRefresh, onCredentialInvalid: h.cfg.OnCredentialInvalid, last: tok}
 	}
 	return h.src, nil
 }
 
-// Authorize is called by the SDK on a 401/403 that the refreshing token source
-// could not resolve. Interactive re-consent is out-of-band (prepare/callback),
-// so we can only report that the server needs to be reconnected — and tell the
-// caller the credential is dead, so it can offer the user an authorize button
-// instead of just dropping this server's tools.
+// Authorize is called by the SDK whenever a request comes back 401/403. Interactive
+// re-consent is out-of-band (prepare/callback), so all we can do is report that the
+// server needs reconnecting and let the caller offer an authorize button, instead
+// of this server's tools just silently disappearing.
+//
+// It must NOT conclude the credential is dead. The SDK's contract is "called when
+// an HTTP request results in an error that may be addressed by the authorization
+// flow (currently 401 and 403)" — mcp/streamable.go dispatches on the status code
+// alone, with no refresh attempted first (the token source only refreshes near
+// expiry, and returns a cached token otherwise). So a perfectly valid token reaches
+// us here whenever the resource server 403s for an unrelated reason:
+// insufficient_scope on one tool, a gateway/WAF, an IP allowlist. Destroying the
+// org-wide refresh token on that would be unrecoverable — only the token endpoint
+// saying invalid_grant proves the credential itself is dead (see
+// persistingTokenSource.Token / isCredentialInvalid).
 func (h *oauthHandler) Authorize(ctx context.Context, req *http.Request, resp *http.Response) error {
 	err := fmt.Errorf("mcp oauth: authorization required, please reconnect the server")
-	// The SDK reaches us only after refreshing already failed to resolve the
-	// 401/403 — that's a definitive rejection, not a transient blip.
-	if h.cfg.OnAuthInvalid != nil {
-		h.cfg.OnAuthInvalid(err)
+	if h.cfg.OnAuthRequired != nil {
+		h.cfg.OnAuthRequired(err)
 	}
 	return err
 }
 
 // persistingTokenSource wraps a refreshing oauth2.TokenSource and calls onRefresh
-// whenever the token changes, so callers can persist the rotated token. A refresh
-// rejected as invalid_grant (revoked/expired refresh token) is reported via
-// onAuthInvalid — that failure is otherwise invisible to any local pre-check.
+// whenever the token changes, so callers can persist the rotated token. This is the
+// ONLY path that may declare a credential dead: a refresh rejected as invalid_grant
+// means the refresh token itself is gone, which no local pre-check can see.
 type persistingTokenSource struct {
-	src           oauth2.TokenSource
-	onRefresh     func(*oauth2.Token)
-	onAuthInvalid func(error)
+	src                 oauth2.TokenSource
+	onRefresh           func(*oauth2.Token)
+	onCredentialInvalid func(error)
 
 	mu   sync.Mutex
 	last *oauth2.Token
@@ -288,8 +309,8 @@ type persistingTokenSource struct {
 func (p *persistingTokenSource) Token() (*oauth2.Token, error) {
 	tok, err := p.src.Token()
 	if err != nil {
-		if p.onAuthInvalid != nil && isCredentialInvalid(err) {
-			p.onAuthInvalid(err)
+		if p.onCredentialInvalid != nil && isCredentialInvalid(err) {
+			p.onCredentialInvalid(err)
 		}
 		return nil, err
 	}

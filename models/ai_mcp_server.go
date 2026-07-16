@@ -314,6 +314,31 @@ func MCPServerOAuthDelByServerId(c *ctx.Context, serverId int64) error {
 	return DB(c).Where("server_id = ?", serverId).Delete(&MCPServerOAuth{}).Error
 }
 
+// MCPServerOAuthInvalidateTokens clears the stored access/refresh tokens of a
+// server whose credential the provider definitively rejected, keeping the client
+// registration so re-consent doesn't need a fresh DCR (a server that never
+// supported DCR could not be re-registered at all).
+//
+// expectAccessToken is the exact stored ciphertext the failing request was using;
+// the update is conditional on it still being there. Returns rows affected: 0 means
+// a newer authorization landed in the meantime (a concurrent OAuth callback saved
+// fresh tokens) and a late "your token is dead" response from the OLD credential
+// must not destroy it — otherwise one stale 401 would knock the server offline for
+// everyone right after someone successfully reconnected it.
+func MCPServerOAuthInvalidateTokens(c *ctx.Context, serverId int64, expectAccessToken string) (int64, error) {
+	if expectAccessToken == "" {
+		return 0, nil
+	}
+	res := DB(c).Model(&MCPServerOAuth{}).
+		Where("server_id = ? AND access_token = ?", serverId, expectAccessToken).
+		Updates(map[string]interface{}{
+			"access_token":  "",
+			"refresh_token": "",
+			"updated_at":    time.Now().Unix(),
+		})
+	return res.RowsAffected, res.Error
+}
+
 // MCPServerOAuthConnectedServerIds returns the ids of servers that hold a
 // non-empty access token, i.e. whose OAuth connection is established.
 func MCPServerOAuthConnectedServerIds(c *ctx.Context) ([]int64, error) {

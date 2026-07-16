@@ -60,6 +60,7 @@ Call **`update_mcp_server`** with `name` (which server) plus **only the fields t
 `new_name` / `url` / `description` / `headers` / `enabled` / `team_ids` / `private`.
 
 - `headers` is **replaced wholesale**, not merged. Since you can only see `header_keys`, never "preserve" headers by re-sending values you don't have — if the user wants to keep existing headers and add one, they must restate the full set, so ask.
+- **Changing `url` on an `auth_mode: oauth` server wipes its authorization.** The stored tokens were granted for the old address and cannot follow it to a new host, so the platform drops them. The confirmation card spells this out and the result tells the user to reauthorize — do not gloss over it, and if they only wanted a small URL tweak (a path or port), make sure they know the cost before confirming.
 - **`headers` is not available on an `auth_mode: oauth` server** — the runtime sends only the Authorization the OAuth flow issued and drops configured headers entirely, so the tool rejects the attempt rather than saving a header that would never be sent. If the user needs a custom header (e.g. `X-Tenant-ID`), tell them it means switching that server's auth mode to 自定义 Header on the "AI 配置 → MCP" page — which gives up OAuth.
 - `private` can only be changed by admins.
 - `team_ids` must stay within the user's own teams unless they're an admin.
@@ -76,6 +77,7 @@ When the user reports missing MCP tools, or asks about an OAuth server:
 1. `list_mcp_servers` and look at `auth_mode` + `oauth_connected`.
 2. If `auth_mode: oauth` and `oauth_connected: false`, tell the user this server needs authorization and that an **授权 (Authorize) button** is shown in the chat for servers awaiting it — clicking it opens the provider's consent page, and the tools appear on the next turn once it succeeds.
 3. Don't try to complete OAuth yourself: you cannot. There is no tool for it — the authorization is a browser flow the user drives. Never ask the user to paste a token, code, or callback URL into the chat.
+   - If they just changed that server's `url`, that's why the authorization is gone (section 3) — say so, rather than letting them think it broke on its own.
 4. `create_mcp_server` / `update_mcp_server` cannot switch a server into `oauth` mode either; that's set up on the "AI 配置 → MCP" page.
 
 Also check the mundane causes before blaming OAuth, in this order:

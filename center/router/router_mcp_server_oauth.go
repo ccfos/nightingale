@@ -210,6 +210,29 @@ func (rt *Router) mcpServerOAuthPrepare(c *gin.Context) {
 
 	clientID := strings.TrimSpace(body.ClientID)
 	clientSecret := strings.TrimSpace(body.ClientSecret)
+	scope := strings.TrimSpace(body.Scope)
+
+	// Re-authorization (the chat's authorize button, or "重新连接" on the form) posts
+	// only the id. Reuse the client registration already stored for this server
+	// before considering DCR: a server that never supported DCR — whose client was
+	// configured by hand on the management page — would otherwise fail here with
+	// "does not support dynamic client registration", i.e. the button could never
+	// work for exactly the servers that need it most. invalidateMCPOAuthToken
+	// deliberately keeps this registration when it clears dead tokens.
+	if clientID == "" {
+		if rec, rerr := models.MCPServerOAuthGetByServerId(rt.Ctx, obj.Id); rerr == nil && rec != nil && rec.ClientId != "" {
+			clientID = rec.ClientId
+			if sec, derr := rt.decryptMCPSecret(rec.ClientSecret); derr == nil {
+				clientSecret = sec
+			} else {
+				logger.Warningf("[MCP] server=%d stored client_secret undecryptable, re-registering: %v", obj.Id, derr)
+				clientID = ""
+			}
+			if clientID != "" && scope == "" {
+				scope = rec.Scope
+			}
+		}
+	}
 	if clientID == "" {
 		cid, csec, rerr := mcp.Register(c.Request.Context(), endpoints.RegistrationEndpoint,
 			"Nightingale ("+obj.Name+")", redirectURI, endpoints.Scopes, hc)
@@ -217,7 +240,6 @@ func (rt *Router) mcpServerOAuthPrepare(c *gin.Context) {
 		clientID, clientSecret = cid, csec
 	}
 
-	scope := strings.TrimSpace(body.Scope)
 	if scope == "" {
 		scope = strings.Join(endpoints.Scopes, " ")
 	}

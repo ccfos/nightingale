@@ -262,6 +262,49 @@ Guidelines:
 - After a successful creation, keep the Final Answer short (one sentence). Structured result cards are rendered separately by the UI.`, req.UserInput, ctxHint.String())
 }
 
+// strictInt64Slice parses a Context value into positive int64 ids, refusing to
+// coerce: a fractional/NaN/Inf/out-of-range number, or any unsupported element
+// type, invalidates the WHOLE group (ok=false) rather than silently dropping or
+// truncating that element. Used for authorization ids, where int64(1.9)==1 would
+// hand the resource to a real team the user never picked, and dropping an element
+// would quietly narrow a submitted set. Callers treat ok=false as "not submitted"
+// so the form is re-asked instead.
+func strictInt64Slice(raw interface{}) ([]int64, bool) {
+	list, ok := raw.([]interface{})
+	if !ok {
+		return nil, false
+	}
+	out := make([]int64, 0, len(list))
+	for _, e := range list {
+		var n int64
+		switch v := e.(type) {
+		case float64:
+			if math.IsNaN(v) || math.IsInf(v, 0) || v != math.Trunc(v) ||
+				v < float64(math.MinInt64) || v >= float64(math.MaxInt64) {
+				return nil, false
+			}
+			n = int64(v)
+		case int:
+			n = int64(v)
+		case int64:
+			n = v
+		case json.Number:
+			i, err := v.Int64()
+			if err != nil {
+				return nil, false
+			}
+			n = i
+		default:
+			return nil, false
+		}
+		if n <= 0 {
+			return nil, false
+		}
+		out = append(out, n)
+	}
+	return out, true
+}
+
 // ContextForwardInputs forwards structured context (busi_group_id,
 // datasource_id, team_ids) to the agent as tool params, so tools like
 // create_alert_rule / create_dashboard can read them via getDatasourceId etc.
@@ -279,12 +322,19 @@ func ContextForwardInputs(req *AIChatRequest) map[string]string {
 	if id := ctxInt64(req.Context, "datasource_id"); id > 0 {
 		inputs["datasource_id"] = fmt.Sprintf("%d", id)
 	}
-	if ids := ctxInt64Slice(req.Context, "team_ids"); len(ids) > 0 {
-		parts := make([]string, len(ids))
-		for i, id := range ids {
-			parts[i] = fmt.Sprintf("%d", id)
+	// team_ids(管理团队) 同样是授权字段，必须严格整数：ctxInt64Slice 会把 [1.9] 直接
+	// int64() 成团队 1 —— 篡改的 action.param 就能把资源分配给用户根本没提交的真实团队，
+	// 且下游 subset 校验对「团队 1」是放行的（调用者确实属于团队 1）。这也正是同批
+	// argInt64Slice 对 args 通道 [1.9] 的严格拒绝，Context 通道不能开后门。
+	// 任一元素非法即整组作废，回退到「未提交」→ 重新弹表单。
+	if raw, ok := req.Context["team_ids"]; ok {
+		if ids, valid := strictInt64Slice(raw); valid && len(ids) > 0 {
+			parts := make([]string, len(ids))
+			for i, id := range ids {
+				parts[i] = fmt.Sprintf("%d", id)
+			}
+			inputs["team_ids"] = strings.Join(parts, ",")
 		}
-		inputs["team_ids"] = strings.Join(parts, ",")
 	}
 	// private(可见范围 0/1) 经 create_mcp_server / create_skill 的 admin 授权表单提交。
 	// 0 是合法值（公开），故按存在性转发而非 >0 判断，避免「选了公开」被当成「未选」。

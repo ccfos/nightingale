@@ -145,9 +145,17 @@ func updateMCPServer(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		ref.Name = v
 		changes = append(changes, fmt.Sprintf("名称 → %s", v))
 	}
+	oauthWillBeCleared := false
 	if v := strings.TrimSpace(getArgString(args, "url")); v != "" && v != obj.URL {
 		ref.URL = v
 		changes = append(changes, fmt.Sprintf("地址 → %s", v))
+		// MCPServer.Update 在 URL 变化时会删掉整条 OAuth 记录（存量 token 是对旧地址的
+		// 授权，不能跟着换主机继续用）。这是破坏性副作用，必须进确认卡片——否则用户只
+		// 看到「地址 → xxx」就点了确认，下一轮该 server 的工具全部消失还不知道为什么。
+		if obj.EffectiveAuthMode() == "oauth" {
+			oauthWillBeCleared = true
+			changes = append(changes, "⚠️ 该 Server 为 OAuth 授权模式，改地址会清除已有授权（旧授权只对旧地址有效），改完需要重新完成授权")
+		}
 	}
 	if _, ok := args["description"]; ok {
 		if v := strings.TrimSpace(getArgString(args, "description")); v != obj.Description {
@@ -236,8 +244,13 @@ func updateMCPServer(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 	if err := obj.Update(deps.DBCtx, ref); err != nil {
 		return "", fmt.Errorf("failed to update mcp server: %v", err)
 	}
-	logger.Infof("update_mcp_server: user=%s name=%s id=%d changes=%v", user.Username, obj.Name, obj.Id, changes)
+	logger.Infof("update_mcp_server: user=%s name=%s id=%d changes=%v oauth_cleared=%v", user.Username, obj.Name, obj.Id, changes, oauthWillBeCleared)
 
+	if oauthWillBeCleared {
+		return fmt.Sprintf("已更新 MCP Server **%s**。\n\n"+
+			"⚠️ 因为改了地址，该 Server 原有的 OAuth 授权已被清除，**现在需要重新授权**才能再用它的工具："+
+			"去「AI 配置 → MCP」编辑它并点「连接授权」（下一轮对话里也会出现授权按钮）。", ref.Name), nil
+	}
 	return fmt.Sprintf("已更新 MCP Server **%s**。\n\n你可以在「AI 配置 → MCP」里查看它。", ref.Name), nil
 }
 

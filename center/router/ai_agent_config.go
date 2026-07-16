@@ -200,11 +200,20 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User)
 			sid := s.Id
 			name := s.Name
 			watch.track(s, false)
-			cfg.OAuth.OnAuthInvalid = func(reason error) {
+			// 非破坏性：resource server 回 401/403 只说明「本轮用不了」，原因可能与凭据
+			// 无关（scope 不足、网关、IP 白名单）。只弹按钮；下一轮本地预检会自愈。
+			cfg.OAuth.OnAuthRequired = func(reason error) {
 				if watch.markFailed(sid) {
-					logger.Infof("[AIAgent] mcp server=%s id=%d credential rejected at runtime, needs reauthorization: %v", name, sid, reason)
-					rt.invalidateMCPOAuthToken(sid)
+					logger.Infof("[AIAgent] mcp server=%s id=%d rejected with 401/403, surfacing authorize button: %v", name, sid, reason)
 				}
+			}
+			// 破坏性：只有 token endpoint 明确说 invalid_grant（refresh token 已死）才走到
+			// 这里。带上本次使用的 token 密文做条件更新，避免把并发授权刚存下的新 token 抹掉。
+			usedToken := rt.mcpOAuthAccessTokenCipher(s.Id)
+			cfg.OAuth.OnCredentialInvalid = func(reason error) {
+				watch.markFailed(sid)
+				logger.Infof("[AIAgent] mcp server=%s id=%d credential definitively rejected, invalidating stored token: %v", name, sid, reason)
+				rt.invalidateMCPOAuthToken(sid, usedToken)
 			}
 		}
 		out = append(out, *cfg)
@@ -272,23 +281,36 @@ func (w *mcpOAuthWatch) servers() []*models.MCPServer {
 	return out
 }
 
-// invalidateMCPOAuthToken clears the stored tokens of a server whose credential the
-// provider definitively rejected, keeping the client registration so re-consent
-// doesn't need a fresh DCR. Without this the local checks (status API,
-// list_mcp_servers, the next turn's pre-check) would go on reporting "connected"
-// off a token we already know is dead.
-func (rt *Router) invalidateMCPOAuthToken(serverId int64) {
+// mcpOAuthAccessTokenCipher returns the stored access-token ciphertext verbatim —
+// the version marker for the conditional invalidation below. "" when absent.
+func (rt *Router) mcpOAuthAccessTokenCipher(serverId int64) string {
 	rec, err := models.MCPServerOAuthGetByServerId(rt.Ctx, serverId)
+	if err != nil || rec == nil {
+		return ""
+	}
+	return rec.AccessToken
+}
+
+// invalidateMCPOAuthToken clears the stored tokens of a server whose credential the
+// token endpoint definitively rejected (invalid_grant — the refresh token is gone,
+// so clearing both is what actually happened, not an over-reach). The client
+// registration is kept so re-consent doesn't need a fresh DCR.
+//
+// Without this the local checks (status API, list_mcp_servers, the next turn's
+// pre-check) would go on reporting "connected" off a token we already know is dead.
+// usedToken scopes the write to the exact credential that failed, so a late
+// rejection carrying an old token can't wipe one a concurrent re-authorization
+// just saved.
+func (rt *Router) invalidateMCPOAuthToken(serverId int64, usedToken string) {
+	if usedToken == "" {
+		return
+	}
+	n, err := models.MCPServerOAuthInvalidateTokens(rt.Ctx, serverId, usedToken)
 	if err != nil {
-		logger.Warningf("[AIAgent] load oauth record to invalidate server=%d failed: %v", serverId, err)
-		return
-	}
-	if rec == nil {
-		return
-	}
-	rec.AccessToken = ""
-	rec.RefreshToken = ""
-	if err := rec.Save(rt.Ctx); err != nil {
 		logger.Warningf("[AIAgent] invalidate oauth token for server=%d failed: %v", serverId, err)
+		return
+	}
+	if n == 0 {
+		logger.Infof("[AIAgent] skip invalidating oauth token for server=%d: a newer authorization already replaced it", serverId)
 	}
 }
