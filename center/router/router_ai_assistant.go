@@ -942,6 +942,12 @@ func buildAgentInputs(chatReq *chat.AIChatRequest, userId int64, chatID string, 
 
 // buildMCPOAuthPayload 渲染 mcp_oauth 载荷：尚待用户完成 OAuth 授权的 MCP。id 是
 // 前端 POST /mcp-server-oauth/prepare 换取厂商授权页 URL 所需的键。
+//
+// detected_at 是「本卡片判定其不可用」的时刻。卡片会持久化在历史消息里、每次打开会话
+// 都重新渲染，前端据此与 /mcp-server-oauth/status 的 updated_at 比较：只有授权发生在
+// 本卡片之后，才把按钮换成「已连接」。不带这个时间戳就只有两种坏结局——要么永远显示
+// 按钮（授权完了旧卡片还在喊你授权），要么无脑信 status 而把按钮藏掉（运行时被 provider
+// 拒绝、但 token 本地看着仍可用时，用户反而没法自救）。
 func buildMCPOAuthPayload(servers []*models.MCPServer) string {
 	type item struct {
 		Id   int64  `json:"id"`
@@ -952,7 +958,10 @@ func buildMCPOAuthPayload(servers []*models.MCPServer) string {
 	for _, s := range servers {
 		items = append(items, item{Id: s.Id, Name: s.Name, URL: s.URL})
 	}
-	body, _ := json.Marshal(map[string]interface{}{"servers": items})
+	body, _ := json.Marshal(map[string]interface{}{
+		"servers":     items,
+		"detected_at": time.Now().Unix(),
+	})
 	return string(body)
 }
 
