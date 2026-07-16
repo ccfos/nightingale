@@ -85,36 +85,50 @@ func (rt *Router) decryptMCPSecret(v string) (string, error) {
 
 // ---- runtime config: DB row -> mcp.ServerConfig (loads+decrypts OAuth) ----
 
-// mcpCredVersion pins the exact stored access-token ciphertext a running MCP
-// client is using, so a later "this credential is dead" verdict can be applied
-// with a conditional UPDATE that touches only that version. It MUST be captured
-// from the same DB read that produced the OAuthConfig — a second query could
-// straddle a concurrent OAuth callback and pin a token the client never used,
-// which is precisely how a stale rejection ends up wiping a fresh authorization.
-// Refreshes rotate the stored ciphertext, so persistRefreshedMCPToken moves the
-// pin along with them; otherwise a genuinely dead credential would stop matching
+// mcpCredVersion pins the exact stored credential a running MCP client is using —
+// BOTH token ciphertexts, verbatim as stored — so a later "this credential is dead"
+// verdict can be applied with a conditional UPDATE that touches only that version.
+//
+// Both halves are required. OAuth does not promise a fresh access token on refresh:
+// two instances refreshing with the same R1 can end with instance B storing the
+// SAME access token X alongside a rotated refresh token R2, right before instance
+// A's now-consumed R1 comes back invalid_grant. Pinning the access token alone
+// would still match X and wipe R2 — knocking the server offline for the whole org
+// moments after it was renewed. Pinning the pair means any rotation of either half
+// stops the match.
+//
+// The pin MUST be captured from the same DB read that produced the OAuthConfig — a
+// second query could straddle a concurrent OAuth callback and pin a credential the
+// client never used, which is the other way a stale rejection destroys a fresh
+// authorization. Refreshes rotate the stored ciphertexts, so persistRefreshedMCPToken
+// moves the pin with them; otherwise a genuinely dead credential would stop matching
 // and never get cleaned up.
+//
+// Comparing stored-ciphertext-then against stored-ciphertext-now is sound whether or
+// not the cipher is deterministic: both sides are values read from the column, never
+// re-encrypted.
 type mcpCredVersion struct {
-	mu     sync.Mutex
-	cipher string
+	mu            sync.Mutex
+	accessCipher  string
+	refreshCipher string
 }
 
-func (v *mcpCredVersion) get() string {
+func (v *mcpCredVersion) get() (access, refresh string) {
 	if v == nil {
-		return ""
+		return "", ""
 	}
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	return v.cipher
+	return v.accessCipher, v.refreshCipher
 }
 
-func (v *mcpCredVersion) set(cipher string) {
+func (v *mcpCredVersion) set(access, refresh string) {
 	if v == nil {
 		return
 	}
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	v.cipher = cipher
+	v.accessCipher, v.refreshCipher = access, refresh
 }
 
 // mcpServerConfig builds the client config. For oauth servers it also returns the
@@ -162,9 +176,9 @@ func (rt *Router) loadMCPOAuthConfig(serverId int64) (*mcp.OAuthConfig, *mcpCred
 	if rec.Expiry > 0 {
 		expiry = time.Unix(rec.Expiry, 0)
 	}
-	// Pinned from THIS read — the very record whose token we're about to hand to
-	// the client. No second query.
-	ver := &mcpCredVersion{cipher: rec.AccessToken}
+	// Pinned from THIS read — the very record whose credential we're about to hand
+	// to the client. No second query, and both halves.
+	ver := &mcpCredVersion{accessCipher: rec.AccessToken, refreshCipher: rec.RefreshToken}
 	return &mcp.OAuthConfig{
 		Endpoints: mcp.OAuthEndpoints{
 			Issuer:                rec.Issuer,
@@ -223,9 +237,11 @@ func (rt *Router) persistRefreshedMCPToken(serverId int64, t *oauth2.Token, ver 
 		logger.Warningf("[MCP-OAuth] persist refreshed token failed (server=%d): save: %v", serverId, err)
 		return
 	}
-	// The stored ciphertext just rotated — move the pin, or a later invalidation
-	// would target a version that no longer exists and silently skip.
-	ver.set(accEnc)
+	// The stored credential just rotated — move the pin to exactly what was written
+	// (rec now holds the final ciphertexts; refresh_token is unchanged when the
+	// provider didn't rotate it). Otherwise a later invalidation would target a
+	// version that no longer exists and silently skip.
+	ver.set(rec.AccessToken, rec.RefreshToken)
 }
 
 // ---- endpoints ----

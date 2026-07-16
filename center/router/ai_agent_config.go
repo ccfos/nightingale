@@ -208,13 +208,13 @@ func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User)
 				}
 			}
 			// 破坏性：只有 token endpoint 回明确的 OAuth 错误码才走到这里。凭据版本
-			// credVer 来自「产出本 cfg 的那一次读取」（且随 refresh 轮换），在失败时刻取
-			// 值做条件更新——避免把并发授权刚存下的新 token 抹掉。
+			// credVer 来自「产出本 cfg 的那一次读取」（含两个 token 密文，且随 refresh
+			// 轮换），在失败时刻才取值做条件更新——避免把并发刷新/授权刚存下的新凭据抹掉。
 			cfg.OAuth.OnCredentialInvalid = func(kind mcp.CredentialInvalidKind, reason error) {
 				watch.markFailed(sid)
 				clearClient := kind == mcp.CredentialInvalidClient
 				logger.Infof("[AIAgent] mcp server=%s id=%d credential definitively rejected (clear_client=%v): %v", name, sid, clearClient, reason)
-				rt.invalidateMCPOAuthCredential(sid, credVer.get(), clearClient)
+				rt.invalidateMCPOAuthCredential(sid, credVer, clearClient)
 			}
 		}
 		out = append(out, *cfg)
@@ -292,19 +292,21 @@ func (w *mcpOAuthWatch) servers() []*models.MCPServer {
 // while invalid_client rejects the client itself and keeping it would make every
 // subsequent authorize attempt fail the same way.
 //
-// usedToken scopes the write to the exact credential version that failed, so a late
-// rejection carrying an old token can't wipe one a concurrent re-authorization just
-// saved.
-func (rt *Router) invalidateMCPOAuthCredential(serverId int64, usedToken string, clearClient bool) {
-	if usedToken == "" {
+// ver pins the exact credential version that failed (both token ciphertexts, taken
+// from the read that produced the client's config and moved along by refreshes), so
+// a late rejection carrying an already-rotated credential can't wipe the one a
+// concurrent refresh or re-authorization just saved.
+func (rt *Router) invalidateMCPOAuthCredential(serverId int64, ver *mcpCredVersion, clearClient bool) {
+	accessCipher, refreshCipher := ver.get()
+	if accessCipher == "" {
 		return
 	}
-	n, err := models.MCPServerOAuthInvalidateTokens(rt.Ctx, serverId, usedToken, clearClient)
+	n, err := models.MCPServerOAuthInvalidateTokens(rt.Ctx, serverId, accessCipher, refreshCipher, clearClient)
 	if err != nil {
 		logger.Warningf("[AIAgent] invalidate oauth credential for server=%d failed: %v", serverId, err)
 		return
 	}
 	if n == 0 {
-		logger.Infof("[AIAgent] skip invalidating oauth credential for server=%d: a newer authorization already replaced it", serverId)
+		logger.Infof("[AIAgent] skip invalidating oauth credential for server=%d: the stored credential is no longer the one that failed", serverId)
 	}
 }

@@ -325,13 +325,18 @@ func MCPServerOAuthDelByServerId(c *ctx.Context, serverId int64) error {
 // the user could never escape the loop; with it cleared, prepare falls back to DCR,
 // or tells them to supply a valid client by hand.
 //
-// expectAccessToken is the exact stored ciphertext the failing request was using;
-// the update is conditional on it still being there. Returns rows affected: 0 means
-// a newer authorization landed in the meantime (a concurrent OAuth callback saved
-// fresh tokens) and a late "your token is dead" response from the OLD credential
-// must not destroy it — otherwise one stale rejection would knock the server
-// offline for everyone right after someone successfully reconnected it.
-func MCPServerOAuthInvalidateTokens(c *ctx.Context, serverId int64, expectAccessToken string, alsoClearClient bool) (int64, error) {
+// expectAccessToken/expectRefreshToken are the exact stored ciphertexts the failing
+// request was using, and the update is conditional on BOTH still being there.
+// Returns rows affected: 0 means the stored credential is no longer the one that
+// failed — a concurrent OAuth callback or another instance's refresh already
+// replaced it — and a late "your token is dead" verdict from the OLD credential
+// must not destroy the new one, or one stale rejection would knock the server
+// offline for the whole org moments after it was renewed.
+//
+// Matching on the access token alone is not enough: OAuth doesn't promise a fresh
+// access token on refresh, so a rotation can keep access=X while moving
+// refresh=R1→R2 — the stale verdict would still match X and wipe R2.
+func MCPServerOAuthInvalidateTokens(c *ctx.Context, serverId int64, expectAccessToken, expectRefreshToken string, alsoClearClient bool) (int64, error) {
 	if expectAccessToken == "" {
 		return 0, nil
 	}
@@ -345,7 +350,7 @@ func MCPServerOAuthInvalidateTokens(c *ctx.Context, serverId int64, expectAccess
 		updates["client_secret"] = ""
 	}
 	res := DB(c).Model(&MCPServerOAuth{}).
-		Where("server_id = ? AND access_token = ?", serverId, expectAccessToken).
+		Where("server_id = ? AND access_token = ? AND refresh_token = ?", serverId, expectAccessToken, expectRefreshToken).
 		Updates(updates)
 	return res.RowsAffected, res.Error
 }
