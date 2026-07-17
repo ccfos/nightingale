@@ -511,7 +511,10 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 			continue
 		}
 
-		if f.Action == "update_triggers" {
+		// 特殊 action 会在原有内容基础上做合并/追加/删除，处理完后必须跳过下面的通用字段写入，
+		// 否则通用流程会用本次提交的原始内容再覆盖一次，导致上面的合并结果丢失（新增变覆盖、删除变只留删除项）。
+		switch f.Action {
+		case "update_triggers":
 			if triggers, has := f.Fields["triggers"]; has {
 				originRule := ar.RuleConfigJson.(map[string]interface{})
 				originRule["triggers"] = triggers
@@ -519,9 +522,8 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"rule_config": string(b)}))
 			}
-		}
 
-		if f.Action == "annotations_add" {
+		case "annotations_add":
 			if annotations, has := f.Fields["annotations"]; has {
 				annotationsMap := annotations.(map[string]interface{})
 				for k, v := range annotationsMap {
@@ -531,9 +533,8 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"annotations": string(b)}))
 			}
-		}
 
-		if f.Action == "annotations_del" {
+		case "annotations_del":
 			if annotations, has := f.Fields["annotations"]; has {
 				annotationsKeys := annotations.(map[string]interface{})
 				for key := range annotationsKeys {
@@ -543,9 +544,8 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"annotations": string(b)}))
 			}
-		}
 
-		if f.Action == "callback_add" {
+		case "callback_add":
 			// 增加一个 callback 地址
 			if callbacks, has := f.Fields["callbacks"]; has {
 				callback := callbacks.(string)
@@ -553,35 +553,35 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 					ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": ar.Callbacks + " " + callback}))
 				}
 			}
-		}
 
-		if f.Action == "callback_del" {
+		case "callback_del":
 			// 删除一个 callback 地址
 			if callbacks, has := f.Fields["callbacks"]; has {
 				callback := callbacks.(string)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": strings.ReplaceAll(ar.Callbacks, callback, "")}))
 			}
-		}
 
-		if f.Action == "datasource_change" {
+		case "datasource_change":
 			// 修改数据源
 			if datasourceQueries, has := f.Fields["datasource_queries"]; has {
 				bytes, err := json.Marshal(datasourceQueries)
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"datasource_queries": bytes}))
 			}
-		}
 
-		for k, v := range f.Fields {
-			// 检查 v 是否为各种切片类型
-			switch v.(type) {
-			case []interface{}, []int64, []int, []string:
-				// 将切片转换为 JSON 字符串
-				bytes, err := json.Marshal(v)
-				ginx.Dangerous(err)
-				ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, string(bytes)))
-			default:
-				ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
+		default:
+			// 通用字段整体覆盖（对应前端 cover 模式及无特殊 action 的普通批量更新）
+			for k, v := range f.Fields {
+				// 检查 v 是否为各种切片类型
+				switch v.(type) {
+				case []interface{}, []int64, []int, []string:
+					// 将切片转换为 JSON 字符串
+					bytes, err := json.Marshal(v)
+					ginx.Dangerous(err)
+					ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, string(bytes)))
+				default:
+					ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
+				}
 			}
 		}
 
