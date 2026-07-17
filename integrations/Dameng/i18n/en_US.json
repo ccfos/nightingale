@@ -1,0 +1,10 @@
+{
+    "Dameng 指标采集耗时过长": "Dameng metric collection taking too long",
+    "Dameng 数据库down": "Dameng database down",
+    "Dameng 缓存命中率过低": "Dameng cache hit ratio too low",
+    "Dameng 锁等待线程数异常": "Dameng lock-waiting thread count abnormal",
+    "存在轻量级锁竞争，会导致SQL执行延迟": "Lightweight lock contention detected, which delays SQL execution",
+    "缓存命中率低于95%会导致大量磁盘IO，性能下降": "Cache hit ratio below 95% causes heavy disk IO and degrades performance",
+    "达梦DB": "Dameng DB",
+    "采集耗时过长反映数据库响应慢，可能导致监控数据延迟": "Long collection time indicates a slow database response and may delay monitoring data"
+}

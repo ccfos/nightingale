@@ -1,0 +1,5 @@
+{
+    "GPU XID 错误": "GPU XID error",
+    "GPU 温度过高": "GPU temperature too high",
+    "xid错误码信息: https://docs.nvidia.com/deploy/xid-errors/analyzing-xid-catalog.html": "XID error code reference: https://docs.nvidia.com/deploy/xid-errors/analyzing-xid-catalog.html"
+}

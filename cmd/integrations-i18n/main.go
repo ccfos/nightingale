@@ -184,22 +184,34 @@ func missing(set map[string]struct{}, dict integration.ComponentDict, exempted m
 	return res
 }
 
-// readmeStatus 返回（README 是否含中文, 是否已有 en_US 副本）
-func readmeStatus(componentDir string) (bool, bool) {
+// readmeStatus 返回（README 是否含中文, 是否已有 en_US 副本, en 副本内含中文的行）
+func readmeStatus(componentDir string) (bool, bool, []string) {
 	files, err := file.FilesUnder(componentDir + "/markdown")
 	if err != nil || len(files) == 0 {
-		return false, false
+		return false, false, nil
 	}
 	source, variants := integration.PickReadmeFiles(files)
 	if source == "" {
-		return false, false
+		return false, false, nil
 	}
 	content, err := os.ReadFile(filepath.Join(componentDir, "markdown", source))
 	if err != nil {
-		return false, false
+		return false, false, nil
 	}
-	_, hasEn := variants["en_US"]
-	return containsHan(string(content)), hasEn
+
+	enFile, hasEn := variants["en_US"]
+	var hanLines []string
+	if hasEn {
+		enContent, err := os.ReadFile(filepath.Join(componentDir, "markdown", enFile))
+		if err == nil {
+			for _, line := range strings.Split(string(enContent), "\n") {
+				if containsHan(line) {
+					hanLines = append(hanLines, line)
+				}
+			}
+		}
+	}
+	return containsHan(string(content)), hasEn, hanLines
 }
 
 func runExtract(dir string, components []string, out string, exempted map[string]struct{}) {
@@ -216,7 +228,7 @@ func runExtract(dir string, components []string, out string, exempted map[string
 
 		p0 := missing(cs.p0, dict, exempted)
 		p1 := missing(cs.p1, dict, exempted)
-		zhReadme, hasEnReadme := readmeStatus(componentDir)
+		zhReadme, hasEnReadme, _ := readmeStatus(componentDir)
 		needReadme := zhReadme && !hasEnReadme
 
 		if len(p0) == 0 && len(p1) == 0 && !needReadme {
@@ -357,8 +369,13 @@ func runCheck(dir string, components []string, scope string, verbose bool, exemp
 			checkFile("dashboard", f, dash)
 		}
 
-		if zhReadme, hasEnReadme := readmeStatus(componentDir); zhReadme && !hasEnReadme {
+		zhReadme, hasEnReadme, hanLines := readmeStatus(componentDir)
+		if zhReadme && !hasEnReadme {
 			add(component, "readme", "markdown/README.md", "README.en_US.md missing")
+		}
+		// en 副本自身残留中文也算未完成翻译
+		for _, line := range hanLines {
+			add(component, "readme", "markdown/README.en_US.md", line)
 		}
 	}
 

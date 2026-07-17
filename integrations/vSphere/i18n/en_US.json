@@ -1,0 +1,7 @@
+{
+    "ESXi实例CPU使用率大于70%": "ESXi host CPU usage exceeds 70%",
+    "ESXi实例内存使用率大于70%": "ESXi host memory usage exceeds 70%",
+    "VM虚拟机CPU使用率大于70%": "VM CPU usage exceeds 70%",
+    "VM虚拟机内存使用率大于70%": "VM memory usage exceeds 70%",
+    "VSphere磁盘使用率大于70%": "vSphere disk usage exceeds 70%"
+}

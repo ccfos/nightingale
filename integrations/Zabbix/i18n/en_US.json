@@ -1,0 +1,4 @@
+{
+    "Zabbix主机详情仪表盘-增强版": "Zabbix Host Detail Dashboard - Enhanced",
+    "增强版 Zabbix 主机详情，使用 host_name 作为主机变量；兼容 OS 与华为 iBMC 指标，覆盖 CPU、内存、磁盘、网络、硬件和异常状态。": "Enhanced Zabbix host detail using host_name as the host variable; compatible with OS and Huawei iBMC metrics, covering CPU, memory, disk, network, hardware and abnormal states."
+}

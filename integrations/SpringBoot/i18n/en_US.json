@@ -1,0 +1,8 @@
+{
+    "JVM仪表盘": "JVM Dashboard",
+    "springboot HEAP内存使用率大于20%": "SpringBoot heap memory usage exceeds 20%",
+    "springboot HTTP请求延迟大于10s": "SpringBoot HTTP request latency exceeds 10s",
+    "springboot HTTP错误数": "SpringBoot HTTP errors",
+    "springboot NOHEAP内存使用率大于30%": "SpringBoot non-heap memory usage exceeds 30%",
+    "springboot 事件错误数": "SpringBoot event errors"
+}

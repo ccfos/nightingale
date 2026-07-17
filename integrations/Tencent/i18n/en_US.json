@@ -1,0 +1,12 @@
+{
+    "Redis-内存版": "Redis - Memory Edition",
+    "腾讯云 Kafka": "Tencent Cloud Kafka",
+    "腾讯云 TDSQL-C": "Tencent Cloud TDSQL-C",
+    "腾讯云 云数据库 PG": "Tencent Cloud PostgreSQL",
+    "腾讯云 云服务器 CVM": "Tencent Cloud CVM",
+    "腾讯云 缓存 Redis": "Tencent Cloud Redis",
+    "腾讯云 负载均衡 公网": "Tencent Cloud CLB (Public)",
+    "腾讯云 负载均衡 内网": "Tencent Cloud CLB (Private)",
+    "负载均衡【公网】": "Load Balancer (Public)",
+    "负载均衡【内网】": "Load Balancer (Private)"
+}

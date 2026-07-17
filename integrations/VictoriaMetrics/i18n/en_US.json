@@ -1,0 +1,11 @@
+{
+    "vm error logging rate 大于0 ": "vm error logging rate above 0 ",
+    "vm-insert 和 vm-storage 组件之间连接的饱和度大于9": "Connection saturation between vm-insert and vm-storage exceeds 0.9",
+    "vm-insert 实例端口异常": "vm-insert instance port down",
+    "vm-select 实例端口异常": "vm-select instance port down",
+    "vm-select请求查询延迟超过15s": "vm-select query latency exceeds 15s",
+    "vm-storage 实例端口异常": "vm-storage instance port down",
+    "vminsert服务宕机": "vminsert service down",
+    "vmselect服务宕机": "vmselect service down",
+    "vmstorage服务宕机": "vmstorage service down"
+}

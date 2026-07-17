@@ -1,0 +1,14 @@
+{
+    "CRC错误计数1小时内持续增长": "CRC error count keeps growing within 1 hour",
+    "SMART设备健康状态异常": "SMART device health status abnormal",
+    "SSD介质磨损百分比≥90%": "SSD media wearout >= 90%",
+    "SSD擦除失败计数增长": "SSD erase fail count growing",
+    "SSD编程失败计数增长": "SSD program fail count growing",
+    "SSD闪存块写入失败，闪存芯片健康度急剧下降，需立即备份数据": "SSD flash block program failures; flash chip health is degrading rapidly, back up data immediately",
+    "SSD闪存块擦除失败，意味着闪存芯片老化，存在数据写入故障风险": "SSD flash block erase failures indicate aging flash chips and a risk of write failures",
+    "SSD闪存芯片磨损程度接近耗尽，随时可能发生故障，需立即备份数据并更换硬盘": "SSD flash wearout is nearly exhausted and may fail at any time; back up data and replace the drive immediately",
+    "数据传输链路CRC校验失败次数增加，可能是接口、线缆或硬盘控制器故障前兆": "Growing CRC failures on the data link, a possible precursor of interface, cable or disk controller failure",
+    "硬盘温度超过65℃": "Disk temperature exceeds 65 Celsius",
+    "硬盘自身检测的整体健康状态为不健康，存在严重故障风险，需立即处理": "Disk self-assessed overall health is FAILED, serious failure risk, handle immediately",
+    "硬盘运行温度过高，会加速硬件老化甚至导致直接故障，需立即检查散热": "Disk operating temperature too high, which accelerates aging or causes outright failure; check cooling immediately"
+}

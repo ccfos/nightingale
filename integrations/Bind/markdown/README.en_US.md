@@ -1,0 +1,13 @@
+forked from [telegraf/bind](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/bind)
+
+Sample configuration
+```
+[[instances]]
+urls = [
+ #"http://localhost:8053/xml/v3",
+]
+
+timeout = "5s"
+gather_memory_contexts = true
+gather_views = true
+```

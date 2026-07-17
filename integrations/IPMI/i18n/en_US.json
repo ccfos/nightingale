@@ -1,0 +1,6 @@
+{
+    "CPU温度超过90": "CPU temperature exceeds 90",
+    "CPU电压大于10": "CPU voltage exceeds 10",
+    "CPU风扇转速超过1000": "CPU fan speed exceeds 1000",
+    "主板温度超过90": "Motherboard temperature exceeds 90"
+}

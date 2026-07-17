@@ -1,0 +1,14 @@
+{
+    "ClickHouse  Exporter 认证错误": "ClickHouse Exporter authentication errors",
+    "ClickHouse Categraf ZooKeeper故障": "ClickHouse Categraf ZooKeeper failure",
+    "ClickHouse Categraf 内存使用": "ClickHouse Categraf memory usage",
+    "ClickHouse Categraf 磁盘使用": "ClickHouse Categraf disk usage",
+    "ClickHouse Categraf 网络故障": "ClickHouse Categraf network failure",
+    "ClickHouse Exporter ZooKeeper故障": "ClickHouse Exporter ZooKeeper failure",
+    "ClickHouse Exporter 内存使用": "ClickHouse Exporter memory usage",
+    "ClickHouse Exporter 副本错误": "ClickHouse Exporter replica errors",
+    "ClickHouse Exporter 磁盘使用": "ClickHouse Exporter disk usage",
+    "ClickHouse Exporter 网络故障": "ClickHouse Exporter network failure",
+    "内存使用报警": "Memory usage alert",
+    "磁盘使用报警": "Disk usage alert"
+}
