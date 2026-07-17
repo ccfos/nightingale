@@ -263,13 +263,39 @@ func AlertHisEventGetByHash(ctx *ctx.Context, hash string) (*AlertHisEvent, erro
 	return lst[0], nil
 }
 
-func AlertHisEventBatchDelete(ctx *ctx.Context, timestamp int64, severities []int, limit int) (int64, error) {
-	db := DB(ctx).Where("last_eval_time < ?", timestamp)
+// AlertHisEventBatchDelete 按 id 游标批量删除 last_eval_time 早于 timestamp 的历史事件，
+// activeIds 是活跃告警 id 快照（cur.id 即对应的 his.id），命中的记录跳过不删。
+// 返回本批候选数 fetched（< limit 表示已扫完）、实际删除数 deleted、本批最大 id（下一批游标）。
+func AlertHisEventBatchDelete(ctx *ctx.Context, timestamp int64, severities []int,
+	minId int64, limit int, activeIds map[int64]struct{}) (fetched int, deleted int64, maxId int64, err error) {
+	session := DB(ctx).Model(&AlertHisEvent{}).Where("last_eval_time < ? and id > ?", timestamp, minId)
 	if len(severities) > 0 {
-		db = db.Where("severity IN (?)", severities)
+		session = session.Where("severity IN (?)", severities)
 	}
-	res := db.Limit(limit).Delete(&AlertHisEvent{})
-	return res.RowsAffected, res.Error
+
+	var ids []int64
+	if err = session.Order("id asc").Limit(limit).Pluck("id", &ids).Error; err != nil {
+		return 0, 0, minId, err
+	}
+
+	if len(ids) == 0 {
+		return 0, 0, minId, nil
+	}
+	maxId = ids[len(ids)-1]
+
+	toDelete := make([]int64, 0, len(ids))
+	for _, id := range ids {
+		if _, ok := activeIds[id]; !ok {
+			toDelete = append(toDelete, id)
+		}
+	}
+
+	if len(toDelete) == 0 {
+		return len(ids), 0, maxId, nil
+	}
+
+	res := DB(ctx).Where("id in ?", toDelete).Delete(&AlertHisEvent{})
+	return len(ids), res.RowsAffected, maxId, res.Error
 }
 
 func (m *AlertHisEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
