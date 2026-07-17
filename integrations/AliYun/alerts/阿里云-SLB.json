@@ -28,7 +28,6 @@
     "annotations": {},
     "uuid": 1751791234000024,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -62,7 +61,6 @@
     "annotations": {},
     "uuid": 1751791234000025,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -96,7 +94,6 @@
     "annotations": {},
     "uuid": 1751791234000026,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -130,7 +127,6 @@
     "annotations": {},
     "uuid": 1751791234000027,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -164,7 +160,6 @@
     "annotations": {},
     "uuid": 1751791234000028,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1

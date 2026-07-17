@@ -28,7 +28,6 @@
     "annotations": {},
     "uuid": 1751791234000012,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -62,7 +61,6 @@
     "annotations": {},
     "uuid": 1751791234000013,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -96,7 +94,6 @@
     "annotations": {},
     "uuid": 1751791234000014,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -130,7 +127,6 @@
     "annotations": {},
     "uuid": 1751791234000015,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -164,7 +160,6 @@
     "annotations": {},
     "uuid": 1751791234000016,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -198,7 +193,6 @@
     "annotations": {},
     "uuid": 1751791234000017,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -232,7 +226,6 @@
     "annotations": {},
     "uuid": 1751791234000018,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -266,7 +259,6 @@
     "annotations": {},
     "uuid": 1751791234000019,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -300,7 +292,6 @@
     "annotations": {},
     "uuid": 1751791234000020,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -334,7 +325,6 @@
     "annotations": {},
     "uuid": 1751791234000021,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -368,7 +358,6 @@
     "annotations": {},
     "uuid": 1751791234000022,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -402,7 +391,6 @@
     "annotations": {},
     "uuid": 1751791234000023,
     "cur_event_count": 0,
-    "update_by_nickname": "超管",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1

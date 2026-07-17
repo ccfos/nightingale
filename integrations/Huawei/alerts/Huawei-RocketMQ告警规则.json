@@ -82,7 +82,6 @@
     "update_by": "",
     "uuid": 1750414791718278,
     "cur_event_count": 0,
-    "update_by_nickname": "技术支持",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -175,7 +174,6 @@
     "update_by": "",
     "uuid": 1750414791763424,
     "cur_event_count": 0,
-    "update_by_nickname": "技术支持",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1
@@ -268,7 +266,6 @@
     "update_by": "",
     "uuid": 1750414791822144,
     "cur_event_count": 0,
-    "update_by_nickname": "技术支持",
     "cron_pattern": "@every 60s",
     "notify_rule_ids": [],
     "notify_version": 1

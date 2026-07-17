@@ -52,7 +52,6 @@
         "update_by": "",
         "uuid": 1763827340121355,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -111,7 +110,6 @@
         "update_by": "",
         "uuid": 1763827340127272,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -170,7 +168,6 @@
         "update_by": "",
         "uuid": 1763827340129245,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -229,7 +226,6 @@
         "update_by": "",
         "uuid": 1763827340131216,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -288,7 +284,6 @@
         "update_by": "",
         "uuid": 1763827340133150,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -347,7 +342,6 @@
         "update_by": "",
         "uuid": 1763827340135206,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -406,7 +400,6 @@
         "update_by": "",
         "uuid": 1763827340137091,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -465,7 +458,6 @@
         "update_by": "",
         "uuid": 1763827340139502,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -490,7 +482,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_instantaneous_input_kbps > 规格基准带宽的80%",
+                    "prom_ql": "huaweicloud_sys_dcs_instantaneous_input_kbps > <baseline_bandwidth_kbps> * 0.8",
                     "severity": 1,
                     "unit": "bitsSecIEC"
                 }
@@ -524,7 +516,6 @@
         "update_by": "",
         "uuid": 1763827340141964,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -549,7 +540,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_instantaneous_output_kbps > 规格基准带宽的80%",
+                    "prom_ql": "huaweicloud_sys_dcs_instantaneous_output_kbps > <baseline_bandwidth_kbps> * 0.8",
                     "severity": 1,
                     "unit": "bitsSecIEC"
                 }
@@ -583,7 +574,6 @@
         "update_by": "",
         "uuid": 1763827340145022,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
@@ -642,7 +632,6 @@
         "update_by": "",
         "uuid": 1764411846855801,
         "cur_event_count": 0,
-        "update_by_nickname": "超管",
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
         "pipeline_configs": null,
