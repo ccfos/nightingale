@@ -1,0 +1,27 @@
+name: integrations-i18n
+
+# 内置模板 i18n 门禁：按 loader 同一遍历渲染 en_US 变体后全量扫描中文字符。
+# scope=p0 覆盖告警 name/note/annotations/cate、仪表盘 name/note/tags、README 副本；
+# 仪表盘 configs 词条（p1）补齐后可切换为 -scope all。
+on:
+  push:
+    paths:
+      - 'integrations/**'
+      - 'center/integration/**'
+      - 'cmd/integrations-i18n/**'
+  pull_request:
+    paths:
+      - 'integrations/**'
+      - 'center/integration/**'
+      - 'cmd/integrations-i18n/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: Check builtin templates have no chinese text in en_US rendering
+        run: go run ./cmd/integrations-i18n check -scope p0

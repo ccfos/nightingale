@@ -1,0 +1,11 @@
+{
+    "_comment": "允许在 en_US 渲染结果中保留中文的完整原文清单（功能性内容：SQL 列别名/valueKey 引用、匹配中文 item 描述的正则）。新增豁免须经 review。",
+    "strings": [
+        "* | select arbitrary(__time__)  time_t, date_format(from_unixtime(__time__ - __time__ % 60), '%m-%d %H:%i') as time,  round(avg(\"duration\" / 1000.0) * 1000, 3) as \"平均延迟\", round(approx_percentile(\"duration\" / 1000.0, 0.95) * 1000, 3) as \"P95延迟\",  round(approx_percentile(\"duration\" / 1000.0, 0.99) * 1000, 3) as \"P99延迟\", round(approx_percentile(\"duration\" / 1000.0, 0.9999) * 1000, 3) as \"P9999延迟\"   group by time  order by time_t  limit 14400",
+        "* | select arbitrary(__time__)  time_t, date_format(from_unixtime(__time__ - __time__ % 60), '%m-%d %H:%i') as time, round(sum(case when \"response_code\" >= 400 then 1 else 0 end) * 100.0 / count(1), 3) as \"失败率%\", round(sum(case when \"response_code\" = 404 then 1 else 0 end) * 100.0 / count(1), 3) as \"404比例%\", round(sum(case when \"response_code\" >= 500 then 1 else 0 end) * 100.0 / count(1), 3) as \"5XX比例%\"    group by time  order by time_t  limit 14400",
+        "404比例%",
+        "5XX比例%",
+        "max by(host_name,host,ident,description,item_parameters)(zabbix_disk_data{group=~\"$group\",host_name=~\"$host\",description=~\".*Space utilization.*|.*utilization.*|.*使用率.*\"})",
+        "失败率%"
+    ]
+}

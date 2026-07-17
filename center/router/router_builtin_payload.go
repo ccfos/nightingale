@@ -204,10 +204,12 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	cate := ginx.QueryStr(c, "cate", "")
 	query := ginx.QueryStr(c, "query", "")
 
+	// DB 里的用户自建模板不做语言处理（用户内容语言无关），仅内置模板按请求语言渲染
 	lst, err := models.BuiltinPayloadGets(rt.Ctx, uint64(ComponentID), typ, cate, query)
 	ginx.Dangerous(err)
 
-	lstInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
+	lang := integration.NormalizeLang(c.GetHeader("X-Language"))
+	lstInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayload(typ, cate, query, uint64(ComponentID), lang)
 	ginx.Dangerous(err)
 
 	if len(lstInFile) > 0 {
@@ -224,7 +226,8 @@ func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	cates, err := models.BuiltinPayloadCates(rt.Ctx, typ, uint64(ComponentID))
 	ginx.Dangerous(err)
 
-	catesInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayloadCates(typ, uint64(ComponentID))
+	lang := integration.NormalizeLang(c.GetHeader("X-Language"))
+	catesInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayloadCates(typ, uint64(ComponentID), lang)
 	ginx.Dangerous(err)
 
 	// 使用 map 进行去重
@@ -303,8 +306,9 @@ func (rt *Router) builtinPayloadsDel(c *gin.Context) {
 func (rt *Router) builtinPayloadsGetByUUID(c *gin.Context) {
 	uuid := ginx.QueryInt64(c, "uuid")
 
-	// 优先查内存中的文件数据，与列表接口保持一致
-	if bp, ok := integration.BuiltinPayloadInFile.IndexData[uuid]; ok && bp != nil {
+	// 优先查内存中的文件数据，与列表接口保持一致（按请求语言取变体）
+	lang := integration.NormalizeLang(c.GetHeader("X-Language"))
+	if bp := integration.BuiltinPayloadInFile.GetByUUID(uuid, lang); bp != nil {
 		ginx.NewRender(c).Data(bp, nil)
 		return
 	}

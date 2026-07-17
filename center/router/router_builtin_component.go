@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 
+	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
@@ -40,6 +41,23 @@ func (rt *Router) builtinComponentsGets(c *gin.Context) {
 
 	bc, err := models.BuiltinComponentGets(rt.Ctx, query, disabled)
 	ginx.Dangerous(err)
+
+	// 非源语言时用 README 语言副本覆盖返回值（DB 中存的是源语言 README）。
+	// 用户改过的组件（UpdatedBy != system）原样返回：用户内容语言无关，
+	// 与消息模板"自建不过滤"同一原则；副本缺失时回退源语言
+	lang := integration.NormalizeLang(c.GetHeader("X-Language"))
+	if lang != integration.LangSource && integration.BuiltinPayloadInFile != nil {
+		if readmes := integration.BuiltinPayloadInFile.Readmes[lang]; readmes != nil {
+			for i := range bc {
+				if bc[i].UpdatedBy != SYSTEM {
+					continue
+				}
+				if readme, ok := readmes[bc[i].Ident]; ok {
+					bc[i].Readme = readme
+				}
+			}
+		}
+	}
 
 	ginx.NewRender(c).Data(bc, nil)
 }
