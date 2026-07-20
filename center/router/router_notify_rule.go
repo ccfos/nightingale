@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -14,6 +15,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/slice"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -197,31 +199,85 @@ func (rt *Router) notifyRulesGet(c *gin.Context) {
 }
 
 type NotifyTestForm struct {
-	EventIDs     []int64             `json:"event_ids" binding:"required"`
+	EventIDs     []int64             `json:"event_ids"`
+	UseMockEvent bool                `json:"use_mock_event"` // 新环境无历史事件时，用内置模拟事件验证通知链路
 	NotifyConfig models.NotifyConfig `json:"notify_config" binding:"required"`
+}
+
+// buildNotifyTestMockEvent 构造用于通知测试的内置模拟事件，字段仅为演示用途，
+// 不落库；severity 取通知配置勾选的第一个级别，保证与配置语义一致
+func buildNotifyTestMockEvent(lang string, notifyConfig models.NotifyConfig) *models.AlertCurEvent {
+	now := time.Now().Unix()
+	severity := 2
+	if len(notifyConfig.Severities) > 0 {
+		severity = notifyConfig.Severities[0]
+		for _, s := range notifyConfig.Severities {
+			if s < severity {
+				severity = s
+			}
+		}
+	}
+
+	ruleName := i18n.Sprintf(lang, "Notification test mock event")
+	tags := []string{
+		"rulename=" + ruleName,
+		"ident=mock-host-01",
+		"source=notify-rule-test",
+	}
+
+	event := &models.AlertCurEvent{
+		Cate:             "prometheus",
+		GroupName:        "Default Busi Group",
+		Hash:             "notify-rule-test-mock-event",
+		RuleName:         ruleName,
+		RuleNote:         i18n.Sprintf(lang, "This is a mock event sent by notification test, just to verify that the notification channel works"),
+		Severity:         severity,
+		PromQl:           "cpu_usage_active > 80",
+		TriggerTime:      now,
+		TriggerValue:     "81.5",
+		TriggerValues:    "81.5",
+		Tags:             strings.Join(tags, ",,"),
+		TagsJSON:         tags,
+		Annotations:      "{}",
+		AnnotationsJSON:  map[string]string{},
+		FirstTriggerTime: now,
+		LastEvalTime:     now,
+		NotifyCurNumber:  1,
+		IsRecovered:      false,
+	}
+	event.SetTagsMap()
+	return event
 }
 
 func (rt *Router) notifyTest(c *gin.Context) {
 	var f NotifyTestForm
 	ginx.BindJSON(c, &f)
 
-	hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, f.EventIDs)
-	ginx.Dangerous(err)
-
-	if len(hisEvents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "event not found")
-	}
-
-	ginx.Dangerous(err)
 	events := []*models.AlertCurEvent{}
-	for _, he := range hisEvents {
-		event := he.ToCur()
-		event.SetTagsMap()
-		if err := dispatch.NotifyRuleMatchCheck(&f.NotifyConfig, event); err != nil {
-			bombErr(http.StatusBadRequest, err)
+	if f.UseMockEvent {
+		// 模拟事件用于验证通道连通性，不做筛选条件匹配校验
+		events = append(events, buildNotifyTestMockEvent(c.GetHeader("X-Language"), f.NotifyConfig))
+	} else {
+		if len(f.EventIDs) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "event_ids or use_mock_event required")
 		}
 
-		events = append(events, event)
+		hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, f.EventIDs)
+		ginx.Dangerous(err)
+
+		if len(hisEvents) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "event not found")
+		}
+
+		for _, he := range hisEvents {
+			event := he.ToCur()
+			event.SetTagsMap()
+			if err := dispatch.NotifyRuleMatchCheck(&f.NotifyConfig, event); err != nil {
+				bombErr(http.StatusBadRequest, err)
+			}
+
+			events = append(events, event)
+		}
 	}
 
 	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
