@@ -154,6 +154,15 @@ func MigrateTables(db *gorm.DB) error {
 				logger.Errorf("failed to migrate table %+v err:%v", dt, err)
 			}
 		}
+
+		// 索引用原生 SQL 创建，不在部分结构体上声明 group_id 列：
+		// 存量库该列是 bigint unsigned 且无默认值，声明列会让 AutoMigrate
+		// 发出 MODIFY COLUMN，在大表上全表重建锁写
+		if !db.Migrator().HasIndex("alert_his_event", "idx_group_last_eval_time") {
+			if err := db.Exec("CREATE INDEX idx_group_last_eval_time ON alert_his_event(group_id, last_eval_time)").Error; err != nil {
+				logger.Errorf("failed to create index idx_group_last_eval_time on alert_his_event: %v", err)
+			}
+		}
 	}()
 
 	if !db.Migrator().HasTable(&models.BuiltinPayload{}) {
@@ -282,8 +291,7 @@ type TaskTpl struct {
 	AuthLevel int `gorm:"column:auth_level;type:int;not null;default:0;comment:ai task auth level, 0=off 1/2/3=level"`
 }
 type AlertHisEvent struct {
-	GroupId       int64   `gorm:"column:group_id;bigint(20);not null;default:0;comment:busi group id of rule;index:idx_group_last_eval_time,priority:1"`
-	LastEvalTime  int64   `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time;index:idx_group_last_eval_time,priority:2"`
+	LastEvalTime  int64   `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
 	NotifyRuleIds []int64 `gorm:"column:notify_rule_ids;type:text;serializer:json;comment:notify rule ids"`
 }
