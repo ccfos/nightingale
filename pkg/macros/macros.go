@@ -6,13 +6,19 @@ import (
 	"strings"
 )
 
-var Macro func(sql string, start, end int64) (string, error)
+// Macro expands SQL macros ($__timeFilter, $__timeGroup, etc) for a given
+// datasource. The datasourceType parameter is the same string constant that
+// each datasource registers with datasource.RegisterDatasource (for example
+// ck.CKType = "ck", es.ESType = "elasticsearch"). Reusing those existing
+// constants keeps the "type name" definition single-sourced in each
+// datasource package instead of duplicating them here.
+var Macro func(sql string, start, end int64, datasourceType string) (string, error)
 
-func RegisterMacro(f func(sql string, start, end int64) (string, error)) {
+func RegisterMacro(f func(sql string, start, end int64, datasourceType string) (string, error)) {
 	Macro = f
 }
 
-func MacroInVain(sql string, start, end int64) (string, error) {
+func MacroInVain(sql string, start, end int64, _ string) (string, error) {
 	return sql, nil
 }
 
@@ -55,10 +61,19 @@ var timeFilterPattern = regexp.MustCompile(`\$__timeFilter\(([^()]*)\)`)
 // empty result. Reporting the error lets the caller log it and count it as a
 // failure rather than mistaking the empty result for "no data".
 //
-// FROM_UNIXTIME is understood by Doris and MySQL. Other dialects are not
-// handled, because the signature carries no datasource type to switch on.
-func ExpandTimeFilter(sql string, start, end int64) (string, error) {
+// The FROM_UNIXTIME predicate is only valid for dialects that understand it, so
+// expansion is limited to those datasource types; every other dialect gets its
+// SQL back verbatim, macro included, exactly as MacroInVain would return it.
+func ExpandTimeFilter(sql string, start, end int64, datasourceType string) (string, error) {
 	if !strings.Contains(sql, timeFilterMacro) {
+		return sql, nil
+	}
+
+	// Literals mirror mysql.MySQLType and doris.DorisType; importing those
+	// packages here would create an import cycle, as they import this one.
+	switch datasourceType {
+	case "mysql", "doris":
+	default:
 		return sql, nil
 	}
 

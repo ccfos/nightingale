@@ -84,27 +84,46 @@ func TestExpandTimeFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ExpandTimeFilter(tt.sql, start, end)
+			got, err := ExpandTimeFilter(tt.sql, start, end, "mysql")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
+// Dialects the expansion does not speak get their SQL back verbatim — macro
+// included — instead of a FROM_UNIXTIME predicate their engine would reject.
+func TestExpandTimeFilterLeavesUnknownDialectsAlone(t *testing.T) {
+	sql := "SELECT count(*) FROM t WHERE $__timeFilter(ts)"
+
+	for _, dsType := range []string{"elasticsearch", "pgsql", "ck", "iotdb", ""} {
+		got, err := ExpandTimeFilter(sql, 1784300000, 1784300060, dsType)
+		assert.NoError(t, err)
+		assert.Equal(t, sql, got, "datasource type %q", dsType)
+	}
+
+	// Doris shares the MySQL dialect and is expanded.
+	got, err := ExpandTimeFilter(sql, 1784300000, 1784300060, "doris")
+	assert.NoError(t, err)
+	assert.Equal(t,
+		"SELECT count(*) FROM t WHERE (ts >= FROM_UNIXTIME(1784300000) AND ts < FROM_UNIXTIME(1784300060))",
+		got)
+}
+
 // A caller that never resolved a time window would otherwise get a predicate
 // that matches nothing, which reads as "no data" instead of as a failure.
 func TestExpandTimeFilterRejectsAnEmptyWindow(t *testing.T) {
-	_, err := ExpandTimeFilter("SELECT count(*) FROM t WHERE $__timeFilter(`ts`)", 0, 0)
+	_, err := ExpandTimeFilter("SELECT count(*) FROM t WHERE $__timeFilter(`ts`)", 0, 0, "mysql")
 	assert.Error(t, err)
 
 	// The guard only speaks for statements that ask for the window.
 	sql := "SELECT count(*) FROM t WHERE ts >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)"
-	got, err := ExpandTimeFilter(sql, 0, 0)
+	got, err := ExpandTimeFilter(sql, 0, 0, "mysql")
 	assert.NoError(t, err)
 	assert.Equal(t, sql, got)
 
 	// A window that merely starts at the epoch is a range, not a missing one.
-	got, err = ExpandTimeFilter("SELECT 1 WHERE $__timeFilter(`ts`)", 0, 1784300060)
+	got, err = ExpandTimeFilter("SELECT 1 WHERE $__timeFilter(`ts`)", 0, 1784300060, "mysql")
 	assert.NoError(t, err)
 	assert.Equal(t,
 		"SELECT 1 WHERE (`ts` >= FROM_UNIXTIME(0) AND `ts` < FROM_UNIXTIME(1784300060))",
@@ -120,7 +139,7 @@ func TestExpandTimeFilterIsRegistrable(t *testing.T) {
 	RegisterMacro(ExpandTimeFilter)
 	assert.NotNil(t, Macro)
 
-	got, err := Macro("SELECT 1 WHERE $__timeFilter(`ts`)", 1784300000, 1784300060)
+	got, err := Macro("SELECT 1 WHERE $__timeFilter(`ts`)", 1784300000, 1784300060, "mysql")
 	assert.NoError(t, err)
 	assert.Equal(t,
 		"SELECT 1 WHERE (`ts` >= FROM_UNIXTIME(1784300000) AND `ts` < FROM_UNIXTIME(1784300060))",
@@ -130,7 +149,7 @@ func TestExpandTimeFilterIsRegistrable(t *testing.T) {
 func TestMacroInVainKeepsSQLUnchanged(t *testing.T) {
 	sql := "SELECT 1 WHERE $__timeFilter(`ts`)"
 
-	got, err := MacroInVain(sql, 1784300000, 1784300060)
+	got, err := MacroInVain(sql, 1784300000, 1784300060, "mysql")
 	assert.NoError(t, err)
 	assert.Equal(t, sql, got)
 }
