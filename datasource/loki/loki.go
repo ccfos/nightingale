@@ -46,7 +46,8 @@ type Query struct {
 	Time      int64  `json:"time" mapstructure:"time"`
 	Step      string `json:"step" mapstructure:"step"`
 	Limit     int    `json:"limit" mapstructure:"limit"`
-	Direction string `json:"direction" mapstructure:"direction"`
+	Reverse   bool   `json:"reverse" mapstructure:"reverse"`
+	Direction string `json:"direction" mapstructure:"direction"` // 兼容旧参数，存在时优先于 reverse
 	Ref       string `json:"ref" mapstructure:"ref"`
 	// SkipCount 为 true 时跳过独立的 count 查询，此时 QueryLog 返回的 total
 	// 等于 len(data)（即受 Limit 截断后的实际条数），并非真实总数。调用方需自行
@@ -134,11 +135,10 @@ func (vl *Loki) QueryLog(ctx context.Context, queryParam interface{}) ([]interfa
 		return nil, 0, fmt.Errorf("decode query param failed: %w", err)
 	}
 	param.Limit = vl.normalizeLogLimit(param.Limit)
-	if param.Direction == "" {
-		param.Direction = "backward"
-	}
+	desc := resolveLogTimeDesc(param)
+	direction := logTimeDescToLokiDirection(desc)
 
-	result, err := vl.QueryRange(ctx, param.Query, param.Start, param.End, param.Step, param.Limit, param.Direction)
+	result, err := vl.QueryRange(ctx, param.Query, param.Start, param.End, param.Step, param.Limit, direction)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -158,7 +158,7 @@ func (vl *Loki) QueryLog(ctx context.Context, queryParam interface{}) ([]interfa
 		}
 		logs = lokikit.NormalizeLogsWithLabelNames(result, labelNames)
 	}
-	sortLokiLogs(logs, param.Direction)
+	sortLokiLogs(logs, desc)
 	ret := make([]interface{}, 0, len(logs))
 	for _, log := range logs {
 		ret = append(ret, log)
@@ -277,8 +277,7 @@ func buildLogCountQuery(query string, start, end int64) (string, bool) {
 	return fmt.Sprintf("sum(count_over_time(%s [%ds]))", strings.TrimSpace(query), rangeSeconds), true
 }
 
-func sortLokiLogs(logs []lokikit.NormalizedLog, direction string) {
-	desc := strings.EqualFold(direction, "backward") || direction == ""
+func sortLokiLogs(logs []lokikit.NormalizedLog, desc bool) {
 	sort.SliceStable(logs, func(i, j int) bool {
 		left := normalizedLogTimestampMillis(logs[i])
 		right := normalizedLogTimestampMillis(logs[j])
@@ -287,6 +286,23 @@ func sortLokiLogs(logs []lokikit.NormalizedLog, direction string) {
 		}
 		return left < right
 	})
+}
+
+func logTimeDescToLokiDirection(desc bool) string {
+	if desc {
+		return "backward"
+	}
+	return "forward"
+}
+
+func resolveLogTimeDesc(param *Query) bool {
+	if param != nil {
+		if strings.TrimSpace(param.Direction) != "" {
+			return !strings.EqualFold(strings.TrimSpace(param.Direction), "forward")
+		}
+		return param.Reverse
+	}
+	return false
 }
 
 func normalizedLogTimestampMillis(log lokikit.NormalizedLog) int64 {

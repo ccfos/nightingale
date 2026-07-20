@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -30,14 +31,15 @@ type VictoriaLogs struct {
 
 // Query 查询参数
 type Query struct {
-	Query  string `json:"query" mapstructure:"query"`   // LogsQL 查询语句
-	Start  int64  `json:"start" mapstructure:"start"`   // 开始时间（秒）
-	End    int64  `json:"end" mapstructure:"end"`       // 结束时间（秒）
-	Time   int64  `json:"time" mapstructure:"time"`     // 单点时间（秒）- 用于告警
-	Step   string `json:"step" mapstructure:"step"`     // 步长，如 "1m", "5m"
-	Limit  int    `json:"limit" mapstructure:"limit"`   // 限制返回数量
-	Offset int    `json:"offset" mapstructure:"offset"` // 偏移量
-	Ref    string `json:"ref" mapstructure:"ref"`       // 变量引用名（如 A、B）
+	Query   string `json:"query" mapstructure:"query"`   // LogsQL 查询语句
+	Start   int64  `json:"start" mapstructure:"start"`   // 开始时间（秒）
+	End     int64  `json:"end" mapstructure:"end"`       // 结束时间（秒）
+	Time    int64  `json:"time" mapstructure:"time"`     // 单点时间（秒）- 用于告警
+	Step    string `json:"step" mapstructure:"step"`     // 步长，如 "1m", "5m"
+	Limit   int    `json:"limit" mapstructure:"limit"`   // 限制返回数量
+	Offset  int    `json:"offset" mapstructure:"offset"` // 偏移量
+	Reverse bool   `json:"reverse" mapstructure:"reverse"`
+	Ref     string `json:"ref" mapstructure:"ref"` // 变量引用名（如 A、B）
 }
 
 type HistogramQuery struct {
@@ -143,8 +145,9 @@ func (vl *VictoriaLogs) QueryLog(ctx context.Context, queryParam interface{}) ([
 	if err := mapstructure.Decode(queryParam, param); err != nil {
 		return nil, 0, fmt.Errorf("decode query param failed: %w", err)
 	}
-
-	logs, err := vl.QueryWithOffset(ctx, param.Query, param.Start, param.End, param.Limit, param.Offset)
+	desc := resolveLogTimeDesc(param)
+	query := applyLogSortQuery(param.Query, desc)
+	logs, err := vl.QueryWithOffset(ctx, query, param.Start, param.End, param.Limit, param.Offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -161,6 +164,34 @@ func (vl *VictoriaLogs) QueryLog(ctx context.Context, queryParam interface{}) ([
 	}
 
 	return result, total, nil
+}
+
+func applyLogSortQuery(query string, desc bool) string {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return query
+	}
+	if hasSortPipe(query) {
+		return query
+	}
+
+	if desc {
+		return query + " | sort by (_time) desc"
+	}
+	return query + " | sort by (_time)"
+}
+
+var logSortPipePattern = regexp.MustCompile(`(?i)(^|\|)\s*(sort|order)(\s|$)`)
+
+func hasSortPipe(query string) bool {
+	return logSortPipePattern.MatchString(query)
+}
+
+func resolveLogTimeDesc(param *Query) bool {
+	if param != nil {
+		return param.Reverse
+	}
+	return false
 }
 
 func (vl *VictoriaLogs) QueryHistogram(ctx context.Context, queryParam interface{}) ([]HistogramValues, error) {

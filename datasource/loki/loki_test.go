@@ -17,6 +17,9 @@ func TestQueryLogReturnsTotalFromCountQuery(t *testing.T) {
 		switch r.URL.Path {
 		case "/api/v1/query_range":
 			sawRangeQuery = true
+			if got := r.URL.Query().Get("direction"); got != "forward" {
+				t.Fatalf("unexpected default direction: %q", got)
+			}
 			if got := r.URL.Query().Get("limit"); got != "1" {
 				t.Fatalf("unexpected range limit: %q", got)
 			}
@@ -69,6 +72,64 @@ func TestQueryLogReturnsTotalFromCountQuery(t *testing.T) {
 	}
 	if !sawRangeQuery || !sawCountQuery {
 		t.Fatalf("expected range and count queries, sawRange=%v sawCount=%v", sawRangeQuery, sawCountQuery)
+	}
+}
+
+func TestQueryLogUsesReverseForDirection(t *testing.T) {
+	var requestCount int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v1/query_range" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		requestCount++
+		wantDirection := "forward"
+		if requestCount == 2 {
+			wantDirection = "backward"
+		}
+		if got := r.URL.Query().Get("direction"); got != wantDirection {
+			t.Fatalf("unexpected Loki direction: got %q want %q", got, wantDirection)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"streams","result":[{"stream":{"app":"api"},"values":[["1710000060000000000","new"],["1710000000000000000","old"]]}]}}`))
+	}))
+	defer server.Close()
+
+	vl := &Loki{
+		Loki: lokikit.Loki{
+			LokiAddr: server.URL,
+		},
+	}
+	logs, total, err := vl.QueryLog(context.Background(), map[string]interface{}{
+		"query":      `{app="api"}`,
+		"start":      1710000000,
+		"end":        1710000060,
+		"limit":      2,
+		"reverse":    false,
+		"skip_count": true,
+	})
+	if err != nil {
+		t.Fatalf("QueryLog failed: %v", err)
+	}
+	if total != 2 {
+		t.Fatalf("unexpected total: %d", total)
+	}
+	if got := logs[0].(lokikit.NormalizedLog)["line"]; got != "old" {
+		t.Fatalf("reverse=false should sort logs asc, first line=%v", got)
+	}
+
+	logs, _, err = vl.QueryLog(context.Background(), map[string]interface{}{
+		"query":      `{app="api"}`,
+		"start":      1710000000,
+		"end":        1710000060,
+		"limit":      2,
+		"reverse":    true,
+		"skip_count": true,
+	})
+	if err != nil {
+		t.Fatalf("QueryLog with reverse=true failed: %v", err)
+	}
+	if got := logs[0].(lokikit.NormalizedLog)["line"]; got != "new" {
+		t.Fatalf("reverse=true should sort logs desc, first line=%v", got)
 	}
 }
 
@@ -223,27 +284,83 @@ func TestLimitHistogramValuesUsesTopTotals(t *testing.T) {
 	}
 }
 
-func TestSortLokiLogsByDirection(t *testing.T) {
+func TestSortLokiLogsByDesc(t *testing.T) {
 	logs := []lokikit.NormalizedLog{
 		{"timestamp": int64(1000), "line": "old"},
 		{"timestamp": int64(3000), "line": "new"},
 		{"timestamp": int64(2000), "line": "mid"},
 	}
 
-	sortLokiLogs(logs, "backward")
+	sortLokiLogs(logs, true)
 	if got := logs[0]["line"]; got != "new" {
-		t.Fatalf("backward should sort by timestamp desc, first line=%v", got)
+		t.Fatalf("desc should sort by timestamp desc, first line=%v", got)
 	}
 	if got := logs[2]["line"]; got != "old" {
-		t.Fatalf("backward should sort by timestamp desc, last line=%v", got)
+		t.Fatalf("desc should sort by timestamp desc, last line=%v", got)
 	}
 
-	sortLokiLogs(logs, "forward")
+	sortLokiLogs(logs, false)
 	if got := logs[0]["line"]; got != "old" {
-		t.Fatalf("forward should sort by timestamp asc, first line=%v", got)
+		t.Fatalf("asc should sort by timestamp asc, first line=%v", got)
 	}
 	if got := logs[2]["line"]; got != "new" {
-		t.Fatalf("forward should sort by timestamp asc, last line=%v", got)
+		t.Fatalf("asc should sort by timestamp asc, last line=%v", got)
+	}
+}
+
+func TestResolveLogTimeDesc(t *testing.T) {
+	tests := []struct {
+		name      string
+		direction string
+		reverse   bool
+		want      bool
+	}{
+		{
+			name:      "direction backward",
+			direction: "backward",
+			want:      true,
+		},
+		{
+			name:      "direction forward",
+			direction: "forward",
+			want:      false,
+		},
+		{
+			name:    "map reverse true",
+			reverse: true,
+			want:    true,
+		},
+		{
+			name: "map reverse false",
+			want: false,
+		},
+		{
+			name: "map reverse string false",
+			want: false,
+		},
+		{
+			name:    "struct reverse true",
+			reverse: true,
+			want:    true,
+		},
+		{
+			name:      "direction overrides reverse",
+			direction: "forward",
+			want:      false,
+		},
+		{
+			name: "default asc",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			param := &Query{Direction: tt.direction, Reverse: tt.reverse}
+			if got := resolveLogTimeDesc(param); got != tt.want {
+				t.Fatalf("resolveLogTimeDesc() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 
