@@ -61,7 +61,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 
 	pushgwRouter.Config(r)
-	macros.RegisterMacro(macros.MacroInVain)
+	macros.RegisterMacro(macros.ExpandTimeFilter)
 	dscache.Init(ctx, false, config.Alert.Heartbeat.EngineName)
 
 	if !config.Alert.Disable {
