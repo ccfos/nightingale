@@ -165,6 +165,51 @@ func TestQueryLogAddsSort(t *testing.T) {
 	}
 }
 
+func TestQueryHistogramNormalizesMillisecondRange(t *testing.T) {
+	var gotStart, gotEnd, gotStep string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/select/logsql/hits" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		gotStart = r.Form.Get("start")
+		gotEnd = r.Form.Get("end")
+		gotStep = r.Form.Get("step")
+		fmt.Fprintln(w, `{"hits":[{"fields":{},"timestamps":["2026-07-20T06:00:00Z","2026-07-20T06:05:00Z"],"values":["1","2"]}]}`)
+	}))
+	defer server.Close()
+
+	vl := &VictoriaLogs{
+		VictoriaLogs: vlkit.VictoriaLogs{
+			VictorialogsAddr: server.URL,
+			MaxQueryRows:     1000,
+		},
+	}
+	if err := vl.InitClient(); err != nil {
+		t.Fatalf("InitClient error: %v", err)
+	}
+
+	got, err := vl.QueryHistogram(context.Background(), HistogramQuery{
+		Query: "*",
+		Start: 1784526946385,
+		End:   1784537746385,
+	})
+	if err != nil {
+		t.Fatalf("QueryHistogram error: %v", err)
+	}
+	if gotStart != "1784526946385" || gotEnd != "1784537746385" {
+		t.Fatalf("unexpected normalized range: start=%q end=%q", gotStart, gotEnd)
+	}
+	if gotStep != "5m" {
+		t.Fatalf("unexpected step for ~3h range: %q", gotStep)
+	}
+	if len(got) != 1 || len(got[0].Values) != 2 {
+		t.Fatalf("unexpected histogram buckets: %#v", got)
+	}
+}
+
 func TestConvertHitsToHistogramValues(t *testing.T) {
 	hits := []vlkit.HitResult{
 		{

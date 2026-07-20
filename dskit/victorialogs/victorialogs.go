@@ -113,13 +113,7 @@ func (vl *VictoriaLogs) Query(ctx context.Context, query string, start, end int6
 func (vl *VictoriaLogs) QueryWithOffset(ctx context.Context, query string, start, end int64, limit, offset int) ([]LogEntry, error) {
 	params := url.Values{}
 	params.Set("query", query)
-
-	if start > 0 {
-		params.Set("start", strconv.FormatInt(start, 10))
-	}
-	if end > 0 {
-		params.Set("end", strconv.FormatInt(end, 10))
-	}
+	addTimeRangeParams(params, start, end)
 	if limit > 0 {
 		params.Set("limit", strconv.Itoa(limit))
 	} else {
@@ -174,7 +168,7 @@ func (vl *VictoriaLogs) StatsQuery(ctx context.Context, query string, time int64
 	params.Set("query", query)
 
 	if time > 0 {
-		params.Set("time", strconv.FormatInt(time, 10))
+		params.Set("time", formatVictoriaLogsTimestamp(time))
 	}
 
 	endpoint := fmt.Sprintf("%s/select/logsql/stats_query", vl.VictorialogsAddr)
@@ -211,13 +205,7 @@ func (vl *VictoriaLogs) StatsQuery(ctx context.Context, query string, time int64
 func (vl *VictoriaLogs) StatsQueryRange(ctx context.Context, query string, start, end int64, step string) (*PrometheusResponse, error) {
 	params := url.Values{}
 	params.Set("query", query)
-
-	if start > 0 {
-		params.Set("start", strconv.FormatInt(start, 10))
-	}
-	if end > 0 {
-		params.Set("end", strconv.FormatInt(end, 10))
-	}
+	addTimeRangeParams(params, start, end)
 	if step != "" {
 		params.Set("step", step)
 	}
@@ -255,8 +243,10 @@ func (vl *VictoriaLogs) StatsQueryRange(ctx context.Context, query string, start
 // POST /select/logsql/hits?query=<query>&start=<start>&end=<end>&step=<step>
 func (vl *VictoriaLogs) HitsLogs(ctx context.Context, query string, start, end int64) (int64, error) {
 	step := ""
-	if start > 0 && end > start {
-		step = dskittypes.DefaultHistogramStep(start, end)
+	startMs := normalizeVictoriaLogsTimestamp(start)
+	endMs := normalizeVictoriaLogsTimestamp(end)
+	if startMs > 0 && endMs > startMs {
+		step = dskittypes.DefaultHistogramStepFromUnixRange(start, end)
 	}
 
 	result, err := vl.QueryHits(ctx, query, start, end, step)
@@ -278,13 +268,7 @@ func (vl *VictoriaLogs) QueryHits(ctx context.Context, query string, start, end 
 func (vl *VictoriaLogs) QueryHitsWithFieldsLimit(ctx context.Context, query string, start, end int64, step string, fieldsLimit int, groupByFields ...string) (*HitsResult, error) {
 	params := url.Values{}
 	params.Set("query", query)
-
-	if start > 0 {
-		params.Set("start", strconv.FormatInt(start, 10))
-	}
-	if end > 0 {
-		params.Set("end", strconv.FormatInt(end, 10))
-	}
+	addTimeRangeParams(params, start, end)
 	if step != "" {
 		params.Set("step", step)
 	}
@@ -352,13 +336,7 @@ func (vl *VictoriaLogs) streamFieldValues(ctx context.Context, path, query strin
 	}
 	params.Set("query", query)
 	params.Set("ignore_pipes", "1")
-
-	if start > 0 {
-		params.Set("start", strconv.FormatInt(start, 10))
-	}
-	if end > 0 {
-		params.Set("end", strconv.FormatInt(end, 10))
-	}
+	addTimeRangeParams(params, start, end)
 	if field != "" {
 		params.Set("field", field)
 	}
@@ -427,4 +405,27 @@ func (vl *VictoriaLogs) doRequest(ctx context.Context, method, endpoint string, 
 	}
 
 	return vl.HTTPClient.Do(req)
+}
+
+func addTimeRangeParams(params url.Values, start, end int64) {
+	if start > 0 {
+		params.Set("start", formatVictoriaLogsTimestamp(start))
+	}
+	if end > 0 {
+		params.Set("end", formatVictoriaLogsTimestamp(end))
+	}
+}
+
+func formatVictoriaLogsTimestamp(value int64) string {
+	if value <= 0 {
+		return "0"
+	}
+	return strconv.FormatInt(normalizeVictoriaLogsTimestamp(value), 10)
+}
+
+func normalizeVictoriaLogsTimestamp(value int64) int64 {
+	if value <= 0 {
+		return value
+	}
+	return dskittypes.NormalizeUnixMillisecondsInt(value)
 }

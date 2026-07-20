@@ -32,9 +32,9 @@ type VictoriaLogs struct {
 // Query 查询参数
 type Query struct {
 	Query   string `json:"query" mapstructure:"query"`   // LogsQL 查询语句
-	Start   int64  `json:"start" mapstructure:"start"`   // 开始时间（秒）
-	End     int64  `json:"end" mapstructure:"end"`       // 结束时间（秒）
-	Time    int64  `json:"time" mapstructure:"time"`     // 单点时间（秒）- 用于告警
+	Start   int64  `json:"start" mapstructure:"start"`   // 开始时间（秒/毫秒等 unix 单位，dskit 归一化为毫秒）
+	End     int64  `json:"end" mapstructure:"end"`       // 结束时间（秒/毫秒等 unix 单位，dskit 归一化为毫秒）
+	Time    int64  `json:"time" mapstructure:"time"`     // 单点时间（秒/毫秒等 unix 单位，dskit 归一化为毫秒）
 	Step    string `json:"step" mapstructure:"step"`     // 步长，如 "1m", "5m"
 	Limit   int    `json:"limit" mapstructure:"limit"`   // 限制返回数量
 	Offset  int    `json:"offset" mapstructure:"offset"` // 偏移量
@@ -205,7 +205,7 @@ func (vl *VictoriaLogs) QueryHistogram(ctx context.Context, queryParam interface
 		groupByFields = append(groupByFields, param.GroupBy)
 	}
 	if param.Step == "" {
-		param.Step = dskittypes.DefaultHistogramStep(param.Start, param.End)
+		param.Step = dskittypes.DefaultHistogramStepFromUnixRange(param.Start, param.End)
 	}
 
 	result, err := vl.QueryHitsWithFieldsLimit(ctx, param.Query, param.Start, param.End, param.Step, param.FieldsLimit, groupByFields...)
@@ -268,7 +268,7 @@ func (vl *VictoriaLogs) queryDataInstant(ctx context.Context, param *Query) ([]m
 		queryTime = param.End // 如果没有 time，使用 end 作为查询时间点
 	}
 	if queryTime == 0 {
-		queryTime = time.Now().Unix()
+		queryTime = time.Now().UnixMilli()
 	}
 
 	result, err := vl.StatsQuery(ctx, param.Query, queryTime)
@@ -283,11 +283,10 @@ func (vl *VictoriaLogs) queryDataInstant(ctx context.Context, param *Query) ([]m
 func (vl *VictoriaLogs) queryDataRange(ctx context.Context, param *Query) ([]models.DataResp, error) {
 	step := param.Step
 	if step == "" {
-		// 根据时间范围计算合适的步长
-		duration := param.End - param.Start
-		if duration <= 3600 {
+		durationSec := dskittypes.UnixRangeDurationSeconds(param.Start, param.End)
+		if durationSec <= 3600 {
 			step = "1m" // 1 小时内，1 分钟步长
-		} else if duration <= 86400 {
+		} else if durationSec <= 86400 {
 			step = "5m" // 1 天内，5 分钟步长
 		} else {
 			step = "1h" // 超过 1 天，1 小时步长
@@ -405,14 +404,14 @@ func convertHitsToHistogramValues(hits []victorialogs.HitResult, groupBy string)
 func parseHistogramTimestamp(value interface{}) (int64, bool) {
 	switch v := value.(type) {
 	case float64:
-		return normalizeUnixTimestamp(v), true
+		return dskittypes.NormalizeUnixTimestamp(v), true
 	case int64:
-		return normalizeUnixTimestamp(float64(v)), true
+		return dskittypes.NormalizeUnixSeconds(v), true
 	case int:
-		return normalizeUnixTimestamp(float64(v)), true
+		return dskittypes.NormalizeUnixSeconds(int64(v)), true
 	case string:
 		if ts, err := strconv.ParseFloat(v, 64); err == nil {
-			return normalizeUnixTimestamp(ts), true
+			return dskittypes.NormalizeUnixTimestamp(ts), true
 		}
 		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
 			return t.Unix(), true
@@ -424,19 +423,6 @@ func parseHistogramTimestamp(value interface{}) (int64, bool) {
 	default:
 		return 0, false
 	}
-}
-
-func normalizeUnixTimestamp(value float64) int64 {
-	if value > 1e17 {
-		return int64(value / 1e9)
-	}
-	if value > 1e14 {
-		return int64(value / 1e6)
-	}
-	if value > 1e11 {
-		return int64(value / 1000)
-	}
-	return int64(value)
 }
 
 func parseHistogramValue(value interface{}) (float64, bool) {
@@ -542,7 +528,7 @@ func (vl *VictoriaLogs) QueryMapData(ctx context.Context, query interface{}) ([]
 
 	// 扩大查询范围，解决时间滞后问题
 	if param.End > 0 && param.Start > 0 {
-		param.Start = param.Start - 30
+		param.Start = dskittypes.NormalizeUnixMillisecondsInt(param.Start) - 30*1000
 	}
 
 	// 限制只取 1 条

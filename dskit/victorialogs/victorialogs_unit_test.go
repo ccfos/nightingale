@@ -46,8 +46,8 @@ func TestVictoriaLogs_QueryWithOffsetAddsOffset(t *testing.T) {
 
 	want := map[string]string{
 		"query":  "*",
-		"start":  "11",
-		"end":    "22",
+		"start":  "11000",
+		"end":    "22000",
 		"limit":  "10",
 		"offset": "30",
 	}
@@ -55,6 +55,46 @@ func TestVictoriaLogs_QueryWithOffsetAddsOffset(t *testing.T) {
 		if got.Get(key) != value {
 			t.Fatalf("unexpected %s: got %q, want %q", key, got.Get(key), value)
 		}
+	}
+}
+
+func TestFormatVictoriaLogsTimestamp(t *testing.T) {
+	cases := []struct {
+		name string
+		in   int64
+		want string
+	}{
+		{name: "seconds", in: 1710000000, want: "1710000000000"},
+		{name: "milliseconds", in: 1710000000000, want: "1710000000000"},
+		{name: "zero", in: 0, want: "0"},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := formatVictoriaLogsTimestamp(c.in); got != c.want {
+				t.Fatalf("unexpected timestamp: got %q want %q", got, c.want)
+			}
+		})
+	}
+}
+
+func TestVictoriaLogs_QueryWithOffsetKeepsMillisecondRange(t *testing.T) {
+	var got url.Values
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		got = r.Form
+		fmt.Fprintln(w, `{"_msg":"ok"}`)
+	}))
+	defer server.Close()
+
+	_, err := newTestVictoriaLogs(server.URL).QueryWithOffset(context.Background(), "*", 1784526946385, 1784537746385, 10, 0)
+	if err != nil {
+		t.Fatalf("QueryWithOffset error: %v", err)
+	}
+	if got.Get("start") != "1784526946385" || got.Get("end") != "1784537746385" {
+		t.Fatalf("unexpected range: start=%q end=%q", got.Get("start"), got.Get("end"))
 	}
 }
 
@@ -81,6 +121,9 @@ func TestVictoriaLogs_HitsLogsAddsStep(t *testing.T) {
 	}
 	if got.Get("step") != "1s" {
 		t.Fatalf("unexpected step: got %q, want %q", got.Get("step"), "1s")
+	}
+	if got.Get("start") != "11000" || got.Get("end") != "22000" {
+		t.Fatalf("unexpected range: start=%q end=%q", got.Get("start"), got.Get("end"))
 	}
 }
 
@@ -216,8 +259,8 @@ func TestVictoriaLogs_FieldNames(t *testing.T) {
 
 	want := map[string]string{
 		"query":        "service:api",
-		"start":        "11",
-		"end":          "22",
+		"start":        "11000",
+		"end":          "22000",
 		"limit":        "50",
 		"filter":       "sta",
 		"ignore_pipes": "1",

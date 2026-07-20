@@ -233,7 +233,7 @@ func (vl *Loki) QueryHistogram(ctx context.Context, queryParam interface{}) ([]H
 }
 
 func defaultHistogramStep(start, end int64) string {
-	return dskittypes.DefaultHistogramStep(normalizeUnixTimestamp(float64(start)), normalizeUnixTimestamp(float64(end)))
+	return dskittypes.DefaultHistogramStepFromUnixRange(start, end)
 }
 
 func buildHistogramQuery(query, step, groupBy string) string {
@@ -270,10 +270,13 @@ func (vl *Loki) countLogs(ctx context.Context, query string, start, end int64) (
 }
 
 func buildLogCountQuery(query string, start, end int64) (string, bool) {
-	rangeSeconds := normalizeUnixTimestamp(float64(end)) - normalizeUnixTimestamp(float64(start))
-	if strings.TrimSpace(query) == "" || rangeSeconds <= 0 {
+	if strings.TrimSpace(query) == "" {
 		return "", false
 	}
+	if dskittypes.NormalizeUnixSeconds(end) <= dskittypes.NormalizeUnixSeconds(start) {
+		return "", false
+	}
+	rangeSeconds := dskittypes.UnixRangeDurationSeconds(start, end)
 	return fmt.Sprintf("sum(count_over_time(%s [%ds]))", strings.TrimSpace(query), rangeSeconds), true
 }
 
@@ -441,14 +444,14 @@ func histogramValuesTotal(value HistogramValues) float64 {
 func parseSampleTimestamp(value interface{}) (float64, bool) {
 	switch v := value.(type) {
 	case float64:
-		return float64(normalizeUnixTimestamp(v)), true
+		return float64(dskittypes.NormalizeUnixTimestamp(v)), true
 	case int64:
-		return float64(normalizeUnixTimestamp(float64(v))), true
+		return float64(dskittypes.NormalizeUnixSeconds(v)), true
 	case int:
-		return float64(normalizeUnixTimestamp(float64(v))), true
+		return float64(dskittypes.NormalizeUnixSeconds(int64(v))), true
 	case string:
 		if f, err := strconv.ParseFloat(v, 64); err == nil {
-			return float64(normalizeUnixTimestamp(f)), true
+			return float64(dskittypes.NormalizeUnixTimestamp(f)), true
 		}
 		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
 			return float64(t.Unix()), true
@@ -476,19 +479,6 @@ func parseSampleValue(value interface{}) (float64, bool) {
 	default:
 		return 0, false
 	}
-}
-
-func normalizeUnixTimestamp(value float64) int64 {
-	if value > 1e17 {
-		return int64(value / 1e9)
-	}
-	if value > 1e14 {
-		return int64(value / 1e6)
-	}
-	if value > 1e11 {
-		return int64(value / 1000)
-	}
-	return int64(value)
 }
 
 func histogramRef(metric map[string]string, groupBy string) string {
@@ -653,7 +643,7 @@ func timestampHourBucket(value int64) int64 {
 	if value <= 0 {
 		return 0
 	}
-	return normalizeUnixTimestamp(float64(value)) / 3600
+	return dskittypes.NormalizeUnixSeconds(value) / 3600
 }
 
 func decodeQueryParam(input interface{}, output interface{}) error {
