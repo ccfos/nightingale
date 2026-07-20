@@ -49,11 +49,21 @@ var timeFilterPattern = regexp.MustCompile(`\$__timeFilter\(([^()]*)\)`)
 // statement surfaces the mistake at query time, which is preferable to failing
 // the whole evaluation here.
 //
+// A window of 0..0 is refused instead. It means the caller never resolved a time
+// range, and expanding it yields a predicate that is valid SQL yet matches
+// nothing, so a periodic query would keep succeeding while silently returning an
+// empty result. Reporting the error lets the caller log it and count it as a
+// failure rather than mistaking the empty result for "no data".
+//
 // FROM_UNIXTIME is understood by Doris and MySQL. Other dialects are not
 // handled, because the signature carries no datasource type to switch on.
 func ExpandTimeFilter(sql string, start, end int64) (string, error) {
 	if !strings.Contains(sql, timeFilterMacro) {
 		return sql, nil
+	}
+
+	if start == 0 && end == 0 {
+		return "", fmt.Errorf("%s requires a query time range, got none", timeFilterMacro)
 	}
 
 	expanded := timeFilterPattern.ReplaceAllStringFunc(sql, func(match string) string {

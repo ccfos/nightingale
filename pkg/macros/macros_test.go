@@ -91,6 +91,26 @@ func TestExpandTimeFilter(t *testing.T) {
 	}
 }
 
+// A caller that never resolved a time window would otherwise get a predicate
+// that matches nothing, which reads as "no data" instead of as a failure.
+func TestExpandTimeFilterRejectsAnEmptyWindow(t *testing.T) {
+	_, err := ExpandTimeFilter("SELECT count(*) FROM t WHERE $__timeFilter(`ts`)", 0, 0)
+	assert.Error(t, err)
+
+	// The guard only speaks for statements that ask for the window.
+	sql := "SELECT count(*) FROM t WHERE ts >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)"
+	got, err := ExpandTimeFilter(sql, 0, 0)
+	assert.NoError(t, err)
+	assert.Equal(t, sql, got)
+
+	// A window that merely starts at the epoch is a range, not a missing one.
+	got, err = ExpandTimeFilter("SELECT 1 WHERE $__timeFilter(`ts`)", 0, 1784300060)
+	assert.NoError(t, err)
+	assert.Equal(t,
+		"SELECT 1 WHERE (`ts` >= FROM_UNIXTIME(0) AND `ts` < FROM_UNIXTIME(1784300060))",
+		got)
+}
+
 // The macro is registered through RegisterMacro at startup, so it has to keep
 // satisfying the signature Macro is declared with.
 func TestExpandTimeFilterIsRegistrable(t *testing.T) {
