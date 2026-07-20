@@ -27,7 +27,7 @@ type FormCandidate struct {
 
 // FormField 表单字段。
 type FormField struct {
-	Key        string          `json:"key"`  // "busi_group_id" | "datasource_id" | "team_ids"
+	Key        string          `json:"key"`  // "busi_group_id" | "datasource_id" | "team_ids" | "skill_scope"
 	Type       string          `json:"type"` // "single" | "multi"
 	Candidates []FormCandidate `json:"candidates"`
 }
@@ -160,6 +160,39 @@ func loadTeamField(deps *ToolDeps, user *models.User, preselectedIDs []int64) Fo
 func IsDefaultBusiGroupName(name string) bool {
 	lower := strings.ToLower(name)
 	return strings.Contains(lower, "default") || strings.Contains(name, "默认")
+}
+
+// ==================== 技能授权表单（创建技能的缺参门） ====================
+
+// SkillScopeFieldKey 是创建技能时「可见范围」字段的 action.param 键。候选 ID 用 1/2
+// 而不是 private 的 0/1：前端把候选 ID 当实体 ID 处理（真值判断），0 会被当成"没选"。
+const SkillScopeFieldKey = "skill_scope"
+
+// 可见范围候选 ID → models.AISkill.Private 的映射（前后端契约）。
+const (
+	SkillScopeCandidatePublic  int64 = 1 // 全员可见 → Private=0
+	SkillScopeCandidatePrivate int64 = 2 // 仅管理团队可见 → Private=1
+)
+
+// BuildSkillAuthForm 构造创建技能的授权表单：管理团队（多选，候选与通知规则同源）
+// + 可见范围（仅 admin，非 admin 一律私有，与技能页面表单口径一致）。与 BuildCreationForm
+// 同一 form_select 契约，但可见范围是固定枚举而非平台实体，候选名按 lang 预制
+// （同 BuildApprovalForm），故单独构造。
+// prePrivate 是模型已给出的可见范围（0/1），以 is_default 预选让用户确认或改选。
+func BuildSkillAuthForm(deps *ToolDeps, user *models.User, lang string, preTeamIDs []int64, prePrivate int) string {
+	fields := []FormField{loadTeamField(deps, user, preTeamIDs)}
+	if user.IsAdmin() {
+		fields = append(fields, FormField{
+			Key:  SkillScopeFieldKey,
+			Type: "single",
+			Candidates: []FormCandidate{
+				{ID: SkillScopeCandidatePublic, Name: LangText(lang, "全员可见", "Visible to everyone"), IsDefault: prePrivate == 0},
+				{ID: SkillScopeCandidatePrivate, Name: LangText(lang, "仅管理团队可见", "Visible to the managing teams only"), IsDefault: prePrivate != 0},
+			},
+		})
+	}
+	body, _ := json.Marshal(FormPayload{SkillName: "skill-creator", Fields: fields})
+	return string(body)
 }
 
 // ==================== Approval 表单（结构化确认通道） ====================

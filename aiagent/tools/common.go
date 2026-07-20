@@ -152,6 +152,37 @@ func getArgInt64(args map[string]interface{}, key string) int64 {
 	return 0
 }
 
+// getArgInt64Slice extracts an array-of-id arg, accepting both a real JSON array
+// ([1,2]，元素可为数字或数字字符串）and the stringified form ("[1,2]") the LLM
+// sometimes emits. 非正数与解析不出的元素直接丢弃——ID 只可能是正整数。
+func getArgInt64Slice(args map[string]interface{}, key string) []int64 {
+	var raw []interface{}
+	switch v := args[key].(type) {
+	case []interface{}:
+		raw = v
+	case string:
+		if json.Unmarshal([]byte(strings.TrimSpace(v)), &raw) != nil {
+			return nil
+		}
+	default:
+		return nil
+	}
+	out := make([]int64, 0, len(raw))
+	for _, item := range raw {
+		var id int64
+		switch n := item.(type) {
+		case float64:
+			id = int64(n)
+		case string:
+			id, _ = strconv.ParseInt(strings.TrimSpace(n), 10, 64)
+		}
+		if id > 0 {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
 // getArgFloat extracts a numeric arg, returning (value, present). It accepts
 // both JSON numbers (float64) and numeric strings — the LLM sometimes wraps
 // numbers in quotes when copying from documentation. Returns present=false

@@ -107,11 +107,13 @@ Declare only the tools the skill actually uses; don't cram them all in.
 ## 7. Persistence flow (the unified action)
 
 1. **Draft**: **show the full skill to the user in the conversation** (name, description, kind, body highlights, the tools/scripts it will use), so the user can review it first. This step is for humans —— don't skip it.
-2. **Call `create_skill`** to submit structured fields: `name` / `description` / `instructions` / optional `builtin_tools` / `files` / `max_iterations` / `compatibility`.
+2. **Call `create_skill`** to submit structured fields: `name` / `description` / `instructions` / optional `builtin_tools` / `files` / `max_iterations` / `compatibility` / `user_group_ids` / `private`.
    - `name` uses kebab-case (lowercase alphanumerics and hyphens), e.g. `redis-slowlog-triage`, and must not collide with a built-in skill name.
    - Give multi-step skills a sensible `max_iterations` (e.g. 15~30).
+   - **Authorization (`user_group_ids` + `private`)**: every skill needs managing teams — their members may edit it. Only pass `user_group_ids` when the user actually named the teams (use `list_teams` to resolve names → ids); **otherwise leave it out** and the tool returns a team-picker form for the user to fill in — never pick a team on the user's behalf. `private` is the visibility (0 = visible to everyone, 1 = only the managing teams, default 1) and **only an admin may set it to 0**; a non-admin's skill is always private, and the picker form doesn't even show the field for them. Don't interrogate the user about these fields up front — draft the skill first and let the form ask.
+   - **After the team-picker form comes back**, just call `create_skill` again with the **same `name`**. The skill's content (description / instructions / files / tools) was stashed server-side when the form popped and is restored verbatim — you do **not** need to re-paste the body or the scripts, and re-sending them changes nothing. Change the `name` only if the user genuinely wants a different skill (that discards the stash).
 3. **Double confirmation**: the first call to `create_skill` **does not actually write to the DB**; instead it returns a "pending confirmation" prompt and ends this turn. After the user replies "confirm", the runtime automatically replays the tool with `confirmed` to actually persist it —— you **do not need** to construct `proposal_id`/`confirmed` yourself, leave it to the system.
-4. **After persistence succeeds**, tell the user: the skill is created, whether it's enabled, and that it can be managed under "AI Config → Skills"; if it's a script-kind skill and the sandbox is available, you can suggest running it once with `run_skill_script` to verify.
+4. **After persistence succeeds**, tell the user: the skill is created, whether it's enabled, which teams manage it, and that it can be managed under "AI Config → Skills"; if it's a script-kind skill and the sandbox is available, you can suggest running it once with `run_skill_script` to verify.
 
 > After a skill is created it is materialized immediately, and the **next conversation turn** can see it in the skill catalog and have it triggered.
 
