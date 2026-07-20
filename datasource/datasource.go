@@ -101,6 +101,12 @@ type Datasource interface {
 	QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error)
 }
 
+// ReadAddrApplier is optional: datasources with a local read addr implement this.
+// Called once at init with the process identity (isCenter). Write addresses must not be touched.
+type ReadAddrApplier interface {
+	ApplyReadAddr(isCenter bool) (usedLocal bool)
+}
+
 func RegisterDatasource(typ string, p Datasource) {
 	if _, found := datasourceRegister[typ]; found {
 		return
