@@ -1,0 +1,17 @@
+{
+    "CPU 每分钟平均使用率，已做归一化处理，即不管几个核，CPU使用率最大值为 100%": "Average CPU usage per minute, normalized so that the maximum CPU usage is 100% regardless of the number of cores",
+    "JVM CPU 每分钟平均使用率": "JVM Average CPU Usage per Minute",
+    "JVM CPU 瞬时使用率": "JVM Instantaneous CPU Usage",
+    "JVM 进程在最近系统采样周期内（通常是几百毫秒） CPU 的使用率\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/": "CPU usage of the JVM process during the most recent system sampling period (usually a few hundred milliseconds)\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+    "上次GC后 JVM Memory Used(heap)": "JVM Memory Used After Last GC (heap)",
+    "上次GC后 JVM Memory Used(nonheap)": "JVM Memory Used After Last GC (nonheap)",
+    "已使用内存\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/": "Used Memory\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+    "已提交内存\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/": "Committed Memory\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+    "最大可获取内存\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/": "Max Available Memory\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+    "最近一次GC后的内存使用量": "Memory Used After the Last GC",
+    "过去1分钟单次GC耗时95分位值（秒）": "P95 Single GC Duration in the Last Minute (Seconds)",
+    "过去一分钟GC总耗时（秒）": "Total GC Duration in the Last Minute (Seconds)",
+    "过去一分钟GC次数": "GC Count in the Last Minute",
+    "过去一分钟GC耗时（秒）": "GC Duration in the Last Minute (Seconds)",
+    "过去一分钟每次GC平均耗时（秒）": "Average GC Duration in the Last Minute (Seconds)"
+}

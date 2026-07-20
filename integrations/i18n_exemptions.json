@@ -1,11 +1,9 @@
 {
-    "_comment": "允许在 en_US 渲染结果中保留中文的完整原文清单（功能性内容：SQL 列别名/valueKey 引用、匹配中文 item 描述的正则）。新增豁免须经 review。",
-    "strings": [
-        "* | select arbitrary(__time__)  time_t, date_format(from_unixtime(__time__ - __time__ % 60), '%m-%d %H:%i') as time,  round(avg(\"duration\" / 1000.0) * 1000, 3) as \"平均延迟\", round(approx_percentile(\"duration\" / 1000.0, 0.95) * 1000, 3) as \"P95延迟\",  round(approx_percentile(\"duration\" / 1000.0, 0.99) * 1000, 3) as \"P99延迟\", round(approx_percentile(\"duration\" / 1000.0, 0.9999) * 1000, 3) as \"P9999延迟\"   group by time  order by time_t  limit 14400",
-        "* | select arbitrary(__time__)  time_t, date_format(from_unixtime(__time__ - __time__ % 60), '%m-%d %H:%i') as time, round(sum(case when \"response_code\" >= 400 then 1 else 0 end) * 100.0 / count(1), 3) as \"失败率%\", round(sum(case when \"response_code\" = 404 then 1 else 0 end) * 100.0 / count(1), 3) as \"404比例%\", round(sum(case when \"response_code\" >= 500 then 1 else 0 end) * 100.0 / count(1), 3) as \"5XX比例%\"    group by time  order by time_t  limit 14400",
-        "404比例%",
-        "5XX比例%",
-        "max by(host_name,host,ident,description,item_parameters)(zabbix_disk_data{group=~\"$group\",host_name=~\"$host\",description=~\".*Space utilization.*|.*utilization.*|.*使用率.*\"})",
-        "失败率%"
-    ]
+    "_comment": "允许在 en_US 渲染结果中保留中文的清单。paths 是字段路径后缀（数组下标不计入），用于天生功能性的字段：原始 SQL/promql，以及引用 SQL 列别名的 valueKey——这些位置的中文必须与查询语句里的别名逐字一致，翻译即失效。strings 是整条原文豁免，粒度粗（同一个词出现在展示字段时会被一并放行），除非确无路径可表达否则不要用。新增豁免须经 review。",
+    "paths": [
+        "targets.expr",
+        "targets.query.query",
+        "targets.query.keys.valueKey"
+    ],
+    "strings": []
 }

@@ -26,9 +26,10 @@ type ComponentDict map[string]string
 
 // NormalizeLang 归一化 X-Language 请求头：空值与 zh 前缀视为源语言（zh_CN），
 // 其余（含 en 前缀和未支持语言）归入 en_US——en_US 桶对全部内置内容完整存在
-// （无词条的组件为 pass-through），因此不需要列表级回退
+// （无词条的组件为 pass-through），因此不需要列表级回退。
+// 大小写不敏感：前端只发 zh_CN，但第三方直连 API 可能传 ZH-CN
 func NormalizeLang(lang string) string {
-	if lang == "" || strings.HasPrefix(lang, "zh") {
+	if lang == "" || strings.HasPrefix(strings.ToLower(lang), "zh") {
 		return LangSource
 	}
 	return LangEnUS
@@ -109,7 +110,8 @@ var displayFieldPathSuffixes = []string{
 	"targets.legend",     // 曲线图例
 	"var.label",          // 变量展示名（var.name 是功能标识，不在白名单）
 	"valueMappings.result.text",
-	"matcher.value", // overrides 按图例/字段名匹配，需与被翻译的 legend 保持一致
+	"matcher.value",       // overrides 按图例/字段名匹配，需与被翻译的 legend 保持一致
+	"custom.sortColumn",   // 表格默认排序列，取值是 renameByName 后的列名，需同步翻译
 	"links.title",
 	"custom.detailName",
 	"standardOptions.util",
@@ -123,6 +125,13 @@ var displayFieldPathContains = []string{
 	"renameByName",
 }
 
+// IsDisplayFieldPath 判定仪表盘 configs 内的字段路径是否属于展示字段白名单
+// （路径为 key 链，数组下标不计入，根段是 "configs"）。导出给 CI 工具复用，
+// 保证门禁分类口径与运行时翻译口径同源
+func IsDisplayFieldPath(path []string) bool {
+	return pathMatchesWhitelist(path)
+}
+
 func pathMatchesWhitelist(path []string) bool {
 	joined := strings.Join(path, ".")
 	for _, suffix := range displayFieldPathSuffixes {
@@ -133,6 +142,15 @@ func pathMatchesWhitelist(path []string) bool {
 	for _, elem := range displayFieldPathContains {
 		for _, p := range path {
 			if p == elem {
+				return true
+			}
+		}
+	}
+	// valueMappings 的 options 形态：options 下的 key 是被映射的原始值（"-1"/"-2" 等
+	// 动态标识），固定后缀表达不了，凡 valueMappings 子树里的 text 都是展示文案
+	if len(path) > 0 && path[len(path)-1] == "text" {
+		for _, p := range path {
+			if p == "valueMappings" {
 				return true
 			}
 		}
@@ -175,8 +193,8 @@ func unmarshalUseNumber(content string) (map[string]interface{}, error) {
 }
 
 // VisitAlertDisplayFields 遍历告警规则对象的展示字段并应用 visit：name、note、
-// annotations 的值（annotations 的 key 是模板引用的功能标识，不动）。
-// promql、append_tags 等功能字段一律不遍历
+// annotations 的 key 与 value（key 在事件详情页按原样展示，无代码按名字引用，
+// 因此同属展示字段）。promql、append_tags 等功能字段一律不遍历
 func VisitAlertDisplayFields(m map[string]interface{}, visit func(string) string) {
 	if s, ok := m["name"].(string); ok {
 		m["name"] = visit(s)
@@ -185,11 +203,19 @@ func VisitAlertDisplayFields(m map[string]interface{}, visit func(string) string
 		m["note"] = visit(s)
 	}
 	if ann, ok := m["annotations"].(map[string]interface{}); ok {
+		translated := make(map[string]interface{}, len(ann))
 		for k, v := range ann {
 			if s, ok := v.(string); ok {
-				ann[k] = visit(s)
+				v = visit(s)
 			}
+			nk := visit(k)
+			if _, dup := translated[nk]; dup && nk != k {
+				// 两个 key 译成同一个时保留原 key，宁可漏译不丢条目
+				nk = k
+			}
+			translated[nk] = v
 		}
+		m["annotations"] = translated
 	}
 }
 

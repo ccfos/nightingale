@@ -10,9 +10,12 @@
 //	go run ./cmd/integrations-i18n extract [-dir integrations] [-out <目录>]
 //	go run ./cmd/integrations-i18n check   [-dir integrations] [-scope p0|all] [-v]
 //
-// 分类口径：p0 = 告警 name/note/annotations/cate + 仪表盘 name/note + README；
-// p1 = 仪表盘 configs 白名单字段；other = 白名单之外仍含中文的字段（需源头清洗或豁免）。
-// 豁免：integrations/i18n_exemptions.json，{"strings": ["允许保留中文的完整原文", ...]}
+// 分类口径按「字段路径」判定（与运行时翻译白名单同源）：
+// p0 = 告警 name/note/annotations（含 key）/cate + 仪表盘 name/note/tags + README；
+// p1 = 仪表盘 configs 白名单字段；other = 白名单之外仍含中文的字段——运行时永远
+// 不会翻译它，补词条也消不掉，只能源头清洗或写进豁免。
+// 豁免：integrations/i18n_exemptions.json，
+// {"paths": ["字段路径后缀", ...], "strings": ["整条原文", ...]}
 package main
 
 import (
@@ -65,8 +68,30 @@ func main() {
 	}
 }
 
-func loadExemptions(dir string) map[string]struct{} {
-	res := make(map[string]struct{})
+// exemptions 允许在 en_US 渲染结果里保留中文的清单。两种粒度：
+//   - paths：字段路径后缀，适合「这个字段天生是功能性的」（SQL/promql/列引用），
+//     不会因为同一个词也出现在展示字段而误放行
+//   - strings：整条原文，适合个别一次性内容；粒度粗，新增须谨慎
+type exemptions struct {
+	strings map[string]struct{}
+	paths   []string
+}
+
+func (e exemptions) allow(path []string, text string) bool {
+	if _, ok := e.strings[text]; ok {
+		return true
+	}
+	joined := strings.Join(path, ".")
+	for _, suffix := range e.paths {
+		if joined == suffix || strings.HasSuffix(joined, "."+suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+func loadExemptions(dir string) exemptions {
+	res := exemptions{strings: make(map[string]struct{})}
 	fp := filepath.Join(dir, "i18n_exemptions.json")
 	bs, err := os.ReadFile(fp)
 	if err != nil {
@@ -74,14 +99,16 @@ func loadExemptions(dir string) map[string]struct{} {
 	}
 	var v struct {
 		Strings []string `json:"strings"`
+		Paths   []string `json:"paths"`
 	}
 	if err := json.Unmarshal(bs, &v); err != nil {
 		fmt.Fprintf(os.Stderr, "parse %s fail: %v\n", fp, err)
 		os.Exit(2)
 	}
 	for _, s := range v.Strings {
-		res[s] = struct{}{}
+		res.strings[s] = struct{}{}
 	}
+	res.paths = v.Paths
 	return res
 }
 
@@ -170,10 +197,12 @@ func collectComponent(componentDir string) (*componentStrings, error) {
 	return cs, nil
 }
 
-func missing(set map[string]struct{}, dict integration.ComponentDict, exempted map[string]struct{}) []string {
+func missing(set map[string]struct{}, dict integration.ComponentDict, exempted exemptions) []string {
 	var res []string
 	for s := range set {
-		if _, ok := exempted[s]; ok {
+		// 路径级豁免的字段不会被 collectComponent 收进来（它只遍历白名单），
+		// 所以提取阶段只需看整条原文豁免
+		if _, ok := exempted.strings[s]; ok {
 			continue
 		}
 		if t, ok := dict[s]; !ok || t == "" {
@@ -214,7 +243,7 @@ func readmeStatus(componentDir string) (bool, bool, []string) {
 	return containsHan(string(content)), hasEn, hanLines
 }
 
-func runExtract(dir string, components []string, out string, exempted map[string]struct{}) {
+func runExtract(dir string, components []string, out string, exempted exemptions) {
 	totalP0, totalP1, readmeTodo := 0, 0, 0
 
 	for _, component := range components {
@@ -272,13 +301,20 @@ func writeMissing(out, component, phase string, keys []string) {
 	}
 }
 
-// scanHan 全量扫描（含非白名单字段），返回 path -> 原文；这是比词条覆盖率更强的
-// 兜底：白名单漏掉的字段也会被抓出来
-func scanHan(node interface{}, path string, report func(path, s string)) {
+// scanHan 全量扫描（含非白名单字段），把命中中文的字段路径（key 链，数组下标
+// 不计入）与原文报给 report；这是比词条覆盖率更强的兜底：白名单漏掉的字段也会
+// 被抓出来。map 的 key 自身含中文时按所在路径一并上报（annotations 的 key 即
+// 展示字段，运行时会翻译）
+func scanHan(node interface{}, path []string, report func(path []string, s string)) {
 	switch v := node.(type) {
 	case map[string]interface{}:
 		for k, child := range v {
-			scanHan(child, path+"."+k, report)
+			// 新建切片而非 append 复用底层数组：report 会持有这个路径
+			sub := append(append([]string{}, path...), k)
+			if containsHan(k) {
+				report(sub, k)
+			}
+			scanHan(child, sub, report)
 		}
 	case []interface{}:
 		for _, child := range v {
@@ -298,34 +334,57 @@ type finding struct {
 	text      string
 }
 
-func runCheck(dir string, components []string, scope string, verbose bool, exempted map[string]struct{}) int {
+// classifyPath 按「字段路径」而非「字符串内容」判定类别，与运行时翻译口径同源：
+//   - p0：告警 name/note/annotations（含 key）、仪表盘根级 name/note/tags
+//   - p1：仪表盘 configs 内命中展示字段白名单的路径
+//   - other：运行时永远不会翻译的路径（功能字段），补词条也消不掉，
+//     只能靠源头清洗或写进 i18n_exemptions.json
+//
+// 早期版本按字符串内容查 p0/p1 集合，同一个串同时出现在展示字段和功能字段时会
+// 被误判成可翻译，掩盖真正的 other
+func classifyPath(kind string, path []string) string {
+	if len(path) == 0 {
+		return "other"
+	}
+	if kind == "alert" {
+		switch path[0] {
+		case "name", "note":
+			if len(path) == 1 {
+				return "p0"
+			}
+		case "annotations":
+			return "p0"
+		}
+		return "other"
+	}
+	// dashboard
+	switch path[0] {
+	case "name", "note", "tags":
+		if len(path) == 1 {
+			return "p0"
+		}
+		return "other"
+	case "configs":
+		if integration.IsDisplayFieldPath(path) {
+			return "p1"
+		}
+	}
+	return "other"
+}
+
+func runCheck(dir string, components []string, scope string, verbose bool, exempted exemptions) int {
 	var findings []finding
-	add := func(component, category, path, text string) {
-		if _, ok := exempted[text]; ok {
+	// path 为 nil 时只按整条原文豁免（README 行、告警 cate 等非字段路径来源）
+	add := func(component, category string, path []string, label, text string) {
+		if exempted.allow(path, text) {
 			return
 		}
-		findings = append(findings, finding{component, category, path, text})
+		findings = append(findings, finding{component, category, label, text})
 	}
 
 	for _, component := range components {
 		componentDir := filepath.Join(dir, component)
 		dict := integration.LoadComponentDicts(componentDir)[integration.LangEnUS]
-
-		// 与 collectComponent 同口径先分类出 p0/p1 字段集合
-		cs, err := collectComponent(componentDir)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			return 2
-		}
-		classify := func(s string) string {
-			if _, ok := cs.p0[s]; ok {
-				return "p0"
-			}
-			if _, ok := cs.p1[s]; ok {
-				return "p1"
-			}
-			return "other"
-		}
 
 		// 渲染 en_US 后全量扫描
 		checkFile := func(kind, name string, m map[string]interface{}) {
@@ -334,9 +393,17 @@ func runCheck(dir string, components []string, scope string, verbose bool, exemp
 				integration.TranslateAlertMap(m, dict)
 			case "dashboard":
 				integration.TranslateDashboardMap(m, dict)
+				// configs 的历史字符串形态：展开成对象再扫，否则整块 JSON 会以
+				// 一个 configs 字符串的形式命中，路径信息全丢
+				if s, ok := m["configs"].(string); ok {
+					var parsed interface{}
+					if err := decodeUseNumber([]byte(s), &parsed); err == nil {
+						m["configs"] = parsed
+					}
+				}
 			}
-			scanHan(m, kind+"("+name+")", func(path, s string) {
-				add(component, classify(s), path, s)
+			scanHan(m, nil, func(path []string, s string) {
+				add(component, classifyPath(kind, path), path, kind+"("+name+")."+strings.Join(path, "."), s)
 			})
 		}
 
@@ -350,7 +417,7 @@ func runCheck(dir string, components []string, scope string, verbose bool, exemp
 			}
 			cate := integration.Translate(dict, strings.TrimSuffix(f, ".json"))
 			if containsHan(cate) {
-				add(component, "p0", "alert-cate("+f+")", cate)
+				add(component, "p0", nil, "alert-cate("+f+")", cate)
 			}
 			for _, rule := range rules {
 				name, _ := rule["name"].(string)
@@ -371,11 +438,11 @@ func runCheck(dir string, components []string, scope string, verbose bool, exemp
 
 		zhReadme, hasEnReadme, hanLines := readmeStatus(componentDir)
 		if zhReadme && !hasEnReadme {
-			add(component, "readme", "markdown/README.md", "README.en_US.md missing")
+			add(component, "readme", nil, "markdown/README.md", "README.en_US.md missing")
 		}
 		// en 副本自身残留中文也算未完成翻译
 		for _, line := range hanLines {
-			add(component, "readme", "markdown/README.en_US.md", line)
+			add(component, "readme", nil, "markdown/README.en_US.md", line)
 		}
 	}
 

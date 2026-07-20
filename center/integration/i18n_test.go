@@ -19,6 +19,11 @@ func TestNormalizeLang(t *testing.T) {
 		"en_GB": LangEnUS,
 		"ja_JP": LangEnUS, // 未支持语言归入 en_US
 		"ru_RU": LangEnUS,
+		// 大小写不敏感：第三方直连 API 可能传大写
+		"ZH_CN": LangSource,
+		"Zh-CN": LangSource,
+		"ZH":    LangSource,
+		"EN_US": LangEnUS,
 	}
 	for in, want := range cases {
 		if got := NormalizeLang(in); got != want {
@@ -31,6 +36,7 @@ func TestTranslateAlertMap(t *testing.T) {
 	dict := ComponentDict{
 		"磁盘使用率过高": "Disk usage too high",
 		"触发值":     "trigger value",
+		"描述":      "Description",
 	}
 
 	m := map[string]interface{}{
@@ -38,7 +44,8 @@ func TestTranslateAlertMap(t *testing.T) {
 		"note": "未收录的说明", // 词条缺失，应保留原文（单字段回退）
 		"annotations": map[string]interface{}{
 			"summary": "触发值", // 值翻译
-			"极值":      "触发值", // key 是功能标识不译，值照译
+			"描述":      "触发值", // key 与值都是展示内容，都译
+			"极值":      "触发值", // key 无词条时保留原文
 		},
 		"rule_config": map[string]interface{}{
 			"queries": []interface{}{
@@ -57,6 +64,26 @@ func TestTranslateAlertMap(t *testing.T) {
 	ann := m["annotations"].(map[string]interface{})
 	if ann["summary"] != "trigger value" || ann["极值"] != "trigger value" {
 		t.Errorf("annotations = %v", ann)
+	}
+	if _, ok := ann["描述"]; ok {
+		t.Errorf("annotation key 描述 should be translated away, got %v", ann)
+	}
+	if ann["Description"] != "trigger value" {
+		t.Errorf("annotation key should be translated to Description, got %v", ann)
+	}
+}
+
+// 告警 annotations 的 key 与 value 都参与翻译，但 key 冲突时保留原 key，
+// 避免条目被覆盖丢失
+func TestTranslateAlertMapAnnotationKeyCollision(t *testing.T) {
+	dict := ComponentDict{"描述": "Description", "说明": "Description"}
+	m := map[string]interface{}{
+		"annotations": map[string]interface{}{"描述": "a", "说明": "b"},
+	}
+	TranslateAlertMap(m, dict)
+	ann := m["annotations"].(map[string]interface{})
+	if len(ann) != 2 {
+		t.Fatalf("annotation entries lost on key collision: %v", ann)
 	}
 }
 
@@ -133,6 +160,73 @@ func TestTranslateDashboardMapWhitelist(t *testing.T) {
 	}
 	if nested["description"] != "未收录描述" {
 		t.Errorf("missing dict entry should fall back, got %v", nested["description"])
+	}
+}
+
+// valueMappings 的 options 形态（key 是被映射的原始值）与表格默认排序列
+// custom.sortColumn（取值是 renameByName 之后的列名）都属展示字段，
+// 必须与 result.text / renameByName 同步翻译，否则 en 下映射文案不一致、排序失效
+func TestTranslateDashboardMapValueMappingsAndSortColumn(t *testing.T) {
+	dict := ComponentDict{
+		"永久":  "Permanent",
+		"异常":  "Abnormal",
+		"指标":  "Metric",
+		"分组键": "GroupKey",
+	}
+
+	m := map[string]interface{}{
+		"configs": map[string]interface{}{
+			"panels": []interface{}{
+				map[string]interface{}{
+					"custom": map[string]interface{}{
+						"sortColumn": "指标",
+						"aggrFunc":   "分组键", // custom 下的非白名单字段不动
+					},
+					"options": map[string]interface{}{
+						"valueMappings": []interface{}{
+							map[string]interface{}{
+								"options": map[string]interface{}{
+									"-2": map[string]interface{}{"text": "永久", "color": "#fff"},
+									"-1": map[string]interface{}{"text": "异常"},
+								},
+								"result": map[string]interface{}{"text": "永久"},
+							},
+						},
+					},
+					"transformations": []interface{}{
+						map[string]interface{}{
+							"options": map[string]interface{}{
+								"renameByName": map[string]interface{}{"__name__": "指标"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	TranslateDashboardMap(m, dict)
+
+	p := m["configs"].(map[string]interface{})["panels"].([]interface{})[0].(map[string]interface{})
+	custom := p["custom"].(map[string]interface{})
+	if custom["sortColumn"] != "Metric" {
+		t.Errorf("custom.sortColumn = %v, want Metric (与 renameByName 同步)", custom["sortColumn"])
+	}
+	if custom["aggrFunc"] != "分组键" {
+		t.Errorf("custom.aggrFunc is not a display field, got %v", custom["aggrFunc"])
+	}
+	vm := p["options"].(map[string]interface{})["valueMappings"].([]interface{})[0].(map[string]interface{})
+	opts := vm["options"].(map[string]interface{})
+	if opts["-2"].(map[string]interface{})["text"] != "Permanent" {
+		t.Errorf("valueMappings.options text = %v", opts["-2"])
+	}
+	if opts["-1"].(map[string]interface{})["text"] != "Abnormal" {
+		t.Errorf("valueMappings.options text = %v", opts["-1"])
+	}
+	if opts["-2"].(map[string]interface{})["color"] != "#fff" {
+		t.Errorf("color must stay untouched, got %v", opts["-2"])
+	}
+	if vm["result"].(map[string]interface{})["text"] != "Permanent" {
+		t.Errorf("valueMappings.result.text = %v", vm["result"])
 	}
 }
 

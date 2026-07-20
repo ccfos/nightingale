@@ -1,3 +1,17 @@
 {
-    "网络交换机": "Network Switch"
+    "CPU使用率排名": "CPU Usage Ranking",
+    "cpu使用率": "CPU Usage",
+    "交换机数目": "Switch Count",
+    "内存使用率": "Memory Usage",
+    "内存使用率排名": "Memory Usage Ranking",
+    "单机详情": "Single Node Details",
+    "总体概览": "Overview",
+    "网络in流量": "Network Inbound Traffic",
+    "网络in流量大于300MB": "Network Inbound Traffic Over 300MB",
+    "网络out流量": "Network Outbound Traffic",
+    "网络out流量大于300MB": "Network Outbound Traffic Over 300MB",
+    "网络交换机": "Network Switch",
+    "设备温度": "Device Temperature",
+    "设备运行时长": "Device Uptime",
+    "采集耗时": "Collection Latency"
 }

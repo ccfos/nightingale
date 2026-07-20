@@ -10,5 +10,9 @@
     "数据传输链路CRC校验失败次数增加，可能是接口、线缆或硬盘控制器故障前兆": "Growing CRC failures on the data link, a possible precursor of interface, cable or disk controller failure",
     "硬盘温度超过65℃": "Disk temperature exceeds 65 Celsius",
     "硬盘自身检测的整体健康状态为不健康，存在严重故障风险，需立即处理": "Disk self-assessed overall health is FAILED, serious failure risk, handle immediately",
-    "硬盘运行温度过高，会加速硬件老化甚至导致直接故障，需立即检查散热": "Disk operating temperature too high, which accelerates aging or causes outright failure; check cooling immediately"
+    "硬盘运行温度过高，会加速硬件老化甚至导致直接故障，需立即检查散热": "Disk operating temperature too high, which accelerates aging or causes outright failure; check cooling immediately",
+    "设备数量": "Device Count",
+    "通电时间": "Power-On Hours",
+    "通电次数": "Power Cycle Count",
+    "非预期掉电次数统计": "Unexpected Power Loss Count"
 }
