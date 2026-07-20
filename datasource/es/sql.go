@@ -158,8 +158,8 @@ func stripSQLQuotedStrings(sql string) string {
 // XPackSQL is the single entry point for ES SQL execution.
 // It uses the go-elasticsearch/v8 SDK which is wire-compatible with ES 7.x, 8.x, and 9.x.
 // Macro expansion is delegated to the globally-registered macros.Macro with
-// DatasourceTypeElasticsearch so downstream (n9e-plus) can apply the ES
-// dialect ($__timeFilter → ISO 8601 string literals).
+// ESType, so the registered dispatcher can apply the ES dialect
+// ($__timeFilter → ISO 8601 string literals).
 //
 // When the response contains a cursor (indicating more data is available),
 // XPackSQL automatically fetches subsequent pages until the LIMIT is reached
