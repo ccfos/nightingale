@@ -39,10 +39,21 @@ func resolveCreationTeamIDs(fromConfig []int64, params map[string]string) []int6
 	if len(fromConfig) > 0 {
 		return fromConfig
 	}
-	s, ok := params["team_ids"]
-	if !ok {
-		return nil
+	return parseTeamIDsCSV(params["team_ids"])
+}
+
+// resolveSkillTeamIDs 解析创建技能的管理团队。与通知规则相反，表单提交值优先于工具
+// 参数：本轮带着 skill_team_ids 就说明用户刚在授权表单里选完，那是最新且权威的选择，
+// 而模型这一轮的 user_group_ids 只是它凭对话猜的 ID。
+func resolveSkillTeamIDs(fromArgs []int64, params map[string]string) []int64 {
+	if ids := parseTeamIDsCSV(params[aiagent.SkillTeamsFieldKey]); len(ids) > 0 {
+		return ids
 	}
+	return fromArgs
+}
+
+// parseTeamIDsCSV 解析表单经 inputs 注入的团队 ID 列表（"1,2,3"）。
+func parseTeamIDsCSV(s string) []int64 {
 	var ids []int64
 	for _, part := range strings.Split(s, ",") {
 		part = strings.TrimSpace(part)

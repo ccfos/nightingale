@@ -58,7 +58,7 @@ func BuildCreationForm(deps *ToolDeps, user *models.User, skillName string, requ
 		case "datasource_id":
 			fields = append(fields, loadDatasourceField(deps, user, pre.DatasourceID))
 		case "team_ids":
-			fields = append(fields, loadTeamField(deps, user, pre.TeamIDs))
+			fields = append(fields, loadTeamField(deps, user, key, pre.TeamIDs))
 		default:
 			logger.Warningf("[form] unknown required context key %q for skill %s", key, skillName)
 		}
@@ -113,10 +113,11 @@ func loadDatasourceField(deps *ToolDeps, user *models.User, preselectedID int64)
 	return field
 }
 
-// loadTeamField 列出用户可引用的团队（通知规则接收组）。preselectedIDs 命中的
-// 候选 is_default（多选）。
-func loadTeamField(deps *ToolDeps, user *models.User, preselectedIDs []int64) FormField {
-	field := FormField{Key: "team_ids", Type: "multi", Candidates: []FormCandidate{}}
+// loadTeamField 列出用户可引用的团队（通知规则接收组 / 技能管理团队）。preselectedIDs
+// 命中的候选 is_default（多选）。key 由调用方给：不同场景用不同的 action.param 键，
+// 表单提交值才不会串场（见 SkillTeamsFieldKey）。
+func loadTeamField(deps *ToolDeps, user *models.User, key string, preselectedIDs []int64) FormField {
+	field := FormField{Key: key, Type: "multi", Candidates: []FormCandidate{}}
 	dbCtx := deps.DBCtx
 
 	var groups []models.UserGroup
@@ -164,6 +165,13 @@ func IsDefaultBusiGroupName(name string) bool {
 
 // ==================== 技能授权表单（创建技能的缺参门） ====================
 
+// SkillTeamsFieldKey 是创建技能时「管理团队」字段的 action.param 键。刻意不复用通知
+// 规则的 team_ids：那个键是共享的（通知规则缺参门和 preflight 都会经 params 注入
+// team_ids），而 create_skill 要靠"本轮带没带自己的表单值"来判断这一轮是不是授权表单的
+// 续跑。共用一个键的话，用户在同一会话里提交通知规则的团队表单，就会被误判成技能表单
+// 的续跑，进而因为找不到技能草稿而中止一次本来合法的创建。
+const SkillTeamsFieldKey = "skill_team_ids"
+
 // SkillScopeFieldKey 是创建技能时「可见范围」字段的 action.param 键。候选 ID 用 1/2
 // 而不是 private 的 0/1：前端把候选 ID 当实体 ID 处理（真值判断），0 会被当成"没选"。
 const SkillScopeFieldKey = "skill_scope"
@@ -180,7 +188,7 @@ const (
 // （同 BuildApprovalForm），故单独构造。
 // prePrivate 是模型已给出的可见范围（0/1），以 is_default 预选让用户确认或改选。
 func BuildSkillAuthForm(deps *ToolDeps, user *models.User, lang string, preTeamIDs []int64, prePrivate int) string {
-	fields := []FormField{loadTeamField(deps, user, preTeamIDs)}
+	fields := []FormField{loadTeamField(deps, user, SkillTeamsFieldKey, preTeamIDs)}
 	if user.IsAdmin() {
 		fields = append(fields, FormField{
 			Key:  SkillScopeFieldKey,

@@ -41,18 +41,23 @@ func TestResolveSkillPrivate(t *testing.T) {
 	}
 }
 
-// 管理团队既可由模型直接给出，也可由缺参门表单经 params 注入；两者都没有时返回空，
-// 由调用方弹表单而不是替用户瞎选。
-func TestResolveCreationTeamIDsForSkill(t *testing.T) {
-	fromForm := map[string]string{"team_ids": "3,4"}
+// 管理团队既可由模型直接给出，也可由授权表单经 params 注入；两者都没有时返回空，由调用方
+// 弹表单而不是替用户瞎选。表单值优先：用户刚在表单里选完，比模型猜的 ID 权威。
+// 通知规则的 team_ids 不参与——那是另一张表单的键，混用会串场（见 SkillTeamsFieldKey）。
+func TestResolveSkillTeamIDs(t *testing.T) {
+	fromForm := map[string]string{aiagent.SkillTeamsFieldKey: "3,4"}
+	fromArgs := getArgInt64Slice(map[string]interface{}{"user_group_ids": []interface{}{float64(1), float64(2)}}, "user_group_ids")
 
-	if got := resolveCreationTeamIDs(getArgInt64Slice(map[string]interface{}{"user_group_ids": []interface{}{float64(1), float64(2)}}, "user_group_ids"), fromForm); len(got) != 2 || got[0] != 1 || got[1] != 2 {
-		t.Fatalf("tool args should win over form-injected team_ids, got %v", got)
+	if got := resolveSkillTeamIDs(fromArgs, fromForm); len(got) != 2 || got[0] != 3 || got[1] != 4 {
+		t.Fatalf("the submitted form should win over the model's guessed ids, got %v", got)
 	}
-	if got := resolveCreationTeamIDs(nil, fromForm); len(got) != 2 || got[0] != 3 || got[1] != 4 {
-		t.Fatalf("form-injected team_ids should be used when args carry none, got %v", got)
+	if got := resolveSkillTeamIDs(fromArgs, nil); len(got) != 2 || got[0] != 1 || got[1] != 2 {
+		t.Fatalf("tool args should be used when no form was submitted, got %v", got)
 	}
-	if got := resolveCreationTeamIDs(nil, nil); len(got) != 0 {
+	if got := resolveSkillTeamIDs(nil, map[string]string{"team_ids": "9"}); len(got) != 0 {
+		t.Fatalf("the notify-rule team key must not feed skill creation, got %v", got)
+	}
+	if got := resolveSkillTeamIDs(nil, nil); len(got) != 0 {
 		t.Fatalf("no teams anywhere should stay empty (so the gate pops the form), got %v", got)
 	}
 }
@@ -91,9 +96,9 @@ func TestGetArgInt64Slice(t *testing.T) {
 // 「确认」会再弹一次表单，或者管理员选的「全员可见」被悄悄降级成私有。
 func TestSkillAuthSurvivesProposalReplay(t *testing.T) {
 	// 提案腿：团队与可见范围都来自表单注入的 params。
-	formParams := map[string]string{"team_ids": "7,8", aiagent.SkillScopeFieldKey: "1"}
+	formParams := map[string]string{aiagent.SkillTeamsFieldKey: "7,8", aiagent.SkillScopeFieldKey: "1"}
 	args := map[string]interface{}{"name": "redis-triage"}
-	args["user_group_ids"] = resolveCreationTeamIDs(getArgInt64Slice(args, "user_group_ids"), formParams)
+	args["user_group_ids"] = resolveSkillTeamIDs(getArgInt64Slice(args, "user_group_ids"), formParams)
 	args["private"] = resolveSkillPrivate(adminUser(), args, formParams)
 
 	// 确认腿：args 经 JSON 序列化后原样 replay，params 里已经没有表单值。
@@ -106,7 +111,7 @@ func TestSkillAuthSurvivesProposalReplay(t *testing.T) {
 		t.Fatalf("unmarshal replay args: %v", err)
 	}
 
-	teams := resolveCreationTeamIDs(getArgInt64Slice(replayed, "user_group_ids"), nil)
+	teams := resolveSkillTeamIDs(getArgInt64Slice(replayed, "user_group_ids"), nil)
 	if len(teams) != 2 || teams[0] != 7 || teams[1] != 8 {
 		t.Fatalf("teams lost on replay: %v", teams)
 	}
@@ -123,7 +128,7 @@ func TestSkillDraftSurvivesAuthFormRoundTrip(t *testing.T) {
 	deps := &aiagent.ToolDeps{} // 无 Redis：走 proposalStore 的进程内兜底
 	params := map[string]string{"chat_id": "chat-draft-1", "seq_id": "7"}
 	// 表单提交那一轮：团队/可见范围经 action.param → params 直达工具层。
-	resumed := map[string]string{"chat_id": "chat-draft-1", "seq_id": "8", "team_ids": "5", aiagent.SkillScopeFieldKey: "2"}
+	resumed := map[string]string{"chat_id": "chat-draft-1", "seq_id": "8", aiagent.SkillTeamsFieldKey: "5", aiagent.SkillScopeFieldKey: "2"}
 
 	instructions := strings.Repeat("你是一个 Redis 排查助手，按以下决策树排查。\n", 200)
 	script := "#!/usr/bin/env python3\nprint('disk report')\n"
@@ -177,7 +182,7 @@ func TestSkillDraftSurvivesAuthFormRoundTrip(t *testing.T) {
 func TestSkillDraftAbortsWhenUnusable(t *testing.T) {
 	ctx := context.Background()
 	deps := &aiagent.ToolDeps{}
-	resumed := map[string]string{"chat_id": "chat-draft-abort", "seq_id": "2", "team_ids": "5"}
+	resumed := map[string]string{"chat_id": "chat-draft-abort", "seq_id": "2", aiagent.SkillTeamsFieldKey: "5"}
 	rebuilt := map[string]interface{}{"name": "skill-a", "instructions": "重写的正文"}
 
 	// 草稿从未存过（超时被清、或换了实例且没配 Redis）。
@@ -206,21 +211,42 @@ func TestSkillDraftOnlyAppliesOnFormResume(t *testing.T) {
 	}
 
 	revised := map[string]interface{}{"name": "skill-a", "instructions": "用户要求改过的新正文"}
-	got, halt := restoreSkillDraft(ctx, deps, stashed, revised) // 无 team_ids：不是表单续跑
+	got, halt := restoreSkillDraft(ctx, deps, stashed, revised) // 没带技能表单的提交值：不是续跑
 	if halt != "" || getArgString(got, "instructions") != "用户要求改过的新正文" {
 		t.Fatalf("a non-form turn must keep the model's args: halt=%q instructions=%q", halt, getArgString(got, "instructions"))
 	}
 
-	// 换个会话即便带着表单值也取不到本会话的草稿——只能中止，不能串会话还原。
-	otherChat := map[string]string{"chat_id": "chat-draft-3", "team_ids": "5"}
+	// 多意图会话：用户提交的是通知规则的团队表单（共享键 team_ids），本轮顺带创建技能。
+	// 这不是技能授权表单的续跑，绝不能因为查无技能草稿就中止一次合法创建。
+	notifyRuleForm := map[string]string{"chat_id": "chat-draft-2", "seq_id": "2", "team_ids": "5"}
+	if got, halt := restoreSkillDraft(ctx, deps, notifyRuleForm, revised); halt != "" || getArgString(got, "instructions") != "用户要求改过的新正文" {
+		t.Fatalf("a notify-rule team form must not be mistaken for the skill auth form: halt=%q", halt)
+	}
+
+	// 换个会话即便带着技能表单值也取不到本会话的草稿——只能中止，不能串会话还原。
+	otherChat := map[string]string{"chat_id": "chat-draft-3", aiagent.SkillTeamsFieldKey: "5"}
 	if _, halt := restoreSkillDraft(ctx, deps, otherChat, revised); halt != skillDraftLostMsg {
 		t.Fatalf("drafts must not cross conversations, got halt %q", halt)
 	}
+}
 
-	// 无 chat_id（CLI / A2A 无会话入口）：不启用草稿机制，原样放行。
-	noChat := map[string]string{"team_ids": "5"}
-	if got, halt := restoreSkillDraft(ctx, deps, noChat, revised); halt != "" || getArgString(got, "instructions") != "用户要求改过的新正文" {
-		t.Fatalf("missing chat_id should be a no-op: halt=%q", halt)
+// 无 chat_id（CLI / A2A 等无会话入口）时没有可靠的草稿键：必须拒绝暂存，调用方据此
+// 放弃弹表单、改让模型直接把 user_group_ids 写进参数——那条路不产生中断，正文不会丢。
+func TestSkillDraftRequiresChatContext(t *testing.T) {
+	ctx := context.Background()
+	deps := &aiagent.ToolDeps{}
+	args := map[string]interface{}{"name": "skill-a", "instructions": "正文"}
+
+	if err := stashSkillDraft(ctx, deps, map[string]string{"seq_id": "1"}, args); err == nil {
+		t.Fatal("stashing without chat_id must fail so the caller never pops a form it can't back with a draft")
+	}
+	// 没有会话上下文却收到技能表单提交值：来路不明，按草稿丢失中止，不拿重写稿顶上。
+	if _, halt := restoreSkillDraft(ctx, deps, map[string]string{aiagent.SkillTeamsFieldKey: "5"}, args); halt != skillDraftLostMsg {
+		t.Fatalf("form values without a chat context should abort, got %q", halt)
+	}
+	// 普通调用（没有表单提交值）不受影响。
+	if got, halt := restoreSkillDraft(ctx, deps, map[string]string{}, args); halt != "" || getArgString(got, "instructions") != "正文" {
+		t.Fatalf("a plain call without chat_id must pass through: halt=%q", halt)
 	}
 }
 
@@ -230,7 +256,7 @@ func TestSkillDraftDropsFieldsAbsentFromDraft(t *testing.T) {
 	ctx := context.Background()
 	deps := &aiagent.ToolDeps{}
 	params := map[string]string{"chat_id": "chat-draft-4"}
-	resumed := map[string]string{"chat_id": "chat-draft-4", "team_ids": "5"}
+	resumed := map[string]string{"chat_id": "chat-draft-4", aiagent.SkillTeamsFieldKey: "5"}
 	if err := stashSkillDraft(ctx, deps, params, map[string]interface{}{"name": "no-files", "instructions": "正文"}); err != nil {
 		t.Fatalf("stash draft: %v", err)
 	}
