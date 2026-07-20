@@ -139,7 +139,7 @@ func (m *MySQL) QueryData(ctx context.Context, query interface{}) ([]models.Data
 
 	if strings.Contains(mysqlQueryParam.SQL, "$__") {
 		var err error
-		mysqlQueryParam.SQL, err = macros.Macro(mysqlQueryParam.SQL, mysqlQueryParam.From, mysqlQueryParam.To)
+		mysqlQueryParam.SQL, err = macros.Macro(mysqlQueryParam.SQL, mysqlQueryParam.From, mysqlQueryParam.To, MySQLType)
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +190,7 @@ func (m *MySQL) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 
 	if strings.Contains(mysqlQueryParam.SQL, "$__") {
 		var err error
-		mysqlQueryParam.SQL, err = macros.Macro(mysqlQueryParam.SQL, mysqlQueryParam.From, mysqlQueryParam.To)
+		mysqlQueryParam.SQL, err = macros.Macro(mysqlQueryParam.SQL, mysqlQueryParam.From, mysqlQueryParam.To, MySQLType)
 		if err != nil {
 			return nil, 0, err
 		}

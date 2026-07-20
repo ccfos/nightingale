@@ -11,18 +11,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/macros"
 )
 
-// SQLPreprocess is called before SQL execution to expand macros.
-// Defaults to macros.Macro. Downstream projects (e.g. n9e-plus)
-// can override this via RegisterSQLPreprocess to adapt macro
-// dialects for different SQL engines.
-var SQLPreprocess func(sql string, from, to int64) (string, error)
-
-// RegisterSQLPreprocess sets a custom SQL preprocessor for ES SQL
-// macro expansion, replacing the default macros.Macro delegation.
-func RegisterSQLPreprocess(f func(sql string, from, to int64) (string, error)) {
-	SQLPreprocess = f
-}
-
 // XPackSQLRequest is the neutral request structure for ES SQL queries.
 // Field names align with the ES SQL REST API spec.
 type XPackSQLRequest struct {
@@ -169,7 +157,9 @@ func stripSQLQuotedStrings(sql string) string {
 
 // XPackSQL is the single entry point for ES SQL execution.
 // It uses the go-elasticsearch/v8 SDK which is wire-compatible with ES 7.x, 8.x, and 9.x.
-// Macro expansion is delegated to SQLPreprocess (defaults to macros.Macro).
+// Macro expansion is delegated to the globally-registered macros.Macro with
+// ESType, so the registered dispatcher can apply the ES dialect
+// ($__timeFilter → ISO 8601 string literals).
 //
 // When the response contains a cursor (indicating more data is available),
 // XPackSQL automatically fetches subsequent pages until the LIMIT is reached
@@ -180,12 +170,8 @@ func XPackSQL(ctx context.Context, escli *Elasticsearch, req XPackSQLRequest) (*
 		return nil, fmt.Errorf("ES SQL requires version 7.x or higher, got %q", escli.Version)
 	}
 
-	if strings.Contains(req.Query, "$__") {
-		preprocess := SQLPreprocess
-		if preprocess == nil {
-			preprocess = defaultSQLPreprocess
-		}
-		expanded, err := preprocess(req.Query, req.From, req.To)
+	if strings.Contains(req.Query, "$__") && macros.Macro != nil {
+		expanded, err := macros.Macro(req.Query, req.From, req.To, ESType)
 		if err != nil {
 			return nil, fmt.Errorf("macro expansion failed: %w", err)
 		}
@@ -239,13 +225,6 @@ func XPackSQL(ctx context.Context, escli *Elasticsearch, req XPackSQLRequest) (*
 	resp.Rows = allRows
 	resp.Cursor = ""
 	return resp, nil
-}
-
-func defaultSQLPreprocess(sql string, from, to int64) (string, error) {
-	if macros.Macro != nil {
-		return macros.Macro(sql, from, to)
-	}
-	return sql, nil
 }
 
 // marshalSQLBody builds the JSON request body for the ES SQL REST API.

@@ -208,7 +208,12 @@ func (c *Clickhouse) QueryData(ctx context.Context, query interface{}) ([]models
 
 	if strings.Contains(ckQueryParam.Sql, "$__") {
 		var err error
-		ckQueryParam.Sql, err = macros.Macro(ckQueryParam.Sql, ckQueryParam.From, ckQueryParam.To)
+		ckQueryParam.Sql, err = macros.Macro(
+			ckQueryParam.Sql,
+			ckQueryParam.From,
+			ckQueryParam.To,
+			CKType,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -243,7 +248,12 @@ func (c *Clickhouse) QueryLog(ctx context.Context, query interface{}) ([]interfa
 
 	if strings.Contains(ckQueryParam.Sql, "$__") {
 		var err error
-		ckQueryParam.Sql, err = macros.Macro(ckQueryParam.Sql, ckQueryParam.From, ckQueryParam.To)
+		ckQueryParam.Sql, err = macros.Macro(
+			ckQueryParam.Sql,
+			ckQueryParam.From,
+			ckQueryParam.To,
+			CKType,
+		)
 		if err != nil {
 			return nil, 0, err
 		}
