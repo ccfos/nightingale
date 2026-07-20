@@ -747,6 +747,12 @@ func AlertCurEventDel(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(&AlertCurEvent{}).Error
 }
 
+func AlertCurEventIds(ctx *ctx.Context) ([]int64, error) {
+	var ids []int64
+	err := DB(ctx).Model(&AlertCurEvent{}).Pluck("id", &ids).Error
+	return ids, err
+}
+
 func AlertCurEventDelByHash(ctx *ctx.Context, hash string) error {
 	if !ctx.IsCenter {
 		_, err := poster.GetByUrls[string](ctx, "/v1/n9e/alert-cur-events-del-by-hash?hash="+hash)

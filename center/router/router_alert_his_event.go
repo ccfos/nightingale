@@ -96,21 +96,41 @@ func (rt *Router) alertHisEventsDelete(c *gin.Context) {
 
 	user := c.MustGet("user").(*models.User)
 
+	// timestamp 不允许超过当前时间，否则清理期间新触发的事件会绕过下面的活跃告警快照
+	timestamp := f.Timestamp
+	if now := time.Now().Unix(); timestamp > now {
+		timestamp = now
+	}
+
 	// 启动后台清理任务
 	go func() {
+		// 快照活跃告警 id 集合（cur.id 即对应的 his.id），活跃告警的历史记录跳过不删
+		ids, err := models.AlertCurEventIds(rt.Ctx)
+		if err != nil {
+			logger.Errorf("Failed to delete alert history events: query active event ids fail, operator=%s, error=%v",
+				user.Username, err)
+			return
+		}
+		activeIds := make(map[int64]struct{}, len(ids))
+		for _, id := range ids {
+			activeIds[id] = struct{}{}
+		}
+
 		limit := 100
+		var minId int64
 		for {
-			n, err := models.AlertHisEventBatchDelete(rt.Ctx, f.Timestamp, f.Severities, limit)
+			fetched, deleted, maxId, err := models.AlertHisEventBatchDelete(rt.Ctx, timestamp, f.Severities, minId, limit, activeIds)
 			if err != nil {
 				logger.Errorf("Failed to delete alert history events: operator=%s, timestamp=%d, severities=%v, error=%v",
-					user.Username, f.Timestamp, f.Severities, err)
+					user.Username, timestamp, f.Severities, err)
 				break
 			}
-			logger.Debugf("Successfully deleted alert history events: operator=%s, timestamp=%d, severities=%v, deleted=%d",
-				user.Username, f.Timestamp, f.Severities, n)
-			if n < int64(limit) {
+			logger.Debugf("Successfully deleted alert history events: operator=%s, timestamp=%d, severities=%v, deleted=%d, skipped_active=%d",
+				user.Username, timestamp, f.Severities, deleted, int64(fetched)-deleted)
+			if fetched < limit {
 				break // 已经删完
 			}
+			minId = maxId
 
 			time.Sleep(100 * time.Millisecond) // 防止锁表
 		}
