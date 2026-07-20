@@ -253,6 +253,11 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	var f NotifyTestForm
 	ginx.BindJSON(c, &f)
 
+	// ChannelID 为空时 NotifyChannelGets 会查回全部渠道并取第一个，测试消息会发到无关渠道
+	if f.NotifyConfig.ChannelID <= 0 {
+		ginx.Bomb(http.StatusBadRequest, "notify_config.channel_id required")
+	}
+
 	events := []*models.AlertCurEvent{}
 	if f.UseMockEvent {
 		// 模拟事件用于验证通道连通性，不做筛选条件匹配校验
