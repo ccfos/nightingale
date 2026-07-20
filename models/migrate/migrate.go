@@ -282,7 +282,8 @@ type TaskTpl struct {
 	AuthLevel int `gorm:"column:auth_level;type:int;not null;default:0;comment:ai task auth level, 0=off 1/2/3=level"`
 }
 type AlertHisEvent struct {
-	LastEvalTime  int64   `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
+	GroupId       int64   `gorm:"column:group_id;bigint(20);not null;default:0;comment:busi group id of rule;index:idx_group_last_eval_time,priority:1"`
+	LastEvalTime  int64   `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time;index:idx_group_last_eval_time,priority:2"`
 	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
 	NotifyRuleIds []int64 `gorm:"column:notify_rule_ids;type:text;serializer:json;comment:notify rule ids"`
 }

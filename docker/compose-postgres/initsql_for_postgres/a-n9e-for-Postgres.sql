@@ -628,6 +628,7 @@ CREATE INDEX alert_his_event_hash_idx ON alert_his_event (hash);
 CREATE INDEX alert_his_event_rule_id_idx ON alert_his_event (rule_id);
 CREATE INDEX alert_his_event_tg_idx ON alert_his_event (trigger_time, group_id);
 CREATE INDEX alert_his_event_nrn_idx ON alert_his_event (last_eval_time);
+CREATE INDEX idx_group_last_eval_time ON alert_his_event (group_id, last_eval_time);
 COMMENT ON COLUMN alert_his_event.group_id IS 'busi group id of rule';
 COMMENT ON COLUMN alert_his_event.datasource_id IS 'datasource id';
 COMMENT ON COLUMN alert_his_event.group_name IS 'busi group name';

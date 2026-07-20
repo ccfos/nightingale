@@ -789,7 +789,7 @@ type InitAlertHisEvent struct {
 	Cate             string `gorm:"size:128;not null"`
 	DatasourceID     int64  `gorm:"not null;default:0;comment:datasource id"`
 	Cluster          string `gorm:"size:128;not null"`
-	GroupID          int64  `gorm:"not null;comment:busi group id of rule;index"`
+	GroupID          int64  `gorm:"not null;comment:busi group id of rule;index;index:idx_group_last_eval_time,priority:1"`
 	GroupName        string `gorm:"size:255;not null;default:'';comment:busi group name"`
 	Hash             string `gorm:"size:64;not null;comment:rule_id + vector_pk;index"`
 	RuleID           int64  `gorm:"not null;index"`
@@ -813,7 +813,7 @@ type InitAlertHisEvent struct {
 	TriggerTime      int64  `gorm:"not null;index"`
 	TriggerValue     string `gorm:"type:text;not null"`
 	RecoverTime      int64  `gorm:"not null;default:0"`
-	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index"`
+	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index;index:idx_group_last_eval_time,priority:2"`
 	Tags             string `gorm:"size:1024;not null;default:'';comment:merge data_tags rule_tags, split by ,,"`
 	OriginalTags     string `gorm:"type:text;comment:labels key=val,,k2=v2"`
 	Annotations      string `gorm:"type:text;not null;comment:annotations"`
@@ -834,7 +834,7 @@ type InitPostgresAlertHisEvent struct {
 	Cate             string `gorm:"size:128;not null"`
 	DatasourceID     int64  `gorm:"not null;default:0;comment:datasource id"`
 	Cluster          string `gorm:"size:128;not null"`
-	GroupID          int64  `gorm:"not null;comment:busi group id of rule;index"`
+	GroupID          int64  `gorm:"not null;comment:busi group id of rule;index;index:idx_group_last_eval_time,priority:1"`
 	GroupName        string `gorm:"size:255;not null;default:'';comment:busi group name"`
 	Hash             string `gorm:"size:64;not null;comment:rule_id + vector_pk;index"`
 	RuleID           int64  `gorm:"not null;index"`
@@ -858,7 +858,7 @@ type InitPostgresAlertHisEvent struct {
 	TriggerTime      int64  `gorm:"not null;index"`
 	TriggerValue     string `gorm:"type:text;not null"`
 	RecoverTime      int64  `gorm:"not null;default:0"`
-	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index"`
+	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index;index:idx_group_last_eval_time,priority:2"`
 	Tags             string `gorm:"size:1024;not null;default:'';comment:merge data_tags rule_tags, split by ,,"`
 	OriginalTags     string `gorm:"type:text;comment:labels key=val,,k2=v2"`
 	Annotations      string `gorm:"type:text;not null;comment:annotations"`

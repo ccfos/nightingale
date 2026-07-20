@@ -136,6 +136,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	go cron.CleanNotifyRecord(ctx, config.Center.CleanNotifyRecordDay)
 	go cron.CleanPipelineExecution(ctx, config.Center.CleanPipelineExecutionDay)
+	go cron.CleanAlertHisEvent(ctx, config.Center.CleanAlertHisEventDay)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors, config.Log.Dir)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,

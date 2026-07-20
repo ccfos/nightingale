@@ -516,7 +516,8 @@ CREATE TABLE `alert_his_event` (
     INDEX `idx_last_eval_time` (`last_eval_time`),
     KEY (`hash`),
     KEY (`rule_id`),
-    KEY (`trigger_time`, `group_id`)
+    KEY (`trigger_time`, `group_id`),
+    KEY `idx_group_last_eval_time` (`group_id`, `last_eval_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE `board_busigroup` (
