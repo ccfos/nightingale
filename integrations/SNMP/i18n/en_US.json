@@ -57,7 +57,6 @@
     "华为设备风扇状态异常": "Huawei device fan state abnormal",
     "各个接入交换机": "Access switches",
     "各个端口流量汇总": "Traffic Summary by Port",
-    "常用中文告警规则-采集器Categraf": "Common Alert Rules - Categraf",
     "并发连接数（当前）": "Concurrent Connections (Current)",
     "开机时间": "Uptime",
     "当前并发连接数": "Current Concurrent Connections",

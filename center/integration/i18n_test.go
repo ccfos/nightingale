@@ -91,10 +91,10 @@ func TestTranslateDashboardMapWhitelist(t *testing.T) {
 	// 同一字符串同时出现在 var.name（功能标识）与 panels.name（展示字段），
 	// 只有后者被替换
 	dict := ComponentDict{
-		"内存":     "Memory",
-		"大盘名":    "Board Name",
-		"每秒查询":   "QPS",
-		"重命名列":   "Renamed Column",
+		"内存":      "Memory",
+		"大盘名":     "Board Name",
+		"每秒查询":    "QPS",
+		"重命名列":    "Renamed Column",
 		"阿里云 RDS": "AliYun RDS",
 	}
 
@@ -346,23 +346,32 @@ func TestGetBuiltinPayloadSearchOnRenderedName(t *testing.T) {
 	}
 }
 
-func TestRenderVariantTranslatesCate(t *testing.T) {
+// cate 是 DB 查询与内存桶共用的 exact-match 筛选键，必须语言无关：
+// 即使词条表里存在同名词条也不能译，否则英文桶的 cate 与 DB 中用户
+// 自建模板的 cate 对不上（前端用同一个串同时查两边）
+func TestRenderVariantKeepsCate(t *testing.T) {
 	b := newTestStore()
 	b.dicts[5] = map[string]ComponentDict{
-		LangEnUS: {"阿里云-RDS": "AliYun-RDS", "规则": "Rule"},
+		LangEnUS: {"AliYun-RDS": "should-not-be-used", "规则": "Rule"},
 	}
 	bp := alertPayload(5, 500, "规则")
-	bp.Cate = "阿里云-RDS"
+	bp.Cate = "AliYun-RDS"
 	b.AddBuiltinPayload(bp)
 
 	cates, err := b.GetBuiltinPayloadCates("alert", 5, LangEnUS)
 	if err != nil || len(cates) != 1 || cates[0] != "AliYun-RDS" {
-		t.Errorf("en cates = %v %v", cates, err)
+		t.Errorf("en cates must keep source cate, got %v %v", cates, err)
 	}
-	// 前端用翻译后的 cate 回查列表，必须能对上
-	lst, err := b.GetBuiltinPayload("alert", "AliYun-RDS", "", 5, LangEnUS)
-	if err != nil || len(lst) != 1 {
-		t.Errorf("query by translated cate should hit: %v %v", lst, err)
+	// 同一个 cate 串在任意语言桶都能查到（与 DB 侧 where cate=? 同键）
+	for _, lang := range []string{LangSource, LangEnUS} {
+		lst, err := b.GetBuiltinPayload("alert", "AliYun-RDS", "", 5, lang)
+		if err != nil || len(lst) != 1 {
+			t.Errorf("query by cate in %s bucket should hit: %v %v", lang, lst, err)
+		}
+	}
+	// name 照常翻译，cate 不受影响
+	if en := b.GetByUUID(500, LangEnUS); en == nil || en.Name != "Rule" || en.Cate != "AliYun-RDS" {
+		t.Errorf("en variant = %+v", en)
 	}
 }
 

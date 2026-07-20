@@ -110,8 +110,8 @@ var displayFieldPathSuffixes = []string{
 	"targets.legend",     // 曲线图例
 	"var.label",          // 变量展示名（var.name 是功能标识，不在白名单）
 	"valueMappings.result.text",
-	"matcher.value",       // overrides 按图例/字段名匹配，需与被翻译的 legend 保持一致
-	"custom.sortColumn",   // 表格默认排序列，取值是 renameByName 后的列名，需同步翻译
+	"matcher.value",     // overrides 按图例/字段名匹配，需与被翻译的 legend 保持一致
+	"custom.sortColumn", // 表格默认排序列，取值是 renameByName 后的列名，需同步翻译
 	"links.title",
 	"custom.detailName",
 	"standardOptions.util",
@@ -263,8 +263,10 @@ func TranslateDashboardMap(m map[string]interface{}, dict ComponentDict) {
 }
 
 // renderVariant 渲染一条内置 payload 的目标语言变体。词条为空或类型未接入
-// 翻译时返回原指针（pass-through）；否则深拷贝，行级 Name/Cate 与 content
-// 内的展示字段同步替换（content 必须同步：导入落库取的是 content）
+// 翻译时返回原指针（pass-through）；否则深拷贝，行级 Name/Note 与 content
+// 内的展示字段同步替换（content 必须同步：导入落库取的是 content）。
+// Cate 不译：它是 DB 查询与内存桶共用的 exact-match 筛选键（语言无关），
+// 文件名即 cate，CI 门禁强制其为非中文
 func renderVariant(bp *models.BuiltinPayload, dict ComponentDict) *models.BuiltinPayload {
 	if len(dict) == 0 {
 		return bp
@@ -299,8 +301,6 @@ func renderVariant(bp *models.BuiltinPayload, dict ComponentDict) *models.Builti
 	variant := *bp
 	variant.Content = string(bs)
 	variant.Name = Translate(dict, bp.Name)
-	// 告警模板的 cate 来自文件名，存在中文文件名（如 阿里云-RDS），是界面可见的分类项
-	variant.Cate = Translate(dict, bp.Cate)
 	variant.Note = Translate(dict, bp.Note)
 	if bp.Type == "dashboard" {
 		// 仪表盘行级 Tags 与 content 内 tags 同源，同步翻译；告警的 Tags 是 append_tags，不译

@@ -452,8 +452,9 @@ func (b *BuiltinPayloadInFileType) GetBuiltinPayload(typ, cate, query string, co
 	return result, nil
 }
 
-// GetBuiltinPayloadCates 按语言取分类列表：告警模板的 cate 来自文件名，
-// 存在中文分类名，en 环境下返回翻译后的 cate（与 GetBuiltinPayload 同一桶，前端回传可对上）
+// GetBuiltinPayloadCates 按语言取分类列表。cate 是语言无关的筛选键（文件名即
+// cate，CI 门禁强制非中文），各语言桶的 cate 相同；前端回传的 cate 可同时命中
+// DB 查询与任意语言桶
 func (b *BuiltinPayloadInFileType) GetBuiltinPayloadCates(typ string, componentId uint64, lang string) ([]string, error) {
 	var result []string
 	byLang := b.Data[lang]

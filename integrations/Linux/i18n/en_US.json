@@ -53,7 +53,6 @@
     "如果超过80%，建议把文件描述符的最大个数调大，或者扩容": "If it exceeds 80%, increase the maximum number of file descriptors or scale out",
     "存活机器数量": "Alive Machines",
     "小于200G的盘，空间不足了": "Disk smaller than 200G is running out of space",
-    "常用中文告警规则-采集器Categraf": "Common Alert Rules - Categraf",
     "总内存": "Total Memory",
     "所有机器": "All Machines",
     "操作系统文件句柄使用率": "OS File Handle Usage",

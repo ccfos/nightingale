@@ -11,6 +11,5 @@
     "Kafka 请求错误率过高": "Kafka request error rate too high",
     "Kafka 集群入向网络流量较高": "Kafka cluster inbound network traffic high",
     "Kafka 集群出向网络流量较高": "Kafka cluster outbound network traffic high",
-    "下钻": "Drill Down",
-    "常用告警规则": "Common Alert Rules"
+    "下钻": "Drill Down"
 }

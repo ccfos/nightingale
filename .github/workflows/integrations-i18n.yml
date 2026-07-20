@@ -1,7 +1,8 @@
 name: integrations-i18n
 
 # 内置模板 i18n 门禁：按 loader 同一遍历渲染 en_US 变体后全量扫描中文字符。
-# scope=all 覆盖全部字段：告警 name/note/annotations（含 key）/cate、仪表盘
+# 另强制告警文件名（=cate，DB 与内存桶共用的语言无关筛选键）不含中文。
+# scope=all 覆盖全部字段：告警 name/note/annotations（含 key）、仪表盘
 # name/note/tags、仪表盘 configs 白名单字段（面板标题/描述/图例/变量 label 等），
 # README 副本，以及白名单之外仍含中文的字段——后者补词条也消不掉，只能源头
 # 清洗或写进 integrations/i18n_exemptions.json。

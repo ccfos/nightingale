@@ -3,7 +3,8 @@
 //	extract  扫描 integrations/ 各组件展示字段中的中文，与 i18n/en_US.json 词条表
 //	         diff，输出缺译清单（供翻译流水线消费）
 //	check    按 loader 同一遍历渲染 en_US 变体后全量扫描中文字符，作为 CI 门禁；
-//	         同时校验「README.md 含中文 ⇒ 必须有 README.en_US.md」
+//	         同时校验「README.md 含中文 ⇒ 必须有 README.en_US.md」、
+//	         「告警文件名（=cate，语言无关筛选键）不含中文」
 //
 // 用法：
 //
@@ -11,7 +12,7 @@
 //	go run ./cmd/integrations-i18n check   [-dir integrations] [-scope p0|all] [-v]
 //
 // 分类口径按「字段路径」判定（与运行时翻译白名单同源）：
-// p0 = 告警 name/note/annotations（含 key）/cate + 仪表盘 name/note/tags + README；
+// p0 = 告警 name/note/annotations（含 key）/文件名 + 仪表盘 name/note/tags + README；
 // p1 = 仪表盘 configs 白名单字段；other = 白名单之外仍含中文的字段——运行时永远
 // 不会翻译它，补词条也消不掉，只能源头清洗或写进豁免。
 // 豁免：integrations/i18n_exemptions.json，
@@ -129,7 +130,7 @@ func decodeUseNumber(bs []byte, v interface{}) error {
 
 // componentStrings 单个组件按类别收集到的「含中文的展示字段原文」集合
 type componentStrings struct {
-	p0 map[string]struct{} // 告警 name/note/annotations/cate + 仪表盘 name/note
+	p0 map[string]struct{} // 告警 name/note/annotations + 仪表盘 name/note
 	p1 map[string]struct{} // 仪表盘 configs 白名单字段
 }
 
@@ -160,9 +161,8 @@ func collectComponent(componentDir string) (*componentStrings, error) {
 		if err := decodeUseNumber(bs, &rules); err != nil {
 			return nil, fmt.Errorf("parse %s/alerts/%s: %v", componentDir, f, err)
 		}
-		// cate 来自文件名，是界面可见的分类项
-		cate := strings.TrimSuffix(f, ".json")
-		collectInto(cs.p0)(cate)
+		// cate（=文件名）是语言无关的筛选键，不走词条翻译，中文文件名由
+		// check 门禁直接拦截（改文件名而非补词条），extract 不收集
 		for _, rule := range rules {
 			integration.VisitAlertDisplayFields(rule, collectInto(cs.p0))
 		}
@@ -374,7 +374,7 @@ func classifyPath(kind string, path []string) string {
 
 func runCheck(dir string, components []string, scope string, verbose bool, exempted exemptions) int {
 	var findings []finding
-	// path 为 nil 时只按整条原文豁免（README 行、告警 cate 等非字段路径来源）
+	// path 为 nil 时只按整条原文豁免（README 行、告警文件名等非字段路径来源）
 	add := func(component, category string, path []string, label, text string) {
 		if exempted.allow(path, text) {
 			return
@@ -415,9 +415,10 @@ func runCheck(dir string, components []string, scope string, verbose bool, exemp
 				fmt.Fprintf(os.Stderr, "parse %s/alerts/%s: %v\n", componentDir, f, err)
 				return 2
 			}
-			cate := integration.Translate(dict, strings.TrimSuffix(f, ".json"))
-			if containsHan(cate) {
-				add(component, "p0", nil, "alert-cate("+f+")", cate)
+			// cate（=文件名）是 DB 查询与内存桶共用的 exact-match 筛选键，
+			// 必须语言无关：中文文件名要改名，补词条消不掉这条 finding
+			if cate := strings.TrimSuffix(f, ".json"); containsHan(cate) {
+				add(component, "p0", nil, "alert-cate("+f+")", "alert file name must not contain chinese (cate is a language-agnostic key, rename the file)")
 			}
 			for _, rule := range rules {
 				name, _ := rule["name"].(string)
