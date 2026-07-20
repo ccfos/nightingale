@@ -198,7 +198,11 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 	// 授权表单弹过一次的话，技能内容以服务端草稿为准（见 restoreSkillDraft）。
 	// 确认腿的 args 由运行时原样重放、已是全量，不需要也不应该再被草稿覆盖。
 	if !getArgBool(args, "confirmed") {
-		args = restoreSkillDraft(ctx, deps, params, args)
+		restored, halt := restoreSkillDraft(ctx, deps, params, args)
+		if halt != "" {
+			return halt, nil
+		}
+		args = restored
 	}
 
 	name := strings.TrimSpace(getArgString(args, "name"))
@@ -237,7 +241,11 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 	private := resolveSkillPrivate(user, args, params)
 	userGroupIds := resolveCreationTeamIDs(getArgInt64Slice(args, "user_group_ids"), params)
 	if len(userGroupIds) == 0 {
-		stashSkillDraft(ctx, deps, params, args)
+		// 草稿存不下就不能弹表单：表单一弹，这次的正文/脚本就丢了。
+		if err := stashSkillDraft(ctx, deps, params, args); err != nil {
+			logger.Warningf("create_skill: stash draft in chat %s failed: %v", params["chat_id"], err)
+			return "", fmt.Errorf("暂存技能草稿失败，未能弹出团队选择表单（否则已写好的技能正文会丢失）：%v。请稍后重试", err)
+		}
 		return "", skillAuthFormInterrupt(params["lang"], deps, user, private)
 	}
 	teamNames, err := resolveSkillTeamNames(deps, user, userGroupIds)
@@ -703,30 +711,43 @@ func renderSkillProposal(action, name, description, instructions string, builtin
 // 必须能在恢复轮由服务端自行推出——被中断的调用没有 tool result，模型无从携带它。
 func skillDraftID(chatID string) string { return "skill_draft:" + chatID }
 
-// restoreSkillDraft 用暂存草稿覆盖本次调用的内容字段。生效有两道闸：
-//   - 这一轮必须带着表单提交值（team_ids 经 params 直达工具层），即确实是表单往返的
-//     续跑。用户没走表单而是直接改口（「正文改成 X 再建」）时，模型这轮的参数才是用户
-//     的最新意图，草稿不能覆盖它（残留草稿会在下次弹表单时被同名新草稿覆盖）。
-//   - 技能名要对得上。技能名短、一直在对话文本里，模型能可靠复现；对不上就认为用户在
-//     建另一个技能，草稿不生效——避免把技能 A 的正文灌进技能 B。
+// skillDraftLostMsg 是草稿在恢复轮拿不到时的中止文案。这里绝不能回退到模型这轮的
+// 参数：那份正文是凭对话重写的，可能已经漂移/截断，而用户在提案里只会看到字数和开头，
+// 未必察觉。宁可中止让用户重新起草确认，也不落一份没人审过的正文。
+const skillDraftLostMsg = "上一步暂存的技能内容（正文/附带脚本）已失效（超时或服务重启）。" +
+	"选完团队后我手里的正文是凭对话重写的，可能与你确认过的原稿不一致，" +
+	"所以本次创建已中止——请重新完整起草技能内容、展示给用户确认后，再调用 create_skill。"
+
+// restoreSkillDraft 用暂存草稿覆盖本次调用的内容字段，返回 (参数, 中止文案)。
+// 中止文案非空时调用方必须把它当作工具结果直接回给模型：不写库、也不进入提案。
 //
-// 无 chat_id（CLI / A2A 等无会话入口）时原样返回。
-func restoreSkillDraft(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, args map[string]interface{}) map[string]interface{} {
+// 是否为「授权表单的续跑」由 params 里的表单提交值（team_ids 经 action.param 直达
+// 工具层）判定。用户没走表单而是直接改口（「正文改成 X 再建」）时，模型这轮的参数才是
+// 用户的最新意图，草稿不参与（残留草稿会在下次弹表单时被新草稿覆盖）。
+// 续跑轮里草稿缺失/损坏/技能名对不上一律中止，不做静默回退。技能名两侧都去空白后比较：
+// 模型两轮分别写出 "x " 和 "x" 不该被当成两个技能。
+//
+// 无 chat_id（CLI / A2A 等无会话入口）时不启用草稿机制，保持原有行为。
+func restoreSkillDraft(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, args map[string]interface{}) (map[string]interface{}, string) {
 	chatID := params["chat_id"]
 	if chatID == "" || strings.TrimSpace(params["team_ids"]) == "" {
-		return args
+		return args, ""
 	}
 	p := updateProposals.peek(ctx, deps.Redis, skillDraftID(chatID))
 	if p == nil || p.Kind != proposalKindSkillDraft {
-		return args
+		logger.Warningf("create_skill: no draft for chat %s on the auth-form resume turn; aborting instead of trusting the rebuilt args", chatID)
+		return args, skillDraftLostMsg
 	}
 	var draft map[string]interface{}
 	if err := json.Unmarshal([]byte(p.Payload), &draft); err != nil {
-		logger.Warningf("create_skill: corrupt draft in chat %s, falling back to the model's args: %v", chatID, err)
-		return args
+		logger.Warningf("create_skill: corrupt draft in chat %s: %v", chatID, err)
+		return args, skillDraftLostMsg
 	}
-	if getArgString(draft, "name") != getArgString(args, "name") {
-		return args
+	drafted := strings.TrimSpace(getArgString(draft, "name"))
+	if cur := strings.TrimSpace(getArgString(args, "name")); drafted != cur {
+		return args, fmt.Sprintf("暂存草稿对应的技能是 %q，本次却要创建 %q，内容对不上，已中止。"+
+			"如果要建的就是 %q，用这个名字重新调用一次 create_skill 即可（正文无需重发）；"+
+			"如果确实要建另一个技能，请重新完整起草内容并让用户确认。", drafted, cur, drafted)
 	}
 
 	merged := make(map[string]interface{}, len(args)+len(skillContentArgs))
@@ -742,34 +763,33 @@ func restoreSkillDraft(ctx context.Context, deps *aiagent.ToolDeps, params map[s
 			delete(merged, k)
 		}
 	}
-	logger.Infof("create_skill: restored draft for skill %q in chat %s", getArgString(args, "name"), chatID)
-	return merged
+	logger.Infof("create_skill: restored draft for skill %q in chat %s", drafted, chatID)
+	return merged, ""
 }
 
-// stashSkillDraft 在弹授权表单前暂存本次调用的完整参数。失败只记日志：草稿是止损
-// 机制，存不下最多回到"模型重写正文"的老行为，不该因此挡住创建流程。
-func stashSkillDraft(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, args map[string]interface{}) {
+// stashSkillDraft 在弹授权表单前暂存本次调用的完整参数。存不下必须让调用方放弃弹表单：
+// 表单一弹，这次调用的参数就随中断被丢掉了（native.go 不把被中断的调用写进 transcript），
+// 没有草稿兜底就只能靠模型重写正文——那正是本机制要消灭的漂移。
+// 无 chat_id（CLI / A2A 等无会话入口）时不启用草稿机制，返回 nil 保持原有行为。
+func stashSkillDraft(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, args map[string]interface{}) error {
 	chatID := params["chat_id"]
 	if chatID == "" {
-		return
+		return nil
 	}
 	body, err := json.Marshal(args)
 	if err != nil {
-		logger.Warningf("create_skill: marshal draft in chat %s failed: %v", chatID, err)
-		return
+		return fmt.Errorf("marshal draft: %v", err)
 	}
 	seqID, _ := strconv.ParseInt(params["seq_id"], 10, 64)
-	if err := updateProposals.put(ctx, deps.Redis, &updateProposal{
+	return updateProposals.put(ctx, deps.Redis, &updateProposal{
 		ID:        skillDraftID(chatID),
 		ChatID:    chatID,
 		SeqID:     seqID,
 		Kind:      proposalKindSkillDraft,
-		Changes:   []string{"draft skill " + getArgString(args, "name")},
+		Changes:   []string{"draft skill " + strings.TrimSpace(getArgString(args, "name"))},
 		Payload:   string(body),
 		CreatedAt: time.Now(),
-	}); err != nil {
-		logger.Warningf("create_skill: stash draft in chat %s failed: %v", chatID, err)
-	}
+	})
 }
 
 // dropSkillDraft 消费掉草稿（take 即删）。

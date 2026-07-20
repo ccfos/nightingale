@@ -135,15 +135,21 @@ func TestSkillDraftSurvivesAuthFormRoundTrip(t *testing.T) {
 		"max_iterations": float64(20),
 		"files":          []interface{}{map[string]interface{}{"path": "main.py", "content": script}},
 	}
-	stashSkillDraft(ctx, deps, params, first)
+	if err := stashSkillDraft(ctx, deps, params, first); err != nil {
+		t.Fatalf("stash draft: %v", err)
+	}
 
-	// 表单提交后的那一轮：模型凭对话文本重建，正文被截断、脚本干脆丢了。
+	// 表单提交后的那一轮：模型凭对话文本重建，正文被截断、脚本干脆丢了，技能名还多了
+	// 个尾随空格——两侧都规范化后仍应认成同一个技能。
 	rebuilt := map[string]interface{}{
-		"name":         "redis-slowlog-triage",
+		"name":         "redis-slowlog-triage ",
 		"description":  "排查 Redis 慢查询",
 		"instructions": "你是一个 Redis 排查助手。",
 	}
-	restored := restoreSkillDraft(ctx, deps, resumed, rebuilt)
+	restored, halt := restoreSkillDraft(ctx, deps, resumed, rebuilt)
+	if halt != "" {
+		t.Fatalf("resume turn should restore the draft, got halt: %s", halt)
+	}
 
 	if got := getArgString(restored, "instructions"); got != instructions {
 		t.Fatalf("instructions drifted across the form round trip: %d chars, want %d", len(got), len(instructions))
@@ -159,33 +165,62 @@ func TestSkillDraftSurvivesAuthFormRoundTrip(t *testing.T) {
 		t.Fatalf("script file lost or altered across the form round trip: %+v", files)
 	}
 
-	// 提案生成后草稿被消费：用户改主意重建另一个技能时不该被灌回旧正文。
+	// 提案生成后草稿被消费；此后再有恢复轮只能中止，绝不能拿模型重写的正文顶上。
 	dropSkillDraft(ctx, deps, params)
-	if got := restoreSkillDraft(ctx, deps, params, rebuilt); getArgString(got, "instructions") != "你是一个 Redis 排查助手。" {
-		t.Fatal("draft should be consumed once the proposal carries the full args")
+	if _, halt := restoreSkillDraft(ctx, deps, resumed, rebuilt); halt == "" {
+		t.Fatal("a consumed draft must abort the resume turn instead of falling back to the rebuilt args")
 	}
 }
 
-// 草稿按会话存放，只对同名技能生效：否则用户放弃 A 转而创建 B 时，B 会被灌进 A 的正文。
-func TestSkillDraftScoping(t *testing.T) {
+// 草稿缺失/损坏/技能名对不上时必须中止：静默回退到模型这轮的参数，等于把没人审过的
+// 重写稿送进提案。
+func TestSkillDraftAbortsWhenUnusable(t *testing.T) {
 	ctx := context.Background()
 	deps := &aiagent.ToolDeps{}
-	params := map[string]string{"chat_id": "chat-draft-2", "seq_id": "1"}
-	stashSkillDraft(ctx, deps, params, map[string]interface{}{"name": "skill-a", "instructions": "A 的正文"})
+	resumed := map[string]string{"chat_id": "chat-draft-abort", "seq_id": "2", "team_ids": "5"}
+	rebuilt := map[string]interface{}{"name": "skill-a", "instructions": "重写的正文"}
 
-	other := map[string]interface{}{"name": "skill-b", "instructions": "B 的正文"}
-	if got := restoreSkillDraft(ctx, deps, params, other); getArgString(got, "instructions") != "B 的正文" {
-		t.Fatal("a draft for skill-a must not leak into skill-b")
+	// 草稿从未存过（超时被清、或换了实例且没配 Redis）。
+	if _, halt := restoreSkillDraft(ctx, deps, resumed, rebuilt); halt != skillDraftLostMsg {
+		t.Fatalf("missing draft should abort with the lost-draft copy, got %q", halt)
 	}
-	// 换个会话同样取不到。
-	otherChat := map[string]string{"chat_id": "chat-draft-3"}
-	same := map[string]interface{}{"name": "skill-a", "instructions": "另一个会话重写的正文"}
-	if got := restoreSkillDraft(ctx, deps, otherChat, same); getArgString(got, "instructions") != "另一个会话重写的正文" {
-		t.Fatal("drafts must not cross conversations")
+
+	// 技能名对不上：中止文案要点出草稿里的名字，方便模型改用它重试。
+	if err := stashSkillDraft(ctx, deps, resumed, map[string]interface{}{"name": "skill-a", "instructions": "A 的正文"}); err != nil {
+		t.Fatalf("stash draft: %v", err)
 	}
-	// 无 chat_id（CLI / A2A 无会话入口）时原样返回，不报错。
-	if got := restoreSkillDraft(ctx, deps, map[string]string{}, same); getArgString(got, "instructions") != "另一个会话重写的正文" {
-		t.Fatal("missing chat_id should be a no-op")
+	_, halt := restoreSkillDraft(ctx, deps, resumed, map[string]interface{}{"name": "skill-b", "instructions": "B 的正文"})
+	if halt == "" || !contains(halt, "skill-a") {
+		t.Fatalf("name mismatch should abort and name the drafted skill, got %q", halt)
+	}
+}
+
+// 草稿只在授权表单的续跑轮生效：用户没走表单而是直接改口（「正文改成 X 再建」）时，
+// 模型这轮的参数才是最新意图，草稿既不覆盖也不中止。
+func TestSkillDraftOnlyAppliesOnFormResume(t *testing.T) {
+	ctx := context.Background()
+	deps := &aiagent.ToolDeps{}
+	stashed := map[string]string{"chat_id": "chat-draft-2", "seq_id": "1"}
+	if err := stashSkillDraft(ctx, deps, stashed, map[string]interface{}{"name": "skill-a", "instructions": "A 的旧正文"}); err != nil {
+		t.Fatalf("stash draft: %v", err)
+	}
+
+	revised := map[string]interface{}{"name": "skill-a", "instructions": "用户要求改过的新正文"}
+	got, halt := restoreSkillDraft(ctx, deps, stashed, revised) // 无 team_ids：不是表单续跑
+	if halt != "" || getArgString(got, "instructions") != "用户要求改过的新正文" {
+		t.Fatalf("a non-form turn must keep the model's args: halt=%q instructions=%q", halt, getArgString(got, "instructions"))
+	}
+
+	// 换个会话即便带着表单值也取不到本会话的草稿——只能中止，不能串会话还原。
+	otherChat := map[string]string{"chat_id": "chat-draft-3", "team_ids": "5"}
+	if _, halt := restoreSkillDraft(ctx, deps, otherChat, revised); halt != skillDraftLostMsg {
+		t.Fatalf("drafts must not cross conversations, got halt %q", halt)
+	}
+
+	// 无 chat_id（CLI / A2A 无会话入口）：不启用草稿机制，原样放行。
+	noChat := map[string]string{"team_ids": "5"}
+	if got, halt := restoreSkillDraft(ctx, deps, noChat, revised); halt != "" || getArgString(got, "instructions") != "用户要求改过的新正文" {
+		t.Fatalf("missing chat_id should be a no-op: halt=%q", halt)
 	}
 }
 
@@ -195,13 +230,19 @@ func TestSkillDraftDropsFieldsAbsentFromDraft(t *testing.T) {
 	ctx := context.Background()
 	deps := &aiagent.ToolDeps{}
 	params := map[string]string{"chat_id": "chat-draft-4"}
-	stashSkillDraft(ctx, deps, params, map[string]interface{}{"name": "no-files", "instructions": "正文"})
+	resumed := map[string]string{"chat_id": "chat-draft-4", "team_ids": "5"}
+	if err := stashSkillDraft(ctx, deps, params, map[string]interface{}{"name": "no-files", "instructions": "正文"}); err != nil {
+		t.Fatalf("stash draft: %v", err)
+	}
 
-	restored := restoreSkillDraft(ctx, deps, params, map[string]interface{}{
+	restored, halt := restoreSkillDraft(ctx, deps, resumed, map[string]interface{}{
 		"name":         "no-files",
 		"instructions": "正文",
 		"files":        []interface{}{map[string]interface{}{"path": "main.py", "content": "print(1)"}},
 	})
+	if halt != "" {
+		t.Fatalf("resume turn should restore the draft, got halt: %s", halt)
+	}
 	files, err := parseSkillFiles(restored)
 	if err != nil {
 		t.Fatalf("parse restored files: %v", err)
