@@ -48,7 +48,7 @@ func seedHisEvents(t *testing.T, c *ctx.Context) {
 	}
 }
 
-func hisEventIds(lst []models.AlertHisEvent) []int64 {
+func eventIdsOf(lst []models.AlertHisEvent) []int64 {
 	ids := make([]int64, 0, len(lst))
 	for i := range lst {
 		ids = append(ids, lst[i].Id)
@@ -77,7 +77,7 @@ func TestAlertHisEventGetsOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("gets: %v", err)
 	}
-	assertIds(t, hisEventIds(lst), 6, 4, 5, 3, 2, 1)
+	assertIds(t, eventIdsOf(lst), 6, 4, 5, 3, 2, 1)
 }
 
 func TestAlertHisEventTotalAndFilters(t *testing.T) {
@@ -127,20 +127,20 @@ func TestAlertHisEventGetsByCursor(t *testing.T) {
 	if err != nil {
 		t.Fatalf("page1: %v", err)
 	}
-	assertIds(t, hisEventIds(page1), 6, 4)
+	assertIds(t, eventIdsOf(page1), 6, 4)
 
 	last := page1[len(page1)-1]
 	page2, err := models.AlertHisEventGetsByCursor(c, nil, nil, 0, 1000, -1, -1, nil, nil, 0, "", last.LastEvalTime, last.Id, 2, nil)
 	if err != nil {
 		t.Fatalf("page2: %v", err)
 	}
-	assertIds(t, hisEventIds(page2), 5, 3)
+	assertIds(t, eventIdsOf(page2), 5, 3)
 
 	offsetPage2, err := models.AlertHisEventGets(c, nil, nil, 0, 1000, -1, -1, nil, nil, 0, "", 2, 2, nil)
 	if err != nil {
 		t.Fatalf("offset page2: %v", err)
 	}
-	assertIds(t, hisEventIds(offsetPage2), 5, 3)
+	assertIds(t, eventIdsOf(offsetPage2), 5, 3)
 
 	// last_eval_time 相同时游标按 id 严格递减，不重不漏
 	last = page2[len(page2)-1]
@@ -148,12 +148,12 @@ func TestAlertHisEventGetsByCursor(t *testing.T) {
 	if err != nil {
 		t.Fatalf("page3: %v", err)
 	}
-	assertIds(t, hisEventIds(page3), 2, 1)
+	assertIds(t, eventIdsOf(page3), 2, 1)
 
 	// 无游标等价于第一页
 	first, err := models.AlertHisEventGetsByCursor(c, nil, nil, 0, 1000, -1, -1, nil, nil, 0, "", 0, 0, 2, nil)
 	if err != nil {
 		t.Fatalf("first: %v", err)
 	}
-	assertIds(t, hisEventIds(first), 6, 4)
+	assertIds(t, eventIdsOf(first), 6, 4)
 }

@@ -15,13 +15,25 @@ const (
 	hisEventSleepMs   = 100 // 每批删除后休眠时间（毫秒），防止长时间锁表
 )
 
-// cleanAlertHisEventInBatches 分批删除过期的历史告警事件
+// cleanAlertHisEventInBatches 按 id 游标分批删除过期的历史告警事件，
+// 活跃告警的历史记录跳过不删（cur.id 即对应的 his.id）
 func cleanAlertHisEventInBatches(ctx *ctx.Context, day int) {
 	threshold := time.Now().Unix() - 86400*int64(day)
-	var totalDeleted int64
 
+	ids, err := models.AlertCurEventIds(ctx)
+	if err != nil {
+		logger.Errorf("Failed to clean alert history events: query active event ids fail: %v", err)
+		return
+	}
+	activeIds := make(map[int64]struct{}, len(ids))
+	for _, id := range ids {
+		activeIds[id] = struct{}{}
+	}
+
+	var totalDeleted int64
+	minId := int64(0)
 	for {
-		deleted, err := models.AlertHisEventBatchDelete(ctx, threshold, nil, hisEventBatchSize)
+		fetched, deleted, maxId, err := models.AlertHisEventBatchDelete(ctx, threshold, nil, minId, hisEventBatchSize, activeIds)
 		if err != nil {
 			logger.Errorf("Failed to clean alert history events in batch: %v", err)
 			return
@@ -29,9 +41,10 @@ func cleanAlertHisEventInBatches(ctx *ctx.Context, day int) {
 
 		totalDeleted += deleted
 
-		if deleted < int64(hisEventBatchSize) {
+		if fetched < hisEventBatchSize {
 			break
 		}
+		minId = maxId
 
 		time.Sleep(time.Duration(hisEventSleepMs) * time.Millisecond)
 	}
