@@ -16,7 +16,7 @@
     "VictoriaMetrics 使用 -maxLabelsPerTimeseries 命令行标志限制每个指标的标签数量。\n\n这可以防止抓取带有过多标签的指标。必须根据您的工作负载调整 maxLabelsPerTimeseries 的值。\n\n当超出限制时（图表 > 0）- 多余的标签将被丢弃，这可能会导致意外的相同时间序列。": "VictoriaMetrics limits the number of labels per metric with the -maxLabelsPerTimeseries command-line flag.\n\nThis prevents ingesting metrics with too many labels. The value of maxLabelsPerTimeseries must be tuned according to your workload.\n\nWhen the limit is exceeded (chart > 0) the extra labels are dropped, which may result in unexpectedly identical time series.",
     "storage组件CPU使用率": "Storage Component CPU Usage",
     "vm error logging rate 大于0 ": "vm error logging rate above 0 ",
-    "vm-insert 和 vm-storage 组件之间连接的饱和度大于9": "Connection saturation between vm-insert and vm-storage exceeds 0.9",
+    "vm-insert 和 vm-storage 组件之间连接的饱和度大于9": "Connection saturation between vm-insert and vm-storage exceeds 9",
     "vm-insert 实例端口异常": "vm-insert instance port down",
     "vm-select 实例端口异常": "vm-select instance port down",
     "vm-select请求查询延迟超过15s": "vm-select query latency exceeds 15s",
