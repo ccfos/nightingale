@@ -1,0 +1,2504 @@
+[
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "H3C 电源状态异常",
+    "note": "正常状态为2\n连续3次 != 2则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_power_status{Brand='H3C'} != 2",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=H3C"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564526780,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "H3C设备 CPU使用率大于70%",
+    "note": "连续10分钟cpu利用率大于70%",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 600,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_cpuuse{Brand='H3C'}>70",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=H3C"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564528573,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "H3C设备 内存使用率大于70%",
+    "note": "连续2分钟内存利用率大于70%",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 120,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_memuse{Brand='H3C'}>70",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=H3C"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564530130,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "H3C设备 风扇状态异常",
+    "note": "正常状态为2\n连续3次!= 2则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_fan_status{Brand='H3C'} != 2",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=H3C"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564531683,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "ICMP 超时",
+    "note": "0 = 未响应\n1 = 响应\n1分钟内所有请求都无响应，认为设备失联",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "max_over_time(snmp_icmp_up{}[1m]) == 0",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564533276,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Incoming 带宽使用率高",
+    "note": "snmp_interface_incoming 表示入流量的累计值，单位为字节每秒， rate(snmp_interface_incoming{}[1m]) * 8，表示每秒的入流量，单位为bit/s\nsnmp_interface_speed 表示接口的最大传输速率\n\n本判断条件表示实际入流量大于带宽的90%\n",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "(rate(snmp_interface_incoming{}[1m]) * 8 / 10^9) > ((snmp_interface_speed{}/ 10^3) *0.9) and snmp_interface_speed >0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564534875,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 15s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Interface Down",
+    "note": "SNMP采集指标说明：\nsnmp_interface_admin_status： up = 1 ,down = 2，testing = 3\n告警规则：\n最近一次snmp_interface_admin_status == up\n最近14天up过至少1次（offset 1h是防止down变up瞬间，发生告警）\n最近1次 ostatus != 1\n60秒检测一次，连续满足3次触发告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_interface_admin_status{ifname!~'^(vlan|Vlanif|VLAN|V|irb|gr-).*'} == 1 and min_over_time(snmp_interface_ostatus{ifname!~'^(vlan|Vlanif|VLAN|V|irb|gr-).*'}[14d] offset 1h)  == 1 and snmp_interface_ostatus{ifname!~'^(vlan|Vlanif|VLAN|V|irb|gr-).*'} != 1",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564536497,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Juniper设备 CPU使用率大于70%",
+    "note": "连续10分钟cpu利用率大于70%",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 600,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_cpuuse{Brand='Juniper'}  > 70",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Juniper"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564538111,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Juniper设备 内存使用率大于70%",
+    "note": "连续2分钟内存利利用率大于70%",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 120,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_memuse{Brand='Juniper'}  > 70",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Juniper"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564539864,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Juniper设备 电源状态异常",
+    "note": "正常状态为2，异常状态为6\n连续3次 == 6则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_power_status{Brand='Juniper'}  == 6",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Juniper"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564541466,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Juniper设备 风扇状态异常",
+    "note": "正常状态为2或5，异常状态为6\n连续3次== 6则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_fan_status{Brand='Juniper'}  == 6",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Juniper"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564543049,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Outgoing 带宽使用率高",
+    "note": "snmp_interface_outgoing 表示出流量的累计值，单位为字节每秒， rate(snmp_interface_outcoming{}[1m]) * 8，表示每秒的出流量，单位为bit/s\nsnmp_interface_speed 表示接口的最大传输速率\n\n本判断条件表示实际入流量大于带宽的90%\n",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "(rate(snmp_interface_outgoing{}[1m]) * 8 / 10^9) > ((snmp_interface_speed{}/ 10^3) *0.9) and snmp_interface_speed >0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564544635,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 15s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Ruijie设备 电源状态异常",
+    "note": "正常状态为4，异常状态为???\n连续3次 != 4则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_power_status{Brand='Ruijie'} != 4",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Ruijie"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564546160,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Ruijie设备 风扇状态异常",
+    "note": "正常状态为4或者6\n连续3次!= 4且不等于6 则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_fan_status{Brand='Ruijie'} != 4 and snmp_system_fan_status{Brand='Ruijie'} != 6",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Ruijie"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564547758,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Ruijie设备CPU使用率大于70%",
+    "note": "连续10分钟cpu利用率大于70%",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 600,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_cpuuse{Brand='Ruijie'} > 70",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Ruijie"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564549270,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "Ruijie设备内存使用率大于70%",
+    "note": "连续2分钟内存利用率大于70%",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 120,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_memuse{Brand='Ruijie'} > 70",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Ruijie"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564550880,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "入方向 CRC 错误",
+    "note": "incoming_errors：端口历史错包总数，\nincoming_ucastpkts：端口历史数据包总数\n\n1. incoming_errors一分钟变化值 大于100\n2. incoming_errors一分钟变化值  除以  incoming_ucastpkts一分钟变化值 大于 1%\n3. 60秒检测一次，连续5次满足，则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 300,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "rate(snmp_interface_incoming_errors{}[2m]) > 100 and rate(snmp_interface_incoming_errors{}[2m]) / rate(snmp_interface_incoming_ucastpkts{}[2m]) > 0.01",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 600,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564552469,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "出方向 CRC 错误",
+    "note": "outgoing_errors：端口历史错包总数，\noutgoing_ucastpkts：端口历史数据包总数\n\n1. outgoing_errors一分钟变化值 大于100\n2. outgoing_errors一分钟变化值  除以  outgoing_ucastpkts一分钟变化值 大于 1%\n3. 60秒检测一次，连续5次满足，则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 300,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "rate(snmp_interface_outgoing_errors{}[2m]) > 100 and rate(snmp_interface_outgoing_errors{}[2m]) / rate(snmp_interface_outgoing_ucastpkts{}[2m]) > 0.01",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 600,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564554091,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "华为设备CPU使用率大于70%",
+    "note": "连续10分钟cpu利用率大于70%",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 600,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_cpuuse{Brand='Huawei'} > 70",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Huawei"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564555703,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "华为设备内存使用率大于70%",
+    "note": "连续2分钟内存利用率大于70%",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 120,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_memuse{Brand='Huawei'} > 70",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Huawei"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564557218,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "华为设备电源状态异常",
+    "note": "正常状态为1，异常状态为2\n连续3次 != 1 则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_power_status{Brand='Huawei'} != 1",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Huawei"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564558796,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "华为设备风扇状态异常",
+    "note": "正常状态为1\n连续3次!=1,则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 180,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "snmp_system_fan_status{Brand='Huawei'} != 1",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [
+      "Brand=Huawei"
+    ],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564560662,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "设备中断",
+    "note": "snmp_uptime 表示设备运行时间，单位10ms\n\ndelta(snmp_uptime{}/100 [2m])  表示设备2分钟内没有uptime 更新",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      1
+    ],
+    "disabled": 0,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "prom_ql": "delta(snmp_uptime{}/100 [2m]) == 0",
+          "severity": 1,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564562282,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 15s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "设备失去连接",
+    "note": "未响应 == 0，响应 == 1\n检测频率60秒,连续3次snmp和icmp都为0，则触发告警\n如未恢复，24h后会再次发送",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "max_over_time(snmp_icmp_up{}[3m]) == 0 and max_over_time(snmp_up{}[3m]) == 0",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 1440,
+    "notify_max_number": 0,
+    "recover_duration": 300,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564564377,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 60s"
+  },
+  {
+    "id": 0,
+    "group_id": 0,
+    "cate": "prometheus",
+    "datasource_ids": [
+      0
+    ],
+    "cluster": "",
+    "name": "设备重启",
+    "note": "设备启动时间小于 600.00秒则告警",
+    "prod": "metric",
+    "algorithm": "",
+    "algo_params": null,
+    "delay": 0,
+    "severity": 0,
+    "severities": [
+      2
+    ],
+    "disabled": 0,
+    "prom_for_duration": 60,
+    "prom_ql": "",
+    "rule_config": {
+      "queries": [
+        {
+          "keys": {
+            "labelKey": "",
+            "metricKey": "",
+            "valueKey": ""
+          },
+          "prom_ql": "resets(snmp_uptime{}[10m]) == 1 and resets(snmp_enginetime{}[10m]) == 1",
+          "severity": 2,
+          "unit": "none"
+        }
+      ],
+      "version": "v1"
+    },
+    "event_relabel_config": null,
+    "prom_eval_interval": 15,
+    "enable_stime": "00:00",
+    "enable_stimes": [
+      "00:00"
+    ],
+    "enable_etime": "00:00",
+    "enable_etimes": [
+      "00:00"
+    ],
+    "enable_days_of_week": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "enable_days_of_weeks": [
+      [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    ],
+    "enable_in_bg": 0,
+    "notify_recovered": 1,
+    "notify_channels": [],
+    "notify_groups_obj": null,
+    "notify_groups": null,
+    "notify_repeat_step": 60,
+    "notify_max_number": 0,
+    "recover_duration": 0,
+    "callbacks": [],
+    "runbook_url": "",
+    "append_tags": [],
+    "annotations": {},
+    "extra_config": {
+      "enrich_queries": [],
+      "escalation": {
+        "for_duration": 60,
+        "new_severity": 2,
+        "notify_max_number": 0,
+        "notify_repeat_step": 60
+      },
+      "network_device_config": {},
+      "notify_aggregation": {
+        "wait": 1
+      }
+    },
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "uuid": 1737357564566468,
+    "cur_event_count": 0,
+    "cron_pattern": "@every 300s"
+  }
+]

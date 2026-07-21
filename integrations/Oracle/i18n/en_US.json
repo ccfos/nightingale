@@ -1,0 +1,7 @@
+{
+    "Oracle: 数据库归档日志量大于100": "Oracle: archived log volume exceeds 100",
+    "Oracle: 数据库总连接数大于500": "Oracle: total database connections exceed 500",
+    "Oracle: 数据库活跃连接数大于100": "Oracle: active database connections exceed 100",
+    "Oracle: 监控数据采集失败，可能已经挂了": "Oracle: metric collection failed, instance may be down",
+    "Oracle: 表空间使用率大于95%": "Oracle: tablespace usage exceeds 95%"
+}

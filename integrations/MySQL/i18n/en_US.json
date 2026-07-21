@@ -1,0 +1,5 @@
+{
+    "MySQL 仪表盘（使用 address 筛选，用于中心端 Categraf 采集远端多个 mysql 实例的场景）": "MySQL Dashboard (filtered by address, for a central Categraf scraping multiple remote MySQL instances)",
+    "MySQL 仪表盘（使用 instance 筛选，需要采集时自行打上 instance 标签）": "MySQL Dashboard (filtered by instance, requires attaching an instance label at collection time)",
+    "MySQL 仪表盘，适用于 Categraf 采集本机 MySQL 的场景": "MySQL Dashboard, for Categraf scraping the local MySQL instance"
+}

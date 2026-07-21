@@ -1,0 +1,7 @@
+{
+    "kafka 数据有丢失风险-副本数小于3": "Kafka data at risk of loss - replication factor below 3",
+    "kafka 服务宕机": "Kafka service down",
+    "kafka 消费能力不足-延迟超过5分钟": "Kafka consumer lagging behind - lag exceeds 5 minutes",
+    "副本不同步预案\n1. Restart the Zookeeper leader.\n2. Restart the broker\\brokers that are not replicating some of the partitions.": "Runbook for out-of-sync replicas\n1. Restart the Zookeeper leader.\n2. Restart the broker\\brokers that are not replicating some of the partitions.",
+    "文档": "Documentation"
+}

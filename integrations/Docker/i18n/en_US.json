@@ -1,0 +1,11 @@
+{
+    "CPU限流率": "CPU Throttling Rate",
+    "container维度": "By container",
+    "容器入方向丢弃的报文数": "Container Inbound Dropped Packets",
+    "容器入方向的字节数": "Container Inbound Bytes",
+    "容器入方向错误的报文数": "Container Inbound Error Packets",
+    "容器出方向丢弃的报文数": "Container Outbound Dropped Packets",
+    "容器出方向失败的报文数": "Container Outbound Failed Packets",
+    "容器出方向的字节数": "Container Outbound Bytes",
+    "容器触发OOM": "Container OOM Events"
+}

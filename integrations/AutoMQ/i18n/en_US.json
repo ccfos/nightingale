@@ -1,0 +1,15 @@
+{
+    "Kafka Broker 连接数过多": "Kafka broker has too many connections",
+    "Kafka Fetch 请求高延迟": "Kafka fetch request latency high",
+    "Kafka Partition 数量过多": "Kafka partition count too high",
+    "Kafka Produce 请求高延迟": "Kafka produce request latency high",
+    "Kafka active controller 数目异常": "Kafka active controller count abnormal",
+    "Kafka 每秒 Fetch 请求超过1000": "Kafka fetch requests exceed 1000 per second",
+    "Kafka 每秒 Produce 请求超过1000": "Kafka produce requests exceed 1000 per second",
+    "Kafka 消费延迟较高": "Kafka consumer lag high",
+    "Kafka 请求 S3 失败率较高": "Kafka S3 request failure rate high",
+    "Kafka 请求错误率过高": "Kafka request error rate too high",
+    "Kafka 集群入向网络流量较高": "Kafka cluster inbound network traffic high",
+    "Kafka 集群出向网络流量较高": "Kafka cluster outbound network traffic high",
+    "下钻": "Drill Down"
+}
