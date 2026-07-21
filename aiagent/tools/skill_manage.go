@@ -241,6 +241,20 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 	private := resolveSkillPrivate(user, args, params)
 	userGroupIds := resolveSkillTeamIDs(getArgInt64Slice(args, "user_group_ids"), params)
 	if len(userGroupIds) == 0 {
+		// 不属于任何团队的非管理员不弹表单：候选团队为空的表单永远无法提交（前端确认
+		// 按钮要求至少选一个团队），子集校验（resolveSkillTeamNames）也注定全部拒绝。
+		// 直接把原因和出路说清楚，不进入草稿与表单流程。
+		if !user.IsAdmin() {
+			mine, err := getUserGroupIds(deps, user.Id)
+			if err != nil {
+				return "", err
+			}
+			if len(mine) == 0 {
+				return aiagent.LangText(params["lang"],
+					"你当前不属于任何团队，而技能必须授权给管理团队，因此暂时无法创建技能。请先让管理员把你加入某个团队，再来创建。",
+					"You don't belong to any team yet, but a skill must be assigned managing teams, so it can't be created for now. Ask an administrator to add you to a team first, then try again."), nil
+			}
+		}
 		// 草稿存不下就不能弹表单：表单一弹，这次的正文/脚本就随中断丢了。无会话上下文
 		// （CLI / A2A）时同理——没有可靠的草稿键，宁可让模型把团队直接写进参数里，
 		// 也不能弹一个注定丢正文的表单。
