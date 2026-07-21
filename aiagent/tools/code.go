@@ -41,7 +41,29 @@ const (
 	// 正常源文件远小于 1MB；超限的（生成物/超长数据文件）跳过内容搜索，
 	// 也顺带保证 read-all-lines 的上下文实现内存安全。
 	searchCodeMaxFileBytes = 1 << 20
+
+	// searchCodeMaxLineRunes 单行输出上限。文件级的 1MB 门挡不住"小文件长行"：
+	// fe 语料里有内联 SVG 常量单行 12k+ 字符，icon/doris 等文件也有多处单行
+	// 超 2000 字符。命中这种行时 maxMatches 只限条数不限字节，context_lines
+	// 还会把它放大到 (2n+1) 倍，单次工具返回可达数百 KB，足以撑爆 LLM 上下文。
+	// 水位与 search_n9e_docs 的 n9eDocContentsMaxRunes 同理（那边是整篇 6000
+	// rune，这里是每行 500 rune × 最多 100 条）。按 rune 截断而非 byte：语料
+	// 含中文注释，byte 截断会切碎 UTF-8。
+	searchCodeMaxLineRunes = 500
 )
+
+// truncateCodeLine 把超长行截到 searchCodeMaxLineRunes 个 rune 并加尾注，
+// 让 LLM 知道这行被截过（而不是以为源码本来就长这样）。
+func truncateCodeLine(line string) string {
+	if len(line) <= searchCodeMaxLineRunes {
+		return line // 字节数已不超限时 rune 数必然不超限，省掉转换
+	}
+	runes := []rune(line)
+	if len(runes) <= searchCodeMaxLineRunes {
+		return line
+	}
+	return string(runes[:searchCodeMaxLineRunes]) + " ...(line truncated)"
+}
 
 // resolveCodeRoot 返回语料根目录 <projectRoot>/code。锚点推导与 file.go 的
 // resolveBasePath 同法：SkillsPath 的父目录即运行目录（skill 与 integrations/
@@ -234,7 +256,7 @@ func searchCode(_ context.Context, deps *aiagent.ToolDeps, args map[string]inter
 				continue
 			}
 			if contextLines == 0 {
-				matches.WriteString(fmt.Sprintf("%s:%d: %s\n", relPath, i+1, line))
+				matches.WriteString(fmt.Sprintf("%s:%d: %s\n", relPath, i+1, truncateCodeLine(line)))
 			} else {
 				lo := i - contextLines
 				if lo < 0 {
@@ -249,7 +271,7 @@ func searchCode(_ context.Context, deps *aiagent.ToolDeps, args map[string]inter
 					if j == i {
 						marker = ">"
 					}
-					matches.WriteString(fmt.Sprintf("%s:%d:%s %s\n", relPath, j+1, marker, lines[j]))
+					matches.WriteString(fmt.Sprintf("%s:%d:%s %s\n", relPath, j+1, marker, truncateCodeLine(lines[j])))
 				}
 				matches.WriteString("--\n")
 			}

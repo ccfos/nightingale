@@ -131,6 +131,55 @@ func TestSearchCode(t *testing.T) {
 	}
 }
 
+// 超长单行必须被截断：fe 语料里有内联 SVG 常量单行 12k+ 字符，命中它会把
+// 数 KB 噪声塞进 LLM 上下文，context_lines 还会成倍放大。两条输出路径
+// （无上下文 / 带上下文）都要截，且按 rune 截以免切碎中文注释。
+func TestSearchCodeTruncatesLongLines(t *testing.T) {
+	deps := seedCodeCorpus(t)
+	bg := context.Background()
+	params := map[string]string{}
+
+	root := filepath.Dir(deps.SkillsPath)
+	longLine := "const svgIcon = \"" + strings.Repeat("中", 4000) + "\" // needle_xyz"
+	content := "package icon\n" + longLine + "\nconst after = 1\n"
+	p := filepath.Join(root, "code", "fe", "src", "icon.ts")
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, ctxLines := range []float64{0, 2} {
+		out, err := searchCode(bg, deps, map[string]interface{}{
+			"repo": "fe", "pattern": "needle_xyz", "context_lines": ctxLines,
+		}, params)
+		if err != nil {
+			t.Fatalf("context_lines=%v: %v", ctxLines, err)
+		}
+		if !strings.Contains(out, "...(line truncated)") {
+			t.Errorf("context_lines=%v: long line must be marked truncated, got %d bytes", ctxLines, len(out))
+		}
+		// 截断后整段输出应远小于原始行（12KB+）；留足版本行/路径节的余量
+		if len(out) > 4000 {
+			t.Errorf("context_lines=%v: output not truncated, got %d bytes", ctxLines, len(out))
+		}
+		// rune 边界：不得切出损坏的 UTF-8
+		if strings.ContainsRune(out, '�') {
+			t.Errorf("context_lines=%v: truncation broke UTF-8", ctxLines)
+		}
+	}
+
+	// 正常长度的行不受影响
+	out, err := searchCode(bg, deps, map[string]interface{}{"repo": "fe", "pattern": "const after"}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "const after = 1") || strings.Contains(out, "(line truncated)") {
+		t.Errorf("short lines must pass through untouched: %q", out)
+	}
+}
+
 func TestReadCode(t *testing.T) {
 	deps := seedCodeCorpus(t)
 	bg := context.Background()
