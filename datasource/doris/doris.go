@@ -31,6 +31,8 @@ type Doris struct {
 	doris.Doris `json:",inline" mapstructure:",squash"`
 }
 
+var _ datasource.ReadAddrApplier = (*Doris)(nil)
+
 type QueryParam struct {
 	Ref        string          `json:"ref" mapstructure:"ref"`
 	Database   string          `json:"database" mapstructure:"database"`
@@ -83,6 +85,7 @@ func (d *Doris) Equal(p datasource.Datasource) bool {
 	}
 
 	return d.Addr == newest.Addr &&
+		d.InternalAddr == newest.InternalAddr &&
 		d.FeAddr == newest.FeAddr &&
 		d.User == newest.User &&
 		d.Password == newest.Password &&
