@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
-	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -106,17 +105,17 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	}
 	tSkillElapsed := time.Since(tSkillStart)
 
-	// 构造本次 Run 的工具表：cfg.Tools 作只读种子 → 追加 skill 工具 → 追加 MCP 工具
+	// 构造本次 Run 的工具表：cfg.Tools 作只读种子 → 追加 skill 工具 → 追加外部工具源工具
 	tToolStart := time.Now()
 	tools := append([]AgentTool(nil), a.cfg.Tools...)
 	tools = a.appendSkillTools(tools, activeSkills)
-	mcpToolCount := 0
-	if a.mcpClientManager != nil && len(a.mcpServers) > 0 {
-		mcpCtx, mcpCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	srcToolCount := 0
+	if len(a.cfg.ToolSources) > 0 {
+		srcCtx, srcCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		before := len(tools)
-		tools = a.appendMCPTools(mcpCtx, tools)
-		mcpCancel()
-		mcpToolCount = len(tools) - before
+		tools = a.appendSourceTools(srcCtx, tools)
+		srcCancel()
+		srcToolCount = len(tools) - before
 	}
 	// 按需技能加载：技能子系统开启时挂 load_skill 工具，配合系统提示词里常驻的
 	// 「可用技能目录」（appendSkillCatalog），agent 可在运行中自取所需技能；
@@ -139,9 +138,9 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 		}
 	}
 
-	logger.Infof("[Agent] preparation: skills=%dms (n=%d) tools=%dms (mcp_added=%d total=%d)",
+	logger.Infof("[Agent] preparation: skills=%dms (n=%d) tools=%dms (external_added=%d total=%d)",
 		tSkillElapsed.Milliseconds(), len(activeSkills),
-		time.Since(tToolStart).Milliseconds(), mcpToolCount, len(tools))
+		time.Since(tToolStart).Milliseconds(), srcToolCount, len(tools))
 
 	rc := &runCtx{skills: activeSkills, tools: tools}
 
@@ -211,17 +210,6 @@ func (a *Agent) applyDefaults() {
 	}
 	if cfg.OutputField == "" {
 		cfg.OutputField = "ai_analysis"
-	}
-
-	// MCP 初始化
-	if cfg.MCP != nil && len(cfg.MCP.Servers) > 0 {
-		a.mcpClientManager = mcp.NewClientManager()
-		a.mcpServers = make(map[string]*mcp.ServerConfig)
-		for i := range cfg.MCP.Servers {
-			server := &cfg.MCP.Servers[i]
-			a.mcpServers[server.Name] = server
-		}
-		logger.Infof("AI Agent MCP initialized: %d servers configured", len(cfg.MCP.Servers))
 	}
 }
 

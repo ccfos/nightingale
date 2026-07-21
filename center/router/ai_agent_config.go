@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/chat"
-	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/toolkits/pkg/logger"
@@ -99,59 +98,13 @@ func (rt *Router) hiddenSkillNamesForUser(userId int64) (hidden []string, denyAl
 	return names, false
 }
 
-// buildMCPConfigForAgent translates agent.MCPServerIds into mcp.Config for the
-// chatting user `me`.
-//
-// Returns nil (not an empty Config) when the agent has no usable MCP bindings —
-// the Agent's applyDefaults checks `cfg.MCP != nil && len(cfg.MCP.Servers) > 0`
-// before standing up the MCP client manager, and we preserve that shortcut.
-//
-// Team scope (same rule as the management list): the user may only use public
-// servers plus those a team they belong to owns; admins may use all. A private
-// server bound to an agent is silently dropped for users without access so the
-// agent can't leak its tools to users who couldn't otherwise see it — the agent
-// therefore exposes different tools to different users, by design.
-func (rt *Router) buildMCPConfigForAgent(agent *models.AIAgent, me *models.User) *mcp.Config {
-	if len(agent.MCPServerIds) == 0 {
+// agentToolSources resolves the per-run external tool sources for agent+me via
+// AgentToolSourcesHook. The hook is the embedder's extension point (e.g. the
+// enterprise edition translates agent.MCPServerIds into MCP client sources,
+// applying its own per-user team scoping); unset means no external sources.
+func (rt *Router) agentToolSources(agent *models.AIAgent, me *models.User) []aiagent.ToolSource {
+	if rt.AgentToolSourcesHook == nil {
 		return nil
 	}
-	servers, err := models.MCPServersByIds(rt.Ctx, agent.MCPServerIds)
-	if err != nil {
-		logger.Warningf("[AIAgent] load mcp servers for agent=%d failed: %v", agent.Id, err)
-		return nil
-	}
-	if len(servers) == 0 {
-		return nil
-	}
-
-	// Resolve the user's team ids once, only when a non-admin actually needs the
-	// check (admins short-circuit in mcpCanManage).
-	var gids []int64
-	if me != nil && !me.IsAdmin() {
-		gids, err = models.MyGroupIds(rt.Ctx, me.Id)
-		if err != nil {
-			logger.Warningf("[AIAgent] load group ids for user=%d failed: %v", me.Id, err)
-			return nil
-		}
-	}
-
-	out := make([]mcp.ServerConfig, 0, len(servers))
-	for _, s := range servers {
-		if !mcpCanUse(me, gids, s) {
-			logger.Infof("[AIAgent] skip private mcp server=%s id=%d for agent=%d: user has no team access", s.Name, s.Id, agent.Id)
-			continue
-		}
-		cfg, cerr := rt.mcpServerConfig(s)
-		if cerr != nil {
-			// e.g. an oauth server that hasn't been connected yet — skip it
-			// rather than failing the whole agent.
-			logger.Warningf("[AIAgent] skip mcp server=%s id=%d: %v", s.Name, s.Id, cerr)
-			continue
-		}
-		out = append(out, *cfg)
-	}
-	if len(out) == 0 {
-		return nil
-	}
-	return &mcp.Config{Servers: out}
+	return rt.AgentToolSourcesHook(agent, me)
 }
