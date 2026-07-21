@@ -75,7 +75,12 @@ func (rt *Router) builtinComponentsPut(c *gin.Context) {
 	}
 
 	if bc.CreatedBy == SYSTEM {
-		req.Ident = bc.Ident
+		// 内置组件只允许启停：readme/logo 以 integrations 文件为源，不接受编辑
+		// 回写——英文界面下 GET 返回的 readme 是语言副本，随表单整行落库会把
+		// 源语言 README 覆盖掉，且 UpdatedBy 一旦不是 system，语言副本渲染
+		// 与重启时的文件恢复会一并失效
+		ginx.NewRender(c).Message(bc.UpdateDisabled(rt.Ctx, req.Disabled))
+		return
 	}
 
 	username := Username(c)
