@@ -20,6 +20,8 @@ type Center struct {
 	EventHistoryGroupView     bool
 	CleanNotifyRecordDay      int
 	CleanPipelineExecutionDay int
+	// CleanAlertHisEventDay 历史告警事件保留天数，<= 0 表示永久保留不清理
+	CleanAlertHisEventDay int
 	MigrateBusiGroupLabel     bool
 	RSA                       httpx.RSAConfig
 	AIAgent                   AIAgent

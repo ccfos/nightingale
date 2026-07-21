@@ -485,3 +485,6 @@ ALTER TABLE `message_template` ADD COLUMN `lang` varchar(32) not null default ''
 
 /* v9 2026-07-10 alert_mute mute_type for notify-only mute */
 ALTER TABLE `alert_mute` ADD COLUMN `mute_type` int not null default 0 comment '0-mute event and notify,1-mute notify only';
+
+/* v9 2026-07-20 alert_his_event composite index for history query (large table: consider gh-ost/pt-osc) */
+ALTER TABLE `alert_his_event` ADD KEY `idx_group_last_eval_time` (`group_id`, `last_eval_time`);
