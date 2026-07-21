@@ -76,6 +76,23 @@ jobs:
         with:
           name: sandbox-assets-arm64
           path: pkg/sandbox/embedassets/linux_arm64
+      # QA code corpus for the -tags=qa_code_embed center build: filtered source
+      # snapshots of this checkout + the latest categraf / n9e-fe release tags.
+      # Arch-independent, so it is built inline here rather than in a matrix job.
+      # Retry mirrors the sandbox-assets step: the script hits the GitHub API
+      # and downloads two source tarballs, so a transient 429/timeout must not
+      # sink the whole tag release (curl-level --retry inside the script
+      # handles per-request blips; this loop covers everything else).
+      - name: Build QA code corpus assets
+        run: |
+          for i in 1 2 3; do
+            bash scripts/build-qa-code-assets.sh && exit 0
+            echo "QA code asset build attempt $i failed; retrying in 15s" >&2
+            sleep 15
+          done
+          exit 1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Still needed for the multi-arch docker image / manifest publish below.
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

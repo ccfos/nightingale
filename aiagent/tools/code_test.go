@@ -1,0 +1,203 @@
+package tools
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/ccfos/nightingale/v6/aiagent"
+)
+
+// seedCodeCorpus 在临时 projectRoot 下搭 skill/ + code/{n9e,categraf}/ 结构，
+// 返回指向 skill/ 的 deps（工具以 SkillsPath 父目录定位 code/）。
+func seedCodeCorpus(t *testing.T) *aiagent.ToolDeps {
+	t.Helper()
+	root := t.TempDir()
+	skillsPath := filepath.Join(root, "skill")
+	if err := os.MkdirAll(skillsPath, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	files := map[string]string{
+		"code/manifest.json":                  `[{"repo":"n9e","ref":"v9.0.0"},{"repo":"categraf","ref":"v0.4.19"}]`,
+		"code/.corpus_hash":                   "deadbeef\n",
+		"code/n9e/TREE.md":                    "# n9e corpus\n",
+		"code/n9e/models/alert_rule.go":       "package models\n\n// Severity levels\nconst Emergency = 1\nconst Warning = 2\nconst Notice = 3\n",
+		"code/categraf/inputs/ping/ping.go":   "package ping\n\nconst metricName = \"ping_average_response_ms\"\n",
+		"code/categraf/inputs/ping/README.md": "# ping plugin\n",
+		"code/categraf/.hidden.txt":           "should not list\n",
+	}
+	for name, content := range files {
+		p := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return &aiagent.ToolDeps{SkillsPath: skillsPath}
+}
+
+func TestListCode(t *testing.T) {
+	deps := seedCodeCorpus(t)
+	bg := context.Background()
+	params := map[string]string{}
+
+	out, err := listCode(bg, deps, map[string]interface{}{"repo": "categraf", "path": "inputs/ping"}, params)
+	if err != nil {
+		t.Fatalf("list_code should succeed: %v", err)
+	}
+	if !strings.Contains(out, "ping.go") || !strings.Contains(out, "README.md") {
+		t.Errorf("listing missing files: %q", out)
+	}
+
+	// 点文件不外露
+	out, err = listCode(bg, deps, map[string]interface{}{"repo": "categraf"}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out, ".hidden.txt") {
+		t.Errorf("dotfiles must be hidden: %q", out)
+	}
+
+	// 白名单外 repo / 路径穿越拒绝
+	if _, err := listCode(bg, deps, map[string]interface{}{"repo": "evil"}, params); err == nil {
+		t.Error("unknown repo must be rejected")
+	}
+	if _, err := listCode(bg, deps, map[string]interface{}{"repo": "n9e", "path": "../categraf"}, params); err == nil {
+		t.Error("path traversal must be rejected")
+	}
+}
+
+func TestSearchCode(t *testing.T) {
+	deps := seedCodeCorpus(t)
+	bg := context.Background()
+	params := map[string]string{}
+
+	// 内容命中：file:line + 语料版本行
+	out, err := searchCode(bg, deps, map[string]interface{}{"repo": "categraf", "pattern": "ping_average_response_ms"}, params)
+	if err != nil {
+		t.Fatalf("search_code should succeed: %v", err)
+	}
+	if !strings.Contains(out, "inputs/ping/ping.go:3:") {
+		t.Errorf("expected line match with file:line, got: %q", out)
+	}
+	if !strings.Contains(out, "code corpus: n9e@v9.0.0, categraf@v0.4.19") {
+		t.Errorf("expected corpus version line, got: %q", out)
+	}
+
+	// pattern 命中文件路径：单列 matching files 节
+	out, err = searchCode(bg, deps, map[string]interface{}{"repo": "categraf", "pattern": "ping"}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "files whose path contains") || !strings.Contains(out, "inputs/ping/ping.go") {
+		t.Errorf("expected path-hit section, got: %q", out)
+	}
+
+	// 大小写不敏感 + path 缩小范围：命中路径必须以仓库根为基准（含 models/
+	// 前缀），保证可直接投给 read_code，两工具参照系一致
+	out, err = searchCode(bg, deps, map[string]interface{}{"repo": "n9e", "pattern": "EMERGENCY", "path": "models"}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "models/alert_rule.go:4:") {
+		t.Errorf("path-narrowed hits must be repo-root-relative: %q", out)
+	}
+	// search→read 接力：命中路径原样喂给 read_code 必须可读
+	if _, err := readCode(bg, deps, map[string]interface{}{"repo": "n9e", "path": "models/alert_rule.go", "start_line": float64(4), "end_line": float64(4)}, params); err != nil {
+		t.Errorf("search hit path must be directly readable by read_code: %v", err)
+	}
+
+	// context_lines 带上下文与 > 标记
+	out, err = searchCode(bg, deps, map[string]interface{}{"repo": "n9e", "pattern": "Emergency", "context_lines": float64(1)}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, ":4:> ") || !strings.Contains(out, ":3:  ") {
+		t.Errorf("expected context lines with marker, got: %q", out)
+	}
+
+	// 无命中
+	out, err = searchCode(bg, deps, map[string]interface{}{"repo": "n9e", "pattern": "no_such_thing_xyz"}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "no matches") {
+		t.Errorf("expected no-matches message, got: %q", out)
+	}
+}
+
+func TestReadCode(t *testing.T) {
+	deps := seedCodeCorpus(t)
+	bg := context.Background()
+	params := map[string]string{}
+
+	// 全文读取带行号
+	out, err := readCode(bg, deps, map[string]interface{}{"repo": "n9e", "path": "models/alert_rule.go"}, params)
+	if err != nil {
+		t.Fatalf("read_code should succeed: %v", err)
+	}
+	if !strings.Contains(out, "1\tpackage models") || !strings.Contains(out, "4\tconst Emergency = 1") {
+		t.Errorf("expected numbered lines, got: %q", out)
+	}
+
+	// 行区间
+	out, err = readCode(bg, deps, map[string]interface{}{"repo": "n9e", "path": "models/alert_rule.go", "start_line": float64(4), "end_line": float64(5)}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out, "package models") || !strings.Contains(out, "4\tconst Emergency = 1") || !strings.Contains(out, "5\tconst Warning = 2") {
+		t.Errorf("range read wrong: %q", out)
+	}
+
+	// 起始行超过文件总行数
+	if _, err := readCode(bg, deps, map[string]interface{}{"repo": "n9e", "path": "models/alert_rule.go", "start_line": float64(100)}, params); err == nil {
+		t.Error("out-of-range start_line must error")
+	}
+
+	// 路径穿越拒绝
+	if _, err := readCode(bg, deps, map[string]interface{}{"repo": "n9e", "path": "../manifest.json"}, params); err == nil {
+		t.Error("path traversal must be rejected")
+	}
+}
+
+// 语料缺失（默认构建未解压）时三工具统一报降级提示，引导 LLM 回文档检索。
+func TestCodeToolsCorpusUnavailable(t *testing.T) {
+	root := t.TempDir()
+	skillsPath := filepath.Join(root, "skill")
+	if err := os.MkdirAll(skillsPath, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	deps := &aiagent.ToolDeps{SkillsPath: skillsPath}
+	bg := context.Background()
+	params := map[string]string{}
+
+	for name, fn := range map[string]func() (string, error){
+		"list_code": func() (string, error) { return listCode(bg, deps, map[string]interface{}{"repo": "n9e"}, params) },
+		"search_code": func() (string, error) {
+			return searchCode(bg, deps, map[string]interface{}{"repo": "n9e", "pattern": "x"}, params)
+		},
+		"read_code": func() (string, error) {
+			return readCode(bg, deps, map[string]interface{}{"repo": "n9e", "path": "TREE.md"}, params)
+		},
+	} {
+		_, err := fn()
+		if err == nil || !strings.Contains(err.Error(), "code corpus not available") {
+			t.Errorf("%s should report corpus unavailable, got: %v", name, err)
+		}
+	}
+
+	// code/ 目录存在但无 .corpus_hash 完成标记（用户自建/残缺）：同样不可用，
+	// 否则残缺语料的"没搜到"会被 LLM 误读成"该标识符不存在"。
+	if err := os.MkdirAll(filepath.Join(root, "code", "n9e"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	_, err := searchCode(bg, deps, map[string]interface{}{"repo": "n9e", "pattern": "x"}, params)
+	if err == nil || !strings.Contains(err.Error(), "code corpus not available") {
+		t.Errorf("unmarked code dir must be unavailable, got: %v", err)
+	}
+}

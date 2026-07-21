@@ -8,6 +8,10 @@ before:
     # fast with a clear message if they're missing, instead of a cryptic go:embed
     # "pattern matches no files" error from the -tags=sandbox_embed build below.
     - bash -c 'for a in amd64 arm64; do for f in bwrap python-base.tar.gz n9e-sandbox-init; do test -s "pkg/sandbox/embedassets/linux_$a/$f" || { echo "missing sandbox asset linux_$a/$f — run scripts/build-sandbox-assets.sh $a"; exit 1; }; done; done'
+    # QA code corpus assets, staged by the workflow (or locally by the script)
+    # before this runs. Same fail-fast rationale as the sandbox assets above,
+    # for the -tags=qa_code_embed build.
+    - bash -c 'for f in n9e.tar.gz categraf.tar.gz fe.tar.gz manifest.json; do test -s "aiagent/skill/embedded/codeassets/$f" || { echo "missing QA code asset $f — run scripts/build-qa-code-assets.sh"; exit 1; }; done'
     # Stage the bundled categraf packages (linux amd64 + arm64) into
     # agents/categraf/, picked up below by archives.files and dockers.extra_files.
     # Release-time only, deliberately not wired into `make build`: a local
@@ -38,11 +42,13 @@ builds:
     goarch:
       - amd64
       - arm64
-    # Bake the embedded sandbox assets into n9e (selects embed_linux_<arch>.go
-    # instead of embed_off.go). Only the center binary reaches pkg/sandbox, so
-    # build-cli / build-edge intentionally stay un-tagged (no wasted bloat).
+    # Bake the embedded sandbox assets (selects embed_linux_<arch>.go instead
+    # of embed_off.go) and the QA code corpus (selects code_embed.go instead
+    # of code_embed_off.go) into n9e. Only the center binary reaches
+    # pkg/sandbox / aiagent, so build-cli / build-edge intentionally stay
+    # un-tagged (no wasted bloat).
     flags:
-      - -tags=sandbox_embed
+      - -tags=sandbox_embed,qa_code_embed
     ldflags:
       - -s -w
       - -X github.com/ccfos/nightingale/v6/pkg/version.Version={{ .Tag }}-{{.Commit}}

@@ -549,6 +549,48 @@ var GrepFiles = aiagent.AgentTool{
 	},
 }
 
+// =============================================================================
+// Code corpus (QA)
+// =============================================================================
+// 三个只读工具面向内嵌代码语料库（qa_code_embed 构建打包的 n9e/categraf/fe
+// 过滤源码，启动期释放到运行目录 code/ 下）。独立于 list_files/read_file/
+// grep_files 三件套：那套的语义与安全边界是"技能目录+集成模板"，挂载面广；
+// 这套只挂给 doc-qa 等 QA 型技能，锚点、白名单、门控互不影响。
+
+var ListCode = aiagent.AgentTool{
+	Name:        "list_code",
+	Description: "列出内嵌代码语料库中某仓库目录下的文件和子目录。可用仓库: n9e(夜莺服务端 Go 代码)、categraf(采集器 Go 代码)、fe(前端 React/TS 代码)。迷路时先 read_code 读该仓库根部的 TREE.md",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "repo", Type: "string", Description: "仓库名，只能是 n9e、categraf、fe 之一", Required: true},
+		{Name: "path", Type: "string", Description: "相对子路径，如 inputs/ping 或 src/locales。不传则列出仓库根目录", Required: false},
+	},
+}
+
+var SearchCode = aiagent.AgentTool{
+	Name:        "search_code",
+	Description: "在内嵌代码语料库的某仓库中搜索关键词（不区分大小写），返回命中路径的文件列表与逐行命中(file:line)。用于核实指标名/配置默认值/环境变量/API路径/常量/UI文案等具体标识符",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "repo", Type: "string", Description: "仓库名，只能是 n9e、categraf、fe 之一", Required: true},
+		{Name: "pattern", Type: "string", Description: "搜索关键词，同时匹配文件内容与文件路径", Required: true},
+		{Name: "path", Type: "string", Description: "相对搜索路径，用于缩小范围，如 inputs 或 center/router。不传则搜索整个仓库", Required: false},
+		{Name: "context_lines", Type: "number", Description: "每处命中附带的上下文行数(0-5)，默认 0", Required: false},
+	},
+}
+
+var ReadCode = aiagent.AgentTool{
+	Name:        "read_code",
+	Description: "读取内嵌代码语料库中某仓库的一个文件，输出带行号。可用 start_line/end_line 只读片段(配合 search_code 返回的行号)；每个仓库根部有 TREE.md 目录导览",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "repo", Type: "string", Description: "仓库名，只能是 n9e、categraf、fe 之一", Required: true},
+		{Name: "path", Type: "string", Description: "相对文件路径，如 inputs/ping/ping.go 或 TREE.md", Required: true},
+		{Name: "start_line", Type: "number", Description: "起始行号(1-based，含)。不传则从文件头读", Required: false},
+		{Name: "end_line", Type: "number", Description: "结束行号(1-based，含)。不传则读到文件尾(超长截断)", Required: false},
+	},
+}
+
 // LoadSkill 按需加载技能工作流文档（系统提示词常驻技能目录，agent 运行中自取
 // 所需技能；加载结果经结构化 transcript 跨轮持久）。
 var LoadSkill = aiagent.AgentTool{
