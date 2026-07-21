@@ -260,8 +260,8 @@ Guidelines:
 }
 
 // ContextForwardInputs forwards structured context (busi_group_id,
-// datasource_id, team_ids) to the agent as tool params, so tools like
-// create_alert_rule / create_dashboard can read them via getDatasourceId etc.
+// datasource_id, team_ids, skill_scope) to the agent as tool params, so tools
+// like create_alert_rule / create_dashboard can read them via getDatasourceId etc.
 // without relying on the LLM to thread them through arguments.
 //
 // router 对所有 action 默认调用本函数：写工具缺参门（tools/form_gate.go）的
@@ -282,6 +282,18 @@ func ContextForwardInputs(req *AIChatRequest) map[string]string {
 			parts[i] = fmt.Sprintf("%d", id)
 		}
 		inputs["team_ids"] = strings.Join(parts, ",")
+	}
+	// 创建技能的授权表单：管理团队与可见范围用技能专属键转发，不与通知规则的 team_ids
+	// 混用——create_skill 靠这个键判断本轮是不是自己那张表单的续跑（见 restoreSkillDraft）。
+	if ids := ctxInt64Slice(req.Context, aiagent.SkillTeamsFieldKey); len(ids) > 0 {
+		parts := make([]string, len(ids))
+		for i, id := range ids {
+			parts[i] = fmt.Sprintf("%d", id)
+		}
+		inputs[aiagent.SkillTeamsFieldKey] = strings.Join(parts, ",")
+	}
+	if id := ctxInt64(req.Context, aiagent.SkillScopeFieldKey); id > 0 {
+		inputs[aiagent.SkillScopeFieldKey] = fmt.Sprintf("%d", id)
 	}
 	return inputs
 }

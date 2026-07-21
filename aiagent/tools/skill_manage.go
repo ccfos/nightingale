@@ -2,10 +2,13 @@ package tools
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	skillpkg "github.com/ccfos/nightingale/v6/aiagent/skill"
@@ -42,6 +45,17 @@ const PermAISkills = "/ai-config/skills"
 
 // proposalKindSkill namespaces skill proposals in the shared confirmation gate.
 const proposalKindSkill = "ai_skill"
+
+// proposalKindSkillDraft namespaces the pending-create draft stashed while the
+// user fills in the authorization form. A separate kind from proposalKindSkill
+// on purpose: confirmUpdateGate matches on kind, so a draft can never be passed
+// off as an approved write proposal.
+const proposalKindSkillDraft = "ai_skill_draft"
+
+// skillContentArgs are the create_skill arguments that describe the skill itself
+// (everything except its name and authorization). They are what the draft
+// restores verbatim across the authorization-form round trip.
+var skillContentArgs = []string{"description", "instructions", "builtin_tools", "files", "max_iterations", "compatibility"}
 
 // authoringToolNames are excluded from list_skill_builtin_tools: a user skill
 // has no business declaring the meta/authoring tools (it would loop or confuse
@@ -181,6 +195,16 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 		return "", err
 	}
 
+	// 授权表单弹过一次的话，技能内容以服务端草稿为准（见 restoreSkillDraft）。
+	// 确认腿的 args 由运行时原样重放、已是全量，不需要也不应该再被草稿覆盖。
+	if !getArgBool(args, "confirmed") {
+		restored, halt := restoreSkillDraft(ctx, deps, params, args)
+		if halt != "" {
+			return halt, nil
+		}
+		args = restored
+	}
+
 	name := strings.TrimSpace(getArgString(args, "name"))
 	if err := validateSkillName(name); err != nil {
 		return "", err
@@ -212,6 +236,40 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 		return "", fmt.Errorf("技能 %q 已存在；如需修改请用 update_skill", name)
 	}
 
+	// 授权：管理团队必填（成员据此获得编辑权），可见范围仅管理员可选——与「AI 配置 →
+	// 技能」页面的创建表单同一口径。团队缺失时弹表单让用户选，而不是替用户挑一个。
+	private := resolveSkillPrivate(user, args, params)
+	userGroupIds := resolveSkillTeamIDs(getArgInt64Slice(args, "user_group_ids"), params)
+	if len(userGroupIds) == 0 {
+		// 不属于任何团队的非管理员不弹表单：候选团队为空的表单永远无法提交（前端确认
+		// 按钮要求至少选一个团队），子集校验（resolveSkillTeamNames）也注定全部拒绝。
+		// 直接把原因和出路说清楚，不进入草稿与表单流程。
+		if !user.IsAdmin() {
+			mine, err := getUserGroupIds(deps, user.Id)
+			if err != nil {
+				return "", err
+			}
+			if len(mine) == 0 {
+				return aiagent.LangText(params["lang"],
+					"你当前不属于任何团队，而技能必须授权给管理团队，因此暂时无法创建技能。请先让管理员把你加入某个团队，再来创建。",
+					"You don't belong to any team yet, but a skill must be assigned managing teams, so it can't be created for now. Ask an administrator to add you to a team first, then try again."), nil
+			}
+		}
+		// 草稿存不下就不能弹表单：表单一弹，这次的正文/脚本就随中断丢了。无会话上下文
+		// （CLI / A2A）时同理——没有可靠的草稿键，宁可让模型把团队直接写进参数里，
+		// 也不能弹一个注定丢正文的表单。
+		if err := stashSkillDraft(ctx, deps, params, args); err != nil {
+			logger.Warningf("create_skill: stash draft in chat %q failed: %v", params["chat_id"], err)
+			return "", fmt.Errorf("无法暂存技能草稿（%v），因此没有弹出团队选择表单——弹了这次写好的正文/脚本就会丢失。"+
+				"请改为直接在 create_skill 里带上 user_group_ids（可先用 list_teams 查团队 ID），或稍后重试", err)
+		}
+		return "", skillAuthFormInterrupt(params["lang"], deps, user, private)
+	}
+	teamNames, err := resolveSkillTeamNames(deps, user, userGroupIds)
+	if err != nil {
+		return "", err
+	}
+
 	skillMD, err := skillpkg.BuildSkillMD(&skillpkg.DBSkill{
 		Name:          name,
 		Description:   description,
@@ -228,13 +286,26 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 	// approval prompt; the confirm leg is replayed by the runtime with
 	// confirmed=true (zero LLM involvement) — see update_proposal.go.
 	if !getArgBool(args, "confirmed") {
-		prompt := renderSkillProposal("即将创建技能", name, description, builtinTools, files, maxIter)
-		return proposeUpdate(ctx, deps, params, &updateProposal{
+		// 把解析出的授权写回 args：确认腿是下一轮用这份 args 原样 replay 的，而表单注入的
+		// params（team_ids/skill_scope）只存在于表单提交那一轮，届时已经取不到——不写回
+		// 就会在用户点「确认」时再弹一次表单，或把管理员选的「全员可见」悄悄降级成私有。
+		args["user_group_ids"] = userGroupIds
+		args["private"] = private
+		prompt := renderSkillProposal("即将创建技能", name, description, instructions, builtinTools, files, maxIter,
+			fmt.Sprintf("管理团队 %s（成员可编辑）；可见范围 %s", strings.Join(teamNames, "、"), skillScopeText(private)))
+		out, err := proposeUpdate(ctx, deps, params, &updateProposal{
 			Kind:         proposalKindSkill,
 			TargetID:     0,
 			BaselineHash: "",
 			Changes:      []string{"create skill " + name},
 		}, prompt, args)
+		// 提案成功（返回的是确认中断）后草稿才使命完成——ResumeArgs 已带全量参数；
+		// 留着它会在用户改主意、重新建一个同名技能时灌回旧正文。提案没生成出来则
+		// 保留草稿，让用户重试时仍能拿回原文。
+		if _, proposed := err.(*aiagent.ToolInterrupt); proposed {
+			dropSkillDraft(ctx, deps, params)
+		}
+		return out, err
 	}
 	if _, err := confirmUpdateGate(ctx, deps, params, "create_skill", proposalKindSkill, 0, getArgString(args, "proposal_id"), true, ""); err != nil {
 		return "", err
@@ -250,6 +321,8 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 		Instructions:  instructions,
 		Compatibility: compatibility,
 		Enabled:       true,
+		UserGroupIds:  userGroupIds,
+		Private:       private,
 		CreatedBy:     user.Username,
 		UpdatedBy:     user.Username,
 	}
@@ -269,7 +342,8 @@ func createSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 	}
 
 	materializeSkillToDisk(deps, obj.Id, name)
-	logger.Infof("create_skill: user=%s name=%s id=%d tools=%d files=%d", user.Username, name, obj.Id, len(builtinTools), len(files))
+	logger.Infof("create_skill: user=%s name=%s id=%d tools=%d files=%d teams=%v private=%d",
+		user.Username, name, obj.Id, len(builtinTools), len(files), userGroupIds, private)
 
 	return renderSkillResult("已创建技能", name, obj.Enabled, len(files), deps), nil
 }
@@ -377,7 +451,7 @@ func updateSkill(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 	baseline := hashConfigs(curMD)
 
 	if !getArgBool(args, "confirmed") {
-		prompt := renderSkillProposal("即将修改技能", obj.Name, description, builtinTools, files, maxIter)
+		prompt := renderSkillProposal("即将修改技能", obj.Name, description, instructions, builtinTools, files, maxIter, "")
 		return proposeUpdate(ctx, deps, params, &updateProposal{
 			Kind:         proposalKindSkill,
 			TargetID:     obj.Id,
@@ -602,8 +676,10 @@ func asString(v interface{}) string {
 
 // renderSkillProposal builds the deterministic confirmation copy shown to the
 // user before a create/update lands — the tool renders it, never the model, so
-// what the user approves is exactly what will be written.
-func renderSkillProposal(action, name, description string, builtinTools []string, files []*models.AISkillFile, maxIter int) string {
+// what the user approves is exactly what will be written. auth 为授权说明（管理
+// 团队 + 可见范围），仅创建时有值：修改不动授权，写出来反而误导。
+// 正文与附带文件带上字数：只列文件名的话，正文/脚本内容被换掉用户也看不出来。
+func renderSkillProposal(action, name, description, instructions string, builtinTools []string, files []*models.AISkillFile, maxIter int, auth string) string {
 	kind := "知识/流程型"
 	if hasScriptFile(files) {
 		kind = "脚本型（含可执行脚本）"
@@ -612,6 +688,9 @@ func renderSkillProposal(action, name, description string, builtinTools []string
 	sb.WriteString(fmt.Sprintf("%s **%s**：\n", action, name))
 	sb.WriteString(fmt.Sprintf("\n- 类型：%s", kind))
 	sb.WriteString(fmt.Sprintf("\n- 触发描述：%s", truncateRunes(description, 200)))
+	if instructions != "" {
+		sb.WriteString(fmt.Sprintf("\n- 正文：%d 字，开头「%s」", len([]rune(instructions)), truncateRunes(strings.TrimSpace(instructions), 60)))
+	}
 	if len(builtinTools) > 0 {
 		sb.WriteString(fmt.Sprintf("\n- 绑定工具：%s", strings.Join(builtinTools, ", ")))
 	}
@@ -621,12 +700,177 @@ func renderSkillProposal(action, name, description string, builtinTools []string
 	if len(files) > 0 {
 		names := make([]string, 0, len(files))
 		for _, f := range files {
-			names = append(names, f.Name)
+			names = append(names, fmt.Sprintf("%s（%d 字）", f.Name, len([]rune(f.Content))))
 		}
 		sb.WriteString(fmt.Sprintf("\n- 附带文件：%s", strings.Join(names, ", ")))
 	}
+	if auth != "" {
+		sb.WriteString(fmt.Sprintf("\n- 授权：%s", auth))
+	}
 	sb.WriteString("\n\n以上尚未写入。回复「确认」立即生效，回复「取消」放弃，也可以直接提出调整。")
 	return sb.String()
+}
+
+// =============================================================================
+// 创建技能的待授权草稿
+//
+// 授权表单是 input 类中断，而 input 中断不做确定性重放（router 的 tryResumePending
+// 直接带着补全的 Context 重跑 agent），被中断的那次调用也不进 transcript（native.go
+// 会把 assistant 轮的 tool_calls 裁到已执行的部分）。也就是说表单交回来时，模型手里
+// 只剩对话文本，instructions / files 原文已经不在上下文里——让它凭记忆重写，长正文
+// 必然漂移甚至被历史窗口截断，而提案文案只列描述和文件名，用户根本看不出内容变了样。
+//
+// 所以首次调用的完整参数按会话暂存在服务端（复用 update_proposal 的 Redis/内存双写
+// 存储，多实例部署同样有效），表单回来后确定性还原：本次调用只负责技能名与授权。
+// =============================================================================
+
+// skillDraftID 按会话给草稿定 key：一个会话同时只可能有一个待授权的创建，且这个 id
+// 必须能在恢复轮由服务端自行推出——被中断的调用没有 tool result，模型无从携带它。
+func skillDraftID(chatID string) string { return "skill_draft:" + chatID }
+
+// skillDraftLostMsg 是草稿在恢复轮拿不到时的中止文案。这里绝不能回退到模型这轮的
+// 参数：那份正文是凭对话重写的，可能已经漂移/截断，而用户在提案里只会看到字数和开头，
+// 未必察觉。宁可中止让用户重新起草确认，也不落一份没人审过的正文。
+const skillDraftLostMsg = "上一步暂存的技能内容（正文/附带脚本）已失效（超时或服务重启）。" +
+	"选完团队后我手里的正文是凭对话重写的，可能与你确认过的原稿不一致，" +
+	"所以本次创建已中止——请重新完整起草技能内容、展示给用户确认后，再调用 create_skill。"
+
+// restoreSkillDraft 用暂存草稿覆盖本次调用的内容字段，返回 (参数, 中止文案)。
+// 中止文案非空时调用方必须把它当作工具结果直接回给模型：不写库、也不进入提案。
+//
+// 是否为「授权表单的续跑」看本轮有没有带技能授权表单自己的提交值（skill_team_ids 经
+// action.param 直达工具层）。这个键是技能专用的：与通知规则共用 team_ids 的话，用户在
+// 同一会话里提交通知规则的团队表单、本轮又顺带创建技能，就会被误判成续跑并因查无草稿
+// 而中止一次本来合法的创建。用户没走表单而是直接改口（「正文改成 X 再建」）时同理——
+// 模型这轮的参数才是用户的最新意图，草稿不参与（残留草稿会在下次弹表单时被新草稿覆盖）。
+// 续跑轮里草稿缺失/损坏/技能名对不上一律中止，不做静默回退。技能名两侧都去空白后比较：
+// 模型两轮分别写出 "x " 和 "x" 不该被当成两个技能。
+func restoreSkillDraft(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, args map[string]interface{}) (map[string]interface{}, string) {
+	if strings.TrimSpace(params[aiagent.SkillTeamsFieldKey]) == "" {
+		return args, ""
+	}
+	chatID := params["chat_id"]
+	if chatID == "" {
+		// 表单只可能由有会话的入口弹出（没有 chat_id 时 stashSkillDraft 会拒绝弹表单），
+		// 走到这里说明提交值来路不明，按草稿丢失处理，不拿模型重写的正文顶上。
+		return args, skillDraftLostMsg
+	}
+	p := updateProposals.peek(ctx, deps.Redis, skillDraftID(chatID))
+	if p == nil || p.Kind != proposalKindSkillDraft {
+		logger.Warningf("create_skill: no draft for chat %s on the auth-form resume turn; aborting instead of trusting the rebuilt args", chatID)
+		return args, skillDraftLostMsg
+	}
+	var draft map[string]interface{}
+	if err := json.Unmarshal([]byte(p.Payload), &draft); err != nil {
+		logger.Warningf("create_skill: corrupt draft in chat %s: %v", chatID, err)
+		return args, skillDraftLostMsg
+	}
+	drafted := strings.TrimSpace(getArgString(draft, "name"))
+	if cur := strings.TrimSpace(getArgString(args, "name")); drafted != cur {
+		return args, fmt.Sprintf("暂存草稿对应的技能是 %q，本次却要创建 %q，内容对不上，已中止。"+
+			"如果要建的就是 %q，用这个名字重新调用一次 create_skill 即可（正文无需重发）；"+
+			"如果确实要建另一个技能，请重新完整起草内容并让用户确认。", drafted, cur, drafted)
+	}
+
+	merged := make(map[string]interface{}, len(args)+len(skillContentArgs))
+	for k, v := range args {
+		merged[k] = v
+	}
+	// 草稿是内容的唯一权威：草稿没有的内容字段要删掉，而不是留下模型这轮补出来的值，
+	// 否则还原结果仍取决于模型这次写了什么。
+	for _, k := range skillContentArgs {
+		if v, ok := draft[k]; ok {
+			merged[k] = v
+		} else {
+			delete(merged, k)
+		}
+	}
+	logger.Infof("create_skill: restored draft for skill %q in chat %s", drafted, chatID)
+	return merged, ""
+}
+
+// stashSkillDraft 在弹授权表单前暂存本次调用的完整参数。存不下必须让调用方放弃弹表单：
+// 表单一弹，这次调用的参数就随中断被丢掉了（native.go 不把被中断的调用写进 transcript），
+// 没有草稿兜底就只能靠模型重写正文——那正是本机制要消灭的漂移。
+// 无 chat_id（CLI / A2A 等无会话入口）时没有可靠的草稿键，同样按失败处理：让调用方改走
+// 「参数里直接带 user_group_ids」的路径，那条路径不产生中断，正文不会丢。
+func stashSkillDraft(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, args map[string]interface{}) error {
+	chatID := params["chat_id"]
+	if chatID == "" {
+		return fmt.Errorf("当前入口没有会话上下文（chat_id），无处暂存草稿")
+	}
+	body, err := json.Marshal(args)
+	if err != nil {
+		return fmt.Errorf("marshal draft: %v", err)
+	}
+	seqID, _ := strconv.ParseInt(params["seq_id"], 10, 64)
+	return updateProposals.put(ctx, deps.Redis, &updateProposal{
+		ID:        skillDraftID(chatID),
+		ChatID:    chatID,
+		SeqID:     seqID,
+		Kind:      proposalKindSkillDraft,
+		Changes:   []string{"draft skill " + strings.TrimSpace(getArgString(args, "name"))},
+		Payload:   string(body),
+		CreatedAt: time.Now(),
+	})
+}
+
+// dropSkillDraft 消费掉草稿（take 即删）。
+func dropSkillDraft(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string) {
+	if chatID := params["chat_id"]; chatID != "" {
+		updateProposals.take(ctx, deps.Redis, skillDraftID(chatID))
+	}
+}
+
+// skillScopeText 把 Private 渲染成与技能页面一致的中文说法（确认文案不经 LLM 转述）。
+func skillScopeText(private int) string {
+	if private == 0 {
+		return "全员可见"
+	}
+	return "仅管理团队可见"
+}
+
+// resolveSkillTeamNames 校验授权团队并返回其名称（用于确认文案）：团队必须真实存在；
+// 非管理员只能授权给自己所属的团队——要求提交的团队全部属于自己（子集）而非仅有交集，
+// 与 HTTP 创建路由 aiSkillAdd 同一口径，避免 AI 面成为把技能授权给无关团队的绕过口。
+func resolveSkillTeamNames(deps *aiagent.ToolDeps, user *models.User, ids []int64) ([]string, error) {
+	groups, err := models.UserGroupGetByIds(deps.DBCtx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load teams: %v", err)
+	}
+	nameOf := make(map[int64]string, len(groups))
+	for _, g := range groups {
+		nameOf[g.Id] = g.Name
+	}
+
+	var mine []int64
+	if !user.IsAdmin() {
+		if mine, err = getUserGroupIds(deps, user.Id); err != nil {
+			return nil, err
+		}
+	}
+
+	names := make([]string, 0, len(ids))
+	var unknown, forbidden []string
+	for _, id := range ids {
+		name, ok := nameOf[id]
+		if !ok {
+			unknown = append(unknown, fmt.Sprintf("%d", id))
+			continue
+		}
+		if !user.IsAdmin() && !int64SliceContains(mine, id) {
+			forbidden = append(forbidden, name)
+			continue
+		}
+		names = append(names, name)
+	}
+	if len(unknown) > 0 {
+		return nil, fmt.Errorf("管理团队 ID %s 不存在：用 list_teams 查真实团队再试", strings.Join(unknown, ", "))
+	}
+	if len(forbidden) > 0 {
+		return nil, fmt.Errorf("无权把技能授权给团队 %s：你只能授权给自己所属的团队，请改选后重试", strings.Join(forbidden, "、"))
+	}
+	return names, nil
 }
 
 func renderSkillResult(action, name string, enabled bool, fileCount int, deps *aiagent.ToolDeps) string {
