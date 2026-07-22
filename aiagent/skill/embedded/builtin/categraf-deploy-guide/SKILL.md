@@ -38,11 +38,28 @@ tags:
 
 Operating system support: Linux kernel 2.6.32+ / Windows 10+ or Server 2008+ / macOS 10.15+.
 
+## Quickest Path: One-Click Install
+
+If the nightingale server is v9+ and bundles categraf, a single command on the target
+host does everything below (download, unpack, rewrite the reporting address, register
+and start the systemd service):
+
+```bash
+curl -sSfL 'http://N9E_HOST:17000/api/n9e/agents/categraf/install.sh' | sudo bash -s -- --server 'http://N9E_HOST:17000'
+```
+
+The address is filled in by the server, so nothing has to be edited by hand. The same
+command is available from the machine list page ("Install Categraf"), which also waits
+for the host to report. Useful flags: `--force` (reinstall/upgrade), `--dir <path>`,
+`--auth user:pass` (when the agent API requires basic auth). Note the `bash -s --`
+form: `| sudo bash --force` silently drops the flag.
+
+If the server is older, does not bundle the package, or the host is not Linux, fall
+back to the manual steps below.
+
 ## Step 1: Get the Binary
 
-Download URLs (pick either one):
-- Official download center: https://flashcat.cloud/download/categraf/
-- GitHub releases: https://github.com/flashcatcloud/categraf/releases
+Download URL: https://github.com/flashcatcloud/categraf/releases
 
 Package naming convention: `categraf-{version}-{os}-{arch}.tar.gz`, for example `categraf-v0.3.35-linux-amd64.tar.gz`. **Confirm the architecture first** (`uname -m`: choose amd64 for x86_64, arm64 for aarch64).
 
@@ -80,7 +97,7 @@ max_idle_conns_per_host = 100
 
 [heartbeat]
 enable = true                  # must be enabled, otherwise this machine won't appear in the Nightingale machine list
-url = "http://N9E_HOST:17000/api/n9e/heartbeat"
+url = "http://N9E_HOST:17000/v1/n9e/heartbeat"
 interval = 10
 ```
 
@@ -204,7 +221,10 @@ kill -HUP `pidof categraf`   # Linux-only, not supported on Windows
 ### 4.4 Self-upgrade (v0.3.36+)
 
 ```bash
-./categraf --update --update_url https://download.flashcat.cloud/categraf-vX.Y.Z-linux-amd64.tar.gz
+./categraf --update --update_url https://github.com/flashcatcloud/categraf/releases/download/vX.Y.Z/categraf-vX.Y.Z-linux-amd64.tar.gz
+
+# On an intranet, point --update_url at nightingale's own bundled package instead:
+./categraf --update --update_url 'http://N9E_HOST:17000/api/n9e/agents/categraf/download?arch=amd64'
 ```
 
 ## Common Pitfalls (one-liner version)

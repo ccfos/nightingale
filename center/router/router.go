@@ -450,6 +450,14 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
 
+		// Categraf install helpers. Anonymous on purpose: the target machine
+		// runs these before it holds any credential, and none of the three
+		// returns anything the caller did not already supply or that is not
+		// public software. Same posture as /pub and /site-info.
+		pages.GET("/agents/categraf/meta", rt.categrafMeta)
+		pages.GET("/agents/categraf/install.sh", rt.categrafInstallScript)
+		pages.GET("/agents/categraf/download", rt.categrafDownload)
+
 		// pages.GET("/builtin-boards", rt.builtinBoardGets)
 		// pages.GET("/builtin-board/:name", rt.builtinBoardGet)
 		// pages.GET("/dashboards/builtin/list", rt.builtinBoardGets)
