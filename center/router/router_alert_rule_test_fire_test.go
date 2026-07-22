@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -41,7 +41,9 @@ func setupTestFire(t *testing.T) (*Router, *ctx.Context, int64) {
 		t.Fatalf("seed busi group: %v", err)
 	}
 
-	testFireLastRun = sync.Map{}
+	testFireMu.Lock()
+	testFireLastRun = map[string]time.Time{}
+	testFireMu.Unlock()
 	return rt, c, bg.Id
 }
 
@@ -284,7 +286,33 @@ func TestAlertRuleTestFire_RecoverEventNotifyEnabled(t *testing.T) {
 	}
 }
 
-// 同一 用户+业务组+规则 10 秒内重复触发应被限流
+// 脱敏：错误串里出现凭据字段名标记时整体隐藏，避免流水线节点凭据经 node_results 泄露
+func TestRedactSensitive(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		// callback 处理器把整个 config 结构体格式化进 error 的真实形态
+		{"failed to send request: dial timeout processor: &{HTTPConfig:{Url:http://x AuthPassword:s3cret Headers:map[Authorization:Bearer t]}}", "(details hidden for security)"},
+		{"header contains token abc", "(details hidden for security)"},
+		{"connection refused", "connection refused"},
+		{"", ""},
+	}
+	for _, c := range cases {
+		if got := redactSensitive(c.in); got != c.want {
+			t.Fatalf("redactSensitive(%q): got %q, want %q", c.in, got, c.want)
+		}
+	}
+
+	// 过长的普通错误被截断
+	long := strings.Repeat("a", 500)
+	got := redactSensitive(long)
+	if len(got) != 303 || !strings.HasSuffix(got, "...") {
+		t.Fatalf("long error should be truncated to 303 chars ending with ..., got len %d", len(got))
+	}
+}
+
+// 同一 用户+业务组 10 秒内重复触发应被限流
 func TestAlertRuleTestFire_RateLimit(t *testing.T) {
 	rt, _, bgid := setupTestFire(t)
 
