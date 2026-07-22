@@ -551,7 +551,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks"), rt.bgro(), rt.taskGets)
 		pages.POST("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks/add"), rt.bgrw(), rt.taskAdd)
 
-		pages.GET("/servers", rt.auth(), rt.user(), rt.perm("/help/servers"), rt.serversGet)
+		pages.GET("/servers", rt.auth(), rt.user(), rt.perm("/system/alerting-engines"), rt.serversGet)
 		pages.GET("/server-clusters", rt.auth(), rt.user(), rt.serverClustersGet)
 
 		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
@@ -615,10 +615,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductPut)
 		pages.DELETE("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/delete"), rt.embeddedProductDelete)
 
-		pages.GET("/user-variable-configs", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigGets)
-		pages.POST("/user-variable-config", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigAdd)
-		pages.PUT("/user-variable-config/:id", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigPut)
-		pages.DELETE("/user-variable-config/:id", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigDel)
+		pages.GET("/user-variable-configs", rt.auth(), rt.user(), rt.perm("/system/variable-settings"), rt.userVariableConfigGets)
+		pages.POST("/user-variable-config", rt.auth(), rt.user(), rt.perm("/system/variable-settings"), rt.userVariableConfigAdd)
+		pages.PUT("/user-variable-config/:id", rt.auth(), rt.user(), rt.perm("/system/variable-settings"), rt.userVariableConfigPut)
+		pages.DELETE("/user-variable-config/:id", rt.auth(), rt.user(), rt.perm("/system/variable-settings"), rt.userVariableConfigDel)
 
 		pages.GET("/config", rt.auth(), rt.admin(), rt.configGetByKey)
 		pages.PUT("/config", rt.auth(), rt.admin(), rt.configPutByKey)
