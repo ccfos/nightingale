@@ -99,6 +99,36 @@ func fixTaskHostDoingPrimaryKey(db *gorm.DB) {
 	logger.Info("dropped task_host_doing legacy primary key on id")
 }
 
+// backfillEventPipelineGroupId sets group_id to 0 on pipelines created before the
+// column existed. Those rows hold NULL, which breaks two things at once:
+//
+//   - the workflow list filters on `group_id = 0`, and `NULL = 0` is never true in
+//     SQL, so the pipelines vanish from the page while the alert engine — which
+//     loads them without a group filter — keeps running them;
+//   - AutoMigrate emits `MODIFY COLUMN group_id ... NOT NULL DEFAULT 0` for the
+//     column's current definition, and that fails on the NULLs. AutoMigrate walks
+//     the fields in declaration order and returns on the first error, so every
+//     column declared after group_id is silently skipped on each startup.
+//
+// Run before AutoMigrate so the ALTER has no NULLs left to choke on.
+func backfillEventPipelineGroupId(db *gorm.DB) {
+	m := db.Migrator()
+	// Nothing to repair on a fresh install: AutoMigrate creates the column NOT NULL.
+	if !m.HasTable(&models.EventPipeline{}) || !m.HasColumn(&models.EventPipeline{}, "group_id") {
+		return
+	}
+
+	result := db.Model(&models.EventPipeline{}).Where("group_id IS NULL").Update("group_id", 0)
+	if result.Error != nil {
+		logger.Errorf("failed to backfill event_pipeline.group_id: %v", result.Error)
+		return
+	}
+
+	if result.RowsAffected > 0 {
+		logger.Infof("backfilled event_pipeline.group_id to 0 for %d legacy rows", result.RowsAffected)
+	}
+}
+
 func isPostgres(db *gorm.DB) bool {
 	dialect := db.Dialector.Name()
 	return dialect == "postgres"
@@ -112,6 +142,9 @@ func MigrateTables(db *gorm.DB) error {
 	if tableOptions != "" {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
+
+	backfillEventPipelineGroupId(db)
+
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &TaskTpl{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
