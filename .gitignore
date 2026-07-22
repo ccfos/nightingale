@@ -43,6 +43,8 @@ _test
 /vendor
 /tmp
 /pub
+# bundled categraf packages, staged at release time by scripts/download_categraf.sh
+/agents
 /n9e
 /docker/pub
 /docker/n9e

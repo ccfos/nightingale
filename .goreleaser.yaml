@@ -8,6 +8,13 @@ before:
     # fast with a clear message if they're missing, instead of a cryptic go:embed
     # "pattern matches no files" error from the -tags=sandbox_embed build below.
     - bash -c 'for a in amd64 arm64; do for f in bwrap python-base.tar.gz n9e-sandbox-init; do test -s "pkg/sandbox/embedassets/linux_$a/$f" || { echo "missing sandbox asset linux_$a/$f — run scripts/build-sandbox-assets.sh $a"; exit 1; }; done; done'
+    # Stage the bundled categraf packages (linux amd64 + arm64) into
+    # agents/categraf/, picked up below by archives.files and dockers.extra_files.
+    # Release-time only, deliberately not wired into `make build`: a local
+    # compile has no reason to pull ~110MB. The version pin lives in
+    # center/router/agentassets/categraf.version, which is also go:embed'ed, so
+    # the shipped tarball and the version the binary reports cannot drift.
+    - bash ./scripts/download_categraf.sh
 
 snapshot:
   name_template: '{{ .Tag }}'
@@ -83,6 +90,7 @@ archives:
       - etc/*
       - integrations/*
       - cli/*
+      - agents/categraf/*
       - n9e.sql
 
 release:
@@ -102,6 +110,7 @@ dockers:
     extra_files:
       - etc
       - integrations
+      - agents
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
@@ -115,6 +124,7 @@ dockers:
     extra_files:
       - etc
       - integrations
+      - agents
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64/v8"
