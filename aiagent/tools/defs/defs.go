@@ -1011,7 +1011,8 @@ var CreateSkill = aiagent.AgentTool{
 	Name: "create_skill",
 	Description: "创建一个新的用户技能并落库（写入 ai_skill 表并物化到磁盘，下一轮即可用）。" +
 		"用于把一段排查/操作流程固化成可复用技能，或创建带脚本(main.py/main.sh)的技能。" +
-		"需要 /ai-config/skills 权限；首次调用只生成待确认提案、用户确认后才真正创建。",
+		"需要 /ai-config/skills 权限；技能必须有管理团队(user_group_ids)，没带会弹团队选择表单；" +
+		"首次调用只生成待确认提案、用户确认后才真正创建。",
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "name", Type: "string", Description: "技能名，小写字母/数字/连字符（kebab-case），如 redis-slowlog-triage；不能与内置技能重名", Required: true},
@@ -1021,6 +1022,8 @@ var CreateSkill = aiagent.AgentTool{
 		{Name: "files", Type: "array", Description: "可选：附带文件数组，每项为对象 {path, content}，如 [{\"path\":\"main.py\",\"content\":\"...\"}]。脚本型技能在此放 main.py/main.sh；不要传 SKILL.md（由本工具自动生成）", Required: false},
 		{Name: "max_iterations", Type: "integer", Description: "可选：技能单轮最大工具调用次数（多步技能可设 15~30）", Required: false},
 		{Name: "compatibility", Type: "string", Description: "可选：兼容性/依赖说明（如 needs sandbox、python3）", Required: false},
+		{Name: "user_group_ids", Type: "array", Description: "管理团队（用户组）ID 数组，成员据此获得该技能的编辑权。用户没点名团队就留空，工具会弹团队选择表单让用户选，不要瞎填；用户点了名可用 list_teams 查真实 ID", Required: false},
+		{Name: "private", Type: "integer", Description: "可选：可见范围，0=全员可见，1=仅管理团队可见（缺省 1）。仅管理员可设为 0，非管理员传了也会被强制为 1", Required: false},
 		{Name: "proposal_id", Type: "string", Description: "确认提案 id（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
 		{Name: "confirmed", Type: "boolean", Description: "是否确认创建（由运行时在用户确认时回填，模型无需手动提供）", Required: false},
 	},

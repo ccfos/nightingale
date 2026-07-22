@@ -8,10 +8,14 @@ import (
 )
 
 type Center struct {
-	Plugins                   []Plugin
-	MetricsYamlFile           string
-	OpsYamlFile               string
-	BuiltinIntegrationsDir    string
+	Plugins                []Plugin
+	MetricsYamlFile        string
+	OpsYamlFile            string
+	BuiltinIntegrationsDir string
+	// AgentsDir holds the bundled collector packages (categraf tar.gz) served
+	// by /api/n9e/agents/categraf/download. Relative paths resolve against the
+	// working directory.
+	AgentsDir                 string
 	I18NHeaderKey             string
 	MetricDesc                MetricDescType
 	AnonymousAccess           AnonymousAccess
@@ -22,9 +26,9 @@ type Center struct {
 	CleanPipelineExecutionDay int
 	// CleanAlertHisEventDay 历史告警事件保留天数，<= 0 表示永久保留不清理
 	CleanAlertHisEventDay int
-	MigrateBusiGroupLabel     bool
-	RSA                       httpx.RSAConfig
-	AIAgent                   AIAgent
+	MigrateBusiGroupLabel bool
+	RSA                   httpx.RSAConfig
+	AIAgent               AIAgent
 
 	// Sandbox isolates execution of user-uploaded Skill Python/Bash scripts
 	// (pkg/sandbox). Fail-open: non-Linux / insufficient kernel capabilities
@@ -85,6 +89,10 @@ type AnonymousAccess struct {
 func (c *Center) PreCheck() {
 	if len(c.Plugins) == 0 {
 		c.Plugins = Plugins
+	}
+	if c.AgentsDir == "" {
+		// 默认使用项目根路径下的 agents/categraf 目录（与 integrations 同级）
+		c.AgentsDir = "agents/categraf"
 	}
 	if c.AIAgent.SkillsPath == "" {
 		// 默认使用项目根路径下的 skill 目录（与 integrations 同级）

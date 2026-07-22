@@ -279,6 +279,13 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/iotdb-databases", rt.iotdbDatabases)
 			pages.POST("/iotdb-tables", rt.iotdbTables)
 			pages.POST("/iotdb-columns", rt.iotdbColumns)
+			pages.POST("/victorialogs-histogram", rt.QueryVictoriaLogsHistogram)
+			pages.POST("/victorialogs-field-names", rt.QueryVictoriaLogsFieldNames)
+			pages.POST("/victorialogs-field-values", rt.QueryVictoriaLogsFieldValues)
+			pages.POST("/loki-label-names", rt.QueryLokiLabelNames)
+			pages.POST("/loki-label-values", rt.QueryLokiLabelValues)
+			pages.POST("/loki-parsed-fields", rt.QueryLokiParsedFields)
+			pages.POST("/loki-histogram", rt.QueryLokiHistogram)
 
 			pages.POST("/log-query-batch", rt.QueryLogBatch)
 
@@ -309,6 +316,13 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/iotdb-databases", rt.auth(), rt.iotdbDatabases)
 			pages.POST("/iotdb-tables", rt.auth(), rt.iotdbTables)
 			pages.POST("/iotdb-columns", rt.auth(), rt.iotdbColumns)
+			pages.POST("/victorialogs-histogram", rt.auth(), rt.user(), rt.QueryVictoriaLogsHistogram)
+			pages.POST("/victorialogs-field-names", rt.auth(), rt.user(), rt.QueryVictoriaLogsFieldNames)
+			pages.POST("/victorialogs-field-values", rt.auth(), rt.user(), rt.QueryVictoriaLogsFieldValues)
+			pages.POST("/loki-label-names", rt.auth(), rt.user(), rt.QueryLokiLabelNames)
+			pages.POST("/loki-label-values", rt.auth(), rt.user(), rt.QueryLokiLabelValues)
+			pages.POST("/loki-parsed-fields", rt.auth(), rt.user(), rt.QueryLokiParsedFields)
+			pages.POST("/loki-histogram", rt.auth(), rt.user(), rt.QueryLokiHistogram)
 
 			pages.POST("/log-query-batch", rt.auth(), rt.user(), rt.QueryLogBatch)
 
@@ -435,6 +449,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/builtin-cate-favorite/:name", rt.auth(), rt.user(), rt.builtinCateFavoriteDel)
 
 		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
+
+		// Categraf install helpers. Anonymous on purpose: the target machine
+		// runs these before it holds any credential, and none of the three
+		// returns anything the caller did not already supply or that is not
+		// public software. Same posture as /pub and /site-info.
+		pages.GET("/agents/categraf/meta", rt.categrafMeta)
+		pages.GET("/agents/categraf/install.sh", rt.categrafInstallScript)
+		pages.GET("/agents/categraf/download", rt.categrafDownload)
 
 		// pages.GET("/builtin-boards", rt.builtinBoardGets)
 		// pages.GET("/builtin-board/:name", rt.builtinBoardGet)
