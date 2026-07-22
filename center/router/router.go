@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -155,6 +156,14 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	if skillsPath := rt.Center.AIAgent.SkillsPath; skillsPath != "" {
 		if err := skill.ExtractBuiltin(skillsPath); err != nil {
 			logger.Warningf("extract builtin skills to %s failed: %v", skillsPath, err)
+		}
+		// QA 代码语料（仅 -tags qa_code_embed 构建内嵌，默认构建 no-op）：释放到
+		// skillsPath 父目录下的 code/（与 integrations/ 同级），list_code /
+		// search_code / read_code 工具以同一锚点定位。失败仅降级 QA，不致命。
+		if abs, err := filepath.Abs(skillsPath); err == nil {
+			if err := skill.ExtractCodeCorpus(filepath.Dir(abs)); err != nil {
+				logger.Warningf("extract QA code corpus failed: %v", err)
+			}
 		}
 	}
 
