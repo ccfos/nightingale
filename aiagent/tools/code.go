@@ -216,6 +216,7 @@ func searchCode(_ context.Context, deps *aiagent.ToolDeps, args map[string]inter
 	}
 
 	var pathHits []string
+	pathHitTotal := 0
 	var matches strings.Builder
 	matchCount := 0
 	truncated := false
@@ -241,9 +242,14 @@ func searchCode(_ context.Context, deps *aiagent.ToolDeps, args map[string]inter
 		}
 		relPath = filepath.ToSlash(relPath)
 
-		// pattern 同时匹配文件路径：按名定位（"找 ping 插件"）一次调用解决
-		if strings.Contains(strings.ToLower(relPath), patternLower) && len(pathHits) < searchCodeMaxPathHits {
-			pathHits = append(pathHits, relPath)
+		// pattern 同时匹配文件路径：按名定位（"找 ping 插件"）一次调用解决。
+		// 总数照常统计，超出展示上限的命中只计数不收集——截断必须显式告知，
+		// 否则模型会把前 20 条当成全部文件下结论。
+		if strings.Contains(strings.ToLower(relPath), patternLower) {
+			pathHitTotal++
+			if len(pathHits) < searchCodeMaxPathHits {
+				pathHits = append(pathHits, relPath)
+			}
 		}
 
 		if truncated {
@@ -305,6 +311,10 @@ func searchCode(_ context.Context, deps *aiagent.ToolDeps, args map[string]inter
 		for _, p := range pathHits {
 			sb.WriteString(p)
 			sb.WriteString("\n")
+		}
+		if pathHitTotal > len(pathHits) {
+			sb.WriteString(fmt.Sprintf("... (%d of %d path matches shown — narrow with the path argument or a more specific pattern)\n",
+				len(pathHits), pathHitTotal))
 		}
 		sb.WriteString("\n")
 	}

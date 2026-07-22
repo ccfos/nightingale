@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -128,6 +129,44 @@ func TestSearchCode(t *testing.T) {
 	}
 	if !strings.Contains(out, "no matches") {
 		t.Errorf("expected no-matches message, got: %q", out)
+	}
+}
+
+// 路径命中超过展示上限时必须显式标注截断：fe 语料上 "icon" 这类 pattern 的
+// 路径命中轻易超 20，静默截断会让模型把前 20 条当成全部文件。
+func TestSearchCodePathHitsTruncationNote(t *testing.T) {
+	deps := seedCodeCorpus(t)
+	bg := context.Background()
+	params := map[string]string{}
+
+	// 25 个路径含 iconpack 的文件，内容刻意不含该词——只走路径命中通道
+	root := filepath.Dir(deps.SkillsPath)
+	for i := 0; i < 25; i++ {
+		p := filepath.Join(root, "code", "fe", "src", "iconpack", fmt.Sprintf("f%02d.ts", i))
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte("export {}\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	out, err := searchCode(bg, deps, map[string]interface{}{"repo": "fe", "pattern": "iconpack"}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, fmt.Sprintf("(%d of 25 path matches shown", searchCodeMaxPathHits)) ||
+		!strings.Contains(out, "narrow with the path argument") {
+		t.Errorf("over-limit path hits must carry a truncation note: %q", out)
+	}
+
+	// 未超限时不出现截断提示
+	out, err = searchCode(bg, deps, map[string]interface{}{"repo": "categraf", "pattern": "ping"}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out, "path matches shown") {
+		t.Errorf("within-limit path hits must not be marked truncated: %q", out)
 	}
 }
 
