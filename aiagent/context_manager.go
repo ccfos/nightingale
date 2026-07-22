@@ -2,17 +2,26 @@ package aiagent
 
 import (
 	"fmt"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 )
 
 // 本文件实现上下文投影：canonical transcript（路由层持久化的完整历史）永不被
-// 有损改写，喂给模型的只是它的一个"投影"——在消息组装点（executeNative）对
-// req.History 做确定性收敛：
+// 有损改写，喂给模型的只是它的一个"投影"。
 //
-//  1. 单条工具观测截断：超长观测（大查询结果等）截到 HistoryObservationCapBytes，
-//     保留头部（proposal_id 等关键产物都在 JSON 头部）。load_skill 的结果豁免——
-//     技能工作流被截断会直接破坏后续轮执行。
+// 观测截断（capObservation）是投影里唯一逐条生效的规则，两个调用点共用它：
+// 本轮工具刚产出时按 LiveObservationCapBytes 截（native.go 的工具循环，只截
+// 进 messages 的副本），跨轮回放时按更紧的 HistoryObservationCapBytes 再截一
+// 次（下面第 1 步）。缺了前者，本轮里一次 search_code / 大查询就能把几百 KB
+// 原文塞进 messages 并在剩余迭代中一路带着走——投影管不到还没进 History 的
+// 消息。
+//
+// 其余两步只在跨轮投影时对 req.History 做：
+//
+//  1. 单条工具观测截断：超长观测（大查询结果等）截到 HistoryObservationCapBytes。
+//     load_skill 的结果豁免——技能工作流被截断会直接破坏后续轮执行。
 //  2. 旧观测清理：总量仍超预算时，从最旧的观测开始把正文替换为占位文本，保留
 //     最近 HistoryKeepRecentObservations 条观测原文与 load_skill 结果。只清内容
 //     不动结构——工具配对（assistant 调用轮 ↔ tool 结果轮）保持完整，模型仍能看
@@ -41,10 +50,7 @@ func projectHistory(history []ChatMessage, budget int) []ChatMessage {
 	copy(projected, history)
 	total := 0
 	for i := range projected {
-		if isCappableObservation(projected[i]) && len(projected[i].Content) > HistoryObservationCapBytes {
-			projected[i].Content = projected[i].Content[:HistoryObservationCapBytes] +
-				"\n...(观测过长已截断，保留头部)"
-		}
+		projected[i] = capObservation(projected[i], HistoryObservationCapBytes)
 		total += msgSize(projected[i])
 	}
 
@@ -151,6 +157,69 @@ func isObservationTurn(m ChatMessage) bool {
 // 破坏技能工作流）。
 func isCappableObservation(m ChatMessage) bool {
 	return m.Role == llm.RoleTool && m.ToolName != "load_skill"
+}
+
+// capObservation 返回 m 的投影副本：可截断的观测超过 limit 时截成首尾两段。
+// 入参不被修改（ChatMessage 是值类型），canonical transcript 收原文。
+func capObservation(m ChatMessage, limit int) ChatMessage {
+	if !isCappableObservation(m) || len(m.Content) <= limit {
+		return m
+	}
+	m.Content = truncateObservation(m.Content, limit)
+	return m
+}
+
+// truncateObservation 把超长观测截成「提示头 + 正文头 + 中缝标记 + 正文尾」，
+// 返回值总字节数不超过 limit（limit<=0 表示不限制，与 projectHistory 的 budget
+// 语义一致）。
+//
+// 保留首尾而非只保留头部：头部承载关键产物（proposal_id 等 JSON 字段都在开
+// 头），尾部承载收尾信息（search_code 的"已截断、请收窄 path 重试"提示、命令
+// 退出码等）。只留头会把"被截掉的另一半"静默变成"结果就这些"，模型据此下结
+// 论比看不到更危险。提示头写明原始字节数与行数，模型才知道该收窄条件重查而
+// 不是接受这份残缺输出。切点对齐 UTF-8 边界，避免把中文切碎成乱码。
+func truncateObservation(content string, limit int) string {
+	if limit <= 0 || len(content) <= limit {
+		return content
+	}
+
+	header := fmt.Sprintf("(观测过长已截断：原始 %d 字节 / %d 行，下面只保留首尾两段；需要完整内容请收窄查询条件后重新调用工具)\n",
+		len(content), strings.Count(content, "\n")+1)
+	// 省略量必然小于原文长度，用它算标记长度上界，保证最终不超 limit。
+	const markerTpl = "\n...(中间省略 %d 字节)...\n"
+	body := limit - len(header) - len(fmt.Sprintf(markerTpl, len(content)))
+	if body <= 0 {
+		// limit 小到放不下提示本身：退化为不带提示的安全前缀。
+		return runePrefix(content, limit)
+	}
+
+	head := body / 2
+	prefix := runePrefix(content, head)
+	suffix := runeSuffix(content, body-head)
+	return header + prefix + fmt.Sprintf(markerTpl, len(content)-len(prefix)-len(suffix)) + suffix
+}
+
+// runePrefix 返回 s 中不超过 n 字节、且不切碎 UTF-8 的最长前缀。
+func runePrefix(s string, n int) string {
+	if n >= len(s) {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
+}
+
+// runeSuffix 返回 s 中不超过 n 字节、且不切碎 UTF-8 的最长后缀。
+func runeSuffix(s string, n int) string {
+	if n >= len(s) {
+		return s
+	}
+	i := len(s) - n
+	for i < len(s) && !utf8.RuneStart(s[i]) {
+		i++
+	}
+	return s[i:]
 }
 
 // isRealUserTurn 报告一条消息是否为用户发言。

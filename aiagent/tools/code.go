@@ -37,6 +37,14 @@ const (
 	searchCodeMaxMatches  = 100
 	searchCodeMaxPathHits = 20
 
+	// searchCodeMaxOutputBytes 逐行命中正文的累计上限。条数上限管不住体积：
+	// 100 条命中在 context_lines=5 时是 1100 行，语料实测 search_code(fe,
+	// "icon", context_lines=5) 约 110KB。最终兜底在 agent 侧的观测截断
+	// （aiagent.LiveObservationCapBytes），这里提前收口是为了不白构造再丢掉大
+	// 半，更是为了能在结尾给出"收窄 path 重试"这种有语义的提示——被上游拦腰
+	// 截断的话，模型只会看到半截输出，不知道该换个更窄的查询。
+	searchCodeMaxOutputBytes = 32 << 10
+
 	// searchCodeMaxFileBytes 参与内容搜索的单文件上限。语料是过滤后的源码，
 	// 正常源文件远小于 1MB；超限的（生成物/超长数据文件）跳过内容搜索，
 	// 也顺带保证 read-all-lines 的上下文实现内存安全。
@@ -238,8 +246,7 @@ func searchCode(_ context.Context, deps *aiagent.ToolDeps, args map[string]inter
 			pathHits = append(pathHits, relPath)
 		}
 
-		if matchCount >= searchCodeMaxMatches {
-			truncated = true
+		if truncated {
 			return nil // 继续走完路径匹配，只停内容匹配
 		}
 		if info.Size() > searchCodeMaxFileBytes {
@@ -276,7 +283,8 @@ func searchCode(_ context.Context, deps *aiagent.ToolDeps, args map[string]inter
 				matches.WriteString("--\n")
 			}
 			matchCount++
-			if matchCount >= searchCodeMaxMatches {
+			if matchCount >= searchCodeMaxMatches || matches.Len() >= searchCodeMaxOutputBytes {
+				truncated = true
 				break
 			}
 		}
@@ -303,8 +311,9 @@ func searchCode(_ context.Context, deps *aiagent.ToolDeps, args map[string]inter
 	if matchCount > 0 {
 		sb.WriteString("## line matches\n")
 		sb.WriteString(matches.String())
-		if truncated || matchCount >= searchCodeMaxMatches {
-			sb.WriteString(fmt.Sprintf("... (stopped at %d matches, narrow with the path argument)\n", searchCodeMaxMatches))
+		if truncated {
+			sb.WriteString(fmt.Sprintf("... (stopped at %d matches / %d bytes — there are more; narrow with the path argument or a more specific pattern)\n",
+				matchCount, matches.Len()))
 		}
 	}
 	if len(pathHits) == 0 && matchCount == 0 {

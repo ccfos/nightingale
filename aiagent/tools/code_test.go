@@ -180,6 +180,49 @@ func TestSearchCodeTruncatesLongLines(t *testing.T) {
 	}
 }
 
+// 命中条数上限管不住体积：context_lines 把每条命中放大到 (2n+1) 行，100 条
+// 命中在真实语料上可达 110KB。累计字节预算必须同时生效，且结尾要给出"还有更
+// 多、请收窄"的提示——否则模型把半截输出当成全部结果。
+func TestSearchCodeCapsTotalOutput(t *testing.T) {
+	deps := seedCodeCorpus(t)
+	bg := context.Background()
+	params := map[string]string{}
+
+	// 每行 ~400 字符、共 1500 行且行行命中的文件（总量压在 searchCodeMaxFileBytes
+	// 以内，否则整文件会被跳过内容搜索）
+	root := filepath.Dir(deps.SkillsPath)
+	line := "	logger.Infof(\"needle_bulk %s\", " + strings.Repeat("a", 380) + ")\n"
+	p := filepath.Join(root, "code", "n9e", "bulk.go")
+	if err := os.WriteFile(p, []byte("package bulk\n"+strings.Repeat(line, 1500)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, ctxLines := range []float64{0, 5} {
+		out, err := searchCode(bg, deps, map[string]interface{}{
+			"repo": "n9e", "pattern": "needle_bulk", "context_lines": ctxLines,
+		}, params)
+		if err != nil {
+			t.Fatalf("context_lines=%v: %v", ctxLines, err)
+		}
+		// 预算之上只允许溢出最后一处命中（含 context 行）+ 头部版本行/提示尾注
+		if len(out) > searchCodeMaxOutputBytes+16*1024 {
+			t.Errorf("context_lines=%v: output %d bytes blew the %d budget", ctxLines, len(out), searchCodeMaxOutputBytes)
+		}
+		if !strings.Contains(out, "narrow with the path argument") {
+			t.Errorf("context_lines=%v: truncated output must tell the model to narrow the search: %q", ctxLines, out[max(0, len(out)-200):])
+		}
+	}
+
+	// 未触发预算时不应出现截断提示
+	out, err := searchCode(bg, deps, map[string]interface{}{"repo": "categraf", "pattern": "ping_average_response_ms"}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out, "stopped at") {
+		t.Errorf("small result must not be marked truncated: %q", out)
+	}
+}
+
 func TestReadCode(t *testing.T) {
 	deps := seedCodeCorpus(t)
 	bg := context.Background()

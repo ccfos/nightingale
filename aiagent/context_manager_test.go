@@ -33,7 +33,7 @@ func TestProjectHistory_CapsOversizedObservation(t *testing.T) {
 		{Role: "assistant", Content: "done"},
 	}
 	got := projectHistory(h, 10*1024*1024) // 预算充裕，只测截断
-	if len(got[1].Content) > HistoryObservationCapBytes+200 {
+	if len(got[1].Content) > HistoryObservationCapBytes {
 		t.Fatalf("not capped: %d bytes", len(got[1].Content))
 	}
 	if !strings.Contains(got[1].Content, "dbprop_head") {
@@ -45,6 +45,90 @@ func TestProjectHistory_CapsOversizedObservation(t *testing.T) {
 	// 原切片不被修改（投影不回写）
 	if len(h[1].Content) <= HistoryObservationCapBytes {
 		t.Fatal("projection must not mutate the canonical history")
+	}
+}
+
+// 截断保留首尾两段：头部承载 proposal_id 之类的关键产物，尾部承载工具自己的
+// 收尾提示（search_code 的"还有更多、请收窄"）。只留头会让模型把半截输出当成
+// 全部结果。
+func TestTruncateObservation_KeepsHeadAndTail(t *testing.T) {
+	head := `{"proposal_id":"dbprop_head",`
+	tail := `... (stopped at 100 matches — narrow with the path argument)`
+	content := head + strings.Repeat("x", 64*1024) + tail
+
+	got := truncateObservation(content, 8*1024)
+	if len(got) > 8*1024 {
+		t.Fatalf("result must fit the limit: %d > %d", len(got), 8*1024)
+	}
+	if !strings.Contains(got, "dbprop_head") {
+		t.Error("head must survive")
+	}
+	if !strings.Contains(got, "narrow with the path argument") {
+		t.Error("tail must survive")
+	}
+	if !strings.Contains(got, "原始") || !strings.Contains(got, "中间省略") {
+		t.Errorf("truncation note must state the original size and the elision: %q", got[:200])
+	}
+	// 未超限的内容原样返回
+	if short := "small"; truncateObservation(short, 8*1024) != short {
+		t.Error("content within the limit must pass through untouched")
+	}
+}
+
+// 切点必须落在 UTF-8 边界：语料与工具输出里大量中文，按字节硬切会切出乱码。
+func TestTruncateObservation_RuneSafe(t *testing.T) {
+	content := strings.Repeat("夜莺监控", 4096)
+	for _, limit := range []int{512, 1024, 4096, 9000} {
+		got := truncateObservation(content, limit)
+		if len(got) > limit {
+			t.Errorf("limit=%d: result %d bytes exceeds limit", limit, len(got))
+		}
+		if strings.ContainsRune(got, '�') {
+			t.Errorf("limit=%d: truncation broke UTF-8", limit)
+		}
+	}
+}
+
+// limit 小到放不下提示文本时退化为安全前缀，绝不返回超过 limit 的内容；
+// limit<=0 表示不限制。
+func TestTruncateObservation_TinyLimit(t *testing.T) {
+	content := strings.Repeat("夜莺", 1000)
+	for _, limit := range []int{1, 3, 32, 200} {
+		got := truncateObservation(content, limit)
+		if len(got) > limit {
+			t.Errorf("limit=%d: got %d bytes", limit, len(got))
+		}
+		if strings.ContainsRune(got, '�') {
+			t.Errorf("limit=%d: broke UTF-8", limit)
+		}
+	}
+	if got := truncateObservation(content, 0); got != content {
+		t.Error("limit<=0 must mean unlimited")
+	}
+}
+
+// capObservation 是 native 工具循环与 projectHistory 共用的那把尺子：豁免
+// load_skill、不改入参、超限才动。
+func TestCapObservation(t *testing.T) {
+	big := strings.Repeat("y", LiveObservationCapBytes*2)
+
+	obs := ChatMessage{Role: llm.RoleTool, ToolName: "search_code", Content: big}
+	got := capObservation(obs, LiveObservationCapBytes)
+	if len(got.Content) > LiveObservationCapBytes {
+		t.Errorf("observation not capped: %d bytes", len(got.Content))
+	}
+	if len(obs.Content) != len(big) {
+		t.Error("capObservation must not mutate its input")
+	}
+
+	skill := ChatMessage{Role: llm.RoleTool, ToolName: "load_skill", Content: big}
+	if len(capObservation(skill, LiveObservationCapBytes).Content) != len(big) {
+		t.Error("load_skill result must stay exempt")
+	}
+
+	user := ChatMessage{Role: "user", Content: big}
+	if len(capObservation(user, LiveObservationCapBytes).Content) != len(big) {
+		t.Error("non-observation messages must pass through")
 	}
 }
 

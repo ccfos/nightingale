@@ -35,8 +35,16 @@ const (
 	// 可经 AgentConfig.HistoryBudgetBytes 按 LLM 配置覆盖。
 	DefaultHistoryBudgetBytes = 96 * 1024
 
+	// LiveObservationCapBytes 本轮工具循环中单条观测进 messages 的上限。工具
+	// 结果是模型下一步决策的直接依据，比历史观测宽松：取 FileReadMaxBytes，
+	// 即"设计上产出最大的内置工具"的额度，这样按额度产出的工具（read_file 等）
+	// 一字不少，只有输出无界的工具（search_code 在语料上实测可达 110KB）会被
+	// 收口。没有这道门时，本轮观测完全不受约束——projectHistory 只作用于
+	// req.History，管不到还没进历史的当前轮。
+	LiveObservationCapBytes = FileReadMaxBytes
+
 	// HistoryObservationCapBytes 历史中单条工具观测的截断上限。大查询结果在
-	// 后续轮次只剩参考价值，保留头部（关键产物如 proposal_id 都在 JSON 头部）。
+	// 后续轮次只剩参考价值，比 LiveObservationCapBytes 更紧。
 	HistoryObservationCapBytes = 16 * 1024
 
 	// HistoryKeepRecentObservations 旧观测清理（投影第 2 步）保留原文的最近观测
