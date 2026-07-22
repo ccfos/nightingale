@@ -351,6 +351,16 @@ func (rt *Router) runTestFireMuteCheck(bgid int64, event *models.AlertCurEvent) 
 }
 
 func (rt *Router) runTestFireNotify(cfg *models.AlertRule, event *models.AlertCurEvent, skipSend bool) testFireStage {
+	// 真实链路中，未开启「恢复时通知」的规则不会发送恢复通知（RecoverSingle 会重判），
+	// 测试保持同样行为：跳过发送并在报告中说明，避免测试结果与真实行为不一致
+	if event.IsRecovered && cfg.NotifyRecovered != 1 {
+		return testFireStage{
+			Stage:  "notify",
+			Status: testFireStageWarn,
+			Data:   gin.H{"recover_notify_disabled": true, "results": []gin.H{}},
+		}
+	}
+
 	if cfg.NotifyVersion != 1 {
 		missing := rt.legacyNotifyMissingTokens(cfg)
 		status := testFireStagePass

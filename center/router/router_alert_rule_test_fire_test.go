@@ -245,7 +245,7 @@ func TestAlertRuleTestFire_DisabledWarn(t *testing.T) {
 	}
 }
 
-// 恢复类型事件
+// 恢复类型事件：未开启「恢复时通知」时，与真实链路一致跳过发送并警示
 func TestAlertRuleTestFire_RecoverEvent(t *testing.T) {
 	rt, _, bgid := setupTestFire(t)
 
@@ -259,6 +259,28 @@ func TestAlertRuleTestFire_RecoverEvent(t *testing.T) {
 	}
 	if got := resp.Dat.Event["is_recovered"]; got != true {
 		t.Fatalf("is_recovered: got %v, want true", got)
+	}
+	notify := stageByName(t, resp, "notify")
+	if notify.Status != "warn" || notify.Data["recover_notify_disabled"] != true {
+		t.Fatalf("notify stage should warn recover_notify_disabled, got %+v", notify)
+	}
+}
+
+// 开启「恢复时通知」的恢复事件正常走通知段
+func TestAlertRuleTestFire_RecoverEventNotifyEnabled(t *testing.T) {
+	rt, _, bgid := setupTestFire(t)
+
+	resp, panicked := callTestFire(t, rt, bgid, AlertRuleTestFireForm{
+		SkipSend:  true,
+		EventType: "recover",
+		Config:    models.AlertRule{Name: "cpu high", NotifyVersion: 1, NotifyRecovered: 1},
+	})
+	if panicked {
+		t.Fatal("handler panicked")
+	}
+	notify := stageByName(t, resp, "notify")
+	if notify.Data["recover_notify_disabled"] == true {
+		t.Fatalf("notify stage should not report recover_notify_disabled when enabled, got %+v", notify)
 	}
 }
 
