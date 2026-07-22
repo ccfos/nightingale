@@ -81,6 +81,13 @@ func init() {
 		PluginType:     "iotdb",
 		PluginTypeName: "IoTDB",
 	}
+
+	DatasourceTypes[9] = DatasourceType{
+		Id:             9,
+		Category:       "logging",
+		PluginType:     "loki",
+		PluginTypeName: "Loki",
+	}
 }
 
 type NewDatasourceFn func(settings map[string]interface{}) (Datasource, error)
