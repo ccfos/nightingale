@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
 	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/alert/pipeline/engine"
@@ -122,7 +121,7 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 	notifyRuleMap := rt.authorizeNotifyRules(cfg, myGroupIds, isAdmin)
 	pipelineMap := rt.authorizePipelines(cfg, myGroupIds, isAdmin, me)
 
-	stages := make([]testFireStage, 0, 7)
+	stages := make([]testFireStage, 0, 6)
 
 	// ---- Stage 1: 合成事件 ----
 	event, synthStage := rt.synthesizeTestEvent(cfg, &f, bgid)
@@ -154,11 +153,10 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 	}
 
 	if eventDropped {
-		// 真实链路中被 pipeline 丢弃的事件不会再走屏蔽/通知/订阅
+		// 真实链路中被 pipeline 丢弃的事件不会再走屏蔽/通知
 		stages = append(stages,
 			testFireStage{Stage: "mute", Status: testFireStageSkip, Data: gin.H{"reason": "event_dropped"}},
 			testFireStage{Stage: "notify", Status: testFireStageSkip, Data: gin.H{"reason": "event_dropped"}},
-			testFireStage{Stage: "subscribe", Status: testFireStageSkip, Data: gin.H{"reason": "event_dropped"}},
 		)
 	} else {
 		// ---- Stage 4: 屏蔽匹配（命中只警示不拦截，用户的目的是测通知）----
@@ -166,9 +164,6 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 
 		// ---- Stage 5: 通知匹配与发送 ----
 		stages = append(stages, rt.runTestFireNotify(cfg, event, f.SkipSend, username, notifyRuleMap))
-
-		// ---- Stage 6: 订阅匹配（只报告不发送）----
-		stages = append(stages, rt.runTestFireSubscribeCheck(cfg, event))
 	}
 
 	// ---- Stage 7: 测试模式跳过的副作用 ----
@@ -589,7 +584,7 @@ func (rt *Router) runTestFireNotify(cfg *models.AlertRule, event *models.AlertCu
 }
 
 // runNotifyOwnPipelines 跑通知规则自身挂的流水线，返回处理后事件与是否被丢弃。
-// 事件用深拷贝，避免污染主链路后续阶段（订阅等）依赖的事件。
+// 事件用深拷贝，避免污染主链路后续阶段依赖的事件。
 func (rt *Router) runNotifyOwnPipelines(pcs []models.PipelineConfig, event *models.AlertCurEvent, username string) (*models.AlertCurEvent, bool) {
 	if !hasEnabledPipeline(pcs) {
 		return event, false
@@ -672,78 +667,6 @@ func (rt *Router) legacyNotifyMissingTokens(cfg *models.AlertRule) []string {
 		}
 	}
 	return missing
-}
-
-func (rt *Router) runTestFireSubscribeCheck(cfg *models.AlertRule, event *models.AlertCurEvent) testFireStage {
-	subs, err := models.AlertSubscribeGetsAll(rt.Ctx)
-	if err != nil {
-		return testFireStage{Stage: "subscribe", Status: testFireStageWarn, Data: gin.H{"error": err.Error()}}
-	}
-
-	matched := make([]gin.H, 0)
-	for _, s := range subs {
-		if s == nil || s.IsDisabled() {
-			continue
-		}
-		if err := s.DB2FE(); err != nil {
-			continue
-		}
-		if err := s.Parse(); err != nil {
-			continue
-		}
-		// 与真实链路 Dispatch.subMatches 的谓词及顺序保持一致
-		if !s.MatchCluster(event.DatasourceId) {
-			continue
-		}
-		if !s.MatchProd(event.RuleProd) {
-			continue
-		}
-		if !s.MatchCate(event.Cate) {
-			continue
-		}
-		if len(s.RuleIds) > 0 {
-			// 未保存的新规则 id 为 0，按规则过滤的订阅天然不命中（与真实链路按 RuleId 建索引一致）
-			found := false
-			for _, rid := range s.RuleIds {
-				if rid == cfg.Id {
-					found = true
-					break
-				}
-			}
-			if !found {
-				continue
-			}
-		}
-		if !common.MatchTags(event.TagsMap, s.ITags) {
-			continue
-		}
-		if !common.MatchGroupsName(event.GroupName, s.IBusiGroups) {
-			continue
-		}
-		// 合成事件 TriggerTime == FirstTriggerTime，for_duration>0 的订阅与真实首次触发一致地不命中
-		if s.ForDuration > (event.TriggerTime - event.FirstTriggerTime) {
-			continue
-		}
-		if len(s.SeveritiesJson) > 0 {
-			found := false
-			for _, sev := range s.SeveritiesJson {
-				if sev == event.Severity || sev == 0 {
-					found = true
-					break
-				}
-			}
-			if !found {
-				continue
-			}
-		}
-		matched = append(matched, gin.H{"id": s.Id, "note": s.Note})
-	}
-
-	return testFireStage{
-		Stage:  "subscribe",
-		Status: testFireStagePass,
-		Data:   gin.H{"matched_subs": matched, "rule_id": cfg.Id},
-	}
 }
 
 func testFireSideEffectsStage(cfg *models.AlertRule) testFireStage {

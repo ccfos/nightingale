@@ -123,7 +123,7 @@ func TestAlertRuleTestFire_Basic(t *testing.T) {
 		t.Fatalf("unexpected err: %s", resp.Err)
 	}
 
-	wantStages := []string{"synthesize", "effective", "pipeline", "mute", "notify", "subscribe", "side_effects"}
+	wantStages := []string{"synthesize", "effective", "pipeline", "mute", "notify", "side_effects"}
 	if len(resp.Dat.Stages) != len(wantStages) {
 		t.Fatalf("stages count: got %d, want %d", len(resp.Dat.Stages), len(wantStages))
 	}
@@ -242,7 +242,7 @@ func TestAlertRuleTestFire_DisabledWarn(t *testing.T) {
 	if effective.Status != "warn" || effective.Data["disabled"] != true {
 		t.Fatalf("effective should warn disabled, got %+v", effective)
 	}
-	if len(resp.Dat.Stages) != 7 {
+	if len(resp.Dat.Stages) != 6 {
 		t.Fatalf("chain should continue after disabled warn, stages: %d", len(resp.Dat.Stages))
 	}
 }
