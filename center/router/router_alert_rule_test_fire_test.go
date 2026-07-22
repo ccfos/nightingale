@@ -29,7 +29,7 @@ func setupTestFire(t *testing.T) (*Router, *ctx.Context, int64) {
 	if err != nil {
 		t.Fatalf("open sqlite: %v", err)
 	}
-	if err := db.AutoMigrate(&models.BusiGroup{}, &models.AlertMute{}, &models.AlertSubscribe{}); err != nil {
+	if err := db.AutoMigrate(&models.BusiGroup{}, &models.AlertMute{}); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
 
@@ -105,7 +105,7 @@ func stageByName(t *testing.T, resp *testFireResp, name string) testFireStageRes
 	return testFireStageResp{}
 }
 
-// 基础链路：mock 样本 + 干跑，七段报告齐全，事件字段合成正确
+// 基础链路：mock 样本 + 干跑，六段报告齐全，事件字段合成正确
 func TestAlertRuleTestFire_Basic(t *testing.T) {
 	rt, _, bgid := setupTestFire(t)
 
@@ -283,6 +283,92 @@ func TestAlertRuleTestFire_RecoverEventNotifyEnabled(t *testing.T) {
 	notify := stageByName(t, resp, "notify")
 	if notify.Data["recover_notify_disabled"] == true {
 		t.Fatalf("notify stage should not report recover_notify_disabled when enabled, got %+v", notify)
+	}
+}
+
+// 去重助手：重复 id 保序去重，防止单请求内放大发送/执行
+func TestDedupHelpers(t *testing.T) {
+	if got := dedupInt64([]int64{7, 7, 8, 7, 9, 8}); len(got) != 3 || got[0] != 7 || got[1] != 8 || got[2] != 9 {
+		t.Fatalf("dedupInt64: got %v, want [7 8 9]", got)
+	}
+	pcs := []models.PipelineConfig{
+		{PipelineId: 1, Enable: true},
+		{PipelineId: 1, Enable: true},
+		{PipelineId: 2, Enable: false},
+		{PipelineId: 0, Enable: true},
+		{PipelineId: 0, Enable: true},
+	}
+	got := dedupPipelineConfigs(pcs)
+	// pipeline 1 去重一次；pipeline 2 保留；id==0 的两项不构成放大，原样保留
+	if len(got) != 4 || got[0].PipelineId != 1 || got[1].PipelineId != 2 || got[2].PipelineId != 0 || got[3].PipelineId != 0 {
+		t.Fatalf("dedupPipelineConfigs: got %+v", got)
+	}
+}
+
+// 单请求引用过多通知规则应被拒（放大防护）
+func TestAlertRuleTestFire_TooManyNotifyRules(t *testing.T) {
+	rt, _, bgid := setupTestFire(t)
+
+	ids := make([]int64, 0, testFireMaxNotifyRules+1)
+	for i := 0; i < testFireMaxNotifyRules+1; i++ {
+		ids = append(ids, int64(i+1))
+	}
+	if _, panicked := callTestFire(t, rt, bgid, AlertRuleTestFireForm{
+		SkipSend: true,
+		Config:   models.AlertRule{Name: "r", NotifyVersion: 1, NotifyRuleIds: ids},
+	}); !panicked {
+		t.Fatal("too many notify rules should be rejected")
+	}
+}
+
+// 流水线归属：group_id == 本规则业务组的流水线，非管理员也应放行（请求已过 bgrw）
+func TestAlertRuleTestFire_PipelineSameBgAllowed(t *testing.T) {
+	rt, c, bgid := setupTestFire(t)
+	if err := c.DB.AutoMigrate(&models.EventPipeline{}); err != nil {
+		t.Fatalf("migrate pipeline: %v", err)
+	}
+	p := &models.EventPipeline{Name: "p1", GroupId: bgid}
+	if err := c.DB.Create(p).Error; err != nil {
+		t.Fatalf("seed pipeline: %v", err)
+	}
+
+	resp, panicked := callTestFire(t, rt, bgid, AlertRuleTestFireForm{
+		SkipSend: true, // 干跑，不实际执行流水线节点
+		Config: models.AlertRule{
+			Name:            "r",
+			NotifyVersion:   1,
+			PipelineConfigs: []models.PipelineConfig{{PipelineId: p.ID, Enable: true}},
+		},
+	})
+	if panicked {
+		t.Fatal("pipeline in the rule's own business group should be allowed")
+	}
+	if stageByName(t, resp, "pipeline").Status == "" {
+		t.Fatal("pipeline stage missing")
+	}
+}
+
+// 流水线归属：group_id 属于其他业务组、非管理员无权限，应 403
+func TestAlertRuleTestFire_PipelineOtherBgForbidden(t *testing.T) {
+	rt, c, bgid := setupTestFire(t)
+	if err := c.DB.AutoMigrate(&models.EventPipeline{}); err != nil {
+		t.Fatalf("migrate pipeline: %v", err)
+	}
+	// GroupId 指向一个当前用户无权访问、且不存在的业务组
+	p := &models.EventPipeline{Name: "other", GroupId: 777777}
+	if err := c.DB.Create(p).Error; err != nil {
+		t.Fatalf("seed pipeline: %v", err)
+	}
+
+	if _, panicked := callTestFire(t, rt, bgid, AlertRuleTestFireForm{
+		SkipSend: true,
+		Config: models.AlertRule{
+			Name:            "r",
+			NotifyVersion:   1,
+			PipelineConfigs: []models.PipelineConfig{{PipelineId: p.ID, Enable: true}},
+		},
+	}); !panicked {
+		t.Fatal("pipeline in another business group should be forbidden")
 	}
 }
 

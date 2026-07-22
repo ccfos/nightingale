@@ -21,7 +21,7 @@ import (
 )
 
 // 告警规则「模拟触发」：在告警条件未满足时，从规则配置合成一条测试事件，
-// 同步走完 生效检查 → 事件处理 pipeline → 屏蔽匹配 → 通知匹配与真实发送 → 订阅匹配，
+// 同步走完 生效检查 → 事件处理 pipeline → 屏蔽匹配 → 通知匹配与真实发送，
 // 返回逐段链路报告。测试事件不入库、不进真实消费队列、不触发回调/自愈/全局 webhook。
 // skip_send=true 时为干跑：不执行任何有外部副作用的环节（pipeline 节点、通知发送）。
 
@@ -109,17 +109,28 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 	cfg := &f.Config
 	cfg.GroupId = bgid
 
+	// 去重并限量：请求体里重复的 notify_rule_id / pipeline_id 会在一次已通过限流的请求里
+	// 对同一批接收人放大发送、重复执行同一条流水线，这里保序去重并设上限
+	cfg.NotifyRuleIds = dedupInt64(cfg.NotifyRuleIds)
+	cfg.PipelineConfigs = dedupPipelineConfigs(cfg.PipelineConfigs)
+	if len(cfg.NotifyRuleIds) > testFireMaxNotifyRules {
+		ginx.Bomb(http.StatusBadRequest, "too many notify rules, at most %d", testFireMaxNotifyRules)
+	}
+	if len(cfg.PipelineConfigs) > testFireMaxPipelines {
+		ginx.Bomb(http.StatusBadRequest, "too many pipelines, at most %d", testFireMaxPipelines)
+	}
+
 	// 越权校验前置：cfg.NotifyRuleIds / PipelineConfigs 完全来自请求体，可指向任意团队的资源。
 	// 未授权直接 403，绝不进入合成/执行/发送环节，避免向他人接收人发消息或触发他人流水线。
 	isAdmin := me.IsAdmin()
-	var myGroupIds map[int64]struct{}
-	if !isAdmin && (len(cfg.NotifyRuleIds) > 0 || hasEnabledPipeline(cfg.PipelineConfigs)) {
+	var myUserGroupIds map[int64]struct{}
+	if !isAdmin && len(cfg.NotifyRuleIds) > 0 {
 		ids, err := models.MyGroupIdsMap(rt.Ctx, me.Id)
 		ginx.Dangerous(err)
-		myGroupIds = ids
+		myUserGroupIds = ids
 	}
-	notifyRuleMap := rt.authorizeNotifyRules(cfg, myGroupIds, isAdmin)
-	pipelineMap := rt.authorizePipelines(cfg, myGroupIds, isAdmin, me)
+	notifyRuleMap := rt.authorizeNotifyRules(cfg, myUserGroupIds, isAdmin)
+	pipelineMap := rt.authorizePipelines(cfg, bgid, isAdmin, me)
 
 	stages := make([]testFireStage, 0, 6)
 
@@ -166,7 +177,7 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 		stages = append(stages, rt.runTestFireNotify(cfg, event, f.SkipSend, username, notifyRuleMap))
 	}
 
-	// ---- Stage 7: 测试模式跳过的副作用 ----
+	// ---- Stage 6: 测试模式跳过的副作用 ----
 	stages = append(stages, testFireSideEffectsStage(cfg))
 
 	ginx.NewRender(c).Data(gin.H{
@@ -184,9 +195,16 @@ func hasEnabledPipeline(pcs []models.PipelineConfig) bool {
 	return false
 }
 
+// 单请求引用的通知规则 / 流水线数量上限，超限视为异常请求
+const (
+	testFireMaxNotifyRules = 20
+	testFireMaxPipelines   = 20
+)
+
 // authorizeNotifyRules 加载 cfg 引用的通知规则并做归属校验，未授权直接 403。
 // 不存在的 ID 不返回（通知阶段按「未找到」处理，不泄露其他团队信息）。
-func (rt *Router) authorizeNotifyRules(cfg *models.AlertRule, myGroupIds map[int64]struct{}, isAdmin bool) map[int64]*models.NotifyRule {
+// 通知规则按用户组归属（UserGroupIds），故这里用调用者的用户组集合比对。
+func (rt *Router) authorizeNotifyRules(cfg *models.AlertRule, myUserGroupIds map[int64]struct{}, isAdmin bool) map[int64]*models.NotifyRule {
 	out := make(map[int64]*models.NotifyRule)
 	if cfg.NotifyVersion != 1 || len(cfg.NotifyRuleIds) == 0 {
 		return out
@@ -196,7 +214,7 @@ func (rt *Router) authorizeNotifyRules(cfg *models.AlertRule, myGroupIds map[int
 		if err != nil || nr == nil {
 			continue
 		}
-		if !isAdmin && !hasGroupIntersection(myGroupIds, nr.UserGroupIds) {
+		if !isAdmin && !hasGroupIntersection(myUserGroupIds, nr.UserGroupIds) {
 			ginx.Bomb(http.StatusForbidden, "forbidden notify rule: %d", nrid)
 		}
 		out[nrid] = nr
@@ -205,7 +223,10 @@ func (rt *Router) authorizeNotifyRules(cfg *models.AlertRule, myGroupIds map[int
 }
 
 // authorizePipelines 加载 cfg 引用的事件处理流水线并做归属校验，未授权直接 403。
-func (rt *Router) authorizePipelines(cfg *models.AlertRule, myGroupIds map[int64]struct{}, isAdmin bool, me *models.User) map[int64]*models.EventPipeline {
+// 流水线按业务组归属（EventPipeline.GroupId 是业务组 id，与用户组 id 不同一空间）：
+// GroupId==本规则业务组 → 请求已过 bgrw，放行；其他业务组 → 走 CanDoBusiGroup；
+// GroupId==0（团队级）→ 走 TeamIds 的用户组权限。语义与 checkEventPipelinePermission 对齐。
+func (rt *Router) authorizePipelines(cfg *models.AlertRule, bgid int64, isAdmin bool, me *models.User) map[int64]*models.EventPipeline {
 	out := make(map[int64]*models.EventPipeline)
 	ids := make([]int64, 0)
 	for _, pc := range cfg.PipelineConfigs {
@@ -222,7 +243,13 @@ func (rt *Router) authorizePipelines(cfg *models.AlertRule, myGroupIds map[int64
 		authorized := isAdmin
 		if !authorized {
 			if p.GroupId > 0 {
-				_, authorized = myGroupIds[p.GroupId]
+				if p.GroupId == bgid {
+					authorized = true
+				} else if bg := BusiGroup(rt.Ctx, p.GroupId); bg != nil {
+					can, err := me.CanDoBusiGroup(rt.Ctx, bg)
+					ginx.Dangerous(err)
+					authorized = can
+				}
 			} else {
 				authorized = me.CheckGroupPermission(rt.Ctx, p.TeamIds) == nil
 			}
@@ -235,13 +262,42 @@ func (rt *Router) authorizePipelines(cfg *models.AlertRule, myGroupIds map[int64
 	return out
 }
 
-func hasGroupIntersection(myGroupIds map[int64]struct{}, groupIds []int64) bool {
+func hasGroupIntersection(myUserGroupIds map[int64]struct{}, groupIds []int64) bool {
 	for _, gid := range groupIds {
-		if _, ok := myGroupIds[gid]; ok {
+		if _, ok := myUserGroupIds[gid]; ok {
 			return true
 		}
 	}
 	return false
+}
+
+func dedupInt64(in []int64) []int64 {
+	seen := make(map[int64]struct{}, len(in))
+	out := make([]int64, 0, len(in))
+	for _, v := range in {
+		if _, ok := seen[v]; ok {
+			continue
+		}
+		seen[v] = struct{}{}
+		out = append(out, v)
+	}
+	return out
+}
+
+// dedupPipelineConfigs 按 pipeline_id 保序去重；id==0 的项原样保留（不构成放大）
+func dedupPipelineConfigs(in []models.PipelineConfig) []models.PipelineConfig {
+	seen := make(map[int64]struct{}, len(in))
+	out := make([]models.PipelineConfig, 0, len(in))
+	for _, pc := range in {
+		if pc.PipelineId != 0 {
+			if _, ok := seen[pc.PipelineId]; ok {
+				continue
+			}
+			seen[pc.PipelineId] = struct{}{}
+		}
+		out = append(out, pc)
+	}
+	return out
 }
 
 func (rt *Router) synthesizeTestEvent(cfg *models.AlertRule, f *AlertRuleTestFireForm, bgid int64) (*models.AlertCurEvent, testFireStage) {
