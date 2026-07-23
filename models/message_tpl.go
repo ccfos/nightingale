@@ -267,10 +267,12 @@ const (
 )
 
 var NewTplMap = map[string]string{
-	"ali-voice": `{{$event.RuleName}}`,
-	"ali-sms":   `{{$event.RuleName}}`,
-	"tx-voice":  `S{{$event.Severity}}{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}{{$event.RuleName}}`,
-	"tx-sms":    `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}规则名称: {{$event.RuleName}}`,
+	"ali-voice":   `{{$event.RuleName}}`,
+	"ali-sms":     `{{$event.RuleName}}`,
+	"tx-voice":    `S{{$event.Severity}}{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}{{$event.RuleName}}`,
+	"tx-sms":      `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}规则名称: {{$event.RuleName}}`,
+	"plivo-voice": `S{{$event.Severity}}{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}{{$event.RuleName}}`,
+	"plivo-sms":   `Level Status: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} Rule Name: {{$event.RuleName}}`,
 	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
 ---
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
@@ -704,6 +706,8 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Discord", Ident: Discord, Weight: 11, Content: map[string]string{"content": NewTplMap[Discord]}},
 	{Name: "Aliyun Voice", Ident: "ali-voice", Weight: 10, Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
 	{Name: "Aliyun SMS", Ident: "ali-sms", Weight: 9, Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
+	{Name: "Plivo Voice", Ident: "plivo-voice", Weight: 10, Content: map[string]string{"content": NewTplMap["plivo-voice"]}},
+	{Name: "Plivo SMS", Ident: "plivo-sms", Weight: 9, Content: map[string]string{"content": NewTplMap["plivo-sms"]}},
 	{Name: "Tencent Voice", Ident: "tx-voice", Weight: 8, Content: map[string]string{"content": NewTplMap["tx-voice"]}},
 	{Name: "Tencent SMS", Ident: "tx-sms", Weight: 7, Content: map[string]string{"content": NewTplMap["tx-sms"]}},
 	{Name: "Telegram", Ident: Telegram, Weight: 6, Content: map[string]string{"content": NewTplMap[Telegram]}},
@@ -1077,6 +1081,8 @@ var MsgTplMapEn = []MessageTemplate{
 	{Name: "Discord", Ident: Discord + "-en", NotifyChannelIdent: Discord, Lang: MsgTplLangEn, Weight: 11, Content: map[string]string{"content": NewTplMap[Discord]}},
 	{Name: "Aliyun Voice", Ident: "ali-voice-en", NotifyChannelIdent: "ali-voice", Lang: MsgTplLangEn, Weight: 10, Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
 	{Name: "Aliyun SMS", Ident: "ali-sms-en", NotifyChannelIdent: "ali-sms", Lang: MsgTplLangEn, Weight: 9, Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
+	{Name: "Plivo Voice", Ident: "plivo-voice-en", NotifyChannelIdent: "plivo-voice", Lang: MsgTplLangEn, Weight: 10, Content: map[string]string{"content": NewTplMap["plivo-voice"]}},
+	{Name: "Plivo SMS", Ident: "plivo-sms-en", NotifyChannelIdent: "plivo-sms", Lang: MsgTplLangEn, Weight: 9, Content: map[string]string{"content": NewTplMap["plivo-sms"]}},
 	{Name: "Tencent Voice", Ident: "tx-voice-en", NotifyChannelIdent: "tx-voice", Lang: MsgTplLangEn, Weight: 8, Content: map[string]string{"content": NewTplMap["tx-voice"]}},
 	{Name: "Tencent SMS", Ident: "tx-sms-en", NotifyChannelIdent: "tx-sms", Lang: MsgTplLangEn, Weight: 7, Content: map[string]string{"content": NewTplMapEn["tx-sms"]}},
 	{Name: "Telegram", Ident: Telegram + "-en", NotifyChannelIdent: Telegram, Lang: MsgTplLangEn, Weight: 6, Content: map[string]string{"content": NewTplMapEn[Telegram]}},
