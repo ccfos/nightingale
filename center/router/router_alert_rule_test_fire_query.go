@@ -51,25 +51,36 @@ type testFireAutoSample struct {
 	valuesText string // 非空时作为事件 TriggerValues，与真实链路的 $A.metric:81.500 格式一致
 }
 
-// resolveTestFireDatasourceId 与引擎真实链路完全一致的数据源解析：只认 DatasourceQueries
+// resolveTestFireDatasourceIds 与引擎真实链路完全一致的数据源解析：只认 DatasourceQueries
 //（引擎 syncAlertRules 只用它）。datasource_ids 是 Deprecated 的展示字段（DB2FE 反填，
 // 编辑表单会原样带回，切换 cate 后残留旧数据源 id），这里明确不使用。
+// 返回值按 id 升序：底层解析结果是从 map 收集的，顺序随机，不排序会让同一条多数据源规则
+// 每次模拟触发检测到不同的数据源（一次连得上、一次报 client 未初始化）。
 // DatasourceCache 单测环境下为空，做 nil 保护。
-func (rt *Router) resolveTestFireDatasourceId(cfg *models.AlertRule) int64 {
+func (rt *Router) resolveTestFireDatasourceIds(cfg *models.AlertRule) []int64 {
 	if len(cfg.DatasourceQueries) == 0 || rt.DatasourceCache == nil {
-		return 0
+		return nil
 	}
-	if ids := rt.DatasourceCache.GetIDsByDsCateAndQueries(cfg.Cate, cfg.DatasourceQueries); len(ids) > 0 {
-		return ids[0]
-	}
-	return 0
+	ids := rt.DatasourceCache.GetIDsByDsCateAndQueries(cfg.Cate, cfg.DatasourceQueries)
+	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	return ids
 }
 
-func (rt *Router) runTestFireQueryCheck(c *gin.Context, cfg *models.AlertRule, dsId int64) (testFireStage, *testFireAutoSample) {
+// firstTestFireDatasourceId 取实际发起检测的数据源，无匹配时为 0
+func firstTestFireDatasourceId(dsIds []int64) int64 {
+	if len(dsIds) == 0 {
+		return 0
+	}
+	return dsIds[0]
+}
+
+func (rt *Router) runTestFireQueryCheck(c *gin.Context, cfg *models.AlertRule, dsIds []int64) (testFireStage, *testFireAutoSample) {
+	dsId := firstTestFireDatasourceId(dsIds)
+
 	// 诊断日志：数据源解析是排障高频点，筛选值形态不对（精确匹配里存了字符串）、
 	// 缓存未同步、cate 不匹配都会落到 dsId=0，这里把解析入参和结果留痕
-	logger.Infof("test-fire query_check: cate=%s prod=%s resolved_ds_id=%d datasource_ids=%v datasource_queries=%+v",
-		cfg.Cate, cfg.Prod, dsId, cfg.DatasourceIdsJson, cfg.DatasourceQueries)
+	logger.Infof("test-fire query_check: cate=%s prod=%s resolved_ds_id=%d matched_ds_ids=%v datasource_ids=%v datasource_queries=%+v",
+		cfg.Cate, cfg.Prod, dsId, dsIds, cfg.DatasourceIdsJson, cfg.DatasourceQueries)
 
 	var stage testFireStage
 	var sample *testFireAutoSample
@@ -94,12 +105,11 @@ func (rt *Router) runTestFireQueryCheck(c *gin.Context, cfg *models.AlertRule, d
 	}
 
 	// 引擎对筛选匹配到的每个数据源都会各自评估告警；测试只对第一个数据源发起检测，
-	// 匹配多于一个时在报告中说明，避免读作「所有数据源都验证过了」
-	if rt.DatasourceCache != nil && len(cfg.DatasourceQueries) > 0 && stage.Data != nil {
-		if all := rt.DatasourceCache.GetIDsByDsCateAndQueries(cfg.Cate, cfg.DatasourceQueries); len(all) > 1 {
-			stage.Data["matched_datasource_ids"] = all
-			stage.Data["only_first_checked"] = true
-		}
+	// 匹配多于一个时在报告中说明，避免读作「所有数据源都验证过了」。
+	// 复用入参而不是重新解析，保证报告里列出的第一个就是实际检测的那个
+	if len(dsIds) > 1 && stage.Data != nil {
+		stage.Data["matched_datasource_ids"] = dsIds
+		stage.Data["only_first_checked"] = true
 	}
 	return stage, sample
 }

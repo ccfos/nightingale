@@ -251,6 +251,25 @@ func TestAlertRuleTestFire_DisabledWarn(t *testing.T) {
 	}
 }
 
+// 规则开启「只在本业务组生效」：生效检查里的 BgNotMatchMuteStrategy 会解引用 TargetCache，
+// 单测环境为空，必须走 nil 保护而不是 panic
+func TestAlertRuleTestFire_EnableInBGWithoutTargetCache(t *testing.T) {
+	rt, _, bgid := setupTestFire(t)
+
+	resp, panicked := callTestFire(t, rt, bgid, AlertRuleTestFireForm{
+		SkipSend: true,
+		Config:   models.AlertRule{Name: "cpu high", NotifyVersion: 1, EnableInBG: 1},
+	})
+	if panicked {
+		t.Fatal("handler panicked, TargetCache nil guard missing")
+	}
+
+	effective := stageByName(t, resp, "effective")
+	if effective.Data["bg_match"] != true {
+		t.Fatalf("bg_match should fall back to true without TargetCache, got %+v", effective)
+	}
+}
+
 // 恢复类型事件：未开启「恢复时通知」时，与真实链路一致跳过发送并警示
 func TestAlertRuleTestFire_RecoverEvent(t *testing.T) {
 	rt, _, bgid := setupTestFire(t)

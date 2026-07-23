@@ -3,10 +3,12 @@ package router
 import (
 	"fmt"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/hash"
 
@@ -19,21 +21,54 @@ import (
 func TestResolveTestFireDatasourceId_IgnoresDeprecatedIds(t *testing.T) {
 	rt := &Router{} // DatasourceCache 为空
 
-	// 只有 datasource_ids：不使用，解析为 0
+	// 只有 datasource_ids：不使用，解析为空
 	cfg := &models.AlertRule{Cate: "mysql", DatasourceIdsJson: []int64{3}}
-	if got := rt.resolveTestFireDatasourceId(cfg); got != 0 {
-		t.Fatalf("datasource_ids alone should be ignored, got %d", got)
+	if got := rt.resolveTestFireDatasourceIds(cfg); len(got) != 0 {
+		t.Fatalf("datasource_ids alone should be ignored, got %v", got)
 	}
 
 	// datasource_ids 残留 + datasource_queries 并存：ids 同样不参与
-	//（单测环境无 DatasourceCache，queries 解析不出 → 0，绝不能回退到 ids 的 3）
+	//（单测环境无 DatasourceCache，queries 解析不出 → 空，绝不能回退到 ids 的 3）
 	cfg = &models.AlertRule{
 		Cate:              "mysql",
 		DatasourceIdsJson: []int64{3},
 		DatasourceQueries: []models.DatasourceQuery{{MatchType: 0, Op: "in", Values: []interface{}{float64(4)}}},
 	}
-	if got := rt.resolveTestFireDatasourceId(cfg); got != 0 {
-		t.Fatalf("stale datasource_ids must never override queries resolution, got %d", got)
+	if got := rt.resolveTestFireDatasourceIds(cfg); len(got) != 0 {
+		t.Fatalf("stale datasource_ids must never override queries resolution, got %v", got)
+	}
+}
+
+// 多数据源规则的解析结果必须稳定有序：底层是 map 收集，不排序会让每次模拟触发
+// 检测到不同的数据源，报告里的「只检测了第一个」也会指向另一个数据源
+func TestResolveTestFireDatasourceIds_StableOrder(t *testing.T) {
+	rt := &Router{DatasourceCache: &memsto.DatasourceCacheType{
+		CateToIDs: map[string]map[int64]*models.Datasource{
+			"mysql": {7: {}, 3: {}, 12: {}, 5: {}},
+		},
+		CateToNames: map[string]map[string]int64{
+			"mysql": {"db-a": 3, "db-b": 5, "db-c": 7, "db-d": 12},
+		},
+	}}
+	cfg := &models.AlertRule{
+		Cate:              "mysql",
+		DatasourceQueries: []models.DatasourceQuery{models.DataSourceQueryAll},
+	}
+
+	want := []int64{3, 5, 7, 12}
+	// map 遍历顺序每次不同，多跑几轮才能暴露未排序的实现
+	for i := 0; i < 20; i++ {
+		got := rt.resolveTestFireDatasourceIds(cfg)
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("round %d: got %v, want %v", i, got, want)
+		}
+		if firstTestFireDatasourceId(got) != want[0] {
+			t.Fatalf("round %d: first id got %d, want %d", i, firstTestFireDatasourceId(got), want[0])
+		}
+	}
+
+	if got := firstTestFireDatasourceId(nil); got != 0 {
+		t.Fatalf("no matched datasource should resolve to 0, got %d", got)
 	}
 }
 

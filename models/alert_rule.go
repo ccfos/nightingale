@@ -319,11 +319,13 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 				case string:
 					// 前端下发的是 id，但 AI 生成、模板导入、API 直调的规则里 values 可能是
 					// 数字字符串或数据源名。静默丢弃会让规则解析不出数据源（引擎不评估、
-					// test-fire 报数据源未匹配）且难以排查，这里做兼容
-					if n, err := strconv.ParseInt(v, 10, 64); err == nil {
-						val = n
-					} else if id, ok := nameMap[v]; ok {
+					// test-fire 报数据源未匹配）且难以排查，这里做兼容。
+					// 先按名字匹配再按数字解析：数据源名允许是纯数字（名为 "5" 的数据源 id 未必是 5），
+					// 名字是用户显式配置的，优先级高于把字符串当 id 猜
+					if id, ok := nameMap[v]; ok {
 						val = id
+					} else if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+						val = n
 					} else {
 						continue
 					}

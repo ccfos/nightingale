@@ -147,8 +147,9 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 	// ---- Stage 1: 查询与判断条件检测 ----
 	// 真实执行查询条件、检测与查询分离的判断条件；失败只标红不阻断后续阶段。
 	// 非 prometheus 数据源查到真实数据时自动取样，供合成事件使用（见 query 文件头注释）
-	dsId := rt.resolveTestFireDatasourceId(cfg)
-	queryStage, autoSample := rt.runTestFireQueryCheck(c, cfg, dsId)
+	dsIds := rt.resolveTestFireDatasourceIds(cfg)
+	dsId := firstTestFireDatasourceId(dsIds)
+	queryStage, autoSample := rt.runTestFireQueryCheck(c, cfg, dsIds)
 	stages = append(stages, queryStage)
 
 	// ---- Stage 2: 合成事件 ----
@@ -159,12 +160,13 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 	// 与引擎 mute.IsMuted 的前置策略一一对应：Disabled / TimeSpan / IdentNotExists / BgNotMatch
 	disabled := cfg.Disabled == 1
 	inTimeSpan := !mute.TimeSpanMuteStrategy(cfg, event)
-	// target_up 类规则且 ident 已不存在时引擎会直接丢弃事件（TargetCache 单测环境为空，做 nil 保护）
-	identExists := true
+	// target_up 类规则且 ident 已不存在时引擎会直接丢弃事件。
+	// 两个策略都会解引用 TargetCache（单测环境为空），统一做 nil 保护
+	identExists, bgMatch := true, true
 	if rt.TargetCache != nil {
 		identExists = !mute.IdentNotExistsMuteStrategy(cfg, event, rt.TargetCache)
+		bgMatch = !mute.BgNotMatchMuteStrategy(cfg, event, rt.TargetCache)
 	}
-	bgMatch := !mute.BgNotMatchMuteStrategy(cfg, event, rt.TargetCache)
 	effectiveStatus := testFireStagePass
 	if disabled || !inTimeSpan || !identExists || !bgMatch {
 		effectiveStatus = testFireStageWarn
@@ -396,7 +398,7 @@ func (rt *Router) synthesizeTestEvent(cfg *models.AlertRule, f *AlertRuleTestFir
 		event.GroupName = bg.Name
 	}
 
-	// 数据源在主流程 resolveTestFireDatasourceId 里解析（与 query_check 共用）
+	// 数据源在主流程 resolveTestFireDatasourceIds 里解析（与 query_check 共用）
 	event.DatasourceId = dsId
 	if rt.DatasourceCache != nil {
 		if ds := rt.DatasourceCache.GetById(dsId); ds != nil {

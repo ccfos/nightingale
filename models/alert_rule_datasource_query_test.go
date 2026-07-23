@@ -41,3 +41,36 @@ func TestGetDatasourceIDsByDatasourceQueries_ExactMatch(t *testing.T) {
 		})
 	}
 }
+
+// 数据源名允许是纯数字：此时应按名字解析到它真正的 id，而不是把字符串当成 id
+func TestGetDatasourceIDsByDatasourceQueries_NumericNameWins(t *testing.T) {
+	idMap := map[int64]struct{}{5: {}, 7: {}}
+	nameMap := map[string]int64{"5": 7, "mysql": 5}
+
+	cases := []struct {
+		name   string
+		values []interface{}
+		want   []int64
+	}{
+		{"numeric name resolves by name", []interface{}{"5"}, []int64{7}},
+		{"non-name numeric string falls back to id", []interface{}{"7"}, []int64{7}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := GetDatasourceIDsByDatasourceQueries(
+				[]DatasourceQuery{{MatchType: 0, Op: "in", Values: c.values}},
+				idMap, nameMap,
+			)
+			sort.Slice(got, func(i, j int) bool { return got[i] < got[j] })
+			if len(got) != len(c.want) {
+				t.Fatalf("got %v, want %v", got, c.want)
+			}
+			for i := range got {
+				if got[i] != c.want[i] {
+					t.Fatalf("got %v, want %v", got, c.want)
+				}
+			}
+		})
+	}
+}
