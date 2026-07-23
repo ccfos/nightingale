@@ -904,6 +904,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/builtin-payloads", rt.builtinPayloadsGets)
 
 			service.GET("/ai-skills", rt.aiSkillGets)
+			service.GET("/ai-skills/visible", rt.aiSkillVisibleGetsByService)
 			service.GET("/ai-skill/:id", rt.aiSkillGetWithFileContents)
 			service.POST("/ai-skills", rt.aiSkillAddByService)
 			service.POST("/ai-skills/import", rt.aiSkillImportByService)
