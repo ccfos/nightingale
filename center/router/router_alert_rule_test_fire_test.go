@@ -105,7 +105,7 @@ func stageByName(t *testing.T, resp *testFireResp, name string) testFireStageRes
 	return testFireStageResp{}
 }
 
-// 基础链路：mock 样本 + 干跑，六段报告齐全，事件字段合成正确
+// 基础链路：mock 样本 + 干跑，七段报告齐全，事件字段合成正确
 func TestAlertRuleTestFire_Basic(t *testing.T) {
 	rt, _, bgid := setupTestFire(t)
 
@@ -123,7 +123,7 @@ func TestAlertRuleTestFire_Basic(t *testing.T) {
 		t.Fatalf("unexpected err: %s", resp.Err)
 	}
 
-	wantStages := []string{"synthesize", "effective", "pipeline", "mute", "notify", "side_effects"}
+	wantStages := []string{"query_check", "synthesize", "effective", "pipeline", "mute", "notify"}
 	if len(resp.Dat.Stages) != len(wantStages) {
 		t.Fatalf("stages count: got %d, want %d", len(resp.Dat.Stages), len(wantStages))
 	}
@@ -144,6 +144,10 @@ func TestAlertRuleTestFire_Basic(t *testing.T) {
 	}
 	if got := resp.Dat.Event["group_name"]; got != "infra" {
 		t.Fatalf("group_name: got %v, want infra", got)
+	}
+	// 事件详情页靠 rule_config 渲染告警条件，必须与真实事件一样携带
+	if resp.Dat.Event["rule_config"] == nil {
+		t.Fatal("event rule_config should carry the rule config for the detail page")
 	}
 
 	tags, _ := resp.Dat.Event["tags"].([]interface{})

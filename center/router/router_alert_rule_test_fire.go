@@ -21,9 +21,19 @@ import (
 )
 
 // 告警规则「模拟触发」：在告警条件未满足时，从规则配置合成一条测试事件，
-// 同步走完 生效检查 → 事件处理 pipeline → 屏蔽匹配 → 通知匹配与真实发送，
+// 同步走完 查询检测 → 生效检查 → 事件处理 pipeline → 屏蔽匹配 → 通知匹配与真实发送，
 // 返回逐段链路报告。测试事件不入库、不进真实消费队列、不触发回调/自愈/全局 webhook。
 // skip_send=true 时为干跑：不执行任何有外部副作用的环节（pipeline 节点、通知发送）。
+//
+// 与引擎真实链路（process.Handle → dispatch.HandleEventNotify）的有意差异，改动时保持同步：
+//  1. severity 用请求指定值，不按 trigger 命中档位（测试要覆盖任意级别）；
+//  2. 屏蔽命中只警示不拦截发送（用户的目的是测通知），真实后果经 mute_type 报告；
+//  3. 恢复事件且未开启「恢复时通知」时整段跳过（真实链路仍会执行通知规则的 pipeline 再跳过发送，
+//     测试为避免副作用不执行）；
+//  4. effective 阶段（TimeSpan/IdentNotExists/BgNotMatch）在 pipeline 之前用合成事件判定，
+//     引擎在 pipeline 之后判定——仅当 pipeline 改写 ident 标签时结果可能有偏差；
+//  5. 多数据源规则只对第一个匹配的数据源检测（引擎逐个评估），报告带 only_first_checked；
+//  6. 旧版通知（notify_version=0）只校验各渠道 token 配置，不实际发送。
 
 type TestFireSample struct {
 	Labels map[string]string `json:"labels"`
@@ -134,16 +144,29 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 
 	stages := make([]testFireStage, 0, 6)
 
-	// ---- Stage 1: 合成事件 ----
-	event, synthStage := rt.synthesizeTestEvent(cfg, &f, bgid)
+	// ---- Stage 1: 查询与判断条件检测 ----
+	// 真实执行查询条件、检测与查询分离的判断条件；失败只标红不阻断后续阶段。
+	// 非 prometheus 数据源查到真实数据时自动取样，供合成事件使用（见 query 文件头注释）
+	dsId := rt.resolveTestFireDatasourceId(cfg)
+	queryStage, autoSample := rt.runTestFireQueryCheck(c, cfg, dsId)
+	stages = append(stages, queryStage)
+
+	// ---- Stage 2: 合成事件 ----
+	event, synthStage := rt.synthesizeTestEvent(cfg, &f, bgid, dsId, autoSample)
 	stages = append(stages, synthStage)
 
-	// ---- Stage 2: 生效检查 ----
+	// ---- Stage 3: 生效检查 ----
+	// 与引擎 mute.IsMuted 的前置策略一一对应：Disabled / TimeSpan / IdentNotExists / BgNotMatch
 	disabled := cfg.Disabled == 1
 	inTimeSpan := !mute.TimeSpanMuteStrategy(cfg, event)
+	// target_up 类规则且 ident 已不存在时引擎会直接丢弃事件（TargetCache 单测环境为空，做 nil 保护）
+	identExists := true
+	if rt.TargetCache != nil {
+		identExists = !mute.IdentNotExistsMuteStrategy(cfg, event, rt.TargetCache)
+	}
 	bgMatch := !mute.BgNotMatchMuteStrategy(cfg, event, rt.TargetCache)
 	effectiveStatus := testFireStagePass
-	if disabled || !inTimeSpan || !bgMatch {
+	if disabled || !inTimeSpan || !identExists || !bgMatch {
 		effectiveStatus = testFireStageWarn
 	}
 	stages = append(stages, testFireStage{
@@ -152,11 +175,12 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 		Data: gin.H{
 			"disabled":     disabled,
 			"in_time_span": inTimeSpan,
+			"ident_exists": identExists,
 			"bg_match":     bgMatch,
 		},
 	})
 
-	// ---- Stage 3: 事件处理 pipeline ----
+	// ---- Stage 4: 事件处理 pipeline ----
 	pipelineStage, processedEvent, eventDropped := rt.runTestFirePipelines(cfg, event, username, f.SkipSend, pipelineMap)
 	stages = append(stages, pipelineStage)
 	if processedEvent != nil {
@@ -170,15 +194,12 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 			testFireStage{Stage: "notify", Status: testFireStageSkip, Data: gin.H{"reason": "event_dropped"}},
 		)
 	} else {
-		// ---- Stage 4: 屏蔽匹配（命中只警示不拦截，用户的目的是测通知）----
+		// ---- Stage 5: 屏蔽匹配（命中只警示不拦截，用户的目的是测通知）----
 		stages = append(stages, rt.runTestFireMuteCheck(bgid, event))
 
-		// ---- Stage 5: 通知匹配与发送 ----
+		// ---- Stage 6: 通知匹配与发送 ----
 		stages = append(stages, rt.runTestFireNotify(cfg, event, f.SkipSend, username, notifyRuleMap))
 	}
-
-	// ---- Stage 6: 测试模式跳过的副作用 ----
-	stages = append(stages, testFireSideEffectsStage(cfg))
 
 	ginx.NewRender(c).Data(gin.H{
 		"event":  event,
@@ -300,7 +321,7 @@ func dedupPipelineConfigs(in []models.PipelineConfig) []models.PipelineConfig {
 	return out
 }
 
-func (rt *Router) synthesizeTestEvent(cfg *models.AlertRule, f *AlertRuleTestFireForm, bgid int64) (*models.AlertCurEvent, testFireStage) {
+func (rt *Router) synthesizeTestEvent(cfg *models.AlertRule, f *AlertRuleTestFireForm, bgid int64, dsId int64, auto *testFireAutoSample) (*models.AlertCurEvent, testFireStage) {
 	now := time.Now().Unix()
 	event := cfg.GenerateNewEvent(rt.Ctx)
 
@@ -310,20 +331,21 @@ func (rt *Router) synthesizeTestEvent(cfg *models.AlertRule, f *AlertRuleTestFir
 		"source": "alert-rule-test-fire",
 	}
 	triggerValue := "81.5"
+	triggerValues := ""
 	promql := ""
 
 	if f.Sample != nil && len(f.Sample.Labels) > 0 {
+		// 前端选定的真实序列（prometheus）
 		sampleSource = "real"
-		labels = map[string]string{}
-		for k, v := range f.Sample.Labels {
-			// __name__ 等内部 label 不进事件标签，与真实评估产出的事件保持一致
-			if strings.HasPrefix(k, "__") || k == "" {
-				continue
-			}
-			labels[k] = v
-		}
+		labels = filterSampleLabels(f.Sample.Labels)
 		triggerValue = readableFloat(f.Sample.Value)
 		promql = f.Sample.Query
+	} else if auto != nil && len(auto.labels) > 0 {
+		// query_check 实查回来的真实序列（非 prometheus 数据源自动取样）
+		sampleSource = "real_auto"
+		labels = filterSampleLabels(auto.labels)
+		triggerValue = readableFloat(auto.value)
+		triggerValues = auto.valuesText
 	}
 	if promql == "" {
 		promql = firstQueryFromRuleConfig(cfg.RuleConfig)
@@ -358,6 +380,10 @@ func (rt *Router) synthesizeTestEvent(cfg *models.AlertRule, f *AlertRuleTestFir
 	event.NotifyCurNumber = 1
 	event.TriggerValue = triggerValue
 	event.TriggerValues = triggerValue
+	if triggerValues != "" {
+		// 真实链路里非 prometheus 事件的 TriggerValues 是 $A.metric:81.500 格式
+		event.TriggerValues = triggerValues
+	}
 	event.PromQl = promql
 	event.PromEvalInterval = cfg.PromEvalInterval
 	event.NotifyVersion = cfg.NotifyVersion
@@ -370,21 +396,17 @@ func (rt *Router) synthesizeTestEvent(cfg *models.AlertRule, f *AlertRuleTestFir
 		event.GroupName = bg.Name
 	}
 
-	// DatasourceCache 单测环境下为空，做 nil 保护
-	var dsId int64
-	if len(cfg.DatasourceIdsJson) > 0 && cfg.DatasourceIdsJson[0] > 0 {
-		dsId = cfg.DatasourceIdsJson[0]
-	} else if len(cfg.DatasourceQueries) > 0 && rt.DatasourceCache != nil {
-		if ids := rt.DatasourceCache.GetIDsByDsCateAndQueries(cfg.Cate, cfg.DatasourceQueries); len(ids) > 0 {
-			dsId = ids[0]
-		}
-	}
+	// 数据源在主流程 resolveTestFireDatasourceId 里解析（与 query_check 共用）
 	event.DatasourceId = dsId
 	if rt.DatasourceCache != nil {
 		if ds := rt.DatasourceCache.GetById(dsId); ds != nil {
 			event.Cluster = ds.Name
 		}
 	}
+
+	// 与真实链路 BuildEvent 一致：事件带上规则配置，事件详情页靠它渲染告警条件/查询语句
+	event.RuleConfig = cfg.RuleConfig
+	event.RuleConfigJson = cfg.RuleConfigJson
 
 	event.Annotations = cfg.Annotations
 	if event.Annotations == "" {
@@ -496,6 +518,10 @@ func (rt *Router) executeOnePipeline(p *models.EventPipeline, event *models.Aler
 	return resultEvent, item, false
 }
 
+// runTestFireMuteCheck 屏蔽匹配，语义对齐引擎 mute.EventMuteStrategy：
+// 命中「屏蔽事件与通知」（MuteTypeAll）时真实链路事件根本不会产生，
+// 命中「只屏蔽通知」（MuteTypeNotifyOnly）时事件产生但不发送通知。
+// 测试报告里两种都只警示不拦截（用户的目的是测通知），由 mute_type 告知真实后果。
 func (rt *Router) runTestFireMuteCheck(bgid int64, event *models.AlertCurEvent) testFireStage {
 	mutes, err := models.AlertMuteGetsByBG(rt.Ctx, bgid)
 	if err != nil {
@@ -503,6 +529,7 @@ func (rt *Router) runTestFireMuteCheck(bgid int64, event *models.AlertCurEvent) 
 	}
 
 	matched := make([]gin.H, 0)
+	fullMuteHit := false
 	for i := range mutes {
 		m := mutes[i]
 		if m.Disabled == 1 {
@@ -513,15 +540,25 @@ func (rt *Router) runTestFireMuteCheck(bgid int64, event *models.AlertCurEvent) 
 			continue
 		}
 		if ok, _ := mute.MatchMute(event, &m); ok {
-			matched = append(matched, gin.H{"id": m.Id, "note": m.Note})
+			if m.MuteType != models.MuteTypeNotifyOnly {
+				fullMuteHit = true
+			}
+			matched = append(matched, gin.H{"id": m.Id, "note": m.Note, "mute_type": m.MuteType})
 		}
 	}
 
+	// plus 版的外部屏蔽扩展点（开源默认 no-op），与引擎 process.Handle 的调用保持一致
+	hookMuted := dispatch.EventMuteHook(event)
+
 	status := testFireStagePass
-	if len(matched) > 0 {
+	if len(matched) > 0 || hookMuted {
 		status = testFireStageWarn
 	}
-	return testFireStage{Stage: "mute", Status: status, Data: gin.H{"matched_mutes": matched}}
+	return testFireStage{Stage: "mute", Status: status, Data: gin.H{
+		"matched_mutes": matched,
+		"full_mute_hit": fullMuteHit,
+		"hook_muted":    hookMuted,
+	}}
 }
 
 func (rt *Router) runTestFireNotify(cfg *models.AlertRule, event *models.AlertCurEvent, skipSend bool, username string, notifyRuleMap map[int64]*models.NotifyRule) testFireStage {
@@ -548,9 +585,19 @@ func (rt *Router) runTestFireNotify(cfg *models.AlertRule, event *models.AlertCu
 		}
 	}
 
-	if len(cfg.NotifyRuleIds) == 0 {
+	// 与引擎 HandleEventWithNotifyRule 一致：遍历事件上的 NotifyRuleIds（规则级 pipeline
+	// 可能增删通知路由），而非规则配置里的静态列表
+	notifyRuleIds := dedupInt64(event.NotifyRuleIds)
+	if len(notifyRuleIds) == 0 {
 		// 新人最常见的坑：规则配好了但没有任何通知目标
 		return testFireStage{Stage: "notify", Status: testFireStageWarn, Data: gin.H{"no_targets": true, "results": []gin.H{}}}
+	}
+
+	// 越权校验只覆盖了请求体里声明的 id；pipeline 动态加入的 id 未经归属校验，
+	// 测试环境不代发（真实链路会发），只在报告中说明
+	authorizedIds := make(map[int64]struct{}, len(cfg.NotifyRuleIds))
+	for _, id := range cfg.NotifyRuleIds {
+		authorizedIds[id] = struct{}{}
 	}
 
 	channelNames := map[int64]string{}
@@ -568,7 +615,12 @@ func (rt *Router) runTestFireNotify(cfg *models.AlertRule, event *models.AlertCu
 
 	results := make([]gin.H, 0)
 	anyFail := false
-	for _, nrid := range cfg.NotifyRuleIds {
+	for _, nrid := range notifyRuleIds {
+		if _, ok := authorizedIds[nrid]; !ok {
+			// pipeline 动态加入、未经归属校验的通知规则：真实链路会发送，测试不代发
+			results = append(results, gin.H{"notify_rule_id": nrid, "matched": false, "added_by_pipeline": true})
+			continue
+		}
 		nr := notifyRuleMap[nrid]
 		if nr == nil {
 			results = append(results, gin.H{"notify_rule_id": nrid, "matched": false, "match_error": "notify rule not found"})
@@ -725,32 +777,6 @@ func (rt *Router) legacyNotifyMissingTokens(cfg *models.AlertRule) []string {
 	return missing
 }
 
-func testFireSideEffectsStage(cfg *models.AlertRule) testFireStage {
-	taskTpls := 0
-	if cfg.RuleConfig != "" {
-		var rc struct {
-			TaskTpls []struct {
-				TplId int64 `json:"tpl_id"`
-			} `json:"task_tpls"`
-		}
-		if err := json.Unmarshal([]byte(cfg.RuleConfig), &rc); err == nil {
-			for _, tpl := range rc.TaskTpls {
-				if tpl.TplId > 0 {
-					taskTpls++
-				}
-			}
-		}
-	}
-	return testFireStage{
-		Stage:  "side_effects",
-		Status: testFireStageSkip,
-		Data: gin.H{
-			"callbacks": len(cfg.CallbacksJSON),
-			"task_tpls": taskTpls,
-		},
-	}
-}
-
 func firstQueryFromRuleConfig(ruleConfig string) string {
 	if ruleConfig == "" {
 		return ""
@@ -773,6 +799,18 @@ func firstQueryFromRuleConfig(ruleConfig string) string {
 		}
 	}
 	return ""
+}
+
+// filterSampleLabels 剔除 __name__ 等内部 label，与真实评估产出的事件标签保持一致
+func filterSampleLabels(in map[string]string) map[string]string {
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		if strings.HasPrefix(k, "__") || k == "" {
+			continue
+		}
+		out[k] = v
+	}
+	return out
 }
 
 func readableFloat(v float64) string {
