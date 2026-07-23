@@ -234,6 +234,13 @@ func (e *WorkflowEngine) executeNode(node *models.WorkflowNode, wfCtx *models.Wo
 		return nodeResult, nil
 	}
 
+	// 处理器执行前拍一份精简快照，用于前后对比。
+	// relabel 等处理器会就地修改事件，必须在执行前把快照固化为字符串。
+	beforeSnap := ""
+	if wfCtx != nil && wfCtx.Event != nil {
+		beforeSnap = wfCtx.Event.LoggableSnapshot()
+	}
+
 	// 获取处理器
 	processor, err := models.GetProcessorByType(node.Type, node.Config)
 	if err != nil {
@@ -246,6 +253,7 @@ func (e *WorkflowEngine) executeNode(node *models.WorkflowNode, wfCtx *models.Wo
 
 	// 执行处理器（带重试）
 	var retries int
+	dropped := false // 事件是否在本节点被 drop
 	maxRetries := node.MaxRetries
 	if !node.RetryOnFail {
 		maxRetries = 0
@@ -311,6 +319,7 @@ func (e *WorkflowEngine) executeNode(node *models.WorkflowNode, wfCtx *models.Wo
 			if newWfCtx == nil || newWfCtx.Event == nil {
 				nodeResult.Status = "terminated"
 				nodeResult.Message = msg
+				dropped = true
 			}
 		}
 		break
@@ -319,11 +328,27 @@ func (e *WorkflowEngine) executeNode(node *models.WorkflowNode, wfCtx *models.Wo
 	nodeResult.FinishedAt = time.Now().Unix()
 	nodeResult.DurationMs = time.Since(startTime).Milliseconds()
 
+	// 处理器执行后拍快照并与执行前对比，得到本节点对事件的字段级改动。
+	// dropped 时 afterSnap 为空，diff 会记为「事件已丢弃」。
+	afterSnap := ""
+	if !dropped && wfCtx != nil && wfCtx.Event != nil {
+		afterSnap = wfCtx.Event.LoggableSnapshot()
+	}
+	changeStr := models.FormatEventChanges(models.DiffEventSnapshot(beforeSnap, afterSnap, dropped))
+
+	// 复用 Message 字段承载改动信息（前端执行记录已渲染 message，无需新增字段/迁移/前端改动），
+	// 保留处理器自身返回的 msg（如 event_drop 的丢弃原因）。skipped/failed 节点不追加。
+	if nodeResult.Status != "skipped" && nodeResult.Status != "failed" {
+		if nodeResult.Message != "" {
+			nodeResult.Message = nodeResult.Message + " | " + changeStr
+		} else {
+			nodeResult.Message = changeStr
+		}
+	}
+
 	var eventHash string
-	eventDetailStr := "nil"
 	if wfCtx != nil && wfCtx.Event != nil {
 		eventHash = wfCtx.Event.Hash
-		eventDetailStr = fmt.Sprintf("%+v", wfCtx.Event)
 	}
 
 	var pipelineID string
@@ -331,8 +356,11 @@ func (e *WorkflowEngine) executeNode(node *models.WorkflowNode, wfCtx *models.Wo
 		pipelineID = wfCtx.Metadata["pipeline_id"]
 	}
 
-	logger.Infof("workflow: executed node name=%s type=%s status=%s msg=%q duration=%dms event_hash=%s pipeline_id=%s event_detail:%s",
-		node.Name, node.Type, nodeResult.Status, nodeResult.Message, nodeResult.DurationMs, eventHash, pipelineID, eventDetailStr)
+	// Message 已包含处理器自身返回的 msg 与改动信息（msg | changes）；failed 节点 Message 为空、
+	// 失败原因在 Error，故一并打出，避免日志里看不到失败/丢弃原因。
+	logger.Infof("workflow: node name=%s type=%s status=%s duration=%dms event_hash=%s pipeline_id=%s msg=%q error=%q",
+		node.Name, node.Type, nodeResult.Status, nodeResult.DurationMs, eventHash, pipelineID, nodeResult.Message, nodeResult.Error)
+	logger.Debugf("workflow: node name=%s before=%s after=%s", node.Name, beforeSnap, afterSnap)
 
 	return nodeResult, nodeOutput
 }

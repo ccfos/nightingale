@@ -1,0 +1,6 @@
+{
+    "DNS 响应状态码异常": "DNS response status code abnormal",
+    "DNS 查询异常": "DNS query failure",
+    "DNS 查询超时": "DNS query timeout",
+    "DNS查询响应时间大于5秒": "DNS query response time exceeds 5 seconds"
+}

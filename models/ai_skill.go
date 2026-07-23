@@ -159,6 +159,33 @@ func AISkillGets(c *ctx.Context, search string) ([]*AISkill, error) {
 	return lst, err
 }
 
+// AISkillMetaGets 与 AISkillGets 同语义（同样的 search 过滤与内置优先排序），但只
+// SELECT 元信息列 —— 刻意跳过 instructions（text）与 git_info（含加密 token），供
+// 只需要「有哪些 skill」的轻量列表接口使用，避免把全部正文拉进内存。
+// private / user_group_ids / created_by 是可见性判定与内置标记所必需，故一并取出。
+func AISkillMetaGets(c *ctx.Context, search string) ([]*AISkill, error) {
+	var lst []*AISkill
+	session := DB(c).Model(&AISkill{}).
+		Select("id", "name", "description", "enabled", "private", "user_group_ids",
+			"source_type", "created_at", "created_by", "updated_at", "updated_by").
+		Order("id")
+	if search != "" {
+		session = session.Where("name like ? or description like ?", "%"+search+"%", "%"+search+"%")
+	}
+	err := session.Find(&lst).Error
+	for _, s := range lst {
+		s.SetDefaultSourceType()
+		s.Builtin = s.CreatedBy == "system"
+		if s.UserGroupIds == nil {
+			s.UserGroupIds = []int64{}
+		}
+	}
+	sort.SliceStable(lst, func(i, j int) bool {
+		return lst[i].Builtin && !lst[j].Builtin
+	})
+	return lst, err
+}
+
 func AISkillGet(c *ctx.Context, where string, args ...interface{}) (*AISkill, error) {
 	var obj AISkill
 	err := DB(c).Where(where, args...).First(&obj).Error

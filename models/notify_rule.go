@@ -33,7 +33,7 @@ type NotifyRule struct {
 }
 
 type PipelineConfig struct {
-	PipelineId int64 `json:"pipeline_id"`
+	PipelineId int64 `json:"pipeline_id,omitempty"`
 	Enable     bool  `json:"enable"`
 }
 

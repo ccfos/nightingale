@@ -727,6 +727,85 @@ func (rt *Router) aiSkillGetWithFileContents(c *gin.Context) {
 
 // ==================== Service API (v1) ====================
 
+// aiSkillMeta 是轻量列表接口的响应条目：只带元信息，不含 instructions、附件与
+// git 凭据 —— 调用方只想知道「有哪些 skill」时不必把全部正文拉走。
+type aiSkillMeta struct {
+	Id          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Enabled     bool   `json:"enabled"`
+	Builtin     bool   `json:"builtin"`
+	UpdatedAt   int64  `json:"updated_at"`
+}
+
+// aiSkillVisibleGetsByService 返回指定用户可见的 skill 元信息列表。
+// GET /v1/n9e/ai-skills/visible?user_id=1[&search=xx]
+//
+// 与页面接口 GET /api/n9e/ai-skills 的两点区别：
+//  1. 不挂 /ai-config/skills 权限点。该权限点管的是「能不能进 skill 管理页增删改」，
+//     而这里回答的是「这个用户能看到哪些 skill」——普通用户没有管理权也该有答案。
+//     鉴权改由 v1 通道自身的 BasicAuth 承担，user_id 只用于指定「以谁的身份看」。
+//  2. 只回元信息（id/name/description/enabled/builtin/updated_at）。
+//
+// 可见性判定与页面完全一致（复用 FilterAISkillsVisible）：管理员看全量，其余人看
+// 公共 skill + 自己所在团队被授权的私有 skill。
+func (rt *Router) aiSkillVisibleGetsByService(c *gin.Context) {
+	userId := ginx.QueryInt64(c, "user_id")
+	me, err := models.UserGetById(rt.Ctx, userId)
+	ginx.Dangerous(err)
+	if me == nil {
+		ginx.Bomb(http.StatusNotFound, "user not found: %d", userId)
+	}
+
+	search := ginx.QueryStr(c, "search", "")
+	lst, err := models.AISkillMetaGets(rt.Ctx, search)
+	ginx.Dangerous(err)
+
+	if !me.IsAdmin() {
+		gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+		ginx.Dangerous(err)
+		lst = models.FilterAISkillsVisible(lst, gids)
+	}
+
+	res := make([]aiSkillMeta, 0, len(lst))
+	for _, s := range lst {
+		res = append(res, aiSkillMeta{
+			Id:          s.Id,
+			Name:        s.Name,
+			Description: s.Description,
+			Enabled:     s.Enabled,
+			Builtin:     s.Builtin,
+			UpdatedAt:   s.UpdatedAt,
+		})
+	}
+
+	// overlay：内置 skill 不进 DB，对所有用户可见，按页面列表同一套约定补在尾部
+	// （负 id = -(内置序号+1)，同名 DB skill 优先并跳过对应 overlay）。
+	if !rt.Center.AIAgent.HideBuiltinSkills {
+		existing := make(map[string]struct{}, len(res))
+		for _, s := range res {
+			existing[s.Name] = struct{}{}
+		}
+		for i, fm := range skill.ListBuiltinFrontmatters() {
+			if _, dup := existing[fm.Name]; dup {
+				continue
+			}
+			if !skillSearchMatch(search, fm.Name, fm.Description) {
+				continue
+			}
+			res = append(res, aiSkillMeta{
+				Id:          -int64(i + 1),
+				Name:        fm.Name,
+				Description: fm.Description,
+				Enabled:     true,
+				Builtin:     true,
+			})
+		}
+	}
+
+	ginx.NewRender(c).Data(res, nil)
+}
+
 func (rt *Router) aiSkillImportByService(c *gin.Context) {
 	meta, instructions, files := extractSkillArchive(c)
 	skillId, err := rt.doSkillImport(meta, instructions, files, "system", nil, nil)

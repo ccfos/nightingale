@@ -1,0 +1,14 @@
+{
+    "Canal client 请求响应时间的概况。": "Overview of Canal client request response time.",
+    "Canal instance ringbuffer 内未释放events占用内存。": "Memory occupied by unreleased events in the Canal instance ringbuffer.",
+    "Canal instance ringbuffer内未释放的events数量。": "Number of unreleased events in the Canal instance ringbuffer.",
+    "Canal instance 基本信息。": "Basic information of the Canal instance.",
+    "Canal instance 处理binlog的TPS，以MySQL transaction为单位计算。": "TPS of binlog processing by the Canal instance, measured in MySQL transactions.",
+    "Canal instance 网络带宽占用。\ninbound: 读取MySQL binlog.\noutbound: 对Client端传输格式化binlog.": "Network bandwidth used by the Canal instance.\ninbound: reading MySQL binlog.\noutbound: transferring formatted binlog to the client.",
+    "Canal instance接收到的请求统计，结果按packet type分类。": "Statistics of requests received by the Canal instance, grouped by packet type.",
+    "Instance处理binlog的TPS(以master变更行数table rows为基准计算)。\nput: put操作TPS。\nget: get操作TPS。\nack: ack操作TPS。": "TPS of binlog processing by the instance (based on the number of changed table rows on the master).\nput: TPS of put operations.\nget: TPS of get operations.\nack: TPS of ack operations.",
+    "client 请求的GET与ACK包的QPS。": "QPS of GET and ACK packets requested by the client.",
+    "master: Canal server相对于MySQL master的延时。通过master heartbeat机制能刷新idle状态下的延时。\nput: store put操作的时间点为基准。\nget: client get操作的时间点为基准。\nack:  client ack操作的时间点为基准。": "master: latency of the Canal server relative to the MySQL master. The master heartbeat mechanism refreshes the latency while idle.\nput: based on the time point of the store put operation.\nget: based on the time point of the client get operation.\nack: based on the time point of the client ack operation.",
+    "server响应GET请求，但返回空包的占比。": "Ratio of GET requests answered by the server with an empty packet.",
+    "sink线程blocking占比；dump线程blocking占比(仅parallel mode)。": "Blocking ratio of the sink thread; blocking ratio of the dump thread (parallel mode only)."
+}

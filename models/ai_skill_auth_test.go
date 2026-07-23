@@ -218,3 +218,78 @@ func TestAISkillHiddenNames(t *testing.T) {
 		t.Fatalf("hidden names mismatch: got %v, want [privB]", hidden)
 	}
 }
+
+func TestAISkillMetaGets(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.AutoMigrate(&models.AISkill{}); err != nil {
+		t.Fatalf("migrate ai_skill: %v", err)
+	}
+	c := &ctx.Context{DB: db}
+
+	inputs := []*models.AISkill{
+		{Name: "pub", Description: "public one", Instructions: "body-pub", Enabled: true},
+		{Name: "privA", Description: "team1 only", Instructions: "body-a", Private: 1, UserGroupIds: []int64{1}},
+		{Name: "privB", Description: "team2 only", Instructions: "body-b", Private: 1, UserGroupIds: []int64{2}},
+		{Name: "sys", Description: "shipped", Instructions: "body-s", CreatedBy: "system",
+			SourceType: models.AISkillSourceGit,
+			GitInfo:    &models.AISkillGitInfo{URL: "u", Token: "secret"}},
+	}
+	for _, s := range inputs {
+		if err := s.Create(c); err != nil {
+			t.Fatalf("create %s: %v", s.Name, err)
+		}
+	}
+
+	lst, err := models.AISkillMetaGets(c, "")
+	if err != nil {
+		t.Fatalf("meta gets: %v", err)
+	}
+	if len(lst) != 4 {
+		t.Fatalf("want 4 skills, got %d", len(lst))
+	}
+	// 内置（created_by=system）排在最前，与 AISkillGets 的排序一致。
+	if lst[0].Name != "sys" || !lst[0].Builtin {
+		t.Fatalf("builtin should sort first, got %q builtin=%v", lst[0].Name, lst[0].Builtin)
+	}
+	// 轻量：instructions 与 git_info（含 token）根本不参与 SELECT。
+	for _, s := range lst {
+		if s.Instructions != "" {
+			t.Fatalf("skill %q leaked instructions %q", s.Name, s.Instructions)
+		}
+		if s.GitInfo != nil {
+			t.Fatalf("skill %q leaked git info %+v", s.Name, s.GitInfo)
+		}
+		if s.Description == "" || s.SourceType == "" {
+			t.Fatalf("skill %q missing meta: desc=%q source=%q", s.Name, s.Description, s.SourceType)
+		}
+	}
+
+	// 可见性判定所需的列（private / user_group_ids）必须取到，否则过滤会误放行。
+	visible := models.FilterAISkillsVisible(lst, []int64{1})
+	names := make([]string, 0, len(visible))
+	for _, s := range visible {
+		names = append(names, s.Name)
+	}
+	if len(visible) != 3 {
+		t.Fatalf("team1 should see 3 skills, got %v", names)
+	}
+	for _, n := range names {
+		if n == "privB" {
+			t.Fatalf("team1 must not see privB, got %v", names)
+		}
+	}
+
+	// search 过滤沿用 AISkillGets 的 name/description LIKE 语义。
+	hit, err := models.AISkillMetaGets(c, "team1")
+	if err != nil {
+		t.Fatalf("meta gets with search: %v", err)
+	}
+	if len(hit) != 1 || hit[0].Name != "privA" {
+		t.Fatalf("search mismatch: got %d rows %+v", len(hit), hit)
+	}
+}

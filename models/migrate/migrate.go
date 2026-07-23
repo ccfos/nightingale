@@ -119,8 +119,7 @@ func MigrateTables(db *gorm.DB) error {
 		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
 		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{},
 		&models.SavedView{}, &models.UserViewFavorite{},
-		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{}, &models.MCPServer{},
-		&models.MCPServerOAuth{},
+		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{},
 		&models.AssistantChatRow{}}
 
 	if isPostgres(db) {
@@ -152,6 +151,15 @@ func MigrateTables(db *gorm.DB) error {
 		for _, dt := range asyncDts {
 			if err := db.AutoMigrate(dt); err != nil {
 				logger.Errorf("failed to migrate table %+v err:%v", dt, err)
+			}
+		}
+
+		// 索引用原生 SQL 创建，不在部分结构体上声明 group_id 列：
+		// 存量库该列是 bigint unsigned 且无默认值，声明列会让 AutoMigrate
+		// 发出 MODIFY COLUMN，在大表上全表重建锁写
+		if !db.Migrator().HasIndex("alert_his_event", "idx_group_last_eval_time") {
+			if err := db.Exec("CREATE INDEX idx_group_last_eval_time ON alert_his_event(group_id, last_eval_time)").Error; err != nil {
+				logger.Errorf("failed to create index idx_group_last_eval_time on alert_his_event: %v", err)
 			}
 		}
 	}()

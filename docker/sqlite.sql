@@ -465,6 +465,7 @@ CREATE INDEX `idx_alert_his_event_last_eval_time` ON `alert_his_event` (`last_ev
 CREATE INDEX `idx_alert_his_event_hash` ON `alert_his_event` (`hash` asc);
 CREATE INDEX `idx_alert_his_event_rule_id` ON `alert_his_event` (`rule_id` asc);
 CREATE INDEX `idx_alert_his_event_trigger_time_group_id` ON `alert_his_event` (`trigger_time`, `group_id` asc);
+CREATE INDEX `idx_group_last_eval_time` ON `alert_his_event` (`group_id`, `last_eval_time` asc);
 
 CREATE TABLE `board_busigroup` (
   `busi_group_id` bigint(20) NOT NULL DEFAULT '0',

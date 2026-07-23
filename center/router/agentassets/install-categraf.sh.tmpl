@@ -1,0 +1,326 @@
+#!/usr/bin/env bash
+# Categraf one-click installer, rendered per-request by nightingale.
+#
+#   curl -fsSL '<n9e>/api/n9e/agents/categraf/install.sh' | sudo bash
+#   curl -fsSL '<n9e>/api/n9e/agents/categraf/install.sh' | sudo bash -s -- --force
+#
+# Flags REQUIRE the `bash -s --` form; plain `| sudo bash --force` silently
+# drops them. This script never calls `read`: when piped, stdin IS the script,
+# so any prompt would consume its own source.
+set -euo pipefail
+
+# --- injected by nightingale -------------------------------------------------
+# Every value below is emitted inside single quotes and is constrained
+# server-side to [A-Za-z0-9.:/_[]-]; it can neither close the quote nor inject
+# a shell metacharacter. See normalizeBaseURL in center/router/router_agent.go.
+DEFAULT_N9E_HOST='{{ .BaseURL }}'
+CATEGRAF_VERSION='{{ .Version }}'
+BUNDLED_ARCHES='{{ .Arches }}'
+GITHUB_BASE='{{ .GitHubBase }}'
+# Where the package is fetched from — deliberately NOT the same knob as the
+# address above. DOWNLOAD_BASE is the server that served this very script and
+# cannot be redirected by ?host=, --server or $N9E_HOST; the tarball it returns
+# is unpacked and run as root, so it must come from the host the operator chose
+# to trust, not from an address someone appended to a link.
+DOWNLOAD_BASE='{{ .DownloadBase }}'
+# -----------------------------------------------------------------------------
+
+INSTALL_DIR="/opt/categraf"
+FORCE=0
+RESET_CONFIG=0
+AUTH_USER=""
+AUTH_PASS=""
+ARCH_OVERRIDE=""
+CONFIG_REWRITTEN=0
+
+log()  { printf '\033[0;32m[categraf]\033[0m %s\n' "$*"; }
+warn() { printf '\033[0;33m[categraf]\033[0m %s\n' "$*" >&2; }
+die()  { printf '\033[0;31m[categraf] ERROR:\033[0m %s\n' "$*" >&2; exit 1; }
+
+usage() {
+    cat <<'USAGE'
+Usage: curl -fsSL <url>/api/n9e/agents/categraf/install.sh | sudo bash -s -- [options]
+
+  --server <url>        nightingale address to report to (default: auto-detected).
+                        Only the reported address; the package is always fetched
+                        from the server this script came from.
+  --dir <path>          install directory (default: /opt/categraf)
+  --arch <amd64|arm64>  override architecture detection
+  --auth <user:pass>    basic auth credentials, when the n9e agent API requires them
+  --force               reinstall/upgrade over an existing installation
+  --reset-config        with --force: also regenerate conf/config.toml
+  -h, --help            show this help
+USAGE
+}
+
+# Guard every value-taking option: without the check, a trailing "--dir" with no
+# value makes `shift 2` fail, and under `set -e` the script dies silently with no
+# message at all — the one failure path that would tell the user nothing.
+need_value() { [ "$2" -ge 2 ] || die "$1 requires a value (use --help)"; }
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --server) need_value "$1" $#; N9E_HOST="$2"; shift 2 ;;
+        --dir) need_value "$1" $#; INSTALL_DIR="$2"; shift 2 ;;
+        --arch) need_value "$1" $#; ARCH_OVERRIDE="$2"; shift 2 ;;
+        --auth)
+            need_value "$1" $#
+            # Require the colon: without it "${2%%:*}" and "${2#*:}" both yield
+            # the whole word, silently setting the password to the username. The
+            # host would then report 401 and the user would go debugging n9e
+            # instead of their own command line.
+            case "$2" in
+                *:*) ;;
+                *) die "--auth expects user:pass" ;;
+            esac
+            # Split on the FIRST colon only: passwords may contain colons.
+            AUTH_USER="${2%%:*}"; AUTH_PASS="${2#*:}"; shift 2 ;;
+        --force) FORCE=1; shift ;;
+        --reset-config) RESET_CONFIG=1; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) die "unknown option: $1 (use --help)" ;;
+    esac
+done
+
+# ---------------------------------------------------------------- preflight --
+[ "$(id -u)" -eq 0 ] || die "must run as root (prefix the command with sudo)"
+
+# Absolute from here on. The service section cd's into $INSTALL_DIR and still
+# refers to it afterwards, so a relative --dir would resolve a second time
+# against itself (mydir -> mydir/mydir) and the launch would fail with an error
+# pointing nowhere near the cause.
+[ -n "$INSTALL_DIR" ] || die "--dir must not be empty"
+case "$INSTALL_DIR" in
+    /*) ;;
+    *) INSTALL_DIR="$PWD/$INSTALL_DIR" ;;
+esac
+INSTALL_DIR="${INSTALL_DIR%/}"
+
+if command -v curl >/dev/null 2>&1; then
+    DL() { curl -fsSL "$1" -o "$2"; }
+elif command -v wget >/dev/null 2>&1; then
+    DL() { wget -qO "$2" "$1"; }
+else
+    die "neither curl nor wget found; install one and retry"
+fi
+
+N9E_HOST="${N9E_HOST:-$DEFAULT_N9E_HOST}"
+N9E_HOST="${N9E_HOST%/}"
+[ -n "$N9E_HOST" ] || die "nightingale address unknown; rerun with: | sudo bash -s -- --server http://<ip>:17000"
+
+# Defence in depth: the server already allowlists this value, but this script
+# runs as root, so it re-checks rather than trusting what it was handed.
+# POSIX bracket form: ']' first, '-' last.
+printf '%s' "$N9E_HOST" | grep -Eq '^https?://[][A-Za-z0-9._:/-]+$' \
+    || die "refusing to use address '$N9E_HOST' (unsupported characters)"
+
+if [ -n "$ARCH_OVERRIDE" ]; then
+    ARCH="$ARCH_OVERRIDE"
+else
+    case "$(uname -m)" in
+        x86_64|amd64) ARCH="amd64" ;;
+        aarch64|arm64) ARCH="arm64" ;;
+        *) die "unsupported architecture $(uname -m); see $N9E_HOST/n9e-docs/categraf for manual install" ;;
+    esac
+fi
+case "$ARCH" in
+    amd64|arm64) ;;
+    *) die "unsupported --arch '$ARCH' (want amd64 or arm64)" ;;
+esac
+
+[ "$(uname -s)" = "Linux" ] || die "this installer supports Linux only; see the docs for Windows"
+
+# Serialize concurrent runs (provisioning loops). mkdir is atomic.
+LOCK="/var/run/.categraf-install.lock"
+mkdir "$LOCK" 2>/dev/null || die "another categraf install is in progress ($LOCK); remove it if stale"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"; rmdir "$LOCK" 2>/dev/null || true' EXIT
+
+# ------------------------------------------------------ idempotence gate -----
+CFG="$INSTALL_DIR/conf/config.toml"
+if [ -d "$INSTALL_DIR" ] && [ "$FORCE" -eq 0 ]; then
+    if [ -f "$CFG" ] && grep -qF "\"${N9E_HOST}/v1/n9e/heartbeat\"" "$CFG"; then
+        log "categraf is already installed in $INSTALL_DIR and reports to $N9E_HOST"
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl is-active --quiet categraf \
+                && log "service is running; nothing to do" \
+                || warn "service is NOT running; start it with: systemctl start categraf"
+        fi
+        exit 0
+    fi
+    warn "$INSTALL_DIR already exists"
+    [ -f "$CFG" ] && warn "it currently reports to: $(grep -m1 '^url = ' "$CFG" || echo unknown)"
+    die "refusing to overwrite; rerun with --force (add --reset-config to also regenerate config.toml)"
+fi
+
+# ------------------------------------------------------------- download ------
+TARBALL="$TMP/categraf.tar.gz"
+GOT=0
+if [ -n "$DOWNLOAD_BASE" ]; then
+    log "downloading categraf $CATEGRAF_VERSION ($ARCH) from $DOWNLOAD_BASE"
+    # `if DL ...; then`, not `DL ... && GOT=1`: the latter is the last command of
+    # this branch, so under `set -e` a failed download would exit the script
+    # silently instead of falling through to the GitHub fallback below.
+    if DL "$DOWNLOAD_BASE/api/n9e/agents/categraf/download?arch=$ARCH" "$TARBALL"; then
+        GOT=1
+    fi
+fi
+if [ "$GOT" -eq 0 ]; then
+    warn "nightingale did not serve a bundled package (arches available: ${BUNDLED_ARCHES:-none})"
+    ASSET="categraf-$CATEGRAF_VERSION-linux-$ARCH.tar.gz"
+    # GitHub is the only public fallback: it is where this pinned version was
+    # taken from, so it is guaranteed to have that exact release. Needs internet
+    # access — on an air-gapped network the bundled package above is the only
+    # way, hence the explicit hint below.
+    URL="$GITHUB_BASE/$CATEGRAF_VERSION/$ASSET"
+    log "falling back to $URL"
+    DL "$URL" "$TARBALL" \
+        || die "download failed from both ${DOWNLOAD_BASE:-nightingale} and GitHub; if this host has no internet access, upgrade nightingale so it bundles categraf, or copy the package to the nightingale server manually"
+fi
+[ -s "$TARBALL" ] || die "downloaded package is empty"
+
+# categraf tarballs are built with goreleaser wrap_in_directory:true, i.e. they
+# contain one top-level "categraf-vX.Y.Z-linux-<arch>/" directory. Detect it
+# rather than assuming --strip-components=1, which busybox tar lacks.
+mkdir -p "$TMP/x"
+tar zxf "$TARBALL" -C "$TMP/x" || die "failed to extract package"
+STAGE="$TMP/x"
+top="$(find "$TMP/x" -mindepth 1 -maxdepth 1)"
+if [ "$(printf '%s\n' "$top" | wc -l)" -eq 1 ] && [ -d "$top" ]; then
+    STAGE="$top"
+fi
+[ -x "$STAGE/categraf" ] || die "unexpected archive layout: no categraf binary found"
+
+# -------------------------------------------------------------- install ------
+BACKUP=""
+if [ "$FORCE" -eq 1 ] && [ -d "$INSTALL_DIR" ]; then
+    # Stop first: categraf holds its binary open, and --install below rewrites
+    # the unit file. NOTE: categraf's --stop/--install/--start ALWAYS exit 0
+    # even on failure (main.go only logs "E! ..."), so never chain them with &&
+    # and always verify with systemctl afterwards.
+    if [ -x "$INSTALL_DIR/categraf" ]; then
+        (cd "$INSTALL_DIR" && ./categraf --stop >/dev/null 2>&1) || true
+    fi
+    command -v systemctl >/dev/null 2>&1 && systemctl stop categraf >/dev/null 2>&1 || true
+
+    # Back up before touching anything, --reset-config included: config.toml is
+    # the file that run is about to discard, so it is the one the user is most
+    # likely to come looking for. The reset itself happens after the restore
+    # below, otherwise the saved copy would be put straight back.
+    if [ -d "$INSTALL_DIR/conf" ]; then
+        BACKUP="${INSTALL_DIR%/}.conf-backup-$(date +%Y%m%d%H%M%S)"
+        cp -a "$INSTALL_DIR/conf" "$BACKUP"
+        log "existing configuration backed up to $BACKUP"
+    fi
+fi
+
+mkdir -p "$INSTALL_DIR"
+# cp -a over the target, never `rm -rf "$INSTALL_DIR"`: a typo'd --dir must not
+# be able to delete anything.
+cp -af "$STAGE"/. "$INSTALL_DIR"/
+
+if [ -n "$BACKUP" ]; then
+    # The copy above replaced conf/ with upstream defaults. Users edit the
+    # shipped conf/input.*/*.toml files in place to enable plugins, so restore
+    # the whole saved tree on top, then fill in only files the new release adds.
+    cp -af "$BACKUP"/. "$INSTALL_DIR/conf"/
+    cp -an "$STAGE/conf"/. "$INSTALL_DIR/conf"/ 2>/dev/null || true
+
+    # --reset-config: the restore above just put the old config.toml back, so
+    # replace it with the pristine one now. The backup keeps the original.
+    if [ "$RESET_CONFIG" -eq 1 ]; then
+        cp -f "$STAGE/conf/config.toml" "$CFG" || die "conf/config.toml missing from package"
+    fi
+fi
+
+# ------------------------------------------------------- rewrite config ------
+# Only ever rewritten when it is the pristine file we just extracted; on --force
+# without --reset-config the user's own config is preserved untouched.
+if [ -z "$BACKUP" ] || [ "$RESET_CONFIG" -eq 1 ]; then
+    [ -f "$CFG" ] || die "conf/config.toml missing from package"
+
+    # The pinned categraf ships exactly two occurrences of this address:
+    # [[writers]] url and [heartbeat] url. $N9E_HOST cannot contain '#' (our
+    # sed delimiter), '&' (whole-match backref) or a backslash, so no escaping
+    # is needed. Write-then-rename avoids GNU/BSD `sed -i` incompatibility.
+    sed -e "s#http://127\.0\.0\.1:17000#${N9E_HOST}#g" "$CFG" > "$CFG.n9e-tmp" \
+        && mv -f "$CFG.n9e-tmp" "$CFG"
+
+    # Verify loudly. categraf starts happily with a wrong URL and reports
+    # nowhere: a green service that never appears in the UI is the worst
+    # possible outcome, so a silent failure here is not acceptable.
+    # -F (fixed string), not a regex: an IPv6 $N9E_HOST such as http://[::1]:17000
+    # would otherwise have its [::1] read as a bracket expression and never match,
+    # so a perfectly good rewrite would be reported as a failure. Dropping the ^
+    # anchor is fine — sed has just run, and the only lines containing $N9E_HOST
+    # are the two it rewrote.
+    grep -qF "url = \"${N9E_HOST}/prometheus/v1/write\"" "$CFG" \
+        || die "writers url not rewritten (categraf $CATEGRAF_VERSION layout changed?); fix $CFG by hand"
+    grep -qF "url = \"${N9E_HOST}/v1/n9e/heartbeat\"" "$CFG" \
+        || die "heartbeat url not rewritten (categraf $CATEGRAF_VERSION layout changed?); fix $CFG by hand"
+
+    if [ -n "$AUTH_USER" ]; then
+        # Credentials are arbitrary user input (unlike $N9E_HOST they are not
+        # allowlisted): escape for TOML basic strings first, then for the sed
+        # replacement side. Order matters — TOML adds backslashes, sed protects
+        # them.
+        # $'\n' (bash), not "$(printf '\n')": command substitution strips
+        # trailing newlines, so the latter yields an empty pattern that matches
+        # every input and rejects all credentials.
+        case "$AUTH_USER$AUTH_PASS" in
+            *$'\n'*) die "--auth must not contain a newline" ;;
+        esac
+        toml_escape() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
+        sed_repl_escape() { printf '%s' "$1" | sed -e 's/[\\&#]/\\&/g'; }
+        U="$(sed_repl_escape "$(toml_escape "$AUTH_USER")")"
+        P="$(sed_repl_escape "$(toml_escape "$AUTH_PASS")")"
+        # Exactly four uncommented basic_auth_* lines exist, at column 0, in
+        # [[writers]] and [heartbeat] — the two sections that need the creds.
+        sed -e "s#^basic_auth_user = \"\"#basic_auth_user = \"${U}\"#" \
+            -e "s#^basic_auth_pass = \"\"#basic_auth_pass = \"${P}\"#" \
+            "$CFG" > "$CFG.n9e-tmp" && mv -f "$CFG.n9e-tmp" "$CFG"
+        grep -q '^basic_auth_user = ""' "$CFG" && die "basic auth not applied to all sections"
+        chmod 600 "$CFG"
+    fi
+    CONFIG_REWRITTEN=1
+else
+    # Upgrade path with the user's config preserved: nothing that would have been
+    # written into config.toml takes effect. Say so — a flag that is accepted and
+    # then quietly dropped sends the user debugging the server instead of their
+    # own command line.
+    CONFIG_REWRITTEN=0
+    [ -n "$AUTH_USER" ] && warn "--auth ignored: existing conf/config.toml preserved (add --reset-config to apply it)"
+    if ! grep -qF "\"${N9E_HOST}/v1/n9e/heartbeat\"" "$CFG" 2>/dev/null; then
+        warn "--server ignored: existing conf/config.toml preserved (add --reset-config to apply it)"
+    fi
+fi
+
+# --------------------------------------------------------------- service -----
+# `--install` derives the unit's WorkingDirectory from the binary's location,
+# so it must run from inside the install directory.
+cd "$INSTALL_DIR"
+if command -v systemctl >/dev/null 2>&1; then
+    ./categraf --install >/dev/null 2>&1 || true
+    ./categraf --start >/dev/null 2>&1 || true
+    sleep 2
+    systemctl is-active --quiet categraf \
+        || die "categraf service did not start; inspect with: journalctl -u categraf -n 50"
+    log "categraf service is running"
+else
+    warn "systemd not found; starting in the background with nohup"
+    nohup "$INSTALL_DIR/categraf" -configs "$INSTALL_DIR/conf" >/dev/null 2>&1 &
+    sleep 2
+    kill -0 $! 2>/dev/null || die "categraf failed to start; run it manually to see the error"
+    log "categraf started (pid $!)"
+fi
+
+# Report the address actually in the config, not the one we were asked for: on
+# the preserve-config path they are not the same, and claiming otherwise would
+# be the only untrue line in the output.
+if [ "$CONFIG_REWRITTEN" -eq 1 ]; then
+    log "installed to $INSTALL_DIR, reporting to $N9E_HOST"
+else
+    log "installed to $INSTALL_DIR, reporting to $(grep -m1 '^url = ' "$CFG" | sed 's|^url = "\(.*\)/prometheus/v1/write"$|\1|' || echo "the address already in $CFG")"
+fi
+log "this host should appear in the nightingale machine list within ~10s;"
+log "select it there to assign it to a business group."

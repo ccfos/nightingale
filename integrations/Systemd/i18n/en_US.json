@@ -1,0 +1,15 @@
+{
+    "Sytemd 监控仪表盘": "Systemd Monitoring Dashboard",
+    "systemd 版本信息": "Systemd Version",
+    "异常": "Abnormal",
+    "当前任务数量": "Current Tasks",
+    "最大任务数量限制": "Max Tasks Limit",
+    "服务状态信息": "Service Status",
+    "服务状态异常": "Service state abnormal",
+    "服务运行时间": "Service Uptime",
+    "服务重启总次数": "Total Service Restarts",
+    "服务频繁重启": "Service restarting frequently",
+    "正常": "Normal",
+    "系统状态异常": "System state abnormal",
+    "系统运行状态": "System Status"
+}

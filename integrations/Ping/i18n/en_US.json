@@ -1,0 +1,9 @@
+{
+    "PING大盘2.0": "PING Dashboard 2.0",
+    "丢包率": "Packet Loss Rate",
+    "延迟": "Latency",
+    "探测源: {{subnet}}目标地址: {{target }}  TTL": "Source: {{subnet}}Target: {{target }}  TTL",
+    "源地址: {{subnet}}  目标地址:{{target}}": "Source: {{subnet}}  Target:{{target}}",
+    "目标地址: {{target}}": "Target: {{target}}",
+    "连通性": "Connectivity"
+}

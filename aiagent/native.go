@@ -193,7 +193,11 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 			}
 
 			toolTurn := ChatMessage{Role: llm.RoleTool, ToolCallID: tc.ID, ToolName: tc.Name, Content: observation}
-			messages = append(messages, toolTurn)
+			// messages 收的是投影副本：本轮观测在这里就按 LiveObservationCapBytes
+			// 收口，否则一次超大工具结果会原样留在 messages 里，被剩余每次迭代
+			// 重复送进请求（跨轮的 projectHistory 此时还够不着它）。turn 进
+			// canonical transcript，永远收原文。
+			messages = append(messages, capObservation(toolTurn, LiveObservationCapBytes))
 			turn = append(turn, toolTurn)
 		}
 

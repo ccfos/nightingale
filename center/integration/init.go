@@ -22,8 +22,13 @@ const SYSTEM = "system"
 var BuiltinPayloadInFile *BuiltinPayloadInFileType
 
 type BuiltinPayloadInFileType struct {
-	Data      map[uint64]map[string]map[string][]*models.BuiltinPayload // map[component_id]map[type]map[cate][]*models.BuiltinPayload
-	IndexData map[int64]*models.BuiltinPayload                          // map[uuid]payload
+	// 首层 key 是语言（LangSource/LangEnUS）：同一 uuid 的模板按语言渲染出多个变体，
+	// zh_CN 桶存文件原始内容，en_US 桶对全部内置内容完整存在（无词条组件为 pass-through 同指针）
+	Data      map[string]map[uint64]map[string]map[string][]*models.BuiltinPayload // map[lang]map[component_id]map[type]map[cate][]*models.BuiltinPayload
+	IndexData map[string]map[int64]*models.BuiltinPayload                          // map[lang]map[uuid]payload
+
+	dicts   map[uint64]map[string]ComponentDict // map[component_id]map[lang]词条表
+	Readmes map[string]map[string]string        // map[lang]map[component_ident]readme，README.<lang>.md 的内容
 
 	BuiltinMetrics map[string]*models.BuiltinMetric
 }
@@ -76,15 +81,21 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 		// get description
 		files, err = file.FilesUnder(componentDir + "/markdown")
 		if err == nil && len(files) > 0 {
-			var readmeFile string
-			for _, file := range files {
-				if strings.HasSuffix(strings.ToLower(file), "md") {
-					readmeFile = componentDir + "/markdown/" + file
-					break
-				}
-			}
+			readmeFile, readmeVariants := PickReadmeFiles(files)
 			if readmeFile != "" {
-				component.Readme, _ = file.ReadString(readmeFile)
+				component.Readme, _ = file.ReadString(componentDir + "/markdown/" + readmeFile)
+			}
+			// 语言副本（README.<lang>.md）只进内存按 X-Language 返回，不落 DB
+			for lang, fn := range readmeVariants {
+				content, err := file.ReadString(componentDir + "/markdown/" + fn)
+				if err != nil {
+					logger.Warningf("read builtin component readme variant fail %s/%s %v", component.Ident, fn, err)
+					continue
+				}
+				if BuiltinPayloadInFile.Readmes[lang] == nil {
+					BuiltinPayloadInFile.Readmes[lang] = make(map[string]string)
+				}
+				BuiltinPayloadInFile.Readmes[lang][component.Ident] = content
 			}
 		} else if err != nil {
 			logger.Warningf("read builtin component markdown dir fail %s %v", component.Ident, err)
@@ -123,6 +134,9 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 			}
 			component.ID = old.ID
 		}
+
+		// i18n 词条表需在 payload 装载前就位：AddBuiltinPayload 按它渲染语言变体
+		BuiltinPayloadInFile.dicts[component.ID] = LoadComponentDicts(componentDir)
 
 		// delete uuid is empty
 		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid = 0 and type != 'collect' and (updated_by = 'system' or updated_by = '')").Error
@@ -308,17 +322,41 @@ type BuiltinBoard struct {
 
 func NewBuiltinPayloadInFileType() *BuiltinPayloadInFileType {
 	return &BuiltinPayloadInFileType{
-		Data:           make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
-		IndexData:      make(map[int64]*models.BuiltinPayload),
+		Data:           make(map[string]map[uint64]map[string]map[string][]*models.BuiltinPayload),
+		IndexData:      make(map[string]map[int64]*models.BuiltinPayload),
+		dicts:          make(map[uint64]map[string]ComponentDict),
+		Readmes:        make(map[string]map[string]string),
 		BuiltinMetrics: make(map[string]*models.BuiltinMetric),
 	}
 }
 
+// AddBuiltinPayload 写入源语言桶并按组件词条表渲染其他语言变体。
+// 签名保持单参数：n9e-plus 的 integrationx 也调用它灌 collect/firemap
 func (b *BuiltinPayloadInFileType) AddBuiltinPayload(bp *models.BuiltinPayload) {
-	if _, exists := b.Data[bp.ComponentID]; !exists {
-		b.Data[bp.ComponentID] = make(map[string]map[string][]*models.BuiltinPayload)
+	b.addBuiltinPayloadForLang(LangSource, bp)
+
+	for lang, dict := range b.dicts[bp.ComponentID] {
+		if lang == LangSource {
+			continue
+		}
+		b.addBuiltinPayloadForLang(lang, renderVariant(bp, dict))
 	}
-	bpInType := b.Data[bp.ComponentID]
+
+	// 无 en_US 词条的组件也进 en_US 桶（同指针 pass-through），
+	// 保证 en_US 桶完整、按语言查询不需要列表级回退
+	if _, ok := b.dicts[bp.ComponentID][LangEnUS]; !ok {
+		b.addBuiltinPayloadForLang(LangEnUS, bp)
+	}
+}
+
+func (b *BuiltinPayloadInFileType) addBuiltinPayloadForLang(lang string, bp *models.BuiltinPayload) {
+	if _, exists := b.Data[lang]; !exists {
+		b.Data[lang] = make(map[uint64]map[string]map[string][]*models.BuiltinPayload)
+	}
+	if _, exists := b.Data[lang][bp.ComponentID]; !exists {
+		b.Data[lang][bp.ComponentID] = make(map[string]map[string][]*models.BuiltinPayload)
+	}
+	bpInType := b.Data[lang][bp.ComponentID]
 	if _, exists := bpInType[bp.Type]; !exists {
 		bpInType[bp.Type] = make(map[string][]*models.BuiltinPayload)
 	}
@@ -328,12 +366,30 @@ func (b *BuiltinPayloadInFileType) AddBuiltinPayload(bp *models.BuiltinPayload) 
 	}
 	bpInCate[bp.Cate] = append(bpInCate[bp.Cate], bp)
 
-	b.IndexData[bp.UUID] = bp
+	if _, exists := b.IndexData[lang]; !exists {
+		b.IndexData[lang] = make(map[int64]*models.BuiltinPayload)
+	}
+	b.IndexData[lang][bp.UUID] = bp
 }
 
+// GetByUUID 按语言取单条内置模板，语言桶缺失时回退源语言
+func (b *BuiltinPayloadInFileType) GetByUUID(uuid int64, lang string) *models.BuiltinPayload {
+	if m := b.IndexData[lang]; m != nil {
+		if bp, ok := m[uuid]; ok {
+			return bp
+		}
+	}
+	if bp, ok := b.IndexData[LangSource][uuid]; ok {
+		return bp
+	}
+	return nil
+}
+
+// GetComponentIdentByCate 签名不变（n9e-plus 调用），内部固定查源语言桶：
+// 调用方传入的 cate 来自 DB 行，即源语言值
 func (b *BuiltinPayloadInFileType) GetComponentIdentByCate(typ, cate string) string {
 
-	for _, source := range b.Data {
+	for _, source := range b.Data[LangSource] {
 		if source == nil {
 			continue
 		}
@@ -355,10 +411,16 @@ func (b *BuiltinPayloadInFileType) GetComponentIdentByCate(typ, cate string) str
 	return ""
 }
 
-func (b *BuiltinPayloadInFileType) GetBuiltinPayload(typ, cate, query string, componentId uint64) ([]*models.BuiltinPayload, error) {
+// GetBuiltinPayload 按语言取内置模板列表。en_US 桶完整存在（见 AddBuiltinPayload），
+// 未知语言已被 NormalizeLang 归一化；query 在渲染后的 name/tags 上匹配
+func (b *BuiltinPayloadInFileType) GetBuiltinPayload(typ, cate, query string, componentId uint64, lang string) ([]*models.BuiltinPayload, error) {
 
 	var result []*models.BuiltinPayload
-	source := b.Data[componentId]
+	byLang := b.Data[lang]
+	if byLang == nil {
+		byLang = b.Data[LangSource]
+	}
+	source := byLang[componentId]
 
 	if source == nil {
 		return nil, nil
@@ -390,9 +452,16 @@ func (b *BuiltinPayloadInFileType) GetBuiltinPayload(typ, cate, query string, co
 	return result, nil
 }
 
-func (b *BuiltinPayloadInFileType) GetBuiltinPayloadCates(typ string, componentId uint64) ([]string, error) {
+// GetBuiltinPayloadCates 按语言取分类列表。cate 是语言无关的筛选键（文件名即
+// cate，CI 门禁强制非中文），各语言桶的 cate 相同；前端回传的 cate 可同时命中
+// DB 查询与任意语言桶
+func (b *BuiltinPayloadInFileType) GetBuiltinPayloadCates(typ string, componentId uint64, lang string) ([]string, error) {
 	var result []string
-	source := b.Data[componentId]
+	byLang := b.Data[lang]
+	if byLang == nil {
+		byLang = b.Data[LangSource]
+	}
+	source := byLang[componentId]
 	if source == nil {
 		return result, nil
 	}

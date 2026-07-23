@@ -1,0 +1,12 @@
+{
+    "MNode 被选举后经过的时长": "Time Elapsed Since the MNode Was Elected",
+    "企业版授权到期时间": "Enterprise License Expiration Time",
+    "企业版授权已用测点数": "Enterprise License Measurement Points Used",
+    "当前TDengine集群 VGroups 数量，Alive 为存活，Total 为所有": "Number of VGroups in the current TDengine cluster. Alive means running, Total means all",
+    "当前TDengine集群 VNodes 数量，Alive 为存活，Total 为所有": "Number of VNodes in the current TDengine cluster. Alive means running, Total means all",
+    "当前TDengine集群DNode数量，Alive 为存活，Total 为所有": "Number of DNodes in the current TDengine cluster. Alive means running, Total means all",
+    "当前TDengine集群MNode数量，Alive 为存活，Total 为所有": "Number of MNodes in the current TDengine cluster. Alive means running, Total means all",
+    "所有数据库的表数量之和": "Total Number of Tables Across All Databases",
+    "数据库个数": "Database Count",
+    "错误率（每秒错误数）": "Error Rate (Errors per Second)"
+}

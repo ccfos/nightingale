@@ -136,6 +136,13 @@ EngineName = "default"
 [Center]
 MetricsYamlFile = "./etc/metrics.yaml"
 I18NHeaderKey = "X-Language"
+# directory holding the bundled collector packages (categraf tar.gz) served by
+# /api/n9e/agents/categraf/download; relative paths resolve against the workdir
+# AgentsDir = "agents/categraf"
+# retention days of alert history events (table: alert_his_event)
+# events older than this are deleted in batches daily at 02:00
+# <= 0 means keep forever (default)
+# CleanAlertHisEventDay = 365
 
 [Center.AnonymousAccess]
 PromQuerier = true

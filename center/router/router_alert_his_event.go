@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -14,6 +15,44 @@ import (
 	"github.com/toolkits/pkg/logger"
 	"golang.org/x/exp/slices"
 )
+
+// 历史告警 count(*) 缓存：大表上每次翻页都重算 count 代价很高，
+// 第一页实算并刷新缓存，翻页在 TTL 内直接复用
+const hisTotalCacheTTL = 120 // seconds
+
+type hisTotalCacheEntry struct {
+	total    int64
+	expireAt int64
+}
+
+var (
+	hisTotalCacheMu sync.Mutex
+	hisTotalCache   = make(map[string]hisTotalCacheEntry)
+)
+
+func hisTotalCacheGet(key string) (int64, bool) {
+	hisTotalCacheMu.Lock()
+	defer hisTotalCacheMu.Unlock()
+	entry, has := hisTotalCache[key]
+	if !has || entry.expireAt < time.Now().Unix() {
+		return 0, false
+	}
+	return entry.total, true
+}
+
+func hisTotalCacheSet(key string, total int64) {
+	now := time.Now().Unix()
+	hisTotalCacheMu.Lock()
+	defer hisTotalCacheMu.Unlock()
+	if len(hisTotalCache) > 1000 {
+		for k, v := range hisTotalCache {
+			if v.expireAt < now {
+				delete(hisTotalCache, k)
+			}
+		}
+	}
+	hisTotalCache[key] = hisTotalCacheEntry{total: total, expireAt: now + hisTotalCacheTTL}
+}
 
 func getTimeRange(c *gin.Context) (stime, etime int64) {
 	stime = ginx.QueryInt64(c, "stime", 0)
@@ -61,12 +100,35 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView, false)
 	ginx.Dangerous(err)
 
-	total, err := models.AlertHisEventTotal(rt.Ctx, prods, bgids, stime, etime, severity,
-		recovered, dsIds, cates, ruleId, query, []int64{})
-	ginx.Dangerous(err)
+	offset := ginx.Offset(c, limit)
 
-	list, err := models.AlertHisEventGets(rt.Ctx, prods, bgids, stime, etime, severity, recovered,
-		dsIds, cates, ruleId, query, limit, ginx.Offset(c, limit), []int64{})
+	// hours 模式下 stime/etime 随请求时刻漂移，缓存 key 里按分钟取整，翻页请求才能命中
+	cacheKey := fmt.Sprintf("%v|%v|%d|%d|%d|%d|%v|%v|%d|%s",
+		prods, bgids, stime/60, etime/60, severity, recovered, dsIds, cates, ruleId, query)
+
+	total, hit := int64(0), false
+	if offset > 0 {
+		total, hit = hisTotalCacheGet(cacheKey)
+	}
+	if !hit {
+		total, err = models.AlertHisEventTotal(rt.Ctx, prods, bgids, stime, etime, severity,
+			recovered, dsIds, cates, ruleId, query, []int64{})
+		ginx.Dangerous(err)
+		hisTotalCacheSet(cacheKey, total)
+	}
+
+	// 游标分页：传上一页最后一行的 last_eval_time 和 id，深翻页时不做 OFFSET 扫描
+	cursorTime := ginx.QueryInt64(c, "cursor_time", 0)
+	cursorId := ginx.QueryInt64(c, "cursor_id", 0)
+
+	var list []models.AlertHisEvent
+	if cursorTime > 0 && cursorId > 0 {
+		list, err = models.AlertHisEventGetsByCursor(rt.Ctx, prods, bgids, stime, etime, severity,
+			recovered, dsIds, cates, ruleId, query, cursorTime, cursorId, limit, []int64{})
+	} else {
+		list, err = models.AlertHisEventGets(rt.Ctx, prods, bgids, stime, etime, severity, recovered,
+			dsIds, cates, ruleId, query, limit, offset, []int64{})
+	}
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
@@ -96,21 +158,41 @@ func (rt *Router) alertHisEventsDelete(c *gin.Context) {
 
 	user := c.MustGet("user").(*models.User)
 
+	// timestamp 不允许超过当前时间，否则清理期间新触发的事件会绕过下面的活跃告警快照
+	timestamp := f.Timestamp
+	if now := time.Now().Unix(); timestamp > now {
+		timestamp = now
+	}
+
 	// 启动后台清理任务
 	go func() {
+		// 快照活跃告警 id 集合（cur.id 即对应的 his.id），活跃告警的历史记录跳过不删
+		ids, err := models.AlertCurEventIds(rt.Ctx)
+		if err != nil {
+			logger.Errorf("Failed to delete alert history events: query active event ids fail, operator=%s, error=%v",
+				user.Username, err)
+			return
+		}
+		activeIds := make(map[int64]struct{}, len(ids))
+		for _, id := range ids {
+			activeIds[id] = struct{}{}
+		}
+
 		limit := 100
+		var minId int64
 		for {
-			n, err := models.AlertHisEventBatchDelete(rt.Ctx, f.Timestamp, f.Severities, limit)
+			fetched, deleted, maxId, err := models.AlertHisEventBatchDelete(rt.Ctx, timestamp, f.Severities, minId, limit, activeIds)
 			if err != nil {
 				logger.Errorf("Failed to delete alert history events: operator=%s, timestamp=%d, severities=%v, error=%v",
-					user.Username, f.Timestamp, f.Severities, err)
+					user.Username, timestamp, f.Severities, err)
 				break
 			}
-			logger.Debugf("Successfully deleted alert history events: operator=%s, timestamp=%d, severities=%v, deleted=%d",
-				user.Username, f.Timestamp, f.Severities, n)
-			if n < int64(limit) {
+			logger.Debugf("Successfully deleted alert history events: operator=%s, timestamp=%d, severities=%v, deleted=%d, skipped_active=%d",
+				user.Username, timestamp, f.Severities, deleted, int64(fetched)-deleted)
+			if fetched < limit {
 				break // 已经删完
 			}
+			minId = maxId
 
 			time.Sleep(100 * time.Millisecond) // 防止锁表
 		}

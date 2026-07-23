@@ -126,7 +126,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	externalProcessors := process.NewExternalProcessors()
 
-	macros.RegisterMacro(macros.MacroInVain)
+	macros.RegisterMacro(macros.ExpandTimeFilter)
 	dscache.Init(ctx, false, config.Alert.Heartbeat.EngineName)
 	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, configCvalCache)
 
@@ -136,6 +136,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	go cron.CleanNotifyRecord(ctx, config.Center.CleanNotifyRecordDay)
 	go cron.CleanPipelineExecution(ctx, config.Center.CleanPipelineExecutionDay)
+	go cron.CleanAlertHisEvent(ctx, config.Center.CleanAlertHisEventDay)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors, config.Log.Dir)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,

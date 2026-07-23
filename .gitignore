@@ -43,6 +43,8 @@ _test
 /vendor
 /tmp
 /pub
+# bundled categraf packages, staged at release time by scripts/download_categraf.sh
+/agents
 /n9e
 /docker/pub
 /docker/n9e
@@ -77,6 +79,10 @@ n9e.sql
 # Runtime skill directory: built-in skills are extracted from embed at startup,
 # DB-synced user skills land here too. Source of truth is aiagent/skill/embedded/builtin/.
 /skill
+
+# Runtime QA code corpus: extracted at startup from the qa_code_embed assets
+# (see aiagent/skill/embedded/codeassets/, built by scripts/build-qa-code-assets.sh).
+/code
 
 !/datasource
 
