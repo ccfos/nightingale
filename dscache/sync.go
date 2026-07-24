@@ -79,13 +79,27 @@ var PromDefaultDatasourceId int64
 func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 	for {
 		if !fromAPI {
-			foundDefaultDatasource := false
 			items, err := models.GetDatasources(ctx)
 			if err != nil {
 				logger.Errorf("get datasource from database fail: %v", err)
 				//stat.CounterExternalErrorTotal.WithLabelValues("db", "get_cluster").Inc()
 				time.Sleep(time.Second * 2)
 				continue
+			}
+
+			// PromDefaultDatasourceId 是全局写入目标（pingmesh 转发等），与本引擎集群归属无关，
+			// 必须在按引擎过滤之前用全量列表探测，否则默认数据源挂在其他集群时会被清零
+			foundDefaultDatasource := false
+			for _, item := range items {
+				if item.PluginType == "prometheus" && item.IsDefault {
+					atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
+					foundDefaultDatasource = true
+					break
+				}
+			}
+			if !foundDefaultDatasource && atomic.LoadInt64(&PromDefaultDatasourceId) != 0 {
+				logger.Debugf("no default datasource found")
+				atomic.StoreInt64(&PromDefaultDatasourceId, 0)
 			}
 
 			// edge 模式下跳过不属于本引擎集群的数据源，避免无意义的 InitClient（issue #3159）。
@@ -103,12 +117,6 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 
 			var dss []datasource.DatasourceInfo
 			for _, item := range items {
-
-				if item.PluginType == "prometheus" && item.IsDefault {
-					atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
-					foundDefaultDatasource = true
-				}
-
 				// logger.Debugf("get datasource: %+v", item)
 				ds := datasource.DatasourceInfo{
 					Id:             item.Id,
@@ -137,11 +145,6 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					}
 				}
 				dss = append(dss, ds)
-			}
-
-			if !foundDefaultDatasource && atomic.LoadInt64(&PromDefaultDatasourceId) != 0 {
-				logger.Debugf("no default datasource found")
-				atomic.StoreInt64(&PromDefaultDatasourceId, 0)
 			}
 
 			if DatasourceProcessHook != nil {
