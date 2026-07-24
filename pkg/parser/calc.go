@@ -48,6 +48,14 @@ func MathCalc(s string, data map[string]interface{}) (float64, error) {
 	}
 }
 
+// ValidateExp 只做表达式的语法编译检查（不校验变量存在性与类型），
+// 用于配置期校验告警判断条件；运行期求值请用 Calc/MathCalc。
+// 不带 Env 编译时 expr 对未知变量走运行期动态解析，因此这里只会报语法错误。
+func ValidateExp(s string) error {
+	_, err := expr.Compile(cleanStr(s))
+	return err
+}
+
 func Calc(s string, data map[string]interface{}) bool {
 	v, err := MathCalc(s, data)
 	if err != nil {

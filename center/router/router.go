@@ -519,6 +519,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/busi-groups/alert-rules/clones", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.batchAlertRuleClone)
 		pages.POST("/busi-group/alert-rules/notify-tryrun", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.alertRuleNotifyTryRun)
 		pages.POST("/busi-group/alert-rules/enable-tryrun", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.alertRuleEnableTryRun)
+		pages.POST("/busi-group/:id/alert-rule/test-fire", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.alertRuleTestFire)
 
 		pages.GET("/busi-groups/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGetsByGids)
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
