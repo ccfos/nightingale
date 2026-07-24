@@ -51,6 +51,21 @@ func (a *AlertCurEventMap) UpdateLastEvalTime(key string, lastEvalTime int64) {
 	event.LastEvalTime = lastEvalTime
 }
 
+// ResetMutedShadow 清除「只屏蔽通知」的影子计数（在事件以非屏蔽状态被评估时调用），
+// 使下一次进入屏蔽时能从当前真实的通知状态重新起算，避免屏蔽反复开关时影子计数残留。
+func (a *AlertCurEventMap) ResetMutedShadow(key string) {
+	a.Lock()
+	defer a.Unlock()
+	event, exists := a.Data[key]
+	if !exists {
+		return
+	}
+	if event.MutedPersistNumber != 0 || event.LastMutedPersistTime != 0 {
+		event.MutedPersistNumber = 0
+		event.LastMutedPersistTime = 0
+	}
+}
+
 func (a *AlertCurEventMap) Delete(key string) {
 	a.Lock()
 	defer a.Unlock()
