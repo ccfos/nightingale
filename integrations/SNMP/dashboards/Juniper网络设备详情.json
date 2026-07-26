@@ -280,7 +280,7 @@
           ],
           "targets": [
             {
-              "expr": "snmp_system_cpuuse{agent_host=\"$ident\"}",
+              "expr": "100 - snmp_cpu_idle{agent_host=\"$ident\"}",
               "legend": "Out",
               "maxDataPoints": 240,
               "refId": "A"
@@ -360,7 +360,7 @@
           ],
           "targets": [
             {
-              "expr": "snmp_system_memuse{agent_host=\"$ident\"}",
+              "expr": "(snmp_mem_max{agent_host=\"$ident\"} - snmp_mem_free{agent_host=\"$ident\"}) / snmp_mem_max{agent_host=\"$ident\"} * 100",
               "instant": true,
               "legend": "mem_usage",
               "maxDataPoints": 240,

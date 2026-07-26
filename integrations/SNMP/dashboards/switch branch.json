@@ -88,7 +88,7 @@
                 ],
                 "targets": [
                     {
-                        "expr": "snmp_sys_uptime",
+                        "expr": "snmp_sys_uptime{agent_host=~\"$ipadd\"}",
                         "instant": false,
                         "legend": "设备在线",
                         "maxDataPoints": 240,
@@ -158,7 +158,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "snmp_TotalPorts",
+                        "expr": "count(snmp_interface_ifOperStatus{agent_host=~\"$ipadd\"})",
                         "legend": "设备端口数",
                         "maxDataPoints": 240,
                         "refId": "A"
@@ -216,13 +216,13 @@
                 },
                 "targets": [
                     {
-                        "expr": "snmp_cpu_usage",
+                        "expr": "100 - snmp_cpu_idle{agent_host=~\"$ipadd\"}",
                         "legend": "CPU使用率",
                         "maxDataPoints": 240,
                         "refId": "A"
                     },
                     {
-                        "expr": "snmp_mem_use / snmp_mem_max*100",
+                        "expr": "(snmp_mem_max{agent_host=~\"$ipadd\"} - snmp_mem_free{agent_host=~\"$ipadd\"}) / snmp_mem_max{agent_host=~\"$ipadd\"} * 100",
                         "legend": "内存使用率",
                         "maxDataPoints": 240,
                         "refId": "B"
@@ -365,13 +365,13 @@
                 ],
                 "targets": [
                     {
-                        "expr": "snmp_interface_ifSpeed",
+                        "expr": "snmp_interface_ifSpeed{agent_host=~\"$ipadd\"}",
                         "legend": "端口速率",
                         "maxDataPoints": 240,
                         "refId": "B"
                     },
                     {
-                        "expr": "snmp_interface_ifOperStatus",
+                        "expr": "snmp_interface_ifOperStatus{agent_host=~\"$ipadd\"}",
                         "legend": "端口状态",
                         "maxDataPoints": 240,
                         "refId": "C"
@@ -434,7 +434,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "snmp_interface_ifOperStatus",
+                        "expr": "snmp_interface_ifOperStatus{agent_host=~\"$ipadd\"}",
                         "legend": "{{LocalIP}}",
                         "maxDataPoints": 240,
                         "refId": "A"
@@ -477,13 +477,13 @@
                 },
                 "targets": [
                     {
-                        "expr": "snmp_interface_ifInOctets",
+                        "expr": "snmp_interface_ifInOctets{agent_host=~\"$ipadd\"}",
                         "legend": "端口IN流量",
                         "maxDataPoints": 240,
                         "refId": "A"
                     },
                     {
-                        "expr": "snmp_interface_ifOutOctets",
+                        "expr": "snmp_interface_ifOutOctets{agent_host=~\"$ipadd\"}",
                         "legend": "端口OUT流量",
                         "maxDataPoints": 240,
                         "refId": "B"
@@ -561,7 +561,7 @@
                 ],
                 "targets": [
                     {
-                        "expr": "irate(snmp_interface_ifInOctets{ifDescr=~\"Vlan256\"}[5m])",
+                        "expr": "sum(irate(snmp_interface_ifInOctets{agent_host=~\"$ipadd\"}[5m]))",
                         "legend": "INT",
                         "maxDataPoints": 240,
                         "refId": "A",
@@ -571,7 +571,7 @@
                         }
                     },
                     {
-                        "expr": "-irate(snmp_interface_ifOutOctets{ ifDescr=~\"Vlan256\"}[5m])",
+                        "expr": "-sum(irate(snmp_interface_ifOutOctets{agent_host=~\"$ipadd\"}[5m]))",
                         "legend": "OUT",
                         "maxDataPoints": 240,
                         "refId": "B",
@@ -606,7 +606,7 @@
                     "cate": "prometheus",
                     "value": "${jieru}"
                 },
-                "definition": "label_values(LocalIP)",
+                "definition": "label_values(snmp_up, agent_host)",
                 "label": "ip地址",
                 "multi": true,
                 "name": "ipadd",
@@ -619,7 +619,7 @@
                     "cate": "prometheus",
                     "value": "${jieru}"
                 },
-                "definition": "label_values(sys_name)",
+                "definition": "label_values(snmp_up{agent_host=~\"$ipadd\"}, Brand)",
                 "label": "设备名称",
                 "multi": true,
                 "name": "sys_name",

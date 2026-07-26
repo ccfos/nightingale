@@ -141,8 +141,8 @@
                         "refId": "H"
                     },
                     {
-                        "expr": "pg_settings_wal_keep_segments{instance=~\"$instance\"}",
-                        "legend": "WAL Keep Segments",
+                        "expr": "pg_settings_wal_keep_size_bytes{instance=~\"$instance\"}",
+                        "legend": "WAL Keep Size",
                         "refId": "I"
                     }
                 ],
@@ -338,7 +338,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "max(pg_replication_lag{instance=\"$instance\"})",
+                        "expr": "max(pg_replication_lag_seconds{instance=~\"$instance\"})",
                         "legend": "",
                         "refId": "A",
                         "step": 120,
@@ -1091,12 +1091,13 @@
                 "type": "query"
             },
             {
-                "allOption": false,
+                "allOption": true,
+                "allValue": ".*",
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${DS_PROMETHEUS}"
                 },
-                "definition": "label_values(datname)",
+                "definition": "label_values(pg_stat_database_xact_commit{instance=~\"$instance\"},datname)",
                 "multi": true,
                 "name": "datname",
                 "reg": "/^(?!template)/",

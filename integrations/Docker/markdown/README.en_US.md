@@ -1,6 +1,27 @@
 # docker
 
-forked from telegraf/inputs.docker. For container monitoring, it is recommended to use cAdvisor to collect the data and then use input.prometheus to scrape cAdvisor. This Docker plugin can basically be ignored.
+The Docker input uses the Docker API and emits `docker_*` metrics. The bundled
+`Docker Dashboard` was validated against these metrics, so this input is
+required for that dashboard.
+
+cAdvisor is also supported, but it emits `container_*` metrics and requires the
+dashboard under the separate `cAdvisor` integration.
+
+## Configuration
+
+```toml
+[[instances]]
+endpoint = "unix:///var/run/docker.sock"
+gather_services = false
+gather_extend_memstats = false
+container_id_label_enable = true
+container_id_label_short_style = false
+timeout = "5s"
+total_include = ["cpu", "blkio", "network"]
+```
+
+Run `./categraf --test --inputs docker` and confirm `docker_up`,
+`docker_n_containers_running`, and `docker_container_cpu_usage_percent`.
 
 ## change
 

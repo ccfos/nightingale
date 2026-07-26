@@ -48,7 +48,7 @@ The statistics come from `/proc/vmstat`, which is only supported on newer kernel
 oom_kill = 1
 nr_free_pages = 0
 nr_alloc_batch = 0
-...
+# Add other fields as needed
 ```
 
 ## arp_package

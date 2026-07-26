@@ -27,7 +27,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 1,
+                "datasourceValue": "${datasource}",
                 "id": "190d574b-502d-482f-8b6f-981730dba70e",
                 "layout": {
                     "h": 4,
@@ -92,7 +92,7 @@
                     "showHeader": true
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 1,
+                "datasourceValue": "${datasource}",
                 "id": "8b107213-6d65-4877-b3e2-31435bb8758c",
                 "layout": {
                     "h": 14,
@@ -236,13 +236,13 @@
                 ],
                 "targets": [
                     {
-                        "expr": "snmp_cpu_usage",
+              "expr": "100 - snmp_cpu_idle",
                         "legend": "CPU使用率",
                         "maxDataPoints": 240,
                         "refId": "A"
                     },
                     {
-                        "expr": "snmp_mem_use/snmp_mem_max",
+              "expr": "(snmp_mem_max - snmp_mem_free) / snmp_mem_max",
                         "legend": "内存使用率",
                         "maxDataPoints": 240,
                         "refId": "B"
@@ -272,7 +272,13 @@
                 "version": "3.0.0"
             }
         ],
-        "var": [],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            }
+        ],
         "version": "3.0.0"
     },
     "public": 0,

@@ -19,7 +19,7 @@
                 "hide": false,
                 "datasource": {
                     "cate": "prometheus",
-                    "value": 38
+                    "value": "${DS_PROMETHEUS}"
                 },
                 "reg": "",
                 "definition": "label_values(up{job='kingbase_kes_exporter'}, cluster)",
@@ -32,7 +32,7 @@
                 "hide": false,
                 "datasource": {
                     "cate": "prometheus",
-                    "value": 38
+                    "value": "${DS_PROMETHEUS}"
                 },
                 "reg": "",
                 "definition": "label_values(up{job='kingbase_node_exporter', cluster=~'$kingbase_cluster'}, address)",
@@ -45,7 +45,7 @@
                 "hide": false,
                 "datasource": {
                     "cate": "prometheus",
-                    "value": 38
+                    "value": "${DS_PROMETHEUS}"
                 },
                 "reg": "",
                 "definition": "label_values(up{job='kingbase_kes_exporter', cluster=~'$kingbase_cluster'}, instance)",
@@ -58,7 +58,7 @@
                 "hide": false,
                 "datasource": {
                     "cate": "prometheus",
-                    "value": 38
+                    "value": "${DS_PROMETHEUS}"
                 },
                 "reg": "",
                 "definition": "label_values(up{job='kingbase_node_exporter', cluster=~'$kingbase_cluster', address=~'$kingbase_address'}, instance)",
@@ -71,7 +71,7 @@
                 "hide": false,
                 "datasource": {
                     "cate": "prometheus",
-                    "value": 38
+                    "value": "${DS_PROMETHEUS}"
                 },
                 "reg": "",
                 "definition": "label_values(kingbase_sys_database_age_total{cluster=~'$kingbase_cluster', datname!='template1', datname!='template0', datname!='security'}, datname)",

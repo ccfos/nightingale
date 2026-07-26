@@ -18,7 +18,7 @@
                 },
                 "version": "3.3.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "targets": [
                     {
                         "expr": "procstat_lookup_count{ident=~\"$ident\", search_string=~\"$search_string\"}",
@@ -94,7 +94,7 @@
                     "nowrap": false
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "id": "da621e2c-ae2b-4375-9a66-2bec7832490b",
                 "layout": {
                     "h": 4,
@@ -161,7 +161,7 @@
                 },
                 "version": "3.3.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "targets": [
                     {
                         "expr": "procstat_lookup_count{ident=~\"$ident\", search_string=~\"$search_string\"}",
@@ -243,7 +243,7 @@
                 },
                 "version": "3.3.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "targets": [
                     {
                         "expr": "procstat_uptime_minimum{ident=~\"$ident\", search_string=~\"$search_string\"}",
@@ -318,7 +318,7 @@
                 },
                 "version": "3.3.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "targets": [
                     {
                         "expr": "procstat_cpu_usage_total{ident=~\"$ident\", search_string=~\"$search_string\"}",
@@ -401,7 +401,7 @@
                 },
                 "version": "3.3.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "targets": [
                     {
                         "expr": "procstat_mem_usage_total{ident=~\"$ident\", search_string=~\"$search_string\"}",
@@ -484,7 +484,7 @@
                 },
                 "version": "3.3.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "targets": [
                     {
                         "expr": "procstat_num_fds_total{ident=~\"$ident\", search_string=~\"$search_string\"}/procstat_rlimit_num_fds_soft_minimum{ident=~\"$ident\", search_string=~\"$search_string\"}*100",
@@ -567,7 +567,7 @@
                 },
                 "version": "3.3.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "targets": [
                     {
                         "expr": "procstat_num_fds_total{ident=~\"$ident\", search_string=~\"$search_string\"}/procstat_rlimit_num_fds_hard_minimum{ident=~\"$ident\", search_string=~\"$search_string\"}*100",
@@ -650,7 +650,7 @@
                 },
                 "version": "3.3.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "targets": [
                     {
                         "expr": "rate(procstat_read_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}[$__rate_interval])",
@@ -734,7 +734,7 @@
                 },
                 "version": "3.3.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Datasource}",
+                "datasourceValue": "${datasource}",
                 "targets": [
                     {
                         "expr": "rate(procstat_write_bytes_total{ident=~\"$ident\", search_string=~\"$search_string\"}[$__rate_interval])",

@@ -1,23 +1,27 @@
 ## Dameng
 
-Use the Categraf dameng plugin to collect metrics from the Dameng database.
+Use the Categraf DMDB input to connect to Dameng and execute monitoring SQL.
+The real-data test used DM8 and a 20,000-row workload.
+
+The input requires a Categraf build that includes the Dameng driver; a standard
+open-source image may not contain it.
 
 ## Collector configuration
-To collect additional metrics, add new [[metrics]] sections to define them.
+Put the instance connection in `conf/input.dmdb/dmdb.toml` and queries in
+`metric.toml`. Use a dedicated monitoring account with permission to read the
+dynamic performance and dictionary views referenced by the queries.
 
 ```toml
-# # collect interval
-# interval = 15
+interval = 15
 
 [[instances]]
 address = "172.0.0.1:5236"
-#username = ""
-#password = ""
-#max_open_connections = 5
-#max_idle_connections = 1
-# # interval = global.interval * interval_times
-# interval_times = 1
-#labels = { test="dmdb" }
+username = "monitor"
+password = "<password>"
+max_open_connections = 5
+max_idle_connections = 1
+interval_times = 1
+labels = { instance = "dmdb-01:5236" }
 
 [[metrics]]
 mesurement = "sessions"
@@ -30,7 +34,6 @@ SELECT state, COUNT(*) as cnt FROM v$sessions GROUP BY state
 
 [[metrics]]
 mesurement = "active"
-label_fields = [ "" ]
 metric_fields = [ "threads" ]
 timeout = "3s"
 request = '''
@@ -39,7 +42,6 @@ SELECT COUNT(*) as threads FROM v$threads
 
 [[metrics]]
 mesurement = "latches"
-label_fields = [ "" ]
 metric_fields = [ "threads" ]
 timeout = "3s"
 request = '''
@@ -74,11 +76,25 @@ select 'GB' as unit, name, sum(page_size)*sf_get_page_size as cache_size, sum(ra
 
 [[metrics]]
 mesurement = "tablespace"
-label_fields = [ "tablespace", "type", "unit" ]
-metric_fields = [ "size", "used", "free_size", "usage_rate" ]
+label_fields = [ "tablespace", "unit" ]
+metric_fields = [ "size", "used_size", "free_size", "usage_rate" ]
 timeout = "3s"
 request = '''
-SELECT 'MB' as unit ,Upper(F.TABLESPACE_NAME) as "tablespace", D.TOT_GROOTTE_MB as "size", (D.TOT_GROOTTE_MB - F.TOTAL_BYTES) as "used_size", To_char(Round(( D.TOT_GROOTTE_MB - F.TOTAL_BYTES ) / D.TOT_GROOTTE_MB * 100, 2), '990.99') as "usage_rate", F.TOTAL_BYTES "free_size" FROM (SELECT TABLESPACE_NAME, Round(Sum(BYTES) / ( 1024 * 1024 ), 2) TOTAL_BYTES, Round(Max(BYTES) / ( 1024 * 1024 ), 2) MAX_BYTES FROM SYS.DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) F, (SELECT DD.TABLESPACE_NAME, Round(Sum(DD.BYTES) / ( 1024 * 1024 ), 2) TOT_GROOTTE_MB FROM SYS.DBA_DATA_FILES DD GROUP BY DD.TABLESPACE_NAME) D WHERE D.TABLESPACE_NAME = F.TABLESPACE_NAME ORDER BY 2 desc;
+SELECT 'MB' as unit, Upper(F.TABLESPACE_NAME) as "tablespace",
+       D.TOT_GROOTTE_MB as "size",
+       (D.TOT_GROOTTE_MB - F.TOTAL_BYTES) as "used_size",
+       Round((D.TOT_GROOTTE_MB - F.TOTAL_BYTES) / D.TOT_GROOTTE_MB * 100, 2) as "usage_rate",
+       F.TOTAL_BYTES as "free_size"
+FROM (SELECT TABLESPACE_NAME, Round(Sum(BYTES)/(1024*1024), 2) TOTAL_BYTES
+      FROM SYS.DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) F,
+     (SELECT TABLESPACE_NAME, Round(Sum(BYTES)/(1024*1024), 2) TOT_GROOTTE_MB
+      FROM SYS.DBA_DATA_FILES GROUP BY TABLESPACE_NAME) D
+WHERE D.TABLESPACE_NAME = F.TABLESPACE_NAME;
 '''
 
 ```
+
+The DMDB input currently spells the field `mesurement`; keep that spelling.
+Validate with `./categraf --test --inputs dmdb` and check
+`dmdb_sessions_cnt`, `dmdb_mem_total_size`, and
+`dmdb_tablespace_used_size`.

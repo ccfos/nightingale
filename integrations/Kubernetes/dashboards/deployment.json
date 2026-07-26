@@ -801,7 +801,14 @@
                 ]
             },
             {
-                "custom": {},
+                "custom": {
+                    "showHeader": true,
+                    "filterable": true,
+                    "cellOptions": {
+                        "type": "none",
+                        "wrapText": false
+                    }
+                },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}",
                 "id": "f3485517-8c13-4b0e-b79f-491a239a9c02",
@@ -817,11 +824,11 @@
                 "maxPerRow": 4,
                 "name": "PersistentVolumeClaim",
                 "options": {
-                    "legend": {
-                        "displayMode": "list"
-                    },
                     "standardOptions": {
                         "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
                     },
                     "thresholds": {
                         "mode": "absolute",
@@ -848,10 +855,11 @@
                     {
                         "expr": "group by (persistentvolumeclaim, storageclass, node, volumename) (group by (persistentvolumeclaim) (label_replace(group by (target_name) (kube_resource_relationship{namespace=\"$namespace\", kind=\"Deployment\", name=\"$name\", target_kind=\"PersistentVolumeClaim\",cluster=~\"$cluster\"}>0), \"persistentvolumeclaim\", \"$1\", \"target_name\", \"(.*)\")) * on (persistentvolumeclaim) group_right() kube_persistentvolumeclaim_info{namespace=\"$namespace\",cluster=~\"$cluster\"}) * on (persistentvolumeclaim) group_left() kube_persistentvolumeclaim_status_phase{phase=\"Bound\", namespace=\"$namespace\",cluster=~\"$cluster\"}",
                         "legend": "__auto",
-                        "refId": "A"
+                        "refId": "A",
+                        "instant": true
                     }
                 ],
-                "type": "unknown",
+                "type": "table",
                 "version": "3.3.0",
                 "overrides": []
             },

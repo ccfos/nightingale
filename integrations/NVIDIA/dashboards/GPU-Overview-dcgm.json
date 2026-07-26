@@ -34,7 +34,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "fc086f5a-1221-4862-915c-c10db729055e",
                 "layout": {
@@ -96,7 +96,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "The total number of Nvidia GPU cards in the cluster",
                 "id": "05af5049-9878-4b85-8598-cba1f1381826",
                 "layout": {
@@ -155,7 +155,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "不同型号的卡TFLOPs值不同,按需修改。",
                 "id": "77a692c1-bbb3-481a-915d-3251ec077776",
                 "layout": {
@@ -209,7 +209,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "d2548617-96b1-4e12-875b-d97ec0506f71",
                 "layout": {
@@ -268,7 +268,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "2f4e1f43-e276-498e-b463-51b980f26a92",
                 "layout": {
@@ -322,7 +322,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "0dd3a516-2d3a-4b99-84c1-67940e767e85",
                 "layout": {
@@ -384,7 +384,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "包含集群所有非维护状态的gpu服务器",
                 "id": "10b5ac5f-baa2-473b-9c03-f98506f54f49",
                 "layout": {
@@ -453,7 +453,7 @@
                     "stack": "normal"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "fe0ae0db-6d17-4311-b524-ad9ec4774114",
                 "layout": {
@@ -547,7 +547,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "2864fec5-e46e-4e58-b86e-eee32a3ec03d",
                 "layout": {
@@ -615,7 +615,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "显卡内存时钟，可以理解为，是显卡内存存储数据的频率，高低影响显卡内存数据的吞吐量；\n波动频率的基本单位是赫兹，采千进位制；1兆赫相当于1000千赫（KHz），也就是10^6赫兹。",
                 "id": "91420e81-047d-4642-9f51-435f23fd8101",
                 "layout": {
@@ -691,7 +691,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "The used Nvidia GPU memory size.",
                 "id": "5aa09bc4-5206-41ec-8c6d-d569a769209f",
                 "layout": {
@@ -748,7 +748,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "d7f18ddd-3866-4ee1-b5cd-e92356d2f417",
                 "layout": {
@@ -808,7 +808,7 @@
                     "stack": "normal"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "008230b2-ac1c-4faf-952d-4246821e92d1",
                 "layout": {

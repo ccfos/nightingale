@@ -48,7 +48,7 @@ ignore_mount_points = ["/boot", "/var/lib/kubelet/pods"]
 oom_kill = 1
 nr_free_pages = 0
 nr_alloc_batch = 0
-...
+# 其他字段按需添加
 ```
 
 ## arp_package

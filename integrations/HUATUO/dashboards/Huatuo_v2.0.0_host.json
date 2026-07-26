@@ -9,14 +9,9 @@
       {
         "name": "datasource",
         "type": "datasource",
-        "definition": "prometheus"
-      },
-      {
-        "name": "datasource",
+        "definition": "prometheus",
         "label": "DataSource",
-        "type": "datasource",
-        "hide": false,
-        "definition": "prometheus"
+        "hide": false
       },
       {
         "name": "region",
@@ -274,7 +269,7 @@
         "targets": [
           {
             "refId": "A",
-            "expr": "$metric{host=~\"$host\",region=\"$region\"}",
+            "expr": "{__name__=~\"$metric\",host=~\"$host\",region=\"$region\"}",
             "legend": "{{host}}/{{container_host}}:{{container_type}}"
           }
         ],

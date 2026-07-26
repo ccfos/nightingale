@@ -63,24 +63,24 @@
                 "repeat": "Port",
                 "targets": [
                     {
-                        "expr": "delta(snmp_network_status_incoming{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m])/8",
+                        "expr": "rate(snmp_interface_incoming{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m]) * 8",
                         "legend": "{{ifname}}:incoming",
                         "refId": "A",
                         "step": 60
                     },
                     {
-                        "expr": "delta(snmp_network_status_outgoing{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m])/8",
+                        "expr": "rate(snmp_interface_outgoing{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m]) * 8",
                         "legend": "{{ifname}}:outgoing",
                         "refId": "B",
                         "step": 60
                     },
                     {
-                        "expr": "100*snmp_network_status_incoming_errors{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}/snmp_network_status_incoming_ucastpkts{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}",
+                        "expr": "100 * rate(snmp_interface_ifInErrors{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m]) / clamp_min(rate(snmp_interface_ifInUcastPkts{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m]), 0.001)",
                         "legend": "{{ifname}}:incoming Errors",
                         "refId": "C"
                     },
                     {
-                        "expr": "100*snmp_network_status_outgoing_errors{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}/snmp_network_status_incoming_ucastpkts{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}",
+                        "expr": "100 * rate(snmp_interface_ifOutErrors{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m]) / clamp_min(rate(snmp_interface_ifOutUcastPkts{ifname=~\"^${Port}$\",agent_host=\"${Host}\"}[${time_minute}m]), 0.001)",
                         "legend": "{{ifname}}:Outgoing Errors",
                         "refId": "D"
                     }
@@ -106,7 +106,7 @@
                     "cate": "prometheus",
                     "value": "${datasource}"
                 },
-                "definition": "label_values(snmp_icmp_up,agent_host)",
+                "definition": "label_values(snmp_up, agent_host)",
                 "name": "Host",
                 "reg": "",
                 "type": "query"
@@ -117,7 +117,7 @@
                     "cate": "prometheus",
                     "value": "${datasource}"
                 },
-                "definition": "label_values(snmp_network_status_ostatus{agent_host =\"$Host\"}, ifname)",
+                "definition": "label_values(snmp_interface_ifOperStatus{agent_host=\"$Host\"}, ifname)",
                 "multi": true,
                 "name": "Port",
                 "type": "query"
