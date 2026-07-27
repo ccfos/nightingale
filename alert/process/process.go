@@ -152,9 +152,11 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
 
-		// event processor
+		// event processor 变换段：relabel/event_update/event_drop 等改事件内容的处理器，
+		// 必须在屏蔽检测之前执行（屏蔽匹配依赖处理后的标签），每个评估周期都会运行；
+		// callback/ai_summary 等动作段处理器推迟到事件真正产生时执行，见 pushEventToQueue
 		eventCopy := event.DeepCopy()
-		event = dispatch.HandleEventPipeline(cachedRule.PipelineConfigs, eventCopy, event, dispatch.EventProcessorCache, p.ctx, cachedRule.Id, "alert_rule")
+		event = dispatch.HandleEventPipeline(cachedRule.PipelineConfigs, eventCopy, event, dispatch.EventProcessorCache, p.ctx, cachedRule.Id, "alert_rule", models.StageTransform)
 		if event == nil {
 			logger.Infof("alert_eval_%d datasource_%d is muted drop by pipeline event:%s", p.rule.Id, p.datasourceId, eventCopy.Hash)
 			continue
@@ -585,6 +587,19 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 }
 
 func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
+	// event processor 动作段：callback/ai_summary 等有外部副作用的处理器只在事件真正产生
+	// （落库/通知）时执行，pending 期、重复通知静默期、屏蔽期不再按评估频率空跑。
+	// 恢复事件保持现状，不走规则级 pipeline。
+	if !e.IsRecovered && p.rule != nil && len(p.rule.PipelineConfigs) > 0 {
+		if processed := dispatch.HandleEventPipeline(p.rule.PipelineConfigs, e, e, dispatch.EventProcessorCache, p.ctx, p.rule.Id, "alert_rule", models.StageAction); processed != nil {
+			e = processed
+		} else {
+			// 丢弃事件属于变换段（event_drop）的职责，动作段不允许丢事件：
+			// 走到这里事件已通过全部产生闸门，保底继续推送
+			logger.Warningf("alert_eval_%d datasource_%d action stage dropped event unexpectedly, push anyway, event:%s", p.rule.Id, p.datasourceId, e.Hash)
+		}
+	}
+
 	if !e.IsRecovered {
 		// 只屏蔽通知的事件不算作已发送，保留原 LastSentTime，
 		// 使解除屏蔽后按真正的上次发送时间计算重复通知间隔。

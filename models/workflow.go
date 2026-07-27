@@ -69,16 +69,17 @@ type WorkflowResult struct {
 
 // NodeExecutionResult 节点执行结果
 type NodeExecutionResult struct {
-	NodeID      string `json:"node_id"`
-	NodeName    string `json:"node_name"`
-	NodeType    string `json:"node_type"`
-	Status      string `json:"status"` // success, failed, skipped
-	Message     string `json:"message"`
-	StartedAt   int64  `json:"started_at"`
-	FinishedAt  int64  `json:"finished_at"`
-	DurationMs  int64  `json:"duration_ms"`
-	Error       string `json:"error,omitempty"`
-	BranchIndex *int   `json:"branch_index,omitempty"` // 条件节点的分支选择
+	NodeID         string `json:"node_id"`
+	NodeName       string `json:"node_name"`
+	NodeType       string `json:"node_type"`
+	Status         string `json:"status"`                     // success, failed, skipped
+	SkippedByStage bool   `json:"skipped_by_stage,omitempty"` // 因分段执行被跳过（区别于节点禁用），合并记录时用真实结果替换
+	Message        string `json:"message"`
+	StartedAt      int64  `json:"started_at"`
+	FinishedAt     int64  `json:"finished_at"`
+	DurationMs     int64  `json:"duration_ms"`
+	Error          string `json:"error,omitempty"`
+	BranchIndex    *int   `json:"branch_index,omitempty"` // 条件节点的分支选择
 }
 
 // 触发模式常量
@@ -93,10 +94,29 @@ const (
 	UseCaseAlertRule     = "alert_rule"
 )
 
+// 执行记录落库策略
+const (
+	// RecordOnDropOrFail 变换段专用：正常执行不落记录（每评估周期都执行，落库会使记录表
+	// 按评估频率增长；真实节点结果暂存事件上 TransformNodeResults，事件产生时随动作段合并落库），
+	// 仅事件被丢弃或有节点失败时落一条留痕——这是事件不会产生、合并记录无从落的场景，
+	// drop 动作必须在这里可见；引擎侧按 pipeline+事件哈希限流，防止持续被 drop 的事件刷表。
+	RecordOnDropOrFail = "drop_or_fail"
+)
+
 // WorkflowTriggerContext 工作流触发上下文
 type WorkflowTriggerContext struct {
 	// 触发模式
 	Mode string `json:"mode"`
+
+	// 执行段过滤：为空执行全部节点；StageTransform/StageAction 仅执行对应段的节点（分支节点两段都执行）
+	Stage ProcessorStage `json:"stage,omitempty"`
+
+	// 执行记录落库策略：为空总是落库；RecordOnDropOrFail 仅事件被丢弃或节点失败时落库（限流）
+	RecordPolicy string `json:"record_policy,omitempty"`
+
+	// 前一段（变换段）的真实节点结果：动作段执行时传入，
+	// 引擎会把本段被 stage 跳过的占位结果替换为这些真实结果，合并成完整记录
+	PriorNodeResults []*NodeExecutionResult `json:"-"`
 
 	// 触发者
 	TriggerBy string `json:"trigger_by"`
@@ -130,6 +150,9 @@ type WorkflowContext struct {
 	// 外部注入的父 context，用于支持调用方取消（如 assistant message cancel）
 	// 为 nil 时 Process 内部使用 context.Background() 作为父
 	ParentCtx context.Context `json:"-"`
+
+	// 本次执行的执行段过滤（来自 WorkflowTriggerContext.Stage），运行时状态不序列化
+	Stage ProcessorStage `json:"-"`
 }
 
 // StreamChunk 类型常量

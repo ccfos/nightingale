@@ -75,6 +75,9 @@ type AlertCurEvent struct {
 	// 与真实的 LastSentTime / NotifyCurNumber 解耦，使真实通知状态全程冻结、解除屏蔽后能正确恢复通知。
 	LastMutedPersistTime int64 `json:"-" gorm:"-"` // 运行时：上次「只屏蔽通知」落库快照的评估时间（影子 LastSentTime）
 	MutedPersistNumber   int   `json:"-" gorm:"-"` // 运行时：本次屏蔽期内已落库快照数（影子 NotifyCurNumber），用于对齐 notify_max_number
+	// 运行时：本评估周期变换段（relabel 等）的真实节点结果，按 pipeline id 暂存，
+	// 事件真正产生时随动作段合并成一条完整执行记录落库；变换段自身不落库
+	TransformNodeResults map[int64][]*NodeExecutionResult `json:"-" gorm:"-"`
 	FirstTriggerTime   int64               `json:"first_trigger_time"`                  // 连续告警的首次告警时间
 	ExtraConfig        interface{}         `json:"extra_config" gorm:"-"`
 	Status             int                 `json:"status" gorm:"-"`

@@ -185,7 +185,8 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			eventCopy.NotifyRuleId = notifyRuleId
 			eventCopy.NotifyRuleName = notifyRule.Name
 
-			eventCopy = HandleEventPipeline(notifyRule.PipelineConfigs, eventOrigin, eventCopy, e.eventProcessorCache, e.ctx, notifyRuleId, "notify_rule")
+			// notify_rule 只在事件产生后运行，完整执行全部节点
+			eventCopy = HandleEventPipeline(notifyRule.PipelineConfigs, eventOrigin, eventCopy, e.eventProcessorCache, e.ctx, notifyRuleId, "notify_rule", "")
 			if eventCopy == nil {
 				continue
 			}
@@ -236,8 +237,18 @@ func shouldSkipNotify(ctx *ctx.Context, event *models.AlertCurEvent, notifyRuleI
 	return false
 }
 
-func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, event *models.AlertCurEvent, eventProcessorCache *memsto.EventProcessorCacheType, ctx *ctx.Context, id int64, from string) *models.AlertCurEvent {
+// HandleEventPipeline 执行事件处理 pipeline。
+// stage 为空表示完整执行（notify_rule 等只在事件产生后运行的场景）；
+// 告警规则场景分两段：StageTransform 在评估阶段、屏蔽检测前执行（屏蔽匹配依赖处理后的标签，每周期运行），
+// StageAction 仅在事件真正产生（落库/通知）时执行，避免 callback/ai_summary 等外部副作用按评估频率空跑。
+func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, event *models.AlertCurEvent, eventProcessorCache *memsto.EventProcessorCacheType, ctx *ctx.Context, id int64, from string, stage models.ProcessorStage) *models.AlertCurEvent {
 	workflowEngine := engine.NewWorkflowEngine(ctx)
+
+	// 变换段每个评估周期都会执行，流水线级日志降为 debug，避免按评估频率刷日志
+	pipeLogf := logger.Infof
+	if stage == models.StageTransform {
+		pipeLogf = logger.Debugf
+	}
 
 	for _, pipelineConfig := range pipelineConfigs {
 		if !pipelineConfig.Enable {
@@ -251,12 +262,12 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 		}
 
 		if eventPipeline.Disabled {
-			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, event pipeline is disabled, event: %s", from, id, pipelineConfig.PipelineId, event.Hash)
+			pipeLogf("processor_by_%s_id:%d pipeline_id:%d, event pipeline is disabled, event: %s", from, id, pipelineConfig.PipelineId, event.Hash)
 			continue
 		}
 
 		if !PipelineApplicable(eventPipeline, event) {
-			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, event pipeline not applicable, event: %s", from, id, pipelineConfig.PipelineId, event.Hash)
+			pipeLogf("processor_by_%s_id:%d pipeline_id:%d, event pipeline not applicable, event: %s", from, id, pipelineConfig.PipelineId, event.Hash)
 			continue
 		}
 
@@ -264,6 +275,18 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 		triggerCtx := &models.WorkflowTriggerContext{
 			Mode:      models.TriggerModeEvent,
 			TriggerBy: from + "_" + strconv.FormatInt(id, 10),
+			Stage:     stage,
+		}
+		switch stage {
+		case models.StageTransform:
+			// 变换段按评估频率执行，正常执行不落记录（否则记录表按评估频率增长），
+			// 真实节点结果暂存事件上、事件产生时随动作段合并落库；
+			// 仅事件被 drop 或节点失败时落一条留痕（事件不会产生、合并记录无从落），引擎侧限流
+			triggerCtx.RecordPolicy = models.RecordOnDropOrFail
+		case models.StageAction:
+			// 动作段在事件真正产生时执行：带上同一评估周期变换段的真实节点结果，
+			// 引擎合并两段结果后落一条完整记录（一个产生的事件对应一条记录）
+			triggerCtx.PriorNodeResults = event.TransformNodeResults[pipelineConfig.PipelineId]
 		}
 
 		resultEvent, result, err := workflowEngine.Execute(eventPipeline, event, triggerCtx)
@@ -281,7 +304,13 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 		}
 
 		event = resultEvent
-		logger.Infof("processor_by_%s_id:%d pipeline_id:%d, pipeline executed, status:%s, message:%s", from, id, pipelineConfig.PipelineId, result.Status, result.Message)
+		if stage == models.StageTransform {
+			if event.TransformNodeResults == nil {
+				event.TransformNodeResults = make(map[int64][]*models.NodeExecutionResult)
+			}
+			event.TransformNodeResults[pipelineConfig.PipelineId] = result.NodeResults
+		}
+		pipeLogf("processor_by_%s_id:%d pipeline_id:%d, pipeline executed, status:%s, message:%s", from, id, pipelineConfig.PipelineId, result.Status, result.Message)
 	}
 
 	event.FE2DB()

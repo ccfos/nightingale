@@ -44,6 +44,11 @@ func (c *CallbackConfig) Init(settings interface{}) (models.Processor, error) {
 	return result, err
 }
 
+// Stage 动作段：有真实外部副作用（HTTP 回调），只在事件真正产生时执行
+func (c *CallbackConfig) Stage() models.ProcessorStage {
+	return models.StageAction
+}
+
 func (c *CallbackConfig) Process(ctx *ctx.Context, wfCtx *models.WorkflowContext) (*models.WorkflowContext, string, error) {
 	event := wfCtx.Event
 	if c.Client == nil {

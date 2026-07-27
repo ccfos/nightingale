@@ -67,6 +67,11 @@ func (c *AISummaryConfig) Init(settings interface{}) (models.Processor, error) {
 	return result, err
 }
 
+// Stage 动作段：每次执行都是真实 LLM 调用，只在事件真正产生时执行
+func (c *AISummaryConfig) Stage() models.ProcessorStage {
+	return models.StageAction
+}
+
 func (c *AISummaryConfig) Process(ctx *ctx.Context, wfCtx *models.WorkflowContext) (*models.WorkflowContext, string, error) {
 	event := wfCtx.Event
 
