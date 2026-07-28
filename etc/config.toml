@@ -159,6 +159,8 @@ AlertDetail = true
 # fits single-instance center deployment; with multiple center replicas each
 # replica would hold a fragment of the data, disable this and use an
 # external TSDB instead
+# NOTE: this section is handled by the center process only. n9e-edge /
+# n9e-alert / n9e-pushgw read the same etc directory but ignore it
 Enable = true
 # data directory
 Dir = "data/tsdb"

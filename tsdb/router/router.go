@@ -5,6 +5,8 @@
 package router
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -23,6 +25,7 @@ import (
 	"github.com/prometheus/prometheus/model/timestamp"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/prometheus/prometheus/promql/parser"
+	"github.com/prometheus/prometheus/storage"
 )
 
 // same defaults as prometheus web/api/v1: effectively unbounded time range
@@ -31,18 +34,48 @@ var (
 	maxTime = time.Unix(math.MaxInt64/1000-62135596801, 0).UTC()
 )
 
+const (
+	// maxWriteBodyBytes caps a single remote write request, both the
+	// compressed body and the snappy-decoded payload. The snappy header can
+	// declare up to 4GiB, so without this a few dozen bytes are enough to make
+	// the process allocate itself to death. Same value as the default of
+	// Pushgw.ProxyMaxBodyBytes, which is orders of magnitude above what the
+	// pushgw writer actually sends (QueuePopSize series per batch).
+	maxWriteBodyBytes = 32 << 20
+
+	// maxWriteConcurrency bounds how many remote write requests are decoded and
+	// appended at the same time, so peak memory stays bounded regardless of how
+	// many clients push concurrently. Extra requests queue instead of being
+	// rejected: the pushgw writer treats 4xx as success and would drop the
+	// samples (see pushgw/writer.Post).
+	maxWriteConcurrency = 64
+
+	// defaultConcurrency is a fallback for a Cfg that never went through
+	// tconf.EmbeddedTSDB.PreCheck, so the semaphores below never end up
+	// unbuffered (which would block every request until its client gives up).
+	defaultConcurrency = 20
+)
+
 type Router struct {
 	inst *tsdb.Instance
 	// scanSem bounds the concurrency of the endpoints that scan the index
 	// directly (series/labels/label values, and delete when enabled),
 	// bypassing the promql engine's ActiveQueryTracker.
 	scanSem chan struct{}
+	// writeSem bounds the concurrency of the remote write endpoint.
+	writeSem chan struct{}
 }
 
 func New(inst *tsdb.Instance) *Router {
+	scanConcurrency := inst.Cfg.QueryMaxConcurrency
+	if scanConcurrency <= 0 {
+		scanConcurrency = defaultConcurrency
+	}
+
 	return &Router{
-		inst:    inst,
-		scanSem: make(chan struct{}, inst.Cfg.QueryMaxConcurrency),
+		inst:     inst,
+		scanSem:  make(chan struct{}, scanConcurrency),
+		writeSem: make(chan struct{}, maxWriteConcurrency),
 	}
 }
 
@@ -55,9 +88,9 @@ func (rt *Router) Config(r *gin.Engine) {
 	}
 
 	// prometheus remote write receiver. pushgw forwards samples here through
-	// an auto-injected [[Pushgw.Writers]] entry (see conf.InitConfig), and
-	// external producers (categraf/prometheus agent) can also write directly
-	g.POST("/api/v1/write", rt.remoteWrite)
+	// an auto-injected [[Pushgw.Writers]] entry (see conf.InitCenterConfig),
+	// and external producers (categraf/prometheus agent) can also write directly
+	g.POST("/api/v1/write", rt.limitWrite, rt.remoteWrite)
 
 	g.GET("/api/v1/query", rt.query)
 	g.POST("/api/v1/query", rt.query)
@@ -83,20 +116,49 @@ func (rt *Router) Config(r *gin.Engine) {
 // limitScan queues the request until a concurrency slot frees up, giving up
 // when the client goes away.
 func (rt *Router) limitScan(c *gin.Context) {
+	rt.limit(c, rt.scanSem, "query")
+}
+
+// limitWrite is limitScan for the remote write endpoint.
+func (rt *Router) limitWrite(c *gin.Context) {
+	rt.limit(c, rt.writeSem, "write")
+}
+
+func (rt *Router) limit(c *gin.Context, sem chan struct{}, kind string) {
 	select {
-	case rt.scanSem <- struct{}{}:
-		defer func() { <-rt.scanSem }()
+	case sem <- struct{}{}:
+		defer func() { <-sem }()
 		c.Next()
 	case <-c.Request.Context().Done():
-		respondError(c, http.StatusServiceUnavailable, "unavailable", "canceled while waiting for a query slot")
+		respondError(c, http.StatusServiceUnavailable, "unavailable", "canceled while waiting for a "+kind+" slot")
 		c.Abort()
 	}
 }
 
 func (rt *Router) remoteWrite(c *gin.Context) {
-	compressed, err := io.ReadAll(c.Request.Body)
+	compressed, err := io.ReadAll(http.MaxBytesReader(c.Writer, c.Request.Body, maxWriteBodyBytes))
 	if err != nil {
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			respondError(c, http.StatusRequestEntityTooLarge, "bad_data",
+				fmt.Sprintf("request body exceeds the %d bytes limit", maxWriteBodyBytes))
+			return
+		}
 		respondError(c, http.StatusBadRequest, "bad_data", "failed to read body: "+err.Error())
+		return
+	}
+
+	// check the length declared in the snappy header before decoding, otherwise
+	// a tiny crafted body makes snappy.Decode allocate up to 4GiB in one shot
+	decodedLen, err := snappy.DecodedLen(compressed)
+	if err != nil {
+		respondError(c, http.StatusBadRequest, "bad_data", "failed to read snappy header: "+err.Error())
+		return
+	}
+
+	if decodedLen > maxWriteBodyBytes {
+		respondError(c, http.StatusRequestEntityTooLarge, "bad_data",
+			fmt.Sprintf("decoded body size %d exceeds the %d bytes limit", decodedLen, maxWriteBodyBytes))
 		return
 	}
 
@@ -234,6 +296,15 @@ func (rt *Router) series(c *gin.Context) {
 	}
 	defer q.Close()
 
+	// Func "series" tells the block querier this is a metadata lookup, so it
+	// resolves labels from the index without reading any chunk (same as
+	// prometheus web/api/v1)
+	hints := &storage.SelectHints{
+		Start: timestamp.FromTime(start),
+		End:   timestamp.FromTime(end),
+		Func:  "series",
+	}
+
 	seen := make(map[string]labels.Labels)
 	for _, sel := range selectors {
 		matchers, err := parser.ParseMetricSelector(sel)
@@ -242,7 +313,7 @@ func (rt *Router) series(c *gin.Context) {
 			return
 		}
 
-		set := q.Select(false, nil, matchers...)
+		set := q.Select(false, hints, matchers...)
 		for set.Next() {
 			lset := set.At().Labels()
 			seen[lset.String()] = lset

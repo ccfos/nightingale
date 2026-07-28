@@ -648,9 +648,16 @@ const EmbeddedTSDBIdentifier = "n9e-embedded-tsdb"
 
 const EmbeddedTSDBName = "embedded-tsdb"
 
+// embeddedTSDBTsdbType 必须与前端时序库类型下拉框的取值、以及
+// center/router.DatasourceTypePrometheus 保持一致（大小写敏感），否则按该字段
+// 分发的功能（如删除序列接口）会认不出这个数据源。
+const embeddedTSDBTsdbType = "Prometheus"
+
+const embeddedTSDBTsdbTypeKey = "prometheus.tsdb_type"
+
 // InitEmbeddedTSDBDatasource ensures a prometheus datasource pointing at the
 // embedded tsdb query endpoints exists. Idempotent: creates the record on
-// first start, updates url/auth if they drift (e.g. server ip changed).
+// first start, updates url/auth/tsdb_type if they drift (e.g. server ip changed).
 // Creation is skipped when other enabled prometheus datasources already
 // exist, so setups with an external TSDB don't get a surprise datasource;
 // once created though, it is kept up to date even if external datasources
@@ -678,16 +685,21 @@ func InitEmbeddedTSDBDatasource(ctx *ctx.Context, url, basicAuthUser, basicAuthP
 			return
 		}
 
-		if ds.HTTPJson.Url == url && ds.AuthJson == auth && ds.HTTPJson.TLS.SkipTlsVerify == skipTLSVerify {
+		if ds.HTTPJson.Url == url && ds.AuthJson == auth && ds.HTTPJson.TLS.SkipTlsVerify == skipTLSVerify &&
+			ds.SettingsJson[embeddedTSDBTsdbTypeKey] == embeddedTSDBTsdbType {
 			return
 		}
 
 		ds.HTTPJson.Url = url
 		ds.HTTPJson.TLS.SkipTlsVerify = skipTLSVerify
 		ds.AuthJson = auth
+		if ds.SettingsJson == nil {
+			ds.SettingsJson = make(map[string]interface{})
+		}
+		ds.SettingsJson[embeddedTSDBTsdbTypeKey] = embeddedTSDBTsdbType
 		ds.UpdatedAt = now
 		ds.UpdatedBy = "system"
-		if err := ds.Update(ctx, "http", "auth", "updated_at", "updated_by"); err != nil {
+		if err := ds.Update(ctx, "settings", "http", "auth", "updated_at", "updated_by"); err != nil {
 			logger.Warningf("InitEmbeddedTSDBDatasource update failed: %v", err)
 			return
 		}
@@ -728,7 +740,7 @@ func InitEmbeddedTSDBDatasource(ctx *ctx.Context, url, basicAuthUser, basicAuthP
 		Category:       "timeseries",
 		ClusterName:    "default",
 		SettingsJson: map[string]interface{}{
-			"prometheus.tsdb_type": "prometheus",
+			embeddedTSDBTsdbTypeKey: embeddedTSDBTsdbType,
 		},
 		HTTPJson:  HTTP{Url: url, Timeout: 10000, DialTimeout: 3000, MaxIdleConnsPerHost: 100, TLS: TLS{SkipTlsVerify: skipTLSVerify}},
 		AuthJson:  auth,

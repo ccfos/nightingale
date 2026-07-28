@@ -2,8 +2,10 @@ package tsdb_test
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -216,6 +218,57 @@ func TestBasicAuthOnWrite(t *testing.T) {
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("write with auth should be 204, got %d", rec.Code)
+	}
+}
+
+// filler streams n bytes without materializing them, so the oversized body
+// test doesn't have to allocate the payload up front.
+type filler struct{ remaining int }
+
+func (f *filler) Read(p []byte) (int, error) {
+	if f.remaining <= 0 {
+		return 0, io.EOF
+	}
+	n := len(p)
+	if n > f.remaining {
+		n = f.remaining
+	}
+	for i := 0; i < n; i++ {
+		p[i] = 'x'
+	}
+	f.remaining -= n
+	return n, nil
+}
+
+func TestRemoteWriteSizeLimits(t *testing.T) {
+	_, r := newTestRouter(t, tconf.EmbeddedTSDB{Enable: true, Dir: t.TempDir()})
+
+	post := func(body io.Reader) int {
+		req := httptest.NewRequest("POST", "/prometheus/api/v1/write", body)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+		return rec.Code
+	}
+
+	// snappy header declares 2GiB while the body is 2 bytes: without the
+	// pre-check snappy.Decode would allocate 2GiB in one shot
+	var hdr [binary.MaxVarintLen64]byte
+	n := binary.PutUvarint(hdr[:], 2<<30)
+	if code := post(bytes.NewReader(append(hdr[:n], 0x00))); code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("snappy bomb should be 413, got %d", code)
+	}
+
+	// the compressed body itself is over the limit
+	if code := post(&filler{remaining: 33 << 20}); code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("oversized body should be 413, got %d", code)
+	}
+
+	// a normal write still goes through
+	if code := remoteWrite(t, r, []prompb.TimeSeries{{
+		Labels:  []prompb.Label{{Name: "__name__", Value: "size_limit_metric"}},
+		Samples: []prompb.Sample{{Timestamp: time.Now().UnixMilli(), Value: 1}},
+	}}); code != http.StatusNoContent {
+		t.Fatalf("normal write status: %d", code)
 	}
 }
 

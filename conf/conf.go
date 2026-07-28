@@ -55,7 +55,17 @@ type Output struct {
 	AgtdPort int
 }
 
+// InitConfig 供 edge / alert / pushgw 等非 center 进程使用，会忽略 [EmbeddedTSDB]。
 func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {
+	return initConfig(configDir, cryptoKey, false)
+}
+
+// InitCenterConfig 供 center 进程使用，只有它会处理 [EmbeddedTSDB]。
+func InitCenterConfig(configDir, cryptoKey string) (*ConfigType, error) {
+	return initConfig(configDir, cryptoKey, true)
+}
+
+func initConfig(configDir, cryptoKey string, isCenter bool) (*ConfigType, error) {
 	var config = new(ConfigType)
 
 	if err := cfg.LoadConfigByDir(configDir, config); err != nil {
@@ -64,6 +74,16 @@ func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {
 
 	if err := config.EmbeddedTSDB.PreCheck(); err != nil {
 		return nil, err
+	}
+
+	// 内置 tsdb 的 remote write 端点只有 center 会挂载（见 center.Initialize 里的
+	// tsdb/router），而 edge / alert / pushgw 默认也读 etc 目录、会读到同一份
+	// config.toml。它们若也注入下面这个 writer，样本会被打到自己端口上不存在的
+	// 路径，404 又被 writer 当成功（见 pushgw/writer.Post 对 4xx 的处理），
+	// 结果是全部样本静默丢弃。所以非 center 进程直接把开关关掉并给出提示。
+	if config.EmbeddedTSDB.Enable && !isCenter {
+		fmt.Println("Warning! [EmbeddedTSDB] only takes effect in n9e center, ignored by this process")
+		config.EmbeddedTSDB.Enable = false
 	}
 
 	// 内置 tsdb 作为一个普通 remote write 后端接入 pushgw 转发链路：在

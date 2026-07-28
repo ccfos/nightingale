@@ -45,7 +45,7 @@ import (
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
-	config, err := conf.InitConfig(configDir, cryptoKey)
+	config, err := conf.InitCenterConfig(configDir, cryptoKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init config: %v", err)
 	}
