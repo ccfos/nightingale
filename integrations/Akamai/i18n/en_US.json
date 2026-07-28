@@ -1,9 +1,18 @@
 {
+    "1) 从告警标签取 cp_code，在 Akamai Control Center 的 Traffic Reports 里按响应码下钻，确认是集中在某个 5xx 码还是分散；2) 504/502 集中的先查源站健康度与回源链路，直接 curl 源站验证；3) 500 集中的检查最近是否发布过 Property 配置（重定向规则、EdgeWorkers 脚本），必要时回滚到上一个版本；4) 结合回源 5xx 指标判断故障在边缘还是源站，边缘侧问题需提工单给 Akamai。": "1) Take cp_code from the alert labels and drill down by response code in Traffic Reports in the Akamai Control Center to see whether the errors concentrate on one 5xx code or are spread out; 2) Concentrated 504/502 point to the origin: check origin health and the origin fetch path by curl-ing the origin directly; 3) Concentrated 500 suggests a recent Property configuration release (redirect rules, EdgeWorkers scripts); roll back to the previous version if needed; 4) Compare against the origin 5xx metric to decide whether the fault is at the edge or the origin; edge-side problems need a ticket to Akamai.",
+    "1) 从告警标签取 cp_code，在 Control Center 的 Offload 报表里查看回源请求集中在哪些 URL；2) 最常见原因是源站返回了 Cache-Control: no-store/private 或没有返回缓存头，检查源站响应头；3) URL 上带随机查询参数导致缓存碎片的，在 Property 里配置忽略无关查询参数（Cache Key 归一化）；4) 确认缓存规则正确后观察卸载率是否回升，仍低则检查内容是否本身就不可缓存（大量个性化动态请求）。": "1) Take cp_code from the alert labels and use the Offload report in Control Center to see which URLs the origin fetches concentrate on; 2) The most common cause is the origin returning Cache-Control: no-store/private or no cache headers at all; check the origin response headers; 3) If random query parameters are fragmenting the cache, configure the Property to ignore irrelevant query parameters (cache key normalisation); 4) Once the cache rules are correct, watch offload recover; if it stays low, check whether the content is inherently uncacheable (heavily personalised dynamic requests).",
+    "1) 从告警标签取 cp_code，在 Traffic Reports 里按 URL 下钻，看 4xx 集中在哪些路径；2) 集中在少数路径的多为资源下线或路径变更，联系业务方确认并配置重定向；3) 403 集中的检查防盗链、Token 鉴权、地域封禁规则是否刚调整过；4) 路径随机且量大的判定为扫描，在 Akamai WAF 侧配置速率限制规则。": "1) Take cp_code from the alert labels and drill down by URL in Traffic Reports to see which paths the 4xx concentrate on; 2) Concentration on a few paths usually means resources were retired or moved; confirm with the business owner and configure redirects; 3) Concentrated 403 means hotlink protection, token authentication, or geo-blocking rules were just changed; 4) Random paths at high volume indicate scanning; configure rate limiting rules in the Akamai WAF.",
+    "1) 从告警标签取 cp_code，直接对源站地址执行 curl -sI 复现，确认源站是否真的在报错；2) 查看源站的应用日志与负载，回源流量突增打垮源站是常见场景；3) 源站正常但回源报错的，检查回源 Host 头、源站的 IP 白名单是否漏放 Akamai 回源段；4) 应急可临时调大缓存 TTL 或开启 Akamai 的源站故障降级（Site Failover），先保住用户可用性。": "1) Take cp_code from the alert labels and reproduce with curl -sI against the origin address to confirm the origin really is erroring; 2) Check the origin application logs and load; a surge of origin traffic overwhelming the origin is a common scenario; 3) If the origin is healthy but fetches still fail, check the origin Host header and whether the origin's IP allowlist is missing Akamai's origin fetch ranges; 4) As an emergency measure raise the cache TTL or enable Akamai's Site Failover to preserve availability for users.",
+    "Akamai 回源 5xx 占比过高": "Akamai origin 5xx ratio too high",
+    "Akamai 缓存卸载率过低": "Akamai cache offload too low",
+    "Akamai 边缘 4xx 占比过高": "Akamai edge 4xx ratio too high",
+    "Akamai 边缘 5xx 占比过高": "Akamai edge 5xx ratio too high",
     "命中缓存请求与总请求占比": "Cache Hit Request Ratio",
     "响应状态码占比": "Response Status Code Ratio",
     "响应状态码请求数": "Requests by Response Status Code",
     "回源响应状态码占比": "Origin Response Status Code Ratio",
     "回源请求/秒": "Origin Requests/s",
+    "回源请求中 5xx 占比超过 1%，源站正在大量报错。缓存能挡住一部分影响，但缓存过期后用户会直接受影响。": "More than 1% of origin fetches returned 5xx, so the origin is erroring heavily. Caching absorbs some of the impact, but users will be affected once the cache expires.",
     "回源请求响应状态码数": "Origin Requests by Response Status Code",
     "域名 (Domain=$Domain)": "Domain (Domain=$Domain)",
     "域名使用带宽": "Domain Bandwidth",
@@ -30,5 +39,8 @@
     "最大请求/秒 ": "Max Requests/s",
     "缓存与总带宽占比": "Cached Bandwidth Ratio",
     "详情": "Details",
-    "请求(CpCode=$CpCode)": "Requests (CpCode=$CpCode)"
+    "请求(CpCode=$CpCode)": "Requests (CpCode=$CpCode)",
+    "请求卸载率（边缘直接命中、无需回源的比例）低于 80%，回源流量偏高，源站压力与带宽成本都会上升。": "The request offload ratio (the share served straight from the edge without an origin fetch) has fallen below 80%. Origin traffic is elevated, raising both origin load and bandwidth cost.",
+    "边缘节点返回 4xx 的请求占比超过 10%，可能是资源被删、鉴权配置变更，也可能是恶意扫描造成大量 404。": "More than 10% of requests served by edge nodes returned 4xx. This may mean resources were deleted or authentication configuration changed, or it may be malicious scanning generating large numbers of 404s.",
+    "边缘节点返回 5xx 的请求占比超过 1%，说明相当比例的用户请求已经失败，通常由回源失败或边缘配置错误引起。": "More than 1% of requests served by edge nodes returned 5xx, so a meaningful share of user requests is already failing. This is usually caused by failed origin fetches or an edge configuration error."
 }
