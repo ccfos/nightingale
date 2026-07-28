@@ -163,7 +163,7 @@
         ],
         "annotations": {
             "summary": "容器的 HEALTHCHECK 已连续 3 分钟返回失败，容器进程虽在但对外不可用，编排层可能正准备重建它。",
-            "action": "1) 从告警标签取 container_name，执行 docker inspect --format '{{json .State.Health}}' \u003c容器名\u003e 看最近几次健康检查的输出；2) 执行 docker logs --tail 200 \u003c容器名\u003e 定位应用报错；3) 按健康检查命令手工复现（docker exec \u003c容器名\u003e \u003c健康检查命令\u003e）确认是应用故障还是检查命令本身写错；4) 应用故障且短期修不好时，先把该实例从上游负载均衡摘除再排查。",
+            "action": "1) 从告警标签取 container_name，执行 docker inspect \u003c容器名\u003e，看输出中 State.Health 字段里最近几次健康检查的输出；2) 执行 docker logs --tail 200 \u003c容器名\u003e 定位应用报错；3) 按健康检查命令手工复现（docker exec \u003c容器名\u003e \u003c健康检查命令\u003e）确认是应用故障还是检查命令本身写错；4) 应用故障且短期修不好时，先把该实例从上游负载均衡摘除再排查。",
             "runbook_url": "https://docs.docker.com/reference/dockerfile/"
         },
         "extra_config": null,
@@ -337,7 +337,7 @@
         ],
         "annotations": {
             "summary": "容器 10 分钟内重启超过 3 次，已进入崩溃重启循环，服务实际处于不可用状态且会持续消耗宿主机资源。",
-            "action": "1) 从告警标签取 container_name，执行 docker logs --tail 200 \u003c容器名\u003e 看每次退出前的报错；2) 执行 docker inspect --format '{{.State.ExitCode}}' \u003c容器名\u003e 看退出码（137 通常是 OOM 或被 kill，1/2 多为应用自身启动失败）；3) 配置或依赖问题（连不上数据库、配置文件缺失）先修复依赖再拉起；4) 为避免持续刷日志占满磁盘，定位期间可先 docker stop 该容器并从负载均衡摘除。",
+            "action": "1) 从告警标签取 container_name，执行 docker logs --tail 200 \u003c容器名\u003e 看每次退出前的报错；2) 执行 docker inspect \u003c容器名\u003e，看输出中 State.ExitCode 退出码（137 通常是 OOM 或被 kill，1/2 多为应用自身启动失败）；3) 配置或依赖问题（连不上数据库、配置文件缺失）先修复依赖再拉起；4) 为避免持续刷日志占满磁盘，定位期间可先 docker stop 该容器并从负载均衡摘除。",
             "runbook_url": "https://docs.docker.com/engine/containers/start-containers-automatically/"
         },
         "extra_config": null,
