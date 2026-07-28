@@ -108,6 +108,13 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 			var dss []datasource.DatasourceInfo
 			for _, item := range items {
 
+				// disabled 数据源不建立运行时查询 client：既符合「禁用」语义，也避免导入的待补充鉴权
+				// (pending_auth) 源每 2s 反复 InitClient，堆积连接/goroutine/DB 句柄。排除后
+				// 它们不进 PutDatasources 的 validIds，已注册的会被一并从缓存移除。
+				if item.Status == "disabled" {
+					continue
+				}
+
 				if item.PluginType == "prometheus" && item.IsDefault {
 					atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
 					foundDefaultDatasource = true
