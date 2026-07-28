@@ -330,6 +330,12 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		// 这里取证, 不能凭训练记忆答 — 否则会编 Severity=Critical / Authorization
 		// Bearer / ping_result_code / [[inputs.xxx]] 等不存在的标识符。
 		"search_n9e_docs",
+		// 代码语料检索（只读，仅 qa_code_embed 构建有内容，缺语料时工具自报降级）。
+		// 与 search_n9e_docs 同一动机：文档没覆盖到的具体标识符要能从源码取证。
+		// 挂进基线而不是只留给 doc-qa 的另一个原因是"能力自述"——工具表里没有它
+		// 时，模型面对"你能读源码吗"会照着 read_file 的描述斩钉截铁否认，而实际
+		// 上语料就在盘上，用户看到的是产品在说假话。
+		"list_code", "search_code", "read_code",
 		// 写操作（创建/编辑）。历史上通用路径不暴露写工具——"没有 preflight 保护，
 		// 缺 busi_group_id 会误建"。该约束已由工具级缺参门解除（agent-routing-
 		// contraction §3）：create/import 工具缺业务组(通知规则为团队)时返回 input

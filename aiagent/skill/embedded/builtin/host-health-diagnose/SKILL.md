@@ -1,6 +1,7 @@
 ---
 name: host-health-diagnose
-description: Help the user determine whether a machine is truly down / the agent is hung / the network is flapping / it is under maintenance. Triggers this skill when the user asks "why is this machine unreachable", "is the host-unreachable alert a false positive", "is categraf stuck", "the heartbeat stopped but I can still ping it", etc. Core stance: **an unreachable agent != a down host**. Concluding "down" just because target_up==0 / BeatTime stopped is a common source of false positives.
+description: >-
+  Help the user determine whether a machine is truly down / the agent is hung / the network is flapping / it is under maintenance. Triggers this skill when the user asks "why is this machine unreachable", "is the host-unreachable alert a false positive", "is categraf stuck", "the heartbeat stopped but I can still ping it", etc. Core stance: **an unreachable agent != a down host**. Concluding "down" just because target_up==0 / BeatTime stopped is a common source of false positives.
 tags:
   - internal
 ---

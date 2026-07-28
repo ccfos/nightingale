@@ -1,6 +1,7 @@
 ---
 name: doc-qa
-description: This skill should be used when the user asks "how-to" or factual questions about Nightingale (n9e) — UI/where-to-click, business groups/subscription rules/mute rules/edge mode, Token usage, notification pipeline, self-healing trigger conditions; OR about categraf input plugin field meanings, metric names, defaults, environment variables, config syntax (e.g. "how to write [[instances]]", "unit of ping_average_response_ms"). NOT for actively troubleshooting an alert or querying metrics.
+description: >-
+  This skill should be used when the user asks "how-to" or factual questions about Nightingale (n9e) — UI/where-to-click, business groups/subscription rules/mute rules/edge mode, Token usage, notification pipeline, self-healing trigger conditions; OR about categraf input plugin field meanings, metric names, defaults, environment variables, config syntax (e.g. "how to write [[instances]]", "unit of ping_average_response_ms"); OR about the n9e / categraf / fe source code — this skill carries an embedded, searchable snapshot of the three repositories, so use it whenever the user asks "can you read the source code / the code directory", or asks how a feature is implemented, what a file or function does, or where something lives in the codebase. NOT for actively troubleshooting an alert or querying metrics.
 version: 2.0.0
 tags:
   - internal

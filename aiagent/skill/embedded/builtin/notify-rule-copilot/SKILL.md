@@ -1,6 +1,7 @@
 ---
 name: notify-rule-copilot
-description: One-stop assistant for creating, editing, copying, and troubleshooting Nightingale (n9e) notify rules (notify_rule). Use it when the user asks to "create a notify rule / add a notification policy / configure how alerts are delivered / edit and adjust a notify rule / tiered notification / route by business group or label / take different actions during vs. outside working hours / don't call on recovery / fix a rule that isn't matching" — it is especially good at decomposing natural-language routing requirements into a correct NotifyConfig array. This skill focuses on the routing layer of notify rules: it does not touch the notification media themselves (→ notify-channel-copilot), does not touch message templates (→ generate-message-template), and does not investigate "why nothing was sent" (→ alert-rule-troubleshoot flow B).
+description: >-
+  One-stop assistant for creating, editing, copying, and troubleshooting Nightingale (n9e) notify rules (notify_rule). Use it when the user asks to "create a notify rule / add a notification policy / configure how alerts are delivered / edit and adjust a notify rule / tiered notification / route by business group or label / take different actions during vs. outside working hours / don't call on recovery / fix a rule that isn't matching" — it is especially good at decomposing natural-language routing requirements into a correct NotifyConfig array. This skill focuses on the routing layer of notify rules: it does not touch the notification media themselves (→ notify-channel-copilot), does not touch message templates (→ generate-message-template), and does not investigate "why nothing was sent" (→ alert-rule-troubleshoot flow B).
 tags:
   - internal
 ---
