@@ -148,6 +148,48 @@ I18NHeaderKey = "X-Language"
 PromQuerier = true
 AlertDetail = true
 
+[EmbeddedTSDB]
+# built-in time series database. When enabled, metrics pushed by categraf are
+# stored locally, no external TSDB (Prometheus/VictoriaMetrics) is needed to
+# view data, a prometheus datasource named "embedded-tsdb" is auto registered.
+# suitable for small scale (up to ~100k active series). for larger scale,
+# disable this and configure [[Pushgw.Writers]] to an external TSDB, both can
+# be enabled at the same time (dual write) during migration.
+# NOTE: data is stored on the local disk of THIS center instance, so it only
+# fits single-instance center deployment; with multiple center replicas each
+# replica would hold a fragment of the data, disable this and use an
+# external TSDB instead
+Enable = true
+# data directory
+Dir = "data/tsdb"
+# how long to retain samples, e.g. 12h 7d 15d
+RetentionDuration = "15d"
+# max disk space used by data blocks, oldest blocks are deleted first when
+# exceeded, e.g. 512MiB 10GiB. empty or 0 means unlimited
+MaxBytes = "10GiB"
+# tolerate out-of-order samples within this window (agent clock skew/resend)
+OutOfOrderTimeWindow = "10m"
+# query engine settings
+QueryTimeout = "1m"
+QueryMaxSamples = 50000000
+LookbackDelta = "5m"
+# max concurrent queries, extra queries are queued (default 20, same as
+# prometheus --query.max-concurrency)
+# QueryMaxConcurrency = 20
+# optional basic auth of the /prometheus/api/v1/* endpoints (query and
+# remote write), also written into the auto registered datasource and the
+# internal write path. WARNING: when left empty these endpoints are open to
+# anyone who can reach the http port
+BasicAuthUser = ""
+BasicAuthPass = ""
+# register the destructive admin endpoints delete_series/clean_tombstones
+# (default false, same as prometheus --web.enable-admin-api); configure
+# BasicAuthUser/Pass before enabling this
+# EnableAdminAPI = false
+# override the url of the auto registered datasource, e.g. a vip/domain in
+# front of this instance. default: http(s)://<detected ip>:<http port>/prometheus
+# DatasourceUrl = ""
+
 [Pushgw]
 # use target labels in database instead of in series
 LabelRewrite = true
@@ -161,25 +203,27 @@ ForceUseServerTS = true
 # QueueMaxSize = 1000000
 # QueuePopSize = 1000
 
-[[Pushgw.Writers]] 
+# uncomment to forward samples to an external TSDB, can be enabled together
+# with [EmbeddedTSDB] (dual write)
+# [[Pushgw.Writers]]
 # Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
-Url = "http://127.0.0.1:9090/api/v1/write"
+# Url = "http://127.0.0.1:9090/api/v1/write"
 # Basic auth username
-BasicAuthUser = ""
+# BasicAuthUser = ""
 # Basic auth password
-BasicAuthPass = ""
+# BasicAuthPass = ""
 # timeout settings, unit: ms
-Headers = ["X-From", "n9e"]
-Timeout = 10000
-DialTimeout = 3000
-TLSHandshakeTimeout = 30000
-ExpectContinueTimeout = 1000
-IdleConnTimeout = 90000
+# Headers = ["X-From", "n9e"]
+# Timeout = 10000
+# DialTimeout = 3000
+# TLSHandshakeTimeout = 30000
+# ExpectContinueTimeout = 1000
+# IdleConnTimeout = 90000
 # time duration, unit: ms
-KeepAlive = 30000
-MaxConnsPerHost = 0
-MaxIdleConns = 100
-MaxIdleConnsPerHost = 100
+# KeepAlive = 30000
+# MaxConnsPerHost = 0
+# MaxIdleConns = 100
+# MaxIdleConnsPerHost = 100
 ## Optional TLS Config
 # UseTLS = false
 # TLSCA = "/etc/n9e/ca.pem"
