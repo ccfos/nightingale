@@ -194,6 +194,30 @@ func (rt *Router) deleteEventPipelines(c *gin.Context) {
 	ginx.NewRender(c).Message(err)
 }
 
+// 批量启用/停用事件Pipeline
+// 相比 PUT /event-pipeline 的整条覆盖，这里只接受 ids + disabled，调用方无需回传整条记录，
+// 因此不会用陈旧快照覆盖掉别人并发修改的 processors / 过滤条件。
+func (rt *Router) updateEventPipelinesDisabled(c *gin.Context) {
+	var f struct {
+		Ids      []int64 `json:"ids"`
+		Disabled bool    `json:"disabled"`
+	}
+	ginx.BindJSON(c, &f)
+
+	if len(f.Ids) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "ids required")
+	}
+
+	for _, id := range f.Ids {
+		pipeline, err := models.GetEventPipeline(rt.Ctx, id)
+		ginx.Dangerous(err)
+		rt.checkEventPipelinePermission(c, pipeline, "rw")
+	}
+
+	me := c.MustGet("user").(*models.User)
+	ginx.NewRender(c).Message(models.UpdateEventPipelinesDisabled(rt.Ctx, f.Ids, f.Disabled, me.Username))
+}
+
 // 测试事件Pipeline
 func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	var f struct {
