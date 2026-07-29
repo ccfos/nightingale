@@ -218,9 +218,51 @@ func (rt *Router) updateEventPipelinesDisabled(c *gin.Context) {
 	ginx.NewRender(c).Message(models.UpdateEventPipelinesDisabled(rt.Ctx, f.Ids, f.Disabled, me.Username))
 }
 
+// MockEventForm 是两个试跑接口共用的「模拟事件」入参。
+// 与通知规则测试（NotifyTestForm.UseMockEvent）保持同一套语义：新环境没有历史事件时
+// 也能验证配置。差别在于工作流的处理器会「读事件内容」来决策（event_drop 判断
+// Severity / IsRecovered / 标签，relabel 改标签），固定不变的样例只能覆盖一个分支，
+// 所以额外允许前端指定级别与恢复态。
+type MockEventForm struct {
+	UseMockEvent    bool `json:"use_mock_event"`
+	MockSeverity    int  `json:"mock_severity"`     // 1/2/3，缺省或非法时按 2 处理
+	MockIsRecovered bool `json:"mock_is_recovered"` // 缺省为告警事件
+}
+
+// buildPipelineTestMockEvent 构造用于工作流试跑的内置模拟事件，不落库。
+// 与通知规则测试共用 newMockEvent 的骨架，只在标签上做区分：工作流的处理器直接读标签
+// 做判断（relabel 改写、event_drop 用 $event.TagsMap 分支），所以这里刻意多带上
+// env / service / __name__，让用户抄文档里的示例片段就能直接跑出结果。
+func buildPipelineTestMockEvent(lang string, f MockEventForm) *models.AlertCurEvent {
+	return newMockEvent(mockEventSpec{
+		RuleName:     i18n.Sprintf(lang, "Event pipeline test mock event"),
+		RuleNote:     i18n.Sprintf(lang, "This is a mock event used by event pipeline tryrun, it is not persisted"),
+		Hash:         "event-pipeline-test-mock-event",
+		Severity:     f.MockSeverity,
+		IsRecovered:  f.MockIsRecovered,
+		PromQL:       "cpu_usage_idle < 10",
+		TriggerValue: "6.70",
+		ExtraTags:    []string{"__name__=cpu_usage_idle", "ident=mock-host-01", "env=prod", "service=web"},
+	})
+}
+
+// resolveTryRunEvent 统一「用模拟事件」与「用历史事件」两条取事件的路径
+func (rt *Router) resolveTryRunEvent(c *gin.Context, eventID int64, mock MockEventForm) *models.AlertCurEvent {
+	if mock.UseMockEvent {
+		return buildPipelineTestMockEvent(c.GetHeader("X-Language"), mock)
+	}
+
+	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, eventID)
+	if err != nil || hisEvent == nil {
+		ginx.Bomb(http.StatusBadRequest, "event not found")
+	}
+	return hisEvent.ToCur()
+}
+
 // 测试事件Pipeline
 func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	var f struct {
+		MockEventForm
 		EventId        int64                `json:"event_id"`
 		PipelineConfig models.EventPipeline `json:"pipeline_config"`
 		InputVariables map[string]string    `json:"input_variables,omitempty"`
@@ -228,11 +270,7 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 
 	ginx.BindJSON(c, &f)
 
-	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
-	if err != nil || hisEvent == nil {
-		ginx.Bomb(http.StatusBadRequest, "event not found")
-	}
-	event := hisEvent.ToCur()
+	event := rt.resolveTryRunEvent(c, f.EventId, f.MockEventForm)
 
 	lang := c.GetHeader("X-Language")
 	me := c.MustGet("user").(*models.User)
@@ -268,16 +306,13 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 // 测试事件处理器
 func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	var f struct {
+		MockEventForm
 		EventId         int64                  `json:"event_id"`
 		ProcessorConfig models.ProcessorConfig `json:"processor_config"`
 	}
 	ginx.BindJSON(c, &f)
 
-	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
-	if err != nil || hisEvent == nil {
-		ginx.Bomb(http.StatusBadRequest, "event not found")
-	}
-	event := hisEvent.ToCur()
+	event := rt.resolveTryRunEvent(c, f.EventId, f.MockEventForm)
 
 	processor, err := models.GetProcessorByType(f.ProcessorConfig.Typ, f.ProcessorConfig.Config)
 	if err != nil {
@@ -463,6 +498,9 @@ func (rt *Router) listAllEventPipelineExecutions(c *gin.Context) {
 	pipelineName := ginx.QueryStr(c, "pipeline_name", "")
 	mode := ginx.QueryStr(c, "mode", "")
 	status := ginx.QueryStr(c, "status", "")
+	// 与其它列表页一致的时间区间参数（秒级 unix 时间戳），0 表示该侧不限
+	stime := ginx.QueryInt64(c, "stime", 0)
+	etime := ginx.QueryInt64(c, "etime", 0)
 	limit := ginx.QueryInt(c, "limit", 20)
 	offset := ginx.QueryInt(c, "p", 1)
 
@@ -473,7 +511,7 @@ func (rt *Router) listAllEventPipelineExecutions(c *gin.Context) {
 		offset = 1
 	}
 
-	executions, total, err := models.ListAllEventPipelineExecutions(rt.Ctx, pipelineId, pipelineName, mode, status, limit, (offset-1)*limit)
+	executions, total, err := models.ListAllEventPipelineExecutions(rt.Ctx, pipelineId, pipelineName, mode, status, stime, etime, limit, (offset-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
