@@ -390,6 +390,35 @@ func TestPickReadmeFiles(t *testing.T) {
 	if source != "mysql.md" || variants["en_US"] != "README.en_US.md" {
 		t.Errorf("fallback source = %q, variants = %v", source, variants)
 	}
+
+	// 含繁体副本
+	source, variants = PickReadmeFiles([]string{"README.zh_HK.md", "README.en_US.md", "README.md"})
+	if source != "README.md" || variants["zh_HK"] != "README.zh_HK.md" {
+		t.Errorf("zh_HK pick source = %q, variants = %v", source, variants)
+	}
+}
+
+func TestClassifySkillReadmeLang(t *testing.T) {
+	cases := map[string]string{
+		"":         LangSource,
+		"zh_CN":    LangSource,
+		"zh":       LangSource,
+		"ZH-CN":    LangSource,
+		"zh_SG":    LangSource,
+		"zh_HK":    LangZhHK,
+		"zh-HK":    LangZhHK,
+		"zh_TW":    LangZhHK,
+		"zh-Hant":  LangZhHK,
+		"en":       LangEnUS,
+		"en_US":    LangEnUS,
+		"ja_JP":    LangEnUS,
+		"fr":       LangEnUS,
+	}
+	for in, want := range cases {
+		if got := ClassifySkillReadmeLang(in); got != want {
+			t.Errorf("ClassifySkillReadmeLang(%q) = %q, want %q", in, got, want)
+		}
+	}
 }
 
 func TestRenderVariantUnknownTypePassThrough(t *testing.T) {
