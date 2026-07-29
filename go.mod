@@ -95,10 +95,10 @@ require (
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.7.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0-beta.4.0.20240610221955-50774cd97099 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.8.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v1.1.3 // indirect
 	github.com/VictoriaMetrics/metrics v1.34.0 // indirect
@@ -122,7 +122,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.9.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -145,7 +145,7 @@ require (
 	github.com/pingcap/failpoint v0.0.0-20240528011301-b51a646c7c86 // indirect
 	github.com/pingcap/log v1.1.0 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
-	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
+	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
