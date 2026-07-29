@@ -72,7 +72,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "MinIO 集群有磁盘离线。纠删码依赖足额磁盘，离线盘数量超过校验块数后对象将不可读写，存在数据丢失风险。",
+            "action": "1) 用 mc admin info \u003calias\u003e 确认离线的是哪个节点的哪块盘，以及集群还剩多少冗余；2) 到该节点用 dmesg -T | grep -iE 'i/o error|ata|scsi' 与 smartctl -a 判断是掉盘、坏盘还是挂载丢失；3) 挂载丢失的重新挂载后 MinIO 会自动纳管；坏盘的换盘后用 mc admin heal -r \u003calias\u003e 触发修复；4) 修复期间避免大量写入，并确认剩余冗余仍高于 EC 校验块数。",
+            "runbook_url": "https://min.io/docs/minio/linux/operations/monitoring.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -153,7 +157,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "MinIO 集群有节点离线，该节点上的所有磁盘同时退出，冗余度大幅下降，再掉节点就会导致对象不可用。",
+            "action": "1) 用 mc admin info \u003calias\u003e 确认离线节点，并 ping / ssh 确认机器是否存活；2) 机器存活则用 systemctl status minio 看进程与日志，常见是 OOM、磁盘挂载失败、证书过期；3) 集群内网不通的排查网络与安全组，MinIO 节点间需要互通；4) 节点恢复后用 mc admin heal -r \u003calias\u003e 触发数据修复并观察进度。",
+            "runbook_url": "https://min.io/docs/minio/linux/operations/monitoring.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

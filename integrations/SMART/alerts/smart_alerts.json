@@ -1,242 +1,266 @@
 [
     {
-      "cate": "prometheus",
-      "name": "SMART设备健康状态异常",
-      "note": "硬盘自身检测的整体健康状态为不健康，存在严重故障风险，需立即处理",
-      "prod": "metric",
-      "delay": 0,
-      "prom_for_duration": 60,
-      "rule_config": {
-        "inhibit": false,
-        "queries": [
-          {
-            "keys": {
-              "labelKey": "",
-              "metricKey": "",
-              "valueKey": ""
-            },
-            "prom_ql": "smart_device_health_ok == 0",
-            "severity": 1,
-            "unit": "none"
-          }
-        ],
-        "version": "v1"
-      },
-      "event_relabel_config": null,
-      "prom_eval_interval": 15,
-      "enable_in_bg": 0,
-      "notify_recovered": 1,
-      "notify_repeat_step": 60,
-      "notify_max_number": 0,
-      "recover_duration": 0,
-      "callbacks": [],
-      "append_tags": [],
-      "annotations": {},
-      "uuid": 1719305153888541029,
-      "cur_event_count": 0,
-      "cron_pattern": "@every 30s",
-      "notify_rule_ids": [],
-      "pipeline_configs": null,
-      "notify_version": 0
+        "cate": "prometheus",
+        "name": "SMART设备健康状态异常",
+        "note": "硬盘自身检测的整体健康状态为不健康，存在严重故障风险，需立即处理",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 60,
+        "rule_config": {
+            "inhibit": false,
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "smart_device_health_ok == 0",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "磁盘的 SMART 自检整体健康状态为不通过，硬盘随时可能彻底失效，上面的数据有丢失风险。",
+            "action": "1) 用 smartctl -a /dev/sdX 看完整属性，重点关注 Reallocated_Sector_Ct、Current_Pending_Sector、Offline_Uncorrectable；2) 立即确认该盘上的数据有副本或已备份——这是最优先的动作；3) RAID 环境下确认阵列状态，先让阵列把该盘踢出并用热备重建；4) 安排停机换盘，不要继续往这块盘写数据。",
+            "runbook_url": "https://www.smartmontools.org/wiki/TocDoc"
+        },
+        "uuid": 1719305153888541029,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "pipeline_configs": null,
+        "notify_version": 0
     },
     {
-      "cate": "prometheus",
-      "name": "SSD介质磨损百分比≥90%",
-      "note": "SSD闪存芯片磨损程度接近耗尽，随时可能发生故障，需立即备份数据并更换硬盘",
-      "prod": "metric",
-      "delay": 0,
-      "prom_for_duration": 60,
-      "rule_config": {
-        "inhibit": false,
-        "queries": [
-          {
-            "keys": {
-              "labelKey": "",
-              "metricKey": "",
-              "valueKey": ""
-            },
-            "prom_ql": "smart_attribute_media_wear_percentage >= 90",
-            "severity": 1,
-            "unit": "%"
-          }
-        ],
-        "version": "v1"
-      },
-      "event_relabel_config": null,
-      "prom_eval_interval": 15,
-      "enable_in_bg": 0,
-      "notify_recovered": 1,
-      "notify_repeat_step": 60,
-      "notify_max_number": 0,
-      "recover_duration": 0,
-      "callbacks": [],
-      "append_tags": [],
-      "annotations": {},
-      "uuid": 1719305153888541030,
-      "cur_event_count": 0,
-      "cron_pattern": "@every 30s",
-      "notify_rule_ids": [],
-      "pipeline_configs": null,
-      "notify_version": 0
+        "cate": "prometheus",
+        "name": "SSD介质磨损百分比≥90%",
+        "note": "SSD闪存芯片磨损程度接近耗尽，随时可能发生故障，需立即备份数据并更换硬盘",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 60,
+        "rule_config": {
+            "inhibit": false,
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "smart_attribute_media_wear_percentage \u003e= 90",
+                    "severity": 1,
+                    "unit": "%"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "SSD 的介质磨损度已达 90%，写入寿命接近耗尽，达到 100% 后可能转为只读或直接失效。",
+            "action": "1) 用 smartctl -a /dev/sdX 确认 Media_Wearout_Indicator / Percentage_Used 与 Total_LBAs_Written；2) 结合写入速率估算剩余寿命，据此排换盘窗口；3) 确认该盘上的数据有副本，并提前准备迁移方案；4) 复盘写入放大来源（日志级别、频繁小写入、无 TRIM），避免新盘重蹈覆辙。",
+            "runbook_url": "https://www.smartmontools.org/wiki/TocDoc"
+        },
+        "uuid": 1719305153888541030,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "pipeline_configs": null,
+        "notify_version": 0
     },
     {
-      "cate": "prometheus",
-      "name": "硬盘温度超过65℃",
-      "note": "硬盘运行温度过高，会加速硬件老化甚至导致直接故障，需立即检查散热",
-      "prod": "metric",
-      "delay": 0,
-      "prom_for_duration": 180,
-      "rule_config": {
-        "inhibit": false,
-        "queries": [
-          {
-            "keys": {
-              "labelKey": "",
-              "metricKey": "",
-              "valueKey": ""
-            },
-            "prom_ql": "smart_device_temp_c > 65",
-            "severity": 1,
-            "unit": "℃"
-          }
-        ],
-        "version": "v1"
-      },
-      "event_relabel_config": null,
-      "prom_eval_interval": 15,
-      "enable_in_bg": 0,
-      "notify_recovered": 1,
-      "notify_repeat_step": 60,
-      "notify_max_number": 0,
-      "recover_duration": 0,
-      "callbacks": [],
-      "append_tags": [],
-      "annotations": {},
-      "uuid": 1719305153888541031,
-      "cur_event_count": 0,
-      "cron_pattern": "@every 30s",
-      "notify_rule_ids": [],
-      "pipeline_configs": null,
-      "notify_version": 0
+        "cate": "prometheus",
+        "name": "硬盘温度超过65℃",
+        "note": "硬盘运行温度过高，会加速硬件老化甚至导致直接故障，需立即检查散热",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "inhibit": false,
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "smart_device_temp_c \u003e 65",
+                    "severity": 1,
+                    "unit": "℃"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "硬盘温度超过 65℃，长期高温会显著加速磁盘老化并提高故障率，SSD 还可能触发降速保护。",
+            "action": "1) 用 smartctl -a /dev/sdX 确认温度与厂商标称的工作温度上限；2) 检查机箱风道、风扇转速与滤网积灰，机房环境温度是否正常；3) 确认盘位安装位置是否过于密集、相邻盘是否同样高温；4) 短期可降低该盘的 IO 压力（错峰备份、迁移热数据）为处理争取时间。",
+            "runbook_url": "https://www.smartmontools.org/wiki/TocDoc"
+        },
+        "uuid": 1719305153888541031,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "pipeline_configs": null,
+        "notify_version": 0
     },
     {
-      "cate": "prometheus",
-      "name": "CRC错误计数1小时内持续增长",
-      "note": "数据传输链路CRC校验失败次数增加，可能是接口、线缆或硬盘控制器故障前兆",
-      "prod": "metric",
-      "delay": 0,
-      "prom_for_duration": 3600,
-      "rule_config": {
-        "inhibit": false,
-        "queries": [
-          {
-            "keys": {
-              "labelKey": "",
-              "metricKey": "",
-              "valueKey": ""
-            },
-            "prom_ql": "increase(smart_attribute_crc_error_count[1h]) > 0",
-            "severity": 1,
-            "unit": "none"
-          }
-        ],
-        "version": "v1"
-      },
-      "event_relabel_config": null,
-      "prom_eval_interval": 15,
-      "enable_in_bg": 0,
-      "notify_recovered": 1,
-      "notify_repeat_step": 60,
-      "notify_max_number": 0,
-      "recover_duration": 0,
-      "callbacks": [],
-      "append_tags": [],
-      "annotations": {},
-      "uuid": 1719305153888541032,
-      "cur_event_count": 0,
-      "cron_pattern": "@every 30s",
-      "notify_rule_ids": [],
-      "pipeline_configs": null,
-      "notify_version": 0
+        "cate": "prometheus",
+        "name": "CRC错误计数1小时内持续增长",
+        "note": "数据传输链路CRC校验失败次数增加，可能是接口、线缆或硬盘控制器故障前兆",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 3600,
+        "rule_config": {
+            "inhibit": false,
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "increase(smart_attribute_crc_error_count[1h]) \u003e 0",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "磁盘接口 CRC 错误持续增长，这通常不是盘体问题而是数据线或接口接触不良，会导致读写重试和性能下降，长期可能损坏数据。",
+            "action": "1) 用 smartctl -a /dev/sdX 确认 UDMA_CRC_Error_Count 的增长速度；2) 停机检查并重新插拔 SATA/SAS 数据线与电源线，优先直接换一根线；3) 换线后观察计数是否停止增长——SMART 计数不会自动归零，看增量而非绝对值；4) 换线无效则怀疑背板或 HBA 卡，逐个替换定位。",
+            "runbook_url": "https://www.smartmontools.org/wiki/TocDoc"
+        },
+        "uuid": 1719305153888541032,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "pipeline_configs": null,
+        "notify_version": 0
     },
     {
-      "cate": "prometheus",
-      "name": "SSD擦除失败计数增长",
-      "note": "SSD闪存块擦除失败，意味着闪存芯片老化，存在数据写入故障风险",
-      "prod": "metric",
-      "delay": 0,
-      "prom_for_duration": 60,
-      "rule_config": {
-        "inhibit": false,
-        "queries": [
-          {
-            "keys": {
-              "labelKey": "",
-              "metricKey": "",
-              "valueKey": ""
-            },
-            "prom_ql": "increase(smart_attribute_erase_fail_count[1h]) > 0",
-            "severity": 1,
-            "unit": "none"
-          }
-        ],
-        "version": "v1"
-      },
-      "event_relabel_config": null,
-      "prom_eval_interval": 15,
-      "enable_in_bg": 0,
-      "notify_recovered": 1,
-      "notify_repeat_step": 60,
-      "notify_max_number": 0,
-      "recover_duration": 0,
-      "callbacks": [],
-      "append_tags": [],
-      "annotations": {},
-      "uuid": 1719305153888541033,
-      "cur_event_count": 0,
-      "cron_pattern": "@every 30s",
-      "notify_rule_ids": [],
-      "pipeline_configs": null,
-      "notify_version": 0
+        "cate": "prometheus",
+        "name": "SSD擦除失败计数增长",
+        "note": "SSD闪存块擦除失败，意味着闪存芯片老化，存在数据写入故障风险",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 60,
+        "rule_config": {
+            "inhibit": false,
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "increase(smart_attribute_erase_fail_count[1h]) \u003e 0",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "SSD 擦除操作失败计数在增长，闪存块正在损坏，可用容量会持续下降并最终导致写入失败。",
+            "action": "1) 用 smartctl -a /dev/sdX 确认 Erase_Fail_Count 与 Reallocated/Available_Reservd_Space 的剩余余量；2) 备用块余量下降说明盘已接近寿命终点，立即确认数据有副本；3) 排换盘计划，不要等到写入完全失败；4) 换盘前降低该盘写入压力，避免加速恶化。",
+            "runbook_url": "https://www.smartmontools.org/wiki/TocDoc"
+        },
+        "uuid": 1719305153888541033,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "pipeline_configs": null,
+        "notify_version": 0
     },
     {
-      "cate": "prometheus",
-      "name": "SSD编程失败计数增长",
-      "note": "SSD闪存块写入失败，闪存芯片健康度急剧下降，需立即备份数据",
-      "prod": "metric",
-      "delay": 0,
-      "prom_for_duration": 60,
-      "rule_config": {
-        "inhibit": false,
-        "queries": [
-          {
-            "keys": {
-              "labelKey": "",
-              "metricKey": "",
-              "valueKey": ""
-            },
-            "prom_ql": "increase(smart_attribute_program_fail_count[1h]) > 0",
-            "severity": 1,
-            "unit": "none"
-          }
-        ],
-        "version": "v1"
-      },
-      "event_relabel_config": null,
-      "prom_eval_interval": 15,
-      "enable_in_bg": 0,
-      "notify_recovered": 1,
-      "notify_repeat_step": 60,
-      "notify_max_number": 0,
-      "recover_duration": 0,
-      "callbacks": [],
-      "append_tags": [],
-      "annotations": {},
-      "uuid": 1719305153888541034,
-      "cur_event_count": 0,
-      "cron_pattern": "@every 30s",
-      "notify_rule_ids": [],
-      "pipeline_configs": null,
-      "notify_version": 0
+        "cate": "prometheus",
+        "name": "SSD编程失败计数增长",
+        "note": "SSD闪存块写入失败，闪存芯片健康度急剧下降，需立即备份数据",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 60,
+        "rule_config": {
+            "inhibit": false,
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "increase(smart_attribute_program_fail_count[1h]) \u003e 0",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "SSD 编程（写入）失败计数在增长，闪存单元正在失效，写入可靠性已经无法保证。",
+            "action": "1) 用 smartctl -a /dev/sdX 确认 Program_Fail_Count 与备用块剩余比例；2) 立即确认该盘数据有副本或备份，这是最优先动作；3) 尽快排换盘，编程失败通常伴随数据静默损坏风险；4) 换盘前把该盘设为只读或迁走热数据，避免继续写入。",
+            "runbook_url": "https://www.smartmontools.org/wiki/TocDoc"
+        },
+        "uuid": 1719305153888541034,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 30s",
+        "notify_rule_ids": [],
+        "pipeline_configs": null,
+        "notify_version": 0
     }
-  ]
+]

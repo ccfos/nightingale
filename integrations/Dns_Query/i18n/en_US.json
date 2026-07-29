@@ -1,6 +1,11 @@
 {
+    "1) 在采集机上手工 dig @\u003cDNS服务器\u003e \u003c域名\u003e 复现，看 status 与耗时；2) 换用公共 DNS（如 dig @223.5.5.5）对比，区分是 DNS 服务器问题还是域名本身问题；3) 自建 DNS 的检查服务进程、上游转发配置与网络连通性；4) 确认探测配置里的域名、记录类型、超时设置是否合理，避免配置导致误报。": "1) Reproduce it on the collector host with dig @\u003cDNS server\u003e \u003cdomain\u003e and check the status and elapsed time; 2) Compare against a public resolver (e.g. dig @223.5.5.5) to tell a DNS server problem from a problem with the domain itself; 3) For a self-hosted resolver, check the service process, upstream forwarding config and network connectivity; 4) Verify the probe's domain, record type and timeout settings are sensible so the config itself is not causing the alert.",
     "DNS 响应状态码异常": "DNS response status code abnormal",
+    "DNS 查询出现异常错误，解析链路存在问题。": "The DNS query returned an error: there is a problem in the resolution path.",
     "DNS 查询异常": "DNS query failure",
+    "DNS 查询耗时超过 5 秒。解析慢会让每一次新建连接都被拖慢，表现为接口偶发超时，且很难定位。": "DNS query time exceeds 5 seconds. Slow resolution drags down every new connection and shows up as intermittent API timeouts that are hard to trace.",
     "DNS 查询超时": "DNS query timeout",
+    "DNS 查询超时，解析请求没有在超时时间内得到响应，依赖该域名的调用会大面积失败。": "The DNS query timed out: no response arrived within the timeout, and calls depending on that domain will fail broadly.",
+    "DNS 查询返回了非 NOERROR 的状态码（如 NXDOMAIN、SERVFAIL），域名解析失败，依赖该域名的所有调用都会失败。": "The DNS query returned a non-NOERROR status (such as NXDOMAIN or SERVFAIL): resolution failed and every call depending on that domain will fail.",
     "DNS查询响应时间大于5秒": "DNS query response time exceeds 5 seconds"
 }

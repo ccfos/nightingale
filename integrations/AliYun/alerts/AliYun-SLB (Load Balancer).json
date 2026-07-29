@@ -68,7 +68,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "负载均衡返回 5xx 的速率偏高，说明后端服务在大面积报错，用户侧已经能感知到失败。",
+            "action": "1) 在控制台确认是 Upstream 5xx（后端返回）还是实例 5xx（SLB 自身）；2) Upstream 5xx 到后端 ECS 上查应用日志定位根因；3) 实例 5xx 多为后端全部不健康导致，检查健康检查配置与后端状态；4) 若与近期发布时间吻合，优先回滚。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -156,7 +160,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "负载均衡返回 5xx 的速率偏高，说明后端服务在大面积报错，用户侧已经能感知到失败。",
+            "action": "1) 在控制台确认是 Upstream 5xx（后端返回）还是实例 5xx（SLB 自身）；2) Upstream 5xx 到后端 ECS 上查应用日志定位根因；3) 实例 5xx 多为后端全部不健康导致，检查健康检查配置与后端状态；4) 若与近期发布时间吻合，优先回滚。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -244,7 +252,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "负载均衡 QPS 使用率偏高，接近实例规格上限，触顶后请求会被拒绝。",
+            "action": "1) 在控制台确认 QPS 曲线与实例规格的性能上限；2) 确认是正常业务增长还是异常流量；3) 正常增长的升级 SLB 规格（性能保障型可指定上限）；4) 异常流量的接入 WAF/DDoS 防护限流。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -332,7 +344,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "负载均衡出现丢弃的连接或流量，说明已触及实例规格上限并开始限流，部分用户请求被直接丢弃。",
+            "action": "1) 在控制台对照丢弃曲线与该实例规格的连接数/带宽上限，确认是哪一项触顶；2) 触顶的立即升级实例规格——性能共享型实例尤其容易在高峰触顶；3) 确认是否存在异常流量把配额吃满；4) 升配后持续观察丢弃是否归零。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -420,7 +436,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "负载均衡出现丢弃的连接或流量，说明已触及实例规格上限并开始限流，部分用户请求被直接丢弃。",
+            "action": "1) 在控制台对照丢弃曲线与该实例规格的连接数/带宽上限，确认是哪一项触顶；2) 触顶的立即升级实例规格——性能共享型实例尤其容易在高峰触顶；3) 确认是否存在异常流量把配额吃满；4) 升配后持续观察丢弃是否归零。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -508,7 +528,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "负载均衡出现丢弃的连接或流量，说明已触及实例规格上限并开始限流，部分用户请求被直接丢弃。",
+            "action": "1) 在控制台对照丢弃曲线与该实例规格的连接数/带宽上限，确认是哪一项触顶；2) 触顶的立即升级实例规格——性能共享型实例尤其容易在高峰触顶；3) 确认是否存在异常流量把配额吃满；4) 升配后持续观察丢弃是否归零。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -596,7 +620,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "负载均衡连接数使用率偏高，接近实例规格上限，触顶后新连接会被拒绝。",
+            "action": "1) 在控制台确认最大连接数与新建连接数曲线；2) 确认后端是否响应变慢导致连接堆积——连接数高常是后端慢的表征；3) 后端正常的升级 SLB 规格；4) 检查客户端是否未复用连接。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -684,7 +712,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "负载均衡连接数使用率偏高，接近实例规格上限，触顶后新连接会被拒绝。",
+            "action": "1) 在控制台确认最大连接数与新建连接数曲线；2) 确认后端是否响应变慢导致连接堆积——连接数高常是后端慢的表征；3) 后端正常的升级 SLB 规格；4) 检查客户端是否未复用连接。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,

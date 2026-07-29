@@ -18,7 +18,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_cpu_usage >80",
+                    "prom_ql": "huaweicloud_sys_agt_cpu_usage \u003e80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -44,7 +44,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "ECS 实例 CPU 使用率超过 80%，应用响应会开始变慢。",
+            "action": "1) SSH 登录用 top -H 定位占用最高的进程与线程；2) 用 perf top 或对应语言的 profiler 找热点函数；3) 区分业务增长与代码异常（死循环、频繁 GC）；4) 业务增长则在控制台变更为更高规格或做水平扩容。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -76,7 +80,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_SlAsH_disk_inodesUsedPercent >80",
+                    "prom_ql": "huaweicloud_sys_agt_SlAsH_disk_inodesUsedPercent \u003e80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -102,7 +106,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "根分区 inode 使用率超过 80%，耗尽后即使有剩余空间也无法创建新文件。",
+            "action": "1) 用 df -i 确认挂载点；2) 逐层统计文件数找出小文件最多的目录；3) 常见来源是日志碎片、session 文件、容器层，确认后批量清理；4) 长期考虑把小文件业务迁到独立分区。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -134,7 +142,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_ntp_offset > 1000",
+                    "prom_ql": "huaweicloud_sys_agt_ntp_offset \u003e 1000",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -160,7 +168,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "ECS 时间偏移超过 1 秒，会导致日志时序错乱、分布式锁与证书校验异常。",
+            "action": "1) 用 chronyc tracking 确认偏移与上游源状态；2) 华为云 ECS 建议使用内网 NTP（ntp.myhuaweicloud.com），确认已配置；3) chronyd 未运行的启动并设开机自启；4) 偏移过大用 chronyc makestep 强制对时。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -192,7 +204,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_net_tcp_close > 20000",
+                    "prom_ql": "huaweicloud_sys_agt_net_tcp_close \u003e 20000",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -218,7 +230,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "处于 CLOSE 相关状态的 TCP 连接超过 2 万（注意：该指标为 net_tcp_close，并非严格意义的 TIME_WAIT），会占用大量端口与内存。",
+            "action": "1) 用 ss -s 看各状态连接数的真实分布；2) 用 ss -tan | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -rn 定位连接对端；3) 根因通常是短连接过多，应用侧改用长连接或连接池；4) 应急可开启 net.ipv4.tcp_tw_reuse 并调大 ip_local_port_range。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -250,7 +266,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_proc_zombie_count >0",
+                    "prom_ql": "huaweicloud_sys_agt_proc_zombie_count \u003e0",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -276,7 +292,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "出现僵尸进程。单个僵尸进程无害，但持续增长说明父进程没有回收子进程，最终会耗尽进程表。",
+            "action": "1) 用 ps -ef | awk '$2 ~ /Z/ || $8 ~ /Z/' 或 ps aux | grep 'Z' 找出僵尸进程及其父进程 PPID；2) 定位父进程后，问题在于它没有调用 wait()，需要在代码里修复；3) 应急可重启父进程，僵尸会被 init 收养并清理；4) 数量持续增长的必须修代码，重启只是临时手段。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -294,7 +314,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "cluster": "",
-        "name": "华为云ecs 内存使用率大于80%",
+        "name": "华为云ecs 可用内存低于20%",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -308,7 +328,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_mem_available > 80",
+                    "prom_ql": "huaweicloud_sys_agt_mem_available \u003c 20",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -334,7 +354,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "ECS 可用内存低于 20%，继续下降会触发 swap 抖动甚至 OOM Killer 杀进程。",
+            "action": "1) 用 free -h 确认 available 与 swap 使用；2) 用 ps aux --sort=-%mem | head 找出占用最高的进程并判断是否泄漏；3) 泄漏的在应用侧抓堆定位，不能只靠重启；4) 业务增长的在控制台变更为更大内存规格。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -366,7 +390,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_net_dropout > 50",
+                    "prom_ql": "huaweicloud_sys_agt_net_dropout \u003e 50",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -392,7 +416,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "网卡发送丢包率超过 50%，一半以上的出向报文被丢弃，对外请求会大面积超时。",
+            "action": "1) 用 ip -s link show 确认 TX dropped 的增长；2) 确认是否已跑满实例规格的带宽上限——云主机带宽是按规格限制的，超限即丢包；3) 超限的在控制台调整带宽或变更规格；4) 未超限的排查安全组、内核发送队列与应用发送逻辑。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -424,7 +452,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_net_errout > 50",
+                    "prom_ql": "huaweicloud_sys_agt_net_errout \u003e 50",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -450,7 +478,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "网卡发送错包率超过 50%，出向报文大量出错，业务通信已严重受损。",
+            "action": "1) 用 ip -s link show 与 ethtool -S 确认错包计数；2) 云环境下物理层由平台负责，错包率异常应优先提工单给华为云；3) 同时确认是否为实例规格带宽超限导致；4) 有冗余的先把流量切走，避免持续影响业务。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -482,7 +514,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_SlAsH_disk_usedPercent > 80",
+                    "prom_ql": "huaweicloud_sys_agt_SlAsH_disk_usedPercent \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -508,7 +540,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "云硬盘使用率超过 80%，写满后应用写入、日志、数据库都会失败。",
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 找出占用最大的目录；2) 优先清理日志与临时文件，用 lsof +L1 检查已删除但未释放的文件；3) 在控制台对云硬盘做在线扩容，再用 growpart + resize2fs/xfs_growfs 扩展文件系统；4) 长期评估是否需要把数据目录迁到独立云盘。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -540,7 +576,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_net_dropin > 50",
+                    "prom_ql": "huaweicloud_sys_agt_net_dropin \u003e 50",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -566,7 +602,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "网卡接收丢包率超过 50%，一半以上的入向报文被丢弃，服务会大面积超时。",
+            "action": "1) 用 ip -s link show 确认 RX dropped 的增长；2) 确认是否跑满实例规格的带宽或 PPS 上限——云主机两者都有限制；3) 超限的在控制台调整带宽或变更规格；4) 未超限的用 ethtool -G 调大接收环形缓冲区，并检查是否需要开启 RPS。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -598,7 +638,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_net_errin > 50",
+                    "prom_ql": "huaweicloud_sys_agt_net_errin \u003e 50",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -624,7 +664,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "网卡接收错包率超过 50%，入向报文大量出错，业务通信已严重受损。",
+            "action": "1) 用 ip -s link show 与 ethtool -S 确认错包计数；2) 云环境物理层由平台负责，错包率异常应优先提工单给华为云；3) 同时确认是否为规格带宽/PPS 超限；4) 有冗余的先把流量切走。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -656,7 +700,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_SlAsH_disk_agt_write_requests_rate > 99",
+                    "prom_ql": "huaweicloud_sys_agt_SlAsH_disk_agt_write_requests_rate \u003e 99",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -682,7 +726,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "云硬盘写 IOPS 接近规格上限，超过后 IO 会被限流排队，应用写入延迟大幅上升。",
+            "action": "1) 用 iostat -x 1 确认实际 IOPS 与 await；2) 用 iotop -oP 找出写入最多的进程；3) 对照该云硬盘规格的 IOPS 上限判断是否已触顶——超高性能盘与通用型盘差异很大；4) 触顶的在控制台升级磁盘类型或扩容（IOPS 通常随容量线性增长），未触顶的优化应用写入模式。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -714,7 +762,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_agt_SlAsH_disk_agt_read_requests_rate > 99",
+                    "prom_ql": "huaweicloud_sys_agt_SlAsH_disk_agt_read_requests_rate \u003e 99",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -740,7 +788,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "云硬盘读 IOPS 接近规格上限，超过后 IO 会被限流排队，查询与读取延迟大幅上升。",
+            "action": "1) 用 iostat -x 1 确认实际 IOPS 与 await；2) 用 iotop -oP 找出读取最多的进程；3) 对照云硬盘规格的 IOPS 上限判断是否触顶；4) 触顶的升级磁盘类型或扩容，未触顶的通过加缓存、补索引减少磁盘读。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

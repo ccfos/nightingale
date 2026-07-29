@@ -72,7 +72,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "容器 CPU 被大量限流（CFS throttling），说明 CPU limit 配额不够用，应用响应时间会明显变长且抖动。",
+            "action": "1) kubectl top pod \u003cpod\u003e -n \u003cns\u003e --containers 对照 resources.limits.cpu；2) 注意 Java 等运行时若未感知 cgroup limit 会开过多线程加剧限流，确认 JVM 版本与参数；3) 调大 limits.cpu，或改用 HPA 水平扩容分摊；4) limit 设置远高于 request 时容易被超卖挤占，评估是否把两者设置得更接近。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -153,7 +157,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "聚合 API（APIService）不可用，依赖它的功能完全失效——例如 metrics-server 挂了会导致 kubectl top 与 HPA 全部失灵。",
+            "action": "1) kubectl get apiservice 确认是哪个 APIService；2) kubectl -n \u003cns\u003e get pod 检查其后端 Pod 是否健康；3) 查看该 Pod 日志定位启动或运行错误；4) 恢复后用 kubectl top node 之类命令验证功能已回来。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeaggregatedapidown/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -234,7 +242,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "聚合 API（APIService）调用出现错误，依赖该扩展 API 的功能会异常。",
+            "action": "1) kubectl get apiservice 看哪个处于 False 状态；2) kubectl describe apiservice \u003cname\u003e 看具体报错；3) 后端服务不可用的检查对应 Deployment/Service；4) 证书问题的核对 CA bundle 配置。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeaggregatedapierrors/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -315,7 +327,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "kube-apiserver 不可达。apiserver 是集群唯一的入口，不可用意味着所有控制面操作（部署、扩缩容、调度）全部停摆。",
+            "action": "1) 在控制面节点确认 kube-apiserver 进程/静态 Pod 状态与日志；2) 多副本部署确认是否只挂了部分实例，负载均衡是否已把故障实例摘除；3) 常见根因是 etcd 不可用、证书过期、资源耗尽；4) 优先恢复 etcd 与证书，apiserver 本身通常会自动恢复。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapidown/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -399,7 +415,11 @@
             "long=1h",
             "short=5m"
         ],
-        "annotations": null,
+        "annotations": {
+            "summary": "apiserver 的错误预算消耗速率过快，说明请求错误率或延迟已明显偏离 SLO，集群控制面正在劣化。",
+            "action": "1) 看 apiserver 的错误码与延迟分布，确认是读还是写请求在劣化；2) 写请求劣化优先排查 etcd 的磁盘延迟——这是最常见根因；3) 读请求劣化排查是否有客户端在做大范围 LIST（无 resourceVersion 的全量列举）；4) 定位到异常客户端的对其限流，并考虑开启 APF（API Priority and Fairness）。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapierrorbudgetburn/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -480,7 +500,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "apiserver 主动终止了部分请求，说明已触发 APF（优先级与公平性）限流或超时保护，部分客户端请求正在失败。",
+            "action": "1) 查看 apiserver 的 apiserver_flowcontrol 相关指标，确认是哪个 flow schema 在被限流；2) 定位发起大量请求的客户端（通常是某个 Operator 或脚本在做全量 LIST）；3) 对该客户端限流或优化其请求模式；4) 确需更高配额的调整 FlowSchema 与 PriorityLevelConfiguration。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapiterminatedrequests/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -561,7 +585,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "证书即将过期。Kubernetes 组件间全部依赖 mTLS，证书过期会导致对应组件直接失联，是可完全避免的自伤型故障。",
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeclientcertificateexpiration/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -642,7 +670,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "Kubernetes 客户端请求错误率偏高，说明某个组件在频繁调用 apiserver 失败，其功能可能已经不正常。",
+            "action": "1) 从告警标签定位是哪个组件/实例在报错；2) 看该组件日志中的具体错误码：401/403 是 RBAC 权限问题，429 是被限流，5xx 是 apiserver 侧问题；3) 权限问题核对 ServiceAccount 的 Role/ClusterRoleBinding；4) 限流问题确认该组件是否在做高频 LIST，优化为 Watch 或加 resourceVersion。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeclienterrors/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -723,7 +755,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "容器长时间处于 Waiting 状态，Pod 起不来，服务容量不足。",
+            "action": "1) kubectl describe pod \u003cpod\u003e -n \u003cns\u003e 看 Waiting 的 Reason；2) ImagePullBackOff 检查镜像名、tag 与拉取凭据（imagePullSecrets）；3) CreateContainerConfigError 检查引用的 ConfigMap/Secret 是否存在；4) CrashLoopBackOff 按崩溃循环路径处理，看 --previous 日志。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecontainerwaiting/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -804,7 +840,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "kube-controller-manager 不可达。各类控制器停摆意味着副本数维持、节点生命周期、endpoint 更新等全部失效。",
+            "action": "1) 在控制面节点确认 kube-controller-manager 静态 Pod 或进程状态与日志；2) 多副本部署确认 leader 选举是否正常切换；3) 常见根因是 apiserver 不可用或证书过期；4) 恢复后确认副本数异常的工作负载开始自动修复。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecontrollermanagerdown/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -885,7 +925,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "集群资源已超卖：所有 Pod 的 requests 之和超过了集群可分配容量。此时若有节点故障，被驱逐的 Pod 将无处调度。",
+            "action": "1) kubectl describe node | grep -A5 'Allocated resources' 汇总各节点的分配率；2) 这是容量规划信号而非即时故障——评估节点故障时是否还有冗余承接；3) 检查是否有 Pod 的 requests 设置得过高（远超实际用量），下调可释放大量可调度容量；4) 冗余确实不足的扩容节点。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecpuovercommit/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -966,7 +1010,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "集群资源已超卖：所有 Pod 的 requests 之和超过了集群可分配容量。此时若有节点故障，被驱逐的 Pod 将无处调度。",
+            "action": "1) kubectl describe node | grep -A5 'Allocated resources' 汇总各节点的分配率；2) 这是容量规划信号而非即时故障——评估节点故障时是否还有冗余承接；3) 检查是否有 Pod 的 requests 设置得过高（远超实际用量），下调可释放大量可调度容量；4) 冗余确实不足的扩容节点。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecpuquotaovercommit/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1047,7 +1095,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "DaemonSet 被调度到了不该运行的节点上，会浪费资源，也可能在不兼容的节点上出错。",
+            "action": "1) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e -o wide 看被误调度到哪些节点；2) 检查 DaemonSet 的 nodeSelector/affinity 与节点标签是否匹配；3) 通常是节点标签被改动或 DaemonSet 配置更新导致，修正后多余 Pod 会被自动清理；4) 未自动清理的手工删除对应 Pod。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetmisscheduled/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1128,7 +1180,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "DaemonSet 没有在应有的节点上调度，那些节点缺少该 DaemonSet 提供的能力（日志采集、网络、监控等）。",
+            "action": "1) kubectl describe ds \u003cname\u003e -n \u003cns\u003e 看 Events 与期望/实际数量；2) 对比节点的污点与 DaemonSet 的容忍配置——污点不匹配是最常见原因；3) 检查 nodeSelector/affinity 是否把节点排除在外；4) 资源不足导致的调低 DaemonSet 的 requests 或释放节点资源。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetnotscheduled/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1209,7 +1265,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "DaemonSet 的滚动更新卡住，部分节点仍在跑旧版本，节点间行为不一致。",
+            "action": "1) kubectl rollout status ds/\u003cname\u003e -n \u003cns\u003e 看卡在哪些节点；2) kubectl describe pod 排查新版本 Pod 为何未就绪；3) 短期无法修复的用 kubectl rollout undo ds/\u003cname\u003e 回滚；4) 检查 updateStrategy 的 maxUnavailable 配置是否过于保守。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetrolloutstuck/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1290,7 +1350,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "工作负载的 observedGeneration 落后于 metadata.generation，说明控制器没有处理最新的配置变更，你的改动实际上没生效。",
+            "action": "1) kubectl describe \u003ckind\u003e \u003cname\u003e -n \u003cns\u003e 对比 generation 与 observedGeneration；2) 检查 kube-controller-manager 是否健康——控制器不工作是最常见原因；3) 看 controller-manager 日志中与该对象相关的报错；4) 确认 apiserver 与 etcd 正常，控制器恢复后 generation 会自动追平。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedeploymentgenerationmismatch/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1371,7 +1435,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "Deployment 的实际副本数与期望不符，服务容量低于预期，滚动发布可能卡住。",
+            "action": "1) kubectl describe deploy \u003cname\u003e -n \u003cns\u003e 看 Conditions 与 Events；2) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 看未就绪 Pod 的状态与原因；3) 常见为资源不足无法调度、镜像拉取失败、就绪探针不通过；4) 按 Pod 的具体状态排查，资源不足的扩容节点或调低 requests。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedeploymentreplicasmismatch/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1452,7 +1520,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "Deployment 的滚动发布卡住，新版本没有推进完成，集群里同时存在新旧两个版本。",
+            "action": "1) kubectl rollout status deploy/\u003cname\u003e -n \u003cns\u003e 确认卡在第几个副本；2) kubectl describe pod 看新版本 Pod 为何未就绪（镜像、探针、资源）；3) 短期无法修复的用 kubectl rollout undo deploy/\u003cname\u003e 回滚到上一版本；4) 修复后重新发布，并检查 maxSurge/maxUnavailable 配置是否合理。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1533,7 +1604,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "HPA 已经扩到最大副本数，说明当前配置的上限已经无法承载流量，再有增长只能靠降级或限流。",
+            "action": "1) kubectl describe hpa \u003cname\u003e -n \u003cns\u003e 看当前指标值与目标值的差距；2) 确认集群是否还有资源支撑更多副本（节点余量）；3) 有余量的调大 maxReplicas；没余量的先扩容节点；4) 同时评估单副本的处理能力是否偏低，优化应用比无限扩副本更有效。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubehpamaxedout/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1614,7 +1689,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "HPA 的实际副本数与它计算出的期望副本数不符，说明扩缩容没能执行，容量调整失效。",
+            "action": "1) kubectl describe hpa \u003cname\u003e -n \u003cns\u003e 看 Conditions 里的具体原因；2) ScalingLimited 说明触及了 min/max 边界；FailedGetScale 说明目标工作负载有问题；3) 指标获取失败的检查 metrics-server 或自定义指标适配器是否健康；4) 资源不足导致新副本 Pending 的，扩容节点。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubehpareplicasmismatch/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1695,7 +1774,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "Job 执行失败，它负责的任务（数据处理、定时清理、迁移等）没有完成。",
+            "action": "1) kubectl get job \u003cjob\u003e -n \u003cns\u003e 看失败次数，再 kubectl logs job/\u003cjob\u003e 看失败原因；2) kubectl describe job 看 Events，确认是否因 backoffLimit 耗尽而放弃；3) 修复根因后 kubectl delete job 再重新提交，或让 CronJob 下次调度重跑；4) 确认该任务失败是否有下游影响（数据未产出、清理未执行），需要时手工补做。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubejobfailed/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1776,7 +1859,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "Job 长时间未完成，它负责的任务迟迟没有结束，下游依赖会一直等待。",
+            "action": "1) kubectl get job \u003cjob\u003e -n \u003cns\u003e 看已运行时长与完成数；2) kubectl logs job/\u003cjob\u003e 看是否卡在某一步；3) 确认是任务本身耗时长还是卡死——卡死的 kubectl delete job 后修复再重跑；4) 给 Job 设置合理的 activeDeadlineSeconds，避免无限期挂起。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1857,7 +1943,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "证书即将过期。Kubernetes 组件间全部依赖 mTLS，证书过期会导致对应组件直接失联，是可完全避免的自伤型故障。",
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletclientcertificateexpiration/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1938,7 +2028,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "证书自动续签失败。续签一直失败意味着证书最终会过期，届时该组件会直接失联。",
+            "action": "1) 看 kubelet 日志中 certificate rotation 相关报错；2) 检查 CSR 是否处于 Pending 未审批：kubectl get csr，必要时手工 kubectl certificate approve；3) 确认集群是否开启了 CSR 自动审批控制器（kube-controller-manager 的 --cluster-signing-cert-file 配置）；4) 修复后确认新 CSR 能被自动审批并签发。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletclientcertificaterenewalerrors/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2019,7 +2113,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "kubelet 不可达，该节点已脱离控制面管理，无法创建、更新或删除 Pod。",
+            "action": "1) 登录节点执行 systemctl status kubelet 确认进程状态；2) journalctl -u kubelet -n 200 --no-pager 定位退出或报错原因；3) 常见为证书过期、配置错误、容器运行时不可用；4) 恢复后确认节点回到 Ready，并检查期间是否有 Pod 被误驱逐。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletdown/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2100,7 +2198,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "kubelet 的 PLEG（Pod 生命周期事件生成器）耗时过高，说明容器运行时响应慢，kubelet 可能很快把节点标记为 NotReady。",
+            "action": "1) 登录节点用 crictl ps 与 crictl info 确认容器运行时响应速度；2) 检查节点上容器数量是否过多、磁盘 IO 是否打满——这两者是 PLEG 变慢的主因；3) 容器运行时卡顿的可尝试重启 containerd（会短暂影响该节点）；4) 持续存在的考虑降低该节点的 Pod 密度。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletplegdurationhigh/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2181,7 +2283,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "Pod 启动耗时过长，滚动发布与扩容都会被拖慢，故障恢复时间也会拉长。",
+            "action": "1) kubectl describe pod \u003cpod\u003e -n \u003cns\u003e 看 Events 的时间戳，定位卡在拉镜像、挂载卷还是初始化容器；2) 拉镜像慢的检查镜像大小与仓库带宽，考虑预热镜像或用本地仓库；3) 挂载卷慢的排查 PV/CSI 驱动状态；4) 应用自身启动慢的优化启动逻辑，并把就绪探针的 initialDelaySeconds 调到合理值。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletpodstartuplatencyhigh/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2262,7 +2368,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "证书即将过期。Kubernetes 组件间全部依赖 mTLS，证书过期会导致对应组件直接失联，是可完全避免的自伤型故障。",
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletservercertificateexpiration/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2343,7 +2453,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "证书自动续签失败。续签一直失败意味着证书最终会过期，届时该组件会直接失联。",
+            "action": "1) 看 kubelet 日志中 certificate rotation 相关报错；2) 检查 CSR 是否处于 Pending 未审批：kubectl get csr，必要时手工 kubectl certificate approve；3) 确认集群是否开启了 CSR 自动审批控制器（kube-controller-manager 的 --cluster-signing-cert-file 配置）；4) 修复后确认新 CSR 能被自动审批并签发。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletservercertificaterenewalerrors/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2424,7 +2538,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "节点上的 Pod 数量接近 kubelet 的上限，触顶后新 Pod 无法调度到该节点，且节点管理开销会显著上升。",
+            "action": "1) kubectl get pod -A -o wide --field-selector spec.nodeName=\u003cnode\u003e | wc -l 确认实际数量；2) 对照 kubelet 的 maxPods 配置（默认 110）；3) 用 kubectl drain 或调整调度策略把部分 Pod 迁到其他节点；4) 确需更高密度的调大 maxPods，但要同步评估节点的 CPU/内存/PLEG 压力。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubelettoomanypods/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2505,7 +2623,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "集群资源已超卖：所有 Pod 的 requests 之和超过了集群可分配容量。此时若有节点故障，被驱逐的 Pod 将无处调度。",
+            "action": "1) kubectl describe node | grep -A5 'Allocated resources' 汇总各节点的分配率；2) 这是容量规划信号而非即时故障——评估节点故障时是否还有冗余承接；3) 检查是否有 Pod 的 requests 设置得过高（远超实际用量），下调可释放大量可调度容量；4) 冗余确实不足的扩容节点。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubememoryovercommit/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2586,7 +2708,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "集群资源已超卖：所有 Pod 的 requests 之和超过了集群可分配容量。此时若有节点故障，被驱逐的 Pod 将无处调度。",
+            "action": "1) kubectl describe node | grep -A5 'Allocated resources' 汇总各节点的分配率；2) 这是容量规划信号而非即时故障——评估节点故障时是否还有冗余承接；3) 检查是否有 Pod 的 requests 设置得过高（远超实际用量），下调可释放大量可调度容量；4) 冗余确实不足的扩容节点。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubememoryquotaovercommit/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2667,7 +2793,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "节点处于 NotReady 状态，其上的 Pod 会在容忍期后被驱逐重建，服务容量下降。",
+            "action": "1) kubectl describe node \u003cnode\u003e 看 Conditions 与 Events，确认是 MemoryPressure、DiskPressure 还是 kubelet 失联；2) 登录节点确认 kubelet 与容器运行时进程状态（systemctl status kubelet containerd）；3) kubelet 日志用 journalctl -u kubelet -n 200 定位；4) 节点短期无法恢复的执行 kubectl drain 让 Pod 尽快迁走，避免等待驱逐超时。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodenotready/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2748,7 +2878,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "节点在 Ready 与 NotReady 之间反复抖动。每次抖动都会触发 Pod 驱逐与重新调度，比持续宕机更具破坏性。",
+            "action": "1) kubectl describe node \u003cnode\u003e 看 Conditions 的变更时间线；2) 登录节点看 kubelet 日志，常见根因是资源压力、容器运行时卡顿、或到 apiserver 的网络不稳；3) 抖动期间建议先 kubectl cordon 该节点，阻止新 Pod 调度上去；4) 根因定位并修复后再 uncordon，不要在抖动中反复重启 kubelet。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodereadinessflapping/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2829,7 +2963,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "节点不可达，控制面已经联系不上它。其上 Pod 的真实状态未知，会在容忍期后被标记驱逐。",
+            "action": "1) 先 ping / ssh 确认机器本身是否存活，机器宕机按宕机处理；2) 机器存活则排查节点到 apiserver 的网络与证书（kubelet 日志里会有明确报错）；3) 确认该节点上是否有单副本的关键服务，有的话优先在其他节点拉起；4) 恢复后确认节点重新 Ready 且 Pod 状态正常。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodeunreachable/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2910,7 +3048,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "PersistentVolume 处于 Failed 或 Pending 异常状态，依赖它的 Pod 无法启动或无法读写数据。",
+            "action": "1) kubectl describe pv \u003cpv\u003e 与 kubectl describe pvc \u003cpvc\u003e -n \u003cns\u003e 看 Events 里的具体报错；2) 常见为存储后端不可用、容量不足、或 StorageClass 参数错误；3) 检查 CSI 驱动 Pod 是否健康（通常在 kube-system 下）；4) 后端存储故障的按存储系统自身流程处理，期间 Pod 会一直 Pending。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumeerrors/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2991,7 +3133,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "PersistentVolume 空间即将耗尽。PV 写满后应用写入直接失败，且很多存储类型无法在线扩容，恢复成本高。",
+            "action": "1) kubectl get pvc -n \u003cns\u003e 定位对应的 PVC 与 PV；2) 进到使用该卷的 Pod 里用 du 找出占用最大的目录（kubectl exec）；3) 清理日志与临时数据；4) StorageClass 支持在线扩容的直接 kubectl edit pvc 调大 spec.resources.requests.storage，不支持的需要迁移数据。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumefillingup/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3072,7 +3218,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "PersistentVolume 的 inode 即将耗尽，耗尽后即使有剩余空间也无法创建新文件。",
+            "action": "1) kubectl exec 进入使用该卷的 Pod，用 df -i 确认；2) 逐层统计文件数找出小文件最多的目录；3) 清理无用的小文件（缓存碎片、临时文件）；4) 无法收敛的需要扩容或更换存储类型。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3153,7 +3302,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "Pod 在反复重启（CrashLoopBackOff），服务实际不可用，且会持续消耗节点资源与镜像拉取带宽。",
+            "action": "1) kubectl logs \u003cpod\u003e -n \u003cns\u003e --previous 看上一次退出前的日志，这是最关键的一步；2) kubectl describe pod 看退出码与 Events：137 通常是 OOM 或被 kill，1/2 多为应用自身启动失败；3) 配置或依赖问题（连不上数据库、ConfigMap/Secret 缺失）先修依赖再拉起；4) OOM 的对照 resources.limits.memory 与实际用量调整，或修复应用内存泄漏。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepodcrashlooping/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3234,7 +3387,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "Pod 长时间不处于 Ready 状态，它承载的流量无法被 Service 转发，副本数不足会直接影响服务容量。",
+            "action": "1) kubectl get pod \u003cpod\u003e -n \u003cns\u003e -o wide 看 STATUS 与 READY，再 kubectl describe pod 看 Events；2) Pending 多为资源不足或调度约束（节点亲和、污点、PVC 未绑定）；ImagePullBackOff 查镜像地址与拉取凭据；3) Running 但未 Ready 的看就绪探针配置与 kubectl logs \u003cpod\u003e 里的启动报错；4) 确认副本数是否已不足以承载流量，不足的先扩容其他健康副本。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepodnotready/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3315,7 +3472,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "命名空间的资源配额接近或已经用满，新 Pod 将无法创建，扩容与发布都会失败。",
+            "action": "1) kubectl describe quota -n \u003cns\u003e 看是哪一项（cpu/memory/pods/storage）触顶；2) kubectl get pod -n \u003cns\u003e -o custom-columns 统计各工作负载的 requests 占用，找出大户；3) 确认是否有已停止但未清理的资源仍占着配额；4) 确需更多配额的联系集群管理员调整 ResourceQuota。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubequotaalmostfull/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3396,7 +3557,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "命名空间的资源配额接近或已经用满，新 Pod 将无法创建，扩容与发布都会失败。",
+            "action": "1) kubectl describe quota -n \u003cns\u003e 看是哪一项（cpu/memory/pods/storage）触顶；2) kubectl get pod -n \u003cns\u003e -o custom-columns 统计各工作负载的 requests 占用，找出大户；3) 确认是否有已停止但未清理的资源仍占着配额；4) 确需更多配额的联系集群管理员调整 ResourceQuota。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubequotaexceeded/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3477,7 +3642,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "命名空间的资源配额接近或已经用满，新 Pod 将无法创建，扩容与发布都会失败。",
+            "action": "1) kubectl describe quota -n \u003cns\u003e 看是哪一项（cpu/memory/pods/storage）触顶；2) kubectl get pod -n \u003cns\u003e -o custom-columns 统计各工作负载的 requests 占用，找出大户；3) 确认是否有已停止但未清理的资源仍占着配额；4) 确需更多配额的联系集群管理员调整 ResourceQuota。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubequotafullyused/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3558,7 +3727,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "kube-scheduler 不可达。调度器停摆意味着新 Pod 无法被分配到节点，扩容与故障自愈全部失效（已运行的 Pod 不受影响）。",
+            "action": "1) 在控制面节点确认 kube-scheduler 静态 Pod 或进程状态与日志；2) 多副本部署的确认是否只是失去 leader，其他副本能否接管；3) 常见根因是 apiserver 不可用或证书问题；4) 恢复后确认 Pending 的 Pod 开始被调度。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeschedulerdown/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3639,7 +3812,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "工作负载的 observedGeneration 落后于 metadata.generation，说明控制器没有处理最新的配置变更，你的改动实际上没生效。",
+            "action": "1) kubectl describe \u003ckind\u003e \u003cname\u003e -n \u003cns\u003e 对比 generation 与 observedGeneration；2) 检查 kube-controller-manager 是否健康——控制器不工作是最常见原因；3) 看 controller-manager 日志中与该对象相关的报错；4) 确认 apiserver 与 etcd 正常，控制器恢复后 generation 会自动追平。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubestatefulsetgenerationmismatch/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3720,7 +3897,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "StatefulSet 的实际副本数与期望不符。有状态服务的副本是按序启动的，一个卡住会阻塞后续全部副本。",
+            "action": "1) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 按序号看是哪个副本卡住；2) kubectl describe pod 排查该副本的 PVC 是否绑定成功——这是有状态服务最常见的卡点；3) 存储问题排查 PV/StorageClass 与 CSI 驱动；4) 应用自身问题看 kubectl logs，修复后 StatefulSet 会自动继续。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubestatefulsetreplicasmismatch/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3801,7 +3982,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "StatefulSet 的更新没有推进完成，部分副本仍在跑旧版本。",
+            "action": "1) kubectl rollout status sts/\u003cname\u003e -n \u003cns\u003e 看卡在第几个副本；2) StatefulSet 按序更新，一个副本卡住会阻塞后续全部——重点看当前正在更新的那个；3) kubectl describe pod 排查其未就绪原因（PVC、探针、镜像）；4) 无法快速修复的用 kubectl rollout undo 回滚。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubestatefulsetupdatenotrolledout/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3882,7 +4067,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "集群内组件版本不一致。版本偏差过大会引发 API 兼容性问题与难以排查的异常行为。",
+            "action": "1) kubectl get node -o wide 看各节点 kubelet 版本，kubectl version 看控制面版本；2) 确认偏差是否在官方支持的版本偏斜范围内（kubelet 不得高于 apiserver，且落后不超过两个小版本）；3) 通常是升级过程未完成，把落后的节点升级到位；4) 升级前先确认工作负载对新版本 API 的兼容性。",
+            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeversionmismatch/"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

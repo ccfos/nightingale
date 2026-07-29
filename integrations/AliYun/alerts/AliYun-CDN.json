@@ -68,7 +68,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "CDN 边缘节点 5xx 占比超过 1%，说明回源或边缘节点出错，最终用户已经在看到错误页。",
+            "action": "1) 在控制台的错误码分析里确认是哪些区域/运营商的节点在报错；2) 确认源站健康状况——CDN 5xx 大多是回源失败导致的；3) 源站正常则检查回源配置（回源 HOST、协议、超时）；4) 大面积异常提工单给阿里云，同时可临时切换回源地址。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -156,7 +160,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "CDN 边缘节点 4xx 占比达到 100%，说明该维度下所有请求都失败，通常是资源不存在、鉴权失败或防盗链配置问题。",
+            "action": "1) 在控制台错误码分析确认具体是 403 还是 404；2) 403 多为防盗链/Referer/URL 鉴权配置与实际请求不符；3) 404 多为源站资源被删除或回源路径配置错误；4) 修正配置后刷新 CDN 缓存并复测。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,

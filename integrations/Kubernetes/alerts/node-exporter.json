@@ -43,7 +43,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机可用内存不足，继续下降会触发 swap 抖动甚至 OOM Killer 杀进程。",
+            "action": "1) 登录节点用 free -h 确认 available 与 swap；2) ps aux --sort=-%mem | head 找出占用最高的进程；3) K8s 节点上优先用 kubectl top pod -A --sort-by=memory 定位是哪个 Pod；4) 泄漏的在应用侧定位，容量不足的迁走部分 Pod 或扩容节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -95,7 +98,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机内存压力大，内核正在频繁回收页面（major page fault 上升），系统整体响应会变慢。",
+            "action": "1) 用 vmstat 1 看 si/so 列确认是否已在 swap；2) 用 sar -B 或 /proc/vmstat 看 pgmajfault 的增长；3) 定位占用最高的进程或 Pod 并评估是否可迁走；4) 确认 swap 配置——K8s 节点通常应关闭 swap，开启会掩盖内存问题。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -147,7 +153,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机网络吞吐量异常，接近网卡能力上限时会出现丢包与延迟抖动。",
+            "action": "1) 用 iftop 或 nethogs 定位占用带宽最高的进程/连接；2) K8s 节点上确认是否有 Pod 在做大量数据传输（备份、数据同步、镜像拉取）；3) 确认是否已跑满网卡带宽，是则限流或错峰；4) 异常流量的排查是否有配置错误导致的流量环路。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -199,7 +208,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机网络吞吐量异常，接近网卡能力上限时会出现丢包与延迟抖动。",
+            "action": "1) 用 iftop 或 nethogs 定位占用带宽最高的进程/连接；2) K8s 节点上确认是否有 Pod 在做大量数据传输（备份、数据同步、镜像拉取）；3) 确认是否已跑满网卡带宽，是则限流或错峰；4) 异常流量的排查是否有配置错误导致的流量环路。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -251,7 +263,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机磁盘读写速率异常偏高，磁盘可能已成为瓶颈，所有依赖它的操作都会变慢。",
+            "action": "1) 用 iostat -x 1 确认是哪块盘、await 与 %util；2) 用 iotop -oP 找出 IO 最高的进程；3) K8s 节点常见是容器日志写入、镜像拉取解压、或某个 Pod 的数据写入；4) 可延后的任务错峰执行，持续高负载的换 SSD 或分散数据。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -303,7 +318,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机磁盘读写速率异常偏高，磁盘可能已成为瓶颈，所有依赖它的操作都会变慢。",
+            "action": "1) 用 iostat -x 1 确认是哪块盘、await 与 %util；2) 用 iotop -oP 找出 IO 最高的进程；3) K8s 节点常见是容器日志写入、镜像拉取解压、或某个 Pod 的数据写入；4) 可延后的任务错峰执行，持续高负载的换 SSD 或分散数据。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -355,7 +373,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机磁盘空间不足。K8s 节点磁盘写满会触发 kubelet 驱逐 Pod 并停止拉取镜像，节点很快不可用。",
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 逐层找占用大的目录；2) 容器运行时目录（/var/lib/containerd 或 /var/lib/docker）用 crictl rmi --prune 清理无用镜像；3) 清理容器日志（/var/log/pods），并确认日志轮转配置生效；4) 用 lsof +L1 检查已删除但句柄未释放的文件。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -407,7 +428,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "按当前写入速度预测，磁盘将在 24 小时内写满。这是提前预警，现在处理成本远低于写满之后。",
+            "action": "1) 用 du -x --max-depth=1 找出增长最快的目录；2) 确认增长来源是正常业务还是异常（应用死循环打日志、备份堆积）；3) 清理无用镜像与容器日志；4) 增长确实来自业务的，安排扩容磁盘或迁移数据，不要等到写满。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -459,7 +483,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "文件系统 inode 使用率高，耗尽后即使有剩余空间也无法创建新文件，表现为「磁盘没满却写不进去」。",
+            "action": "1) 用 df -i 确认挂载点；2) 逐层统计文件数找出小文件最多的目录；3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -511,7 +538,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "文件系统 inode 使用率高，耗尽后即使有剩余空间也无法创建新文件，表现为「磁盘没满却写不进去」。",
+            "action": "1) 用 df -i 确认挂载点；2) 逐层统计文件数找出小文件最多的目录；3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -563,7 +593,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机磁盘读写延迟异常，IO 请求排队严重，上层应用会出现明显卡顿。",
+            "action": "1) 用 iostat -x 1 看 r_await/w_await 与队列深度；2) 延迟高但 IOPS 不高的怀疑磁盘硬件问题，用 smartctl -a 检查；3) IOPS 也高的按磁盘饱和处理，定位高 IO 进程；4) 云盘的确认是否触及规格的 IOPS/吞吐上限被限流。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -615,7 +648,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机磁盘读写延迟异常，IO 请求排队严重，上层应用会出现明显卡顿。",
+            "action": "1) 用 iostat -x 1 看 r_await/w_await 与队列深度；2) 延迟高但 IOPS 不高的怀疑磁盘硬件问题，用 smartctl -a 检查；3) IOPS 也高的按磁盘饱和处理，定位高 IO 进程；4) 云盘的确认是否触及规格的 IOPS/吞吐上限被限流。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -667,7 +703,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "节点负载偏高，可运行与等待 IO 的任务数超过 CPU 处理能力，请求明显排队。",
+            "action": "1) 用 uptime 看 1/5/15 分钟趋势判断是突发还是持续；2) top 里看 %wa，高说明瓶颈在磁盘而非 CPU；3) vmstat 1 用 r/b 列区分 CPU 密集与 IO 阻塞；4) K8s 节点上用 kubectl top pod 定位高负载 Pod 并考虑迁走。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -719,7 +758,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "CPU steal time 偏高，说明宿主机上有其他虚拟机在抢占 CPU，本机实际拿到的算力低于预期。",
+            "action": "1) 用 top 或 vmstat 确认 st 列的持续水位；2) 这是宿主机层面的资源争抢，虚拟机内部无法根治；3) 云环境下联系云厂商或更换实例规格（独享型规格无 steal）；4) 自建虚拟化的检查宿主机超卖比例并迁移虚机。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -771,7 +813,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "上下文切换次数异常偏高，CPU 大量时间花在调度而非实际计算上，有效算力下降。",
+            "action": "1) 用 vmstat 1 确认 cs 列的水位；2) 用 pidstat -w 1 找出切换最频繁的进程；3) 常见根因是线程数过多、锁竞争激烈、或大量短生命周期进程；4) 应用侧收敛线程池大小、优化锁粒度是根本解法。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -823,7 +868,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "交换分区即将用满。swap 用满后内核只能靠 OOM Killer 释放内存，会有进程被强制杀死。",
+            "action": "1) 用 free -h 与 swapon -s 确认 swap 使用情况；2) 用 smem 或 /proc/\u003cpid\u003e/status 的 VmSwap 找出换出最多的进程；3) K8s 节点原则上应关闭 swap，开启会掩盖真实的内存压力并让 QoS 失效；4) 根因是内存不足，按内存告警路径处理。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -875,7 +923,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机上有 systemd 服务处于失败状态，该服务提供的功能已经中断。",
+            "action": "1) systemctl --failed 列出失败单元；2) journalctl -u \u003cunit\u003e -n 100 --no-pager 定位原因；3) K8s 节点上重点关注 kubelet、containerd、kube-proxy 这几个关键单元；4) 修复后 systemctl reset-failed 清理状态并确认恢复。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -927,7 +978,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "集群内节点的内核版本不一致。内核差异会导致同一份工作负载在不同节点上表现不同，是难以排查的问题源。",
+            "action": "1) 用 kubectl get node -o wide 对比各节点内核版本；2) 确认差异是升级过程中的临时状态还是长期存在；3) 逐步把落后节点的内核升级对齐；4) 升级前确认容器运行时与 CNI 插件对目标内核版本的兼容性。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -979,7 +1033,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机上发生了 OOM Kill，有进程被内核强制杀死。K8s 节点上这通常意味着某个容器超出内存限制或节点整体内存不足。",
+            "action": "1) 用 dmesg -T | grep -i 'killed process' 确认被杀进程与当时内存；2) 对照 kubectl get pod -A 找出对应的 Pod，看是否是 limit 设置过低；3) 节点整体内存紧张的迁走部分 Pod 或扩容；4) 反复被杀的必须在应用侧定位内存泄漏，只调 limit 会反复复发。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1031,7 +1088,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机网卡出现错包，通常是物理链路问题，会导致重传与延迟抖动。",
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 与 ethtool -S \u003c网卡\u003e 确认错包计数与类型；2) 确认协商速率与双工模式和对端一致；3) 检查网线/光模块，云环境下提工单给云厂商；4) 有冗余的先把流量切走。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1083,7 +1143,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机网卡出现错包，通常是物理链路问题，会导致重传与延迟抖动。",
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 与 ethtool -S \u003c网卡\u003e 确认错包计数与类型；2) 确认协商速率与双工模式和对端一致；3) 检查网线/光模块，云环境下提工单给云厂商；4) 有冗余的先把流量切走。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1135,7 +1198,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "网络接口接近饱和，链路带宽已经不够用，会出现丢包、排队与延迟抖动。",
+            "action": "1) 用 iftop/nethogs 定位占用带宽最高的连接；2) K8s 节点上确认是否有大流量 Pod 或正在拉取大镜像；3) 可错峰的任务调整执行时间；4) 确需更高带宽的升级网卡或迁移部分工作负载。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1187,7 +1253,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "内核连接跟踪表接近上限，表满后新连接会被直接丢弃，表现为大面积连接超时。",
+            "action": "1) 用 sysctl net.netfilter.nf_conntrack_count 与 nf_conntrack_max 确认水位；2) K8s 节点上 kube-proxy 的 iptables 模式会产生大量 conntrack 条目，Pod 密度高时尤其明显；3) 调大 nf_conntrack_max 并同步调大 buckets；4) 长期可评估切换到 IPVS 模式减少 conntrack 压力。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1239,7 +1308,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机时钟偏差或未同步。K8s 对时钟一致性要求很高，偏差会导致证书校验失败、事件时序错乱、租约异常。",
+            "action": "1) 用 chronyc tracking 确认偏移量与上游源状态；2) 确认 chronyd/ntpd 服务在运行且开机自启；3) 检查到 NTP 服务器的网络是否放行 123/UDP；4) 偏移过大用 chronyc makestep 强制对时，之后确认所有节点时间一致。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1291,7 +1363,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机时钟偏差或未同步。K8s 对时钟一致性要求很高，偏差会导致证书校验失败、事件时序错乱、租约异常。",
+            "action": "1) 用 chronyc tracking 确认偏移量与上游源状态；2) 确认 chronyd/ntpd 服务在运行且开机自启；3) 检查到 NTP 服务器的网络是否放行 123/UDP；4) 偏移过大用 chronyc makestep 强制对时，之后确认所有节点时间一致。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1343,7 +1418,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "按当前写入速度预测，磁盘将在 24 小时内写满。这是提前预警，现在处理成本远低于写满之后。",
+            "action": "1) 用 du -x --max-depth=1 找出增长最快的目录；2) 确认增长来源是正常业务还是异常（应用死循环打日志、备份堆积）；3) 清理无用镜像与容器日志；4) 增长确实来自业务的，安排扩容磁盘或迁移数据，不要等到写满。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1395,7 +1473,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "按当前写入速度预测，磁盘将在 24 小时内写满。这是提前预警，现在处理成本远低于写满之后。",
+            "action": "1) 用 du -x --max-depth=1 找出增长最快的目录；2) 确认增长来源是正常业务还是异常（应用死循环打日志、备份堆积）；3) 清理无用镜像与容器日志；4) 增长确实来自业务的，安排扩容磁盘或迁移数据，不要等到写满。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1447,7 +1528,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机磁盘空间不足。K8s 节点磁盘写满会触发 kubelet 驱逐 Pod 并停止拉取镜像，节点很快不可用。",
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 逐层找占用大的目录；2) 容器运行时目录（/var/lib/containerd 或 /var/lib/docker）用 crictl rmi --prune 清理无用镜像；3) 清理容器日志（/var/log/pods），并确认日志轮转配置生效；4) 用 lsof +L1 检查已删除但句柄未释放的文件。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1499,7 +1583,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "主机磁盘空间不足。K8s 节点磁盘写满会触发 kubelet 驱逐 Pod 并停止拉取镜像，节点很快不可用。",
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 逐层找占用大的目录；2) 容器运行时目录（/var/lib/containerd 或 /var/lib/docker）用 crictl rmi --prune 清理无用镜像；3) 清理容器日志（/var/log/pods），并确认日志轮转配置生效；4) 用 lsof +L1 检查已删除但句柄未释放的文件。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1551,7 +1638,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "文件系统 inode 使用率高，耗尽后即使有剩余空间也无法创建新文件，表现为「磁盘没满却写不进去」。",
+            "action": "1) 用 df -i 确认挂载点；2) 逐层统计文件数找出小文件最多的目录；3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1603,7 +1693,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "文件系统 inode 使用率高，耗尽后即使有剩余空间也无法创建新文件，表现为「磁盘没满却写不进去」。",
+            "action": "1) 用 df -i 确认挂载点；2) 逐层统计文件数找出小文件最多的目录；3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1655,7 +1748,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "文件系统 inode 使用率高，耗尽后即使有剩余空间也无法创建新文件，表现为「磁盘没满却写不进去」。",
+            "action": "1) 用 df -i 确认挂载点；2) 逐层统计文件数找出小文件最多的目录；3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1707,7 +1803,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "文件系统 inode 使用率高，耗尽后即使有剩余空间也无法创建新文件，表现为「磁盘没满却写不进去」。",
+            "action": "1) 用 df -i 确认挂载点；2) 逐层统计文件数找出小文件最多的目录；3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1759,7 +1858,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "内核连接跟踪表接近上限，表满后新连接会被直接丢弃，表现为大面积连接超时。",
+            "action": "1) 用 sysctl net.netfilter.nf_conntrack_count 与 nf_conntrack_max 确认水位；2) K8s 节点上 kube-proxy 的 iptables 模式会产生大量 conntrack 条目，Pod 密度高时尤其明显；3) 调大 nf_conntrack_max 并同步调大 buckets；4) 长期可评估切换到 IPVS 模式减少 conntrack 压力。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1811,7 +1913,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "node_exporter 的 textfile collector 抓取出错，自定义指标无法上报，基于这些指标的告警会失效。",
+            "action": "1) 检查 textfile 目录下的 .prom 文件权限与格式；2) 写入方通常是 cron 脚本，确认脚本执行成功且用原子写（先写 .tmp 再 mv）；3) 格式错误的用 promtool check metrics 校验；4) 清理残留的临时文件，它们会导致解析失败。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1863,7 +1968,10 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "summary": "网络接口状态抖动，链路反复 up/down。每次抖动都会中断该链路上的连接并触发路由重收敛。",
+            "action": "1) 用 dmesg -T | grep -i 'link is' 看抖动时间线；2) 检查网线/光模块，抖动多为物理层接触不良；3) 确认协商速率与双工模式和对端一致；4) 联系网络侧确认交换机端口状态，云环境下提工单。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
