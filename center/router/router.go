@@ -32,6 +32,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
 	"gorm.io/gorm"
 
@@ -60,6 +61,13 @@ type Router struct {
 	UserTokenCache    *memsto.UserTokenCacheType
 	Ctx               *ctx.Context
 	LogDir            string
+
+	// Pushgw is this deployment's forwarding config. It is only read to answer
+	// "which datasource do host metrics end up in" (categrafMeta), so it is set
+	// after New() rather than taken as a parameter — an embedder that never
+	// sets it just gets an empty writer list and the UI falls back to letting
+	// the user pick the datasource.
+	Pushgw pconf.Pushgw
 
 	// Sandbox is the Skill script-execution isolation controller (pkg/sandbox).
 	// Built once at New() from the configured capabilities; nil-safe (a disabled
@@ -465,6 +473,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		// public software. Same posture as /pub and /site-info.
 		pages.GET("/agents/categraf/meta", rt.categrafMeta)
 		pages.GET("/agents/categraf/install.sh", rt.categrafInstallScript)
+		pages.GET("/agents/categraf/collect.sh", rt.categrafCollectScript)
 		pages.GET("/agents/categraf/download", rt.categrafDownload)
 
 		// pages.GET("/builtin-boards", rt.builtinBoardGets)
