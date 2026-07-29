@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/dscache"
 
@@ -38,11 +40,13 @@ import (
 	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/ccfos/nightingale/v6/tsdb"
+	tsdbrt "github.com/ccfos/nightingale/v6/tsdb/router"
 	"github.com/flashcatcloud/ibex/src/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
-	config, err := conf.InitConfig(configDir, cryptoKey)
+	config, err := conf.InitCenterConfig(configDir, cryptoKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init config: %v", err)
 	}
@@ -132,6 +136,53 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	writers := writer.NewWriters(config.Pushgw)
 
+	var tsdbInstance *tsdb.Instance
+	if config.EmbeddedTSDB.Enable {
+		// 内置 tsdb 数据落在本实例的本地磁盘，多副本 center 部署时每个副本只有
+		// 一部分数据，且会互相改写下面注册的数据源地址，查询结果静默缺失
+		if others, err := models.AlertingEngineGetsInstances(ctx, "engine_cluster = ? and clock > ? and instance <> ?",
+			config.Alert.Heartbeat.EngineName, time.Now().Unix()-90, config.Alert.Heartbeat.Endpoint); err == nil && len(others) > 0 {
+			logger.Warningf("embedded tsdb: detected other active center instances %v, "+
+				"embedded tsdb only fits single-instance deployment, metrics will be fragmented across replicas; "+
+				"disable [EmbeddedTSDB] and use an external TSDB, or set EmbeddedTSDB.DatasourceUrl to a stable address", others)
+		}
+
+		tsdbInstance, err = tsdb.Open(config.EmbeddedTSDB)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open embedded tsdb: %v", err)
+		}
+
+		// 样本经 pushgw 转发链路走 remote write 写入本实例的
+		// /prometheus/api/v1/write（writer 配置在 conf.InitConfig 注入），
+		// 这里只需挂查询/写入路由（见下方 tsdbrt）并注册数据源
+
+		tsdbUrl := config.EmbeddedTSDB.DatasourceUrl
+		skipTLSVerify := false
+		if tsdbUrl == "" {
+			// 与 httpx.Init 保持一致：配了证书就只监听 https；本机地址/探测 IP 通常
+			// 不在证书 SAN 里，跳过校验，需要严格校验时显式配置 DatasourceUrl
+			scheme := "http"
+			if config.HTTP.CertFile != "" && config.HTTP.KeyFile != "" {
+				scheme = "https"
+				skipTLSVerify = true
+			}
+
+			// 未配置 BasicAuth 时 /prometheus 端点仅接受本机请求（见
+			// tsdb/router 的 requireLocal），数据源相应指向本机地址——前端代理
+			// 与告警引擎都从 center 进程发起，本机可达；配置了 BasicAuth 即视
+			// 为允许远程访问，改用探测 IP 方便 edge / grafana 等远程消费
+			host := config.Alert.Heartbeat.IP
+			if config.EmbeddedTSDB.BasicAuthUser == "" {
+				host = config.HTTP.Host
+				if host == "" || host == "0.0.0.0" || host == "::" {
+					host = "127.0.0.1"
+				}
+			}
+			tsdbUrl = fmt.Sprintf("%s://%s/prometheus", scheme, net.JoinHostPort(host, fmt.Sprint(config.HTTP.Port)))
+		}
+		models.InitEmbeddedTSDBDatasource(ctx, tsdbUrl, config.EmbeddedTSDB.BasicAuthUser, config.EmbeddedTSDB.BasicAuthPass, skipTLSVerify)
+	}
+
 	go version.GetGithubVersion()
 
 	go cron.CleanNotifyRecord(ctx, config.Center.CleanNotifyRecordDay)
@@ -152,6 +203,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	centerRouter.Config(r)
 	alertrtRouter.Config(r)
 	pushgwRouter.Config(r)
+	if tsdbInstance != nil {
+		tsdbrt.New(tsdbInstance, config.HTTP.Host).Config(r)
+	}
 	dumper.ConfigRouter(r)
 
 	if config.Ibex.Enable {
@@ -167,8 +221,15 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	return func() {
-		logxClean()
+		// httpClean 优雅关闭：等在途请求处理完才返回，之后不再有 remote write
+		// 请求进到本地 tsdb，Close 不会与写入竞态
 		httpClean()
+		if tsdbInstance != nil {
+			if err := tsdbInstance.Close(); err != nil {
+				logger.Errorf("failed to close embedded tsdb: %v", err)
+			}
+		}
+		logxClean()
 	}, nil
 }
 

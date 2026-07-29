@@ -641,3 +641,119 @@ func DatasourceStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 	return stats[0], nil
 }
+
+// EmbeddedTSDBIdentifier marks the datasource auto-created for the embedded
+// tsdb, so restarts can find it regardless of user renames.
+const EmbeddedTSDBIdentifier = "n9e-embedded-tsdb"
+
+const EmbeddedTSDBName = "embedded-tsdb"
+
+// embeddedTSDBTsdbType 必须与前端时序库类型下拉框的取值、以及
+// center/router.DatasourceTypePrometheus 保持一致（大小写敏感），否则按该字段
+// 分发的功能（如删除序列接口）会认不出这个数据源。
+const embeddedTSDBTsdbType = "Prometheus"
+
+const embeddedTSDBTsdbTypeKey = "prometheus.tsdb_type"
+
+// InitEmbeddedTSDBDatasource ensures a prometheus datasource pointing at the
+// embedded tsdb query endpoints exists. Idempotent: creates the record on
+// first start, updates url/auth/tsdb_type if they drift (e.g. server ip changed).
+// Creation is skipped when other enabled prometheus datasources already
+// exist, so setups with an external TSDB don't get a surprise datasource;
+// once created though, it is kept up to date even if external datasources
+// are added later.
+// The alert engine reader and memsto caches poll the datasource table, so the
+// record takes effect without any notification.
+func InitEmbeddedTSDBDatasource(ctx *ctx.Context, url, basicAuthUser, basicAuthPass string, skipTLSVerify bool) {
+	auth := Auth{}
+	if basicAuthUser != "" {
+		auth = Auth{BasicAuth: true, BasicAuthUser: basicAuthUser, BasicAuthPassword: basicAuthPass}
+	}
+
+	var lst []*Datasource
+	if err := DB(ctx).Where("identifier = ?", EmbeddedTSDBIdentifier).Find(&lst).Error; err != nil {
+		logger.Warningf("InitEmbeddedTSDBDatasource query failed: %v", err)
+		return
+	}
+
+	now := time.Now().Unix()
+
+	if len(lst) > 0 {
+		ds := lst[0]
+		if err := ds.DB2FE(); err != nil {
+			logger.Warningf("InitEmbeddedTSDBDatasource unmarshal failed: %v", err)
+			return
+		}
+
+		if ds.HTTPJson.Url == url && ds.AuthJson == auth && ds.HTTPJson.TLS.SkipTlsVerify == skipTLSVerify &&
+			ds.SettingsJson[embeddedTSDBTsdbTypeKey] == embeddedTSDBTsdbType {
+			return
+		}
+
+		ds.HTTPJson.Url = url
+		ds.HTTPJson.TLS.SkipTlsVerify = skipTLSVerify
+		ds.AuthJson = auth
+		if ds.SettingsJson == nil {
+			ds.SettingsJson = make(map[string]interface{})
+		}
+		ds.SettingsJson[embeddedTSDBTsdbTypeKey] = embeddedTSDBTsdbType
+		ds.UpdatedAt = now
+		ds.UpdatedBy = "system"
+		if err := ds.Update(ctx, "settings", "http", "auth", "updated_at", "updated_by"); err != nil {
+			logger.Warningf("InitEmbeddedTSDBDatasource update failed: %v", err)
+			return
+		}
+		logger.Infof("embedded tsdb datasource url updated to %s", url)
+		return
+	}
+
+	// respect existing setups: if usable prometheus datasources already
+	// exist, don't add a built-in one. Note samples are still written to the
+	// local storage as long as EmbeddedTSDB is enabled.
+	var promCount int64
+	if err := DB(ctx).Model(&Datasource{}).Where("plugin_type = ? and status = ?", PROMETHEUS, "enabled").Count(&promCount).Error; err != nil {
+		logger.Warningf("InitEmbeddedTSDBDatasource count failed: %v", err)
+		return
+	}
+	if promCount > 0 {
+		logger.Infof("embedded tsdb datasource auto register skipped: %d enabled prometheus datasource(s) already exist. samples are still stored locally, to query them create a prometheus datasource with url %s, or disable EmbeddedTSDB if the local storage is not needed", promCount, url)
+		return
+	}
+
+	var nameCount int64
+	if err := DB(ctx).Model(&Datasource{}).Where("name = ?", EmbeddedTSDBName).Count(&nameCount).Error; err != nil {
+		logger.Warningf("InitEmbeddedTSDBDatasource count by name failed: %v", err)
+		return
+	}
+	if nameCount > 0 {
+		logger.Warningf("datasource named %s already exists but was not created for the embedded tsdb, skip auto register", EmbeddedTSDBName)
+		return
+	}
+
+	ds := &Datasource{
+		Name:           EmbeddedTSDBName,
+		Identifier:     EmbeddedTSDBIdentifier,
+		Description:    "auto-created datasource backed by the built-in tsdb of n9e",
+		PluginId:       1,
+		PluginType:     PROMETHEUS,
+		PluginTypeName: "Prometheus Like",
+		Category:       "timeseries",
+		ClusterName:    "default",
+		SettingsJson: map[string]interface{}{
+			embeddedTSDBTsdbTypeKey: embeddedTSDBTsdbType,
+		},
+		HTTPJson:  HTTP{Url: url, Timeout: 10000, DialTimeout: 3000, MaxIdleConnsPerHost: 100, TLS: TLS{SkipTlsVerify: skipTLSVerify}},
+		AuthJson:  auth,
+		Status:    "enabled",
+		IsDefault: true,
+		CreatedBy: "system",
+		UpdatedBy: "system",
+	}
+
+	if err := ds.Add(ctx); err != nil {
+		logger.Warningf("InitEmbeddedTSDBDatasource insert failed: %v", err)
+		return
+	}
+
+	logger.Infof("embedded tsdb datasource auto registered, url: %s", url)
+}
