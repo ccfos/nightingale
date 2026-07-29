@@ -86,6 +86,19 @@ func (d *DatasourceCacheType) GetById(id int64) *models.Datasource {
 	return d.ds[id]
 }
 
+// GetByCate 返回某个 plugin_type 下的全部数据源快照。返回的是 map 迭代顺序，
+// 调用方若需要稳定输出（如写进 API 响应）要自行排序。
+func (d *DatasourceCacheType) GetByCate(cate string) []*models.Datasource {
+	d.RLock()
+	defer d.RUnlock()
+
+	lst := make([]*models.Datasource, 0, len(d.CateToIDs[cate]))
+	for _, ds := range d.CateToIDs[cate] {
+		lst = append(lst, ds)
+	}
+	return lst
+}
+
 // GetStat 返回缓存当前同步到的 (total, lastUpdated)。外部据此判断 GetById 读到的快照版本，
 // 与缓存内部 StatChanged 判定同源——缓存何时刷新内容，该值就何时变化。
 func (d *DatasourceCacheType) GetStat() (total, lastUpdated int64) {

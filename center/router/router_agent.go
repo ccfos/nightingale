@@ -3,11 +3,13 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -206,6 +208,104 @@ func (rt *Router) n9eBaseURL(c *gin.Context) string {
 	return rt.n9eSelfURL(c)
 }
 
+// normalizeStorageURL 把一个地址归一成可比较的 scheme://host:port/path 形式：
+// scheme 与主机名转小写、补出默认端口、loopback 的几种写法收敛到一个、去掉尾斜杠。
+// 空串表示无法解析，调用方一律当"匹配不上"处理。
+func normalizeStorageURL(raw string) string {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || u.Host == "" {
+		return ""
+	}
+
+	scheme := strings.ToLower(u.Scheme)
+	if scheme != "http" && scheme != "https" {
+		return ""
+	}
+
+	host := strings.ToLower(u.Hostname())
+	// 同一台机器的三种写法，配置里混用很常见，不收敛就永远匹配不上
+	if host == "localhost" || host == "::1" {
+		host = "127.0.0.1"
+	}
+
+	port := u.Port()
+	if port == "" {
+		if scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+
+	return scheme + "://" + net.JoinHostPort(host, port) + strings.TrimRight(u.Path, "/")
+}
+
+// storageURLMatches 判断 writer 地址是否指向该数据源。用前缀而非相等：writer 配的是
+// remote-write 端点（.../api/v1/write），数据源存的是查询根地址，前者天然是后者多一段
+// 路径。要求前缀后紧跟 '/'，否则 http://x:9090 会错配到 http://x:90901。
+func storageURLMatches(writerURL, datasourceURL string) bool {
+	if writerURL == "" || datasourceURL == "" {
+		return false
+	}
+	return writerURL == datasourceURL || strings.HasPrefix(writerURL, datasourceURL+"/")
+}
+
+// metricDatasourceIDs answers "where do host metrics actually land" by matching
+// the pushgw writer addresses against the configured Prometheus datasources.
+// The write path is the direct answer, unlike the engine_name/cluster_name
+// chain the UI used to reason from — that one describes which alert engine
+// consumes a datasource, which is a different thing and can disagree.
+//
+// URL matching is inherently lossy though: a VictoriaMetrics cluster writes to
+// vminsert and reads from vmselect (different host and port), and a containerized
+// deployment routinely writes to an internal address while the datasource is
+// configured with an external one. So this is a best guess, never the whole
+// truth — the wizard shows the datasource picker seeded with this value and
+// lets the user switch, which is what keeps a miss from being a dead end.
+func (rt *Router) metricDatasourceIDs() []int64 {
+	if rt.DatasourceCache == nil || len(rt.Pushgw.Writers) == 0 {
+		return nil
+	}
+
+	writerURLs := make([]string, 0, len(rt.Pushgw.Writers))
+	for _, w := range rt.Pushgw.Writers {
+		if u := normalizeStorageURL(w.Url); u != "" {
+			writerURLs = append(writerURLs, u)
+		}
+	}
+	if len(writerURLs) == 0 {
+		return nil
+	}
+
+	ids := make([]int64, 0, 1)
+	for _, ds := range rt.DatasourceCache.GetByCate(models.PROMETHEUS) {
+		candidates := append([]string{ds.HTTPJson.Url}, ds.HTTPJson.Urls...)
+		if matchesAnyWriter(writerURLs, candidates) {
+			ids = append(ids, ds.Id)
+		}
+	}
+
+	// GetByCate 走的是 map 迭代，顺序随机；前端拿第一个当默认值，不排序会让
+	// 同一套配置每次请求返回不同的默认数据源。
+	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	return ids
+}
+
+func matchesAnyWriter(writerURLs, datasourceURLs []string) bool {
+	for _, raw := range datasourceURLs {
+		target := normalizeStorageURL(raw)
+		if target == "" {
+			continue
+		}
+		for _, w := range writerURLs {
+			if storageURLMatches(w, target) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // categrafMeta tells the UI whether one-click install is available here, so an
 // older or stripped-down deployment degrades to the docs instead of showing a
 // dead button.
@@ -224,6 +324,11 @@ func (rt *Router) categrafMeta(c *gin.Context) {
 		// pointing the frontend at an older server degrades to the docs
 		// instead of generating a command the server cannot serve.
 		"collect": true,
+		// Best-guess default for the wizard's "did the metrics arrive" check.
+		// Empty is a valid answer (no writers configured, or none matched a
+		// datasource): the UI then falls back to the default datasource and
+		// the user picks from there.
+		"metric_datasource_ids": rt.metricDatasourceIDs(),
 	}, nil)
 }
 

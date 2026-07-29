@@ -142,6 +142,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,
 		cconf.Operations, dsCache, notifyConfigCache, promClients,
 		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache, config.Log.Dir)
+	// categrafMeta 反查「机器指标写进了哪个数据源」要读 writer 地址；单独赋值而非
+	// 加进 New 的参数表，避免动到嵌入方（企业版）调用的函数签名。
+	centerRouter.Pushgw = config.Pushgw
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)

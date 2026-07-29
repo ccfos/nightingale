@@ -214,3 +214,110 @@ func TestN9EBaseURLRejectsInvalidHostParam(t *testing.T) {
 	}()
 	rt.n9eBaseURL(c)
 }
+
+// The wizard seeds its "did the metrics arrive" query with whatever this
+// matching returns, so a miss costs the user a manual datasource switch while a
+// false hit sends the query to a datasource that will never have the data.
+func TestNormalizeStorageURL(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"explicit port kept", "http://10.1.2.3:9090", "http://10.1.2.3:9090"},
+		{"default http port filled in", "http://prom.example.com", "http://prom.example.com:80"},
+		{"default https port filled in", "https://prom.example.com", "https://prom.example.com:443"},
+		{"scheme and host lowercased", "HTTP://Prom.Example.COM:9090", "http://prom.example.com:9090"},
+		{"trailing slash dropped", "http://10.1.2.3:9090/", "http://10.1.2.3:9090"},
+		{"path kept", "http://10.1.2.3:8481/select/0/prometheus", "http://10.1.2.3:8481/select/0/prometheus"},
+		{"surrounding space tolerated", "  http://10.1.2.3:9090  ", "http://10.1.2.3:9090"},
+
+		// The same machine spelled three ways; config files mix these freely and
+		// nothing would ever match if they were compared literally.
+		{"localhost folded to loopback", "http://localhost:9090", "http://127.0.0.1:9090"},
+		{"ipv6 loopback folded", "http://[::1]:9090", "http://127.0.0.1:9090"},
+
+		// Unparseable input must read as "no match", never as a wildcard.
+		{"empty", "", ""},
+		{"no host", "/api/v1/write", ""},
+		{"non-http scheme", "kafka://broker:9092", ""},
+	}
+
+	for _, tc := range cases {
+		if got := normalizeStorageURL(tc.in); got != tc.want {
+			t.Errorf("%s: normalizeStorageURL(%q) = %q, want %q", tc.name, tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestStorageURLMatches(t *testing.T) {
+	cases := []struct {
+		name   string
+		writer string
+		ds     string
+		want   bool
+	}{
+		{
+			name:   "remote-write endpoint under the datasource root",
+			writer: normalizeStorageURL("http://127.0.0.1:9090/api/v1/write"),
+			ds:     normalizeStorageURL("http://127.0.0.1:9090"),
+			want:   true,
+		},
+		{
+			name:   "victoriametrics single node",
+			writer: normalizeStorageURL("http://vm:8428/api/v1/write"),
+			ds:     normalizeStorageURL("http://vm:8428"),
+			want:   true,
+		},
+		{
+			name:   "identical addresses",
+			writer: normalizeStorageURL("http://127.0.0.1:9090"),
+			ds:     normalizeStorageURL("http://localhost:9090/"),
+			want:   true,
+		},
+		{
+			// A port that merely starts with the datasource port must not match;
+			// this is what the trailing-slash guard in the prefix test buys.
+			name:   "port prefix is not a match",
+			writer: normalizeStorageURL("http://127.0.0.1:90901/api/v1/write"),
+			ds:     normalizeStorageURL("http://127.0.0.1:9090"),
+			want:   false,
+		},
+		{
+			// vminsert and vmselect are different hosts and ports, so a cluster
+			// deployment correctly reports no match and the user picks manually.
+			name:   "victoriametrics cluster insert vs select",
+			writer: normalizeStorageURL("http://vminsert:8480/insert/0/prometheus/api/v1/write"),
+			ds:     normalizeStorageURL("http://vmselect:8481/select/0/prometheus"),
+			want:   false,
+		},
+		{
+			name:   "different host",
+			writer: normalizeStorageURL("http://prom-a:9090/api/v1/write"),
+			ds:     normalizeStorageURL("http://prom-b:9090"),
+			want:   false,
+		},
+		{
+			name:   "unparseable datasource url never matches",
+			writer: normalizeStorageURL("http://127.0.0.1:9090/api/v1/write"),
+			ds:     normalizeStorageURL(""),
+			want:   false,
+		},
+	}
+
+	for _, tc := range cases {
+		if got := storageURLMatches(tc.writer, tc.ds); got != tc.want {
+			t.Errorf("%s: storageURLMatches(%q, %q) = %v, want %v", tc.name, tc.writer, tc.ds, got, tc.want)
+		}
+	}
+}
+
+// A deployment with no writers configured, or one where nothing matched, must
+// return an empty list rather than guessing — the UI reads empty as "fall back
+// to the default datasource" and still lets the user pick.
+func TestMetricDatasourceIDsWithoutWriters(t *testing.T) {
+	rt := &Router{}
+	if got := rt.metricDatasourceIDs(); len(got) != 0 {
+		t.Errorf("no writers configured should yield no datasource ids, got %v", got)
+	}
+}
