@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/dscache"
@@ -158,14 +159,26 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		tsdbUrl := config.EmbeddedTSDB.DatasourceUrl
 		skipTLSVerify := false
 		if tsdbUrl == "" {
-			// 与 httpx.Init 保持一致：配了证书就只监听 https；自动探测的 IP 通常
+			// 与 httpx.Init 保持一致：配了证书就只监听 https；本机地址/探测 IP 通常
 			// 不在证书 SAN 里，跳过校验，需要严格校验时显式配置 DatasourceUrl
 			scheme := "http"
 			if config.HTTP.CertFile != "" && config.HTTP.KeyFile != "" {
 				scheme = "https"
 				skipTLSVerify = true
 			}
-			tsdbUrl = fmt.Sprintf("%s://%s:%d/prometheus", scheme, config.Alert.Heartbeat.IP, config.HTTP.Port)
+
+			// 未配置 BasicAuth 时 /prometheus 端点仅接受本机请求（见
+			// tsdb/router 的 requireLocal），数据源相应指向本机地址——前端代理
+			// 与告警引擎都从 center 进程发起，本机可达；配置了 BasicAuth 即视
+			// 为允许远程访问，改用探测 IP 方便 edge / grafana 等远程消费
+			host := config.Alert.Heartbeat.IP
+			if config.EmbeddedTSDB.BasicAuthUser == "" {
+				host = config.HTTP.Host
+				if host == "" || host == "0.0.0.0" || host == "::" {
+					host = "127.0.0.1"
+				}
+			}
+			tsdbUrl = fmt.Sprintf("%s://%s/prometheus", scheme, net.JoinHostPort(host, fmt.Sprint(config.HTTP.Port)))
 		}
 		models.InitEmbeddedTSDBDatasource(ctx, tsdbUrl, config.EmbeddedTSDB.BasicAuthUser, config.EmbeddedTSDB.BasicAuthPass, skipTLSVerify)
 	}
@@ -188,7 +201,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter.Config(r)
 	pushgwRouter.Config(r)
 	if tsdbInstance != nil {
-		tsdbrt.New(tsdbInstance).Config(r)
+		tsdbrt.New(tsdbInstance, config.HTTP.Host).Config(r)
 	}
 	dumper.ConfigRouter(r)
 

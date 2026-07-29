@@ -22,15 +22,21 @@ type EmbeddedTSDB struct {
 	QueryMaxSamples      int
 	QueryMaxConcurrency  int
 	LookbackDelta        string
-	BasicAuthUser        string
-	BasicAuthPass        string
+	// BasicAuthUser/Pass protect the /prometheus/api/v1/* endpoints. When
+	// empty, those endpoints only accept requests from the n9e host itself
+	// (see tsdb/router.Router.localOnly); setting them allows authenticated
+	// remote access.
+	BasicAuthUser string
+	BasicAuthPass string
 	// EnableAdminAPI controls whether the destructive admin endpoints
 	// (delete_series / clean_tombstones) are registered. Off by default,
 	// same as prometheus --web.enable-admin-api.
 	EnableAdminAPI bool
 	// DatasourceUrl overrides the url written into the auto-registered
-	// datasource. Set it to a stable address (vip/domain) when the
-	// auto-detected local ip is not what queriers should use.
+	// datasource. Set it to a stable address (vip/domain) when the default
+	// (127.0.0.1, or the detected ip once basic auth is configured) is not
+	// what queriers should use. Setting it also lifts the local-only
+	// restriction of the /prometheus/api/v1/* endpoints.
 	DatasourceUrl string
 
 	// parsed values, filled by PreCheck

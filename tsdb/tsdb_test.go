@@ -22,7 +22,7 @@ import (
 	"github.com/prometheus/prometheus/prompb"
 )
 
-func newTestRouter(t *testing.T, cfg tconf.EmbeddedTSDB) (*tsdb.Instance, *gin.Engine) {
+func newTestRouter(t *testing.T, cfg tconf.EmbeddedTSDB, httpHost string) (*tsdb.Instance, *gin.Engine) {
 	t.Helper()
 	if err := cfg.PreCheck(); err != nil {
 		t.Fatalf("precheck fail: %v", err)
@@ -36,8 +36,16 @@ func newTestRouter(t *testing.T, cfg tconf.EmbeddedTSDB) (*tsdb.Instance, *gin.E
 
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	tsdbrt.New(inst).Config(r)
+	tsdbrt.New(inst, httpHost).Config(r)
 	return inst, r
+}
+
+// localReq builds a request originating from loopback. httptest's default
+// RemoteAddr is 192.0.2.1, which the local-only default would reject.
+func localReq(method, target string, body io.Reader) *http.Request {
+	req := httptest.NewRequest(method, target, body)
+	req.RemoteAddr = "127.0.0.1:34567"
+	return req
 }
 
 // remoteWrite posts series to /prometheus/api/v1/write the same way the
@@ -49,7 +57,7 @@ func remoteWrite(t *testing.T, r *gin.Engine, items []prompb.TimeSeries) int {
 		t.Fatalf("marshal fail: %v", err)
 	}
 
-	req := httptest.NewRequest("POST", "/prometheus/api/v1/write", bytes.NewReader(snappy.Encode(nil, data)))
+	req := localReq("POST", "/prometheus/api/v1/write", bytes.NewReader(snappy.Encode(nil, data)))
 	req.Header.Set("Content-Encoding", "snappy")
 	req.Header.Set("Content-Type", "application/x-protobuf")
 	rec := httptest.NewRecorder()
@@ -58,7 +66,7 @@ func remoteWrite(t *testing.T, r *gin.Engine, items []prompb.TimeSeries) int {
 }
 
 func TestEmbeddedTSDBWriteQuery(t *testing.T) {
-	_, r := newTestRouter(t, tconf.EmbeddedTSDB{Enable: true, Dir: t.TempDir()})
+	_, r := newTestRouter(t, tconf.EmbeddedTSDB{Enable: true, Dir: t.TempDir()}, "")
 
 	now := time.Now().UnixMilli()
 	items := []prompb.TimeSeries{
@@ -79,7 +87,7 @@ func TestEmbeddedTSDBWriteQuery(t *testing.T) {
 	}
 
 	get := func(path string) (int, string) {
-		req := httptest.NewRequest("GET", path, nil)
+		req := localReq("GET", path, nil)
 		rec := httptest.NewRecorder()
 		r.ServeHTTP(rec, req)
 		return rec.Code, rec.Body.String()
@@ -155,7 +163,7 @@ func TestEmbeddedTSDBWriteQuery(t *testing.T) {
 	}
 
 	// non-snappy garbage body
-	req := httptest.NewRequest("POST", "/prometheus/api/v1/write", strings.NewReader("not-snappy"))
+	req := localReq("POST", "/prometheus/api/v1/write", strings.NewReader("not-snappy"))
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusBadRequest {
@@ -163,7 +171,7 @@ func TestEmbeddedTSDBWriteQuery(t *testing.T) {
 	}
 
 	// admin endpoints must not be registered by default
-	req = httptest.NewRequest("POST", "/prometheus/api/v1/admin/tsdb/delete_series?match[]=test_metric", nil)
+	req = localReq("POST", "/prometheus/api/v1/admin/tsdb/delete_series?match[]=test_metric", nil)
 	rec = httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNotFound {
@@ -172,7 +180,7 @@ func TestEmbeddedTSDBWriteQuery(t *testing.T) {
 }
 
 func TestAdminAPIEnabled(t *testing.T) {
-	_, r := newTestRouter(t, tconf.EmbeddedTSDB{Enable: true, Dir: t.TempDir(), EnableAdminAPI: true})
+	_, r := newTestRouter(t, tconf.EmbeddedTSDB{Enable: true, Dir: t.TempDir(), EnableAdminAPI: true}, "")
 
 	now := time.Now().UnixMilli()
 	if code := remoteWrite(t, r, []prompb.TimeSeries{{
@@ -182,14 +190,14 @@ func TestAdminAPIEnabled(t *testing.T) {
 		t.Fatalf("remote write status: %d", code)
 	}
 
-	req := httptest.NewRequest("POST", "/prometheus/api/v1/admin/tsdb/delete_series?match[]=adm_metric", nil)
+	req := localReq("POST", "/prometheus/api/v1/admin/tsdb/delete_series?match[]=adm_metric", nil)
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("delete_series should be 204, got %d body: %s", rec.Code, rec.Body.String())
 	}
 
-	req = httptest.NewRequest("GET", "/prometheus/api/v1/query?query=adm_metric", nil)
+	req = localReq("GET", "/prometheus/api/v1/query?query=adm_metric", nil)
 	rec = httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK || strings.Contains(rec.Body.String(), "adm_metric") {
@@ -200,7 +208,7 @@ func TestAdminAPIEnabled(t *testing.T) {
 func TestBasicAuthOnWrite(t *testing.T) {
 	_, r := newTestRouter(t, tconf.EmbeddedTSDB{
 		Enable: true, Dir: t.TempDir(), BasicAuthUser: "u", BasicAuthPass: "p",
-	})
+	}, "")
 
 	data, _ := proto.Marshal(&prompb.WriteRequest{})
 	body := snappy.Encode(nil, data)
@@ -218,6 +226,69 @@ func TestBasicAuthOnWrite(t *testing.T) {
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("write with auth should be 204, got %d", rec.Code)
+	}
+}
+
+// without BasicAuth/DatasourceUrl the endpoints must only accept requests
+// from this machine: they expose full metrics read and unauthenticated
+// sample injection otherwise.
+func TestLocalOnlyByDefault(t *testing.T) {
+	_, r := newTestRouter(t, tconf.EmbeddedTSDB{Enable: true, Dir: t.TempDir()}, "")
+
+	do := func(method, path, remoteAddr string) int {
+		req := httptest.NewRequest(method, path, nil)
+		if remoteAddr != "" {
+			req.RemoteAddr = remoteAddr
+		}
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+		return rec.Code
+	}
+
+	// httptest's default RemoteAddr 192.0.2.1 plays the remote client
+	if code := do("GET", "/prometheus/api/v1/labels", ""); code != http.StatusForbidden {
+		t.Fatalf("remote query should be 403, got %d", code)
+	}
+	if code := do("POST", "/prometheus/api/v1/write", ""); code != http.StatusForbidden {
+		t.Fatalf("remote write should be 403, got %d", code)
+	}
+
+	// loopback passes, both ipv4 and ipv6
+	if code := do("GET", "/prometheus/api/v1/labels", "127.0.0.1:9999"); code != http.StatusOK {
+		t.Fatalf("loopback query should pass, got %d", code)
+	}
+	if code := do("GET", "/prometheus/api/v1/labels", "[::1]:9999"); code != http.StatusOK {
+		t.Fatalf("ipv6 loopback query should pass, got %d", code)
+	}
+
+	// when the http server binds a concrete address, a local process
+	// connecting to it gets that address as its source: must pass too
+	_, rBind := newTestRouter(t, tconf.EmbeddedTSDB{Enable: true, Dir: t.TempDir()}, "10.1.2.3")
+	reqBind := httptest.NewRequest("GET", "/prometheus/api/v1/labels", nil)
+	reqBind.RemoteAddr = "10.1.2.3:9999"
+	recBind := httptest.NewRecorder()
+	rBind.ServeHTTP(recBind, reqBind)
+	if recBind.Code != http.StatusOK {
+		t.Fatalf("bind address source should pass, got %d", recBind.Code)
+	}
+	reqBind = httptest.NewRequest("GET", "/prometheus/api/v1/labels", nil)
+	reqBind.RemoteAddr = "10.1.2.4:9999"
+	recBind = httptest.NewRecorder()
+	rBind.ServeHTTP(recBind, reqBind)
+	if recBind.Code != http.StatusForbidden {
+		t.Fatalf("other host should be 403, got %d", recBind.Code)
+	}
+
+	// an explicit DatasourceUrl states remote access intent and lifts the
+	// restriction (BasicAuth does too, covered by TestBasicAuthOnWrite)
+	_, rRemote := newTestRouter(t, tconf.EmbeddedTSDB{
+		Enable: true, Dir: t.TempDir(), DatasourceUrl: "http://vip.example.com:17000/prometheus",
+	}, "")
+	reqRemote := httptest.NewRequest("GET", "/prometheus/api/v1/labels", nil)
+	recRemote := httptest.NewRecorder()
+	rRemote.ServeHTTP(recRemote, reqRemote)
+	if recRemote.Code != http.StatusOK {
+		t.Fatalf("remote query with DatasourceUrl set should pass, got %d", recRemote.Code)
 	}
 }
 
@@ -241,10 +312,10 @@ func (f *filler) Read(p []byte) (int, error) {
 }
 
 func TestRemoteWriteSizeLimits(t *testing.T) {
-	_, r := newTestRouter(t, tconf.EmbeddedTSDB{Enable: true, Dir: t.TempDir()})
+	_, r := newTestRouter(t, tconf.EmbeddedTSDB{Enable: true, Dir: t.TempDir()}, "")
 
 	post := func(body io.Reader) int {
-		req := httptest.NewRequest("POST", "/prometheus/api/v1/write", body)
+		req := localReq("POST", "/prometheus/api/v1/write", body)
 		rec := httptest.NewRecorder()
 		r.ServeHTTP(rec, req)
 		return rec.Code

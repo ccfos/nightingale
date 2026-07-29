@@ -180,8 +180,11 @@ LookbackDelta = "5m"
 # QueryMaxConcurrency = 20
 # optional basic auth of the /prometheus/api/v1/* endpoints (query and
 # remote write), also written into the auto registered datasource and the
-# internal write path. WARNING: when left empty these endpoints are open to
-# anyone who can reach the http port
+# internal write path. when left empty, these endpoints only accept requests
+# from this machine and the auto registered datasource points at 127.0.0.1;
+# set user/pass to allow remote access (e.g. n9e-edge, grafana, or agents
+# writing to this endpoint directly), the datasource url then uses the
+# detected ip
 BasicAuthUser = ""
 BasicAuthPass = ""
 # register the destructive admin endpoints delete_series/clean_tombstones
@@ -189,7 +192,10 @@ BasicAuthPass = ""
 # BasicAuthUser/Pass before enabling this
 # EnableAdminAPI = false
 # override the url of the auto registered datasource, e.g. a vip/domain in
-# front of this instance. default: http(s)://<detected ip>:<http port>/prometheus
+# front of this instance; setting it also lifts the local-only restriction
+# of the /prometheus/api/v1/* endpoints. default when basic auth is
+# configured: http(s)://<detected ip>:<http port>/prometheus, otherwise
+# http(s)://127.0.0.1:<http port>/prometheus
 # DatasourceUrl = ""
 
 [Pushgw]

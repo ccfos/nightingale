@@ -1,7 +1,9 @@
 // Package router exposes prometheus compatible query endpoints backed by the
 // embedded tsdb, mounted at /prometheus/api/v1/* so the auto-registered
-// datasource url http://<ip>:<port>/prometheus works with both the frontend
-// datasource proxy and the alert engine prometheus client.
+// datasource url http(s)://<host>:<port>/prometheus works with both the
+// frontend datasource proxy and the alert engine prometheus client. By
+// default only requests from the n9e host itself are accepted; configuring
+// BasicAuth or DatasourceUrl allows remote access (see Router.localOnly).
 package router
 
 import (
@@ -9,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net"
 	"net/http"
 	"runtime"
 	"sort"
@@ -58,6 +61,18 @@ const (
 
 type Router struct {
 	inst *tsdb.Instance
+	// localOnly: without BasicAuth these endpoints expose full metrics read
+	// and unauthenticated sample injection to anyone who can reach the http
+	// port, so by default only requests from this machine are accepted. The
+	// local writer/datasource/frontend-proxy/alert-engine chain all originate
+	// locally; configuring BasicAuthUser/Pass (or an explicit DatasourceUrl)
+	// states the intent of remote access and lifts the restriction.
+	localOnly bool
+	// bindIP is the non-wildcard address the http server is bound to, if any.
+	// A local process connecting to it gets that address as its source (the
+	// traffic still goes through loopback), so requireLocal must accept it
+	// alongside 127.0.0.1/::1.
+	bindIP net.IP
 	// scanSem bounds the concurrency of the endpoints that scan the index
 	// directly (series/labels/label values, and delete when enabled),
 	// bypassing the promql engine's ActiveQueryTracker.
@@ -66,16 +81,25 @@ type Router struct {
 	writeSem chan struct{}
 }
 
-func New(inst *tsdb.Instance) *Router {
+// New builds the router. httpHost is the HTTP.Host the server binds to, used
+// by the local-only check; pass "" when unknown (wildcard bind).
+func New(inst *tsdb.Instance, httpHost string) *Router {
 	scanConcurrency := inst.Cfg.QueryMaxConcurrency
 	if scanConcurrency <= 0 {
 		scanConcurrency = defaultConcurrency
 	}
 
+	var bindIP net.IP
+	if ip := net.ParseIP(httpHost); ip != nil && !ip.IsUnspecified() {
+		bindIP = ip
+	}
+
 	return &Router{
-		inst:     inst,
-		scanSem:  make(chan struct{}, scanConcurrency),
-		writeSem: make(chan struct{}, maxWriteConcurrency),
+		inst:      inst,
+		localOnly: inst.Cfg.BasicAuthUser == "" && inst.Cfg.DatasourceUrl == "",
+		bindIP:    bindIP,
+		scanSem:   make(chan struct{}, scanConcurrency),
+		writeSem:  make(chan struct{}, maxWriteConcurrency),
 	}
 }
 
@@ -83,13 +107,17 @@ func (rt *Router) Config(r *gin.Engine) {
 	g := r.Group("/prometheus")
 
 	cfg := rt.inst.Cfg
+	if rt.localOnly {
+		g.Use(rt.requireLocal)
+	}
 	if cfg.BasicAuthUser != "" {
 		g.Use(gin.BasicAuth(gin.Accounts{cfg.BasicAuthUser: cfg.BasicAuthPass}))
 	}
 
 	// prometheus remote write receiver. pushgw forwards samples here through
-	// an auto-injected [[Pushgw.Writers]] entry (see conf.InitCenterConfig),
-	// and external producers (categraf/prometheus agent) can also write directly
+	// an auto-injected [[Pushgw.Writers]] entry (see conf.InitCenterConfig);
+	// external producers (categraf/prometheus agent) can also write directly
+	// once BasicAuth is configured (the default is local-only, see above)
 	g.POST("/api/v1/write", rt.limitWrite, rt.remoteWrite)
 
 	g.GET("/api/v1/query", rt.query)
@@ -111,6 +139,24 @@ func (rt *Router) Config(r *gin.Engine) {
 		g.POST("/api/v1/admin/tsdb/clean_tombstones", rt.cleanTombstones)
 		g.PUT("/api/v1/admin/tsdb/clean_tombstones", rt.cleanTombstones)
 	}
+}
+
+// requireLocal rejects requests that don't originate from this machine, the
+// zero-config default (see Router.localOnly). Judged by the connection's
+// RemoteAddr — never by forwardable headers.
+func (rt *Router) requireLocal(c *gin.Context) {
+	host, _, err := net.SplitHostPort(c.Request.RemoteAddr)
+	if err == nil {
+		if ip := net.ParseIP(host); ip != nil && (ip.IsLoopback() || (rt.bindIP != nil && ip.Equal(rt.bindIP))) {
+			c.Next()
+			return
+		}
+	}
+
+	respondError(c, http.StatusForbidden, "forbidden",
+		"embedded tsdb endpoints only accept requests from the n9e host by default; "+
+			"set EmbeddedTSDB.BasicAuthUser/BasicAuthPass (or DatasourceUrl) to allow remote access")
+	c.Abort()
 }
 
 // limitScan queues the request until a concurrency slot frees up, giving up
