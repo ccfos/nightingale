@@ -178,7 +178,9 @@ func ListEventPipelineExecutionsByEventID(c *ctx.Context, eventID int64) ([]*Eve
 }
 
 // ListAllEventPipelineExecutions 获取所有 Pipeline 的执行记录列表
-func ListAllEventPipelineExecutions(c *ctx.Context, pipelineId int64, pipelineName, mode, status string, limit, offset int) ([]*EventPipelineExecution, int64, error) {
+// stime / etime 为 0 表示该侧不限制。执行记录动辄上万条，没有时间过滤时
+// 排查「凌晨 3 点那条告警到底跑没跑」只能一页页翻，所以按 created_at 支持区间筛选。
+func ListAllEventPipelineExecutions(c *ctx.Context, pipelineId int64, pipelineName, mode, status string, stime, etime int64, limit, offset int) ([]*EventPipelineExecution, int64, error) {
 	var executions []*EventPipelineExecution
 	var total int64
 
@@ -195,6 +197,12 @@ func ListAllEventPipelineExecutions(c *ctx.Context, pipelineId int64, pipelineNa
 	}
 	if status != "" {
 		session = session.Where("status = ?", status)
+	}
+	if stime > 0 {
+		session = session.Where("created_at >= ?", stime)
+	}
+	if etime > 0 {
+		session = session.Where("created_at <= ?", etime)
 	}
 
 	err := session.Count(&total).Error

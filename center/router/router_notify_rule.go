@@ -3,7 +3,6 @@ package router
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -205,9 +204,9 @@ type NotifyTestForm struct {
 }
 
 // buildNotifyTestMockEvent 构造用于通知测试的内置模拟事件，字段仅为演示用途，
-// 不落库；severity 取通知配置勾选的第一个级别，保证与配置语义一致
+// 不落库；severity 取通知配置勾选的最低级别，保证与配置语义一致。
+// 事件骨架与工作流试跑的样例事件共用 newMockEvent，避免两处各自演化。
 func buildNotifyTestMockEvent(lang string, notifyConfig models.NotifyConfig) *models.AlertCurEvent {
-	now := time.Now().Unix()
 	severity := 2
 	if len(notifyConfig.Severities) > 0 {
 		severity = notifyConfig.Severities[0]
@@ -218,35 +217,16 @@ func buildNotifyTestMockEvent(lang string, notifyConfig models.NotifyConfig) *mo
 		}
 	}
 
-	ruleName := i18n.Sprintf(lang, "Notification test mock event")
-	tags := []string{
-		"rulename=" + ruleName,
-		"ident=mock-host-01",
-		"source=notify-rule-test",
-	}
-
-	event := &models.AlertCurEvent{
-		Cate:             "prometheus",
-		GroupName:        "Default Busi Group",
-		Hash:             "notify-rule-test-mock-event",
-		RuleName:         ruleName,
-		RuleNote:         i18n.Sprintf(lang, "This is a mock event sent by notification test, just to verify that the notification channel works"),
-		Severity:         severity,
-		PromQl:           "cpu_usage_active > 80",
-		TriggerTime:      now,
-		TriggerValue:     "81.5",
-		TriggerValues:    "81.5",
-		Tags:             strings.Join(tags, ",,"),
-		TagsJSON:         tags,
-		Annotations:      "{}",
-		AnnotationsJSON:  map[string]string{},
-		FirstTriggerTime: now,
-		LastEvalTime:     now,
-		NotifyCurNumber:  1,
-		IsRecovered:      false,
-	}
-	event.SetTagsMap()
-	return event
+	return newMockEvent(mockEventSpec{
+		RuleName:     i18n.Sprintf(lang, "Notification test mock event"),
+		RuleNote:     i18n.Sprintf(lang, "This is a mock event sent by notification test, just to verify that the notification channel works"),
+		Hash:         "notify-rule-test-mock-event",
+		Severity:     severity,
+		IsRecovered:  false,
+		PromQL:       "cpu_usage_active > 80",
+		TriggerValue: "81.5",
+		ExtraTags:    []string{"ident=mock-host-01", "source=notify-rule-test"},
+	})
 }
 
 func (rt *Router) notifyTest(c *gin.Context) {
