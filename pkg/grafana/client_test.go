@@ -1,6 +1,8 @@
 package grafana
 
 import (
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
@@ -13,17 +15,28 @@ func TestFetchDatasources(t *testing.T) {
 	// httptest 监听 127.0.0.1，默认拒绝内网，需白名单放行 loopback。
 	t.Setenv(allowlistEnv, "127.0.0.1/32,::1/128")
 
-	const payload = `[
+	const listPayload = `[
 		{"id":1,"uid":"a","name":"prom","type":"prometheus","url":"http://prom:9090","basicAuth":false},
 		{"id":2,"uid":"b","name":"mydb","type":"mysql","url":"10.0.0.1:3306","user":"root","database":"app","basicAuth":true,"basicAuthUser":"admin"}
 	]`
+	// 详情接口补齐列表里省略的 basicAuthUser / secureJsonFields。
+	const promDetail = `{"id":1,"uid":"a","name":"prom","type":"prometheus","url":"http://prom:9090","basicAuth":true,"basicAuthUser":"prom-reader","secureJsonFields":{"basicAuthPassword":true}}`
+	const mysqlDetail = `{"id":2,"uid":"b","name":"mydb","type":"mysql","url":"10.0.0.1:3306","user":"root","database":"app","basicAuth":true,"basicAuthUser":"admin"}`
 
-	var gotAuth, gotPath string
+	var listAuth string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotAuth = r.Header.Get("Authorization")
-		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(payload))
+		switch r.URL.Path {
+		case "/api/datasources":
+			listAuth = r.Header.Get("Authorization") // 列表请求先于并发详情，单线程写入无竞态
+			w.Write([]byte(listPayload))
+		case "/api/datasources/uid/a":
+			w.Write([]byte(promDetail))
+		case "/api/datasources/uid/b":
+			w.Write([]byte(mysqlDetail))
+		default:
+			http.NotFound(w, r)
+		}
 	}))
 	defer srv.Close()
 
@@ -31,17 +44,21 @@ func TestFetchDatasources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FetchDatasources: %v", err)
 	}
-	if gotPath != "/api/datasources" {
-		t.Errorf("path = %q, want /api/datasources", gotPath)
-	}
-	if gotAuth != "Bearer sa-token" {
-		t.Errorf("auth header = %q, want Bearer sa-token", gotAuth)
+	if listAuth != "Bearer sa-token" {
+		t.Errorf("list auth header = %q, want Bearer sa-token", listAuth)
 	}
 	if len(lst) != 2 {
 		t.Fatalf("got %d datasources, want 2", len(lst))
 	}
-	if lst[1].Type != "mysql" || lst[1].User != "root" || lst[1].Database != "app" || !lst[1].BasicAuth {
-		t.Errorf("second datasource parsed wrong: %+v", lst[1])
+	// 详情补齐：prom 列表里 basicAuth=false、无用户名，详情回填后应带上用户名与 secureJsonFields。
+	if !lst[0].BasicAuth || lst[0].BasicAuthUser != "prom-reader" {
+		t.Errorf("prom not enriched from detail: basicAuth=%v user=%q", lst[0].BasicAuth, lst[0].BasicAuthUser)
+	}
+	if !lst[0].SecureJSONFields["basicAuthPassword"] {
+		t.Errorf("prom secureJsonFields not enriched: %+v", lst[0].SecureJSONFields)
+	}
+	if lst[1].Type != "mysql" || lst[1].User != "root" || lst[1].Database != "app" || lst[1].BasicAuthUser != "admin" {
+		t.Errorf("mysql datasource wrong: %+v", lst[1])
 	}
 }
 
@@ -59,16 +76,11 @@ func TestFetchDatasources_HTTPError(t *testing.T) {
 	}
 }
 
-func TestFetchDatasources_InternalBlocked(t *testing.T) {
-	// 不设白名单：连 loopback 的 httptest 也应被拦截（secure-by-default）。
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`[]`))
-	}))
-	defer srv.Close()
-
-	_, err := FetchDatasources(Conn{URL: srv.URL, AuthType: AuthTypeToken, Token: "x"})
+func TestFetchDatasources_MetadataBlocked(t *testing.T) {
+	// 云元数据 / link-local 默认拦截(无需服务器，dialControl 在拨号前就拒绝)。
+	_, err := FetchDatasources(Conn{URL: "http://169.254.169.254", AuthType: AuthTypeToken, Token: "x"})
 	if err == nil {
-		t.Fatal("expected loopback to be blocked without allowlist")
+		t.Fatal("expected cloud metadata address to be blocked")
 	}
 }
 
@@ -86,6 +98,35 @@ func TestFetchDatasources_TooLarge(t *testing.T) {
 	_, err := FetchDatasources(Conn{URL: srv.URL, AuthType: AuthTypeToken, Token: "x"})
 	if err == nil || !strings.Contains(err.Error(), "exceeds") {
 		t.Fatalf("expected 'exceeds' error, got %v", err)
+	}
+}
+
+func TestDescribeStatusError(t *testing.T) {
+	mk := func(code int) *http.Response {
+		return &http.Response{StatusCode: code, Body: io.NopCloser(strings.NewReader("raw body"))}
+	}
+	for code, want := range map[int]string{401: "401", 403: "403", 404: "404"} {
+		if err := describeStatusError(mk(code)); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("status %d -> %v, want friendly msg containing %q", code, err, want)
+		}
+	}
+	// 其它状态保留截断正文，但仍是干净字符串（非结构体 JSON）。
+	if err := describeStatusError(mk(500)); err == nil || !strings.Contains(err.Error(), "raw body") {
+		t.Errorf("500 -> %v", err)
+	}
+}
+
+func TestDescribeConnError(t *testing.T) {
+	cases := map[string]string{
+		"dial tcp 1.2.3.4:3000: connect: connection refused": "连接被拒绝",
+		"dial tcp: lookup bad.host: no such host":            "无法解析",
+		"x509: certificate signed by unknown authority":      "证书",
+		"blocked internal address 127.0.0.1":                 "白名单",
+	}
+	for in, want := range cases {
+		if err := describeConnError(errors.New(in)); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("describeConnError(%q) = %v, want contains %q", in, err, want)
+		}
 	}
 }
 
@@ -175,29 +216,26 @@ func TestTargetBlocked(t *testing.T) {
 		allow   []netip.Prefix
 		blocked bool
 	}{
-		{mk("169.254.169.254"), none, true},               // cloud metadata (link-local)
-		{mk("fd00:ec2::254"), none, true},                 // ipv6 metadata (ULA => private)
-		{mk("fe80::1"), none, true},                       // ipv6 link-local
-		{mk("fe80::1%eth0"), none, true},                  // zoned link-local — the reported bypass
-		{mk("0.0.0.0"), none, true},                       // unspecified
-		{mk("127.0.0.1"), none, true},                     // loopback
-		{mk("::1"), none, true},                           // ipv6 loopback
-		{mk("10.0.0.5"), none, true},                      // private
-		{mk("192.168.1.10"), none, true},                  // private
-		{mk("100.64.0.1"), none, true},                    // CGNAT (RFC 6598)
-		{mk("240.0.0.1"), none, true},                     // reserved
-		{mk("192.0.2.5"), none, true},                     // documentation
-		{mk("ff02::1"), none, true},                       // multicast
-		{mk("::ffff:10.0.0.1"), none, true},               // v4-mapped private
-		{mk("fec0::1"), none, true},                       // ipv6 site-local (deprecated, still internal)
-		{mk("64:ff9b:1::1"), none, true},                  // ipv6 NAT64 local
-		{mk("0.0.0.1"), none, true},                       // 0.0.0.0/8 "this network"
-		{mk("8.8.8.8"), none, false},                      // public v4
-		{mk("2606:4700:4700::1111"), none, false},         // public v6
-		{mk("10.0.0.5"), parseAllowlist("10.0.0.0/8"), false},      // allowlisted subnet
-		{mk("127.0.0.1"), parseAllowlist("127.0.0.1/32"), false},   // allowlisted loopback
-		{mk("fe80::1%eth0"), parseAllowlist("fe80::1/128"), false}, // zoned addr hits allowlist
-		{mk("169.254.169.254"), parseAllowlist("8.8.8.8/32"), true}, // allowlist miss still blocked
+		// 仍拦截：link-local(含云元数据)、IPv6 元数据、unspecified、组播。
+		{mk("169.254.169.254"), none, true}, // cloud metadata (link-local)
+		{mk("fd00:ec2::254"), none, true},   // ipv6 cloud metadata
+		{mk("fe80::1"), none, true},         // ipv6 link-local
+		{mk("fe80::1%eth0"), none, true},    // zoned link-local
+		{mk("0.0.0.0"), none, true},         // unspecified
+		{mk("ff02::1"), none, true},         // multicast
+		// 默认放行：loopback / 私网 / 公网(Grafana 常与 n9e 同机或同内网)。
+		{mk("127.0.0.1"), none, false},            // loopback
+		{mk("::1"), none, false},                  // ipv6 loopback
+		{mk("10.0.0.5"), none, false},             // private
+		{mk("192.168.1.10"), none, false},         // private
+		{mk("100.64.0.1"), none, false},           // CGNAT
+		{mk("::ffff:10.0.0.1"), none, false},      // v4-mapped private
+		{mk("8.8.8.8"), none, false},              // public v4
+		{mk("2606:4700:4700::1111"), none, false}, // public v6
+		// 白名单强制放行(可覆盖默认被拦的地址)。
+		{mk("169.254.169.254"), parseAllowlist("169.254.169.254/32"), false}, // allowlist overrides metadata block
+		{mk("fe80::1%eth0"), parseAllowlist("fe80::1/128"), false},           // zoned addr hits allowlist
+		{mk("169.254.169.254"), parseAllowlist("8.8.8.8/32"), true},          // allowlist miss still blocked
 	}
 	for _, c := range cases {
 		if got := targetBlocked(c.ip, c.allow); got != c.blocked {

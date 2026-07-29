@@ -5,6 +5,7 @@ package grafana
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -13,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -23,9 +25,9 @@ const (
 	AuthTypeBasic = "basic"
 )
 
-// allowlistEnv 是运维放行内网/本地 Grafana 目标的白名单环境变量，逗号分隔的 IP 或 CIDR，
-// 例如 "127.0.0.1/32,10.0.0.0/8"。默认只放行全局可路由的公网单播地址（见 targetBlocked），
-// 内网/特殊网段一律拒绝，只有命中白名单才放行——secure-by-default，防止 SSRF 跳板。
+// allowlistEnv 是可选的目标白名单环境变量，逗号分隔的 IP 或 CIDR，命中即强制放行（包括默认被拦的
+// link-local / 元数据地址）。默认已放行 loopback / 私网 / 公网（Grafana 常与 n9e 同机或同内网），
+// 仅拦截云元数据 / link-local / 组播等 SSRF 高危目标，故一般无需配置本变量。
 const allowlistEnv = "N9E_GRAFANA_IMPORT_ALLOWLIST"
 
 // maxErrorBodyBytes 是拼进错误信息里的响应正文上限。
@@ -39,19 +41,11 @@ var (
 	maxDatasources = 10000
 )
 
-// specialPrefixes 是 netip 分类方法未覆盖、但同样不应作为导入目标的特殊用途网段。
-var specialPrefixes = parsePrefixes(
-	"0.0.0.0/8",       // "this host on this network"（RFC 1122，0.0.0.0/32 之外的其余）
-	"100.64.0.0/10",   // CGNAT (RFC 6598)
-	"192.0.0.0/24",    // IETF 协议分配
-	"192.0.2.0/24",    // TEST-NET-1 文档
-	"198.18.0.0/15",   // 基准测试
-	"198.51.100.0/24", // TEST-NET-2 文档
-	"203.0.113.0/24",  // TEST-NET-3 文档
-	"240.0.0.0/4",     // 保留/未来用途（含 255.255.255.255 广播）
-	"64:ff9b:1::/48",  // IPv6 NAT64 本地用途
-	"fec0::/10",       // IPv6 site-local（已废弃但仍可能在内网路由）
-	"2001:db8::/32",   // IPv6 文档
+// metadataPrefixes 是即便默认放行内网、也仍要拦截的云厂商实例元数据地址（SSRF 最高危目标）。
+// IPv4 169.254.169.254 属 link-local，已被 IsLinkLocalUnicast 拦；这里补 IPv6 元数据（属 ULA，
+// 默认放行内网会漏）。
+var metadataPrefixes = parsePrefixes(
+	"fd00:ec2::254/128", // AWS IPv6 实例元数据
 )
 
 // Conn 描述一次连接 Grafana 的入参。
@@ -83,9 +77,9 @@ type GrafanaDatasource struct {
 	IsDefault        bool                   `json:"isDefault"`
 }
 
-// buildTargetURL 校验并规整用户填入的 Grafana 地址：只允许 http/https，丢弃 query 与
-// fragment（防止在基址塞 query 绕开固定路径），保留可能的子路径后拼上 /api/datasources。
-func buildTargetURL(raw string) (string, error) {
+// buildBaseURL 校验并规整用户填入的 Grafana 地址：只允许 http/https，丢弃 query 与 fragment
+// （防止在基址塞 query 绕开固定路径），保留可能的子路径，返回 scheme://host[/subpath]。
+func buildBaseURL(raw string) (string, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return "", fmt.Errorf("grafana url is empty")
@@ -101,7 +95,16 @@ func buildTargetURL(raw string) (string, error) {
 		return "", fmt.Errorf("grafana url missing host")
 	}
 	base := &url.URL{Scheme: u.Scheme, Host: u.Host, Path: strings.TrimRight(u.Path, "/")}
-	return base.String() + "/api/datasources", nil
+	return base.String(), nil
+}
+
+// buildTargetURL 返回数据源列表接口地址。
+func buildTargetURL(raw string) (string, error) {
+	base, err := buildBaseURL(raw)
+	if err != nil {
+		return "", err
+	}
+	return base + "/api/datasources", nil
 }
 
 func parsePrefixes(cidrs ...string) []netip.Prefix {
@@ -133,34 +136,31 @@ func parseAllowlist(s string) []netip.Prefix {
 	return out
 }
 
-// targetBlocked 判断解析后的目标地址是否应被拦截。无效地址一律 fail closed；命中白名单放行；
-// 否则只放行全局可路由的公网单播地址，其余（loopback / 私网+ULA / link-local / 组播 /
-// unspecified / CGNAT 等特殊网段）全部拒绝。用 net/netip 分类，天然处理 IPv6 %zone。
+// targetBlocked 判断解析后的目标地址是否应被拦截。无效地址一律 fail closed；命中白名单强制放行；
+// 否则默认放行（含 loopback / 私网 / 公网——Grafana 常与 n9e 同机或同内网），只拦最危险的：
+// link-local（含云元数据 169.254.169.254）、其它云元数据、组播、unspecified。
+// 本功能仅 admin 可用，管理员本就能在「新增数据源」里指向任意地址，故对内网默认放行、只挡元数据跳板。
+// 用 net/netip 分类，天然处理 IPv6 %zone。
 func targetBlocked(addr netip.Addr, allow []netip.Prefix) bool {
 	if !addr.IsValid() {
 		return true
 	}
-	// 去掉 %zone 再归一 v4-mapped：既防 ::ffff:10.0.0.1 绕过，又让带 zone 的合法内网地址
-	// （如 fe80::1%eth0）能被白名单 fe80::1/128 命中（netip.Prefix.Contains 不匹配带 zone 的地址）。
+	// 去掉 %zone 再归一 v4-mapped：既防 ::ffff:10.0.0.1 绕过，又让带 zone 的地址能被白名单命中。
 	addr = addr.WithZone("").Unmap()
 	for _, p := range allow {
 		if p.Contains(addr) {
 			return false
 		}
 	}
-	return !isGloballyRoutable(addr)
-}
-
-func isGloballyRoutable(addr netip.Addr) bool {
-	if !addr.IsGlobalUnicast() || addr.IsPrivate() {
-		return false
+	if addr.IsUnspecified() || addr.IsMulticast() || addr.IsLinkLocalUnicast() || addr.IsLinkLocalMulticast() {
+		return true
 	}
-	for _, p := range specialPrefixes {
+	for _, p := range metadataPrefixes {
 		if p.Contains(addr) {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 // dialAddr 从 Dial Control 收到的 address（"ip:port"，IPv6 可能带 %zone）解析出目标地址。
@@ -224,13 +224,74 @@ func redirectPolicy(req *http.Request, via []*http.Request) error {
 	return nil
 }
 
-// FetchDatasources 连接 Grafana 拉取其数据源清单。
+// describeConnError 把底层网络错误(dial/timeout/TLS/DNS)归类成面向用户的可读提示，
+// 避免把 *url.Error/*net.OpError 结构体透传给前端(会被序列化成含 Op/Addr/Port 的原始 JSON)。
+func describeConnError(err error) error {
+	var netErr net.Error
+	if errors.As(err, &netErr) && netErr.Timeout() {
+		return fmt.Errorf("连接 Grafana 超时，请检查地址是否正确、网络是否可达")
+	}
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, "x509"), strings.Contains(msg, "certificate"), strings.Contains(msg, "tls:"):
+		return fmt.Errorf("Grafana TLS 证书校验失败，请使用受信任证书，或勾选『跳过 TLS 校验』")
+	case strings.Contains(msg, "connection refused"):
+		return fmt.Errorf("无法连接 Grafana(连接被拒绝)，请检查地址和端口")
+	case strings.Contains(msg, "no such host"), strings.Contains(msg, "server misbehaving"):
+		return fmt.Errorf("无法解析 Grafana 域名，请检查地址是否正确")
+	case strings.Contains(msg, "no route to host"), strings.Contains(msg, "network is unreachable"):
+		return fmt.Errorf("无法连接 Grafana(网络不可达)，请检查地址与网络")
+	case strings.Contains(msg, "blocked"):
+		return fmt.Errorf("目标地址被安全策略拒绝(内网/环回/元数据地址)，如确需访问请配置白名单")
+	default:
+		return fmt.Errorf("连接 Grafana 失败，请检查地址与鉴权信息")
+	}
+}
+
+// describeStatusError 把非 200 响应归类成可读提示，只保留一小段截断后的错误正文。
+func describeStatusError(resp *http.Response) error {
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodyBytes))
+	// 附上 Grafana 的原始错误正文(截断),让用户看到具体原因(如 Token 权限/org 不符)。
+	suffix := ""
+	if d := strings.TrimSpace(string(body)); d != "" {
+		suffix = "；Grafana: " + d
+	}
+	switch resp.StatusCode {
+	case http.StatusUnauthorized:
+		return fmt.Errorf("Grafana 认证失败(401)，请检查 Token 或用户名/密码%s", suffix)
+	case http.StatusForbidden:
+		return fmt.Errorf("Grafana 拒绝访问(403)，Token/账号缺少 datasources:read 权限(建议用 Admin 角色的 Service Account)%s", suffix)
+	case http.StatusNotFound:
+		return fmt.Errorf("Grafana 接口未找到(404)，请确认填写的是 Grafana 根地址%s", suffix)
+	default:
+		return fmt.Errorf("Grafana 返回错误(%d)%s", resp.StatusCode, suffix)
+	}
+}
+
+// FetchDatasources 连接 Grafana 拉取数据源清单。列表接口在部分版本里会省略 basicAuthUser /
+// 完整 jsonData / secureJsonFields，故对「映射表命中(有望导入)」且带 uid 的数据源，再逐条拉
+// /api/datasources/uid/:uid 详情回填这些字段——从而保留 Basic Auth 用户名，并用真实
+// secureJsonFields 精确判定是否缺密钥。详情拉取失败不阻断，退回列表数据兜底。
 func FetchDatasources(conn Conn) ([]GrafanaDatasource, error) {
-	target, err := buildTargetURL(conn.URL)
+	base, err := buildBaseURL(conn.URL)
 	if err != nil {
 		return nil, err
 	}
 
+	client, transport := newGrafanaClient(conn)
+	defer transport.CloseIdleConnections()
+
+	list, err := fetchDatasourceList(client, conn, base)
+	if err != nil {
+		return nil, err
+	}
+	enrichDatasourceDetails(client, conn, base, list)
+	return list, nil
+}
+
+// newGrafanaClient 构建带 SSRF 校验(dialControl)、禁降级重定向、可选跳过 TLS 的 http.Client，
+// 返回 transport 供调用方 CloseIdleConnections。
+func newGrafanaClient(conn Conn) (*http.Client, *http.Transport) {
 	allow := parseAllowlist(os.Getenv(allowlistEnv))
 	transport := &http.Transport{
 		// 刻意不启用 http.ProxyFromEnvironment：走代理时 Control 校验到的是代理地址而非
@@ -244,14 +305,16 @@ func FetchDatasources(conn Conn) ([]GrafanaDatasource, error) {
 	if conn.SkipTLSVerify {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
-	defer transport.CloseIdleConnections()
-
-	client := &http.Client{
+	return &http.Client{
 		Timeout:       15 * time.Second,
 		Transport:     transport,
 		CheckRedirect: redirectPolicy,
-	}
+	}, transport
+}
 
+// grafanaGet 发起一次带鉴权的 GET，网络错误与非 200 都归类成可读错误。成功时返回 resp，
+// 由调用方负责关闭 Body。
+func grafanaGet(client *http.Client, conn Conn, target string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, target, nil)
 	if err != nil {
 		return nil, err
@@ -261,17 +324,24 @@ func FetchDatasources(conn Conn) ([]GrafanaDatasource, error) {
 	} else {
 		req.Header.Set("Authorization", "Bearer "+strings.TrimSpace(conn.Token))
 	}
-
 	resp, err := client.Do(req)
+	if err != nil {
+		return nil, describeConnError(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		return nil, describeStatusError(resp)
+	}
+	return resp, nil
+}
+
+// fetchDatasourceList 拉取并流式解码数据源列表，带字节与条数上限。
+func fetchDatasourceList(client *http.Client, conn Conn, base string) ([]GrafanaDatasource, error) {
+	resp, err := grafanaGet(client, conn, base+"/api/datasources")
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		msg, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodyBytes))
-		return nil, fmt.Errorf("grafana responded %d: %s", resp.StatusCode, strings.TrimSpace(string(msg)))
-	}
 
 	// 多读 1 字节以区分「恰好到上限的合法响应」与「超限截断」。计数器超过上限即判 too large。
 	cr := &countingReader{r: io.LimitReader(resp.Body, maxResponseBytes+1)}
@@ -283,6 +353,72 @@ func FetchDatasources(conn Conn) ([]GrafanaDatasource, error) {
 		return nil, err
 	}
 	return lst, nil
+}
+
+// fetchDatasourceDetail 拉取单条数据源详情(含 basicAuthUser / 完整 jsonData / secureJsonFields)。
+func fetchDatasourceDetail(client *http.Client, conn Conn, base, uid string) (GrafanaDatasource, error) {
+	var gds GrafanaDatasource
+	resp, err := grafanaGet(client, conn, base+"/api/datasources/uid/"+url.PathEscape(uid))
+	if err != nil {
+		return gds, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
+	if err != nil {
+		return gds, err
+	}
+	if int64(len(body)) > maxResponseBytes {
+		return gds, fmt.Errorf("grafana datasource detail exceeds %d bytes", maxResponseBytes)
+	}
+	if err := json.Unmarshal(body, &gds); err != nil {
+		return gds, fmt.Errorf("decode grafana datasource detail: %w", err)
+	}
+	return gds, nil
+}
+
+// enrichDatasourceDetails 对映射表命中且带 uid 的数据源，并发拉详情回填非密字段。
+// 单条失败静默跳过(保留列表数据兜底)，不阻断整体拉取；并发上限固定，避免数据源很多时压垮 Grafana。
+func enrichDatasourceDetails(client *http.Client, conn Conn, base string, list []GrafanaDatasource) {
+	const concurrency = 6
+	sem := make(chan struct{}, concurrency)
+	var wg sync.WaitGroup
+	for i := range list {
+		if list[i].UID == "" || !isMappedType(list[i].Type) {
+			continue
+		}
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(i int) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			// 各 goroutine 只写自己那个下标，元素间无共享内存，无需加锁。
+			if detail, err := fetchDatasourceDetail(client, conn, base, list[i].UID); err == nil {
+				mergeDetail(&list[i], detail)
+			}
+		}(i)
+	}
+	wg.Wait()
+}
+
+// mergeDetail 用详情里更完整的非密字段覆盖列表项；只回填有值的字段，避免用空值清掉列表已有数据。
+func mergeDetail(dst *GrafanaDatasource, detail GrafanaDatasource) {
+	dst.BasicAuth = detail.BasicAuth || dst.BasicAuth
+	if detail.BasicAuthUser != "" {
+		dst.BasicAuthUser = detail.BasicAuthUser
+	}
+	if detail.User != "" {
+		dst.User = detail.User
+	}
+	if detail.Database != "" {
+		dst.Database = detail.Database
+	}
+	if len(detail.JSONData) > 0 {
+		dst.JSONData = detail.JSONData
+	}
+	if len(detail.SecureJSONFields) > 0 {
+		dst.SecureJSONFields = detail.SecureJSONFields
+	}
 }
 
 // decodeDatasources 逐条流式解码 JSON 数组，超过 maxDatasources 立即终止；

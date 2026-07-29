@@ -177,6 +177,23 @@ func TestMapToDatasource_ConnectionFields(t *testing.T) {
 	})
 }
 
+// TestMapToDatasource_BasicAuthUserFallback 覆盖 basic auth 用户名保留：优先 basicAuthUser，
+// 空时兜底顶层 user（部分 Grafana 版本列表接口把用户名放在 user）。
+func TestMapToDatasource_BasicAuthUserFallback(t *testing.T) {
+	t.Run("basicAuthUser preferred", func(t *testing.T) {
+		ds, _ := MapToDatasource(GrafanaDatasource{Type: "prometheus", Name: "p", URL: "u", BasicAuth: true, BasicAuthUser: "direct", User: "top"}, testPlugins)
+		if ds.AuthJson.BasicAuthUser != "direct" {
+			t.Fatalf("basic_auth_user=%q, want direct", ds.AuthJson.BasicAuthUser)
+		}
+	})
+	t.Run("fallback to top-level user when basicAuthUser empty", func(t *testing.T) {
+		ds, _ := MapToDatasource(GrafanaDatasource{Type: "prometheus", Name: "p", URL: "u", BasicAuth: true, User: "prom-reader"}, testPlugins)
+		if ds.AuthJson.BasicAuthUser != "prom-reader" {
+			t.Fatalf("basic_auth_user=%q, want prom-reader (fallback)", ds.AuthJson.BasicAuthUser)
+		}
+	})
+}
+
 // TestMapToDatasource_DatabaseFromJSONData 覆盖新版 Grafana 把库名放 jsonData.database、
 // 顶层 database 为空的真实形态（旧测试只覆盖顶层 database）。
 func TestMapToDatasource_DatabaseFromJSONData(t *testing.T) {

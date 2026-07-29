@@ -112,7 +112,12 @@ func MapToDatasource(gds GrafanaDatasource, plugins []cconf.Plugin) (*models.Dat
 
 	if gds.BasicAuth {
 		ds.AuthJson.BasicAuth = true
+		// 优先用 basicAuthUser；部分 Grafana 版本的列表接口把 basic auth 用户名放在顶层 user，
+		// 兜底取之，避免导入后用户名丢失（密码仍为空，需用户补填）。
 		ds.AuthJson.BasicAuthUser = gds.BasicAuthUser
+		if ds.AuthJson.BasicAuthUser == "" {
+			ds.AuthJson.BasicAuthUser = gds.User
+		}
 	}
 
 	// need_auth 的来源：Basic Auth、必然带密钥的类型、Grafana 声明的已配置加密字段
@@ -129,6 +134,12 @@ func MapToDatasource(gds GrafanaDatasource, plugins []cconf.Plugin) (*models.Dat
 	}
 
 	return ds, meta
+}
+
+// isMappedType 判断该 Grafana 类型是否在映射表里(有望导入)，用于决定是否值得拉详情补齐字段。
+func isMappedType(t string) bool {
+	_, ok := grafanaTypeToN9e[t]
+	return ok
 }
 
 func findPlugin(plugins []cconf.Plugin, n9eType string) (cconf.Plugin, bool) {

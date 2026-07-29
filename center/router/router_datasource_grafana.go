@@ -35,7 +35,7 @@ func (rt *Router) datasourceGrafanaFetch(c *gin.Context) {
 
 	gdss, err := grafana.FetchDatasources(conn)
 	if err != nil {
-		Render(c, nil, err)
+		Render(c, nil, err.Error())
 		return
 	}
 
@@ -52,7 +52,7 @@ func (rt *Router) datasourceGrafanaFetch(c *gin.Context) {
 
 	existing, err := rt.existingDatasourceNames(names)
 	if err != nil {
-		Render(c, nil, err)
+		Render(c, nil, err.Error())
 		return
 	}
 	for i := range items {
@@ -126,7 +126,7 @@ func (rt *Router) datasourceGrafanaImport(c *gin.Context) {
 	}
 	existing, err := rt.existingDatasourceNames(names)
 	if err != nil {
-		Render(c, nil, err)
+		Render(c, nil, err.Error())
 		return
 	}
 
