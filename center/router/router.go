@@ -465,6 +465,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		// public software. Same posture as /pub and /site-info.
 		pages.GET("/agents/categraf/meta", rt.categrafMeta)
 		pages.GET("/agents/categraf/install.sh", rt.categrafInstallScript)
+		pages.GET("/agents/categraf/collect.sh", rt.categrafCollectScript)
 		pages.GET("/agents/categraf/download", rt.categrafDownload)
 
 		// pages.GET("/builtin-boards", rt.builtinBoardGets)

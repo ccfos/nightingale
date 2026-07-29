@@ -220,7 +220,23 @@ func (rt *Router) categrafMeta(c *gin.Context) {
 		"basic_auth": len(rt.HTTP.APIForAgent.BasicAuth) > 0, // bool only, never the credentials
 		"base_url":   base,
 		"script_url": base + "/api/n9e/agents/categraf/install.sh",
+		// The UI shows its collect-config wizard only when this is present, so
+		// pointing the frontend at an older server degrades to the docs
+		// instead of generating a command the server cannot serve.
+		"collect": true,
 	}, nil)
+}
+
+// categrafCollectScript serves the static collect-config applier. The same
+// buffer-then-send discipline as the install script applies: the client pipes
+// this into `sudo bash`, so a truncated body must be a curl error, never a
+// half-executed script.
+func (rt *Router) categrafCollectScript(c *gin.Context) {
+	body := []byte(agentassets.CollectConfigScript)
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Header("Cache-Control", "no-store, no-cache, must-revalidate")
+	c.Header("Content-Length", strconv.Itoa(len(body)))
+	c.Data(http.StatusOK, "text/x-shellscript; charset=utf-8", body)
 }
 
 // categrafDownload serves a bundled collector package.

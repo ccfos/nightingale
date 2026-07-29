@@ -23,6 +23,13 @@ var categrafVersionRaw string
 //go:embed install-categraf.sh.tmpl
 var InstallCategrafTpl string
 
+// CollectConfigScript is served by GET /api/n9e/agents/categraf/collect.sh.
+// It is a plain file, not a template: the plugin config it applies travels
+// base64-encoded on the command line, so nothing needs to be rendered in.
+//
+//go:embed collect-config.sh
+var CollectConfigScript string
+
 // CategrafVersion returns the pinned categraf release tag, e.g. "v0.5.15".
 func CategrafVersion() string {
 	return strings.TrimSpace(categrafVersionRaw)
