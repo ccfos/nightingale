@@ -32,8 +32,13 @@ func TestAlertRuleVerify_EventRelabelConfig(t *testing.T) {
 		{"empty source label", `{"event_relabel_config":[{"source_labels":[""],"action":"replace"}]}`, true},
 		{"source label starting with digit", dirtyRelabelRuleConfig, true},
 		{"source label with dash", `{"event_relabel_config":[{"source_labels":["a-b"],"action":"replace"}]}`, true},
-		{"invalid target label", `{"event_relabel_config":[{"source_labels":["ident"],"target_label":"1x!","action":"replace"}]}`, true},
 		{"empty target label is allowed", `{"event_relabel_config":[{"source_labels":["ident"],"target_label":"","action":"replace"}]}`, false},
+		// target_label 在读取端是普通 string，不参与反序列化校验，运行期
+		// lowercase/uppercase/hashmod 等分支也会原样写出（含点号的标签正是 REPLACE_DOT
+		// 机制要支持的场景）。校验口径必须与读取端对齐，不能把这些存量配置拒之门外。
+		{"dotted target label is allowed", `{"event_relabel_config":[{"source_labels":["ident"],"target_label":"k8s.pod","action":"lowercase"}]}`, false},
+		{"non-ascii target label is allowed", `{"event_relabel_config":[{"source_labels":["ident"],"target_label":"主机名","action":"lowercase"}]}`, false},
+		{"weird target label is allowed", `{"event_relabel_config":[{"source_labels":["ident"],"target_label":"1x!","action":"replace"}]}`, false},
 		// 字段类型不合法同样会让读取端整段丢弃 relabel 配置，必须一起拦住，
 		// 否则表现为"保存成功但 relabel 永远不生效"
 		{"modulus of wrong type", `{"event_relabel_config":[{"source_labels":["ident"],"modulus":"3","action":"hashmod"}]}`, true},

@@ -673,12 +673,11 @@ func (ar *AlertRule) validateCronPattern() error {
 // model.LabelNames，遇到非法 label name 会中途中止，拿不到出错的下标。
 type relabelConfigForVerify struct {
 	SourceLabels []string `json:"source_labels"`
-	TargetLabel  string   `json:"target_label"`
 }
 
 // validateEventRelabelConfig 保证 rule_config.event_relabel_config 能被读取端解开。
-// 读取端用的是 pconf.RelabelConfig，非法 label name（空串、数字开头等）会让它的
-// UnmarshalJSON 失败：center 侧表现为 event_relabel_config 被静默改坏，edge 侧表现为
+// 读取端用的是 pconf.RelabelConfig，source_labels 里的非法 label name（空串、数字开头等）
+// 会让它的 UnmarshalJSON 失败：center 侧表现为 event_relabel_config 被静默改坏，edge 侧表现为
 // 整批告警规则同步失败、进程退出。字段类型不合法（如 modulus 传字符串）虽不会打挂
 // edge，但读取端同样整段丢弃，表现为"保存成功但 relabel 永远不生效"。两类都拦在写入口。
 func (ar *AlertRule) validateEventRelabelConfig() error {
@@ -707,14 +706,14 @@ func (ar *AlertRule) validateEventRelabelConfig() error {
 				continue
 			}
 
+			// 只校验 source_labels：它在读取端是 model.LabelNames，非法 label name 会让
+			// 反序列化失败。target_label 在读取端是普通 string，不参与反序列化校验，
+			// 且运行期 lowercase/uppercase/hashmod 等分支会原样写出（含点号的标签正是
+			// relabel.go 里 REPLACE_DOT 机制要支持的），所以这里不能收得比读取端更严。
 			for _, sourceLabel := range cfg.SourceLabels {
 				if !model.LabelName(sourceLabel).IsValid() {
 					return fmt.Errorf("event_relabel_config[%d]: %q is not a valid label name in source_labels", i, sourceLabel)
 				}
-			}
-
-			if cfg.TargetLabel != "" && !model.LabelName(cfg.TargetLabel).IsValid() {
-				return fmt.Errorf("event_relabel_config[%d]: %q is not a valid label name in target_label", i, cfg.TargetLabel)
 			}
 		}
 	}
