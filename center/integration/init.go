@@ -528,10 +528,14 @@ func (b *BuiltinPayloadInFileType) BuiltinMetricGets(metricsInDB []*models.Built
 			logger.Errorf("Error getting translation for metric %s: %v", metric.Name, err)
 			continue // Skip if translation not found
 		}
-		metric.Name = trans.Name
-		metric.Note = trans.Note
 
-		filteredMetrics = append(filteredMetrics, metric)
+		// 译文写在副本上：b.BuiltinMetrics 是所有请求共享的进程级缓存，就地改写
+		// 会让后续请求的 applyFilter 拿上一次请求留下的译文去匹配 query。
+		translated := *metric
+		translated.Name = trans.Name
+		translated.Note = trans.Note
+
+		filteredMetrics = append(filteredMetrics, &translated)
 	}
 
 	// Sort metrics
