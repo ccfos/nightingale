@@ -1,6 +1,7 @@
 package grafana
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
@@ -85,6 +86,20 @@ func MapToDatasource(gds GrafanaDatasource, plugins []cconf.Plugin) (*models.Dat
 		}
 	}
 
+	// mysql 同理：dskit/mysql 的 DSN 写死 "...?charset=utf8&parseTime=True"，没有 tls= 参数，
+	// 连接只能是明文。Grafana 侧只要出现任一 TLS 相关字段就拒绝导入，与上面 pgsql 同标准。
+	//
+	// 三个 flag 一律拦截是刻意取保守：tlsAuth / tlsAuthWithCACert 确定代表启用了 TLS；
+	// tlsSkipVerify 按 Grafana 文档是「跳过校验」的修饰符、通常与前两者同现，但文档没有明确
+	// 排除它单独出现的情况。误拦的代价是这条源不能一键导入（用户手工新建即可），放行错的代价
+	// 是库凭据与查询数据被静默降级为明文外发——按后者不可接受来定。
+	if rule.n9eType == "mysql" {
+		if flag := mysqlTLSFlag(gds.JSONData); flag != "" {
+			meta.Reason = "mysql tls (" + flag + ") not supported: n9e connects to mysql in plaintext"
+			return nil, meta
+		}
+	}
+
 	meta.Supported = true
 
 	// 不映射 IsDefault：Add() 不像 upsert 那样保证「默认源唯一」，
@@ -99,7 +114,7 @@ func MapToDatasource(gds GrafanaDatasource, plugins []cconf.Plugin) (*models.Dat
 
 	switch rule.shape {
 	case shapeHTTP:
-		ds.HTTPJson.Url = gds.URL
+		ds.HTTPJson.Url = httpURL(rule.n9eType, gds.URL)
 		ds.HTTPJson.Headers = customHeaders(gds.JSONData)
 		ds.HTTPJson.TLS.SkipTlsVerify = boolField(gds.JSONData, "tlsSkipVerify")
 	case shapeHTTPMulti:
@@ -134,6 +149,42 @@ func MapToDatasource(gds GrafanaDatasource, plugins []cconf.Plugin) (*models.Dat
 	}
 
 	return ds, meta
+}
+
+// mysqlTLSFlag 返回 Grafana MySQL 数据源上第一个被启用的 TLS 相关字段名，都没启用则返回空串。
+// 返回字段名而非布尔，是为了让预览页的 reason 能指明是哪一项触发的拦截。
+func mysqlTLSFlag(jsonData map[string]interface{}) string {
+	for _, k := range []string{"tlsAuth", "tlsAuthWithCACert", "tlsSkipVerify"} {
+		if boolField(jsonData, k) {
+			return k
+		}
+	}
+	return ""
+}
+
+// httpURL 把 Grafana 的地址转成 n9e 侧可用的地址。
+//
+// 目前只有 loki 需要转换：Grafana 存的是 Loki 服务基址（官方文档示例 http://localhost:3100），
+// 由 Grafana 自己拼 /loki/api/v1/...；而 n9e 的 dskit/loki apiURL() 只在配置地址后追加
+// /api/v1/...，所以 n9e 侧的地址必须自带 /loki（router_datasource.go 的连通性校验也是这么要求的）。
+// 原样搬运会导入出一个 status=enabled 但请求 /api/v1/query_range → 404 的死数据源。
+//
+// 判断只看 u.Path，不能对整串做 strings.Contains(raw, "/loki")：
+// "http://loki:3100" 因为 http:// 的双斜杠，整串里就含 "/loki"，而主机名叫 loki 恰是最常见写法。
+func httpURL(n9eType, raw string) string {
+	if n9eType != "loki" {
+		return raw
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		// 解析不了就原样返回，交给后续连通性校验/用户去处理，不在这里吞掉原始输入。
+		return raw
+	}
+	if strings.Contains(u.Path, "/loki") {
+		return raw
+	}
+	u.Path = strings.TrimRight(u.Path, "/") + "/loki"
+	return u.String()
 }
 
 // isMappedType 判断该 Grafana 类型是否在映射表里(有望导入)，用于决定是否值得拉详情补齐字段。

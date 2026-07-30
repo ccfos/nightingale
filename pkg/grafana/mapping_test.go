@@ -1,6 +1,7 @@
 package grafana
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
@@ -347,6 +348,82 @@ func TestMapToDatasource_PostgresSSLMode(t *testing.T) {
 		_, meta := MapToDatasource(GrafanaDatasource{Type: "postgres", Name: "pg", URL: "x"}, testPlugins)
 		if !meta.Supported {
 			t.Fatalf("want supported when sslmode absent")
+		}
+	})
+}
+
+// TestMapToDatasource_MySQLTLS 覆盖 mysql 承载不了 TLS：dskit/mysql 的 DSN 没有 tls= 参数，
+// 连接只能是明文，所以 Grafana 侧启用了任一 TLS 选项的 mysql 一律标记不支持（与 pgsql sslmode 同标准）。
+func TestMapToDatasource_MySQLTLS(t *testing.T) {
+	for _, flag := range []string{"tlsAuth", "tlsAuthWithCACert", "tlsSkipVerify"} {
+		t.Run(flag+" -> unsupported", func(t *testing.T) {
+			gds := GrafanaDatasource{Type: "mysql", Name: "mydb", URL: "10.0.0.1:3306", JSONData: map[string]interface{}{flag: true}}
+			ds, meta := MapToDatasource(gds, testPlugins)
+			if meta.Supported || ds != nil {
+				t.Fatalf("supported=%v ds=%+v, want unsupported for %s", meta.Supported, ds, flag)
+			}
+			// reason 要指明是哪个字段触发的，方便用户判断该不该手工建。
+			if !strings.Contains(meta.Reason, flag) {
+				t.Errorf("reason = %q, want it to name the triggering flag %q", meta.Reason, flag)
+			}
+		})
+		t.Run(flag+"=false -> supported", func(t *testing.T) {
+			gds := GrafanaDatasource{Type: "mysql", Name: "mydb", URL: "10.0.0.1:3306", JSONData: map[string]interface{}{flag: false}}
+			if _, meta := MapToDatasource(gds, testPlugins); !meta.Supported {
+				t.Fatalf("want supported when %s=false", flag)
+			}
+		})
+	}
+	t.Run("no tls flags -> supported", func(t *testing.T) {
+		if _, meta := MapToDatasource(GrafanaDatasource{Type: "mysql", Name: "mydb", URL: "10.0.0.1:3306"}, testPlugins); !meta.Supported {
+			t.Fatalf("want supported when no tls flag present")
+		}
+	})
+	t.Run("pgsql tls flags unaffected", func(t *testing.T) {
+		// mysql 的判断不能误伤 pgsql —— 后者只看 sslmode。
+		gds := GrafanaDatasource{Type: "postgres", Name: "pg", URL: "10.0.0.2:5432", JSONData: map[string]interface{}{"tlsAuth": true}}
+		if _, meta := MapToDatasource(gds, testPlugins); !meta.Supported {
+			t.Fatalf("postgres with tlsAuth should still be judged by sslmode only")
+		}
+	})
+}
+
+// TestMapToDatasource_LokiURL 覆盖 Loki 的路径约定差异：Grafana 存服务基址（自己拼 /loki/api/v1/...），
+// n9e 的 dskit/loki 只追加 /api/v1/...，故 n9e 侧地址必须自带 /loki，否则导入即 404。
+func TestMapToDatasource_LokiURL(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		// 主机名就叫 loki 是最常见写法；注意 "http://loki:3100" 整串里因 "//" 就含 "/loki"，
+		// 所以判断必须只看 u.Path，这条用例专门守住这个坑。
+		{"host named loki", "http://loki:3100", "http://loki:3100/loki"},
+		{"bare host", "http://10.0.0.9:3100", "http://10.0.0.9:3100/loki"},
+		{"fqdn", "https://loki.example.org", "https://loki.example.org/loki"},
+		{"trailing slash", "http://10.0.0.9:3100/", "http://10.0.0.9:3100/loki"},
+		{"already has /loki", "http://10.0.0.9:3100/loki", "http://10.0.0.9:3100/loki"},
+		{"already has /loki with trailing slash", "http://10.0.0.9:3100/loki/", "http://10.0.0.9:3100/loki/"},
+		{"gateway subpath", "http://gw.example.org/logs", "http://gw.example.org/logs/loki"},
+		{"unparseable kept as-is", "://bad", "://bad"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ds, meta := MapToDatasource(GrafanaDatasource{Type: "loki", Name: "l", URL: tt.in}, testPlugins)
+			if !meta.Supported || ds == nil {
+				t.Fatalf("loki should be supported, got supported=%v reason=%q", meta.Supported, meta.Reason)
+			}
+			if ds.HTTPJson.Url != tt.want {
+				t.Errorf("http.url = %q, want %q", ds.HTTPJson.Url, tt.want)
+			}
+		})
+	}
+
+	t.Run("prometheus url untouched", func(t *testing.T) {
+		// 只有 loki 需要转换，同为 shapeHTTP 的 prometheus 必须原样保留。
+		ds, _ := MapToDatasource(GrafanaDatasource{Type: "prometheus", Name: "p", URL: "http://prom:9090"}, testPlugins)
+		if ds.HTTPJson.Url != "http://prom:9090" {
+			t.Errorf("prometheus http.url = %q, want unchanged", ds.HTTPJson.Url)
 		}
 	})
 }
