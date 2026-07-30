@@ -92,6 +92,21 @@ func enabledPluginTypes(plugins []cconf.Plugin) map[string]bool {
 	return set
 }
 
+// clusterNameFromSettings 从 settings 里取出「关联告警引擎集群」（键形如 {type}.cluster_name）。
+// 与 datasourceUpsert 的取法一致；区别是这里的 settings 直接来自客户端提交，故用带 ok 的类型断言，
+// 非字符串值只当作未设置，而不是像 upsert 里 v.(string) 那样直接 panic。
+func clusterNameFromSettings(settings map[string]interface{}) string {
+	for k, v := range settings {
+		if !strings.Contains(k, "cluster_name") {
+			continue
+		}
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
 // grafanaImportResult 是「批量导入」每条数据源的处理结果。
 // status: imported（已启用）/ pending_auth（缺密钥，存为 disabled 待补填）/ skipped（重名）/ failed。
 type grafanaImportResult struct {
@@ -153,6 +168,10 @@ func (rt *Router) datasourceGrafanaImport(c *gin.Context) {
 		if ds.Status == "" {
 			ds.Status = "enabled"
 		}
+		// 与 datasourceUpsert 保持一致：前端表单把「关联告警引擎集群」存在 settings 的
+		// {type}.cluster_name 里，cluster_name 列由它派生（dscache 的 edge 过滤读的是列）。
+		// 导入是另一条落库路径，不补这段抄写的话，前端设置的关联引擎不会写进列、edge 过滤失效。
+		ds.ClusterName = clusterNameFromSettings(ds.SettingsJson)
 
 		if err := ds.Add(rt.Ctx); err != nil {
 			// 唯一索引在大小写不敏感 collation / 并发下可能拦下预检没发现的重名，兜底判 skipped。
