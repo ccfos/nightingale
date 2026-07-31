@@ -50,10 +50,10 @@ func (rt *Router) notificationRecordList(c *gin.Context) {
 	ginx.NewRender(c).Data(response, nil)
 }
 
-// notificationRecordDelivered 回答「这套部署是否曾成功发出过通知」，供新手引导判定「发送测试告警」这一步是否完成。
+// notificationRecordUsed 回答「这套部署是否产生过通知记录（无论成败）」，供新手引导判定「发送测试告警」这一步是否完成。
 // 只回布尔和时间戳，不回渠道、接收人或内容，避免把通知明细暴露给只有页面权限的用户。
-func (rt *Router) notificationRecordDelivered(c *gin.Context) {
-	record, err := models.NotificationRecordLatestSuccess(rt.Ctx)
+func (rt *Router) notificationRecordUsed(c *gin.Context) {
+	record, err := models.NotificationRecordLatest(rt.Ctx)
 	ginx.Dangerous(err)
 
 	var lastAt int64
@@ -62,8 +62,8 @@ func (rt *Router) notificationRecordDelivered(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(gin.H{
-		"delivered": record != nil,
-		"last_at":   lastAt,
+		"used":    record != nil,
+		"last_at": lastAt,
 	}, nil)
 }
 

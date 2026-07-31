@@ -560,7 +560,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 		pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
-		pages.GET("/notification-records/delivered", rt.auth(), rt.user(), rt.notificationRecordDelivered)
+		pages.GET("/notification-records/used", rt.auth(), rt.user(), rt.notificationRecordUsed)
 		pages.GET("/event-detail/:hash", rt.eventDetailPage)
 		pages.GET("/alert-eval-detail/:id", rt.alertEvalDetailPage)
 		pages.GET("/trace-logs/:traceid", rt.traceLogsPage)
