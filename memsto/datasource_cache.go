@@ -116,6 +116,13 @@ func (d *DatasourceCacheType) SyncDatasources() {
 	go d.loopSyncDatasources()
 }
 
+// SyncOnce 立即同步一次数据源缓存，不启动循环、失败也不终止进程。
+// 供配置写入后（如 upsert）主动调用，让新数据源立刻对 proxy / 查询可见，
+// 而不必等待 9 秒的下一个同步周期 —— 否则保存后立即查询会报 "no such datasource"。
+func (d *DatasourceCacheType) SyncOnce() error {
+	return d.syncDatasources()
+}
+
 func (d *DatasourceCacheType) loopSyncDatasources() {
 	duration := time.Duration(9000) * time.Millisecond
 	for {

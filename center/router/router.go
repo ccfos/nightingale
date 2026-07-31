@@ -601,6 +601,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/datasource/desc", rt.auth(), rt.admin(), rt.datasourceGet)
 		pages.POST("/datasource/status/update", rt.auth(), rt.admin(), rt.datasourceUpdataStatus)
 		pages.DELETE("/datasource/", rt.auth(), rt.admin(), rt.datasourceDel)
+		// 模板匹配是只读探测，普通用户可用；导入动作的权限由业务组/payload 接口各自把关
+		pages.POST("/datasource/template-match", rt.auth(), rt.user(), rt.datasourceTemplateMatch)
 
 		pages.GET("/roles", rt.auth(), rt.user(), rt.roleGets)
 		pages.POST("/roles", rt.auth(), rt.user(), rt.perm("/roles/add"), rt.roleAdd)
