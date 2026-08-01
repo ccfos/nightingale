@@ -1148,6 +1148,15 @@ func getDefs(renderData map[string]interface{}) []string {
 		"{{ $event := index $events 0 }}",
 		"{{ $labels := $event.TagsMap }}",
 		"{{ $value := $event.TriggerValue }}",
+		// $domain 一直是文档里公开的字段，但此前没有在这里声明，模板写 {{$domain}}
+		// 会在 Parse 阶段报 undefined variable，而 RenderEvent 把解析错误当正文返回，
+		// 于是第三方收到的是一段 "failed to parse template: ..."。
+		//
+		// 不写成 {{ $domain := .domain }}：text/template 对缺失的键会渲染出 "<no value>"，
+		// 一旦将来有调用方忘了填 renderData["domain"]，这串东西会直接进到用户收到的消息里。
+		// 走 with 兜底后缺键时是空串。模板内部再 {{$domain := "..."}} 重新赋值仍然生效
+		// （后声明者胜），内置模板（notify_tpl.go）的既有写法不受影响。
+		`{{ $domain := "" }}{{ with .domain }}{{ $domain = . }}{{ end }}`,
 	}
 }
 

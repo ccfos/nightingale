@@ -120,3 +120,50 @@ func TestBuildPipelineTestMockEventDefaults(t *testing.T) {
 		t.Fatal("default mock event should be a firing event")
 	}
 }
+
+// 媒介测试的样例事件：级别与恢复态由用户在弹窗里调，其余字段固定
+func TestBuildChannelTestMockEvent(t *testing.T) {
+	e := buildChannelTestMockEvent("en_US", MockEventForm{MockSeverity: 1, MockIsRecovered: true})
+
+	if e.Hash != "notify-channel-test-mock-event" {
+		t.Fatalf("hash = %q", e.Hash)
+	}
+	if e.Severity != 1 || !e.IsRecovered || e.RecoverTime == 0 {
+		t.Fatalf("overrides not applied: severity=%d recovered=%v recoverTime=%d", e.Severity, e.IsRecovered, e.RecoverTime)
+	}
+	// 来源标签用于在收到的消息里区分是哪个入口发的测试
+	if got := e.TagsMap["source"]; got != "notify-channel-test" {
+		t.Fatalf("source tag = %q, want notify-channel-test", got)
+	}
+}
+
+func TestBuildChannelTestMockEventDefaults(t *testing.T) {
+	e := buildChannelTestMockEvent("en_US", MockEventForm{})
+	if e.Severity != 2 {
+		t.Fatalf("severity = %d, want 2 by default", e.Severity)
+	}
+	if e.IsRecovered || e.RecoverTime != 0 {
+		t.Fatal("default mock event should be a firing event")
+	}
+}
+
+// 模板预览的样例事件必须让 $labels（来自 TagsMap）可用，否则文档里的
+// {{$event.TagsMap.instance}} 这类示例在预览里会直接报 nil map
+func TestBuildTemplatePreviewMockEventHasTagsMap(t *testing.T) {
+	e := buildTemplatePreviewMockEvent("en_US", MockEventForm{MockSeverity: 3})
+
+	if e.Hash != "message-template-preview-mock-event" {
+		t.Fatalf("hash = %q", e.Hash)
+	}
+	if e.Severity != 3 {
+		t.Fatalf("severity = %d, want 3", e.Severity)
+	}
+	if len(e.TagsMap) == 0 {
+		t.Fatal("TagsMap is empty, $labels would be unusable in preview")
+	}
+	for _, key := range []string{"ident", "rulename", "source"} {
+		if _, ok := e.TagsMap[key]; !ok {
+			t.Fatalf("mock event missing tag %q, TagsMap=%v", key, e.TagsMap)
+		}
+	}
+}

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 	texttemplate "text/template"
@@ -111,6 +112,63 @@ func TestMsgTplMapEnMirrorsMsgTplMap(t *testing.T) {
 			if _, ok := enTpl.Content[key]; !ok {
 				t.Errorf("built-in en template %s missing content key %q", enTpl.Ident, key)
 			}
+		}
+	}
+}
+
+// $domain 是文档与前端字段面板对外公开的变量，必须由 getDefs 声明。
+// 少了它，任何写 {{$domain}} 的模板会在 Parse 阶段报 undefined variable，
+// 而 RenderEvent 把解析错误当正文返回——第三方收到的是一段
+// "failed to parse template: ..."，且媒介测试仍报成功，错误只在真实群消息里才看得见。
+func TestGetDefsProvidesDomain(t *testing.T) {
+	renderData := map[string]interface{}{
+		"events": []*AlertCurEvent{{RuleName: "r1", TagsMap: map[string]string{}}},
+		"domain": "http://site",
+	}
+
+	render := func(t *testing.T, body string, data map[string]interface{}) string {
+		t.Helper()
+		full := strings.Join(append(getDefs(data), body), "")
+		tpl, err := texttemplate.New("k").Funcs(tplx.TemplateFuncMap).Parse(full)
+		if err != nil {
+			t.Fatalf("parse error: %v", err)
+		}
+		var buf bytes.Buffer
+		if err := tpl.Execute(&buf, data); err != nil {
+			t.Fatalf("execute error: %v", err)
+		}
+		return buf.String()
+	}
+
+	t.Run("模板可直接引用 $domain", func(t *testing.T) {
+		if got := render(t, "{{$domain}}/alert-his-events/{{$event.Id}}", renderData); got != "http://site/alert-his-events/0" {
+			t.Fatalf("got %q", got)
+		}
+	})
+
+	// 内置模板（notify_tpl.go）都是先 {{$domain := "..."}} 再用，后声明者必须仍然胜出，
+	// 否则这次改动会把所有内置模板里的域名替换掉
+	t.Run("模板内部重新赋值仍然生效", func(t *testing.T) {
+		if got := render(t, `{{$domain := "http://custom" }}{{$domain}}`, renderData); got != "http://custom" {
+			t.Fatalf("got %q", got)
+		}
+	})
+
+	// 将来若有调用方漏填 domain，应渲染成空串而不是报错
+	t.Run("缺 domain 键时渲染为空且不报错", func(t *testing.T) {
+		data := map[string]interface{}{"events": renderData["events"]}
+		if got := render(t, "[{{$domain}}]", data); got != "[]" {
+			t.Fatalf("got %q", got)
+		}
+	})
+}
+
+// 中文内置模板同样要能在加上 getDefs 之后解析（英文版由 TestNewTplMapEnParse 覆盖）
+func TestNewTplMapParse(t *testing.T) {
+	for key, text := range NewTplMap {
+		full := strings.Join(append(getDefs(nil), text), "")
+		if _, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(full); err != nil {
+			t.Errorf("built-in template %s parse error: %v", key, err)
 		}
 	}
 }

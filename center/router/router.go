@@ -780,6 +780,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		// pages.POST("/dingtalk-group-list/:id", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.dingtalkGroupsGetByNotifyChannel)
 		pages.GET("/pagerduty-integration-key/:id/:service_id/:integration_id", rt.auth(), rt.user(), rt.pagerDutyIntegrationKeyGet)
 		pages.GET("/pagerduty-service-list/:id", rt.auth(), rt.user(), rt.pagerDutyNotifyServicesGet)
+		// 复用 /notification-channels/add 权限而不新增权限串：权限只定义在 cconf.builtInOps，
+		// 未进任何 SQL seed，新增串会导致所有存量部署必须手工授权后功能才可用。
+		pages.POST("/notify-channel-config/test", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelConfigTest)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)
 		pages.GET("/notify-channel-config/idents", rt.auth(), rt.user(), rt.notifyChannelIdentsGet)
 
