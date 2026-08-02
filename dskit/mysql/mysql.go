@@ -34,6 +34,7 @@ type Shard struct {
 	MaxOpenConns    int    `json:"mysql.max_open_conns" mapstructure:"mysql.max_open_conns"`
 	ConnMaxLifetime int    `json:"mysql.conn_max_lifetime" mapstructure:"mysql.conn_max_lifetime"`
 	MaxQueryRows    int    `json:"mysql.max_query_rows" mapstructure:"mysql.max_query_rows"`
+	DsnExtraParams  string `json:"mysql.dsn_extra_params" mapstructure:"mysql.dsn_extra_params"`
 }
 
 func NewMySQLWithSettings(ctx context.Context, settings interface{}) (*MySQL, error) {
@@ -98,13 +99,20 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 	if len(shard.Addr) == 0 {
 		return nil, errors.New("empty addr")
 	}
+	extraParams, err := NormalizeDSNExtraParams(shard.DsnExtraParams)
+	if err != nil {
+		return nil, fmt.Errorf("mysql connect: invalid mysql.dsn_extra_params: %w", err)
+	}
+
 	var keys []string
-	var err error
 	keys = append(keys, shard.Addr)
 
 	keys = append(keys, shard.Password, shard.User)
 	if len(database) > 0 {
 		keys = append(keys, database)
+	}
+	if extraParams != "" {
+		keys = append(keys, extraParams)
 	}
 	cachedKey := strings.Join(keys, ":")
 	// cache conn with database
@@ -120,6 +128,9 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 	}()
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True", shard.User, shard.Password, shard.Addr, database)
+	if extraParams != "" {
+		dsn += "&" + extraParams
+	}
 	db, err = sqlbase.NewDB(
 		ctx,
 		mysql.Open(dsn),
