@@ -9,16 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// 所有列都显式声明类型，与 docker/migratesql/migrate.sql 保持一致，理由同 AILLMConfig。
 type AISkillFile struct {
 	Id        int64  `json:"id" gorm:"primaryKey;autoIncrement"`
-	SkillId   int64  `json:"skill_id"`
-	Name      string `json:"name"`
+	SkillId   int64  `json:"skill_id" gorm:"type:bigint;not null;default:0;index:idx_skill_id"`
+	Name      string `json:"name" gorm:"type:varchar(255);not null;default:''"`
 	Content   string `json:"content" gorm:"type:mediumtext"`
-	Size      int64  `json:"size"`
-	CreatedAt int64  `json:"created_at"`
-	CreatedBy string `json:"created_by"`
-	UpdatedAt int64  `json:"updated_at"`
-	UpdatedBy string `json:"updated_by"`
+	Size      int64  `json:"size" gorm:"type:bigint;not null;default:0"`
+	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;default:0"`
+	CreatedBy string `json:"created_by" gorm:"type:varchar(64);not null;default:''"`
+	UpdatedAt int64  `json:"updated_at" gorm:"type:bigint;not null;default:0"`
+	UpdatedBy string `json:"updated_by" gorm:"type:varchar(64);not null;default:''"`
 }
 
 func (f *AISkillFile) TableName() string {
@@ -36,14 +37,14 @@ var MaxFilesPerSkill = 1000
 // PostgreSQL does not support mediumtext; its text type is unlimited.
 type PostgresAISkillFile struct {
 	Id        int64  `json:"id" gorm:"primaryKey;autoIncrement"`
-	SkillId   int64  `json:"skill_id"`
-	Name      string `json:"name"`
+	SkillId   int64  `json:"skill_id" gorm:"type:bigint;not null;default:0;index:idx_skill_id"`
+	Name      string `json:"name" gorm:"type:varchar(255);not null;default:''"`
 	Content   string `json:"content" gorm:"type:text"`
-	Size      int64  `json:"size"`
-	CreatedAt int64  `json:"created_at"`
-	CreatedBy string `json:"created_by"`
-	UpdatedAt int64  `json:"updated_at"`
-	UpdatedBy string `json:"updated_by"`
+	Size      int64  `json:"size" gorm:"type:bigint;not null;default:0"`
+	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;default:0"`
+	CreatedBy string `json:"created_by" gorm:"type:varchar(64);not null;default:''"`
+	UpdatedAt int64  `json:"updated_at" gorm:"type:bigint;not null;default:0"`
+	UpdatedBy string `json:"updated_by" gorm:"type:varchar(64);not null;default:''"`
 }
 
 func (f *PostgresAISkillFile) TableName() string {

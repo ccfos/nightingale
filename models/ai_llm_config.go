@@ -21,21 +21,25 @@ type LLMExtraConfig struct {
 	ContextLength  *int              `json:"context_length,omitempty"`
 }
 
+// 列类型显式声明，与 docker/migratesql/migrate.sql 保持一致：
+//   - 裸 string 会被 GORM 的 MySQL 方言映射成 longtext，AutoMigrate 就会去改 DDL 里的 varchar 列
+//   - description 用 text 而非 varchar：存量库这列是 AutoMigrate 建的 longtext，收窄会在超长
+//     描述上报 1406/静默截断；TEXT 不能带字面量默认值（MySQL 1101），故不带 not null default
 type AILLMConfig struct {
 	Id          int64          `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	APIType     string         `json:"api_type"`
-	APIURL      string         `json:"api_url"`
-	APIKey      string         `json:"api_key"`
-	Model       string         `json:"model"`
-	ExtraConfig LLMExtraConfig `json:"extra_config" gorm:"serializer:json"`
-	Enabled     bool           `json:"enabled"`
-	IsDefault   bool           `json:"is_default" gorm:"column:is_default;type:boolean;default:false"`
-	CreatedAt   int64          `json:"created_at"`
-	CreatedBy   string         `json:"created_by"`
-	UpdatedAt   int64          `json:"updated_at"`
-	UpdatedBy   string         `json:"updated_by"`
+	Name        string         `json:"name" gorm:"type:varchar(255);not null;default:''"`
+	Description string         `json:"description" gorm:"type:text"`
+	APIType     string         `json:"api_type" gorm:"type:varchar(64);not null;default:''"`
+	APIURL      string         `json:"api_url" gorm:"type:varchar(1024);not null;default:''"`
+	APIKey      string         `json:"api_key" gorm:"type:varchar(1024);not null;default:''"`
+	Model       string         `json:"model" gorm:"type:varchar(255);not null;default:''"`
+	ExtraConfig LLMExtraConfig `json:"extra_config" gorm:"serializer:json;type:text"`
+	Enabled     bool           `json:"enabled" gorm:"type:boolean;not null;default:false"`
+	IsDefault   bool           `json:"is_default" gorm:"column:is_default;type:boolean;not null;default:false"`
+	CreatedAt   int64          `json:"created_at" gorm:"type:bigint;not null;default:0"`
+	CreatedBy   string         `json:"created_by" gorm:"type:varchar(64);not null;default:''"`
+	UpdatedAt   int64          `json:"updated_at" gorm:"type:bigint;not null;default:0"`
+	UpdatedBy   string         `json:"updated_by" gorm:"type:varchar(64);not null;default:''"`
 }
 
 func (a *AILLMConfig) TableName() string {
