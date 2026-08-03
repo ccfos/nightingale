@@ -335,7 +335,7 @@ func (rt *Router) series(c *gin.Context) {
 		return
 	}
 
-	q, err := rt.inst.DB.Querier(c.Request.Context(), timestamp.FromTime(start), timestamp.FromTime(end))
+	q, err := rt.inst.DB.Querier(timestamp.FromTime(start), timestamp.FromTime(end))
 	if err != nil {
 		respondError(c, http.StatusInternalServerError, "internal", err.Error())
 		return
@@ -359,7 +359,7 @@ func (rt *Router) series(c *gin.Context) {
 			return
 		}
 
-		set := q.Select(false, hints, matchers...)
+		set := q.Select(c.Request.Context(), false, hints, matchers...)
 		for set.Next() {
 			lset := set.At().Labels()
 			seen[lset.String()] = lset
@@ -390,7 +390,7 @@ func (rt *Router) labelNames(c *gin.Context) {
 		return
 	}
 
-	q, err := rt.inst.DB.Querier(c.Request.Context(), timestamp.FromTime(start), timestamp.FromTime(end))
+	q, err := rt.inst.DB.Querier(timestamp.FromTime(start), timestamp.FromTime(end))
 	if err != nil {
 		respondError(c, http.StatusInternalServerError, "internal", err.Error())
 		return
@@ -398,7 +398,7 @@ func (rt *Router) labelNames(c *gin.Context) {
 	defer q.Close()
 
 	if len(selectors) == 0 {
-		names, _, err := q.LabelNames()
+		names, _, err := q.LabelNames(c.Request.Context())
 		if err != nil {
 			respondError(c, http.StatusInternalServerError, "internal", err.Error())
 			return
@@ -418,7 +418,7 @@ func (rt *Router) labelNames(c *gin.Context) {
 			return
 		}
 
-		names, _, err := q.LabelNames(matchers...)
+		names, _, err := q.LabelNames(c.Request.Context(), matchers...)
 		if err != nil {
 			respondError(c, http.StatusInternalServerError, "internal", err.Error())
 			return
@@ -448,7 +448,7 @@ func (rt *Router) labelValues(c *gin.Context) {
 		return
 	}
 
-	q, err := rt.inst.DB.Querier(c.Request.Context(), timestamp.FromTime(start), timestamp.FromTime(end))
+	q, err := rt.inst.DB.Querier(timestamp.FromTime(start), timestamp.FromTime(end))
 	if err != nil {
 		respondError(c, http.StatusInternalServerError, "internal", err.Error())
 		return
@@ -456,7 +456,7 @@ func (rt *Router) labelValues(c *gin.Context) {
 	defer q.Close()
 
 	if len(selectors) == 0 {
-		values, _, err := q.LabelValues(name)
+		values, _, err := q.LabelValues(c.Request.Context(), name)
 		if err != nil {
 			respondError(c, http.StatusInternalServerError, "internal", err.Error())
 			return
@@ -476,7 +476,7 @@ func (rt *Router) labelValues(c *gin.Context) {
 			return
 		}
 
-		values, _, err := q.LabelValues(name, matchers...)
+		values, _, err := q.LabelValues(c.Request.Context(), name, matchers...)
 		if err != nil {
 			respondError(c, http.StatusInternalServerError, "internal", err.Error())
 			return
@@ -496,7 +496,7 @@ func (rt *Router) labelValues(c *gin.Context) {
 
 func (rt *Router) buildInfo(c *gin.Context) {
 	respondOK(c, gin.H{
-		"version":   "2.47.1",
+		"version":   "2.49.1",
 		"revision":  "n9e-embedded-tsdb",
 		"branch":    "HEAD",
 		"buildUser": "",
@@ -523,7 +523,7 @@ func (rt *Router) deleteSeries(c *gin.Context) {
 			return
 		}
 
-		if err := rt.inst.DB.Delete(timestamp.FromTime(start), timestamp.FromTime(end), matchers...); err != nil {
+		if err := rt.inst.DB.Delete(c.Request.Context(), timestamp.FromTime(start), timestamp.FromTime(end), matchers...); err != nil {
 			respondError(c, http.StatusInternalServerError, "internal", err.Error())
 			return
 		}
