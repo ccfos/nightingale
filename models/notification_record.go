@@ -96,3 +96,19 @@ func NotificationRecordsGet(ctx *ctx.Context, where string, args ...interface{})
 
 	return lst, nil
 }
+
+// NotificationRecordLatest 取最新一条通知记录（无论成败），返回 nil 表示从未产生过通知。
+// 不复用 NotificationRecordsGet：后者没有 limit，会把全部匹配行读进内存。
+func NotificationRecordLatest(ctx *ctx.Context) (*NotificationRecord, error) {
+	var lst []*NotificationRecord
+	err := DB(ctx).Order("id desc").Limit(1).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+
+	return lst[0], nil
+}
