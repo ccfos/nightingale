@@ -595,7 +595,14 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 	}
 
 	dispatch.LogEvent(e, "push_queue")
-	if !queue.EventQueue.PushFront(e) {
+
+	// 入队的必须是快照，不能是 e 本身：p.fires 里存的就是同一个指针，
+	// RecoverSingle 会把它取出来原地改成恢复事件（IsRecovered=true）再二次入队，
+	// UpdateLastEvalTime / ResetMutedShadow 也每个评估周期原地写它。
+	// 队列一旦有积压，还没被消费的那条触发事件就会被就地改写成恢复事件，
+	// 结果是 alert_his_event 落两条恢复、零条触发，alert_cur_event 什么也不留；
+	// 同时消费者 goroutine 正在读这个对象，构成 data race。
+	if !queue.EventQueue.PushFront(e.DeepCopy()) {
 		logger.Warningf("alert_eval_%d datasource_%d event_push_queue: queue is full, event:%s", p.rule.Id, p.datasourceId, e.Hash)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "push_event_queue", p.BusiGroupCache.GetNameByBusiGroupId(p.rule.GroupId), fmt.Sprintf("%v", p.rule.Id)).Inc()
 	}
