@@ -22,6 +22,13 @@ type DatasourceCacheType struct {
 	DatasourceCheckHook func(*gin.Context) bool
 	DatasourceFilter    func([]*models.Datasource, *models.User) []*models.Datasource
 
+	// syncMu 串行化 syncDatasources 的「读 stat → 判断 → 读库 → Set」全流程。
+	// SyncOnce 让 upsert 的 HTTP handler 也能触发同步，会与 9 秒一次的循环并发，
+	// 不整段互斥的话慢的那次可能用旧快照覆盖新快照。
+	// 必须与下面的 RWMutex 分开：那把锁保护 ds / CateToIDs 的读取（GetById 等），
+	// 拿它包住 DB 查询会把所有读者一起堵死。
+	syncMu sync.Mutex
+
 	sync.RWMutex
 	ds          map[int64]*models.Datasource            // key: id value: datasource
 	CateToIDs   map[string]map[int64]*models.Datasource // key1: cate key2: id value: datasource
@@ -51,6 +58,9 @@ func (d *DatasourceCacheType) GetIDsByDsCateAndQueries(cate string, datasourceQu
 }
 
 func (d *DatasourceCacheType) StatChanged(total, lastUpdated int64) bool {
+	d.RLock()
+	defer d.RUnlock()
+
 	if d.statTotal == total && d.statLastUpdated == lastUpdated {
 		return false
 	}
@@ -134,6 +144,10 @@ func (d *DatasourceCacheType) loopSyncDatasources() {
 }
 
 func (d *DatasourceCacheType) syncDatasources() error {
+	// 与 loopSyncDatasources 及各个 SyncOnce 调用方串行执行，详见 syncMu 的注释
+	d.syncMu.Lock()
+	defer d.syncMu.Unlock()
+
 	start := time.Now()
 
 	stat, err := models.DatasourceStatistics(d.ctx)
