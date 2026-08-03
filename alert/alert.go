@@ -22,6 +22,7 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/evallog"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/macros"
@@ -30,6 +31,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/flashcatcloud/ibex/src/cmd/ibex"
+	"github.com/toolkits/pkg/logger"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -103,6 +105,11 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	alertSubscribeCache := memsto.NewAlertSubscribeCache(ctx, syncStats)
 	recordingRuleCache := memsto.NewRecordingRuleCache(ctx, syncStats)
 	targetsOfAlertRulesCache := memsto.NewTargetOfAlertRuleCache(ctx, alertc.Heartbeat.EngineName, syncStats)
+
+	// 评估执行记录：本地文件存储，支持按规则+时间范围查询评估现场
+	if err := evallog.Init(alertc.EvalLog, func() { alertStats.CounterEvalLogDropTotal.Inc() }); err != nil {
+		logger.Errorf("failed to init evallog: %v", err)
+	}
 
 	go models.InitNotifyConfig(ctx, alertc.Alerting.TemplatesDir)
 	go models.InitMessageTemplate(ctx)

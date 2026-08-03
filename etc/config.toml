@@ -133,6 +133,19 @@ EngineName = "default"
 # [Alert.Alerting]
 # NotifyConcurrency = 10
 
+# eval execution records: what each rule evaluation queried and judged,
+# stored on local disk of the alert engine, queryable on the rule page
+# [Alert.EvalLog]
+# Disable = false
+# Dir = "./evallog"
+# RetentionHours = 192
+# MaxSeriesPerQuery = 100
+# MaxPointsPerSeries = 60
+# MaxRecordBytes = 262144
+# PerRuleDailyMB = 1024
+# QueueSize = 4096
+# MaxDiskGB = 20
+
 [Center]
 MetricsYamlFile = "./etc/metrics.yaml"
 I18NHeaderKey = "X-Language"

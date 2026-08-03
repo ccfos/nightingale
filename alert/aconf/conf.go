@@ -2,6 +2,8 @@ package aconf
 
 import (
 	"path"
+
+	"github.com/ccfos/nightingale/v6/pkg/evallog"
 )
 
 type Alert struct {
@@ -9,6 +11,7 @@ type Alert struct {
 	EngineDelay int64
 	Heartbeat   HeartbeatConfig
 	Alerting    Alerting
+	EvalLog     evallog.Config
 }
 
 type SMTPConfig struct {

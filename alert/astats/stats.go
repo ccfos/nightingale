@@ -29,6 +29,7 @@ type Stats struct {
 	GaugeRecordEvalDuration     *prometheus.GaugeVec
 	GaugeRecordSeriesCount      *prometheus.GaugeVec
 	GaugeNotifyRecordQueueSize  prometheus.Gauge
+	CounterEvalLogDropTotal     prometheus.Counter
 }
 
 func NewSyncStats() *Stats {
@@ -173,6 +174,14 @@ func NewSyncStats() *Stats {
 		Help:      "Number of var filling query.",
 	}, []string{"rule_id", "datasource_id", "ref", "typ"})
 
+	// 评估执行记录因写入队列满被丢弃的条数
+	CounterEvalLogDropTotal := prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "eval_log_drop_total",
+		Help:      "Number of eval log records dropped due to full queue.",
+	})
+
 	prometheus.MustRegister(
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
@@ -193,6 +202,7 @@ func NewSyncStats() *Stats {
 		GaugeRecordSeriesCount,
 		GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery,
+		CounterEvalLogDropTotal,
 	)
 
 	return &Stats{
@@ -215,5 +225,6 @@ func NewSyncStats() *Stats {
 		GaugeRecordSeriesCount:      GaugeRecordSeriesCount,
 		GaugeNotifyRecordQueueSize:  GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery:      CounterVarFillingQuery,
+		CounterEvalLogDropTotal:     CounterEvalLogDropTotal,
 	}
 }
