@@ -8,86 +8,11 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 )
 
-type DatasourceType struct {
-	Id             int64  `json:"id"`
-	Category       string `json:"category"`
-	PluginType     string `json:"type"`
-	PluginTypeName string `json:"type_name"`
-}
-
 type Keys struct {
 	ValueKey   string `json:"valueKey" mapstructure:"valueKey"` // 多个用空格分隔
 	LabelKey   string `json:"labelKey" mapstructure:"labelKey"` // 多个用空格分隔
 	TimeKey    string `json:"timeKey" mapstructure:"timeKey"`
 	TimeFormat string `json:"timeFormat" mapstructure:"timeFormat"`
-}
-
-var DatasourceTypes map[int64]DatasourceType
-
-func init() {
-	DatasourceTypes = make(map[int64]DatasourceType)
-	DatasourceTypes[1] = DatasourceType{
-		Id:             1,
-		Category:       "timeseries",
-		PluginType:     "prometheus",
-		PluginTypeName: "Prometheus Like",
-	}
-
-	DatasourceTypes[2] = DatasourceType{
-		Id:             2,
-		Category:       "logging",
-		PluginType:     "elasticsearch",
-		PluginTypeName: "Elasticsearch",
-	}
-
-	DatasourceTypes[3] = DatasourceType{
-		Id:             3,
-		Category:       "logging",
-		PluginType:     "aliyun-sls",
-		PluginTypeName: "SLS",
-	}
-
-	DatasourceTypes[4] = DatasourceType{
-		Id:             4,
-		Category:       "timeseries",
-		PluginType:     "ck",
-		PluginTypeName: "ClickHouse",
-	}
-
-	DatasourceTypes[5] = DatasourceType{
-		Id:             5,
-		Category:       "timeseries",
-		PluginType:     "mysql",
-		PluginTypeName: "MySQL",
-	}
-
-	DatasourceTypes[6] = DatasourceType{
-		Id:             6,
-		Category:       "timeseries",
-		PluginType:     "pgsql",
-		PluginTypeName: "PostgreSQL",
-	}
-
-	DatasourceTypes[7] = DatasourceType{
-		Id:             7,
-		Category:       "logging",
-		PluginType:     "victorialogs",
-		PluginTypeName: "VictoriaLogs",
-	}
-
-	DatasourceTypes[8] = DatasourceType{
-		Id:             8,
-		Category:       "timeseries",
-		PluginType:     "iotdb",
-		PluginTypeName: "IoTDB",
-	}
-
-	DatasourceTypes[9] = DatasourceType{
-		Id:             9,
-		Category:       "logging",
-		PluginType:     "loki",
-		PluginTypeName: "Loki",
-	}
 }
 
 type NewDatasourceFn func(settings map[string]interface{}) (Datasource, error)

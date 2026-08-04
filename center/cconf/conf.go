@@ -1,6 +1,7 @@
 package cconf
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
@@ -89,6 +90,20 @@ type AnonymousAccess struct {
 func (c *Center) PreCheck() {
 	if len(c.Plugins) == 0 {
 		c.Plugins = Plugins
+	}
+	// Plugins 是数据源类型的唯一登记表，id 会作为 plugin_id 落库、type 是全链路的 cate 标识，
+	// 任何一个重复都会导致前端类型列表和数据源记录错乱，启动期直接拦下
+	ids := make(map[int64]string, len(c.Plugins))
+	types := make(map[string]struct{}, len(c.Plugins))
+	for _, p := range c.Plugins {
+		if prev, ok := ids[p.Id]; ok {
+			panic(fmt.Sprintf("duplicate datasource plugin id %d (%s and %s)", p.Id, prev, p.Type))
+		}
+		ids[p.Id] = p.Type
+		if _, ok := types[p.Type]; ok {
+			panic(fmt.Sprintf("duplicate datasource plugin type %s", p.Type))
+		}
+		types[p.Type] = struct{}{}
 	}
 	if c.AgentsDir == "" {
 		// 默认使用项目根路径下的 agents/categraf 目录（与 integrations 同级）

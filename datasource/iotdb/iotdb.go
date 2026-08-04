@@ -106,7 +106,16 @@ func (it *IoTDB) ShowTables(ctx context.Context, database string) ([]string, err
 }
 
 func (it *IoTDB) DescribeTable(ctx context.Context, query interface{}) ([]*types.ColumnProperty, error) {
-	return it.Iotdb.DescribeTable(ctx, query)
+	// 通用元数据端点 /db-desc-table 透传的 query 是 map[string]interface{}，
+	// 而 dskit 侧断言 map[string]string，这里统一归一化
+	param := new(QueryParam)
+	if err := mapstructure.Decode(query, param); err != nil {
+		return nil, err
+	}
+	return it.Iotdb.DescribeTable(ctx, map[string]string{
+		"database": param.Database,
+		"table":    param.Table,
+	})
 }
 
 func (it *IoTDB) MakeLogQuery(ctx context.Context, query interface{}, eventTags []string, start, end int64) (interface{}, error) {
