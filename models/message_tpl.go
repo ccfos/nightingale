@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"regexp"
+	"sort"
 	"strings"
 	texttemplate "text/template"
 	"time"
@@ -1148,6 +1149,16 @@ func getDefs(renderData map[string]interface{}) []string {
 		"{{ $event := index $events 0 }}",
 		"{{ $labels := $event.TagsMap }}",
 		"{{ $value := $event.TriggerValue }}",
+		// 站点地址不在这里声明成 $domain：它是渲染数据里的一个键（RenderEvent 填的
+		// renderData["domain"]），模板里直接写 {{$.domain}} 即可，内置模板（本文件的
+		// MsgTplMap/NewTplMap）用的就是这个写法。
+		//
+		// 之所以不额外补一个 $domain 变量：GetDefs 是可被下游覆盖的函数变量，覆盖方
+		// 是照抄一份而非在基线上追加，这里每加一个变量就多一处会静默分叉的隐式契约——
+		// 而 .domain 走的是数据查找，不经过 defs，两边天然一致。
+		//
+		// 注意 {{.domain}} 只在顶层可用，range/with 内部 dot 会被改写；对外公开的写法
+		// 统一用 {{$.domain}}（$ 恒为根数据，任何位置都成立）。
 	}
 }
 
@@ -1155,77 +1166,113 @@ func init() {
 	GetDefs = getDefs
 }
 
+func buildRenderData(events []*AlertCurEvent, siteUrl string) map[string]interface{} {
+	renderData := make(map[string]interface{})
+	renderData["events"] = events
+	// 模板里用 {{$.domain}} 取站点地址，见 getDefs 上方的说明
+	renderData["domain"] = siteUrl
+	return renderData
+}
+
+// isSlackIdent 的两个 slack 媒介需要把 &lt; 还原回 <，否则 Slack 的 <url|text> 链接语法失效。
+func isSlackIdent(ident string) bool {
+	return ident == "slackwebhook" || ident == "slackbot"
+}
+
+// renderField 渲染单个模板字段，按 NotifyChannelIdent 选择渲染分支：
+//   - email：text/template，且不做任何转义（邮件正文里的换行就是换行）
+//   - slackwebhook / slackbot：html/template + JSON 转义，并把 &lt; 还原成 <
+//   - 其余：html/template + JSON 转义
+//
+// 与 RenderEvent 的唯一区别是错误处理：这里把错误交给调用方，由调用方决定是继续
+// 投递（RenderEvent：把错误文本当正文，保持既有行为）还是中止（RenderEventStrict）。
+func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]interface{}) (interface{}, error) {
+	text := strings.Join(append(GetDefs(renderData), msgTpl), "")
+
+	if t.NotifyChannelIdent == "email" {
+		tpl, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse template: %v", err)
+		}
+		var body bytes.Buffer
+		if err = tpl.Execute(&body, renderData); err != nil {
+			return nil, fmt.Errorf("failed to execute template: %v", err)
+		}
+		return body.String(), nil
+	}
+
+	tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse template: %v", err)
+	}
+	var body bytes.Buffer
+	if err = tpl.Execute(&body, renderData); err != nil {
+		return nil, fmt.Errorf("failed to execute template: %v", err)
+	}
+
+	escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
+	escaped = strings.ReplaceAll(escaped, "\n", "\\n")
+	escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+	if isSlackIdent(t.NotifyChannelIdent) {
+		escaped = strings.ReplaceAll(escaped, "&lt;", "<")
+	}
+	return template.HTML(escaped), nil
+}
+
 func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent, siteUrl string) map[string]interface{} {
 	if t == nil {
 		return nil
 	}
 
-	renderData := make(map[string]interface{})
-	renderData["events"] = events
-	renderData["domain"] = siteUrl
+	renderData := buildRenderData(events, siteUrl)
 
 	// event 内容渲染到 messageTemplate
 	tplContent := make(map[string]interface{})
 	for key, msgTpl := range t.Content {
-		defs := GetDefs(renderData)
-
-		var body bytes.Buffer
-		if t.NotifyChannelIdent == "email" {
-			text := strings.Join(append(defs, msgTpl), "")
-			tpl, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
-			if err != nil {
-				logger.Errorf("failed to parse template: %v", err)
-				tplContent[key] = fmt.Sprintf("failed to parse template: %v", err)
-				continue
-			}
-
-			var body bytes.Buffer
-			if err = tpl.Execute(&body, renderData); err != nil {
-				logger.Errorf("failed to execute template: %v", err)
-				tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
-				continue
-			}
-			tplContent[key] = body.String()
-			continue
-		} else if t.NotifyChannelIdent == "slackwebhook" || t.NotifyChannelIdent == "slackbot" {
-			text := strings.Join(append(defs, msgTpl), "")
-			tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
-			if err != nil {
-				logger.Errorf("failed to parse template: %v events: %v", err, events)
-				continue
-			}
-
-			if err = tpl.Execute(&body, renderData); err != nil {
-				logger.Errorf("failed to execute template: %v events: %v", err, events)
-				continue
-			}
-
-			escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
-			escaped = strings.ReplaceAll(escaped, "\n", "\\n")
-			escaped = strings.ReplaceAll(escaped, "\r", "\\r")
-			escaped = strings.ReplaceAll(escaped, "&lt;", "<")
-			tplContent[key] = template.HTML(escaped)
-			continue
-		}
-
-		text := strings.Join(append(defs, msgTpl), "")
-		tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+		val, err := t.renderField(key, msgTpl, renderData)
 		if err != nil {
-			logger.Errorf("failed to parse template: %v events: %v", err, events)
-			tplContent[key] = fmt.Sprintf("failed to parse template: %v", err)
+			logger.Errorf("failed to render template field %s: %v events: %v", key, err, events)
+			// slack 分支历来是把出错的字段整个丢掉（下游按缺字段处理），其余分支把错误
+			// 文本当正文发出去。这个差异是既有行为，这里只是显式化，没有改变它。
+			// 需要如实报错的场景请用 RenderEventStrict。
+			if !isSlackIdent(t.NotifyChannelIdent) {
+				tplContent[key] = err.Error()
+			}
 			continue
 		}
-
-		if err = tpl.Execute(&body, renderData); err != nil {
-			logger.Errorf("failed to execute template: %v events: %v", err, events)
-			tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
-			continue
-		}
-
-		escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
-		escaped = strings.ReplaceAll(escaped, "\n", "\\n")
-		escaped = strings.ReplaceAll(escaped, "\r", "\\r")
-		tplContent[key] = template.HTML(escaped)
+		tplContent[key] = val
 	}
 	return tplContent
+}
+
+// RenderEventStrict 与 RenderEvent 渲染逻辑完全一致（共用 renderField），区别只在
+// 任何字段解析/执行失败时立即返回 error，而不是把错误文本当正文继续往下发。
+//
+// 「保存前测试媒介配置」这类需要如实报告成败的场景必须用它：RenderEvent 的吞错语义
+// 会让模板写错时接口仍报成功，而第三方群里收到的是一段 "failed to parse template: ..."，
+// 错误只在真实消息里才看得见。
+func (t *MessageTemplate) RenderEventStrict(events []*AlertCurEvent, siteUrl string) (map[string]interface{}, error) {
+	if t == nil {
+		return nil, nil
+	}
+
+	renderData := buildRenderData(events, siteUrl)
+
+	// map 遍历顺序随机，多个字段同时写错时报哪个字段将不确定；按 key 排序保证
+	// 同一份模板每次报的都是同一个字段，用户才能照着定位
+	keys := make([]string, 0, len(t.Content))
+	for key := range t.Content {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	tplContent := make(map[string]interface{}, len(keys))
+	for _, key := range keys {
+		val, err := t.renderField(key, t.Content[key], renderData)
+		if err != nil {
+			return nil, fmt.Errorf("template field %q: %v", key, err)
+		}
+		tplContent[key] = val
+	}
+	return tplContent, nil
 }

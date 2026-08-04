@@ -1,6 +1,8 @@
 package models
 
 import (
+	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 	texttemplate "text/template"
@@ -111,6 +113,172 @@ func TestMsgTplMapEnMirrorsMsgTplMap(t *testing.T) {
 			if _, ok := enTpl.Content[key]; !ok {
 				t.Errorf("built-in en template %s missing content key %q", enTpl.Ident, key)
 			}
+		}
+	}
+}
+
+// 站点地址对外公开的写法是 {{$.domain}}（前端字段面板与文档都按这个给），
+// 它走渲染数据查找、不经过 getDefs，因此不受 GetDefs 被下游覆盖的影响。
+// 这里把这条契约钉住：既要保证 $.domain 在任意位置都取得到，也要保证
+// getDefs 不会偷偷再引入一个 $domain 变量——那会造成「开源能用、覆盖了
+// GetDefs 的下游不能用」的静默分叉。
+func TestDomainComesFromRenderDataNotDefs(t *testing.T) {
+	renderData := map[string]interface{}{
+		"events": []*AlertCurEvent{{RuleName: "r1", TagsMap: map[string]string{"env": "prod"}}},
+		"domain": "http://site",
+	}
+
+	render := func(t *testing.T, body string, data map[string]interface{}) string {
+		t.Helper()
+		full := strings.Join(append(getDefs(data), body), "")
+		tpl, err := texttemplate.New("k").Funcs(tplx.TemplateFuncMap).Parse(full)
+		if err != nil {
+			t.Fatalf("parse error: %v", err)
+		}
+		var buf bytes.Buffer
+		if err := tpl.Execute(&buf, data); err != nil {
+			t.Fatalf("execute error: %v", err)
+		}
+		return buf.String()
+	}
+
+	t.Run("模板可直接引用 $.domain", func(t *testing.T) {
+		if got := render(t, "{{$.domain}}/alert-his-events/{{$event.Id}}", renderData); got != "http://site/alert-his-events/0" {
+			t.Fatalf("got %q", got)
+		}
+	})
+
+	// 对外只推荐 $.domain 而不是 .domain，正是因为后者在 range/with 里的 dot 已被改写。
+	// 字段面板里的表达式是「点一下就复制粘贴到任意位置」的，必须在任意位置都成立。
+	t.Run("range 内部 $.domain 仍然成立", func(t *testing.T) {
+		body := "{{range $k, $v := $event.TagsMap}}[{{$.domain}}]{{end}}"
+		if got := render(t, body, renderData); got != "[http://site]" {
+			t.Fatalf("got %q", got)
+		}
+	})
+
+	// getDefs 不得声明 $domain：内置模板（notify_tpl.go 与 plus 的 modelx）都是
+	// 先 {{$domain := "..."}} 自己声明再用，一旦这里也声明，能不能用就取决于
+	// GetDefs 有没有被覆盖，而覆盖方是照抄一份、不会跟着同步。
+	t.Run("getDefs 不声明 $domain", func(t *testing.T) {
+		for _, def := range getDefs(renderData) {
+			if strings.Contains(def, "$domain") {
+				t.Fatalf("getDefs 声明了 $domain: %s\n"+
+					"这会制造静默分叉：GetDefs 是可被下游覆盖的函数变量，覆盖方（如 n9e-plus 的 "+
+					"modelx.GetDefs）是照抄一份而非在基线上追加，不会跟着同步。结果是同一份模板"+
+					"在开源版能解析、在覆盖了 GetDefs 的部署里 Parse 报 undefined variable，"+
+					"而 RenderEvent 把解析错误当正文发给第三方。\n"+
+					"站点地址请用渲染数据里的 {{$.domain}}（不经过 defs，两边天然一致）；"+
+					"确需新增模板变量时，请先让下游改成在基线上追加。", def)
+			}
+		}
+	})
+
+	// 自己声明 $domain 的存量模板不受影响
+	t.Run("模板内部自行声明 $domain 仍然可用", func(t *testing.T) {
+		if got := render(t, `{{$domain := "http://custom" }}{{$domain}}`, renderData); got != "http://custom" {
+			t.Fatalf("got %q", got)
+		}
+	})
+}
+
+// 渲染分支由 NotifyChannelIdent 决定，而不是由调用方碰巧传了什么。
+//
+// 「保存前测试媒介配置」是拿请求体里的模板源码现构造一个 MessageTemplate 去渲染的，
+// 一旦忘了带 ident 就会一律落到默认分支：测试邮件正文里的换行变成字面量 \n、引号变成 \"，
+// 而保存之后走生产链路（模板行带 notify_channel_ident）却是正常的——同一份模板两种结果，
+// 用户只会以为自己模板写错了。
+func TestRenderEventBranchDependsOnNotifyChannelIdent(t *testing.T) {
+	events := []*AlertCurEvent{{RuleName: "r1", TagsMap: map[string]string{}}}
+	// 正文里同时有换行和引号：默认分支会把它们转义掉，email 分支必须原样保留
+	content := map[string]string{"content": "line1\nsay \"hi\""}
+
+	t.Run("email 走 text/template 且不转义", func(t *testing.T) {
+		got := (&MessageTemplate{Content: content, NotifyChannelIdent: "email"}).RenderEvent(events, "http://site")
+		if want := "line1\nsay \"hi\""; fmt.Sprint(got["content"]) != want {
+			t.Fatalf("got %q, want %q", fmt.Sprint(got["content"]), want)
+		}
+	})
+
+	// 这一条正是漏传 ident 时会发生的事，留在这里说明「默认分支不是无害兜底」
+	t.Run("ident 为空落到默认分支，换行与引号被转义", func(t *testing.T) {
+		got := (&MessageTemplate{Content: content}).RenderEvent(events, "http://site")
+		if want := `line1\nsay \"hi\"`; fmt.Sprint(got["content"]) != want {
+			t.Fatalf("got %q, want %q", fmt.Sprint(got["content"]), want)
+		}
+	})
+
+	t.Run("slack 分支把 &lt; 还原成 <", func(t *testing.T) {
+		slack := map[string]string{"content": "<http://x|link>"}
+		got := (&MessageTemplate{Content: slack, NotifyChannelIdent: "slackwebhook"}).RenderEvent(events, "http://site")
+		if s := fmt.Sprint(got["content"]); !strings.Contains(s, "<http://x|link>") {
+			t.Fatalf("got %q", s)
+		}
+	})
+}
+
+// RenderEvent 把模板错误当正文返回（生产链路的既有行为，不改），
+// RenderEventStrict 必须往外抛——否则「保存前测试」会在模板写错时报成功，
+// 而第三方收到的是一段 "failed to parse template: ..."。
+func TestRenderEventStrictReportsTemplateErrors(t *testing.T) {
+	events := []*AlertCurEvent{{RuleName: "r1", TagsMap: map[string]string{}}}
+	broken := map[string]string{"content": "{{$nope}}"}
+
+	t.Run("RenderEvent 把错误当正文返回", func(t *testing.T) {
+		got := (&MessageTemplate{Content: broken}).RenderEvent(events, "http://site")
+		if s := fmt.Sprint(got["content"]); !strings.Contains(s, "failed to parse template") {
+			t.Fatalf("既有吞错行为被改变了，got %q", s)
+		}
+	})
+
+	t.Run("RenderEventStrict 返回 error 且带字段名", func(t *testing.T) {
+		got, err := (&MessageTemplate{Content: broken}).RenderEventStrict(events, "http://site")
+		if err == nil {
+			t.Fatalf("expected error, got content %v", got)
+		}
+		if got != nil {
+			t.Fatalf("出错时不应返回半成品内容: %v", got)
+		}
+		if !strings.Contains(err.Error(), `"content"`) || !strings.Contains(err.Error(), "undefined variable") {
+			t.Fatalf("错误信息要能定位到字段与原因，got %q", err.Error())
+		}
+	})
+
+	// 执行期错误（Parse 过得去、Execute 挂）同样要报
+	t.Run("执行期错误也报", func(t *testing.T) {
+		bad := map[string]string{"content": "{{index $events 5}}"}
+		if _, err := (&MessageTemplate{Content: bad}).RenderEventStrict(events, "http://site"); err == nil {
+			t.Fatal("expected execute error")
+		}
+	})
+
+	t.Run("模板全部正确时与 RenderEvent 结果一致", func(t *testing.T) {
+		ok := map[string]string{"title": "{{$event.RuleName}}", "content": "{{$.domain}}"}
+		strict, err := (&MessageTemplate{Content: ok}).RenderEventStrict(events, "http://site")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		loose := (&MessageTemplate{Content: ok}).RenderEvent(events, "http://site")
+		if fmt.Sprint(strict) != fmt.Sprint(loose) {
+			t.Fatalf("strict=%v loose=%v", strict, loose)
+		}
+	})
+
+	// slack 分支历来是把出错字段整个丢掉而不是写入错误文本，重构不能改掉这个差异
+	t.Run("slack 分支出错时仍然丢字段", func(t *testing.T) {
+		got := (&MessageTemplate{Content: broken, NotifyChannelIdent: "slackbot"}).RenderEvent(events, "http://site")
+		if _, ok := got["content"]; ok {
+			t.Fatalf("slack 分支应丢掉出错字段，got %v", got)
+		}
+	})
+}
+
+// 中文内置模板同样要能在加上 getDefs 之后解析（英文版由 TestNewTplMapEnParse 覆盖）
+func TestNewTplMapParse(t *testing.T) {
+	for key, text := range NewTplMap {
+		full := strings.Join(append(getDefs(nil), text), "")
+		if _, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(full); err != nil {
+			t.Errorf("built-in template %s parse error: %v", key, err)
 		}
 	}
 }
