@@ -104,14 +104,21 @@ func (s *SsoClient) Reload(cf Config) error {
 	// 用完就 cancel 的 ctx 会让登录回调和 token 校验直接报 context canceled
 	client := &http.Client{Timeout: idpTimeout}
 	if cf.SkipTlsVerify {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
+		// 从 DefaultTransport 克隆而不是新建一个零值 Transport：零值没有 IdleConnTimeout，
+		// IdP 长期返回错误时，每个 reload 周期一次的重试会把空闲连接一直攒下去
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		client.Transport = transport
 	}
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, client)
 
 	provider, err := oidc.NewProvider(ctx, cf.SsoAddr)
 	if err != nil {
+		// 这次创建的连接不会再有人用，重试很频繁，别留着占 fd
+		if transport, ok := client.Transport.(*http.Transport); ok {
+			transport.CloseIdleConnections()
+		}
+
 		s.Lock()
 		s.Enable = false
 		s.Unlock()

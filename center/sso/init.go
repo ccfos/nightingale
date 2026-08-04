@@ -55,6 +55,9 @@ func (s *SsoClient) ReloadOIDC(ctx *ctx.Context) error {
 
 	config, found, err := s.latestOIDCConfig(ctx)
 	if err != nil {
+		// 读库失败也要置位重试标记：调用方随后照样会推进更新时间水位，不置位的话这次
+		// 配置变更（可能正是「关闭 OIDC」或换掉不再受信的 IdP）就再也不会被应用
+		s.oidcNotReady = true
 		return err
 	}
 

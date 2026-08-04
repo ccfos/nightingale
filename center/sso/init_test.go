@@ -138,6 +138,47 @@ func TestReloadOIDCMarksRetryWhenIdPUnreachable(t *testing.T) {
 	}
 }
 
+// 定期 reload 已经成功读过一次配置，ReloadOIDC 内部的第二次读库若失败，必须置位重试
+// 标记：调用方随后照样推进更新时间水位，不置位的话下个周期会直接跳过，这次配置变更
+// （这里是「关闭 OIDC」）就永远不会生效
+func TestReloadOIDCRetriesWhenConfigQueryFails(t *testing.T) {
+	s, c := newTestSsoClient(t)
+	issuer := newTestIdP(t)
+
+	saveOIDCConfig(t, c, oidcTOML(true, issuer))
+	if err := s.ReloadOIDC(c); err != nil {
+		t.Fatalf("reload enabled oidc: %v", err)
+	}
+	if !s.OIDC.Ready() {
+		t.Fatal("oidc should be ready after loading a reachable idp")
+	}
+
+	if err := models.DB(c).Exec("DROP TABLE sso_config").Error; err != nil {
+		t.Fatalf("drop sso_config: %v", err)
+	}
+	if err := s.ReloadOIDC(c); err == nil {
+		t.Fatal("expected an error when reading the config fails")
+	}
+	if !s.oidcNeedsRetry() {
+		t.Error("a failed config read must keep the periodic reload retrying")
+	}
+
+	// 库恢复后（且此时的配置是「关闭 OIDC」），下一轮重试必须把它应用上
+	if err := models.DB(c).AutoMigrate(&models.SsoConfig{}); err != nil {
+		t.Fatalf("recreate sso_config: %v", err)
+	}
+	saveOIDCConfig(t, c, oidcTOML(false, issuer))
+	if err := s.ReloadOIDC(c); err != nil {
+		t.Fatalf("reload after the database recovered: %v", err)
+	}
+	if s.OIDC.Ready() {
+		t.Error("oidc should be disabled once the pending config change is finally applied")
+	}
+	if s.oidcNeedsRetry() {
+		t.Error("retry flag should be cleared once the reload succeeded")
+	}
+}
+
 // 库里没有 OIDC 记录时不该报错，也不该一直空转重试
 func TestReloadOIDCWithoutConfig(t *testing.T) {
 	s, c := newTestSsoClient(t)
