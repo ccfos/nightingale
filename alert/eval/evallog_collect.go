@@ -10,9 +10,9 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// evalLogSamplesFromValue 将 prom 查询结果转为 evallog 采样，按 SeriesCap 提前截断避免大结果集的无谓分配。
+// EvalLogSamplesFromValue 将 prom 查询结果转为 evallog 采样，按 SeriesCap 提前截断避免大结果集的无谓分配。
 // 返回 (采样, 真实总数)。
-func evalLogSamplesFromValue(value model.Value) ([]evallog.SeriesSample, int) {
+func EvalLogSamplesFromValue(value model.Value) ([]evallog.SeriesSample, int) {
 	cap := evallog.SeriesCap()
 	if cap <= 0 || value == nil {
 		return nil, 0
@@ -53,8 +53,8 @@ func evalLogSamplesFromValue(value model.Value) ([]evallog.SeriesSample, int) {
 	return samples, total
 }
 
-// evalLogSamplesFromDataResps 将非 prom 数据源查询结果转为 evallog 采样。
-func evalLogSamplesFromDataResps(series []models.DataResp) ([]evallog.SeriesSample, int) {
+// EvalLogSamplesFromDataResps 将非 prom 数据源查询结果转为 evallog 采样。
+func EvalLogSamplesFromDataResps(series []models.DataResp) ([]evallog.SeriesSample, int) {
 	cap := evallog.SeriesCap()
 	if cap <= 0 {
 		return nil, 0
@@ -76,8 +76,8 @@ func evalLogSamplesFromDataResps(series []models.DataResp) ([]evallog.SeriesSamp
 	return samples, len(series)
 }
 
-// evalLogSamplesFromPoints 将异常点转为 evallog 采样（变量填充查询的聚合现场）。
-func evalLogSamplesFromPoints(points []models.AnomalyPoint) ([]evallog.SeriesSample, int) {
+// EvalLogSamplesFromPoints 将异常点转为 evallog 采样（变量填充查询的聚合现场）。
+func EvalLogSamplesFromPoints(points []models.AnomalyPoint) ([]evallog.SeriesSample, int) {
 	cap := evallog.SeriesCap()
 	if cap <= 0 {
 		return nil, 0
@@ -93,8 +93,8 @@ func evalLogSamplesFromPoints(points []models.AnomalyPoint) ([]evallog.SeriesSam
 	return samples, len(points)
 }
 
-// evalLogAnomalies 将本周期判定结果写入记录。
-func evalLogAnomalies(rec *evallog.EvalRecord, points []models.AnomalyPoint, recover bool) {
+// EvalLogAnomalies 将本周期判定结果写入记录。
+func EvalLogAnomalies(rec *evallog.EvalRecord, points []models.AnomalyPoint, recover bool) {
 	if rec == nil {
 		return
 	}
@@ -109,8 +109,8 @@ func evalLogAnomalies(rec *evallog.EvalRecord, points []models.AnomalyPoint, rec
 	}
 }
 
-// evalLogQueryString 将非 prom 数据源的查询对象序列化为字符串。
-func evalLogQueryString(query interface{}) string {
+// EvalLogQueryString 将非 prom 数据源的查询对象序列化为字符串。
+func EvalLogQueryString(query interface{}) string {
 	b, err := json.Marshal(query)
 	if err != nil {
 		return fmt.Sprintf("%+v", query)

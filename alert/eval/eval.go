@@ -166,6 +166,12 @@ func (arw *AlertRuleWorker) Eval() {
 	defer func() {
 		rec.Finish(time.Since(begin).Milliseconds())
 		evallog.Push(rec)
+		// 记录已交给异步写入协程，本周期之外（如外部事件推送路径）再往里追加轨迹，
+		// 既写不进已落盘的记录，又与序列化构成竞态，因此这里断开引用
+		arw.EvalRec = nil
+		if arw.Processor != nil {
+			arw.Processor.EvalRec = nil
+		}
 		if len(message) == 0 {
 			logger.Infof("alert_eval_%d datasource_%d finished, duration:%v", arw.Rule.Id, arw.DatasourceId, time.Since(begin))
 		} else {
@@ -214,8 +220,8 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 
-	evalLogAnomalies(rec, anomalyPoints, false)
-	evalLogAnomalies(rec, recoverPoints, true)
+	EvalLogAnomalies(rec, anomalyPoints, false)
+	EvalLogAnomalies(rec, recoverPoints, true)
 
 	// 恢复不做抑制合并：每个 recover point 各自独立恢复。
 	// RecoverSingle 内部以 p.fires 是否存在为闸门，从未 fire 的档位自动 no-op，
@@ -307,7 +313,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 
 			if arw.EvalRec != nil {
 				// 变量填充会展开成 N 个子查询，记录聚合现场：原始 promql + 命中的异常点采样
-				samples, total := evalLogSamplesFromPoints(anomalyPoints)
+				samples, total := EvalLogSamplesFromPoints(anomalyPoints)
 				arw.EvalRec.AddQuery(evallog.QueryRecord{
 					Ref:         fmt.Sprintf("%d", i),
 					Query:       query.PromQl,
@@ -365,7 +371,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 			}
 
 			if arw.EvalRec != nil {
-				samples, total := evalLogSamplesFromValue(value)
+				samples, total := EvalLogSamplesFromValue(value)
 				arw.EvalRec.AddQuery(evallog.QueryRecord{
 					Ref:         fmt.Sprintf("%d", i),
 					Query:       promql,
@@ -1596,7 +1602,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					ref, _ := GetQueryRef(query)
 					arw.EvalRec.AddQuery(evallog.QueryRecord{
 						Ref:        ref,
-						Query:      evalLogQueryString(query),
+						Query:      EvalLogQueryString(query),
 						DurationMs: time.Since(queryStart).Milliseconds(),
 						Error:      err.Error(),
 					})
@@ -1613,10 +1619,10 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 
 			if arw.EvalRec != nil {
 				ref, _ := GetQueryRef(query)
-				samples, total := evalLogSamplesFromDataResps(series)
+				samples, total := EvalLogSamplesFromDataResps(series)
 				arw.EvalRec.AddQuery(evallog.QueryRecord{
 					Ref:         ref,
-					Query:       evalLogQueryString(query),
+					Query:       EvalLogQueryString(query),
 					DurationMs:  time.Since(queryStart).Milliseconds(),
 					SeriesTotal: total,
 					Series:      samples,
