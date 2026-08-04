@@ -236,6 +236,61 @@ func TestSlowReloadDoesNotOverwriteNewerConfig(t *testing.T) {
 	}
 }
 
+// 登出地址必须把 id_token 带给 IdP，否则 IdP 不会结束会话，用户点了退出只是回到夜莺登录页
+func TestSsoLogoutAddrCarriesIdToken(t *testing.T) {
+	s := &SsoClient{}
+
+	cases := []struct {
+		name       string
+		logoutAddr string
+		idToken    string
+		want       string
+	}{
+		{
+			name:       "配置写了模板变量就按模板替换",
+			logoutAddr: "https://idp.example.com/logout?id_token_hint={{$__id_token__}}",
+			idToken:    "tok",
+			want:       "https://idp.example.com/logout?id_token_hint=tok",
+		},
+		{
+			name:       "没写模板变量时补上 id_token_hint",
+			logoutAddr: "http://127.0.0.1:19001/logout",
+			idToken:    "tok",
+			want:       "http://127.0.0.1:19001/logout?id_token_hint=tok",
+		},
+		{
+			name:       "已有的查询参数要保留",
+			logoutAddr: "http://127.0.0.1:19001/logout?post_logout_redirect_uri=http%3A%2F%2Fn9e.com%2Flogin",
+			idToken:    "tok",
+			want:       "http://127.0.0.1:19001/logout?id_token_hint=tok&post_logout_redirect_uri=http%3A%2F%2Fn9e.com%2Flogin",
+		},
+		{
+			name:       "已经带了 id_token_hint 就不动",
+			logoutAddr: "http://127.0.0.1:19001/logout?id_token_hint=other",
+			idToken:    "tok",
+			want:       "http://127.0.0.1:19001/logout?id_token_hint=other",
+		},
+		{
+			name:       "拿不到 id_token 时保持原样",
+			logoutAddr: "http://127.0.0.1:19001/logout",
+			want:       "http://127.0.0.1:19001/logout",
+		},
+		{
+			name:    "没配登出地址就不要拼出一个相对地址",
+			idToken: "tok",
+			want:    "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := s.replaceIdTokenTemplate(tc.logoutAddr, tc.idToken); got != tc.want {
+				t.Errorf("logout addr = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestNewDisabled(t *testing.T) {
 	s, err := New(Config{Enable: false, SsoAddr: deadIdPAddr(t)})
 	if err != nil {

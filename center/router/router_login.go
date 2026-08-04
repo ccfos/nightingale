@@ -238,6 +238,9 @@ func (rt *Router) refreshPost(c *gin.Context) {
 	}
 }
 
+// oidcNotReadyMsg 是 OIDC 尚未与 IdP 对接成功时给用户的统一提示
+const oidcNotReadyMsg = "oidc is not ready, please check the oidc config and the idp status"
+
 func (rt *Router) loginRedirect(c *gin.Context) {
 	redirect := ginx.QueryStr(c, "redirect", "/")
 
@@ -256,9 +259,10 @@ func (rt *Router) loginRedirect(c *gin.Context) {
 		}
 	}
 
+	// 与 callback 保持一致：返回可读原因而不是空跳转地址，否则登录页只能提示「没拿到地址」，
+	// 用户无从知道是 OIDC 没配好还是 IdP 连不上
 	if !rt.Sso.OIDC.Ready() {
-		ginx.NewRender(c).Data("", nil)
-		return
+		ginx.Bomb(200, oidcNotReadyMsg)
 	}
 
 	redirect, err := rt.Sso.OIDC.Authorize(rt.Redis, redirect)
@@ -280,7 +284,7 @@ func (rt *Router) loginCallback(c *gin.Context) {
 	state := ginx.QueryStr(c, "state", "")
 
 	if !rt.Sso.OIDC.Ready() {
-		ginx.Bomb(200, "oidc is not ready, please check the oidc config and the idp status")
+		ginx.Bomb(200, oidcNotReadyMsg)
 	}
 
 	ret, err := rt.Sso.OIDC.Callback(rt.Redis, rctx, code, state)

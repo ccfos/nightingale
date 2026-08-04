@@ -64,8 +64,11 @@ func (s *SsoClient) ReloadOIDC(ctx *ctx.Context) error {
 	}
 
 	if !found {
-		// 配置里已经没有 OIDC，不必再重试
-		s.oidcNotReady = false
+		// 配置源里已经没有 OIDC，撤销信任：留着旧的 Enable/Provider 会让登录和 token 校验
+		// 继续认一个已经被删掉的 IdP。保持重试是因为记录可能被重新写回，而恢复备份往往
+		// 沿用原来的 update_at，秒级水位认不出这种变化
+		s.OIDC.Reload(oidcx.Config{Enable: false})
+		s.oidcNotReady = true
 		return nil
 	}
 

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +23,8 @@ const (
 	idpTimeout = 10 * time.Second
 	// idleConnTimeout 与 http.DefaultTransport 保持一致，仅在拿不到默认 Transport 时兜底
 	idleConnTimeout = 90 * time.Second
+	// idTokenTemplate 是登出地址里可选的 id_token 占位符
+	idTokenTemplate = "{{$__id_token__}}"
 )
 
 type SsoClient struct {
@@ -225,12 +228,32 @@ func (s *SsoClient) GetSsoLogoutAddr(idToken string) string {
 	return s.replaceIdTokenTemplate(s.SsoLogoutAddr, idToken)
 }
 
-// replaceIdTokenTemplate 替换登出 URL 中的 {{$__id_token__}} 模板变量
+// replaceIdTokenTemplate 把 id_token 填进登出 URL：配置里写了 {{$__id_token__}} 就按模板替换，
+// 没写则补一个 id_token_hint 查询参数（OIDC RP-Initiated Logout 的标准参数）。少了它 IdP 多半
+// 不会真正结束会话，用户看到的就是「点了退出又回到登录页」，而 IdP 侧仍处于登录态。
 func (s *SsoClient) replaceIdTokenTemplate(logoutAddr, idToken string) string {
-	if idToken == "" {
+	if idToken == "" || logoutAddr == "" {
 		return logoutAddr
 	}
-	return strings.ReplaceAll(logoutAddr, "{{$__id_token__}}", idToken)
+
+	if strings.Contains(logoutAddr, idTokenTemplate) {
+		return strings.ReplaceAll(logoutAddr, idTokenTemplate, idToken)
+	}
+
+	u, err := url.Parse(logoutAddr)
+	if err != nil {
+		logger.Warningf("oidc: parse sso logout addr %q failed: %v", logoutAddr, err)
+		return logoutAddr
+	}
+
+	query := u.Query()
+	if query.Get("id_token_hint") != "" {
+		return logoutAddr
+	}
+
+	query.Set("id_token_hint", idToken)
+	u.RawQuery = query.Encode()
+	return u.String()
 }
 
 func wrapStateKey(key string) string {

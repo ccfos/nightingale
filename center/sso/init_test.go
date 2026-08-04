@@ -238,15 +238,60 @@ func TestOIDCRetryDoesNotStarveLdapTicker(t *testing.T) {
 	}
 }
 
-// 库里没有 OIDC 记录时不该报错，也不该一直空转重试
+// 库里没有 OIDC 记录时不该报错；客户端保持未就绪，并继续轮询等记录出现
 func TestReloadOIDCWithoutConfig(t *testing.T) {
 	s, c := newTestSsoClient(t)
 
-	s.oidcNotReady = true
 	if err := s.ReloadOIDC(c); err != nil {
 		t.Fatalf("reload without an oidc config: %v", err)
 	}
+	if s.OIDC.Ready() {
+		t.Error("oidc must not be ready without a config")
+	}
+	if !s.oidcNeedsRetry() {
+		t.Error("a missing oidc config should keep being polled so a restored record is picked up")
+	}
+}
+
+// 记录被运维操作或迁移删掉后，必须收回对旧 IdP 的信任；记录再写回时（恢复备份常常沿用
+// 原来的 update_at，秒级水位认不出变化）还要能自动补齐
+func TestReloadOIDCRevokesTrustWhenConfigDeleted(t *testing.T) {
+	s, c := newTestSsoClient(t)
+	issuer := newTestIdP(t)
+
+	saveOIDCConfig(t, c, oidcTOML(true, issuer))
+	if err := s.ReloadOIDC(c); err != nil {
+		t.Fatalf("reload enabled oidc: %v", err)
+	}
+	if !s.OIDC.Ready() {
+		t.Fatal("oidc should be ready after loading a reachable idp")
+	}
+
+	if err := models.DB(c).Where("name = ?", "OIDC").Delete(&models.SsoConfig{}).Error; err != nil {
+		t.Fatalf("delete sso config: %v", err)
+	}
+	if err := s.ReloadOIDC(c); err != nil {
+		t.Fatalf("reload after the config was deleted: %v", err)
+	}
+	if s.OIDC.Ready() {
+		t.Error("oidc must stop trusting an idp whose config was removed")
+	}
+	if !s.oidcNeedsRetry() {
+		t.Error("a missing oidc config should keep being polled")
+	}
+
+	// 记录被恢复回来，且 update_at 沿用旧值
+	restored := models.SsoConfig{Name: "OIDC", Content: oidcTOML(true, issuer), UpdateAt: 1}
+	if err := restored.Create(c); err != nil {
+		t.Fatalf("restore sso config: %v", err)
+	}
+	if err := s.ReloadOIDC(c); err != nil {
+		t.Fatalf("reload after the config was restored: %v", err)
+	}
+	if !s.OIDC.Ready() {
+		t.Error("oidc should recover once the config record is back")
+	}
 	if s.oidcNeedsRetry() {
-		t.Error("retry flag should be cleared when there is no oidc config at all")
+		t.Error("retry flag should be cleared once the reload succeeded")
 	}
 }
