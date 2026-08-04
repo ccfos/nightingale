@@ -11,7 +11,9 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-const cleanInterval = time.Hour
+// cleanInterval 清理周期。不能拉长到小时级：MaxDiskGB 的兜底判定只在每轮清理时发生，
+// 间隔多长，目录就能超出预算多久。
+const cleanInterval = 10 * time.Minute
 
 // ruleDirPattern / hourFilePattern 限定清理的删除面。
 //
@@ -22,6 +24,28 @@ var (
 	ruleDirPattern  = regexp.MustCompile(`^\d+_\d+$`)
 	hourFilePattern = regexp.MustCompile(`^\d{2}\.jsonl(\.gz)?$`)
 )
+
+// ownHourFile 判定 path 是否是本包写出的小时文件，是则返回它所属的整点时刻。
+//
+// 凡是会删除或改写文件的入口都必须先过这道校验，不只是 cleaner：writer 启动时的
+// sweepLeftovers 同样会把命中的文件压成 .gz 并删除原文件（compressFile 末尾的
+// os.Remove），Dir 误配成已有目录时波及面和不加校验的清理完全一样。
+func ownHourFile(root, path string) (time.Time, bool) {
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return time.Time{}, false
+	}
+	parts := strings.Split(filepath.ToSlash(rel), "/")
+	if len(parts) != 3 || !ruleDirPattern.MatchString(parts[0]) || !hourFilePattern.MatchString(parts[2]) {
+		return time.Time{}, false
+	}
+	name := strings.TrimSuffix(strings.TrimSuffix(parts[2], ".gz"), ".jsonl")
+	h, err := time.ParseInLocation(dateLayout+" "+hourLayout, parts[1]+" "+name, time.Local)
+	if err != nil {
+		return time.Time{}, false
+	}
+	return h, true
+}
 
 // cleanLoop 周期清理：按 RetentionHours 删过期数据（天目录/小时文件粒度），
 // 再按 MaxDiskGB 兜底从最旧小时删起。
@@ -56,10 +80,10 @@ func cleanOnce(cfg Config) {
 		return
 	}
 
+	// files 是可删候选，total 是目录实际占用——两者口径**不同**：当前整点的文件计入
+	// total 但不进 files（见下方循环内注释）。
 	var files []hourFile
 	var total int64
-	// 当前整点的文件仍被 writer 持有句柄并追加，不能进入总量兜底的候选：
-	// 删掉它既不会立刻释放空间（fd 还持有 inode），又会让这一小时的记录对查询端消失
 	currentHour := truncHour(time.Now())
 
 	for _, rd := range ruleDirs {
@@ -110,15 +134,20 @@ func cleanOnce(cfg Config) {
 					}
 					continue
 				}
-				if !h.Before(currentHour) {
-					continue // 当前（及未来）小时的文件不参与总量兜底删除
-				}
 				info, err := hf.Info()
 				if err != nil {
 					continue
 				}
-				files = append(files, hourFile{path: path, hour: h, size: info.Size()})
+				// total 必须包含当前小时：写入几乎全部集中在当前小时，把它排除在统计外会让
+				// 预算判定系统性低估目录实际占用——pruneToBudget 的 `total <= budget` 可能
+				// 在磁盘早已超过 MaxDiskGB 时仍然直接返回、一个旧文件都不删。
 				total += info.Size()
+				if !h.Before(currentHour) {
+					// 但当前（及未来）小时的文件不进删除候选：句柄还被 writer 持有，
+					// 删了既不立刻释放空间，又会让这一小时的记录对查询端消失
+					continue
+				}
+				files = append(files, hourFile{path: path, hour: h, size: info.Size()})
 			}
 		}
 	}
@@ -143,6 +172,13 @@ func pruneToBudget(files []hourFile, total, budget int64) {
 			continue
 		}
 		total -= f.size
+	}
+	if total > budget {
+		// 候选删光仍超预算：剩下的都是当前小时（句柄未释放，不能删）。
+		// 这条日志是 MaxDiskGB 已经压不住写入速率的信号，不能和正常清理混为一谈。
+		logger.Warningf("evallog clean: still %d bytes after pruning all closed hour files, budget %d; "+
+			"lower PerRuleDailyMB / MaxSeriesPerQuery or raise MaxDiskGB", total, budget)
+		return
 	}
 	logger.Infof("evallog clean: disk budget exceeded, pruned to %d bytes", total)
 }

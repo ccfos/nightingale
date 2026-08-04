@@ -38,16 +38,19 @@ type Writer struct {
 	closing  sync.Once
 	dropHook func()
 
-	appenders map[string]*appender  // key: {rule_id}_{ds_id}
+	appenders map[string]*appender   // key: {rule_id}_{ds_id}
 	budgets   map[string]*ruleBudget // key 同上；生命周期独立于 appender
 
-	// gzMu 同时保护 gzClosed 与「向 gzCh 投递」：投递方除消费 goroutine 外还有启动时的
-	// sweepLeftovers，若不互斥，Close 关闭 gzCh 后的残余投递会 panic（向已关闭 channel
-	// 发送），gzWg.Add 与 gzWg.Wait 并发也会 panic。
+	// gzMu 同时保护 gzClosed、gzInflight 与「向 gzCh 投递」：投递方除消费 goroutine 外
+	// 还有启动时的 sweepLeftovers，若不互斥，Close 关闭 gzCh 后的残余投递会 panic
+	//（向已关闭 channel 发送），gzWg.Add 与 gzWg.Wait 并发也会 panic。
 	gzMu     sync.Mutex
 	gzClosed bool
 	gzCh     chan string
 	gzWg     sync.WaitGroup
+	// gzInflight 记录已排队/正在压缩的路径 → 完成信号，供 getAppender 在重开同名文件前
+	// 等待，避免压缩任务的 os.Remove 删掉刚被重新打开的 inode（详见 waitGzDone）。
+	gzInflight map[string]chan struct{}
 }
 
 type appender struct {
@@ -79,13 +82,14 @@ func NewWriter(cfg Config, dropHook func()) (*Writer, error) {
 	}
 
 	w := &Writer{
-		cfg:       cfg,
-		ch:        make(chan *EvalRecord, cfg.QueueSize),
-		done:      make(chan struct{}),
-		dropHook:  dropHook,
-		appenders: make(map[string]*appender),
-		budgets:   make(map[string]*ruleBudget),
-		gzCh:      make(chan string, 1024),
+		cfg:        cfg,
+		ch:         make(chan *EvalRecord, cfg.QueueSize),
+		done:       make(chan struct{}),
+		dropHook:   dropHook,
+		appenders:  make(map[string]*appender),
+		budgets:    make(map[string]*ruleBudget),
+		gzCh:       make(chan string, 1024),
+		gzInflight: make(map[string]chan struct{}),
 	}
 
 	w.gzWg.Add(1)
@@ -245,7 +249,7 @@ func (w *Writer) marshalWithinLimit(r *EvalRecord) ([]byte, bool) {
 }
 
 // enforceLineCeiling 保证写出的行不超过读取端能扫描的长度，必要时逐步砍掉事件轨迹。
-// 超过该长度的行会让 readJsonlFile 的 bufio.Scanner 中止，该小时文件**从这一行起**的
+// 超过该长度的行会让 scanJsonlFile 的 bufio.Scanner 中止，该小时文件**从这一行起**的
 // 所有记录都读不到——损失远大于丢掉这一条，所以这里宁可丢。
 func (w *Writer) enforceLineCeiling(r *EvalRecord, line []byte) ([]byte, bool) {
 	for len(line) > maxRecordLineBytes && len(r.Events) > 0 {
@@ -314,6 +318,9 @@ func (w *Writer) getAppender(key string, r *EvalRecord) *appender {
 		return nil
 	}
 	path := filepath.Join(dir, t.Format(hourLayout)+".jsonl")
+	// 该路径可能正被异步 gzip 处理（迟到的跨整点记录）。必须等它压完再打开，
+	// 否则拿到的是马上会被 os.Remove 掉的 inode，之后的写入静默丢失。
+	w.waitGzDone(path)
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if os.IsNotExist(err) {
 		// 清理协程的 pruneEmptyDirs 可能刚好在 MkdirAll 与 OpenFile 之间把这个空目录删掉
@@ -404,10 +411,19 @@ func (w *Writer) enqueueGz(path string) {
 	if w.gzClosed {
 		return
 	}
+	if _, busy := w.gzInflight[path]; busy {
+		// 同一路径已在队列里，重复投递只会让 gzLoop 对着同一个文件白跑一次
+		return
+	}
+	done := make(chan struct{})
+	w.gzInflight[path] = done
 	w.gzWg.Add(1)
 	select {
 	case w.gzCh <- path:
 	default:
+		// 没能入队就必须立刻撤销登记并放行等待者，否则 waitGzDone 会永远阻塞消费 goroutine
+		delete(w.gzInflight, path)
+		close(done)
 		w.gzWg.Done()
 		logger.Warningf("evallog gzip queue full, skip compress %s", path)
 	}
@@ -419,13 +435,50 @@ func (w *Writer) gzLoop() {
 		if err := compressFile(path); err != nil && !os.IsNotExist(err) {
 			logger.Warningf("evallog compress %s error: %v", path, err)
 		}
+		w.finishGz(path)
 		w.gzWg.Done()
 	}
 }
 
+// finishGz 撤销登记并唤醒等待该路径的消费 goroutine。
+func (w *Writer) finishGz(path string) {
+	w.gzMu.Lock()
+	done := w.gzInflight[path]
+	delete(w.gzInflight, path)
+	w.gzMu.Unlock()
+	if done != nil {
+		close(done)
+	}
+}
+
+// waitGzDone 等待该路径上排队/进行中的压缩任务结束。
+//
+// compressFile 成功后会 os.Remove(path)。若在压缩进行中重新打开同名文件，新 appender
+// 持有的就是一个随即被 unlink 的 inode：后续写入不报错，却永远读不回来；该 appender
+// 下次滚动时 compressFile 又拿到 ENOENT 被 gzLoop 的 os.IsNotExist 分支吞掉，全程无日志。
+// 触发路径是跨整点的慢评估（Ts 取评估开始时刻、Push 在评估结束时执行）——整点后
+// housekeep 已 finalize 并投递压缩，迟到记录随后到达，getAppender 就会重建同名 .jsonl。
+//
+// 只有历史小时文件会被投递压缩，所以这里只在迟到记录这条冷路径上真正阻塞；
+// gzLoop 不会反向等待消费 goroutine，不存在环路。
+func (w *Writer) waitGzDone(path string) {
+	w.gzMu.Lock()
+	done, busy := w.gzInflight[path]
+	w.gzMu.Unlock()
+	if !busy {
+		return
+	}
+	<-done
+}
+
 // sweepLeftovers 启动时把历史遗留的非当前小时 .jsonl 压缩掉（上次进程退出/崩溃残留）。
+//
+// 只处理本包自己写出的 {rule_id}_{ds_id}/{date}/{hour}.jsonl：命中的文件会被压成 .gz
+// 并**删除原文件**（compressFile 末尾的 os.Remove），而 Dir 是运维可配项。只按 .jsonl
+// 后缀遍历整棵子树，Dir 一旦误配成某个已有目录，该目录下所有非当前小时的 .jsonl 都会
+// 被改写并删除——这正是 cleaner 用 ownHourFile 守住的那条线，写入侧同样不能少。
 func (w *Writer) sweepLeftovers() {
-	nowPathSuffix := filepath.Join(time.Now().Format(dateLayout), time.Now().Format(hourLayout)+".jsonl")
+	currentHour := truncHour(time.Now())
 	_ = filepath.Walk(w.cfg.Dir, func(path string, info os.FileInfo, err error) error {
 		if w.gzStopped() {
 			// Writer 已关闭（进程退出 / 重新 Init），继续遍历已无意义
@@ -437,8 +490,12 @@ func (w *Writer) sweepLeftovers() {
 		if !strings.HasSuffix(path, ".jsonl") {
 			return nil
 		}
-		if strings.HasSuffix(path, nowPathSuffix) {
-			return nil // 当前小时文件继续追加
+		h, ok := ownHourFile(w.cfg.Dir, path)
+		if !ok {
+			return nil
+		}
+		if !h.Before(currentHour) {
+			return nil // 当前（及未来）小时文件继续追加
 		}
 		w.enqueueGz(path)
 		return nil
@@ -494,7 +551,7 @@ func compressFile(path string) error {
 
 // appendCompressed 把 src 的内容压成一个新的 gzip 成员追加到已存在的 dst 末尾，
 // 成功后删除 src。追加中途失败时 dst 末尾会留下一个不完整成员，读取端
-// （readJsonlFile 对 scanner.Err 返回已解析部分）仍能拿到此前的全部记录，
+// （scanJsonlFile 遇到 scanner.Err 时保留已扫到的部分）仍能拿到此前的全部记录，
 // 比原先整份覆盖丢掉一小时数据要好得多。
 func appendCompressed(dst string, in io.Reader, src string) error {
 	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_APPEND, 0644)

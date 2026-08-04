@@ -396,13 +396,18 @@ func hourPath(cfg Config, ruleId int64, at time.Time) string {
 
 func waitGzip(t *testing.T, cfg Config, ruleId int64, at time.Time) {
 	t.Helper()
-	for i := 0; i < 100; i++ {
-		if _, err := os.Stat(hourPath(cfg, ruleId, at) + ".jsonl.gz"); err == nil {
+	waitFile(t, hourPath(cfg, ruleId, at)+".jsonl.gz")
+}
+
+func waitFile(t *testing.T, path string) {
+	t.Helper()
+	for i := 0; i < 200; i++ {
+		if _, err := os.Stat(path); err == nil {
 			return
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
-	t.Fatal("timeout waiting for gzip")
+	t.Fatalf("timeout waiting for %s", path)
 }
 
 // 回归：采样含 NaN/±Inf 时 json.Marshal 报错，整条记录（连同漏斗计数与事件轨迹）被丢弃。
@@ -568,6 +573,321 @@ func TestCleanerPathPatterns(t *testing.T) {
 		if hourFilePattern.MatchString(name) {
 			t.Fatalf("%q must not be treated as an hour file", name)
 		}
+	}
+}
+
+// 回归：writer 启动时的 sweepLeftovers 曾只按 .jsonl 后缀遍历整棵子树，
+// 命中的文件会被压成 .gz 并删除原文件，Dir 误配成已有目录时会毁掉第三方数据。
+func TestSweepLeftoversOnlyTouchesOwnLayout(t *testing.T) {
+	dir := t.TempDir()
+
+	// 非本包布局的 .jsonl：一层、两层、四层，以及规则目录名不合法的情况
+	foreign := []string{
+		filepath.Join(dir, "app.jsonl"),
+		filepath.Join(dir, "someone-elses-logs", "events.jsonl"),
+		filepath.Join(dir, "someone-elses-logs", "2020-01-02", "10.jsonl"),
+		filepath.Join(dir, "1_1", "2020-01-02", "nested", "10.jsonl"),
+		filepath.Join(dir, "1_1", "not-a-date", "10.jsonl"),
+	}
+	for _, p := range foreign {
+		if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte("keep me\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// 本包布局的历史小时文件：应当被压缩掉
+	past := time.Now().Add(-2 * time.Hour)
+	own := filepath.Join(dir, "3_1", past.Format(dateLayout), past.Format(hourLayout)+".jsonl")
+	if err := os.MkdirAll(filepath.Dir(own), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(own, []byte("{\"ts\":1}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := Config{Dir: dir}
+	cfg.normalize()
+	// 直接用 NewWriter 而不是 Init：Init 会同时拉起 cleanLoop，而按设计
+	// {rule_id}_{ds_id}/{date}/ 整棵目录归本包所有、过期即 RemoveAll，
+	// 会把放在那底下的对照文件一起删掉，混淆本测试要守的「sweep 不越界」。
+	w, err := NewWriter(cfg, nil)
+	if err != nil {
+		t.Fatalf("new writer: %v", err)
+	}
+	// sweepLeftovers 在自己的 goroutine 里跑，直接 Close 会因 gzClosed 让它提前中止；
+	// 先等它把本包的遗留文件压完，再关闭并检查第三方文件
+	waitFile(t, own+".gz")
+	w.Close()
+
+	for _, p := range foreign {
+		if _, err := os.Stat(p); err != nil {
+			t.Fatalf("foreign file must not be touched: %s: %v", p, err)
+		}
+		if _, err := os.Stat(p + ".gz"); !os.IsNotExist(err) {
+			t.Fatalf("foreign file must not be compressed: %s.gz exists", p)
+		}
+	}
+	if _, err := os.Stat(own + ".gz"); err != nil {
+		t.Fatalf("own leftover hour file should be compressed: %v", err)
+	}
+	if _, err := os.Stat(own); !os.IsNotExist(err) {
+		t.Fatal("own leftover plain file should be removed after compress")
+	}
+}
+
+func TestOwnHourFile(t *testing.T) {
+	root := "/var/lib/evallog"
+	if h, ok := ownHourFile(root, filepath.Join(root, "12_3", "2026-08-04", "07.jsonl")); !ok {
+		t.Fatal("valid layout should be recognized")
+	} else if h.Hour() != 7 || h.Day() != 4 {
+		t.Fatalf("unexpected hour: %v", h)
+	}
+	if _, ok := ownHourFile(root, filepath.Join(root, "12_3", "2026-08-04", "07.jsonl.gz")); !ok {
+		t.Fatal("gz variant should be recognized")
+	}
+	for _, p := range []string{
+		filepath.Join(root, "app.jsonl"),
+		filepath.Join(root, "logs", "2026-08-04", "07.jsonl"),
+		filepath.Join(root, "12_3", "2026-08-04", "sub", "07.jsonl"),
+		filepath.Join(root, "12_3", "not-a-date", "07.jsonl"),
+		filepath.Join(root, "12_3", "2026-08-04", "7.jsonl"),
+		filepath.Join(root, "12_3", "2026-08-04", "07.jsonl.gz.tmp"),
+	} {
+		if _, ok := ownHourFile(root, p); ok {
+			t.Fatalf("%q must not be treated as an own hour file", p)
+		}
+	}
+}
+
+// 回归：压缩进行中重开同名 .jsonl，会让新 appender 持有一个随即被 compressFile
+// os.Remove 掉的 inode，之后写入静默丢失。getAppender 现在先等压缩结束。
+func TestGetAppenderWaitsForInflightCompression(t *testing.T) {
+	cfg := Config{Dir: t.TempDir()}
+	cfg.normalize()
+	w, err := NewWriter(cfg, nil)
+	if err != nil {
+		t.Fatalf("new writer: %v", err)
+	}
+	defer w.Close()
+
+	path := filepath.Join(cfg.Dir, "1_1", "2026-08-04", "07.jsonl")
+
+	// 手工登记一个"压缩中"的路径，模拟 gzLoop 正在处理
+	done := make(chan struct{})
+	w.gzMu.Lock()
+	w.gzInflight[path] = done
+	w.gzMu.Unlock()
+
+	returned := make(chan struct{})
+	go func() {
+		w.waitGzDone(path)
+		close(returned)
+	}()
+
+	select {
+	case <-returned:
+		t.Fatal("waitGzDone must block while the path is being compressed")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	w.finishGz(path)
+	select {
+	case <-returned:
+	case <-time.After(2 * time.Second):
+		t.Fatal("waitGzDone must return once compression finishes")
+	}
+
+	// 未登记的路径不得阻塞
+	w.waitGzDone(filepath.Join(cfg.Dir, "9_9", "2026-08-04", "07.jsonl"))
+}
+
+// 回归：gzip 队列打满时 enqueueGz 会放弃压缩，此时若仍留着 inflight 登记，
+// getAppender 里的 waitGzDone 会永远阻塞消费 goroutine。
+func TestEnqueueGzReleasesWaiterWhenQueueFull(t *testing.T) {
+	cfg := Config{Dir: t.TempDir()}
+	cfg.normalize()
+	w := &Writer{
+		cfg:        cfg,
+		gzCh:       make(chan string), // 无缓冲且无人消费 → 必然走 default 分支
+		gzInflight: make(map[string]chan struct{}),
+	}
+
+	w.enqueueGz("/tmp/whatever/07.jsonl")
+
+	w.gzMu.Lock()
+	_, busy := w.gzInflight["/tmp/whatever/07.jsonl"]
+	w.gzMu.Unlock()
+	if busy {
+		t.Fatal("dropped compress task must not stay registered as inflight")
+	}
+
+	waited := make(chan struct{})
+	go func() {
+		w.waitGzDone("/tmp/whatever/07.jsonl")
+		close(waited)
+	}()
+	select {
+	case <-waited:
+	case <-time.After(2 * time.Second):
+		t.Fatal("waitGzDone must not block after the task was dropped")
+	}
+}
+
+// 回归：MaxDiskGB 兜底曾把当前小时文件排除在 total 之外，而写入几乎全部集中在当前小时，
+// 于是目录实际早已超预算时 pruneToBudget 仍可能一条都不删。
+func TestCleanerCountsCurrentHourInTotal(t *testing.T) {
+	cfg := Config{Dir: t.TempDir()}
+	cfg.normalize()
+	cfg.RetentionHours = 48
+	cfg.MaxDiskGB = 1 // budget = 1GB
+
+	now := time.Now()
+	// 用稀疏文件而不是真写字节：cleanOnce 只读 FileInfo.Size()（逻辑大小），
+	// 而这个用例要造出 GB 级的目录占用，真写会拖慢整个包的测试并可能撑爆临时盘
+	write := func(at time.Time, size int64) string {
+		dir := filepath.Join(cfg.Dir, "1_1", at.Format(dateLayout))
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			t.Fatal(err)
+		}
+		p := filepath.Join(dir, at.Format(hourLayout)+".jsonl.gz")
+		f, err := os.Create(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := f.Truncate(size); err != nil {
+			f.Close()
+			t.Fatal(err)
+		}
+		if err := f.Close(); err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+
+	// 旧文件 0.4GB + 当前小时 0.7GB = 1.1GB > 1GB 预算。
+	// 漏算当前小时时 total 只有 0.4GB，旧文件会被判定为"没超预算"而保留。
+	const gb int64 = 1024 * 1024 * 1024
+	oldFile := write(now.Add(-3*time.Hour), 4*gb/10)
+	curFile := write(now, 7*gb/10)
+
+	cleanOnce(cfg)
+
+	if _, err := os.Stat(oldFile); !os.IsNotExist(err) {
+		t.Fatal("expect the old hour file pruned once the current hour is counted in total")
+	}
+	if _, err := os.Stat(curFile); err != nil {
+		t.Fatalf("current hour file must never be pruned: %v", err)
+	}
+}
+
+// 回归：读取端曾把整个小时文件反序列化后才应用 limit。现在 limit 下推到扫描环节，
+// 但跨小时的倒序、翻页语义必须保持不变。
+func TestQueryLimitPushdownAcrossHours(t *testing.T) {
+	cfg := initForTest(t, nil)
+
+	now := time.Now()
+	// 三个小时各 5 条
+	for hoursAgo := 0; hoursAgo < 3; hoursAgo++ {
+		base := now.Add(-time.Duration(hoursAgo) * time.Hour)
+		for i := 0; i < 5; i++ {
+			Push(mkRecord(55, base.Add(time.Duration(i)*time.Second), 1))
+		}
+	}
+	Shutdown()
+
+	from := now.Add(-4 * time.Hour).UnixMilli()
+	to := now.Add(time.Hour).UnixMilli()
+
+	all, err := queryRecords(cfg, 55, 1, from, to, 0, 0)
+	if err != nil || len(all) != 15 {
+		t.Fatalf("expect 15 records: err=%v n=%d", err, len(all))
+	}
+	for i := 1; i < len(all); i++ {
+		if all[i].Ts > all[i-1].Ts {
+			t.Fatalf("records not desc at %d: %d > %d", i, all[i].Ts, all[i-1].Ts)
+		}
+	}
+
+	// limit 小于单个小时的条数：只能拿到最新小时里最新的 3 条
+	top3, err := queryRecords(cfg, 55, 1, from, to, 0, 3)
+	if err != nil || len(top3) != 3 {
+		t.Fatalf("expect 3 records: err=%v n=%d", err, len(top3))
+	}
+	for i := range top3 {
+		if top3[i].Ts != all[i].Ts {
+			t.Fatalf("limit must keep the newest records: got %d want %d", top3[i].Ts, all[i].Ts)
+		}
+	}
+
+	// limit 跨越小时边界：第 7 条落在第二个小时里
+	page, err := queryRecords(cfg, 55, 1, from, to, 0, 7)
+	if err != nil || len(page) != 7 {
+		t.Fatalf("expect 7 records: err=%v n=%d", err, len(page))
+	}
+	for i := range page {
+		if page[i].Ts != all[i].Ts {
+			t.Fatalf("cross-hour limit mismatch at %d: got %d want %d", i, page[i].Ts, all[i].Ts)
+		}
+	}
+
+	// 游标翻页仍从上一页末尾继续
+	next, err := queryRecords(cfg, 55, 1, from, to, page[6].Ts, 4)
+	if err != nil || len(next) != 4 {
+		t.Fatalf("expect 4 records: err=%v n=%d", err, len(next))
+	}
+	for i := range next {
+		if next[i].Ts != all[7+i].Ts {
+			t.Fatalf("cursor page mismatch at %d: got %d want %d", i, next[i].Ts, all[7+i].Ts)
+		}
+	}
+}
+
+func TestRecordRing(t *testing.T) {
+	r := newRecordRing(3)
+	for i := 1; i <= 5; i++ {
+		r.push(EvalRecord{Ts: int64(i)})
+	}
+	got := r.appendDesc(nil)
+	if len(got) != 3 {
+		t.Fatalf("expect 3 kept, got %d", len(got))
+	}
+	// 保留最后 3 条（3/4/5），倒序输出
+	for i, want := range []int64{5, 4, 3} {
+		if got[i].Ts != want {
+			t.Fatalf("at %d: got %d want %d", i, got[i].Ts, want)
+		}
+	}
+
+	// 未填满时同样按倒序输出
+	r2 := newRecordRing(10)
+	r2.push(EvalRecord{Ts: 1})
+	r2.push(EvalRecord{Ts: 2})
+	got2 := r2.appendDesc(nil)
+	if len(got2) != 2 || got2[0].Ts != 2 || got2[1].Ts != 1 {
+		t.Fatalf("unexpected: %+v", got2)
+	}
+
+	// 一条都没 push 过：惰性分配下底层数组还是 nil，不能在此处取模 panic
+	if got3 := newRecordRing(5).appendDesc(nil); len(got3) != 0 {
+		t.Fatalf("empty ring should yield nothing, got %+v", got3)
+	}
+
+	// 恰好填满、以及绕圈多轮后的顺序
+	r4 := newRecordRing(2)
+	for i := 1; i <= 2; i++ {
+		r4.push(EvalRecord{Ts: int64(i)})
+	}
+	if got := r4.appendDesc(nil); len(got) != 2 || got[0].Ts != 2 || got[1].Ts != 1 {
+		t.Fatalf("exactly-full ring wrong: %+v", got)
+	}
+	for i := 3; i <= 8; i++ {
+		r4.push(EvalRecord{Ts: int64(i)})
+	}
+	if got := r4.appendDesc(nil); len(got) != 2 || got[0].Ts != 8 || got[1].Ts != 7 {
+		t.Fatalf("wrapped ring wrong: %+v", got)
 	}
 }
 

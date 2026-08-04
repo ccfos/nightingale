@@ -94,6 +94,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	httpClean := httpx.Init(config.HTTP, r)
 
 	return func() {
+		// evallog 的写入队列与各文件的 64KB 缓冲只有 Shutdown 会排空，
+		// 不调用就等于每次正常退出都丢掉最近一批评估记录——而重启前后恰恰最需要现场。
+		// 必须排在 logxClean 之前，否则刷盘阶段的告警日志也一并丢了。
+		evallog.Shutdown()
 		logxClean()
 		httpClean()
 	}, nil

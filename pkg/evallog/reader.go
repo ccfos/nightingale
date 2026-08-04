@@ -86,49 +86,94 @@ func queryRecords(cfg Config, ruleId, datasourceId int64, fromMs, toMs, beforeMs
 	result := make([]EvalRecord, 0, 64)
 	// 从最新小时向旧遍历，攒够 limit 即止
 	for h := truncHour(msTime(upper)); !h.Before(truncHour(msTime(fromMs))); h = h.Add(-time.Hour) {
-		recs, err := readHourFile(ruleDir, h)
-		if err != nil {
+		remaining := limit - len(result)
+		if remaining <= 0 {
+			break
+		}
+		// 把剩余 limit 下推到扫描环节：每个小时只留该小时内最新的 remaining 条，
+		// 常驻内存由 limit 决定，而不是由小时文件大小决定
+		ring := newRecordRing(remaining)
+		if err := scanHourFile(ruleDir, h, fromMs, upper, ring); err != nil {
 			return nil, err
 		}
-		// 文件内按写入序（时间升序），倒序过滤
-		for i := len(recs) - 1; i >= 0; i-- {
-			if recs[i].Ts < fromMs || recs[i].Ts > upper {
-				continue
-			}
-			result = append(result, recs[i])
-			if len(result) >= limit {
-				return result, nil
-			}
-		}
+		result = ring.appendDesc(result)
 	}
 	return result, nil
 }
 
-// readHourFile 读取某小时的记录文件，优先未压缩文件（当前小时），其次 .gz。
-func readHourFile(ruleDir string, hour time.Time) ([]EvalRecord, error) {
-	base := filepath.Join(ruleDir, hour.Format(dateLayout), hour.Format(hourLayout))
-
-	if recs, err := readJsonlFile(base+".jsonl", false); err == nil {
-		// 滚动压缩与写入存在短暂共存窗口，两个都读并合并
-		if gzRecs, gzErr := readJsonlFile(base+".jsonl.gz", true); gzErr == nil {
-			return append(gzRecs, recs...), nil
-		}
-		return recs, nil
-	} else if !os.IsNotExist(err) {
-		return nil, err
-	}
-
-	recs, err := readJsonlFile(base+".jsonl.gz", true)
-	if os.IsNotExist(err) {
-		return nil, nil
-	}
-	return recs, err
+// tsProbe 只解出 ts 字段。区间外的行占绝大多数，对它们做整条反序列化纯属浪费。
+type tsProbe struct {
+	Ts int64 `json:"ts"`
 }
 
-func readJsonlFile(path string, gzipped bool) ([]EvalRecord, error) {
+// recordRing 定长环形缓冲，保留扫描过程中最后 cap 条命中记录。
+//
+// 小时文件内是时间升序，"最后 N 条"就是该小时里最新的 N 条，正是倒序结果需要的那段。
+// 之所以不能像原先那样先把整个文件读成切片再截取：单条记录硬上限接近 4MB、
+// PerRuleDailyMB 默认允许每规则每天写 1GB，单个小时文件可达数十 MB，解码成结构体后
+// 还要再放大几倍，一次合法查询就能在告警引擎上造成数百 MB 级堆分配。
+type recordRing struct {
+	buf   []EvalRecord
+	cap   int
+	start int // 最旧元素下标
+	size  int
+}
+
+// newRecordRing 惰性分配：一次查询最多要扫 RetentionHours 个小时，其中绝大多数小时
+// 根本没有文件，每轮都按 limit 预分配底层数组只是白白制造垃圾。
+func newRecordRing(capacity int) *recordRing {
+	if capacity < 1 {
+		capacity = 1
+	}
+	return &recordRing{cap: capacity}
+}
+
+func (r *recordRing) push(rec EvalRecord) {
+	if len(r.buf) < r.cap {
+		r.buf = append(r.buf, rec)
+		r.size = len(r.buf)
+		return
+	}
+	// 满了：覆盖最旧的一条并前移起点
+	r.buf[r.start] = rec
+	r.start = (r.start + 1) % len(r.buf)
+}
+
+// appendDesc 按时间倒序（最新在前）把环内元素追加到 dst。
+func (r *recordRing) appendDesc(dst []EvalRecord) []EvalRecord {
+	if r.size == 0 {
+		return dst
+	}
+	for i := r.size - 1; i >= 0; i-- {
+		dst = append(dst, r.buf[(r.start+i)%len(r.buf)])
+	}
+	return dst
+}
+
+// scanHourFile 流式扫描某小时的记录文件，把 [fromMs, upperMs] 内的记录喂给 ring。
+func scanHourFile(ruleDir string, hour time.Time, fromMs, upperMs int64, ring *recordRing) error {
+	base := filepath.Join(ruleDir, hour.Format(dateLayout), hour.Format(hourLayout))
+
+	// 顺序固定为 .gz 在前、.jsonl 在后：滚动压缩与写入存在短暂共存窗口，两个文件都要读，
+	// 且 .gz 里的记录更早，先扫才能让 ring 内保持时间升序。
+	for _, f := range []struct {
+		path    string
+		gzipped bool
+	}{
+		{base + ".jsonl.gz", true},
+		{base + ".jsonl", false},
+	} {
+		if err := scanJsonlFile(f.path, f.gzipped, fromMs, upperMs, ring); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	return nil
+}
+
+func scanJsonlFile(path string, gzipped bool, fromMs, upperMs int64, ring *recordRing) error {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer f.Close()
 
@@ -136,13 +181,13 @@ func readJsonlFile(path string, gzipped bool) ([]EvalRecord, error) {
 	if gzipped {
 		zr, err := gzip.NewReader(f)
 		if err != nil {
-			return nil, fmt.Errorf("evallog gzip open %s: %v", path, err)
+			return fmt.Errorf("evallog gzip open %s: %v", path, err)
 		}
 		defer zr.Close()
 		r = zr
 	}
 
-	var recs []EvalRecord
+	matched := 0
 	scanner := bufio.NewScanner(r)
 	// 单条记录上限 256KB（默认），buffer 放宽到 maxScanLineBytes 以兼容配置放大的场景；
 	// 写入侧的 enforceLineCeiling 保证不会写出超过这个长度的行
@@ -152,18 +197,25 @@ func readJsonlFile(path string, gzipped bool) ([]EvalRecord, error) {
 		if len(line) == 0 {
 			continue
 		}
-		var rec EvalRecord
-		if err := json.Unmarshal(line, &rec); err != nil {
+		var probe tsProbe
+		if err := json.Unmarshal(line, &probe); err != nil {
 			// 尾部半行（进程崩溃或并发追加中）跳过
 			continue
 		}
-		recs = append(recs, rec)
+		if probe.Ts < fromMs || probe.Ts > upperMs {
+			continue
+		}
+		var rec EvalRecord
+		if err := json.Unmarshal(line, &rec); err != nil {
+			continue
+		}
+		ring.push(rec)
+		matched++
 	}
 	if err := scanner.Err(); err != nil {
-		// 截断的 gzip 尾、超长行等异常：返回已解析部分而不是整体失败，
+		// 截断的 gzip 尾、超长行等异常：保留已扫到的部分而不是整体失败，
 		// 但必须留下痕迹——静默返回半个文件会被当成「这段时间就这么多记录」
-		logger.Warningf("evallog scan %s stopped early after %d records: %v", path, len(recs), err)
-		return recs, nil
+		logger.Warningf("evallog scan %s stopped early after %d matched records: %v", path, matched, err)
 	}
-	return recs, nil
+	return nil
 }
