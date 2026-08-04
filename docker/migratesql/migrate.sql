@@ -488,3 +488,10 @@ ALTER TABLE `alert_mute` ADD COLUMN `mute_type` int not null default 0 comment '
 
 /* v9 2026-07-20 alert_his_event composite index for history query (large table: consider gh-ost/pt-osc) */
 ALTER TABLE `alert_his_event` ADD KEY `idx_group_last_eval_time` (`group_id`, `last_eval_time`);
+
+/* v9 2026-08-01 widen ai_llm_config/ai_agent description to text. Databases created by
+   AutoMigrate instead of this file hold these columns as longtext, and narrowing them to
+   varchar breaks on over-long descriptions (MySQL 1406, or silent truncation on
+   PostgreSQL). TEXT cannot carry a literal default value, hence no NOT NULL DEFAULT. */
+ALTER TABLE `ai_llm_config` MODIFY `description` text COMMENT 'description';
+ALTER TABLE `ai_agent` MODIFY `description` text COMMENT 'description';

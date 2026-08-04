@@ -30,11 +30,12 @@ const (
 
 // Doris struct to hold connection details and the connection object
 type Doris struct {
-	Addr            string `json:"doris.addr" mapstructure:"doris.addr"`         // fe mysql endpoint
-	FeAddr          string `json:"doris.fe_addr" mapstructure:"doris.fe_addr"`   // fe http endpoint
-	User            string `json:"doris.user" mapstructure:"doris.user"`         //
-	Password        string `json:"doris.password" mapstructure:"doris.password"` //
-	Timeout         int    `json:"doris.timeout" mapstructure:"doris.timeout"`   // ms
+	Addr            string `json:"doris.addr" mapstructure:"doris.addr"`                   // fe mysql endpoint (center-reachable)
+	InternalAddr    string `json:"doris.internal_addr" mapstructure:"doris.internal_addr"` // fe mysql endpoint for edge process
+	FeAddr          string `json:"doris.fe_addr" mapstructure:"doris.fe_addr"`             // fe http endpoint
+	User            string `json:"doris.user" mapstructure:"doris.user"`                   //
+	Password        string `json:"doris.password" mapstructure:"doris.password"`           //
+	Timeout         int    `json:"doris.timeout" mapstructure:"doris.timeout"`             // ms
 	MaxIdleConns    int    `json:"doris.max_idle_conns" mapstructure:"doris.max_idle_conns"`
 	MaxOpenConns    int    `json:"doris.max_open_conns" mapstructure:"doris.max_open_conns"`
 	ConnMaxLifetime int    `json:"doris.conn_max_lifetime" mapstructure:"doris.conn_max_lifetime"`
@@ -44,6 +45,31 @@ type Doris struct {
 	// 写用户，用来区分读写用户，减少数据源
 	UserWrite     string `json:"doris.user_write" mapstructure:"doris.user_write"`
 	PasswordWrite string `json:"doris.password_write" mapstructure:"doris.password_write"`
+}
+
+// ResolveReadAddr returns the effective FE MySQL read address for the current process.
+// Edge (isCenter=false) prefers localAddr when non-empty; otherwise falls back to centerAddr.
+// Write path (FeAddr) is independent and never selected here.
+func ResolveReadAddr(isCenter bool, centerAddr, localAddr string) string {
+	if !isCenter {
+		if la := strings.TrimSpace(localAddr); la != "" {
+			return la
+		}
+	}
+	return strings.TrimSpace(centerAddr)
+}
+
+// ApplyReadAddr rewrites Addr in-process to the effective read address for edge/center identity.
+// Does not persist settings; call once at datasource init before opening connections.
+func (d *Doris) ApplyReadAddr(isCenter bool) (usedLocal bool) {
+	if d == nil {
+		return false
+	}
+	local := strings.TrimSpace(d.InternalAddr)
+	resolved := ResolveReadAddr(isCenter, d.Addr, local)
+	usedLocal = !isCenter && local != ""
+	d.Addr = resolved
+	return usedLocal
 }
 
 // NewDorisWithSettings initializes a new Doris instance with the given settings

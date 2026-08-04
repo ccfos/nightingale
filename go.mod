@@ -52,7 +52,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/common v0.60.1
-	github.com/prometheus/prometheus v0.47.1
+	github.com/prometheus/prometheus v0.49.1
 	github.com/rakyll/statik v0.1.7
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/spaolacci/murmur3 v1.1.0
@@ -88,17 +88,17 @@ require (
 )
 
 require (
-	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137
+	github.com/alecthomas/units v0.0.0-20231202071711-9a357b53e9c9
 	github.com/google/jsonschema-go v0.4.3
 )
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.7.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.1.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v1.1.3 // indirect
 	github.com/VictoriaMetrics/metrics v1.34.0 // indirect
@@ -106,7 +106,7 @@ require (
 	github.com/alibabacloud-go/debug v1.0.1 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/aliyun/credentials-go v1.4.6 // indirect
-	github.com/aws/aws-sdk-go v1.44.302 // indirect
+	github.com/aws/aws-sdk-go v1.48.14 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
@@ -122,7 +122,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.9.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -216,7 +216,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	go.uber.org/automaxprocs v1.5.2 // indirect
+	go.uber.org/automaxprocs v1.5.3 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.52.0
 	golang.org/x/image v0.41.0 // indirect
@@ -228,8 +228,6 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
-
-replace golang.org/x/exp => golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 
 replace github.com/olivere/elastic/v7 => github.com/n9e/elastic/v7 v7.0.33-0.20251031061708-f480a2dfcfa7
 

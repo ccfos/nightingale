@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
@@ -12,12 +13,28 @@ import (
 	"gorm.io/gorm"
 )
 
+// recoverMigratePanic keeps a panic inside a migration entry point from killing
+// the process. Migration failures are already non-fatal (errors are only
+// logged), and the schema will be repaired by another instance or the next
+// restart. Known panic sources: gorm's migrator crashes on a *gorm.DB whose
+// Error was set by an earlier statement, and the mysql driver's ColumnTypes
+// races with a concurrent ALTER from another instance during cluster startup.
+func recoverMigratePanic(scene string) {
+	if r := recover(); r != nil {
+		logger.Errorf("recovered panic during %s: %v\n%s", scene, r, debug.Stack())
+	}
+}
+
 func Migrate(db *gorm.DB) {
+	defer recoverMigratePanic("migrate tables")
+
 	MigrateTables(db)
 	MigrateEsIndexPatternTable(db)
 }
 
 func MigrateIbexTables(db *gorm.DB) {
+	defer recoverMigratePanic("migrate ibex tables")
+
 	var tableOptions string
 	switch db.Dialector.(type) {
 	case *mysql.Dialector:
@@ -61,6 +78,15 @@ func fixTaskHostDoingPrimaryKey(db *gorm.DB) {
 	if _, ok := db.Dialector.(*mysql.Dialector); !ok {
 		return
 	}
+
+	// The caller hands over the chained session built by Set (clone=0), on
+	// which every statement shares one instance: an error from any Raw/Exec
+	// below would stick to db.Error forever. The caller's later AutoMigrate
+	// would then inherit that error, gorm's row callback would skip execution
+	// and return a nil *sql.Row, and Scan would panic with a nil dereference.
+	// A fresh Session gives each statement its own instance, keeping errors
+	// local to this function.
+	db = db.Session(&gorm.Session{})
 
 	if !db.Migrator().HasTable("task_host_doing") {
 		return
