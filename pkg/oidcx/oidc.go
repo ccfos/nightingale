@@ -17,8 +17,12 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// idpTimeout 限制与 IdP 的单次 HTTP 交互耗时（discovery、取 JWKS、换 token），避免拖住定期 reload
-const idpTimeout = 10 * time.Second
+const (
+	// idpTimeout 限制与 IdP 的单次 HTTP 交互耗时（discovery、取 JWKS、换 token），避免拖住定期 reload
+	idpTimeout = 10 * time.Second
+	// idleConnTimeout 与 http.DefaultTransport 保持一致，仅在拿不到默认 Transport 时兜底
+	idleConnTimeout = 90 * time.Second
+)
 
 type SsoClient struct {
 	Enable          bool
@@ -104,11 +108,7 @@ func (s *SsoClient) Reload(cf Config) error {
 	// 用完就 cancel 的 ctx 会让登录回调和 token 校验直接报 context canceled
 	client := &http.Client{Timeout: idpTimeout}
 	if cf.SkipTlsVerify {
-		// 从 DefaultTransport 克隆而不是新建一个零值 Transport：零值没有 IdleConnTimeout，
-		// IdP 长期返回错误时，每个 reload 周期一次的重试会把空闲连接一直攒下去
-		transport := http.DefaultTransport.(*http.Transport).Clone()
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		client.Transport = transport
+		client.Transport = newSkipTlsVerifyTransport()
 	}
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, client)
 
@@ -158,6 +158,26 @@ func (s *SsoClient) Reload(cf Config) error {
 	}
 
 	return nil
+}
+
+// newSkipTlsVerifyTransport 返回一个跳过证书校验的 Transport。优先克隆 DefaultTransport
+// 以继承 IdleConnTimeout 等参数——零值 Transport 不回收空闲连接，IdP 长期返回错误时，每个
+// reload 周期一次的重试会把 socket 一直攒下去。DefaultTransport 可能被链路追踪之类的组件
+// 换成别的 RoundTripper，所以断言要带 ok：这段代码跑在启动和后台重载路径上，panic 会直接
+// 带走整个进程。
+func newSkipTlsVerifyTransport() *http.Transport {
+	transport, ok := http.DefaultTransport.(*http.Transport)
+	if ok {
+		transport = transport.Clone()
+	} else {
+		transport = &http.Transport{
+			Proxy:           http.ProxyFromEnvironment,
+			IdleConnTimeout: idleConnTimeout,
+		}
+	}
+
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	return transport
 }
 
 // Ready 表示 OIDC 已开启且与 IdP 完成了 discovery，可以真正承接登录。调用方据此决定

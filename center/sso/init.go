@@ -55,8 +55,10 @@ func (s *SsoClient) ReloadOIDC(ctx *ctx.Context) error {
 
 	config, found, err := s.latestOIDCConfig(ctx)
 	if err != nil {
-		// 读库失败也要置位重试标记：调用方随后照样会推进更新时间水位，不置位的话这次
-		// 配置变更（可能正是「关闭 OIDC」或换掉不再受信的 IdP）就再也不会被应用
+		// 读不到库就不知道当前该信任谁：管理员可能刚把 OIDC 关掉或换掉不再受信的 IdP 且
+		// 已经持久化成功，这时继续拿旧配置放行登录和 token 校验属于鉴权边界问题，先收紧；
+		// 同时置位重试标记，等库恢复、读到最新配置后再重新启用
+		s.OIDC.Reload(oidcx.Config{Enable: false})
 		s.oidcNotReady = true
 		return err
 	}
@@ -316,8 +318,13 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 	}
 
 	lastCacheUpdateTime := s.configCache.GetLastUpdateTime()
-	// OIDC 还没对接成功时，即使配置没有变更也要再跑一遍，IdP 恢复后无需重启 center
-	if lastUpdateTime == s.LastUpdateTime && lastCacheUpdateTime == s.configLastUpdateTime && !s.oidcNeedsRetry() {
+	if lastUpdateTime == s.LastUpdateTime && lastCacheUpdateTime == s.configLastUpdateTime {
+		// 配置没变时只补 OIDC：它还没对接成功就每个周期重试一次，IdP 恢复后无需重启 center。
+		// 这里不能顺带跑完整个 reload —— LDAP 的重载会重置用户同步 Ticker，每 9 秒一次的话
+		// 同步间隔稍长的 LDAP 就永远等不到触发了
+		if s.oidcNeedsRetry() {
+			return s.ReloadOIDC(ctx)
+		}
 		return nil
 	}
 

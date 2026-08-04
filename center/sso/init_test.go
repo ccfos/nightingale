@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 
 	"gorm.io/driver/sqlite"
@@ -46,10 +48,10 @@ func newTestIdP(t *testing.T) string {
 	return srv.URL
 }
 
-func saveOIDCConfig(t *testing.T, c *ctx.Context, content string) {
+func saveSsoConfig(t *testing.T, c *ctx.Context, name, content string) {
 	t.Helper()
 
-	cfg := models.SsoConfig{Name: "OIDC", Content: content}
+	cfg := models.SsoConfig{Name: name, Content: content, UpdateAt: time.Now().Unix()}
 	existing, err := cfg.Query(c)
 	if err != nil {
 		if err := cfg.Create(c); err != nil {
@@ -62,6 +64,11 @@ func saveOIDCConfig(t *testing.T, c *ctx.Context, content string) {
 	if err := cfg.Update(c); err != nil {
 		t.Fatalf("update sso config: %v", err)
 	}
+}
+
+func saveOIDCConfig(t *testing.T, c *ctx.Context, content string) {
+	t.Helper()
+	saveSsoConfig(t, c, "OIDC", content)
 }
 
 func oidcTOML(enable bool, ssoAddr string) string {
@@ -162,6 +169,10 @@ func TestReloadOIDCRetriesWhenConfigQueryFails(t *testing.T) {
 	if !s.oidcNeedsRetry() {
 		t.Error("a failed config read must keep the periodic reload retrying")
 	}
+	// 读不到库就不知道该信任谁，先收紧：管理员可能刚关掉 OIDC 或换掉不再受信的 IdP
+	if s.OIDC.Ready() {
+		t.Error("oidc must not keep accepting logins with a config we can no longer confirm")
+	}
 
 	// 库恢复后（且此时的配置是「关闭 OIDC」），下一轮重试必须把它应用上
 	if err := models.DB(c).AutoMigrate(&models.SsoConfig{}); err != nil {
@@ -176,6 +187,54 @@ func TestReloadOIDCRetriesWhenConfigQueryFails(t *testing.T) {
 	}
 	if s.oidcNeedsRetry() {
 		t.Error("retry flag should be cleared once the reload succeeded")
+	}
+}
+
+const ldapTOMLWithSyncInterval = `
+Enable = true
+Host = 'ldap.example.org'
+Port = 389
+SyncAddUsers = false
+SyncDelUsers = false
+SyncInterval = 1
+AuthFilter = '(&(uid=%s))'
+`
+
+// OIDC 长期对接不上时，每个周期的重试不能顺带把 LDAP 也重载一遍：LDAP 重载会重置用户
+// 同步 Ticker，间隔稍长的 LDAP 同步就永远等不到触发
+func TestOIDCRetryDoesNotStarveLdapTicker(t *testing.T) {
+	s, c := newTestSsoClient(t)
+	s.LDAP = ldapx.New(ldapx.Config{})
+
+	saveSsoConfig(t, c, "LDAP", ldapTOMLWithSyncInterval)
+	saveOIDCConfig(t, c, oidcTOML(true, newTestIdP(t)+"/not-an-idp"))
+
+	// 第一轮：配置有变更，整个 reload 跑一遍，LDAP 同步 Ticker 被设为 1 秒
+	if err := s.reload(c); err != nil {
+		t.Fatalf("first reload: %v", err)
+	}
+	if !s.oidcNeedsRetry() {
+		t.Fatal("oidc should be marked for retry after failing to reach the idp")
+	}
+
+	// 之后的周期里配置没再变，只有 OIDC 在反复重试
+	s.LDAP.Host = "sentinel.example.org"
+	deadline := time.Now().Add(1500 * time.Millisecond)
+	for time.Now().Before(deadline) {
+		s.reload(c) // IdP 一直不可达，这里必然失败，只关心它有没有波及 LDAP
+		time.Sleep(200 * time.Millisecond)
+	}
+
+	if !s.oidcNeedsRetry() {
+		t.Error("oidc should still be marked for retry while the idp stays unreachable")
+	}
+	if s.LDAP.Host != "sentinel.example.org" {
+		t.Error("ldap must not be reloaded when only oidc needs a retry")
+	}
+	select {
+	case <-s.LDAP.Ticker.C:
+	default:
+		t.Error("ldap sync ticker should still fire while oidc keeps retrying")
 	}
 }
 
