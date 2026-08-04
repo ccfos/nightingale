@@ -17,13 +17,44 @@ import (
 // recoverMigratePanic keeps a panic inside a migration entry point from killing
 // the process. Migration failures are already non-fatal (errors are only
 // logged), and the schema will be repaired by another instance or the next
-// restart. Known panic sources: gorm's migrator crashes on a *gorm.DB whose
-// Error was set by an earlier statement, and the mysql driver's ColumnTypes
-// races with a concurrent ALTER from another instance during cluster startup.
+// restart.
+//
+// The remaining panic source is cross-instance and cannot be fixed on our side:
+// the mysql driver's ColumnTypes stitches "SELECT * LIMIT 1" and an
+// information_schema query together, so an ALTER TABLE run by another instance
+// between the two leaves SQLColumnType nil and ColumnType.Length() dereferences
+// it. (The other historical source, a *gorm.DB whose Error was set by an
+// earlier statement, is now prevented structurally -- see migrationDB.)
 func recoverMigratePanic(scene string) {
 	if r := recover(); r != nil {
 		logger.Errorf("recovered panic during %s: %v\n%s", scene, r, debug.Stack())
 	}
+}
+
+// migrationDB returns a handle that is safe to reuse across statements and
+// goroutines, carrying tableOptions if the dialect needs them.
+//
+// A chain method such as Set() returns a clone==0 handle: getInstance() hands
+// back that same *DB, so every later statement shares one Statement and one
+// Error field. Both have bitten us:
+//
+//   - Shared Statement: SQL stays on it while the statement is in flight
+//     (processor.Execute only resets it afterwards) and Statement.clone()
+//     copies non-empty SQL, so a concurrent caller re-issues someone else's
+//     statement. A duplicated CREATE INDEX on a large alert_his_event blocks
+//     on the metadata lock forever and hangs process startup.
+//   - Shared Error: a failed statement sets db.Error on the shared handle for
+//     good; gorm's row callback then skips execution, returns a nil *sql.Row,
+//     and the next Scan panics.
+//
+// Deriving a Session (with a non-nil Context, which clones the Statement while
+// Settings such as gorm:table_options survive) makes getInstance() build a
+// fresh *DB per statement, so neither SQL nor Error leaks between callers.
+func migrationDB(db *gorm.DB, tableOptions string) *gorm.DB {
+	if tableOptions != "" {
+		db = db.Set("gorm:table_options", tableOptions)
+	}
+	return db.Session(&gorm.Session{Context: context.Background()})
 }
 
 func Migrate(db *gorm.DB) {
@@ -42,9 +73,7 @@ func MigrateIbexTables(db *gorm.DB) {
 		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
 	}
 
-	if tableOptions != "" {
-		db = db.Set("gorm:table_options", tableOptions)
-	}
+	db = migrationDB(db, tableOptions)
 
 	fixTaskHostDoingPrimaryKey(db)
 
@@ -136,9 +165,7 @@ func MigrateTables(db *gorm.DB) error {
 	case *mysql.Dialector:
 		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
 	}
-	if tableOptions != "" {
-		db = db.Set("gorm:table_options", tableOptions)
-	}
+	db = migrationDB(db, tableOptions)
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &TaskTpl{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
@@ -168,16 +195,10 @@ func MigrateTables(db *gorm.DB) error {
 	}
 
 	asyncDts := []interface{}{&AlertHisEvent{}, &AlertCurEvent{}}
-	// 异步迁移必须用独立 Statement 的会话，不能直接复用上面的 db。
-	// db 是 Set() 返回的 clone==0 实例，getInstance() 对它返回自身，
-	// 所以它的 Statement 被主流程和这个 goroutine 共用；goroutine 里的
-	// db.Exec 会把 SQL 写进这个共享 Statement，且要等语句执行完才 Reset。
-	// alert_his_event 这种大表上 CREATE INDEX 长达数十分钟，期间主流程的
-	// AutoMigrate 走 Statement.clone()（SQL 非空时连 SQL 一起复制），
-	// 会把这条 CREATE INDEX 复制走并重复执行，第二条卡在 metadata lock 上
-	// 永不返回，整个进程的初始化就此挂死（HTTP 端口永远不监听）。
-	// Session 传非 nil 的 Context 会触发 Statement.clone()，既拿到独立
-	// Statement，又保留 Settings 里的 gorm:table_options。
+	// migrationDB 已经保证每条语句都拿到独立的 Statement，这里再派生一个专供
+	// goroutine 使用的 handle：这段异步迁移会在大表上跑数十分钟的 CREATE INDEX，
+	// 一旦哪天 db 又退化成链式方法返回的 clone==0 实例，主流程就会把这条在飞的
+	// SQL 复制走重复执行、卡死在 metadata lock 上，整个启动挂死。宁可多一层。
 	asyncDB := db.Session(&gorm.Session{Context: context.Background()})
 	go func() {
 		defer func() {

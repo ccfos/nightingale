@@ -113,3 +113,50 @@ func TestChainedSessionLeaksSQL(t *testing.T) {
 		t.Fatalf("main flow should have queried t, executed: %v", rec.sqls)
 	}
 }
+
+// TestMigrationDBIsolatesStatements guards migrationDB itself: statements run
+// on the handle it returns must not leave their SQL or their Error behind for
+// the next caller. The chained handle is asserted alongside it to show the
+// failure mode being prevented -- on that one a single failed statement
+// poisons everything that follows.
+func TestMigrationDBIsolatesStatements(t *testing.T) {
+	rec := &sqlRecorder{Interface: gormlogger.Discard}
+	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{Logger: rec})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+
+	// The failure mode: on a clone==0 handle the error sticks, and gorm's raw
+	// callback then skips every later statement instead of running it.
+	chained := db.Set("gorm:table_options", "")
+	if err := chained.Exec("SELECT * FROM no_such_table").Error; err == nil {
+		t.Fatal("expected the bogus statement to fail")
+	}
+	if chained.Error == nil {
+		t.Fatal("precondition changed: a chained handle no longer keeps the error")
+	}
+	if err := chained.Exec("CREATE TABLE poisoned (id integer)").Error; err == nil {
+		t.Fatal("precondition changed: a poisoned chained handle no longer blocks later statements")
+	}
+	if db.Migrator().HasTable("poisoned") {
+		t.Fatal("precondition changed: the poisoned handle actually executed the statement")
+	}
+
+	// migrationDB's handle keeps errors local to the statement that caused them.
+	h := migrationDB(db, "CHARSET=utf8mb4")
+	if err := h.Exec("SELECT * FROM no_such_table").Error; err == nil {
+		t.Fatal("expected the bogus statement to fail")
+	}
+	if h.Error != nil {
+		t.Fatalf("migrationDB handle must not keep the error: %v", h.Error)
+	}
+	if h.Statement.SQL.Len() != 0 {
+		t.Fatalf("migrationDB handle must not keep the SQL: %q", h.Statement.SQL.String())
+	}
+	if err := h.Exec("CREATE TABLE recovered (id integer)").Error; err != nil {
+		t.Fatalf("later statements must still run: %v", err)
+	}
+	if !h.Migrator().HasTable("recovered") {
+		t.Fatal("later statement did not reach the database")
+	}
+}
