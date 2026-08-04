@@ -123,17 +123,19 @@ func SeriesCap() int {
 }
 
 // Push 异步提交一条记录，nil 记录或未启用时 no-op。
-func Push(r *EvalRecord) {
+// 返回是否成功入队：队列满被丢弃时为 false，调用方可据此回退到日志输出完整现场，
+// 避免「现场日志已降级为 debug + 记录又没落盘」两头落空。
+func Push(r *EvalRecord) bool {
 	if r == nil {
-		return
+		return false
 	}
 	mu.RLock()
 	w := defaultWriter
 	mu.RUnlock()
 	if w == nil {
-		return
+		return false
 	}
-	w.Push(r)
+	return w.Push(r)
 }
 
 // QueryRecords 查询本节点某规则在 [fromMs, toMs] 内的评估记录，按 ts 倒序。

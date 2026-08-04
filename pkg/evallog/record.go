@@ -9,6 +9,11 @@
 // 查询按文件名直接定位小时文件，保留清理按天目录删除，均不依赖索引。
 package evallog
 
+import (
+	"math"
+	"unicode/utf8"
+)
+
 // EvalRecord 一条评估周期记录。字段语义与告警排障漏斗对应：
 // Queries 回答"当时查到了什么"，Anomalies 回答"判定出了什么"，
 // Fired/Muted/DropByPipeline/Pending/Inhibited 回答"事件后来去哪了"，
@@ -102,6 +107,38 @@ func NewRecord(ruleId, datasourceId int64, tsMs int64) *EvalRecord {
 	}
 }
 
+// nonFiniteWarning 采样含 NaN/±Inf 时追加到 QueryRecord.Warnings 的提示。
+const nonFiniteWarning = "query result contains non-finite values (NaN/Inf), recorded as 0"
+
+// sanitizePoints 把 NaN/±Inf 归一为 0，返回是否发生过替换。
+// encoding/json 对非有限浮点直接返回错误，一旦 Marshal 失败整条记录（含漏斗计数与
+// 事件轨迹）都会丢掉；而查询结果出现 NaN（如分母为 0 的比率表达式）恰恰是最需要
+// 留下现场的周期，所以在入库时就地兜底，而不是让序列化失败。
+func sanitizePoints(points [][2]float64) bool {
+	var replaced bool
+	for i := range points {
+		for j := range points[i] {
+			if v := points[i][j]; math.IsNaN(v) || math.IsInf(v, 0) {
+				points[i][j] = 0
+				replaced = true
+			}
+		}
+	}
+	return replaced
+}
+
+// truncateRunes 按 rune 边界截断，避免把多字节字符切成半个导致 JSON 里出现替换字符。
+func truncateRunes(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	cut := s[:max]
+	for len(cut) > 0 && !utf8.ValidString(cut) {
+		cut = cut[:len(cut)-1]
+	}
+	return cut + "...(truncated)"
+}
+
 // AddQuery 追加一个查询现场，按容量闸截断 Series/Points。
 func (r *EvalRecord) AddQuery(q QueryRecord) {
 	if r == nil {
@@ -110,6 +147,15 @@ func (r *EvalRecord) AddQuery(q QueryRecord) {
 	cfg := currentConfig()
 	if cfg == nil {
 		return
+	}
+	var nonFinite bool
+	for i := range q.Series {
+		if sanitizePoints(q.Series[i].Points) {
+			nonFinite = true
+		}
+	}
+	if nonFinite {
+		q.Warnings = append(q.Warnings, nonFiniteWarning)
 	}
 	if len(q.Series) > cfg.MaxSeriesPerQuery {
 		q.Series = q.Series[:cfg.MaxSeriesPerQuery]
@@ -129,6 +175,10 @@ func (r *EvalRecord) AddQuery(q QueryRecord) {
 func (r *EvalRecord) AddAnomaly(a AnomalyBrief) {
 	if r == nil {
 		return
+	}
+	if math.IsNaN(a.Value) || math.IsInf(a.Value, 0) {
+		// 同 sanitizePoints：非有限值会让整条记录序列化失败
+		a.Value = 0
 	}
 	if a.Recover {
 		r.RecoverTotal++
@@ -205,5 +255,26 @@ func (r *EvalRecord) stripEventDetails() {
 		r.Events[i].Tags = ""
 		r.Events[i].Detail = ""
 	}
+	r.Truncated = true
+}
+
+// maxSkeletonStringBytes shrinkToSkeleton 中单个可变长字符串保留的字节数。
+const maxSkeletonStringBytes = 512
+
+// shrinkToSkeleton 前两级降级后仍超出 MaxRecordBytes 时的最后一级：清空异常点明细，
+// 把每个查询压到 ref + 截断后的查询串 + 统计量。计数与事件骨架保留，它们最接近排障结论。
+//
+// 存在的意义是让 MaxRecordBytes 真的成为硬上限：stripSeries / stripEventDetails 都不动
+// Query / Error / Warnings / Anomalies.Key 这些可变长字段，光靠它们无法收敛。而写出超过
+// 读取端 4MB 扫描上限的行，会让该小时文件从这一行起的所有记录被静默丢弃。
+func (r *EvalRecord) shrinkToSkeleton() {
+	r.Anomalies = nil
+	for i := range r.Queries {
+		r.Queries[i].Series = nil
+		r.Queries[i].Warnings = nil
+		r.Queries[i].Query = truncateRunes(r.Queries[i].Query, maxSkeletonStringBytes)
+		r.Queries[i].Error = truncateRunes(r.Queries[i].Error, maxSkeletonStringBytes)
+	}
+	r.Error = truncateRunes(r.Error, maxSkeletonStringBytes)
 	r.Truncated = true
 }

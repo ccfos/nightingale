@@ -18,6 +18,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	// evalRecordsFanout 同时查询的引擎节点数上限
+	evalRecordsFanout = 8
+	// evalRecordsMaxRespBytes 单个节点响应体的读取上限；超出即报错而不是静默截断
+	evalRecordsMaxRespBytes = 64 * 1024 * 1024
+)
+
 // alertRuleEvalRecords 查询告警规则的评估执行记录。
 // GET /api/n9e/alert-rule/:arid/eval-records?datasource_id=&from=&to=&before=&limit=
 // from/to 为 unix 秒（默认最近 1 小时），before 为毫秒游标，结果按 ts 倒序。
@@ -88,27 +95,36 @@ func (rt *Router) alertRuleEvalRecords(c *gin.Context) {
 	}
 
 	// 并发查询各目标节点（edge 节点不可达时靠短超时快速失败），
-	// 失败节点不静默丢弃，透出给前端以区分"没有记录"和"取不到记录"
+	// 失败节点不静默丢弃，透出给前端以区分"没有记录"和"取不到记录"。
+	// 扇出加信号量限流：一条按 cate 匹配的规则可能命中几十个数据源，每个 goroutine
+	// 最坏会驻留一份 evalRecordsMaxRespBytes 的响应，不限流内存会成倍放大。
 	var (
 		mu        sync.Mutex
 		wg        sync.WaitGroup
 		merged    []evallog.EvalRecord
 		instances []string
 		nodeErrs  []evalRecordsNodeErr
+		disabled  []string
+		sem       = make(chan struct{}, evalRecordsFanout)
 	)
 	for _, t := range targets {
 		wg.Add(1)
 		go func(t dsNode) {
 			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
 			var recs []evallog.EvalRecord
+			var enabled bool
 			var err error
 			if t.node == instance {
 				recs, err = evallog.QueryRecords(ruleId, t.dsId, from*1000, to*1000, before, limit)
+				enabled = err != evallog.ErrNotEnabled
 				if err == evallog.ErrNotEnabled {
 					err = nil
 				}
 			} else {
-				recs, err = rt.forwardEvalRecords(t.node, ruleId, t.dsId, from, to, before, limit)
+				recs, enabled, err = rt.forwardEvalRecords(t.node, ruleId, t.dsId, from, to, before, limit)
 			}
 
 			mu.Lock()
@@ -118,6 +134,17 @@ func (rt *Router) alertRuleEvalRecords(c *gin.Context) {
 					Instance:     t.node,
 					DatasourceId: t.dsId,
 					Error:        err.Error(),
+				})
+				return
+			}
+			if !enabled {
+				// 该节点没开 evallog：既不是"没有记录"也不是"取不到记录"，必须单独透出，
+				// 否则前端只能看到一个空列表，会被读成"当时确实没有数据"
+				disabled = append(disabled, t.node)
+				nodeErrs = append(nodeErrs, evalRecordsNodeErr{
+					Instance:     t.node,
+					DatasourceId: t.dsId,
+					Error:        "eval records not enabled on this engine instance ([Alert.EvalLog] Disable = true)",
 				})
 				return
 			}
@@ -135,10 +162,15 @@ func (rt *Router) alertRuleEvalRecords(c *gin.Context) {
 		merged = []evallog.EvalRecord{}
 	}
 
+	if disabled == nil {
+		disabled = []string{}
+	}
+
 	ginx.NewRender(c).Data(gin.H{
-		"list":      merged,
-		"instances": instances,
-		"errors":    nodeErrs,
+		"list":               merged,
+		"instances":          instances,
+		"errors":             nodeErrs,
+		"disabled_instances": disabled,
 	}, nil)
 }
 
@@ -150,12 +182,13 @@ type evalRecordsNodeErr struct {
 	Error        string `json:"error"`
 }
 
-func (rt *Router) forwardEvalRecords(node string, ruleId, dsId, from, to, before int64, limit int) ([]evallog.EvalRecord, error) {
+// forwardEvalRecords 向目标引擎节点转发查询，返回 (记录, 该节点是否启用 evallog, 错误)。
+func (rt *Router) forwardEvalRecords(node string, ruleId, dsId, from, to, before int64, limit int) ([]evallog.EvalRecord, bool, error) {
 	url := fmt.Sprintf("http://%s/v1/n9e/eval-records?rule_id=%d&datasource_id=%d&from=%d&to=%d&before=%d&limit=%d",
 		node, ruleId, dsId, from, to, before, limit)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	for user, pass := range rt.HTTP.APIForService.BasicAuth {
@@ -167,26 +200,35 @@ func (rt *Router) forwardEvalRecords(node string, ruleId, dsId, from, to, before
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("forward to %s failed: %v", node, err)
+		return nil, false, fmt.Errorf("forward to %s failed: %v", node, err)
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 64*1024*1024)) // 64MB limit
+	// 多读 1 字节用于判断是否触到上限：LimitReader 截断时不报错，直接 Unmarshal
+	// 会得到"JSON 语法错误"这种看不出根因的信息
+	body, err := io.ReadAll(io.LimitReader(resp.Body, evalRecordsMaxRespBytes+1))
 	if err != nil {
-		return nil, err
+		return nil, false, err
+	}
+	if int64(len(body)) > evalRecordsMaxRespBytes {
+		return nil, false, fmt.Errorf("response from %s exceeds %d bytes, narrow the time range or lower limit",
+			node, evalRecordsMaxRespBytes)
 	}
 
 	var result struct {
 		Dat struct {
-			List []evallog.EvalRecord `json:"list"`
+			List    []evallog.EvalRecord `json:"list"`
+			Enabled *bool                `json:"enabled"`
 		} `json:"dat"`
 		Err string `json:"err"`
 	}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	if result.Err != "" {
-		return nil, fmt.Errorf("%s", result.Err)
+		return nil, false, fmt.Errorf("%s", result.Err)
 	}
-	return result.Dat.List, nil
+	// 老版本引擎不返回 enabled 字段，缺省按启用处理，保持向后兼容
+	enabled := result.Dat.Enabled == nil || *result.Dat.Enabled
+	return result.Dat.List, enabled, nil
 }

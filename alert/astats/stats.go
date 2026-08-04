@@ -174,12 +174,12 @@ func NewSyncStats() *Stats {
 		Help:      "Number of var filling query.",
 	}, []string{"rule_id", "datasource_id", "ref", "typ"})
 
-	// 评估执行记录因写入队列满被丢弃的条数
+	// 评估执行记录被丢弃的条数（写入队列满，或降级到骨架后仍超出单行硬上限）
 	CounterEvalLogDropTotal := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "eval_log_drop_total",
-		Help:      "Number of eval log records dropped due to full queue.",
+		Help:      "Number of eval log records dropped (full write queue, or still oversized after full degradation).",
 	})
 
 	prometheus.MustRegister(

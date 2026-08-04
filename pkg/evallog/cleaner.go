@@ -3,6 +3,7 @@ package evallog
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -11,6 +12,16 @@ import (
 )
 
 const cleanInterval = time.Hour
+
+// ruleDirPattern / hourFilePattern 限定清理的删除面。
+//
+// Dir 是运维可配项，而「按日期分子目录」的日志/数据目录极其常见：一旦误配成某个已有
+// 目录，不加校验的清理会把 {Dir}/<任意名字>/<YYYY-MM-DD>/ 连同内容递归删掉。只处理
+// 本包自己写出的 {rule_id}_{ds_id}/{date}/{hour}.jsonl(.gz)，其余一律不碰。
+var (
+	ruleDirPattern  = regexp.MustCompile(`^\d+_\d+$`)
+	hourFilePattern = regexp.MustCompile(`^\d{2}\.jsonl(\.gz)?$`)
+)
 
 // cleanLoop 周期清理：按 RetentionHours 删过期数据（天目录/小时文件粒度），
 // 再按 MaxDiskGB 兜底从最旧小时删起。
@@ -47,9 +58,12 @@ func cleanOnce(cfg Config) {
 
 	var files []hourFile
 	var total int64
+	// 当前整点的文件仍被 writer 持有句柄并追加，不能进入总量兜底的候选：
+	// 删掉它既不会立刻释放空间（fd 还持有 inode），又会让这一小时的记录对查询端消失
+	currentHour := truncHour(time.Now())
 
 	for _, rd := range ruleDirs {
-		if !rd.IsDir() {
+		if !rd.IsDir() || !ruleDirPattern.MatchString(rd.Name()) {
 			continue
 		}
 		rulePath := filepath.Join(cfg.Dir, rd.Name())
@@ -80,7 +94,7 @@ func cleanOnce(cfg Config) {
 				continue
 			}
 			for _, hf := range hourFiles {
-				if hf.IsDir() {
+				if hf.IsDir() || !hourFilePattern.MatchString(hf.Name()) {
 					continue
 				}
 				name := strings.TrimSuffix(strings.TrimSuffix(hf.Name(), ".gz"), ".jsonl")
@@ -95,6 +109,9 @@ func cleanOnce(cfg Config) {
 						logger.Warningf("evallog clean remove %s error: %v", path, err)
 					}
 					continue
+				}
+				if !h.Before(currentHour) {
+					continue // 当前（及未来）小时的文件不参与总量兜底删除
 				}
 				info, err := hf.Info()
 				if err != nil {
@@ -131,19 +148,24 @@ func pruneToBudget(files []hourFile, total, budget int64) {
 }
 
 // pruneEmptyDirs 删除清理后残留的空天目录/空规则目录。
+//
+// 跳过今天的天目录：writer 的 getAppender 是「MkdirAll 之后再 OpenFile」两步，
+// 中间有窗口。把它刚建好、还没来得及写入的空目录删掉，会让这一轮的 OpenFile 拿到
+// ENOENT，记录直接落不了盘。今天的目录本来也马上会被写满，不值得为它冒这个险。
 func pruneEmptyDirs(root string) {
+	today := time.Now().Format(dateLayout)
 	ruleDirs, err := os.ReadDir(root)
 	if err != nil {
 		return
 	}
 	for _, rd := range ruleDirs {
-		if !rd.IsDir() {
+		if !rd.IsDir() || !ruleDirPattern.MatchString(rd.Name()) {
 			continue
 		}
 		rulePath := filepath.Join(root, rd.Name())
 		dateDirs, _ := os.ReadDir(rulePath)
 		for _, dd := range dateDirs {
-			if !dd.IsDir() {
+			if !dd.IsDir() || dd.Name() == today {
 				continue
 			}
 			datePath := filepath.Join(rulePath, dd.Name())

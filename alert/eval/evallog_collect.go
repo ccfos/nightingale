@@ -3,11 +3,14 @@ package eval
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/evallog"
 
 	"github.com/prometheus/common/model"
+	"github.com/toolkits/pkg/logger"
 )
 
 // EvalLogSamplesFromValue 将 prom 查询结果转为 evallog 采样，按 SeriesCap 提前截断避免大结果集的无谓分配。
@@ -107,6 +110,53 @@ func EvalLogAnomalies(rec *evallog.EvalRecord, points []models.AnomalyPoint, rec
 			Recover:     recover,
 		})
 	}
+}
+
+// LogEvalRecordFallback 记录未能进入落盘队列时，把本轮现场摘要回退打到 info 日志。
+//
+// evallog 启用后，eval 里原本标注「此条日志很重要，是告警判断的现场值」的 info 日志
+// 被降级成了 debug。但「evallog 启用」不等于「记录一定落盘」：写入队列满时 Push 会
+// 直接丢弃。两者判定条件相同、失效条件不同，磁盘慢或队列打满这类最需要现场的场景下
+// 会出现记录没落盘、日志也不打了的两头落空，这个回退就是为了堵住它。
+//
+// 刻意只打摘要而不是整条记录：会走到这里通常就是队列被打满，此时批量往日志里灌
+// 几百 KB 的原始曲线，只会把「写不动」变成「写日志也写不动」。
+func LogEvalRecordFallback(rec *evallog.EvalRecord) {
+	if rec == nil {
+		return
+	}
+
+	var qs strings.Builder
+	for i := range rec.Queries {
+		if i > 0 {
+			qs.WriteString("; ")
+		}
+		q := &rec.Queries[i]
+		fmt.Fprintf(&qs, "%s series=%d cost=%dms", q.Ref, q.SeriesTotal, q.DurationMs)
+		if q.Error != "" {
+			fmt.Fprintf(&qs, " error=%s", truncateForLog(q.Error))
+		}
+		fmt.Fprintf(&qs, " query=%s", truncateForLog(q.Query))
+	}
+
+	logger.Infof("alert_eval_%d datasource_%d evallog record dropped, scene summary: cost=%dms error=%s "+
+		"anomaly=%d recover=%d fired=%d pending=%d muted=%d dropped=%d inhibited=%d queries[%s]",
+		rec.RuleId, rec.DatasourceId, rec.DurationMs, truncateForLog(rec.Error),
+		rec.AnomalyTotal, rec.RecoverTotal, rec.Fired, rec.Pending, rec.Muted, rec.DropByPipeline, rec.Inhibited,
+		qs.String())
+}
+
+// truncateForLog 回退日志里单个字段的长度上限，避免超长 promql / 错误串刷爆日志。
+func truncateForLog(s string) string {
+	const max = 256
+	if len(s) <= max {
+		return s
+	}
+	cut := s[:max]
+	for len(cut) > 0 && !utf8.ValidString(cut) {
+		cut = cut[:len(cut)-1]
+	}
+	return cut + "...(truncated)"
 }
 
 // EvalLogQueryString 将非 prom 数据源的查询对象序列化为字符串。

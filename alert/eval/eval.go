@@ -165,7 +165,11 @@ func (arw *AlertRuleWorker) Eval() {
 
 	defer func() {
 		rec.Finish(time.Since(begin).Milliseconds())
-		evallog.Push(rec)
+		if rec != nil && !evallog.Push(rec) {
+			// evallog 启用时本轮的现场日志已被降级为 debug，记录又没能入队（队列满等），
+			// 就会两头落空。这里把现场摘要回退打到 info，保证任何情况下都留得下排障依据。
+			LogEvalRecordFallback(rec)
+		}
 		// 记录已交给异步写入协程，本周期之外（如外部事件推送路径）再往里追加轨迹，
 		// 既写不进已落盘的记录，又与序列化构成竞态，因此这里断开引用
 		arw.EvalRec = nil

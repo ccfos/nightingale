@@ -25,10 +25,12 @@ const (
 	appenderIdleTimeout = 5 * time.Minute
 	// 周期性刷盘/滚动检查间隔
 	flushInterval = time.Second
+	// 闸2 的当日预算计数在无写入多久后回收；必须大于一天，否则跨日前就被清掉
+	budgetIdleTimeout = 25 * time.Hour
 )
 
 // Writer 单 goroutine 消费队列、按 {rule_ds}/{date}/{hour}.jsonl 追加写入，
-// 整点滚动后异步 gzip。所有 appender 状态仅在消费 goroutine 内访问，无锁。
+// 整点滚动后异步 gzip。所有 appender / budgets 状态仅在消费 goroutine 内访问，无锁。
 type Writer struct {
 	cfg      Config
 	ch       chan *EvalRecord
@@ -36,10 +38,16 @@ type Writer struct {
 	closing  sync.Once
 	dropHook func()
 
-	appenders map[string]*appender // key: {rule_id}_{ds_id}
+	appenders map[string]*appender  // key: {rule_id}_{ds_id}
+	budgets   map[string]*ruleBudget // key 同上；生命周期独立于 appender
 
-	gzCh chan string
-	gzWg sync.WaitGroup
+	// gzMu 同时保护 gzClosed 与「向 gzCh 投递」：投递方除消费 goroutine 外还有启动时的
+	// sweepLeftovers，若不互斥，Close 关闭 gzCh 后的残余投递会 panic（向已关闭 channel
+	// 发送），gzWg.Add 与 gzWg.Wait 并发也会 panic。
+	gzMu     sync.Mutex
+	gzClosed bool
+	gzCh     chan string
+	gzWg     sync.WaitGroup
 }
 
 type appender struct {
@@ -49,10 +57,17 @@ type appender struct {
 	f         *os.File
 	bw        *bufio.Writer
 	lastWrite time.Time
+}
 
-	// 闸2：当日写入预算
-	budgetDate  string
-	budgetBytes int64
+// ruleBudget 闸2：单规则单日写入预算计数。
+//
+// 刻意不挂在 appender 上：appender 会因空闲 5 分钟（appenderIdleTimeout）或句柄数超过
+// maxOpenAppenders 被关闭并从 map 删除，计数跟着一起没了。评估间隔大于 5 分钟的规则
+// 每两次评估之间必然被关一次，预算永远累加不到门限，PerRuleDailyMB 等于完全失效。
+type ruleBudget struct {
+	date    string // "2006-01-02"
+	bytes   int64
+	lastUse time.Time
 }
 
 func NewWriter(cfg Config, dropHook func()) (*Writer, error) {
@@ -69,6 +84,7 @@ func NewWriter(cfg Config, dropHook func()) (*Writer, error) {
 		done:      make(chan struct{}),
 		dropHook:  dropHook,
 		appenders: make(map[string]*appender),
+		budgets:   make(map[string]*ruleBudget),
 		gzCh:      make(chan string, 1024),
 	}
 
@@ -79,17 +95,23 @@ func NewWriter(cfg Config, dropHook func()) (*Writer, error) {
 	return w, nil
 }
 
-// Push 非阻塞入队，队列满则丢弃并回调 dropHook。
-func (w *Writer) Push(r *EvalRecord) {
+// Push 非阻塞入队，队列满则丢弃并回调 dropHook。返回是否入队成功。
+func (w *Writer) Push(r *EvalRecord) (queued bool) {
 	// Close 与并发 Push 竞争时向已关闭 channel 发送会 panic，吞掉即可：
 	// 关闭发生在进程退出/重新 Init，丢这一条记录无影响
-	defer func() { _ = recover() }()
+	defer func() {
+		if recover() != nil {
+			queued = false
+		}
+	}()
 	select {
 	case w.ch <- r:
+		return true
 	default:
 		if w.dropHook != nil {
 			w.dropHook()
 		}
+		return false
 	}
 }
 
@@ -98,9 +120,24 @@ func (w *Writer) Close() {
 	w.closing.Do(func() {
 		close(w.ch)
 		<-w.done
+
+		// 置位 gzClosed 与 close(gzCh) 必须在同一把锁里，且 Wait 放在解锁之后：
+		// 这样 enqueueGz 要么在置位前完成 Add+投递，要么看到 gzClosed 直接返回，
+		// 不会出现「向已关闭 channel 发送」或「Add 与 Wait 并发」。
+		w.gzMu.Lock()
+		w.gzClosed = true
 		close(w.gzCh)
+		w.gzMu.Unlock()
+
 		w.gzWg.Wait()
 	})
+}
+
+// gzStopped 供 sweepLeftovers 提前中止：Writer 已关闭后再遍历目录纯属浪费。
+func (w *Writer) gzStopped() bool {
+	w.gzMu.Lock()
+	defer w.gzMu.Unlock()
+	return w.gzClosed
 }
 
 func (w *Writer) loop() {
@@ -124,57 +161,138 @@ func (w *Writer) loop() {
 }
 
 func (w *Writer) write(r *EvalRecord) {
-	line, err := json.Marshal(r)
-	if err != nil {
-		logger.Warningf("evallog marshal rule %d error: %v", r.RuleId, err)
+	key := fmt.Sprintf("%d_%d", r.RuleId, r.DatasourceId)
+
+	line, ok := w.marshalWithinLimit(r)
+	if !ok {
 		return
 	}
 
-	// 闸1c：单条记录硬上限。降级阶梯：先丢原始曲线，仍超限再把事件轨迹压到 hash+stage 骨架
-	if len(line) > w.cfg.MaxRecordBytes {
-		r.stripSeries()
-		if line, err = json.Marshal(r); err != nil {
-			return
-		}
-		if len(line) > w.cfg.MaxRecordBytes {
-			r.stripEventDetails()
-			if line, err = json.Marshal(r); err != nil {
-				return
-			}
-		}
-	}
-
-	a := w.getAppender(r)
+	a := w.getAppender(key, r)
 	if a == nil {
 		return
 	}
 
 	// 闸2：单规则单日预算，超出后降级为摘要模式
-	date := msTime(r.Ts).Format(dateLayout)
-	if a.budgetDate != date {
-		a.budgetDate = date
-		a.budgetBytes = 0
-	}
-	// 超预算后降级为摘要模式：同样先丢曲线，事件轨迹保留骨架
+	now := time.Now()
+	b := w.budgetFor(key, msTime(r.Ts).Format(dateLayout), now)
 	limit := int64(w.cfg.PerRuleDailyMB) * 1024 * 1024
-	if a.budgetBytes+int64(len(line)) > limit && (len(r.Queries) > 0 || len(r.Events) > 0) {
+	if b.bytes+int64(len(line)) > limit && (len(r.Queries) > 0 || len(r.Events) > 0) {
+		// 超预算后降级为摘要模式：同样先丢曲线，事件轨迹保留骨架
 		r.stripSeries()
 		r.stripEventDetails()
+		var err error
 		if line, err = json.Marshal(r); err != nil {
+			w.dropRecord(r, "marshal after budget degrade", err)
 			return
 		}
 	}
-	a.budgetBytes += int64(len(line))
+	b.bytes += int64(len(line))
 
-	if _, err = a.bw.Write(append(line, '\n')); err != nil {
+	if _, err := a.bw.Write(append(line, '\n')); err != nil {
 		logger.Warningf("evallog write %s error: %v", a.hourPath, err)
 	}
-	a.lastWrite = time.Now()
+	a.lastWrite = now
+}
+
+// marshalWithinLimit 序列化并按降级阶梯把结果压进 MaxRecordBytes（闸1c）：
+// 原始曲线 → 事件轨迹明细 → 骨架（清异常点、截断查询串）。
+//
+// 两级上限的分工：
+//   - MaxRecordBytes 是可配置的**软预算**，降级到事件骨架为止就不再往下压——轨迹回答
+//     「事件为什么没发出去」，比省这点空间更接近排障结论，所以骨架超预算也照写。
+//   - maxRecordLineBytes 是由读取端扫描能力反推的**硬上限**，任何路径都不得逾越。
+//
+// 序列化本身失败时同样走降级重试而不是直接丢：整条记录里的漏斗计数与周期级错误
+// 通常比某一条曲线更有排障价值。
+func (w *Writer) marshalWithinLimit(r *EvalRecord) ([]byte, bool) {
+	line, err := json.Marshal(r)
+	if err != nil {
+		logger.Warningf("evallog marshal rule %d error: %v, retry as summary", r.RuleId, err)
+		r.shrinkToSkeleton()
+		r.stripEventDetails()
+		if line, err = json.Marshal(r); err != nil {
+			w.dropRecord(r, "marshal", err)
+			return nil, false
+		}
+		return w.enforceLineCeiling(r, line)
+	}
+
+	if len(line) > w.cfg.MaxRecordBytes {
+		r.stripSeries()
+		if line, err = json.Marshal(r); err != nil {
+			w.dropRecord(r, "marshal after strip series", err)
+			return nil, false
+		}
+	}
+	if len(line) > w.cfg.MaxRecordBytes {
+		r.stripEventDetails()
+		if line, err = json.Marshal(r); err != nil {
+			w.dropRecord(r, "marshal after strip event details", err)
+			return nil, false
+		}
+	}
+	if len(line) > w.cfg.MaxRecordBytes {
+		// 前两级只动 Series 与事件明细，Query / Error / Warnings / Anomalies.Key 这些
+		// 可变长字段不受影响，光靠它们收敛不了，这一级把它们也压掉
+		r.shrinkToSkeleton()
+		if line, err = json.Marshal(r); err != nil {
+			w.dropRecord(r, "marshal after shrink", err)
+			return nil, false
+		}
+	}
+	return w.enforceLineCeiling(r, line)
+}
+
+// enforceLineCeiling 保证写出的行不超过读取端能扫描的长度，必要时逐步砍掉事件轨迹。
+// 超过该长度的行会让 readJsonlFile 的 bufio.Scanner 中止，该小时文件**从这一行起**的
+// 所有记录都读不到——损失远大于丢掉这一条，所以这里宁可丢。
+func (w *Writer) enforceLineCeiling(r *EvalRecord, line []byte) ([]byte, bool) {
+	for len(line) > maxRecordLineBytes && len(r.Events) > 0 {
+		r.Events = r.Events[:len(r.Events)/2]
+		r.Truncated = true
+		var err error
+		if line, err = json.Marshal(r); err != nil {
+			w.dropRecord(r, "marshal after trimming events", err)
+			return nil, false
+		}
+	}
+	if len(line) > maxRecordLineBytes {
+		w.dropRecord(r, fmt.Sprintf("record is %d bytes after full degrade, exceeds line ceiling %d", len(line), maxRecordLineBytes), nil)
+		return nil, false
+	}
+	return line, true
+}
+
+// dropRecord 统一记录「这一条最终没能落盘」，并计入丢弃指标，避免静默消失。
+func (w *Writer) dropRecord(r *EvalRecord, reason string, err error) {
+	if err != nil {
+		logger.Warningf("evallog drop record rule %d ds %d: %s: %v", r.RuleId, r.DatasourceId, reason, err)
+	} else {
+		logger.Warningf("evallog drop record rule %d ds %d: %s", r.RuleId, r.DatasourceId, reason)
+	}
+	if w.dropHook != nil {
+		w.dropHook()
+	}
+}
+
+// budgetFor 取出（必要时创建）某 rule_ds 的当日预算计数，跨日自动清零。
+func (w *Writer) budgetFor(key, date string, now time.Time) *ruleBudget {
+	b, ok := w.budgets[key]
+	if !ok {
+		b = &ruleBudget{date: date}
+		w.budgets[key] = b
+	}
+	if b.date != date {
+		b.date = date
+		b.bytes = 0
+	}
+	b.lastUse = now
+	return b
 }
 
 // getAppender 取出/创建目标小时文件的 appender，必要时滚动旧文件。
-func (w *Writer) getAppender(r *EvalRecord) *appender {
-	key := fmt.Sprintf("%d_%d", r.RuleId, r.DatasourceId)
+func (w *Writer) getAppender(key string, r *EvalRecord) *appender {
 	t := msTime(r.Ts)
 	hourKey := t.Format(dateLayout) + "/" + t.Format(hourLayout)
 
@@ -197,6 +315,13 @@ func (w *Writer) getAppender(r *EvalRecord) *appender {
 	}
 	path := filepath.Join(dir, t.Format(hourLayout)+".jsonl")
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if os.IsNotExist(err) {
+		// 清理协程的 pruneEmptyDirs 可能刚好在 MkdirAll 与 OpenFile 之间把这个空目录删掉
+		// （写入历史小时的记录时尤其可能命中），重建一次再试
+		if mkErr := os.MkdirAll(dir, 0755); mkErr == nil {
+			f, err = os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		}
+	}
 	if err != nil {
 		logger.Warningf("evallog open %s error: %v", path, err)
 		return nil
@@ -208,11 +333,6 @@ func (w *Writer) getAppender(r *EvalRecord) *appender {
 		hourKey:  hourKey,
 		f:        f,
 		bw:       bufio.NewWriterSize(f, 64*1024),
-	}
-	if ok {
-		// 保留跨小时前累计的预算计数
-		na.budgetDate = a.budgetDate
-		na.budgetBytes = a.budgetBytes
 	}
 	w.appenders[key] = na
 	return na
@@ -232,7 +352,16 @@ func (w *Writer) finalize(a *appender, compress bool) {
 
 // housekeep 周期任务：刷盘、滚动已跨小时的文件、关闭空闲句柄。
 func (w *Writer) housekeep() {
-	nowHourKey := time.Now().Format(dateLayout) + "/" + time.Now().Format(hourLayout)
+	now := time.Now()
+
+	// 回收长期无写入的预算计数，避免规则大量增删后 budgets 无界增长
+	for k, b := range w.budgets {
+		if now.Sub(b.lastUse) > budgetIdleTimeout {
+			delete(w.budgets, k)
+		}
+	}
+
+	nowHourKey := now.Format(dateLayout) + "/" + now.Format(hourLayout)
 	for _, a := range w.appenders {
 		if a.hourKey != nowHourKey {
 			// 该小时已过且不再有写入进来，滚动压缩
@@ -270,6 +399,11 @@ func (w *Writer) evictOldest() {
 }
 
 func (w *Writer) enqueueGz(path string) {
+	w.gzMu.Lock()
+	defer w.gzMu.Unlock()
+	if w.gzClosed {
+		return
+	}
 	w.gzWg.Add(1)
 	select {
 	case w.gzCh <- path:
@@ -293,6 +427,10 @@ func (w *Writer) gzLoop() {
 func (w *Writer) sweepLeftovers() {
 	nowPathSuffix := filepath.Join(time.Now().Format(dateLayout), time.Now().Format(hourLayout)+".jsonl")
 	_ = filepath.Walk(w.cfg.Dir, func(path string, info os.FileInfo, err error) error {
+		if w.gzStopped() {
+			// Writer 已关闭（进程退出 / 重新 Init），继续遍历已无意义
+			return filepath.SkipAll
+		}
 		if err != nil || info.IsDir() {
 			return nil
 		}
@@ -314,6 +452,19 @@ func compressFile(path string) error {
 	}
 	defer in.Close()
 
+	dst := path + ".gz"
+
+	// 同一小时可能被滚动压缩两次：整点后 housekeep 已经把该小时压成 .gz，随后一个
+	// 跨整点的慢评估（Ts 取评估开始时刻、Push 在评估结束时执行）又带着上一小时的 Ts
+	// 到达，getAppender 会重建同名 .jsonl。此时若仍走 rename，就会把整小时数据的 .gz
+	// 整份替换成只含这一两条迟到记录的新文件。
+	// gzip 成员可拼接、gzip.Reader 默认 multistream，所以目标已存在时追加而不是覆盖。
+	if _, statErr := os.Stat(dst); statErr == nil {
+		return appendCompressed(dst, in, path)
+	} else if !os.IsNotExist(statErr) {
+		return statErr
+	}
+
 	tmp := path + ".gz.tmp"
 	out, err := os.Create(tmp)
 	if err != nil {
@@ -334,11 +485,35 @@ func compressFile(path string) error {
 		return err
 	}
 
-	if err = os.Rename(tmp, path+".gz"); err != nil {
+	if err = os.Rename(tmp, dst); err != nil {
 		os.Remove(tmp)
 		return err
 	}
 	return os.Remove(path)
+}
+
+// appendCompressed 把 src 的内容压成一个新的 gzip 成员追加到已存在的 dst 末尾，
+// 成功后删除 src。追加中途失败时 dst 末尾会留下一个不完整成员，读取端
+// （readJsonlFile 对 scanner.Err 返回已解析部分）仍能拿到此前的全部记录，
+// 比原先整份覆盖丢掉一小时数据要好得多。
+func appendCompressed(dst string, in io.Reader, src string) error {
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+
+	zw := gzip.NewWriter(out)
+	_, err = io.Copy(zw, in)
+	if cerr := zw.Close(); err == nil {
+		err = cerr
+	}
+	if cerr := out.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
+		return err
+	}
+	return os.Remove(src)
 }
 
 func msTime(ms int64) time.Time {
