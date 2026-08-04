@@ -3,7 +3,6 @@ package router
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -205,9 +204,9 @@ type NotifyTestForm struct {
 }
 
 // buildNotifyTestMockEvent 构造用于通知测试的内置模拟事件，字段仅为演示用途，
-// 不落库；severity 取通知配置勾选的第一个级别，保证与配置语义一致
+// 不落库；severity 取通知配置勾选的最低级别，保证与配置语义一致。
+// 事件骨架与工作流试跑的样例事件共用 newMockEvent，避免两处各自演化。
 func buildNotifyTestMockEvent(lang string, notifyConfig models.NotifyConfig) *models.AlertCurEvent {
-	now := time.Now().Unix()
 	severity := 2
 	if len(notifyConfig.Severities) > 0 {
 		severity = notifyConfig.Severities[0]
@@ -218,35 +217,16 @@ func buildNotifyTestMockEvent(lang string, notifyConfig models.NotifyConfig) *mo
 		}
 	}
 
-	ruleName := i18n.Sprintf(lang, "Notification test mock event")
-	tags := []string{
-		"rulename=" + ruleName,
-		"ident=mock-host-01",
-		"source=notify-rule-test",
-	}
-
-	event := &models.AlertCurEvent{
-		Cate:             "prometheus",
-		GroupName:        "Default Busi Group",
-		Hash:             "notify-rule-test-mock-event",
-		RuleName:         ruleName,
-		RuleNote:         i18n.Sprintf(lang, "This is a mock event sent by notification test, just to verify that the notification channel works"),
-		Severity:         severity,
-		PromQl:           "cpu_usage_active > 80",
-		TriggerTime:      now,
-		TriggerValue:     "81.5",
-		TriggerValues:    "81.5",
-		Tags:             strings.Join(tags, ",,"),
-		TagsJSON:         tags,
-		Annotations:      "{}",
-		AnnotationsJSON:  map[string]string{},
-		FirstTriggerTime: now,
-		LastEvalTime:     now,
-		NotifyCurNumber:  1,
-		IsRecovered:      false,
-	}
-	event.SetTagsMap()
-	return event
+	return newMockEvent(mockEventSpec{
+		RuleName:     i18n.Sprintf(lang, "Notification test mock event"),
+		RuleNote:     i18n.Sprintf(lang, "This is a mock event sent by notification test, just to verify that the notification channel works"),
+		Hash:         "notify-rule-test-mock-event",
+		Severity:     severity,
+		IsRecovered:  false,
+		PromQL:       "cpu_usage_active > 80",
+		TriggerValue: "81.5",
+		ExtraTags:    []string{"ident=mock-host-01", "source=notify-rule-test"},
+	})
 }
 
 func (rt *Router) notifyTest(c *gin.Context) {
@@ -292,6 +272,21 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	ginx.NewRender(c).Data(resp, err)
 }
 
+// resolveSiteUrl 返回模板渲染与通知上下文共用的站点地址。
+func resolveSiteUrl(ctx *ctx.Context) string {
+	siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
+	if siteUrl == "" {
+		siteUrl = "http://127.0.0.1:17000"
+	}
+	return siteUrl
+}
+
+// NeedMessageTemplate 表示该媒介类型是否依赖消息模板。
+// flashduty / pagerduty 从 event 字段直接构造 payload，不走模板。
+func NeedMessageTemplate(requestType string) bool {
+	return requestType != "flashduty" && requestType != "pagerduty"
+}
+
 func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType, notifyConfig models.NotifyConfig, events []*models.AlertCurEvent) (string, error) {
 	notifyChannels, err := models.NotifyChannelGets(ctx, notifyConfig.ChannelID, "", "", -1)
 	if err != nil {
@@ -307,15 +302,10 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		return "", fmt.Errorf("notify channel not enabled, please enable it first")
 	}
 
-	// 获取站点URL用于模板渲染
-	siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
-	if siteUrl == "" {
-		siteUrl = "http://127.0.0.1:17000"
-	}
+	siteUrl := resolveSiteUrl(ctx)
 
 	tplContent := make(map[string]interface{})
-	// flashduty / pagerduty 不依赖模板，从 event 字段直接构造 payload
-	if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" {
+	if NeedMessageTemplate(notifyChannel.RequestType) {
 		messageTemplates, err := models.MessageTemplateGets(ctx, notifyConfig.TemplateID, "", "")
 		if err != nil {
 			return "", fmt.Errorf("failed to get message templates: %v", err)
@@ -327,6 +317,21 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		tplContent = messageTemplates[0].RenderEvent(events, siteUrl)
 	}
 
+	return sendToNotifyChannel(ctx, userCache, userGroup, notifyConfig, notifyChannel, events, tplContent, siteUrl)
+}
+
+// sendToNotifyChannel 是通知投递的公共下半段：在通道配置与「已渲染」的模板内容都确定之后，
+// 构造通知上下文并按 request_type 分派投递。
+//
+// 之所以与上半段（按 ID 查库、Enable 闸门、按 template_id 查模板）拆开，是为了让
+// 「测试一份尚未保存的媒介配置」能够复用与生产完全相同的投递路径——该场景下通道配置
+// 来自请求体、模板内容来自内联源码，两者都无法从库里取。
+//
+// 注意 tplContent 必须是渲染后的结果（models.MessageTemplate.RenderEvent 的产物），
+// 不是模板源码；传源码进来会把 {{$event.RuleName}} 原样发出去。
+func sendToNotifyChannel(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType,
+	notifyConfig models.NotifyConfig, notifyChannel *models.NotifyChannelConfig,
+	events []*models.AlertCurEvent, tplContent map[string]interface{}, siteUrl string) (string, error) {
 	client, err := models.GetHTTPClient(notifyChannel)
 	if err != nil {
 		return "", fmt.Errorf("failed to get http client: %v", err)

@@ -21,7 +21,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 7,
+                "datasourceValue": "${datasource}",
                 "id": "aba69dc0-5a11-4bcd-add9-335b5a677bee",
                 "layout": {
                     "h": 5,
@@ -67,7 +67,7 @@
                     "legengPosition": "right"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 7,
+                "datasourceValue": "${datasource}",
                 "id": "e34a272e-6125-4afa-a2c1-80d7d9078673",
                 "layout": {
                     "h": 5,
@@ -115,7 +115,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 7,
+                "datasourceValue": "${datasource}",
                 "id": "a8917108-58a6-479a-8ec4-571f1b5a79c2",
                 "layout": {
                     "h": 5,
@@ -178,7 +178,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 7,
+                "datasourceValue": "${datasource}",
                 "id": "1b102bee-ccc9-49a0-a1d1-cc097bb6a987",
                 "layout": {
                     "h": 6,
@@ -241,7 +241,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 7,
+                "datasourceValue": "${datasource}",
                 "id": "b432fc11-2f9d-4b72-826b-6ca787401859",
                 "layout": {
                     "h": 6,
@@ -304,7 +304,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 7,
+                "datasourceValue": "${datasource}",
                 "id": "9062d707-d8a7-4a93-82e5-46f6059e8d70",
                 "layout": {
                     "h": 6,
@@ -361,7 +361,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 7,
+                "datasourceValue": "${datasource}",
                 "id": "c3f64cfd-adb2-4316-bb84-55f88ed513a3",
                 "layout": {
                     "h": 6,
@@ -406,7 +406,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 7,
+                "datasourceValue": "${datasource}",
                 "id": "8df57678-ff19-4b63-b768-4dad3f12222b",
                 "layout": {
                     "h": 5,

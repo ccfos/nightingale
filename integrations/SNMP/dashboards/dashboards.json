@@ -212,7 +212,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "snmp_sys_cpu_usage",
+              "expr": "100 - snmp_cpu_idle",
                         "legend": "Out",
                         "refId": "A"
                     }
@@ -265,7 +265,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "snmp_sys_mem_usage",
+              "expr": "(snmp_mem_max - snmp_mem_free) / snmp_mem_max * 100",
                         "legend": "mem_usage",
                         "refId": "A"
                     }
@@ -318,7 +318,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "snmp_sys_mem_usage",
+              "expr": "(snmp_mem_max - snmp_mem_free) / snmp_mem_max * 100",
                         "legend": "mem_usage",
                         "refId": "A"
                     }
@@ -371,8 +371,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "snmp_sys_session_rate",
-                        "legend": "mem_usage",
+                        "expr": "rate(snmp_tcp_passive_opens[5m])",
+                        "legend": "new connections/s",
                         "refId": "A"
                     }
                 ],

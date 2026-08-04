@@ -37,7 +37,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "DCGM_FI_DEV_GPU_UTIL 指标参考：https://docs.nvidia.com/datacenter/dcgm/latest/dcgm-api/dcgm-api-field-ids.html?highlight=dcgm_fi_dev_gpu_util",
                 "id": "0f84e2a2-0d87-49a1-87ae-b7fc6ab61f52",
                 "layout": {
@@ -119,7 +119,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "id": "6807675e-f5c7-487c-b128-3e2117b334c1",
                 "layout": {
                     "h": 8,
@@ -200,7 +200,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "id": "2af04e49-8dd7-4553-835f-b7342ecd498b",
                 "layout": {
                     "h": 8,
@@ -296,7 +296,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "使用GPU的容器cpu使用率",
                 "id": "96b14a10-39e2-454b-a0ce-c49f5cf5bc80",
                 "layout": {
@@ -380,7 +380,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "RSS，常驻内存集（Resident Set Size），是进程实际使用物理内存的大小，例如进程中的堆、栈所用空间就属于RSS的一部分。RSS用量由进程自行控制，不受内核干预。例如c++中手动回收内存，python/golang的GC机制，都会影响RSS用量。\n\ncache，物理内存中的缓存部分。cache一般为内核在内存有余量的情况下，将进程读取的一些临时文件数据保存在物理内存中，这样之后读取同一份数据可以直接从内存而不是磁盘中获取，提高读取速度。当可用内存余量不足时，内核将根据LRU算法主动回收不再使用的cache内存部分。回收后的内存可以供进程继续使用。\n\n限制内存量：进程可以使用的最大物理内存。\n\n任务OOM与RSS用量相关，当RSS用量达到限制内存后，如果仍在持续申请内存，进程可能会出现“cannot allocate memory” 或触发 oom killer机制。",
                 "id": "dd424d3c-c33c-45c8-868c-0bc788d1be5e",
                 "layout": {
@@ -475,7 +475,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "fb7679d4-0c02-4379-9bfb-08a59c8bcf17",
                 "layout": {
@@ -563,7 +563,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "包含process context switch和thread context switch",
                 "id": "854df399-78ae-4112-9cac-b33683b92272",
                 "layout": {
@@ -644,7 +644,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "表示通过PCIe总线传输/接收的通信带宽，包括协议标头和数据有效负载。",
                 "id": "8a0a62ce-c505-4f9a-aaa8-6fcea44aa769",
                 "layout": {
@@ -734,7 +734,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "cc8d1f41-bc55-4a37-b0c7-94466ab417d5",
                 "layout": {
@@ -833,7 +833,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "每一秒钟的自然时间内，花费在I/O上的耗时。（wall-clock time）\n\nnode_disk_io_time_seconds_total：\n磁盘花费在输入/输出操作上的秒数。该值为累加值。（Milliseconds Spent Doing I/Os）\n\nrate(node_disk_io_time_seconds_total[1m])：\n计算每秒的速率：(last值-last前一个值)/时间戳差值，即：1秒钟内磁盘花费在I/O操作的时间占比。",
                 "id": "659df69c-8a4c-4108-985d-d18a0c590099",
                 "layout": {
@@ -915,7 +915,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "Read bytes 每个磁盘分区每秒读取的比特数\nWritten bytes 每个磁盘分区每秒写入的比特数",
                 "id": "e77f6e5c-67ef-40b0-8982-9195601f8cbe",
                 "layout": {
@@ -1003,7 +1003,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "id": "aac8c2b7-4004-4572-b0d4-c187f4513223",
                 "layout": {
                     "h": 12,
@@ -1095,7 +1095,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "id": "d37260c1-940c-40d9-9a1b-77ba66201d49",
                 "layout": {
                     "h": 4,
@@ -1197,7 +1197,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "id": "e022d6e6-b1b7-4650-86de-589d64e88b77",
                 "layout": {
                     "h": 9,
@@ -1302,7 +1302,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "\t表示在一个时间间隔内，Graphics或Compute引擎处于Active的时间占比。\n该值表示所有Graphics和Compute引擎的平均值。\n\nGraphics或Compute引擎处于Active是指Graphics或Compute Context绑定到线程，并且Graphics或Compute Context处于Busy状态。",
                 "id": "3a065904-d08f-441b-94bf-851069d751c1",
                 "layout": {
@@ -1380,7 +1380,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "表示Tensor（HMMA/IMMA） Pipe处于Active状态的周期分数。\n该值表示一个时间间隔内的平均值，而不是瞬时值。\n\n较高的值表示Tensor Cores的利用率较高。\n\n该值为1（100%）表示在整个时间间隔内每隔一个指令周期发出一个Tensor指令（两个周期完成一条指令）。\n\n假设该值为0.2（20%），可能有如下情况：\n在整个时间间隔内，有20%的SM的Tensor Core以100%的利用率运行。\n在整个时间间隔内，有100%的SM的Tensor Core以20%的利用率运行。\n在整个时间间隔的1/5时间内，有100%的SM上的Tensor Core以100%利用率运行。",
                 "id": "c20a8694-6625-4581-b2e1-49f39f4c9b6f",
                 "layout": {
@@ -1459,7 +1459,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "表示在一个时间间隔内，至少一个线程束在一个SM（Streaming Multiprocessor）上处于Active的时间占比。\n该值表示所有SM的平均值，且该值对每个块的线程数不敏感。\n\n线程束处于Active是指一个线程束被调度且分配资源后的状态，可能是在Computing、也可能是非Computing状态（例如等待内存请求）。\n\n该值小于0.5表示未高效利用GPU，大于0.8是必要的。\n\n假设一个GPU有N个SM：\n一个核函数在整个时间间隔内使用N个线程块运行在所有的SM上，此时该值为1（100%）。\n一个核函数在一个时间间隔内运行N/5个线程块，此时该值为0.2。\n一个核函数使用N个线程块，在一个时间间隔内，仅运行了1/5个周期的时间，此时该值为0.2。",
                 "id": "98b11b6e-3b18-48cf-85d3-724c46be4c52",
                 "layout": {
@@ -1537,7 +1537,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "表示在一个时间间隔内，驻留在SM上的线程束与该SM最大可驻留线程束的比例。\n该值表示一个时间间隔内的所有SM的平均值。\n\n占用率越高不代表GPU使用率越高。只有在GPU内存带宽受限的工作负载（DCGM_FI_PROF_DRAM_ACTIVE）情况下，更高的占用率表示更有效的GPU使用率。",
                 "id": "290ca1fb-5ab7-41ed-b1d9-7385302c214e",
                 "layout": {
@@ -1615,7 +1615,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "表示内存带宽利用率（Memory BW Utilization）将数据发送到设备内存或从设备内存接收数据的周期分数。\n该值表示时间间隔内的平均值，而不是瞬时值。\n\n较高的值表示设备内存的利用率较高。\n\n该值为1（100%）表示在整个时间间隔内的每个周期执行一条 DRAM 指令（实际上，峰值约为 0.8 (80%) 是可实现的最大值）。\n\n假设该值为0.2（20%），表示20%的周期在时间间隔内读取或写入设备内存。",
                 "id": "5ce6527d-7cb3-46c7-857f-681600ac90c6",
                 "layout": {
@@ -1693,7 +1693,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "表示FP16（半精度）管道处于Active的周期分数。\n该值表示一个时间间隔内的平均值，而不是瞬时值。\n\n较高的值代表FP16 Cores有较高的利用率。\n\n该值为 1 (100%) 表示在整个时间间隔内上每两个周期（Volta类型卡为例）执行一次FP16指令。\n\n假设该值为0.2（20%），可能有如下情况：\n在整个时间间隔内，有20%的SM的FP16 Core以100%的利用率运行。\n在整个时间间隔内，有100%的SM的FP16 Core以20%的利用率运行。\n在整个时间间隔的1/5时间内，有100%的SM上的FP16 Core以100%利用率运行。",
                 "id": "b4196799-f1af-46c2-b2b8-51e7b354ec38",
                 "layout": {
@@ -1772,7 +1772,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "表示乘加操作FMA（Fused Multiply-Add）管道处于Active的周期分数，乘加操作包括FP32（单精度）和整数。\n该值表示一个时间间隔内的平均值，而不是瞬时值。\n\n较高的值代表FP32 Cores有较高的利用率。\n\n该值为1（100%）表示在整个时间间隔内上每两个周期（Volta类型卡为例）执行一次FP32指令。\n\n假设该值为0.2（20%），可能有如下情况：\n在整个时间间隔内，有20%的SM的FP32 Core以100%的利用率运行。\n在整个时间间隔内，有100%的SM的FP32 Core以20%的利用率运行。\n在整个时间间隔的1/5时间内，有100%的SM上的FP32 Core以100%利用率运行。",
                 "id": "4f140581-8c55-41fd-96c3-9df47dff9450",
                 "layout": {
@@ -1850,7 +1850,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": "${Database}",
+                "datasourceValue": "${datasource}",
                 "description": "表示FP64（双精度）Pipe处于Active状态的周期分数。\n该值表示一个时间间隔内的平均值，而不是瞬时值。\n\n较高的值代表FP64 Cores有较高的利用率。\n\n该值为 1（100%）表示在整个时间间隔内上每四个周期（以Volta类型卡为例）执行一次FP64指令。\n\n假设该值为0.2（20%），可能有如下情况：\n在整个时间间隔内，有20%的SM的FP64 Core以100%的利用率运行。\n在整个时间间隔内，有100%的SM的FP64 Core以20%的利用率运行。\n在整个时间间隔的1/5时间内，有100%的SM上的FP64 Core以100%利用率运行。",
                 "id": "1b611415-b729-452f-8693-f74d1ed6e437",
                 "layout": {

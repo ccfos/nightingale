@@ -1,6 +1,7 @@
 ---
 name: categraf-deploy-guide
-description: Answers "how do I deploy the categraf collector". Trigger scenarios: the user asks "how to install categraf / how to deploy categraf / run categraf with Docker / install categraf on Windows / how to register categraf as a system service / report categraf to Nightingale / how to write categraf config.toml / how to verify that categraf is collecting data". Covers binary + systemd, Docker, Windows, K8s tips, key configuration, and common verification commands. This skill is instructional/guidance-oriented, calls no tools, and outputs ready-to-paste commands and configuration snippets.
+description: >-
+  Answers "how do I deploy the categraf collector". Trigger scenarios: the user asks "how to install categraf / how to deploy categraf / run categraf with Docker / install categraf on Windows / how to register categraf as a system service / report categraf to Nightingale / how to write categraf config.toml / how to verify that categraf is collecting data". Covers binary + systemd, Docker, Windows, K8s tips, key configuration, and common verification commands. This skill is instructional/guidance-oriented, calls no tools, and outputs ready-to-paste commands and configuration snippets.
 tags:
   - internal
 ---

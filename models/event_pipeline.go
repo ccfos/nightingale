@@ -156,6 +156,24 @@ func DeleteEventPipelines(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(&EventPipeline{}).Error
 }
 
+// UpdateEventPipelinesDisabled 批量启用/停用事件Pipeline。
+// 这里只写 disabled 及审计字段，不走 Update 的 Select("*") 全字段覆盖：
+// 调用方（如列表页的行内开关）持有的往往是页面加载时的旧快照，整条回传会把
+// 期间别人改过的 processors / 过滤条件一起写回去，静默回退对方的改动。
+// update_at 必须一并更新，否则 EventPipelineStatistics 的 max(update_at) 不变，
+// memsto 侧的事件处理器缓存不会感知到这次变更。
+func UpdateEventPipelinesDisabled(ctx *ctx.Context, ids []int64, disabled bool, updateBy string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	return DB(ctx).Model(&EventPipeline{}).Where("id in ?", ids).Updates(map[string]interface{}{
+		"disabled":  disabled,
+		"update_at": time.Now().Unix(),
+		"update_by": updateBy,
+	}).Error
+}
+
 // Update 更新事件Pipeline
 func (e *EventPipeline) Update(ctx *ctx.Context, ref *EventPipeline) error {
 	ref.ID = e.ID

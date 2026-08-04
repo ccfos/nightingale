@@ -17,6 +17,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 	"github.com/toolkits/pkg/str"
+	"gorm.io/gorm/clause"
 )
 
 type Configs struct { //ckey+external
@@ -35,6 +36,13 @@ type Configs struct { //ckey+external
 
 func (Configs) TableName() string {
 	return "configs"
+}
+
+func configExternalEq(value int) clause.Eq {
+	return clause.Eq{
+		Column: clause.Column{Name: "external"},
+		Value:  value,
+	}
 }
 
 var (
@@ -169,7 +177,10 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) { //select built-
 	}
 
 	var lst []string
-	err := DB(ctx).Model(&Configs{}).Where("ckey=?  and external=? ", ckey, 0).Pluck("cval", &lst).Error
+	err := DB(ctx).Model(&Configs{}).
+		Where("ckey = ?", ckey).
+		Where(configExternalEq(0)).
+		Pluck("cval", &lst).Error
 	if err != nil {
 		return "", errors.WithMessage(err, "failed to query configs")
 	}
@@ -189,7 +200,9 @@ func ConfigsGetAll(ctx *ctx.Context) ([]*Configs, error) { // select built-in ty
 
 	var lst []*Configs
 	err := DB(ctx).Model(&Configs{}).Select("id, ckey, cval").
-		Where("ckey!='' and external=? ", 0).Find(&lst).Error
+		Where("ckey != ?", "").
+		Where(configExternalEq(0)).
+		Find(&lst).Error
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to query configs")
 	}
@@ -201,7 +214,9 @@ func ConfigsSet(ctx *ctx.Context, ckey, cval string) error {
 	return ConfigsSetWithUname(ctx, ckey, cval, "default")
 }
 func ConfigsSetWithUname(ctx *ctx.Context, ckey, cval, uName string) error { //built-in
-	num, err := Count(DB(ctx).Model(&Configs{}).Where("ckey=? and external=?", ckey, 0)) //built-in type
+	num, err := Count(DB(ctx).Model(&Configs{}).
+		Where("ckey = ?", ckey).
+		Where(configExternalEq(0))) //built-in type
 	if err != nil {
 		return errors.WithMessage(err, "failed to count configs")
 	}
@@ -357,7 +372,9 @@ func ConfigsGets(ctx *ctx.Context, prefix string, limit, offset int) ([]*Configs
 }
 
 func (c *Configs) Add(ctx *ctx.Context) error {
-	num, err := Count(DB(ctx).Model(&Configs{}).Where("ckey=? and external=? ", c.Ckey, c.External))
+	num, err := Count(DB(ctx).Model(&Configs{}).
+		Where("ckey = ?", c.Ckey).
+		Where(configExternalEq(c.External)))
 	if err != nil {
 		return errors.WithMessage(err, "failed to count configs")
 	}
@@ -379,7 +396,9 @@ func (c *Configs) Add(ctx *ctx.Context) error {
 }
 
 func (c *Configs) Update(ctx *ctx.Context) error {
-	num, err := Count(DB(ctx).Model(&Configs{}).Where("id<>? and ckey=? and external=? ", c.Id, c.Ckey, c.External))
+	num, err := Count(DB(ctx).Model(&Configs{}).
+		Where("id <> ? AND ckey = ?", c.Id, c.Ckey).
+		Where(configExternalEq(c.External)))
 	if err != nil {
 		return errors.WithMessage(err, "failed to count configs")
 	}
@@ -396,7 +415,7 @@ func ConfigsDel(ctx *ctx.Context, ids []int64) error {
 
 func ConfigsGetUserVariable(context *ctx.Context) ([]Configs, error) {
 	var objs []Configs
-	tx := DB(context).Where("external = ?", ConfigExternal).Order("id desc")
+	tx := DB(context).Where(configExternalEq(ConfigExternal)).Order("id desc")
 	err := tx.Find(&objs).Error
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to gets user variable")
@@ -450,9 +469,15 @@ func userVariableCheck(context *ctx.Context, ckey string, id int64) error {
 	}
 
 	if id != 0 { //update
-		err = DB(context).Where("id <> ? and ckey = ? and external=?", &id, ckey, ConfigExternal).Find(&objs).Error
+		err = DB(context).
+			Where("id <> ? AND ckey = ?", id, ckey).
+			Where(configExternalEq(ConfigExternal)).
+			Find(&objs).Error
 	} else {
-		err = DB(context).Where("ckey = ? and external=?", ckey, ConfigExternal).Find(&objs).Error
+		err = DB(context).
+			Where("ckey = ?", ckey).
+			Where(configExternalEq(ConfigExternal)).
+			Find(&objs).Error
 	}
 	if err != nil {
 		return err
@@ -469,7 +494,8 @@ func ConfigsUserVariableStatistics(context *ctx.Context) (*Statistics, error) {
 	}
 
 	session := DB(context).Model(&Configs{}).Select(
-		"count(*) as total", "max(update_at) as last_updated").Where("external = ?", ConfigExternal)
+		"count(*) as total", "max(update_at) as last_updated").
+		Where(configExternalEq(ConfigExternal))
 
 	var stats []*Statistics
 	err := session.Find(&stats).Error
@@ -515,7 +541,9 @@ func ConfigCvalStatistics(context *ctx.Context) (*Statistics, error) {
 	}
 
 	session := DB(context).Model(&Configs{}).Select("count(*) as total",
-		"max(update_at) as last_updated").Where("ckey!='' and external=? ", 0) // built-in config
+		"max(update_at) as last_updated").
+		Where("ckey != ?", "").
+		Where(configExternalEq(0)) // built-in config
 
 	var stats []*Statistics
 	err := session.Find(&stats).Error

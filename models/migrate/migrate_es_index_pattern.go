@@ -19,7 +19,7 @@ type EsIndexPattern struct {
 }
 
 func MigrateEsIndexPatternTable(db *gorm.DB) error {
-	db = db.Set("gorm:table_options", "CHARSET=utf8mb4")
+	db = migrationDB(db, "CHARSET=utf8mb4")
 	if db.Migrator().HasTable("es_index_pattern") {
 		return nil
 	}

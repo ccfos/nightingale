@@ -1,4 +1,6 @@
 {
+    "1) 在采集机上手工 ping -c 5 \u003c目标\u003e 复现，再用 mtr -n \u003c目标\u003e 定位丢包在哪一跳；2) 目标机存活则确认它是否禁 ICMP——很多安全策略会禁，此时该探测不适用，应改用端口探测；3) 中间跳丢包联系网络侧排查；4) 确认目标机是否宕机或网卡故障。": "1) Reproduce it on the collector host with ping -c 5 \u003ctarget\u003e, then use mtr -n \u003ctarget\u003e to find which hop drops packets; 2) If the target is alive, check whether it blocks ICMP — many security policies do, in which case this probe does not apply and you should switch to a port probe; 3) For loss at an intermediate hop, involve the network team; 4) Confirm the target host is not down or suffering a NIC failure.",
+    "PING 探测目标地址失败，目标主机或中间链路不可达。": "The PING probe to the target address failed: the target host or an intermediate link is unreachable.",
     "PING大盘2.0": "PING Dashboard 2.0",
     "丢包率": "Packet Loss Rate",
     "延迟": "Latency",

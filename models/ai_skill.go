@@ -12,26 +12,28 @@ import (
 	"gorm.io/gorm"
 )
 
+// 所有列都显式声明类型，与 docker/migratesql/migrate.sql 保持一致，理由同 AILLMConfig。
 type AISkill struct {
 	Id            int64             `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name          string            `json:"name"`
+	Name          string            `json:"name" gorm:"type:varchar(255);not null;default:''"`
 	Description   string            `json:"description" gorm:"type:varchar(4096)"`
 	Instructions  string            `json:"instructions" gorm:"type:text"`
 	License       string            `json:"license,omitempty" gorm:"type:varchar(255)"`
 	Compatibility string            `json:"compatibility,omitempty" gorm:"type:varchar(255)"`
-	Metadata      map[string]string `json:"metadata,omitempty" gorm:"serializer:json"`
+	Metadata      map[string]string `json:"metadata,omitempty" gorm:"serializer:json;type:text"`
 	AllowedTools  string            `json:"allowed_tools,omitempty" gorm:"type:varchar(4096)"`
-	Enabled       bool              `json:"enabled"`
+	Enabled       bool              `json:"enabled" gorm:"type:boolean;not null;default:false"`
 	// UserGroupIds 授权团队：成员有权编辑该 skill；Private 授权范围（0-公共 1-私有）
 	// 决定 skill 在 AI 对话中的可见性。二者均为空/0 的存量 skill 走创建人/更新人兜底。
-	UserGroupIds  []int64           `json:"user_group_ids" gorm:"serializer:json"`
-	Private       int               `json:"private" gorm:"not null;default:0"`
-	SourceType    string            `json:"source_type" gorm:"type:varchar(16);default:'local'"`
-	GitInfo       *AISkillGitInfo   `json:"git_info,omitempty" gorm:"column:git_info;type:text;serializer:json"`
-	CreatedAt     int64             `json:"created_at"`
-	CreatedBy     string            `json:"created_by"`
-	UpdatedAt     int64             `json:"updated_at"`
-	UpdatedBy     string            `json:"updated_by"`
+	UserGroupIds []int64 `json:"user_group_ids" gorm:"serializer:json;type:text"`
+	// size:32 不能省：gorm 把 type:int 当成通用 Int 类型，落到 MySQL 仍是 bigint
+	Private    int             `json:"private" gorm:"type:int;size:32;not null;default:0"`
+	SourceType string          `json:"source_type" gorm:"type:varchar(16);not null;default:'local'"`
+	GitInfo    *AISkillGitInfo `json:"git_info,omitempty" gorm:"column:git_info;type:text;serializer:json"`
+	CreatedAt  int64           `json:"created_at" gorm:"type:bigint;not null;default:0"`
+	CreatedBy  string          `json:"created_by" gorm:"type:varchar(64);not null;default:''"`
+	UpdatedAt  int64           `json:"updated_at" gorm:"type:bigint;not null;default:0"`
+	UpdatedBy  string          `json:"updated_by" gorm:"type:varchar(64);not null;default:''"`
 
 	// Runtime fields, not stored in DB
 	Files         []*AISkillFile `json:"files,omitempty" gorm:"-"`

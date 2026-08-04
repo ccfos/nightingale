@@ -9,7 +9,7 @@ ElasticSearch 通过 HTTP JSON 的方式暴露了自身的监控指标，通过 
 
 categraf 配置文件：`conf/input.elasticsearch/elasticsearch.toml`
 
-```yaml
+```toml
 [[instances]]
 servers = ["http://192.168.11.177:9200"]
 http_timeout = "10s"

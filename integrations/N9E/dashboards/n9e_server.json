@@ -44,7 +44,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(n9e_server_samples_received_total[1m])",
+          "expr": "rate(n9e_pushgw_samples_received_total[1m])",
                         "refId": "A"
                     }
                 ],
@@ -71,7 +71,7 @@
                     "x": 12,
                     "y": 0
                 },
-                "name": "number of alarm events generated per second",
+      "name": "number of samples written to TSDB per second",
                 "options": {
                     "legend": {
                         "displayMode": "hidden"
@@ -85,7 +85,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(n9e_server_alerts_total[10m])",
+          "expr": "rate(n9e_pushgw_write_total[1m])",
                         "refId": "A"
                     }
                 ],
@@ -126,7 +126,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "n9e_server_alert_queue_size",
+          "expr": "n9e_alert_alert_queue_size",
                         "refId": "A"
                     }
                 ],
@@ -167,7 +167,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "n9e_server_http_request_duration_seconds_sum/n9e_server_http_request_duration_seconds_count",
+          "expr": "sum(rate(n9e_pushgw_http_request_duration_seconds_sum[5m])) / clamp_min(sum(rate(n9e_pushgw_http_request_duration_seconds_count[5m])), 0.001)",
                         "refId": "A"
                     }
                 ],
@@ -208,7 +208,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "n9e_server_sample_queue_size",
+          "expr": "n9e_pushgw_sample_queue_size",
                         "refId": "A"
                     }
                 ],
@@ -249,7 +249,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "avg(n9e_server_forward_duration_seconds_sum/n9e_server_forward_duration_seconds_count)",
+          "expr": "sum(rate(n9e_pushgw_forward_duration_seconds_sum[5m])) / clamp_min(sum(rate(n9e_pushgw_forward_duration_seconds_count[5m])), 0.001)",
                         "refId": "A"
                     }
                 ],

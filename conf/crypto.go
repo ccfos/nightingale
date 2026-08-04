@@ -48,5 +48,12 @@ func decryptConfig(config *ConfigType, cryptoKey string) error {
 		config.Pushgw.Writers[i].BasicAuthPass = decryptWriterPwd
 	}
 
+	decryptTsdbPwd, err := secu.DealWithDecrypt(config.EmbeddedTSDB.BasicAuthPass, cryptoKey)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt embedded tsdb basic auth password: %s", err)
+	}
+
+	config.EmbeddedTSDB.BasicAuthPass = decryptTsdbPwd
+
 	return nil
 }

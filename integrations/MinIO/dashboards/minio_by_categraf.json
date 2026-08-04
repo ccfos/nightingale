@@ -611,7 +611,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "minio_cluster_disk_online_total{job=\"$scrape_jobs\"}",
+                        "expr": "minio_cluster_drive_online_total{job=\"$scrape_jobs\"}",
                         "legend": "Total online disks in MinIO Cluster",
                         "refId": "A"
                     }
@@ -927,7 +927,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "minio_cluster_disk_offline_total{job=\"$scrape_jobs\"}",
+                        "expr": "minio_cluster_drive_offline_total{job=\"$scrape_jobs\"}",
                         "legend": "",
                         "refId": "A"
                     }
@@ -1037,7 +1037,7 @@
                 },
                 "links": [],
                 "maxPerRow": 4,
-                "name": "Time Since Last Heal Activity",
+                "name": "Cluster Health Status",
                 "options": {
                     "standardOptions": {
                         "util": "none"
@@ -1055,7 +1055,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "minio_heal_time_last_activity_nano_seconds{job=\"$scrape_jobs\"}",
+                        "expr": "minio_cluster_health_status{job=\"$scrape_jobs\"}",
                         "legend": "{{server}}",
                         "refId": "A"
                     }
@@ -1111,7 +1111,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "minio_usage_last_activity_nano_seconds{job=\"$scrape_jobs\"}",
+                        "expr": "minio_usage_last_activity_nano_seconds{job=\"$scrape_jobs\"} / 1e9",
                         "legend": "{{server}}",
                         "refId": "A"
                     }
@@ -1395,7 +1395,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum by (server,api) (increase(minio_s3_requests_5xx_errors_total{job=\"$scrape_jobs\"}[5m]))",
+                        "expr": "sum by (server,api) (increase(minio_s3_requests_errors_total{job=\"$scrape_jobs\"}[5m]))",
                         "legend": "{{server,api}}",
                         "refId": "A"
                     }
@@ -1426,7 +1426,7 @@
                 },
                 "links": [],
                 "maxPerRow": 4,
-                "name": "Healing",
+                "name": "Cluster Health and Scanning",
                 "options": {
                     "legend": {
                         "displayMode": "hidden"
@@ -1447,18 +1447,18 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum by (instance) (minio_heal_objects_heal_total{job=\"$scrape_jobs\"})",
-                        "legend": "Objects healed in current self heal run",
+                        "expr": "sum by (instance) (minio_cluster_health_erasure_set_healing_drives{job=\"$scrape_jobs\"})",
+                        "legend": "Healing drives",
                         "refId": "A"
                     },
                     {
-                        "expr": "sum by (instance) (minio_heal_objects_error_total{job=\"$scrape_jobs\"})",
-                        "legend": "Heal errors in current self heal run",
+                        "expr": "sum by (instance) (minio_cluster_drive_offline_total{job=\"$scrape_jobs\"})",
+                        "legend": "Offline drives",
                         "refId": "B"
                     },
                     {
-                        "expr": "sum by (instance) (minio_heal_objects_total{job=\"$scrape_jobs\"}) ",
-                        "legend": "Objects scanned in current self heal run",
+                        "expr": "sum by (instance) (minio_node_scanner_objects_scanned{job=\"$scrape_jobs\"})",
+                        "legend": "Objects scanned",
                         "refId": "C"
                     }
                 ],
@@ -1477,7 +1477,7 @@
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${DS_PROMETHEUS}",
-                "description": "Total number of bytes received and sent among all MinIO server instances",
+                "description": "Total number of bytes received and sent by the MinIO server process",
                 "id": "4ded094e-a71a-4104-80c6-eeb8770abf21",
                 "layout": {
                     "h": 9,
@@ -1489,7 +1489,7 @@
                 },
                 "links": [],
                 "maxPerRow": 4,
-                "name": "Internode Data Transfer",
+                "name": "Node Network Transfer",
                 "options": {
                     "legend": {
                         "displayMode": "hidden"
@@ -1510,13 +1510,13 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(minio_inter_node_traffic_sent_bytes{job=\"$scrape_jobs\"}[5m])",
-                        "legend": "Internode Bytes Received [{{server}}]",
+                        "expr": "rate(minio_process_network_transmit_bytes_total{job=\"$scrape_jobs\"}[5m])",
+                        "legend": "Bytes Sent [{{server}}]",
                         "refId": "A"
                     },
                     {
-                        "expr": "rate(minio_inter_node_traffic_received_bytes{job=\"$scrape_jobs\"}[5m])",
-                        "legend": "Internode Bytes Sent [{{server}}]",
+                        "expr": "rate(minio_process_network_receive_bytes_total{job=\"$scrape_jobs\"}[5m])",
+                        "legend": "Bytes Received [{{server}}]",
                         "refId": "B"
                     }
                 ],
@@ -1671,7 +1671,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "minio_node_disk_free_inodes{job=\"$scrape_jobs\"}",
+                        "expr": "minio_node_drive_free_inodes{job=\"$scrape_jobs\"}",
                         "legend": "Free Inodes [{{server}}:{{disk}}]",
                         "refId": "A"
                     }
@@ -1723,7 +1723,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "minio_node_disk_used_bytes{job=\"$scrape_jobs\"}",
+                        "expr": "minio_node_drive_used_bytes{job=\"$scrape_jobs\"}",
                         "legend": "Used Capacity [{{server}}:{{disk}}]",
                         "refId": "A"
                     }

@@ -7,7 +7,7 @@
             0
         ],
         "cluster": "",
-        "name": "ClickHouse Categraf ZooKeeper故障",
+        "name": "ClickHouse Categraf 副本进入只读",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -27,7 +27,7 @@
                         "labelKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "avg(clickhouse_metrics_zoo_keeper_session ) != 1",
+                    "prom_ql": "clickhouse_metrics_readonly_replica \u003e 0",
                     "severity": 2
                 }
             ]
@@ -72,7 +72,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "有副本表进入只读状态，通常是 ClickHouse 与 ZooKeeper/Keeper 的会话断开导致，此时该副本无法写入，插入请求会直接失败。",
+            "action": "1) 执行 SELECT database, table, is_readonly, zookeeper_exception FROM system.replicas WHERE is_readonly 定位只读的表和原因；2) 检查 ZooKeeper/Keeper 集群是否健康（echo ruok | nc \u003czk\u003e 2181），以及 ClickHouse 到它的网络连通性；3) ZK 恢复后执行 SYSTEM RESTART REPLICA \u003cdb\u003e.\u003ctable\u003e 让副本重新建立会话；4) 若是 ZK 上元数据丢失，需要 SYSTEM RESTORE REPLICA 重建，操作前先确认另有健康副本。",
+            "runbook_url": "https://clickhouse.com/docs/en/operations/monitoring"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -162,7 +166,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "ClickHouse 内存占用超过宿主机总内存的 90%，再涨会触发 MEMORY_LIMIT_EXCEEDED 让查询失败，甚至被系统 OOM Killer 杀掉。",
+            "action": "1) 执行 SELECT query, memory_usage, elapsed FROM system.processes ORDER BY memory_usage DESC LIMIT 5 找当前吃内存的查询，必要时 KILL QUERY WHERE query_id='...' 止血；2) 查 system.query_log 里 memory_usage 最高的历史查询，定位缺少过滤条件或大 JOIN 的 SQL；3) 用 max_memory_usage / max_bytes_before_external_group_by 给单查询设上限并允许落盘；4) 确认 mark cache、uncompressed cache 配置是否过大。",
+            "runbook_url": "https://clickhouse.com/docs/en/operations/tips"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -252,7 +260,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "ClickHouse 默认磁盘可用空间不足 10%，写满后插入和 merge 都会失败，且可能导致部分数据无法恢复。",
+            "action": "1) 执行 SELECT name, free_space, total_space FROM system.disks 确认各磁盘水位；2) 用 SELECT database, table, formatReadableSize(sum(bytes)) FROM system.parts WHERE active GROUP BY 1,2 ORDER BY sum(bytes) DESC 找出占用最大的表；3) 对有 TTL 的表执行 ALTER TABLE ... MATERIALIZE TTL 触发清理，或直接 DROP PARTITION 删除过期分区；4) 长期需扩容磁盘或配置多卷存储策略把冷数据下沉。",
+            "runbook_url": "https://clickhouse.com/docs/en/operations/tips"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -268,7 +280,7 @@
             0
         ],
         "cluster": "",
-        "name": "ClickHouse Categraf 网络故障",
+        "name": "ClickHouse Categraf 并发网络连接数过高",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -350,7 +362,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "ClickHouse 并发网络发送/接收连接数超过 250，说明大量查询正在同时传输数据，接近连接与带宽瓶颈，查询延迟会上升。（该指标是并发连接数，不是流量）",
+            "action": "1) 执行 SELECT count(), user, client_hostname FROM system.processes GROUP BY 2,3 ORDER BY 1 DESC 看连接来自哪些客户端；2) 对照 system.metrics 里的 Query、TCPConnection 判断是查询并发高还是连接泄漏；3) 客户端未复用连接的，在应用侧改用连接池；4) 确认 max_concurrent_queries 与 max_connections 配置是否与实例规格匹配，必要时限流。",
+            "runbook_url": "https://clickhouse.com/docs/en/operations/monitoring"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

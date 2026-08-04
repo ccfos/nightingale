@@ -301,7 +301,7 @@
           ],
           "targets": [
             {
-              "expr": "topk(10,changes(snmp_interface_ostatus{}[1d])>10) ",
+                                "expr": "topk(10, changes(snmp_interface_ifOperStatus{}[1d]) > 10)",
               "maxDataPoints": 240,
               "refId": "A"
             }

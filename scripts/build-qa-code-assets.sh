@@ -53,14 +53,22 @@ gh_api() {
   fi
 }
 
-# latest_tag <owner/repo> — resolve the latest release tag (same awk as fe.sh).
+# latest_tag <owner/repo> — resolve the latest release tag (awk 同 fe.sh，但
+# 必须先把响应落进变量：awk 匹配到 tag_name 就 exit 会提前关管道，curl 在
+# Linux 上几乎必现 EPIPE 退 23，配合 pipefail 直接杀掉整个脚本。
 latest_tag() {
-  gh_api "https://api.github.com/repos/$1/releases/latest" | awk '/tag_name/{print $4;exit}' FS='[""]'
+  local json
+  json="$(gh_api "https://api.github.com/repos/$1/releases/latest")"
+  awk '/tag_name/{print $4;exit}' FS='[""]' <<<"$json"
 }
 
 # tag_commit <owner/repo> <tag> — resolve a tag to its commit sha (best-effort).
+# 同样先落变量再 awk；否则管道失败时 || echo unknown 会在已打出的 sha 后面
+# 追加一行，把 manifest.json 写坏。
 tag_commit() {
-  gh_api "https://api.github.com/repos/$1/commits/$2" 2>/dev/null | awk '/"sha"/{print $4;exit}' FS='[""]' || echo unknown
+  local json
+  json="$(gh_api "https://api.github.com/repos/$1/commits/$2" 2>/dev/null)" || { echo unknown; return 0; }
+  awk '/"sha"/{print $4;exit}' FS='[""]' <<<"$json"
 }
 
 # fetch_source <owner/repo> <ref> <dest> — download + unpack a source tarball,

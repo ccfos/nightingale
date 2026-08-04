@@ -13,7 +13,7 @@ mongodb_uri = "mongodb://127.0.0.1:27017"
 # 这将覆盖 dsn，当用户名或密码中存在特殊字符时，设置这里会很有用，避免手动编码它们。
 # 注意！该用户必须被授予足够的权限来查询所需的统计数据，详见 ../inputs/mongodb/README.md
 #username = "root"
-#password = "123456"
+#password = "<password>"
 # 如果设置为 true，将使用直接连接方式。
 # 如果希望采集集群每个实例的 mongodb_rs_myState 指标，需要开启 direct_connect
 direct_connect = true

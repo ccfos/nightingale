@@ -1,12 +1,48 @@
 # Kubernetes
 
-This plugin is deprecated. For Kubernetes monitoring, refer to this [article series](https://flashcat.cloud/categories/kubernetes%E7%9B%91%E6%8E%A7%E4%B8%93%E6%A0%8F/).
+The legacy Categraf Kubernetes input is deprecated, but the dashboards and
+alerts remain usable. Collect native Prometheus endpoints with Categraf and
+deploy kube-state-metrics and node-exporter.
 
-However, the built-in alert rules and built-in dashboards under the Kubernetes category are still usable.
+Required sources include:
+
+| Source | Common endpoint |
+| --- | --- |
+| kube-apiserver | `https://<api-server>:6443/metrics` |
+| kubelet | `https://<node>:10250/metrics`, `/metrics/cadvisor`, `/metrics/resource` |
+| controller-manager | `https://<control-plane>:10257/metrics` |
+| scheduler | `https://<control-plane>:10259/metrics` |
+| kube-proxy | `http://<node>:10249/metrics` |
+| kube-state-metrics | `http://<service>:8080/metrics` |
+| CoreDNS | `http://<coredns>:9153/metrics` |
+| node-exporter | `http://<node>:9100/metrics` |
+
+Example:
+
+```toml
+interval = 15
+
+[[instances]]
+urls = ["https://kubernetes.default.svc:443/metrics"]
+bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+use_tls = true
+tls_ca = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+labels = { cluster = "prod-k8s", job = "apiserver" }
+
+[[instances]]
+urls = ["http://kube-state-metrics.monitoring.svc:8080/metrics"]
+labels = { cluster = "prod-k8s", job = "kube-state-metrics" }
+```
+
+Use one stable `cluster` label across all targets and preserve a unique
+`instance`. K3s may bind scheduler, controller-manager, and proxy metrics to
+loopback; collect them locally or through a restricted proxy. Do not expose
+unauthenticated control-plane metrics publicly. Missing roles and HA-only
+features legitimately produce empty panels in a single-node cluster.
 
 ---
 
-Below is the documentation of the old plugin:
+The legacy plugin documentation follows for existing deployments:
 
 forked from telegraf/kubernetes. This plugin fetches monitoring data through the API provided by kubelet, including metrics for system containers, nodes, pod volumes, pod networks, and pod containers.
 

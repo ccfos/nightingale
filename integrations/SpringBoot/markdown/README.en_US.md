@@ -2,26 +2,41 @@
 
 For projects in the Java ecosystem, micrometer is a common choice for exposing metrics data. However, SpringBoot projects can directly use SpringBoot Actuator to expose metrics data. Actuator is also implemented on top of micrometer under the hood — it is just simpler to use.
 
+Add `spring-boot-starter-actuator` and `micrometer-registry-prometheus`.
+
+See [Spring Boot Metrics](https://docs.spring.io/spring-boot/reference/actuator/metrics.html).
+
 ## Application configuration
 
-Add the following configuration to application.properties:
+For Spring Boot 3.x:
 
 ```properties
-management.endpoint.metrics.enabled=true
-management.endpoints.web.exposure.include=*
+management.endpoints.web.exposure.include=health,info,prometheus
+management.endpoint.prometheus.enabled=true
+management.prometheus.metrics.export.enabled=true
+```
+
+For Spring Boot 2.x:
+
+```properties
+management.endpoints.web.exposure.include=health,info,prometheus
 management.endpoint.prometheus.enabled=true
 management.metrics.export.prometheus.enabled=true
 ```
 
-Then start the project and visit `http://localhost:8080/actuator/prometheus` to see monitoring data in prometheus format.
+Avoid exposing every Actuator endpoint unless it is required.
 
 ## Collection configuration
 
-Since the monitoring data is exposed in Prometheus format, it can be collected directly with the categraf prometheus plugin. The configuration file is `conf/input.prometheus/prometheus.toml`. A sample configuration:
+Create `conf/input.prometheus/springboot.toml`:
 
 ```toml
 [[instances]]
-urls = [
-     "http://192.168.11.177:8080/actuator/prometheus"
-]
+urls = ["http://127.0.0.1:8080/actuator/prometheus"]
+url_label_key = "instance"
+url_label_value = "{{.Host}}"
+labels = { job = "springboot", application = "order-service" }
 ```
+
+Keep `application` stable across replicas and `instance` unique. Generate real
+HTTP traffic and GC activity before validating rate and latency panels.

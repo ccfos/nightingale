@@ -67,9 +67,8 @@
 
     # [[instances.metrics]]
     # measurement = "sessions"
-    # label_fields = [ "status", "type" ]
     # metric_fields = [ "value" ]
     # timeout = "3s"
     # request = '''
-    # SELECT status, type, COUNT(*) as value FROM v$session GROUP BY status, type
+    # SELECT count() AS value FROM system.processes
     # '''

@@ -9,14 +9,9 @@
       {
         "name": "datasource",
         "type": "datasource",
-        "definition": "prometheus"
-      },
-      {
-        "name": "datasource",
+        "definition": "prometheus",
         "label": "DataSource",
-        "type": "datasource",
-        "hide": false,
-        "definition": "prometheus"
+        "hide": false
       },
       {
         "name": "region",
@@ -146,7 +141,7 @@
         "targets": [
           {
             "refId": "A",
-            "expr": "$metric{container_host=~\"$container_host\",region=\"$region\",container_type!=\"Sidecar\"}",
+            "expr": "{__name__=~\"$metric\",container_host=~\"$container_host\",region=\"$region\",container_type!=\"Sidecar\"}",
             "legend": "{{host}}/{{container_host}}:{{container_type}}"
           }
         ],

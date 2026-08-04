@@ -469,22 +469,63 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 		logger.Infof("alert_eval_%d datasource_%d event-hash-%s %s", p.rule.Id, p.datasourceId, event.Hash, message)
 	}()
 
-	// 只屏蔽通知：事件要产生并落库，但不能消耗通知计数与发送时间，
-	// 否则解除屏蔽后 fired.NotifyCurNumber 会被"虚假发送"耗尽、LastSentTime 也被推进，
-	// 导致本该恢复的通知一直发不出去。这里首次触发入队持久化（consume 阶段跳过发送），
-	// 后续评估仅刷新评估时间保活，不重复入队、不推进任何通知计数。
+	// 只屏蔽通知：事件要照常产生并落库，落库节奏与 notify_max_number 截断都与不屏蔽时完全一致，
+	// 仅不真正发送通知。为避免解除屏蔽后真实的 NotifyCurNumber 被"虚假发送"耗尽、LastSentTime 被推进，
+	// 导致重复/恢复通知发不出去，这里用一套影子计数（LastMutedPersistTime / MutedPersistNumber）
+	// 复刻正常重复逻辑来驱动落库快照，真实的 NotifyCurNumber、LastSentTime 全程保持不变。
 	if event.NotifyMuted == 1 {
 		if fired, has := p.fires.Get(event.Hash); has {
-			p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 			event.FirstTriggerTime = fired.FirstTriggerTime
 			// 与正常 fired 路径一致，每轮评估都触发 hook：下游（如 n9e-plus 抑制存储）
 			// 按时间戳过期，依赖每轮刷新感知事件仍活跃；只屏蔽通知的事件仍应参与抑制联动
 			p.HandleFireEventHook(event)
-			message = "notify muted, already persisted, skip re-enqueue"
+
+			// 对齐 notify_repeat_step == 0：不重复，仅保活，不再落新快照
+			if cachedRule.NotifyRepeatStep == 0 {
+				p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+				message = "notify muted, notify_repeat_step is 0, no repeat snapshot"
+				return
+			}
+
+			// 影子发送时间：本屏蔽期首次落库前回退到进入屏蔽时的真实 LastSentTime
+			mutedBase := fired.LastMutedPersistTime
+			if mutedBase == 0 {
+				mutedBase = fired.LastSentTime
+			}
+			if event.LastEvalTime >= mutedBase+int64(cachedRule.NotifyRepeatStep)*60 {
+				// 影子通知次数：本屏蔽期首次落库前继承进入屏蔽时的真实 NotifyCurNumber，
+				// 从而与不屏蔽时一样受 notify_max_number 截断
+				mutedNum := fired.MutedPersistNumber
+				if mutedNum == 0 {
+					mutedNum = fired.NotifyCurNumber
+				}
+				if cachedRule.NotifyMaxNumber != 0 && mutedNum >= cachedRule.NotifyMaxNumber {
+					p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+					message = fmt.Sprintf("notify muted, snapshot stalled by notify_max_number(%d >= %d)", mutedNum, cachedRule.NotifyMaxNumber)
+					return
+				}
+				// 真实通知状态全程冻结，仅推进影子计数后落一条快照
+				event.NotifyCurNumber = fired.NotifyCurNumber
+				event.LastSentTime = fired.LastSentTime
+				event.FirstEvalTime = fired.FirstEvalTime
+				event.MutedPersistNumber = mutedNum + 1
+				event.LastMutedPersistTime = event.LastEvalTime
+				message = fmt.Sprintf("notify muted, periodic snapshot persisted(#%d)", event.MutedPersistNumber)
+				p.pushEventToQueue(event)
+				return
+			}
+
+			p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+			message = "notify muted, kept alive, next snapshot pending"
 			return
 		}
+		// 屏蔽期内首次由静默转为 firing：立即落一条，并把影子计数作为后续落库节奏基准。
+		// 影子基准用 LastEvalTime（=now，与 512 行后续快照及非屏蔽路径 LastSentTime 取值一致），
+		// 不用 TriggerTime（数据时间戳），否则第一条重复快照会提前一个数据延迟窗口触发。
 		event.NotifyCurNumber = 0
 		event.FirstTriggerTime = event.TriggerTime
+		event.MutedPersistNumber = 1
+		event.LastMutedPersistTime = event.LastEvalTime
 		message = "notify muted, event persisted without notifying"
 		p.HandleFireEventHook(event)
 		p.pushEventToQueue(event)
@@ -493,6 +534,9 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 
 	if fired, has := p.fires.Get(event.Hash); has {
 		p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+		// 事件已解除屏蔽、以正常状态评估：清掉屏蔽期的影子计数，
+		// 使下次再进入屏蔽时从当前真实通知状态重新起算（屏蔽反复开关不残留）
+		p.fires.ResetMutedShadow(event.Hash)
 		event.FirstTriggerTime = fired.FirstTriggerTime
 		p.HandleFireEventHook(event)
 
@@ -551,7 +595,14 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 	}
 
 	dispatch.LogEvent(e, "push_queue")
-	if !queue.EventQueue.PushFront(e) {
+
+	// 入队的必须是快照，不能是 e 本身：p.fires 里存的就是同一个指针，
+	// RecoverSingle 会把它取出来原地改成恢复事件（IsRecovered=true）再二次入队，
+	// UpdateLastEvalTime / ResetMutedShadow 也每个评估周期原地写它。
+	// 队列一旦有积压，还没被消费的那条触发事件就会被就地改写成恢复事件，
+	// 结果是 alert_his_event 落两条恢复、零条触发，alert_cur_event 什么也不留；
+	// 同时消费者 goroutine 正在读这个对象，构成 data race。
+	if !queue.EventQueue.PushFront(e.DeepCopy()) {
 		logger.Warningf("alert_eval_%d datasource_%d event_push_queue: queue is full, event:%s", p.rule.Id, p.datasourceId, e.Hash)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "push_event_queue", p.BusiGroupCache.GetNameByBusiGroupId(p.rule.GroupId), fmt.Sprintf("%v", p.rule.Id)).Inc()
 	}

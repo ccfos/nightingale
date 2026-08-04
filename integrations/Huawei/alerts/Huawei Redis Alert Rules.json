@@ -18,7 +18,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_cpu_avg_usage > 80",
+                    "prom_ql": "huaweicloud_sys_dcs_cpu_avg_usage \u003e 80",
                     "severity": 2,
                     "unit": "percent"
                 }
@@ -44,7 +44,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "DCS Redis 平均 CPU 使用率超过 80%，Redis 是单线程模型，CPU 打满会让所有命令排队。",
+            "action": "1) 用 SLOWLOG GET 10 找耗时最高的命令；2) 重点排查 KEYS、HGETALL、SMEMBERS 等 O(N) 命令与大 key 操作，改用 SCAN 或分批；3) 确认是否正在做 RDB/AOF 持久化导致 CPU 尖峰；4) 优化命令后仍高的在控制台升级实例规格。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -76,7 +80,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_memory_usage > 80",
+                    "prom_ql": "huaweicloud_sys_dcs_memory_usage \u003e 80",
                     "severity": 1,
                     "unit": "percent"
                 }
@@ -102,7 +106,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "DCS Redis 内存使用率超过 80%，继续增长会触发大量 key 驱逐，或在 noeviction 策略下拒绝写入。",
+            "action": "1) 用 redis-cli --bigkeys 定位大 key 并拆分或补 TTL；2) 用 INFO memory 确认碎片率，碎片高可开启 activedefrag；3) 检查是否有未设过期时间的 key 持续堆积；4) 确认 maxmemory-policy 后在控制台扩容规格。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -160,7 +168,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "DCS Redis 出现慢日志，有命令执行超过阈值，会阻塞后续所有命令（Redis 单线程）。",
+            "action": "1) 用 SLOWLOG GET 10 看具体慢命令与耗时；2) 重点排查 O(N) 命令与大 key 操作；3) 改用 SCAN 分批、拆分大 key 是根本解法；4) 若慢命令来自定时任务，改到低峰期执行。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -192,7 +204,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_bandwidth_usage > 90",
+                    "prom_ql": "huaweicloud_sys_dcs_bandwidth_usage \u003e 90",
                     "severity": 2,
                     "unit": "percent"
                 }
@@ -218,7 +230,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "DCS Redis 带宽使用率超过 90%，触顶后会触发流控，命令延迟大幅上升甚至超时。",
+            "action": "1) 用 INFO stats 看 instantaneous_input_kbps / output_kbps 确认方向；2) 用 redis-cli --bigkeys 找大 key——读写大 key 是带宽被打满的最常见原因；3) 拆分大 key、减少一次性批量读取；4) 确实需要更高带宽的在控制台升级规格。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -250,7 +266,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_total_connections_received > 10000",
+                    "prom_ql": "huaweicloud_sys_dcs_total_connections_received \u003e 10000",
                     "severity": 3,
                     "unit": "cps"
                 }
@@ -276,7 +292,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "DCS Redis 新建连接数偏高，说明客户端在频繁建连断连，会持续消耗 CPU 并推高延迟。",
+            "action": "1) 用 CLIENT LIST 按来源统计，定位频繁重连的客户端；2) 应用侧改用连接池并复用连接，这是根本解法；3) 检查客户端是否设置了过短的连接超时导致反复重连；4) 确认没有触发流控或内存告警导致连接被服务端断开。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -308,7 +328,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_cpu_usage > 80",
+                    "prom_ql": "huaweicloud_sys_dcs_cpu_usage \u003e 80",
                     "severity": 2,
                     "unit": "percent"
                 }
@@ -334,7 +354,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "DCS Redis 单节点最大 CPU 使用率超过 80%，该节点上的命令会排队，集群模式下表现为部分 key 变慢。",
+            "action": "1) 在控制台定位是哪个节点 CPU 高；2) 集群模式下通常是数据倾斜——某个 slot 有热 key，用 --hotkeys 定位；3) 热 key 可通过本地缓存或拆分 key 缓解；4) 均衡后仍高的升级规格。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -366,7 +390,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_connected_clients > 8000",
+                    "prom_ql": "huaweicloud_sys_dcs_connected_clients \u003e 8000",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -392,7 +416,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "DCS Redis 活跃客户端连接数超过 8000，接近实例规格上限，触顶后新连接会被拒绝。",
+            "action": "1) 在华为云控制台看该 DCS 实例的监控曲线确认趋势；2) 用 redis-cli 连上实例执行 INFO 确认对应指标的真实情况；3) 定位到具体原因后按 Redis 常规路径处理（大 key、慢命令、连接泄漏）；4) 容量不足的在控制台变更实例规格。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -424,7 +452,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_rx_controlled > 0",
+                    "prom_ql": "huaweicloud_sys_dcs_rx_controlled \u003e 0",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -450,129 +478,17 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "DCS Redis 触发了流控，说明带宽或 QPS 已超出实例规格上限，被流控的命令会明显变慢甚至失败。",
+            "action": "1) 在控制台看流控发生的时间点，对照带宽与 QPS 曲线确认是哪一项超限；2) 带宽超限的用 --bigkeys 找大 key 并拆分；3) QPS 超限的在应用侧加本地缓存或合并请求；4) 确实需要更高规格的在控制台变更实例。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
         "update_at": 0,
         "update_by": "",
         "uuid": 1763827340139502,
-        "cur_event_count": 0,
-        "cron_pattern": "@every 60s",
-        "notify_rule_ids": [],
-        "pipeline_configs": null,
-        "notify_version": 1
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "cluster": "",
-        "name": "华为云Redis网络瞬时输入流量大于规格基准带宽的80%",
-        "note": "仅Redis 3.0实例的单机/主备实例进行配置，建议按Redis 3.0规格基准带宽的80%进行配置。其他实例不配置。",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 0,
-        "severities": null,
-        "disabled": 0,
-        "prom_for_duration": 120,
-        "prom_ql": "",
-        "rule_config": {
-            "queries": [
-                {
-                    "prom_ql": "huaweicloud_sys_dcs_instantaneous_input_kbps > <baseline_bandwidth_kbps> * 0.8",
-                    "severity": 1,
-                    "unit": "bitsSecIEC"
-                }
-            ],
-            "version": "v1"
-        },
-        "event_relabel_config": null,
-        "prom_eval_interval": 15,
-        "enable_stime": "",
-        "enable_stimes": null,
-        "enable_etime": "",
-        "enable_etimes": null,
-        "enable_days_of_week": null,
-        "enable_days_of_weeks": null,
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": null,
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": {},
-        "extra_config": null,
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1763827340141964,
-        "cur_event_count": 0,
-        "cron_pattern": "@every 60s",
-        "notify_rule_ids": [],
-        "pipeline_configs": null,
-        "notify_version": 1
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "cluster": "",
-        "name": "华为云Redis网络瞬时输出流量大于规格基准带宽的80%",
-        "note": "仅Redis 3.0实例的单机/主备实例进行配置，建议按Redis 3.0规格基准带宽的80%进行配置。其他实例不配置。",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 0,
-        "severities": null,
-        "disabled": 0,
-        "prom_for_duration": 120,
-        "prom_ql": "",
-        "rule_config": {
-            "queries": [
-                {
-                    "prom_ql": "huaweicloud_sys_dcs_instantaneous_output_kbps > <baseline_bandwidth_kbps> * 0.8",
-                    "severity": 1,
-                    "unit": "bitsSecIEC"
-                }
-            ],
-            "version": "v1"
-        },
-        "event_relabel_config": null,
-        "prom_eval_interval": 15,
-        "enable_stime": "",
-        "enable_stimes": null,
-        "enable_etime": "",
-        "enable_etimes": null,
-        "enable_days_of_week": null,
-        "enable_days_of_weeks": null,
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": null,
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": {},
-        "extra_config": null,
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1763827340145022,
         "cur_event_count": 0,
         "cron_pattern": "@every 60s",
         "notify_rule_ids": [],
@@ -598,7 +514,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_dcs_p_connected_clients > 20000",
+                    "prom_ql": "huaweicloud_sys_dcs_p_connected_clients \u003e 20000",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -624,7 +540,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "DCS Redis Proxy 节点活跃客户端数超过 20000，接近 Proxy 承载上限，触顶后新连接会被拒绝。",
+            "action": "1) 在华为云控制台看该 DCS 实例的监控曲线确认趋势；2) 用 redis-cli 连上实例执行 INFO 确认对应指标的真实情况；3) 定位到具体原因后按 Redis 常规路径处理（大 key、慢命令、连接泄漏）；4) 容量不足的在控制台变更实例规格。",
+            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

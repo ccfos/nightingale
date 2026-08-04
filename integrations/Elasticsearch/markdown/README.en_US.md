@@ -9,7 +9,7 @@ For small clusters, set `local=false` and scrape any single node in the cluster 
 
 categraf configuration file: `conf/input.elasticsearch/elasticsearch.toml`
 
-```yaml
+```toml
 [[instances]]
 servers = ["http://192.168.11.177:9200"]
 http_timeout = "10s"

@@ -7,6 +7,9 @@ Streamable HTTP 入口，供 MCP 生态使用。
 
 实现复用现有 `aiagent.Agent` 内核，不做并行实现。
 
+> 本文是**服务端实现说明**（模块布局、执行流程、设计取舍）。
+> 只想知道怎么配置开放给第三方，看 [a2a-integration.md](./a2a-integration.md)。
+
 ## 一、配置
 
 ```toml
@@ -277,32 +280,39 @@ go run ./cmd/a2a-cli \
 go run ./cmd/a2a-cli --server http://127.0.0.1:17000 --token <t> --message hi --get
 ```
 
-直接 curl 也可以：
+直接 curl 也可以。注意 REST 绑定的路径是 `/a2a/message:send`（不带 `/v1`），
+且 `messageId` / `role` / `parts` 三个字段必填，`role` 的枚举值是 `ROLE_USER`：
 
 ```bash
 # 1) discover
 curl https://n9e.example.com/.well-known/agent-card.json
 
 # 2) 发消息（非流式）
-curl -X POST https://n9e.example.com/a2a/v1/messages:send \
+curl -X POST https://n9e.example.com/a2a/message:send \
   -H "Content-Type: application/json" \
   -H "X-User-Token: <user_token>" \
   -d '{
     "message": {
-      "role": "user",
+      "messageId": "req-0001",
+      "role": "ROLE_USER",
       "parts": [{ "text": "查看 prod 业务组当前正在告警的事件" }]
-    }
+    },
+    "metadata": { "lang": "zh_CN" }
   }'
 
-# 3) 续接同一 chat（多轮）
-curl -X POST https://n9e.example.com/a2a/v1/messages:send \
+# 3) 续接同一 chat（多轮）：contextId 在 message 里
+curl -X POST https://n9e.example.com/a2a/message:send \
   -H "Content-Type: application/json" \
   -H "X-User-Token: <user_token>" \
   -d '{
-    "context_id": "chat-xxx",
     "message": {
-      "role": "user",
+      "messageId": "req-0002",
+      "role": "ROLE_USER",
+      "contextId": "chat-xxx",
       "parts": [{ "text": "进一步分析其中第一条" }]
     }
   }'
 ```
+
+面向管理员的接入配置说明（开关、反向代理、Token、验证）见
+[a2a-integration.md](./a2a-integration.md)。

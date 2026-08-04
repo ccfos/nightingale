@@ -73,3 +73,39 @@ func TestVerifyChannelConfig_Nil(t *testing.T) {
 		t.Fatal("expected error for nil config")
 	}
 }
+
+// 「测试尚未保存的媒介配置」这条路径把一个 ID 为 0、从未落库的 config 直接送进投递链路。
+// Resolve 一旦改成按 ID 查缓存，该功能会在运行时静默失效（Resolve 返回 !ok，
+// 报的是 "unknown channel ident"，与真正的配置错误无法区分），因此把不变量钉在这里。
+func TestResolveWorksOnUnsavedConfig(t *testing.T) {
+	cases := []struct {
+		name    string
+		ident   string
+		reqType string
+	}{
+		{name: "callback by ident", ident: "callback", reqType: "http"},
+		{name: "custom ident falls back by request_type", ident: "my-webhook", reqType: "http"},
+		{name: "smtp", ident: "email", reqType: "smtp"},
+		{name: "flashduty", ident: "flashduty", reqType: "flashduty"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ncc := &models.NotifyChannelConfig{
+				// ID 刻意留零值：这正是未保存配置的形态
+				Ident:       tc.ident,
+				RequestType: tc.reqType,
+				RequestConfig: &models.RequestConfig{
+					HTTPRequestConfig: &models.HTTPRequestConfig{URL: "https://example.com/hook", Method: "POST"},
+				},
+			}
+
+			if ncc.ID != 0 {
+				t.Fatalf("precondition failed: ID = %d, want 0", ncc.ID)
+			}
+			if _, ok := DefaultRegistry.Resolve(ncc); !ok {
+				t.Fatalf("Resolve failed for unsaved config ident=%s request_type=%s", tc.ident, tc.reqType)
+			}
+		})
+	}
+}

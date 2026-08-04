@@ -44,7 +44,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "有 systemd 服务不处于 active 状态，该服务承载的功能已经中断。",
+            "action": "1) 用 systemctl --failed 列出所有异常单元，再用 systemctl status \u003cunit\u003e 看具体状态与最近日志；2) 用 journalctl -u \u003cunit\u003e -n 100 --no-pager 定位退出原因；3) 配置问题先修复配置再 systemctl restart \u003cunit\u003e；4) 反复失败的用 systemctl show \u003cunit\u003e -p NRestarts 确认是否已陷入重启循环，先定位根因不要盲目重启。",
+            "runbook_url": "https://www.freedesktop.org/software/systemd/man/systemctl.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -76,7 +80,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "increase(systemd_service_restart_total[5m]) > 3",
+                    "prom_ql": "increase(systemd_service_restart_total[5m]) \u003e 3",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -102,7 +106,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "systemd 服务 5 分钟内重启超过 3 次，已进入崩溃重启循环，服务实际处于不可用状态。",
+            "action": "1) 用 journalctl -u \u003cunit\u003e -n 200 --no-pager 看每次退出前的报错；2) 检查退出码与是否被 OOM 杀死（dmesg -T | grep -i 'killed process'）；3) 依赖未就绪导致的（连不上数据库、挂载未完成），在 unit 里补 After=/Requires= 并修复依赖；4) 定位期间可临时 systemctl stop 该服务，避免持续刷日志占满磁盘。",
+            "runbook_url": "https://www.freedesktop.org/software/systemd/man/systemctl.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -160,7 +168,11 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "summary": "systemd 整体状态不是 running（通常是 degraded），说明系统里有单元处于失败状态，可能影响开机自启与依赖链。",
+            "action": "1) 用 systemctl status 看整体状态，再用 systemctl --failed 列出失败的单元；2) 逐个用 journalctl -u \u003cunit\u003e 定位失败原因并修复；3) 确认失败单元是否影响关键业务——有些是无关的一次性任务，可用 systemctl reset-failed 清理状态；4) 修复后再次确认 systemctl is-system-running 返回 running。",
+            "runbook_url": "https://www.freedesktop.org/software/systemd/man/systemctl.html"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

@@ -14,6 +14,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
+	"github.com/prometheus/common/model"
 	"github.com/tidwall/match"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -316,6 +317,19 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 					val = int64(v)
 				case int32:
 					val = int64(v)
+				case string:
+					// 前端下发的是 id，但 AI 生成、模板导入、API 直调的规则里 values 可能是
+					// 数字字符串或数据源名。静默丢弃会让规则解析不出数据源（引擎不评估、
+					// test-fire 报数据源未匹配）且难以排查，这里做兼容。
+					// 先按名字匹配再按数字解析：数据源名允许是纯数字（名为 "5" 的数据源 id 未必是 5），
+					// 名字是用户显式配置的，优先级高于把字符串当 id 猜
+					if id, ok := nameMap[v]; ok {
+						val = id
+					} else if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+						val = n
+					} else {
+						continue
+					}
 				default:
 					continue
 				}
@@ -615,6 +629,10 @@ func (ar *AlertRule) Verify() error {
 		return err
 	}
 
+	if err := ar.validateEventRelabelConfig(); err != nil {
+		return err
+	}
+
 	if ar.NotifyVersion == 0 {
 		// 如果是旧版本，则清空 NotifyRuleIds
 		ar.NotifyRuleIds = []int64{}
@@ -645,6 +663,65 @@ func (ar *AlertRule) validateCronPattern() error {
 	_, err := scheduler.AddFunc(ar.CronPattern, func() {})
 	if err != nil {
 		return fmt.Errorf("invalid cron pattern: %s, error: %v", ar.CronPattern, err)
+	}
+
+	return nil
+}
+
+// relabelConfigForVerify 用宽松类型接收 event_relabel_config，只为把非法 label name
+// 定位到具体第几条配置：直接解成 pconf.RelabelConfig 的话，它的 SourceLabels 是
+// model.LabelNames，遇到非法 label name 会中途中止，拿不到出错的下标。
+type relabelConfigForVerify struct {
+	SourceLabels []string `json:"source_labels"`
+}
+
+// validateEventRelabelConfig 保证 rule_config.event_relabel_config 能被读取端解开。
+// 读取端用的是 pconf.RelabelConfig，source_labels 里的非法 label name（空串、数字开头等）
+// 会让它的 UnmarshalJSON 失败：center 侧表现为 event_relabel_config 被静默改坏，edge 侧表现为
+// 整批告警规则同步失败、进程退出。字段类型不合法（如 modulus 传字符串）虽不会打挂
+// edge，但读取端同样整段丢弃，表现为"保存成功但 relabel 永远不生效"。两类都拦在写入口。
+func (ar *AlertRule) validateEventRelabelConfig() error {
+	if ar.RuleConfig == "" {
+		return nil
+	}
+
+	// 用 RawMessage 接住 relabel 段：rule_config 的整体结构由各 cate 自己定义，
+	// 这里只关心 relabel 部分，其余部分解不出来就不越权报错
+	var ruleConfig struct {
+		EventRelabelConfig json.RawMessage `json:"event_relabel_config"`
+	}
+	if err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig); err != nil {
+		return nil
+	}
+
+	if len(ruleConfig.EventRelabelConfig) == 0 {
+		return nil
+	}
+
+	// 宽松类型解得开时，优先给出带下标的报错
+	var looseConfigs []*relabelConfigForVerify
+	if err := json.Unmarshal(ruleConfig.EventRelabelConfig, &looseConfigs); err == nil {
+		for i, cfg := range looseConfigs {
+			if cfg == nil {
+				continue
+			}
+
+			// 只校验 source_labels：它在读取端是 model.LabelNames，非法 label name 会让
+			// 反序列化失败。target_label 在读取端是普通 string，不参与反序列化校验，
+			// 且运行期 lowercase/uppercase/hashmod 等分支会原样写出（含点号的标签正是
+			// relabel.go 里 REPLACE_DOT 机制要支持的），所以这里不能收得比读取端更严。
+			for _, sourceLabel := range cfg.SourceLabels {
+				if !model.LabelName(sourceLabel).IsValid() {
+					return fmt.Errorf("event_relabel_config[%d]: %q is not a valid label name in source_labels", i, sourceLabel)
+				}
+			}
+		}
+	}
+
+	// 最后按读取端的真实类型解一遍，判定标准与 DB2FE 完全一致
+	var configs []*pconf.RelabelConfig
+	if err := json.Unmarshal(ruleConfig.EventRelabelConfig, &configs); err != nil {
+		return fmt.Errorf("invalid event_relabel_config: %v", err)
 	}
 
 	return nil
@@ -1080,11 +1157,24 @@ func (ar *AlertRule) DB2FE() error {
 	json.Unmarshal([]byte(ar.ExtraConfig), &ar.ExtraConfigJSON)
 
 	// 解析 RuleConfig 字段
-	var ruleConfig struct {
-		EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config"`
+	// 空 rule_config 在老库里是存量数据（该列 text not null 无默认值），不是异常，直接跳过，
+	// 否则每次列表接口都会为这些行刷一条 Warning。
+	if ar.RuleConfig != "" {
+		var ruleConfig struct {
+			EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config"`
+		}
+		if err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig); err != nil {
+			// 这里的错误不能吞：SourceLabels 是 model.LabelNames，遇到非法 label name 会
+			// 中途中止，留下一个被改坏的结构体（已扩容但未赋值的元素变成空串，报错位置之后的
+			// 字段全丢）。把这份数据发给 edge，edge 反序列化整批规则都会失败并退出进程，
+			// 所以宁可整段置空，也不能把伪造出来的值传下去。
+			logger.Warningf("alert rule(id=%d name=%s) decode event_relabel_config failed, dropped: %v",
+				ar.Id, ar.Name, err)
+			ar.EventRelabelConfig = nil
+		} else {
+			ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
+		}
 	}
-	json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
-	ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
 
 	// 兼容旧逻辑填充 cron_pattern
 	if ar.CronPattern == "" && ar.PromEvalInterval != 0 {
@@ -1206,16 +1296,53 @@ func AlertRuleGetsLegacyNotifyByBGIds(ctx *ctx.Context, bgids []int64, includeDi
 	return lst, err
 }
 
+// rawAlertRule 与 json.RawMessage 一样延迟解码，额外实现 String()，
+// 避免 poster 里 %+v 的 debug 日志把整批规则打成字节十进制数组。
+type rawAlertRule []byte
+
+func (r *rawAlertRule) UnmarshalJSON(b []byte) error {
+	*r = append((*r)[:0], b...)
+	return nil
+}
+
+func (r rawAlertRule) String() string {
+	return string(r)
+}
+
 func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 	if !ctx.IsCenter {
-		lst, err := poster.GetByUrls[[]*AlertRule](ctx, "/v1/n9e/alert-rules?disabled=0")
+		// 逐条反序列化，而不是一次解成 []*AlertRule：单条规则里的脏数据（例如
+		// event_relabel_config 里的非法 label name）会让整个响应解码失败，进而
+		// 导致边缘机房一条规则都同步不到、启动阶段直接 exit。坏规则跳过并告警，
+		// 其余规则照常生效。
+		raws, err := poster.GetByUrls[[]rawAlertRule](ctx, "/v1/n9e/alert-rules?disabled=0")
 		if err != nil {
 			return nil, err
 		}
-		for i := 0; i < len(lst); i++ {
-			lst[i].FE2DB()
+
+		lst := make([]*AlertRule, 0, len(raws))
+		for i := 0; i < len(raws); i++ {
+			var ar AlertRule
+			if err := json.Unmarshal(raws[i], &ar); err != nil {
+				logger.Errorf("failed to decode alert rule, skipped: %v, raw: %s", err, string(raws[i]))
+				continue
+			}
+			ar.FE2DB()
+			lst = append(lst, &ar)
 		}
-		return lst, err
+
+		if skipped := len(raws) - len(lst); skipped > 0 {
+			logger.Errorf("%d of %d alert rules skipped due to decode failure", skipped, len(raws))
+		}
+
+		// 一条都没解出来，说明不是个别脏数据而是响应整体不可用（如 center 与 edge 版本不一致）。
+		// 此时必须返回 error：调用方据此保留旧缓存并继续重试，否则规则缓存会被清空、
+		// 同步水位又被刷成最新，告警全停且不再重试。
+		if len(raws) > 0 && len(lst) == 0 {
+			return nil, fmt.Errorf("all %d alert rules failed to decode", len(raws))
+		}
+
+		return lst, nil
 	}
 
 	session := DB(ctx).Where("disabled = ?", 0)

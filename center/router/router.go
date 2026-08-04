@@ -32,6 +32,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
 	"gorm.io/gorm"
 
@@ -60,6 +61,13 @@ type Router struct {
 	UserTokenCache    *memsto.UserTokenCacheType
 	Ctx               *ctx.Context
 	LogDir            string
+
+	// Pushgw is this deployment's forwarding config. It is only read to answer
+	// "which datasource do host metrics end up in" (categrafMeta), so it is set
+	// after New() rather than taken as a parameter — an embedder that never
+	// sets it just gets an empty writer list and the UI falls back to letting
+	// the user pick the datasource.
+	Pushgw pconf.Pushgw
 
 	// Sandbox is the Skill script-execution isolation controller (pkg/sandbox).
 	// Built once at New() from the configured capabilities; nil-safe (a disabled
@@ -465,6 +473,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		// public software. Same posture as /pub and /site-info.
 		pages.GET("/agents/categraf/meta", rt.categrafMeta)
 		pages.GET("/agents/categraf/install.sh", rt.categrafInstallScript)
+		pages.GET("/agents/categraf/collect.sh", rt.categrafCollectScript)
 		pages.GET("/agents/categraf/download", rt.categrafDownload)
 
 		// pages.GET("/builtin-boards", rt.builtinBoardGets)
@@ -519,6 +528,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/busi-groups/alert-rules/clones", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.batchAlertRuleClone)
 		pages.POST("/busi-group/alert-rules/notify-tryrun", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.alertRuleNotifyTryRun)
 		pages.POST("/busi-group/alert-rules/enable-tryrun", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.alertRuleEnableTryRun)
+		pages.POST("/busi-group/:id/alert-rule/test-fire", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.alertRuleTestFire)
 
 		pages.GET("/busi-groups/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGetsByGids)
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
@@ -550,6 +560,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 		pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
+		pages.GET("/notification-records/used", rt.auth(), rt.user(), rt.notificationRecordUsed)
 		pages.GET("/event-detail/:hash", rt.eventDetailPage)
 		pages.GET("/alert-eval-detail/:id", rt.alertEvalDetailPage)
 		pages.GET("/trace-logs/:traceid", rt.traceLogsPage)
@@ -588,9 +599,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
 		pages.POST("/datasource/plugin/list", rt.auth(), rt.pluginList)
 		pages.POST("/datasource/upsert", rt.auth(), rt.admin(), rt.datasourceUpsert)
+		pages.POST("/datasource/grafana/fetch", rt.auth(), rt.admin(), rt.datasourceGrafanaFetch)
+		pages.POST("/datasource/grafana/import", rt.auth(), rt.admin(), rt.datasourceGrafanaImport)
 		pages.POST("/datasource/desc", rt.auth(), rt.admin(), rt.datasourceGet)
 		pages.POST("/datasource/status/update", rt.auth(), rt.admin(), rt.datasourceUpdataStatus)
 		pages.DELETE("/datasource/", rt.auth(), rt.admin(), rt.datasourceDel)
+		// 模板匹配是只读探测，普通用户可用；导入动作的权限由业务组/payload 接口各自把关
+		pages.POST("/datasource/template-match", rt.auth(), rt.user(), rt.datasourceTemplateMatch)
 
 		pages.GET("/roles", rt.auth(), rt.user(), rt.roleGets)
 		pages.POST("/roles", rt.auth(), rt.user(), rt.perm("/roles/add"), rt.roleAdd)
@@ -737,6 +752,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/event-pipelines", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.eventPipelinesList)
 		pages.POST("/event-pipeline", rt.auth(), rt.user(), rt.perm("/event-pipelines/add"), rt.addEventPipeline)
 		pages.PUT("/event-pipeline", rt.auth(), rt.user(), rt.perm("/event-pipelines/put"), rt.updateEventPipeline)
+		pages.PUT("/event-pipelines/disabled", rt.auth(), rt.user(), rt.perm("/event-pipelines/put"), rt.updateEventPipelinesDisabled)
 		pages.GET("/event-pipeline/:id", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipeline)
 		pages.DELETE("/event-pipelines", rt.auth(), rt.user(), rt.perm("/event-pipelines/del"), rt.deleteEventPipelines)
 		pages.POST("/event-pipeline-tryrun", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.tryRunEventPipeline)
@@ -767,6 +783,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		// pages.POST("/dingtalk-group-list/:id", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.dingtalkGroupsGetByNotifyChannel)
 		pages.GET("/pagerduty-integration-key/:id/:service_id/:integration_id", rt.auth(), rt.user(), rt.pagerDutyIntegrationKeyGet)
 		pages.GET("/pagerduty-service-list/:id", rt.auth(), rt.user(), rt.pagerDutyNotifyServicesGet)
+		// 复用 /notification-channels/add 权限而不新增权限串：权限只定义在 cconf.builtInOps，
+		// 未进任何 SQL seed，新增串会导致所有存量部署必须手工授权后功能才可用。
+		pages.POST("/notify-channel-config/test", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelConfigTest)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)
 		pages.GET("/notify-channel-config/idents", rt.auth(), rt.user(), rt.notifyChannelIdentsGet)
 

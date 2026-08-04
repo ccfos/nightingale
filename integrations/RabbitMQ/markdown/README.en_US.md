@@ -1,11 +1,31 @@
 # RabbitMQ
 
-Recent versions of RabbitMQ (3.8 and above) have built-in support for exposing monitoring data in Prometheus format, so it can be collected directly with categraf's prometheus plugin. Enable RabbitMQ Prometheus access with:
+RabbitMQ 3.8 and later include a Prometheus plugin. Enable it:
 
 ```bash
 rabbitmq-plugins enable rabbitmq_prometheus
 ```
 
-Once enabled successfully, rabbitmq listens on port 15692 by default, and visiting `http://localhost:15692/metrics` shows monitoring data in prometheus format.
+It listens on port `15692` by default:
 
-For versions below 3.8, you still need to use categraf's rabbitmq plugin to collect monitoring data.
+```bash
+curl -fsS http://127.0.0.1:15692/metrics | grep rabbitmq_build_info
+```
+
+Create `conf/input.prometheus/rabbitmq.toml`:
+
+```toml
+[[instances]]
+urls = ["http://127.0.0.1:15692/metrics"]
+url_label_key = "instance"
+url_label_value = "{{.Host}}"
+labels = { job = "rabbitmq" }
+```
+
+The 3.8/3.8+ dashboards were validated against built-in Prometheus metrics.
+Create exchanges and queues and publish/consume messages before checking rate
+and backlog panels.
+
+For versions older than 3.8, enable `rabbitmq_management` and use Categraf's
+RabbitMQ input against port `15672`. Its metric names differ, so use the
+matching legacy dashboard.

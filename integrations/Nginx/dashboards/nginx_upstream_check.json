@@ -31,7 +31,7 @@
                     "y": 0
                 },
                 "links": [],
-                "name": "Requests",
+                "name": "Upstream Status",
                 "options": {
                     "standardOptions": {},
                     "valueMappings": [
@@ -57,7 +57,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "nginx_upstream_check_status_code{target=\"$target\"}",
+                        "expr": "last_over_time(nginx_upstream_check_status_code{target=\"$target\"}[$__rate_interval])",
                         "legend": "",
                         "refId": "A"
                     }
@@ -149,7 +149,6 @@
                 "definition": "label_values(nginx_upstream_check_status_code,target)",
                 "multi": false,
                 "name": "target",
-                "reg": "/http:\\/\\//",
                 "type": "query"
             },
             {
@@ -157,7 +156,7 @@
                     "cate": "prometheus",
                     "value": "${datasource}"
                 },
-                "definition": "label_values(nginx_upstream_check_status_code,upstream)",
+                "definition": "label_values(nginx_upstream_check_status_code{target=\"$target\"},upstream)",
                 "name": "upstream",
                 "type": "query"
             }

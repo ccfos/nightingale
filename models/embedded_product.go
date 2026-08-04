@@ -151,7 +151,10 @@ func CanMigrateEP(ctx *ctx.Context) bool {
 
 func MigrateEP(ctx *ctx.Context) {
 	var lst []string
-	_ = DB(ctx).Model(&Configs{}).Where("ckey=?  and external=? ", "embedded-dashboards", 0).Pluck("cval", &lst).Error
+	_ = DB(ctx).Model(&Configs{}).
+		Where("ckey = ?", "embedded-dashboards").
+		Where(configExternalEq(0)).
+		Pluck("cval", &lst).Error
 	if len(lst) > 0 {
 		var oldData []DashboardConfig
 		if err := json.Unmarshal([]byte(lst[0]), &oldData); err != nil {

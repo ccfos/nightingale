@@ -173,7 +173,7 @@
             {
                 "version": "3.1.0",
                 "id": "12ee5f93-8bfb-4445-9e71-7f07ab790719",
-                "type": "unknown",
+                "type": "timeseries",
                 "name": "proxy-CPU使用率（%）-Top$Top_Number",
                 "links": [],
                 "layout": {
@@ -191,6 +191,16 @@
                     }
                 ],
                 "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
                     "valueMappings": [],
                     "thresholds": {
                         "mode": "absolute",
@@ -210,19 +220,20 @@
                                 "value": 85
                             }
                         ]
-                    },
-                    "standardOptions": {
-                        "util": "none"
-                    },
-                    "legend": {
-                        "displayMode": "list"
-                    },
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
                     }
                 },
-                "custom": {},
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
                 "maxPerRow": 4,
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}"
@@ -475,7 +486,7 @@
             {
                 "version": "3.1.0",
                 "id": "1c0e06be-3891-478d-8e9d-f24bdafb80b3",
-                "type": "unknown",
+                "type": "timeseries",
                 "name": "node-CPU使用率（%）-Top$Top_Number",
                 "links": [],
                 "layout": {
@@ -493,6 +504,16 @@
                     }
                 ],
                 "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
                     "valueMappings": [],
                     "thresholds": {
                         "mode": "absolute",
@@ -510,19 +531,20 @@
                                 "value": 85
                             }
                         ]
-                    },
-                    "standardOptions": {
-                        "util": "none"
-                    },
-                    "legend": {
-                        "displayMode": "list"
-                    },
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
                     }
                 },
-                "custom": {},
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
                 "maxPerRow": 4,
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}"
@@ -752,7 +774,7 @@
             {
                 "version": "3.1.0",
                 "id": "3fa9f1b4-ee86-4098-a314-a8343a575b24",
-                "type": "unknown",
+                "type": "timeseries",
                 "name": "node-数据节点流入带宽情况-Top$Top_Number",
                 "links": [],
                 "layout": {
@@ -775,6 +797,16 @@
                     }
                 ],
                 "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
                     "valueMappings": [],
                     "thresholds": {
                         "mode": "absolute",
@@ -792,19 +824,20 @@
                                 "value": 75
                             }
                         ]
-                    },
-                    "standardOptions": {
-                        "util": "none"
-                    },
-                    "legend": {
-                        "displayMode": "list"
-                    },
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
                     }
                 },
-                "custom": {},
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
                 "maxPerRow": 4,
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}"
@@ -812,7 +845,7 @@
             {
                 "version": "3.1.0",
                 "id": "6cc79719-53ae-4a08-a0ac-32b8f1664815",
-                "type": "unknown",
+                "type": "timeseries",
                 "name": "node-数据节点流出带宽情况-Top$Top_Number",
                 "links": [],
                 "layout": {
@@ -835,6 +868,16 @@
                     }
                 ],
                 "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
                     "valueMappings": [],
                     "thresholds": {
                         "mode": "absolute",
@@ -852,19 +895,20 @@
                                 "value": 75
                             }
                         ]
-                    },
-                    "standardOptions": {
-                        "util": "none"
-                    },
-                    "legend": {
-                        "displayMode": "list"
-                    },
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
                     }
                 },
-                "custom": {},
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
                 "maxPerRow": 4,
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}"
@@ -1311,7 +1355,7 @@
             {
                 "version": "3.1.0",
                 "id": "4a372aec-01a7-4ab8-b49a-e9f23f425826",
-                "type": "unknown",
+                "type": "timeseries",
                 "name": "节点详情",
                 "links": [],
                 "layout": {
@@ -1349,16 +1393,6 @@
                     }
                 ],
                 "options": {
-                    "valueMappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "style": "line",
-                        "steps": [
-                            {
-                                "color": "#73BF69"
-                            }
-                        ]
-                    },
                     "standardOptions": {
                         "util": "none"
                     },
@@ -1368,9 +1402,30 @@
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
+                    },
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            }
+                        ]
                     }
                 },
-                "custom": {},
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
                 "maxPerRow": 4,
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}"

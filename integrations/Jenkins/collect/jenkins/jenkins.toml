@@ -10,3 +10,10 @@
 
 #response_timeout = "5s"
 
+# 只采集该时间窗内构建过的 job。
+# 注意：该项不配置时默认值为 0，等价于"截止时间就是当前时刻"，
+# 任何已完成的构建都会被判定为过期而跳过，jenkins_job_duration /
+# jenkins_job_number / jenkins_job_result_code 三个指标将永远采集不到。
+# 需要 job 维度指标（例如构建失败告警）时必须显式配置。
+max_build_age = "24h"
+

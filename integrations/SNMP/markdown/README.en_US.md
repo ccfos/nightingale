@@ -18,7 +18,7 @@ interval_times = 1
 timeout = "5s"
 version = 2
 community = "public"
-agent_host_tag = "switch_ip"
+agent_host_tag = "agent_host"
 retries = 1
 
 [[instances.field]]
@@ -40,7 +40,30 @@ oid = "IF-MIB::ifDescr"
 name = "ifDescr"
 is_tag = true
 
+[[instances.table.field]]
+oid = "IF-MIB::ifSpeed"
+name = "ifSpeed"
+
+[[instances.table.field]]
+oid = "IF-MIB::ifOperStatus"
+name = "ifOperStatus"
+
+[[instances.table.field]]
+oid = "IF-MIB::ifInOctets"
+name = "ifInOctets"
+
+[[instances.table.field]]
+oid = "IF-MIB::ifOutOctets"
+name = "ifOutOctets"
+
 ```
+
+`public` is for examples and test environments only. Use a restricted,
+deployment-specific community or preferably SNMPv3 in production.
+
+The bundled generic traffic dashboards depend on `agent_host`, `ifDescr`,
+`ifSpeed`, `ifOperStatus`, `ifInOctets`, and `ifOutOctets`. If you rename the
+agent tag, update the dashboard variables as well.
 
 The sample above uses SNMP v2. For v3, an example of the authentication settings:
 
@@ -48,7 +71,10 @@ The sample above uses SNMP v2. For v3, an example of the authentication settings
 version = 3
 sec_name = "managev3user"
 auth_protocol = "SHA"
-auth_password = "example.Demo.c0m"
+auth_password = "<auth-password>"
+sec_level = "authPriv"
+priv_protocol = "AES"
+priv_password = "<privacy-password>"
 ```
 
 In addition, for SNMP collection we recommend deploying a dedicated Categraf, because different monitored objects may need different collection frequencies. For example, collecting from edge switches every 5 minutes is enough, while core switches can be collected more frequently, e.g. every 60s or 120s.
@@ -70,3 +96,8 @@ snmpget -v2c -c public 172.30.15.189 RFC1213-MIB::sysUpTime.0
 ```
 
 If even snmpget does not work, fix that first — possible causes include snmpd not running, a firewall blocking SNMP access, or the snmpget command not being installed, etc. GPT and Google can help you solve these issues, so we won't go into detail here.
+
+The real-data test used a net-snmp agent and standard CPU, memory, TCP, and
+interface OIDs. Juniper, Huawei, and switch-specific dashboards still require
+the correct vendor MIBs and real hardware to validate private OIDs such as
+fans, power supplies, and line cards.

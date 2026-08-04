@@ -33,7 +33,7 @@
 
 夜莺侧重于监控告警，类似于 Grafana 的数据源集成方式，夜莺也是对接多种既有的数据源，不过 Grafana 侧重于可视化，夜莺则是侧重于告警引擎、告警事件的处理和分发。
 
-> - 💡夜莺正式推出了 [MCP-Server](https://github.com/n9e/n9e-mcp-server/)，此 MCP Server 允许 AI 助手通过自然语言与夜莺 API 交互，实现告警管理、监控和可观测性任务。
+> - 💡夜莺服务端已内置 MCP Server：n9e 进程自身在 `/mcp` 暴露 [MCP](https://modelcontextprotocol.io/) 端点，无需额外部署任何进程，AI 助手即可用自然语言查数据、管告警，详见下文 [MCP Server](#mcp-server) 章节。
 > - 夜莺监控项目，最初由滴滴开发和开源，并于 2022 年 5 月 11 日，捐赠予中国计算机学会开源发展技术委员会（CCF ODTC），为 CCF ODTC 成立后接受捐赠的第一个开源项目。
 
 ![](https://n9e.github.io/img/global/arch-bg.png)
@@ -53,6 +53,56 @@
 ![边缘部署模式](doc/img/readme/20240222102119.png)
 
 > 上图中，机房A和中心机房的网络链路很好，所以直接由中心端的夜莺进程做告警引擎，机房B和中心机房的网络链路不好，所以在机房B部署了 `n9e-edge` 做告警引擎，对机房B的数据源做告警判定。
+
+## MCP Server
+
+夜莺**服务端内置 MCP Server**：n9e 进程自身以 Streamable HTTP 方式在 `/mcp` 提供 [Model Context Protocol](https://modelcontextprotocol.io/) 服务，无需额外部署进程。任意 MCP 客户端（Claude Code / Claude Desktop、Cursor、ChatGPT connector、自研 Agent）都可以用自然语言查询和管理夜莺。
+
+### 客户端接入
+
+端点是 `http(s)://<夜莺地址>:17000/mcp`（根路径，不在 `/api/n9e` 下面）。鉴权用个人访问令牌（在页面上 *个人信息 → Token 管理* 里创建），放在 `X-User-Token` 请求头里：
+
+```json
+{
+  "mcpServers": {
+    "nightingale": {
+      "type": "http",
+      "url": "http://127.0.0.1:17000/mcp",
+      "headers": { "X-User-Token": "<你的 token>" }
+    }
+  }
+}
+```
+
+每次工具调用都会带着你的 token 在进程内派发到夜莺自己的 HTTP API 上，所以 RBAC、业务组权限和该用户在页面上操作时完全一致 —— 客户端拿不到 token 所属用户看不到的东西。
+
+### 工具
+
+13 个工具集共 74 个细粒度工具（42 个读、32 个写）：`alerts`、`targets`、`datasource`、`mutes`、`busi_groups`、`notify_rules`、`alert_subscribes`、`event_pipelines`、`users`、`metrics`、`logs`、`dashboards`、`roles`。
+
+**默认只暴露只读工具**，写工具（增删改）需要在配置里显式打开。
+
+### 配置
+
+下面这些都是可选项，`/mcp` 默认就是开启的（`etc/config.toml`）：
+
+```toml
+[HTTP.A2A]
+# DisableMCP = true                        # 仅关掉 /mcp（Disable = true 会把 /a2a 一起关掉）
+# MCPToolsets = ["alerts", "dashboards"]   # 限定暴露哪些工具集，留空 = 全部
+# MCPEnableWriteTools = true               # 额外注册写工具，默认只读
+```
+
+`/mcp` 的鉴权复用 `[HTTP.TokenAuth]`，需保证后者是启用状态。
+
+### 用 OAuth 2.1 替代 token
+
+`/mcp` 也接受 `Authorization: Bearer` 形式的 OAuth access token，两种玩法：
+
+- 夜莺**自己做授权服务器（AS）**，支持 RFC 7591 动态客户端注册和 PKCE，Claude、ChatGPT 这类托管客户端零预注册就能连上，详见 [doc/api/mcp-oauth-as.md](./doc/api/mcp-oauth-as.md)。
+- 夜莺做**资源服务器（RS）**，验证企业既有 IdP（Keycloak、Entra ID、Okta、Auth0）签发的 token，并落到对应的本地用户，权限和审计都按人留痕，详见 [doc/api/a2a-oauth-rs.md](./doc/api/a2a-oauth-rs.md)。
+
+除 MCP 之外，同一个进程还在 `/a2a` 暴露 [A2A](https://a2a-protocol.org/) 端点，把夜莺内置 AI 助手包装成标准的 Agent 供其他智能体调用，详见 [doc/api/a2a.md](./doc/api/a2a.md)。如果你更希望把 MCP Server 作为独立进程部署、去连远端的夜莺，独立版 [n9e-mcp-server](https://github.com/n9e/n9e-mcp-server/) 提供的是同一套工具。
 
 ## 告警降噪、升级、协同
 

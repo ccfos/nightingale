@@ -1,19 +1,21 @@
 # PostgreSQL
 
-categraf connects to PostgreSQL as a client to collect the relevant metrics, so you first need to make sure the user is properly authorized. For example:
+categraf connects to PostgreSQL as a client. Create a dedicated account:
 
+```sql
+CREATE USER categraf WITH PASSWORD '<password>';
+GRANT pg_monitor TO categraf;
+ALTER USER categraf SET default_transaction_read_only = on;
 ```
-create user categraf with password 'categraf';
-alter user categraf set default_transaction_read_only=on;
-grant usage on schema public to categraf;
-grant select on all tables in schema public to categraf ;
-```
+
+`pg_monitor` grants access to monitoring views. Grant schema/table access only
+when custom application-table queries need it.
 
 ## Configuration Example
 
 ```toml
 [[instances]]
-address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmode=disable"
+address = "host=192.168.11.181 port=5432 user=categraf password=<password> sslmode=disable"
 ## specify address via a url matching:
 ##   postgres://[pqgotest[:password]]@localhost[/dbname]?sslmode=[disable|verify-ca|verify-full]
 ## or a simple string:
@@ -53,10 +55,13 @@ address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmod
 #
 # [[instances.metrics]]
 # measurement = "sessions"
-# label_fields = [ "status", "type" ]
+# label_fields = [ "state" ]
 # metric_fields = [ "value" ]
 # timeout = "3s"
 # request = '''
-# SELECT status, type, COUNT(*) as value FROM v$session GROUP BY status, type
+# SELECT COALESCE(state, 'unknown') AS state,
+#        COUNT(*)::double precision AS value
+# FROM pg_stat_activity
+# GROUP BY COALESCE(state, 'unknown')
 # '''
 ```

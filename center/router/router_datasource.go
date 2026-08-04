@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -139,6 +140,27 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 	ginx.NewRender(c).Data(dss, err)
 }
 
+// datasourceVerification 是 upsert 保存时连通性/查询测试的结构化结果，
+// 用于前端保存结果页区分「已验证 / 已保存未验证」。
+//
+// 当前实现只会产出前两种状态：测试没过一律阻断保存（走 Dangerous），因此不存在
+// 「存下来了但没通过」的情况；force_save 则一次测试都不发，保持 saved_unverified。
+// force_saved_failed 仅保留在契约里 —— 前端对它有兜底渲染，将来若把连通性测试
+// 改成保存后异步执行，这个状态会重新有来源。
+type datasourceVerification struct {
+	State     string `json:"state"` // verified | saved_unverified（force_saved_failed 暂无来源）
+	Stage     string `json:"stage"` // query | version | none
+	LatencyMs int64  `json:"latency_ms"`
+	Message   string `json:"message"` // 脱敏后的错误信息；目前仅 elasticsearch 取版本失败时透出
+}
+
+// 错误信息中可能出现用户写进 URL 的凭据（http://user:pass@host），透出前必须脱敏
+var dsUrlCredRe = regexp.MustCompile(`(://)[^/@\s]+:[^/@\s]+@`)
+
+func sanitizeDsError(msg string) string {
+	return dsUrlCredRe.ReplaceAllString(msg, "$1***:***@")
+}
+
 func (rt *Router) datasourceUpsert(c *gin.Context) {
 	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
@@ -153,13 +175,38 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	var err error
 	var count int64
 
-	if !req.ForceSave {
-		if req.PluginType == models.PROMETHEUS || req.PluginType == models.LOKI || req.PluginType == models.TDENGINE || req.PluginType == models.IOTDB {
-			err = DatasourceCheck(c, req)
-			if err != nil {
-				Dangerous(c, err)
-				return
-			}
+	verif := datasourceVerification{State: "saved_unverified", Stage: "none"}
+
+	// runCheck 执行一次测试并记录结构化结果。
+	// 返回 true 表示已响应错误（失败且未选择强制保存），调用方需直接 return。
+	runCheck := func(stage string, fn func() error) (aborted bool) {
+		// force_save 对应前端「不测试连通性直接保存」：一次测试都不发，保存立即返回，
+		// verif 保持 saved_unverified/none。连通性交给保存结果弹窗的数据体检去回答 ——
+		// 若在这里跑测试，不可达地址会让保存请求挂满超时，与按钮承诺的「不测试」不符。
+		// 注意 clickhouse 也走本函数，因此它同样受此门禁保护（旧实现里 ck 的连通性测试
+		// 未受 force_save 保护，导致「直接保存」在 ck 上必失败）。
+		if req.ForceSave {
+			return false
+		}
+
+		t0 := time.Now()
+		checkErr := fn()
+		verif.Stage = stage
+		verif.LatencyMs = time.Since(t0).Milliseconds()
+		if checkErr == nil {
+			verif.State = "verified"
+			return false
+		}
+		// 走到这里必然是「测试连通性并保存」且没通过：如实报错、不落库。
+		// 这条错误会原样回给前端展示，因此同样要过脱敏 —— 用户可能把凭据写在
+		// URL 里（http://user:pass@host），而 http 库的报错会带上整个 URL。
+		Dangerous(c, fmt.Errorf("%s", sanitizeDsError(checkErr.Error())))
+		return true
+	}
+
+	if req.PluginType == models.PROMETHEUS || req.PluginType == models.LOKI || req.PluginType == models.TDENGINE || req.PluginType == models.IOTDB {
+		if runCheck("query", func() error { return DatasourceCheck(c, req) }) {
+			return
 		}
 	}
 
@@ -221,6 +268,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 			return
 		}
 		// 检查ckconfig的nodes不应该以http://或https://开头
+		// 配置格式错误始终阻断（不属于连通性问题，force_save 也不应保存脏配置）
 		for _, addr := range ckConfig.Nodes {
 			if strings.HasPrefix(addr, "http://") || strings.HasPrefix(addr, "https://") {
 				err = fmt.Errorf("clickhouse node address should not start with http:// or https:// : %s", addr)
@@ -230,19 +278,21 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 			}
 		}
 
-		// InitCli 会自动检测并选择 HTTP 或 Native 协议
-		err = ckConfig.InitCli()
-		if err != nil {
-			logger.Warningf("clickhouse connection failed: %v", err)
-			Dangerous(c, err)
-			return
-		}
-
-		// 执行 SHOW DATABASES 测试连通性
-		_, err = ckConfig.ShowDatabases(context.Background())
-		if err != nil {
-			logger.Warningf("clickhouse test query failed: %v", err)
-			Dangerous(c, err)
+		// 连通性测试统一走 runCheck，从而受 force_save 门禁保护
+		//（旧实现这段没有门禁，导致「直接保存」在 ck 上必失败）
+		if runCheck("query", func() error {
+			// InitCli 会自动检测并选择 HTTP 或 Native 协议
+			if initErr := ckConfig.InitCli(); initErr != nil {
+				logger.Warningf("clickhouse connection failed: %v", initErr)
+				return initErr
+			}
+			// 执行 SHOW DATABASES 测试连通性
+			if _, qErr := ckConfig.ShowDatabases(context.Background()); qErr != nil {
+				logger.Warningf("clickhouse test query failed: %v", qErr)
+				return qErr
+			}
+			return nil
+		}) {
 			return
 		}
 	}
@@ -266,10 +316,16 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 
 		if !skipAuto {
-			version, err := getElasticsearchVersion(req, 10*time.Second)
-			if err != nil {
-				logger.Warningf("failed to get elasticsearch version: %v", err)
+			t0 := time.Now()
+			version, verErr := getElasticsearchVersion(req, 10*time.Second)
+			verif.Stage = "version"
+			verif.LatencyMs = time.Since(t0).Milliseconds()
+			if verErr != nil {
+				// 保持既有语义：取版本失败不阻断保存，但如实记录「未验证」及原因
+				logger.Warningf("failed to get elasticsearch version: %v", verErr)
+				verif.Message = sanitizeDsError(verErr.Error())
 			} else {
+				verif.State = "verified"
 				if req.SettingsJson == nil {
 					req.SettingsJson = make(map[string]interface{})
 				}
@@ -296,7 +352,22 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		err = req.Update(rt.Ctx, "name", "identifier", "description", "cluster_name", "settings", "http", "auth", "updated_by", "updated_at", "is_default", "weight")
 	}
 
-	Render(c, nil, err)
+	if err != nil {
+		Render(c, nil, err)
+		return
+	}
+
+	// 主动刷新数据源缓存：保存结果页会立刻发起数据体检、用户也可能马上去探索器查询，
+	// 若等 9 秒的下一个同步周期，proxy 会因缓存里没有这条记录而报 "no such datasource"。
+	if syncErr := rt.DatasourceCache.SyncOnce(); syncErr != nil {
+		logger.Warningf("sync datasource cache after upsert failed: %v", syncErr)
+	}
+
+	// req.Add 经 gorm Create 回填自增 Id；前端保存结果页依赖 id 与 verification 建立上下文
+	Render(c, gin.H{
+		"id":           req.Id,
+		"verification": verif,
+	}, nil)
 }
 
 func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
@@ -317,6 +388,8 @@ func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
 	}
 
 	client := &http.Client{
+		// 必须有超时：不可达地址会一直挂住「测试连通性并保存」这个请求
+		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
 		},

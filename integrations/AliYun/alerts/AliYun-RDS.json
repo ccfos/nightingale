@@ -1,365 +1,409 @@
 [
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/CPU使用率告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "AliyunRds_CpuUsage{engine=\"MySQL\"} > 80",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/CPU使用率告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "AliyunRds_CpuUsage{engine=\"MySQL\"} \u003e 80",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "云数据库实例 CPU 使用率偏高，SQL 排队等待 CPU，业务响应会变慢。",
+            "action": "1) 在阿里云控制台的实例监控页确认 CPU 曲线是持续还是突发；2) 用控制台自带的「一键诊断」或慢日志找出消耗 CPU 最高的 SQL；3) 对慢 SQL 补索引、消除全表扫描，这是最有效的手段；4) 优化后仍高的在控制台变更实例规格，注意变配会有短暂闪断。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000001,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000001,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/IOPS使用率告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "AliyunRds_IOPSUsage{engine=\"MySQL\"} > 80",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/IOPS使用率告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "AliyunRds_IOPSUsage{engine=\"MySQL\"} \u003e 80",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "云数据库实例 IOPS 使用率超过 80%，接近规格上限，超出后 IO 会被限流排队，SQL 延迟大幅上升。",
+            "action": "1) 在控制台监控页确认 IOPS 曲线与规格上限；2) 用慢日志找出扫描量最大的 SQL——大量随机读是 IOPS 被打满的主因；3) 补索引减少扫描、避免大事务批量写；4) 优化后仍触顶的升级实例规格（IOPS 随规格提升）。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000002,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000002,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/QPS波动率告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "100 * delta(AliyunRds_MySQL_QPS{}[5m]) / AliyunRds_MySQL_QPS{} offset 1m > 30",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/QPS波动率告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 * delta(AliyunRds_MySQL_QPS{}[5m]) / AliyunRds_MySQL_QPS{} offset 1m \u003e 30",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "QPS 在 5 分钟内翻倍，通常是业务突增、缓存击穿或有异常客户端在打循环请求，实例可能很快被打满。",
+            "action": "1) 在控制台监控页确认 QPS 曲线的起跳时间点；2) 对照业务侧的发布记录与营销活动，确认是否为预期流量；3) 非预期的用慢日志/审计日志按来源统计，定位异常客户端并限流；4) 确认缓存层是否失效导致请求穿透到数据库。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000003,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000003,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/TPS波动率告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "100 * delta(AliyunRds_MySQL_TPS{}[5m]) / AliyunRds_MySQL_TPS{} offset 1m > 30",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/TPS波动率告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 * delta(AliyunRds_MySQL_TPS{}[5m]) / AliyunRds_MySQL_TPS{} offset 1m \u003e 30",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "QPS 在 5 分钟内翻倍，通常是业务突增、缓存击穿或有异常客户端在打循环请求，实例可能很快被打满。",
+            "action": "1) 在控制台监控页确认 QPS 曲线的起跳时间点；2) 对照业务侧的发布记录与营销活动，确认是否为预期流量；3) 非预期的用慢日志/审计日志按来源统计，定位异常客户端并限流；4) 确认缓存层是否失效导致请求穿透到数据库。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000004,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000004,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/内存使用率告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "AliyunRds_MemoryUsage{engine=\"MySQL\"} > 80",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/内存使用率告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "AliyunRds_MemoryUsage{engine=\"MySQL\"} \u003e 80",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "云数据库实例内存使用率超过 80%，缓存命中率会下降、临时表落盘增多，继续增长可能触发实例重启。",
+            "action": "1) 在控制台监控页确认内存增长趋势；2) MongoDB 类关注 WiredTiger cache 占比，MySQL 类关注 buffer pool 与连接内存（每连接的 sort/join buffer）；3) 排查是否有大结果集查询或过高的连接数在吃内存；4) 优化后仍不足的在控制台升配。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000005,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000005,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/总连接数告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "AliyunRds_MySQL_ThreadsConnected{} > 1200",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/总连接数告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "AliyunRds_MySQL_ThreadsConnected{} \u003e 1200",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "云数据库实例连接数使用率超过 80%，触顶后新连接会被拒绝，应用直接报连接失败。",
+            "action": "1) 在控制台看连接数曲线与实例规格上限；2) 用 SHOW PROCESSLIST（MySQL 类）或 db.currentOp()（MongoDB）按来源统计，找出连接异常的应用；3) 区分业务增长与应用连接池泄漏（大量空闲连接堆积）；4) 应急升配，根因侧收敛连接池上限并缩短空闲超时。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000006,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000006,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/慢查询占比大于1告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "100 * max(AliyunRds_MySQL_SlowQueries) by (instanceId, instanceName, regionId) / max(AliyunRds_MySQL_QPS) by (instanceId, instanceName, regionId) > 1",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/慢查询占比大于1告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 * max(AliyunRds_MySQL_SlowQueries) by (instanceId, instanceName, regionId) / max(AliyunRds_MySQL_QPS) by (instanceId, instanceName, regionId) \u003e 1",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "慢查询数量明显上升，慢 SQL 会长时间占住连接与 IO，并发上来后容易连锁拖垮实例。",
+            "action": "1) 在控制台的慢日志页按执行时长排序找出 TOP 慢 SQL；2) 用 EXPLAIN 看执行计划，重点消除全表扫描；3) 补索引或改写 SQL 后复测；4) 确认是否与近期上线的新功能相关，是则优先回滚该功能的查询。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000007,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000007,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/慢查询告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "AliyunRds_MySQL_SlowQueries{} > 100",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/慢查询告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "AliyunRds_MySQL_SlowQueries{} \u003e 100",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "慢查询数量明显上升，慢 SQL 会长时间占住连接与 IO，并发上来后容易连锁拖垮实例。",
+            "action": "1) 在控制台的慢日志页按执行时长排序找出 TOP 慢 SQL；2) 用 EXPLAIN 看执行计划，重点消除全表扫描；3) 补索引或改写 SQL 后复测；4) 确认是否与近期上线的新功能相关，是则优先回滚该功能的查询。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000008,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000008,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/磁盘空间使用率告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "AliyunRds_DiskUsage{engine=\"MySQL\"} > 80",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/磁盘空间使用率告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "AliyunRds_DiskUsage{engine=\"MySQL\"} \u003e 80",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "云数据库实例磁盘使用率超过 80%，写满后实例会被锁定为只读，业务写入全部失败——这是云数据库最常见的自伤型故障。",
+            "action": "1) 在控制台的「空间分析」里看是数据、日志还是临时文件占用最大；2) binlog/redo 占用大的调短日志保留时长；3) 数据本身大的归档历史数据，删除后需 OPTIMIZE TABLE 或等待空间回收；4) 尽快在控制台扩容磁盘，云盘扩容通常可在线完成。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000009,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000009,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/运行状态异常告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 60,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "{__name__=~\"AliyunRds_MySQL_(SlaveIO|SlaveSQL)Running\"} != 1",
-          "severity": 1,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/运行状态异常告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "{__name__=~\"AliyunRds_MySQL_(SlaveIO|SlaveSQL)Running\"} != 1",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "RDS MySQL 的复制线程（SlaveIO 或 SlaveSQL）不处于运行状态，只读实例数据停止更新，读流量会读到过期数据。",
+            "action": "1) 在阿里云控制台的只读实例页确认复制状态与延迟；2) 控制台一般提供「修复复制」入口，优先使用；3) 因主实例 binlog 被清理导致的，只能重建只读实例；4) 恢复前把读流量从该只读实例切走。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000010,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
     },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000010,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  },
-  {
-    "cate": "prometheus",
-    "name": "阿里云 RDS 数据库 MySQL/连接数使用率告警",
-    "note": "",
-    "prod": "metric",
-    "delay": 0,
-    "prom_for_duration": 180,
-    "rule_config": {
-      "queries": [
-        {
-          "prom_ql": "AliyunRds_ConnectionUsage{engine=\"MySQL\"} > 80",
-          "severity": 2,
-          "unit": "none"
-        }
-      ],
-      "version": "v1"
-    },
-    "event_relabel_config": null,
-    "prom_eval_interval": 15,
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "append_tags": [],
-    "annotations": {},
-    "uuid": 1751791234000011,
-    "cur_event_count": 0,
-    "cron_pattern": "@every 60s",
-    "notify_rule_ids": [],
-    "notify_version": 1
-  }
+    {
+        "cate": "prometheus",
+        "name": "阿里云 RDS 数据库 MySQL/连接数使用率告警",
+        "note": "",
+        "prod": "metric",
+        "delay": 0,
+        "prom_for_duration": 180,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "AliyunRds_ConnectionUsage{engine=\"MySQL\"} \u003e 80",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "append_tags": [],
+        "annotations": {
+            "summary": "云数据库实例连接数使用率超过 80%，触顶后新连接会被拒绝，应用直接报连接失败。",
+            "action": "1) 在控制台看连接数曲线与实例规格上限；2) 用 SHOW PROCESSLIST（MySQL 类）或 db.currentOp()（MongoDB）按来源统计，找出连接异常的应用；3) 区分业务增长与应用连接池泄漏（大量空闲连接堆积）；4) 应急升配，根因侧收敛连接池上限并缩短空闲超时。",
+            "runbook_url": "https://help.aliyun.com/product/28572.html"
+        },
+        "uuid": 1751791234000011,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
+    }
 ]
