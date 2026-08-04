@@ -257,7 +257,7 @@ func (rt *Router) loginRedirect(c *gin.Context) {
 		}
 	}
 
-	if !rt.Sso.OIDC.Enable {
+	if !rt.Sso.OIDC.Ready() {
 		ginx.NewRender(c).Data("", nil)
 		return
 	}
@@ -279,6 +279,10 @@ func (rt *Router) loginCallback(c *gin.Context) {
 	rctx := c.Request.Context()
 	code := ginx.QueryStr(c, "code", "")
 	state := ginx.QueryStr(c, "state", "")
+
+	if !rt.Sso.OIDC.Ready() {
+		ginx.Bomb(200, "oidc is not ready, please check the oidc config and the idp status")
+	}
 
 	ret, err := rt.Sso.OIDC.Callback(rt.Redis, rctx, code, state)
 	if err != nil {
@@ -808,8 +812,9 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 		var config oidcx.Config
 		err := toml.Unmarshal([]byte(f.Content), &config)
 		ginx.Dangerous(err)
-		rt.Sso.OIDC, err = oidcx.New(config)
-		ginx.Dangerous(err)
+		// 走 ReloadOIDC 而不是直接 rt.Sso.OIDC.Reload：既不替换指针（指针被登录接口并发读），
+		// 也让定期 reload 知道这次热更新有没有成功，失败时由它继续重试
+		ginx.Dangerous(rt.Sso.ReloadOIDC(config))
 	case "CAS":
 		var config cas.Config
 		err := toml.Unmarshal([]byte(f.Content), &config)

@@ -69,6 +69,183 @@ func newTestClient(provider *oidc.Provider) *SsoClient {
 	return s
 }
 
+// deadIdPAddr returns the address of a server that has already been shut down,
+// so discovery fails fast with connection refused instead of hanging on DNS.
+func deadIdPAddr(t *testing.T) string {
+	t.Helper()
+	srv := httptest.NewServer(http.NewServeMux())
+	addr := srv.URL
+	srv.Close()
+	return addr
+}
+
+func newReloadConfig(ssoAddr string) Config {
+	return Config{
+		Enable:      true,
+		DisplayName: "Sign in with OIDC",
+		SsoAddr:     ssoAddr,
+		RedirectURL: "http://n9e.com/callback",
+		ClientId:    "n9e",
+	}
+}
+
+func TestReloadRetriesUntilIdPIsReachable(t *testing.T) {
+	_, _, issuer := newTestIdP(t)
+
+	cf := newReloadConfig(deadIdPAddr(t))
+	s, err := New(cf)
+	if err == nil {
+		t.Fatal("expected an error when the idp is unreachable")
+	}
+	if s == nil {
+		t.Fatal("New must return a usable client even when the idp is unreachable")
+	}
+	if s.Ready() {
+		t.Error("client must not be ready before discovery succeeds")
+	}
+	if got := s.GetDisplayName(); got != "" {
+		t.Errorf("display name = %q, want empty so the login page hides the entry", got)
+	}
+
+	// IdP 恢复后在同一个客户端上重试即可补齐，不需要重启进程
+	cf.SsoAddr = issuer
+	if err := s.Reload(cf); err != nil {
+		t.Fatalf("reload after the idp came back: %v", err)
+	}
+	if !s.Ready() {
+		t.Fatal("client should be ready once discovery succeeds")
+	}
+	if got := s.GetDisplayName(); got != cf.DisplayName {
+		t.Errorf("display name = %q, want %q", got, cf.DisplayName)
+	}
+	if s.Attributes.Username != "sub" || len(s.Config.Scopes) == 0 {
+		t.Errorf("defaults not applied: username=%q scopes=%v", s.Attributes.Username, s.Config.Scopes)
+	}
+	if _, ok := s.Ctx.Deadline(); ok {
+		t.Error("stored ctx must not carry the discovery timeout, later token exchanges would expire")
+	}
+}
+
+func TestReloadFailureHidesLoginEntry(t *testing.T) {
+	_, _, issuer := newTestIdP(t)
+
+	cf := newReloadConfig(issuer)
+	cf.SsoLogoutAddr = issuer + "/session/end"
+	s, err := New(cf)
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	if !s.Ready() {
+		t.Fatal("client should be ready when the idp is reachable")
+	}
+
+	// 一个曾经可用的客户端在 IdP 不可达后要转为未就绪，而不是留下半初始化的入口
+	cf.SsoAddr = deadIdPAddr(t)
+	if err := s.Reload(cf); err == nil {
+		t.Fatal("expected an error when the idp becomes unreachable")
+	}
+	if s.Ready() {
+		t.Error("client must not stay ready after discovery failed")
+	}
+	if got := s.GetDisplayName(); got != "" {
+		t.Errorf("display name = %q, want empty", got)
+	}
+	if got := s.GetSsoLogoutAddr("id-token"); got != "" {
+		t.Errorf("logout addr = %q, want empty", got)
+	}
+}
+
+// 初始化失败时 center 曾把 OIDC 客户端置空，定期 reload 再解引用它导致进程崩溃
+func TestNilClientIsSafe(t *testing.T) {
+	var s *SsoClient
+	if s.Ready() {
+		t.Error("nil client must not report ready")
+	}
+	if got := s.GetDisplayName(); got != "" {
+		t.Errorf("display name = %q, want empty", got)
+	}
+	if got := s.GetSsoLogoutAddr("id-token"); got != "" {
+		t.Errorf("logout addr = %q, want empty", got)
+	}
+}
+
+// Provider 里的远程 JWKS 一直用 Reload 时传进去的 ctx 取密钥，所以那个 ctx 不能是
+// 用完就 cancel 的短生命周期上下文，否则客户端 Ready 为真、验签却全部 context canceled
+func TestClientBuiltByReloadCanVerifyTokens(t *testing.T) {
+	_, priv, issuer := newTestIdP(t)
+
+	s, err := New(newReloadConfig(issuer))
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+
+	const audience = "n9e-agent"
+	token := signRS256(t, priv, jwt.MapClaims{
+		"iss": issuer,
+		"aud": audience,
+		"sub": "alice",
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+
+	if _, err := s.VerifyAccessToken(context.Background(), token, audience); err != nil {
+		t.Fatalf("verify token with a client built by Reload: %v", err)
+	}
+}
+
+// 定期 reload 和管理员保存配置会并发调用 Reload，慢的旧配置不能盖掉先完成的新配置
+func TestSlowReloadDoesNotOverwriteNewerConfig(t *testing.T) {
+	entered := make(chan struct{})
+	release := make(chan struct{})
+
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		close(entered)
+		<-release
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"issuer":%q,"authorization_endpoint":%q,"token_endpoint":%q,"jwks_uri":%q}`,
+			srv.URL, srv.URL+"/auth", srv.URL+"/token", srv.URL+"/jwks")
+	})
+
+	s := &SsoClient{}
+	slowDone := make(chan error, 1)
+	go func() { slowDone <- s.Reload(newReloadConfig(srv.URL)) }()
+	<-entered // 旧配置已经卡在 discovery 上
+
+	// 管理员此刻把 OIDC 关掉
+	disableDone := make(chan error, 1)
+	disableStarted := make(chan struct{})
+	go func() {
+		close(disableStarted)
+		disableDone <- s.Reload(Config{Enable: false})
+	}()
+	<-disableStarted
+	time.Sleep(50 * time.Millisecond) // 给禁用配置足够时间抢在慢配置发布之前
+
+	close(release)
+	if err := <-slowDone; err != nil {
+		t.Fatalf("slow reload: %v", err)
+	}
+	if err := <-disableDone; err != nil {
+		t.Fatalf("disable reload: %v", err)
+	}
+
+	if s.Ready() {
+		t.Error("oidc should stay disabled, a slower reload that started earlier must not resurrect it")
+	}
+}
+
+func TestNewDisabled(t *testing.T) {
+	s, err := New(Config{Enable: false, SsoAddr: deadIdPAddr(t)})
+	if err != nil {
+		t.Fatalf("disabled oidc should not error: %v", err)
+	}
+	if s.Ready() {
+		t.Error("disabled oidc must not report ready")
+	}
+}
+
 func TestVerifyAccessToken(t *testing.T) {
 	provider, priv, issuer := newTestIdP(t)
 	s := newTestClient(provider)

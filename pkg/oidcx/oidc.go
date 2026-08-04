@@ -17,6 +17,9 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// idpTimeout 限制与 IdP 的单次 HTTP 交互耗时（discovery、取 JWKS、换 token），避免拖住定期 reload
+const idpTimeout = 10 * time.Second
+
 type SsoClient struct {
 	Enable          bool
 	Verifier        *oidc.IDTokenVerifier
@@ -37,6 +40,8 @@ type SsoClient struct {
 
 	Ctx      context.Context
 	Provider *oidc.Provider
+	// reloadMu 串行化整个 Reload（含 discovery），细节见 Reload 注释
+	reloadMu sync.Mutex
 	sync.RWMutex
 }
 
@@ -70,10 +75,21 @@ func New(cf Config) (*SsoClient, error) {
 	return s, err
 }
 
+// Reload 用新配置重建 OIDC 客户端。与 IdP 的 discovery 交互放在加写锁之前完成：一是
+// 避免网络 I/O 期间阻塞正在进行的登录请求，二是失败时不会把半初始化的状态写进 s ——
+// Enable 为真而 Provider 为空会让登录页出现一个点了跳错地址的入口。IdP 不可达时把
+// Enable 置回 false，由调用方按周期重试，恢复后无需重启进程。
+//
+// discovery 在写锁之外做，所以要另用一把锁把「discovery + 发布」串起来：定期 reload 和
+// 管理员保存配置会并发调进来，否则慢的旧配置可能在快的新配置（甚至「关闭 OIDC」）之后
+// 才发布，把新配置覆盖回去。
 func (s *SsoClient) Reload(cf Config) error {
-	s.Lock()
-	defer s.Unlock()
+	s.reloadMu.Lock()
+	defer s.reloadMu.Unlock()
+
 	if !cf.Enable {
+		s.Lock()
+		defer s.Unlock()
 		s.Enable = cf.Enable
 		return nil
 	}
@@ -82,6 +98,31 @@ func (s *SsoClient) Reload(cf Config) error {
 		cf.Attributes.Username = "sub"
 	}
 
+	// 默认 http.Client 没有超时，IdP 地址是黑洞时会把调用方（定期 reload 协程）永久挂住，
+	// 连带其他 SSO 配置也热更新不了。超时只能落在 client 上，不能用 context.WithTimeout：
+	// oidc.NewProvider 会把这里的 ctx 一直存进 Provider 的远程 JWKS，后续验签取密钥还要用它，
+	// 用完就 cancel 的 ctx 会让登录回调和 token 校验直接报 context canceled
+	client := &http.Client{Timeout: idpTimeout}
+	if cf.SkipTlsVerify {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, client)
+
+	provider, err := oidc.NewProvider(ctx, cf.SsoAddr)
+	if err != nil {
+		s.Lock()
+		s.Enable = false
+		s.Unlock()
+		return err
+	}
+	oidcConfig := &oidc.Config{
+		ClientID: cf.ClientId,
+	}
+
+	s.Lock()
+	defer s.Unlock()
 	s.Enable = cf.Enable
 	s.SsoAddr = cf.SsoAddr
 	s.SsoLogoutAddr = cf.SsoLogoutAddr
@@ -94,26 +135,7 @@ func (s *SsoClient) Reload(cf Config) error {
 	s.DisplayName = cf.DisplayName
 	s.DefaultRoles = cf.DefaultRoles
 	s.DefaultTeams = cf.DefaultTeams
-	s.Ctx = context.Background()
-
-	if cf.SkipTlsVerify {
-		transport := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-
-		// Create an HTTP client that uses our custom transport
-		client := &http.Client{Transport: transport}
-		s.Ctx = context.WithValue(s.Ctx, oauth2.HTTPClient, client)
-	}
-
-	provider, err := oidc.NewProvider(s.Ctx, cf.SsoAddr)
-	if err != nil {
-		return err
-	}
-	oidcConfig := &oidc.Config{
-		ClientID: cf.ClientId,
-	}
-
+	s.Ctx = ctx
 	s.Verifier = provider.Verifier(oidcConfig)
 	s.Provider = provider
 	s.Config = oauth2.Config{
@@ -131,10 +153,31 @@ func (s *SsoClient) Reload(cf Config) error {
 	return nil
 }
 
-func (s *SsoClient) GetDisplayName() string {
+// Ready 表示 OIDC 已开启且与 IdP 完成了 discovery，可以真正承接登录。调用方据此决定
+// 是否展示 OIDC 登录入口。空接收者也安全：SSO 客户端的初始化可能因 IdP 不可达而失败。
+func (s *SsoClient) Ready() bool {
+	if s == nil {
+		return false
+	}
+
 	s.RLock()
 	defer s.RUnlock()
-	if !s.Enable {
+	return s.ready()
+}
+
+// ready 要求调用方已持有锁
+func (s *SsoClient) ready() bool {
+	return s.Enable && s.Provider != nil
+}
+
+func (s *SsoClient) GetDisplayName() string {
+	if s == nil {
+		return ""
+	}
+
+	s.RLock()
+	defer s.RUnlock()
+	if !s.ready() {
 		return ""
 	}
 
@@ -142,9 +185,13 @@ func (s *SsoClient) GetDisplayName() string {
 }
 
 func (s *SsoClient) GetSsoLogoutAddr(idToken string) string {
+	if s == nil {
+		return ""
+	}
+
 	s.RLock()
 	defer s.RUnlock()
-	if !s.Enable {
+	if !s.ready() {
 		return ""
 	}
 

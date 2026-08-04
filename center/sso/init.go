@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
@@ -32,6 +33,40 @@ type SsoClient struct {
 	LastUpdateTime       int64
 	configCache          *memsto.ConfigCache
 	configLastUpdateTime int64
+	// oidcNotReady 表示 OIDC 配置为开启但与 IdP 的对接还没成功（多为 IdP 暂时不可达），
+	// 置位后即使 SSO 配置没有变更，reload 也会每个周期重试一次，IdP 恢复即自动补齐；
+	// 定期 reload 协程和管理接口都会读写它，用 oidcMu 保护
+	oidcNotReady bool
+	oidcMu       sync.Mutex
+}
+
+// ReloadOIDC 是 OIDC 热更新的唯一入口：定期 reload 和管理员保存配置都走这里，保证
+// 「对接失败」一定被记下来。否则管理接口把 OIDC 指到一个暂时不可达的 IdP 时，客户端
+// 变为未就绪却没人重试，而 sso_config.update_at 只有秒级精度，这次更新和上一次落在
+// 同一秒时定期 reload 会认为配置没变直接跳过，IdP 恢复后 OIDC 依然不可用。
+func (s *SsoClient) ReloadOIDC(config oidcx.Config) error {
+	s.oidcMu.Lock()
+	defer s.oidcMu.Unlock()
+
+	if s.OIDC == nil {
+		return fmt.Errorf("oidc client is not initialized")
+	}
+
+	err := s.OIDC.Reload(config)
+	s.oidcNotReady = err != nil
+	return err
+}
+
+func (s *SsoClient) setOIDCNotReady(notReady bool) {
+	s.oidcMu.Lock()
+	defer s.oidcMu.Unlock()
+	s.oidcNotReady = notReady
+}
+
+func (s *SsoClient) oidcNeedsRetry() bool {
+	s.oidcMu.Lock()
+	defer s.oidcMu.Unlock()
+	return s.oidcNotReady
 }
 
 const LDAP = `
@@ -193,10 +228,12 @@ func Init(center cconf.Center, ctx *ctx.Context, configCache *memsto.ConfigCache
 			logger.Info("init oidc..")
 			oidcClient, err := oidcx.New(config)
 			if err != nil {
-				logger.Error("init oidc failed:", err)
-			} else {
-				ssoClient.OIDC = oidcClient
+				// IdP 启动时不可达不该拖垮 center：客户端照常挂上（此时它处于未就绪状态，
+				// 不会对外暴露登录入口），交给下面的定期 reload 持续重试
+				logger.Errorf("init oidc failed: %v, will retry in background", err)
+				ssoClient.oidcNotReady = true
 			}
+			ssoClient.OIDC = oidcClient
 		case "CAS":
 			var config cas.Config
 			err := toml.Unmarshal([]byte(cfg.Content), &config)
@@ -228,6 +265,12 @@ func Init(center cconf.Center, ctx *ctx.Context, configCache *memsto.ConfigCache
 		}
 	}
 
+	// sso_config 表里没有 OIDC 记录时也保证客户端非空，这样 reload 协程和 HTTP handler
+	// 都不必再改写这个指针，避免并发读写
+	if ssoClient.OIDC == nil {
+		ssoClient.OIDC = &oidcx.SsoClient{}
+	}
+
 	go ssoClient.SyncSsoUsers(ctx)
 	go ssoClient.Reload(ctx)
 	return ssoClient
@@ -241,7 +284,8 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 	}
 
 	lastCacheUpdateTime := s.configCache.GetLastUpdateTime()
-	if lastUpdateTime == s.LastUpdateTime && lastCacheUpdateTime == s.configLastUpdateTime {
+	// OIDC 还没对接成功时，即使配置没有变更也要再跑一遍，IdP 恢复后无需重启 center
+	if lastUpdateTime == s.LastUpdateTime && lastCacheUpdateTime == s.configLastUpdateTime && !s.oidcNeedsRetry() {
 		return nil
 	}
 
@@ -251,6 +295,8 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 	}
 	userVariableMap := s.configCache.Get()
 	ssoConfigMap := make(map[string]models.SsoConfig, 0)
+	// 重试标记由下面的 OIDC 分支重新置位，配置里已经没有 OIDC 时不该继续空转
+	s.setOIDCNotReady(false)
 	for _, cfg := range configs {
 		ssoConfigMap[cfg.Name] = cfg
 		cfg.Content = tplx.ReplaceTemplateUseText(cfg.Name, cfg.Content, userVariableMap)
@@ -272,8 +318,7 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 			}
 
 			logger.Info("reload oidc..")
-			err = s.OIDC.Reload(config)
-			if err != nil {
+			if err := s.ReloadOIDC(config); err != nil {
 				logger.Error("reload oidc failed:", err)
 				continue
 			}
