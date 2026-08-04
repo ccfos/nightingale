@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"fmt"
 	"runtime/debug"
 
@@ -167,6 +168,17 @@ func MigrateTables(db *gorm.DB) error {
 	}
 
 	asyncDts := []interface{}{&AlertHisEvent{}, &AlertCurEvent{}}
+	// 异步迁移必须用独立 Statement 的会话，不能直接复用上面的 db。
+	// db 是 Set() 返回的 clone==0 实例，getInstance() 对它返回自身，
+	// 所以它的 Statement 被主流程和这个 goroutine 共用；goroutine 里的
+	// db.Exec 会把 SQL 写进这个共享 Statement，且要等语句执行完才 Reset。
+	// alert_his_event 这种大表上 CREATE INDEX 长达数十分钟，期间主流程的
+	// AutoMigrate 走 Statement.clone()（SQL 非空时连 SQL 一起复制），
+	// 会把这条 CREATE INDEX 复制走并重复执行，第二条卡在 metadata lock 上
+	// 永不返回，整个进程的初始化就此挂死（HTTP 端口永远不监听）。
+	// Session 传非 nil 的 Context 会触发 Statement.clone()，既拿到独立
+	// Statement，又保留 Settings 里的 gorm:table_options。
+	asyncDB := db.Session(&gorm.Session{Context: context.Background()})
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -175,7 +187,7 @@ func MigrateTables(db *gorm.DB) error {
 		}()
 
 		for _, dt := range asyncDts {
-			if err := db.AutoMigrate(dt); err != nil {
+			if err := asyncDB.AutoMigrate(dt); err != nil {
 				logger.Errorf("failed to migrate table %+v err:%v", dt, err)
 			}
 		}
@@ -183,8 +195,8 @@ func MigrateTables(db *gorm.DB) error {
 		// 索引用原生 SQL 创建，不在部分结构体上声明 group_id 列：
 		// 存量库该列是 bigint unsigned 且无默认值，声明列会让 AutoMigrate
 		// 发出 MODIFY COLUMN，在大表上全表重建锁写
-		if !db.Migrator().HasIndex("alert_his_event", "idx_group_last_eval_time") {
-			if err := db.Exec("CREATE INDEX idx_group_last_eval_time ON alert_his_event(group_id, last_eval_time)").Error; err != nil {
+		if !asyncDB.Migrator().HasIndex("alert_his_event", "idx_group_last_eval_time") {
+			if err := asyncDB.Exec("CREATE INDEX idx_group_last_eval_time ON alert_his_event(group_id, last_eval_time)").Error; err != nil {
 				logger.Errorf("failed to create index idx_group_last_eval_time on alert_his_event: %v", err)
 			}
 		}
