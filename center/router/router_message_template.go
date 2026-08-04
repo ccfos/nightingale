@@ -242,8 +242,8 @@ func (rt *Router) eventsMessage(c *gin.Context) {
 
 	renderData := make(map[string]interface{})
 	renderData["events"] = events
-	// 与 MessageTemplate.RenderEvent 对齐：缺了 domain 会让模板里的 {{$domain}} 预览恒为空，
-	// 而真正发出去的消息里是有值的，预览与实际不一致。
+	// 与 MessageTemplate.RenderEvent 对齐：缺了这个键会让模板里的 {{$.domain}} 预览恒为空
+	// （内置模板全都用它拼事件详情链接），而真正发出去的消息里是有值的，预览与实际不一致。
 	renderData["domain"] = resolveSiteUrl(rt.Ctx)
 
 	defs := models.GetDefs(renderData)

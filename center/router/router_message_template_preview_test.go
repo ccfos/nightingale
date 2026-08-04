@@ -28,9 +28,9 @@ func renderPreviewField(t *testing.T, body string, renderData map[string]interfa
 	return previewFieldResult{Success: true, Content: buf.String()}
 }
 
-// getDefs 是模板预览与真实投递共用的变量声明。$domain 少了会让预览直接报
-// undefined variable，用户在预览里看到的是一句 Go 报错而不是渲染结果；
-// 预览接口特意填了 renderData["domain"]，这里确认它真的能被模板取到。
+// 站点地址走渲染数据而不是 defs 变量：内置模板与前端生成的起步内容都写
+// {{$.domain}}。此前预览接口没填 renderData["domain"]，这些模板在预览里恒为空、
+// 与真正发出去的消息对不上；这里确认补上的那个键真的能被模板取到。
 func TestEventsMessagePreviewResolvesDomain(t *testing.T) {
 	events := []*models.AlertCurEvent{
 		buildTemplatePreviewMockEvent("en_US", MockEventForm{MockSeverity: 2}),
@@ -40,13 +40,26 @@ func TestEventsMessagePreviewResolvesDomain(t *testing.T) {
 		"domain": "http://site",
 	}
 
-	t.Run("$domain 能取到预览接口填的站点地址", func(t *testing.T) {
-		got := renderPreviewField(t, "{{$domain}}/alert-his-events/{{$event.Id}}", renderData)
+	t.Run("$.domain 能取到预览接口填的站点地址", func(t *testing.T) {
+		got := renderPreviewField(t, "{{$.domain}}/alert-his-events/{{$event.Id}}", renderData)
 		if !got.Success {
 			t.Fatalf("preview failed: %s", got.Message)
 		}
 		if got.Content != "http://site/alert-his-events/0" {
 			t.Fatalf("content = %q", got.Content)
+		}
+	})
+
+	// 裸 {{$domain}} 不是本系统提供的变量（它只在老的 notify_tpl 内置模板里由模板
+	// 自行声明），预览必须如实报错，而不是靠 defs 悄悄兜住——否则开源能预览、
+	// 覆盖了 GetDefs 的下游发出去才炸。
+	t.Run("裸 $domain 仍然报未定义变量", func(t *testing.T) {
+		got := renderPreviewField(t, "{{$domain}}", renderData)
+		if got.Success {
+			t.Fatalf("expected failure, got %q", got.Content)
+		}
+		if !strings.Contains(got.Message, "undefined variable") {
+			t.Fatalf("message = %q", got.Message)
 		}
 	})
 

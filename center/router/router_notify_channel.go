@@ -584,6 +584,34 @@ func buildChannelTestMockEvent(lang string, f MockEventForm) *models.AlertCurEve
 	})
 }
 
+// buildTestTplContent 把请求体里的模板**源码**渲染成 sendToNotifyChannel 期望的正文
+// （直接塞源码进去会把 {{$event.RuleName}} 原样发出去）。
+//
+// 两处细节决定了这个功能有没有意义，都不能省：
+//
+//  1. NotifyChannelIdent 必须带上。RenderEvent 按它选渲染分支——email 走 text/template
+//     且不转义，slack 有专门的 &lt; 还原，其余走 html/template + JSON 转义。留空会一律落到
+//     默认分支：测试一个 smtp 媒介时正文里的换行变成字面量 \n、引号变成 \"，而保存之后走
+//     生产链路（模板行带 notify_channel_ident）却是正常的——同一份模板两种结果，正好违背
+//     「保存前看到真实投递效果」这个目的。
+//
+//  2. 走 RenderEventStrict 而不是 RenderEvent。后者把 Parse/Execute 错误当正文返回，
+//     只要第三方端点回 2xx 接口就报 success=true——用户看到「测试成功」，群里收到的却是
+//     一段 "failed to parse template: ..."。测试接口的全部价值就是如实回答通不通。
+//
+// 空模板是合法形态、不是参数错误：body 直接透传 $events 的媒介（内置 callback 的默认 body
+// 是 {{ jsonMarshal $events }}）根本不引用 $tpl，前端也就推导不出字段名。生产链路上它走的是
+// 种子模板 {"content": ""}（models/message_tpl.go 的 MsgTplMap），渲染结果同样是空——这里
+// 返回空 map 与之等价，{{$tpl.x}} 会渲染成空串且不报错。
+func buildTestTplContent(nc *models.NotifyChannelConfig, tplSrc map[string]string,
+	events []*models.AlertCurEvent, siteUrl string) (map[string]interface{}, error) {
+	if !NeedMessageTemplate(nc.RequestType) || len(tplSrc) == 0 {
+		return make(map[string]interface{}), nil
+	}
+	tpl := &models.MessageTemplate{Content: tplSrc, NotifyChannelIdent: nc.Ident}
+	return tpl.RenderEventStrict(events, siteUrl)
+}
+
 func (rt *Router) notifyChannelConfigTest(c *gin.Context) {
 	var f NotifyChannelTestForm
 	ginx.BindJSON(c, &f)
@@ -624,17 +652,12 @@ func (rt *Router) notifyChannelConfigTest(c *gin.Context) {
 
 	siteUrl := resolveSiteUrl(rt.Ctx)
 
-	// 模板内容必须先渲染：sendToNotifyChannel 期望的是 RenderEvent 的产物，
-	// 直接塞源码进去会把 {{$event.RuleName}} 原样发出去。
-	//
-	// 空模板是合法形态，不能当成参数错误：body 直接透传 $events 的媒介（内置 callback 的
-	// 默认 body 是 {{ jsonMarshal $events }}）根本不引用 $tpl，前端也就推导不出字段名。
-	// 生产链路上它走的是种子模板 {"content": ""}（models/message_tpl.go 的 MsgTplMap），
-	// 渲染结果同样是空——这里传空 map 与之等价，{{$tpl.x}} 会渲染成空串且不报错。
-	tplContent := make(map[string]interface{})
-	if NeedMessageTemplate(nc.RequestType) && len(f.TplContent) > 0 {
-		tpl := &models.MessageTemplate{Content: f.TplContent}
-		tplContent = tpl.RenderEvent(events, siteUrl)
+	tplContent, rerr := buildTestTplContent(nc, f.TplContent, events, siteUrl)
+	if rerr != nil {
+		// 模板写错是业务结果，与投递失败同一个出口：200 + success=false，
+		// 前端在结果页展示报错原文
+		ginx.NewRender(c).Data(notifyChannelTestResult{Success: false, ErrorMessage: rerr.Error()}, nil)
+		return
 	}
 
 	_, err := sendToNotifyChannel(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, nc, events, tplContent, siteUrl)

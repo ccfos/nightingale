@@ -159,8 +159,76 @@ func TestSendToNotifyChannelWithEmptyTplContent(t *testing.T) {
 	}
 }
 
-// 前端为新建模板 / 媒介测试自动生成的起步内容里带 {{$domain}}。
-// getDefs 若不声明该变量，Parse 会失败，而 RenderEvent 把解析错误当正文返回——
+// buildTestTplContent 是 notifyChannelConfigTest 的渲染步骤。它的两个不变量——
+// 按媒介 ident 选渲染分支、模板出错立刻失败——都不会在投递链路上暴露出来：
+// 分支选错只是内容形态不同，出错被吞掉更是照样返回 success=true，
+// 两者都只有在用户真的收到消息时才看得见，所以只能在这里钉住。
+func TestBuildTestTplContent(t *testing.T) {
+	events := []*models.AlertCurEvent{
+		buildChannelTestMockEvent("en_US", MockEventForm{MockSeverity: 1}),
+	}
+	const siteUrl = "http://site"
+	// 正文里同时有换行和引号：默认分支会转义，email 分支必须原样保留
+	body := map[string]string{"content": "line1\nsay \"hi\""}
+
+	t.Run("smtp 媒介按 ident 走 email 分支，换行与引号不被转义", func(t *testing.T) {
+		nc := &models.NotifyChannelConfig{RequestType: "smtp", Ident: "email"}
+		got, err := buildTestTplContent(nc, body, events, siteUrl)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if want := "line1\nsay \"hi\""; fmt.Sprint(got["content"]) != want {
+			t.Fatalf("got %q, want %q —— ident 没传到 MessageTemplate 上", fmt.Sprint(got["content"]), want)
+		}
+	})
+
+	t.Run("普通 http 媒介仍走默认分支的 JSON 转义", func(t *testing.T) {
+		nc := &models.NotifyChannelConfig{RequestType: "http", Ident: "dingtalk"}
+		got, err := buildTestTplContent(nc, body, events, siteUrl)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if want := `line1\nsay \"hi\"`; fmt.Sprint(got["content"]) != want {
+			t.Fatalf("got %q, want %q", fmt.Sprint(got["content"]), want)
+		}
+	})
+
+	// 模板写错必须在投递之前失败。若退回 RenderEvent，这里会拿到一段
+	// "failed to parse template: ..." 当正文、err 为 nil，接口随后报 success=true
+	t.Run("模板写错立即失败，不产出正文", func(t *testing.T) {
+		nc := &models.NotifyChannelConfig{RequestType: "http", Ident: "dingtalk"}
+		got, err := buildTestTplContent(nc, map[string]string{"content": "{{$nope}}"}, events, siteUrl)
+		if err == nil {
+			t.Fatalf("模板写错却没报错，渲染结果=%v", got)
+		}
+		if got != nil {
+			t.Fatalf("出错时不应产出正文: %v", got)
+		}
+		if !strings.Contains(err.Error(), "undefined variable") {
+			t.Fatalf("错误信息应保留 Go 模板的原因，got %q", err.Error())
+		}
+	})
+
+	// 空模板与不走模板的媒介都是合法形态，返回空 map 而不是报错
+	t.Run("空模板返回空 map", func(t *testing.T) {
+		nc := &models.NotifyChannelConfig{RequestType: "http", Ident: "callback"}
+		got, err := buildTestTplContent(nc, nil, events, siteUrl)
+		if err != nil || len(got) != 0 {
+			t.Fatalf("got %v, err %v", got, err)
+		}
+	})
+
+	t.Run("flashduty 不走模板，即使传了内容也返回空 map", func(t *testing.T) {
+		nc := &models.NotifyChannelConfig{RequestType: "flashduty", Ident: "flashduty"}
+		got, err := buildTestTplContent(nc, body, events, siteUrl)
+		if err != nil || len(got) != 0 {
+			t.Fatalf("got %v, err %v", got, err)
+		}
+	})
+}
+
+// 前端为新建模板 / 媒介测试自动生成的起步内容里带 {{$.domain}}。
+// 这类模板错误 RenderEvent 是不会往外报的——它把解析错误当正文返回，
 // 第三方收到 "failed to parse template: ..." 而接口仍报成功。这里守住整条链路。
 func TestRenderedStarterContentHasNoTemplateError(t *testing.T) {
 	events := []*models.AlertCurEvent{
@@ -169,7 +237,7 @@ func TestRenderedStarterContentHasNoTemplateError(t *testing.T) {
 	// 与 src/pages/notificationTemplates/utils/tplKeys.ts 的 buildBody 保持一致
 	starter := map[string]string{
 		"title":   "[S{{$event.Severity}}] {{$event.RuleName}}",
-		"content": "Status: {{if $event.IsRecovered}}Recovered{{else}}Firing{{end}}\nDetail: {{$domain}}/alert-his-events/{{$event.Id}}",
+		"content": "Status: {{if $event.IsRecovered}}Recovered{{else}}Firing{{end}}\nDetail: {{$.domain}}/alert-his-events/{{$event.Id}}",
 	}
 
 	tpl := &models.MessageTemplate{Content: starter}
@@ -184,7 +252,8 @@ func TestRenderedStarterContentHasNoTemplateError(t *testing.T) {
 			t.Fatalf("starter content %q left an unrendered placeholder: %s", key, s)
 		}
 	}
-	if got := fmt.Sprint(rendered["content"]); !strings.Contains(got, "http://site/alert-his-events/") {
-		t.Fatalf("$domain not substituted: %s", got)
+	// 连事件 ID 一起断言：只匹配前缀的话，站点地址后面被转义/截断也照样通过
+	if want := "http://site/alert-his-events/" + fmt.Sprint(events[0].Id); !strings.Contains(fmt.Sprint(rendered["content"]), want) {
+		t.Fatalf("$.domain not substituted, want %q in: %s", want, rendered["content"])
 	}
 }
