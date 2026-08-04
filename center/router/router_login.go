@@ -16,7 +16,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
-	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
@@ -809,12 +808,9 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 		ginx.Dangerous(err)
 		rt.Sso.LDAP.Reload(config)
 	case "OIDC":
-		var config oidcx.Config
-		err := toml.Unmarshal([]byte(f.Content), &config)
-		ginx.Dangerous(err)
-		// 走 ReloadOIDC 而不是直接 rt.Sso.OIDC.Reload：既不替换指针（指针被登录接口并发读），
-		// 也让定期 reload 知道这次热更新有没有成功，失败时由它继续重试
-		ginx.Dangerous(rt.Sso.ReloadOIDC(config))
+		// 这里只负责持久化，重载统一交给 ReloadOIDC：它会在串行锁内重新读库，既不替换
+		// 客户端指针（指针被登录接口并发读），也不会让并发保存按乱序发布配置
+		ginx.Dangerous(rt.Sso.ReloadOIDC(rt.Ctx))
 	case "CAS":
 		var config cas.Config
 		err := toml.Unmarshal([]byte(f.Content), &config)

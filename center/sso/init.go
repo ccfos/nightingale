@@ -40,11 +40,12 @@ type SsoClient struct {
 	oidcMu       sync.Mutex
 }
 
-// ReloadOIDC 是 OIDC 热更新的唯一入口：定期 reload 和管理员保存配置都走这里，保证
-// 「对接失败」一定被记下来。否则管理接口把 OIDC 指到一个暂时不可达的 IdP 时，客户端
-// 变为未就绪却没人重试，而 sso_config.update_at 只有秒级精度，这次更新和上一次落在
-// 同一秒时定期 reload 会认为配置没变直接跳过，IdP 恢复后 OIDC 依然不可用。
-func (s *SsoClient) ReloadOIDC(config oidcx.Config) error {
+// ReloadOIDC 是 OIDC 热更新的唯一入口：定期 reload 和管理员保存配置都走这里。它拿到
+// 串行锁之后才去读库，不接受调用方传进来的配置快照——快照在排队等锁期间可能已经过期，
+// 按快照发布会把管理员刚保存的新配置（甚至「关闭 OIDC」）覆盖回旧的，而 sso_config.update_at
+// 只有秒级精度，两次更新落在同一秒时定期 reload 认不出配置变化，旧配置会长期生效。
+// 以库为准还顺带保证「对接失败」一定被记下来，IdP 恢复后由定期 reload 自动补齐。
+func (s *SsoClient) ReloadOIDC(ctx *ctx.Context) error {
 	s.oidcMu.Lock()
 	defer s.oidcMu.Unlock()
 
@@ -52,15 +53,43 @@ func (s *SsoClient) ReloadOIDC(config oidcx.Config) error {
 		return fmt.Errorf("oidc client is not initialized")
 	}
 
-	err := s.OIDC.Reload(config)
+	config, found, err := s.latestOIDCConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		// 配置里已经没有 OIDC，不必再重试
+		s.oidcNotReady = false
+		return nil
+	}
+
+	logger.Info("reload oidc..")
+	err = s.OIDC.Reload(config)
 	s.oidcNotReady = err != nil
 	return err
 }
 
-func (s *SsoClient) setOIDCNotReady(notReady bool) {
-	s.oidcMu.Lock()
-	defer s.oidcMu.Unlock()
-	s.oidcNotReady = notReady
+// latestOIDCConfig 读取库里最新的 OIDC 配置，第二个返回值表示配置是否存在
+func (s *SsoClient) latestOIDCConfig(ctx *ctx.Context) (oidcx.Config, bool, error) {
+	var config oidcx.Config
+
+	configs, err := models.SsoConfigGets(ctx)
+	if err != nil {
+		return config, false, err
+	}
+
+	for _, cfg := range configs {
+		if cfg.Name != "OIDC" {
+			continue
+		}
+
+		content := tplx.ReplaceTemplateUseText(cfg.Name, cfg.Content, s.configCache.Get())
+		err = toml.Unmarshal([]byte(content), &config)
+		return config, true, err
+	}
+
+	return config, false, nil
 }
 
 func (s *SsoClient) oidcNeedsRetry() bool {
@@ -295,8 +324,6 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 	}
 	userVariableMap := s.configCache.Get()
 	ssoConfigMap := make(map[string]models.SsoConfig, 0)
-	// 重试标记由下面的 OIDC 分支重新置位，配置里已经没有 OIDC 时不该继续空转
-	s.setOIDCNotReady(false)
 	for _, cfg := range configs {
 		ssoConfigMap[cfg.Name] = cfg
 		cfg.Content = tplx.ReplaceTemplateUseText(cfg.Name, cfg.Content, userVariableMap)
@@ -309,19 +336,6 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 				continue
 			}
 			s.LDAP.Reload(config)
-		case "OIDC":
-			var config oidcx.Config
-			err := toml.Unmarshal([]byte(cfg.Content), &config)
-			if err != nil {
-				logger.Warning("reload oidc failed:", err)
-				continue
-			}
-
-			logger.Info("reload oidc..")
-			if err := s.ReloadOIDC(config); err != nil {
-				logger.Error("reload oidc failed:", err)
-				continue
-			}
 		case "CAS":
 			var config cas.Config
 			err := toml.Unmarshal([]byte(cfg.Content), &config)
@@ -340,6 +354,12 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 			s.OAuth2.Reload(config)
 
 		}
+	}
+
+	// OIDC 不走上面这份配置快照：ReloadOIDC 会在串行锁内重新读库，避免过期快照盖掉
+	// 管理员刚保存的配置
+	if err := s.ReloadOIDC(ctx); err != nil {
+		logger.Error("reload oidc failed:", err)
 	}
 
 	if dingTalkConfig, ok := ssoConfigMap[dingtalk.SsoTypeName]; ok {
