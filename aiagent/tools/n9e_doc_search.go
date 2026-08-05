@@ -93,27 +93,40 @@ var (
 // ToolDeps，谁先调用 search_n9e_docs 谁就会拿零值配置把 docSyncOnce 消费掉——
 // 那样配置里的「关闭同步」永远没机会生效，出网也停不掉。
 var (
-	docSyncCfgMu       sync.RWMutex
-	docSyncCfgDisabled bool
-	docSyncCfgURL      = n9eDocIndexURL
+	docSyncCfgMu          sync.RWMutex
+	docSyncCfgInitialized bool
+	docSyncCfgDisabled    bool
+	docSyncCfgURL         = n9eDocIndexURL
 )
 
 // InitDocIndexSync 配置远程文档索引同步：disabled 为真则彻底不出网，
-// indexURL 为空时用官方地址。须在开始接收请求前调用。
+// indexURL 为空时用官方地址。须在任何后台 goroutine 启动前调用 —— 在此之前
+// triggerDocIndexSync 一律按兵不动，绝不能拿默认的官方地址先斩后奏。
 func InitDocIndexSync(disabled bool, indexURL string) {
 	docSyncCfgMu.Lock()
 	defer docSyncCfgMu.Unlock()
+	docSyncCfgInitialized = true
 	docSyncCfgDisabled = disabled
 	docSyncCfgURL = n9eDocIndexURL
-	if indexURL != "" {
-		docSyncCfgURL = indexURL
+
+	if indexURL == "" {
+		return
 	}
+	if u, err := url.Parse(indexURL); err != nil || !isAbsoluteHTTPURL(u) {
+		// 不静默回退到官方地址：运维特意指了内网镜像，地址写错了就更不该把
+		// 请求发到公网去，直接停掉同步等他改配置。日志里不回显这个地址，
+		// 它可能带着凭据、且脱敏函数对这种畸形串也只能给占位符。
+		docSyncCfgDisabled = true
+		logger.Errorf("AIAgent.DocIndexURL is not an absolute http(s) url, n9e doc index sync is disabled until it is fixed (or %s)", n9eDocSyncDisableHint)
+		return
+	}
+	docSyncCfgURL = indexURL
 }
 
-func docSyncConfig() (disabled bool, indexURL string) {
+func docSyncConfig() (initialized, disabled bool, indexURL string) {
 	docSyncCfgMu.RLock()
 	defer docSyncCfgMu.RUnlock()
-	return docSyncCfgDisabled, docSyncCfgURL
+	return docSyncCfgInitialized, docSyncCfgDisabled, docSyncCfgURL
 }
 
 // searchN9eDocs scores entries against caller-supplied keywords and returns
@@ -344,8 +357,15 @@ func truncateRunes(s string, max int) string {
 // keeps the cost off deployments that never use this skill. 走哪条路由
 // InitDocIndexSync 装好的进程级配置决定，与调用方是谁无关。
 func triggerDocIndexSync() {
+	initialized, disabled, indexURL := docSyncConfig()
+	if !initialized {
+		// 配置还没装载（进程刚起，告警流水线里的 ai.agent 可能抢在前面调到这里）。
+		// 这一轮什么都不做，尤其不能消费 docSyncOnce —— 一旦按默认值起了同步
+		// 循环，之后写进来的 disabled=true 再也停不掉它，离线部署的不出网边界
+		// 就被永久破坏了。等配置装好后的下一次调用再启动。
+		return
+	}
 	docSyncOnce.Do(func() {
-		disabled, indexURL := docSyncConfig()
 		if disabled {
 			docIndexMu.Lock()
 			docSyncDisabled = true
@@ -467,13 +487,21 @@ func setDocSyncFails(n int) {
 	docIndexMu.Unlock()
 }
 
+// isAbsoluteHTTPURL 判定 u 是不是一个能用来拉索引的绝对 http(s) 地址。
+// Opaque 必须为空是关键：漏写双斜杠的 "https:user:secret@host/path" 会被
+// url.Parse 整串塞进 Opaque，凭据既不在 User 里，抹也抹不掉。
+func isAbsoluteHTTPURL(u *url.URL) bool {
+	return (u.Scheme == "http" || u.Scheme == "https") && u.Host != "" && u.Opaque == ""
+}
+
 // redactIndexURL 去掉 userinfo / query / fragment 后再进日志和错误：自建镜像
 // 常把访问凭据放在 https://user:token@host/ 或 ?token= 里，原样打出去等于把
-// 凭据抄进日志系统。解析不了就不猜，直接给占位符，绝不回退成原串。
+// 凭据抄进日志系统。凡是解析不了、或不是规规矩矩的绝对 http(s) 地址（含上面
+// 那种 opaque 形式），一律给占位符——宁可日志少一条信息，也不赌能抹干净。
 func redactIndexURL(raw string) string {
 	u, err := url.Parse(raw)
-	if err != nil {
-		return "(unparsable doc index url)"
+	if err != nil || !isAbsoluteHTTPURL(u) {
+		return "(invalid doc index url)"
 	}
 	u.User = nil
 	u.RawQuery = ""

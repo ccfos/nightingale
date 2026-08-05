@@ -11,6 +11,7 @@ import (
 
 	"github.com/toolkits/pkg/logger"
 
+	aitools "github.com/ccfos/nightingale/v6/aiagent/tools"
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -68,6 +69,11 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	i18nx.Init(configDir)
 	flashduty.Init(config.Center.FlashDuty)
+
+	// search_n9e_docs 的远程索引同步开关与地址。必须赶在 alert.Start 等后台
+	// goroutine 之前装好：同步循环由工具首次被调用惰性启动且只启动一次，而告警
+	// 流水线里的 ai.agent 也会调这个工具——装晚了配置就管不住已经起飞的循环。
+	aitools.InitDocIndexSync(config.Center.AIAgent.DisableDocIndexSync, config.Center.AIAgent.DocIndexURL)
 
 	db, err := storage.New(config.DB)
 	if err != nil {
