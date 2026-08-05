@@ -143,7 +143,9 @@ EngineName = "default"
 # MaxPointsPerSeries = 60
 # MaxRecordBytes = 262144
 # PerRuleDailyMB = 1024
-# QueueSize = 4096
+# write queue length; also caps memory retained when the disk stalls (the queue
+# holds in-memory records, ~200KB each at the default caps)
+# QueueSize = 512
 # MaxDiskGB = 20
 # read-side caps: keep query load off the eval loop.
 # MaxQueryBytes is the serialized-bytes budget of one query's result; a query that hits it

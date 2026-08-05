@@ -860,6 +860,90 @@ func TestEnqueueGzReleasesWaiterWhenQueueFull(t *testing.T) {
 	}
 }
 
+// 回归：磁盘写失败必须走熔断——每个窗口至多一条进入/续期日志、每条丢失都计入 dropHook、
+// Push 直接拒绝让调用方回退 info 摘要（与队列满同语义）、磁盘恢复后自动收口清零。
+// 修复前：磁盘满时每条记录一条 Warning（日志与 evallog 常在同一块盘，写放大雪上加霜），
+// 且 write 失败路径不计 dropHook，eval_log_drop_total 对这类丢失是盲的。
+func TestWriteFailureCircuitBreaker(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("chmod-based failure injection does not work as root")
+	}
+	old := writeFailCooldown
+	writeFailCooldown = 50 * time.Millisecond
+	defer func() { writeFailCooldown = old }()
+
+	var drops int32
+	cfg := Config{Dir: t.TempDir()}
+	cfg.normalize()
+	// 裸 Writer 同步调用 write()，避开消费 goroutine 的时序；字段访问约定同 loop()
+	w := &Writer{
+		cfg:        cfg,
+		ch:         make(chan *EvalRecord, 4),
+		dropHook:   func() { atomic.AddInt32(&drops, 1) },
+		appenders:  make(map[string]*appender),
+		budgets:    make(map[string]*ruleBudget),
+		gzCh:       make(chan string, 8),
+		gzInflight: make(map[string]chan struct{}),
+	}
+	// 不走 NewRecord：它依赖包级单例已 Init，而本用例刻意用裸 Writer
+	rec := func(ruleId int64, ts time.Time) *EvalRecord {
+		return &EvalRecord{Ts: ts.UnixMilli(), RuleId: ruleId, DatasourceId: 1}
+	}
+	now := time.Now()
+
+	// 基线：正常写入不触发熔断
+	w.write(rec(1, now))
+	if w.degraded(time.Now()) {
+		t.Fatal("healthy write must not degrade")
+	}
+
+	// 注入打开失败：根目录改只读，新规则目录的 MkdirAll 必然失败
+	if err := os.Chmod(cfg.Dir, 0555); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(cfg.Dir, 0755)
+
+	w.write(rec(2, now))
+	if !w.degraded(time.Now()) {
+		t.Fatal("open failure must enter degradation")
+	}
+	if got := atomic.LoadInt32(&drops); got != 1 {
+		t.Fatalf("the triggering record must be counted as dropped, got %d", got)
+	}
+
+	// 熔断期内：Push 直接拒绝（调用方据此回退 info 摘要），write 入口短路，均计数、不碰磁盘
+	if w.Push(rec(3, now)) {
+		t.Fatal("Push must report not-queued during degradation")
+	}
+	w.write(rec(4, now))
+	if got := atomic.LoadInt32(&drops); got != 3 {
+		t.Fatalf("every dropped record must hit dropHook, got %d", got)
+	}
+	if got := atomic.LoadInt64(&w.degradedDrops); got != 3 {
+		t.Fatalf("degradedDrops = %d, want 3", got)
+	}
+
+	// 修复磁盘 + 熔断到期：下一条写入成功即恢复并清零统计
+	if err := os.Chmod(cfg.Dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(2 * writeFailCooldown)
+	w.write(rec(5, now))
+	if w.degraded(time.Now()) || atomic.LoadInt64(&w.degradedUntilNs) != 0 {
+		t.Fatal("a successful write after the cooldown must clear degradation")
+	}
+	if got := atomic.LoadInt64(&w.degradedDrops); got != 0 {
+		t.Fatalf("drop counter must reset on recovery, got %d", got)
+	}
+
+	// 恢复后的记录要真的落盘可查
+	w.closeAll(false)
+	recs, err := queryRecs(cfg, 5, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
+	if err != nil || len(recs) != 1 {
+		t.Fatalf("post-recovery record must be persisted: err=%v n=%d", err, len(recs))
+	}
+}
+
 // 回归：MaxDiskGB 兜底曾把当前小时文件排除在 total 之外，而写入几乎全部集中在当前小时，
 // 于是目录实际早已超预算时 pruneToBudget 仍可能一条都不删。
 func TestCleanerCountsCurrentHourInTotal(t *testing.T) {

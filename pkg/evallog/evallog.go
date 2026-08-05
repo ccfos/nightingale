@@ -16,7 +16,7 @@ type Config struct {
 	MaxPointsPerSeries int    // 闸1b：单曲线保留的点数，默认 60
 	MaxRecordBytes     int    // 闸1c：单条记录序列化后硬上限，默认 256KB
 	PerRuleDailyMB     int    // 闸2：单规则单日写入预算（未压缩，跨该规则命中的全部数据源合计），超出后当日降级为摘要，默认 1024
-	QueueSize          int    // 闸3：异步写入队列长度，默认 4096
+	QueueSize          int    // 闸3：异步写入队列长度，默认 512（同时是磁盘卡顿时的最坏内存驻留系数，见 defQueueSize）
 	MaxDiskGB          int    // 兜底：目录总量上限，超出从最旧小时删起，默认 20
 
 	// 以下两个是**读侧**的闸，防的是「查询把告警引擎拖垮」。
@@ -32,8 +32,16 @@ const (
 	defMaxPointsPerSeries = 60
 	defMaxRecordBytes     = 256 * 1024
 	defPerRuleDailyMB     = 1024
-	defQueueSize          = 4096
-	defMaxDiskGB          = 20
+	// defQueueSize 写入队列长度。
+	//
+	// 队列里是**序列化前**的 *EvalRecord，满载一条（100 曲线 × 60 点 + labels）在内存中约
+	// 200KB+：磁盘 hang/NFS 卡顿把消费 goroutine 堵住时，队列有多深、堆就要陪多深——
+	// 4096 意味着最坏 GB 级驻留，小内存 edge 节点会被 OOM 反杀，旁路功能拖垮主流程。
+	// 512 给消费端约一秒的卡顿余量就够了（正常水位近零：入队每秒几百条 vs 消费每秒数千条，
+	// 1 万 rule-ds × 15s 间隔也只有 667 条/秒），最坏驻留收敛到 ~100MB。
+	// 被丢弃的记录有 dropHook 计数 + info 摘要回退兜底，不会无声消失；超大部署可自行调高。
+	defQueueSize = 512
+	defMaxDiskGB = 20
 
 	// defMaxQueryBytes 单次查询字节预算。
 	//

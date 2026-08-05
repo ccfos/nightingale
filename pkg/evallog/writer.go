@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/toolkits/pkg/logger"
@@ -29,6 +30,10 @@ const (
 	// 闸2 的当日预算计数在无写入多久后回收；必须大于一天，否则跨日前就被清掉
 	budgetIdleTimeout = 25 * time.Hour
 )
+
+// writeFailCooldown 写失败熔断（见 markDegraded）的时长。
+// 变量而非常量：测试需要把它调小，避免用例空等 30 秒。
+var writeFailCooldown = 30 * time.Second
 
 // Writer 单 goroutine 消费队列、按 {rule_ds}/{date}/{hour}.jsonl 追加写入，
 // 整点滚动后异步 gzip。所有 appender / budgets 状态仅在消费 goroutine 内访问，无锁。
@@ -52,6 +57,11 @@ type Writer struct {
 	// gzInflight 记录已排队/正在压缩的路径 → 完成信号，供 getAppender 在重开同名文件前
 	// 等待，避免压缩任务的 os.Remove 删掉刚被重新打开的 inode（详见 waitGzDone）。
 	gzInflight map[string]chan struct{}
+
+	// 写失败熔断（见 markDegraded）。degradedUntilNs 由消费 goroutine 写、Push 在
+	// eval goroutine 读，两个字段都必须原子访问。
+	degradedUntilNs int64 // 熔断截止（UnixNano），0 表示未熔断
+	degradedDrops   int64 // 熔断以来丢弃的记录数，恢复/续期日志用
 }
 
 type appender struct {
@@ -105,7 +115,7 @@ func NewWriter(cfg Config, dropHook func()) (*Writer, error) {
 	return w, nil
 }
 
-// Push 非阻塞入队，队列满则丢弃并回调 dropHook。返回是否入队成功。
+// Push 非阻塞入队，队列满或写路径处于熔断期则丢弃并回调 dropHook。返回是否入队成功。
 func (w *Writer) Push(r *EvalRecord) (queued bool) {
 	// Close 与并发 Push 竞争时向已关闭 channel 发送会 panic，吞掉即可：
 	// 关闭发生在进程退出/重新 Init，丢这一条记录无影响
@@ -114,6 +124,15 @@ func (w *Writer) Push(r *EvalRecord) (queued bool) {
 			queued = false
 		}
 	}()
+	// 写失败熔断期内直接按「未入队」处理：调用方会走与队列满相同的 info 摘要回退，
+	// 磁盘故障期间现场不至于两头落空；丢弃同样计入指标。
+	if w.degraded(time.Now()) {
+		atomic.AddInt64(&w.degradedDrops, 1)
+		if w.dropHook != nil {
+			w.dropHook()
+		}
+		return false
+	}
 	select {
 	case w.ch <- r:
 		return true
@@ -171,6 +190,14 @@ func (w *Writer) loop() {
 }
 
 func (w *Writer) write(r *EvalRecord) {
+	now := time.Now()
+	// 熔断期内直接丢弃并计数：不 marshal、不碰磁盘、不逐条打日志。
+	// Push 侧的闸只拦新记录，队列里可能还留着熔断生效前入队的存量，这里兜住它们。
+	if w.degraded(now) {
+		w.dropDegraded()
+		return
+	}
+
 	key := fmt.Sprintf("%d_%d", r.RuleId, r.DatasourceId)
 
 	line, ok := w.marshalWithinLimit(r)
@@ -180,11 +207,13 @@ func (w *Writer) write(r *EvalRecord) {
 
 	a := w.getAppender(key, r)
 	if a == nil {
+		// getAppender 已打过带路径与原因的日志，这里负责计数并进入熔断
+		w.dropDegraded()
+		w.markDegraded(now, "open hour file failed")
 		return
 	}
 
 	// 闸2：单规则单日预算（跨该规则的全部数据源合计），超出后降级为摘要模式
-	now := time.Now()
 	b := w.budgetFor(strconv.FormatInt(r.RuleId, 10), msTime(r.Ts).Format(dateLayout), now)
 	limit := int64(w.cfg.PerRuleDailyMB) * 1024 * 1024
 	if b.bytes+int64(len(line)) > limit && (len(r.Queries) > 0 || len(r.Events) > 0) {
@@ -197,12 +226,52 @@ func (w *Writer) write(r *EvalRecord) {
 			return
 		}
 	}
-	b.bytes += int64(len(line))
 
 	if _, err := a.bw.Write(append(line, '\n')); err != nil {
-		logger.Warningf("evallog write %s error: %v", a.hourPath, err)
+		// bufio 的 error 会粘滞在句柄上，继续复用只会让后续写全部失败，关掉并进入熔断
+		w.finalize(a, false)
+		w.dropDegraded()
+		w.markDegraded(now, err.Error())
+		return
 	}
+	// 预算在写成功后才累加：写失败/熔断丢弃的记录不该虚占当日额度
+	b.bytes += int64(len(line))
 	a.lastWrite = now
+
+	// 熔断到期后的首次成功写入：恢复并收口统计
+	if atomic.LoadInt64(&w.degradedUntilNs) != 0 {
+		logger.Infof("evallog write path recovered, %d records were dropped during degradation",
+			atomic.LoadInt64(&w.degradedDrops))
+		atomic.StoreInt64(&w.degradedUntilNs, 0)
+		atomic.StoreInt64(&w.degradedDrops, 0)
+	}
+}
+
+// degraded 写路径是否处于熔断期。
+func (w *Writer) degraded(now time.Time) bool {
+	return now.UnixNano() < atomic.LoadInt64(&w.degradedUntilNs)
+}
+
+// dropDegraded 计一条熔断相关丢弃（指标 + 恢复日志的统计），刻意不打日志。
+func (w *Writer) dropDegraded() {
+	atomic.AddInt64(&w.degradedDrops, 1)
+	if w.dropHook != nil {
+		w.dropHook()
+	}
+}
+
+// markDegraded 进入/续期写失败熔断。
+//
+// 磁盘满/hang 几乎总是盘级故障而非单文件故障，所以按 Writer 全局熔断，不按 appender 区分。
+// 没有它，磁盘满之后 bufio 的粘滞 error 会让**每条**记录都产出一条 Warning——日志和
+// evallog 常在同一块盘上，等于在磁盘最紧张的时刻再压上一份写放大；getAppender 失败路径
+// 还会每条记录白做一次 MkdirAll+OpenFile。熔断期内 Push 直接拒绝（调用方回退 info 摘要，
+// 现场不丢）、write 入口直接丢弃计数，每个窗口只有进入/续期时这一条日志。
+// 到期后由下一条记录探测：写成功即恢复，再失败则续期。
+func (w *Writer) markDegraded(now time.Time, reason string) {
+	atomic.StoreInt64(&w.degradedUntilNs, now.Add(writeFailCooldown).UnixNano())
+	logger.Warningf("evallog write path degraded (%s): dropping eval records for %s, %d dropped since degradation began; check disk space/health of %s",
+		reason, writeFailCooldown, atomic.LoadInt64(&w.degradedDrops), w.cfg.Dir)
 }
 
 // marshalWithinLimit 序列化并按降级阶梯把结果压进 MaxRecordBytes（闸1c）：
@@ -376,6 +445,15 @@ func (w *Writer) housekeep() {
 
 	nowHourKey := now.Format(dateLayout) + "/" + now.Format(hourLayout)
 	for _, a := range w.appenders {
+		// 熔断期内不再做周期刷盘/滚动：尽力刷一次就收口句柄，能刷出去的保住，
+		// 刷不出去的损失已由熔断的日志与计数覆盖，不再逐秒逐句柄重复报错。
+		// 每轮重读熔断态：本循环内 Flush 失败进入熔断后，其余句柄立刻走这条收口路径。
+		if w.degraded(now) {
+			a.bw.Flush()
+			a.f.Close()
+			delete(w.appenders, a.ruleDs)
+			continue
+		}
 		if a.hourKey != nowHourKey {
 			// 该小时已过且不再有写入进来，滚动压缩
 			w.finalize(a, true)
@@ -388,6 +466,11 @@ func (w *Writer) housekeep() {
 		}
 		if err := a.bw.Flush(); err != nil {
 			logger.Warningf("evallog flush %s error: %v", a.hourPath, err)
+			// Flush 失败与写失败同源（盘级故障）：收口句柄并进入熔断，
+			// 否则粘滞在 bufio 上的 error 会让之后每一秒、每个句柄都重复上面那条 Warning
+			a.f.Close()
+			delete(w.appenders, a.ruleDs)
+			w.markDegraded(now, "flush failed")
 		}
 	}
 }
