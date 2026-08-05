@@ -29,6 +29,10 @@ type Stats struct {
 	GaugeRecordEvalDuration     *prometheus.GaugeVec
 	GaugeRecordSeriesCount      *prometheus.GaugeVec
 	GaugeNotifyRecordQueueSize  prometheus.Gauge
+	CounterEvalLogDropTotal     prometheus.Counter
+	// CounterEvalLogQueryRejectTotal 持续增长说明查询并发闸在起作用：
+	// 要么有人在反复刷记录页，要么 MaxConcurrentQueries 配得太紧
+	CounterEvalLogQueryRejectTotal prometheus.Counter
 }
 
 func NewSyncStats() *Stats {
@@ -173,6 +177,22 @@ func NewSyncStats() *Stats {
 		Help:      "Number of var filling query.",
 	}, []string{"rule_id", "datasource_id", "ref", "typ"})
 
+	// 评估执行记录被丢弃的条数（写入队列满，或降级到骨架后仍超出单行硬上限）
+	CounterEvalLogDropTotal := prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "eval_log_drop_total",
+		Help:      "Number of eval log records dropped (full write queue, or still oversized after full degradation).",
+	})
+
+	// 查询被并发闸拒绝的次数（防止排障查询把告警引擎的内存/CPU 吃掉）
+	CounterEvalLogQueryRejectTotal := prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "eval_log_query_reject_total",
+		Help:      "Number of eval log queries rejected by the concurrency gate.",
+	})
+
 	prometheus.MustRegister(
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
@@ -193,6 +213,8 @@ func NewSyncStats() *Stats {
 		GaugeRecordSeriesCount,
 		GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery,
+		CounterEvalLogDropTotal,
+		CounterEvalLogQueryRejectTotal,
 	)
 
 	return &Stats{
@@ -215,5 +237,8 @@ func NewSyncStats() *Stats {
 		GaugeRecordSeriesCount:      GaugeRecordSeriesCount,
 		GaugeNotifyRecordQueueSize:  GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery:      CounterVarFillingQuery,
+		CounterEvalLogDropTotal:     CounterEvalLogDropTotal,
+
+		CounterEvalLogQueryRejectTotal: CounterEvalLogQueryRejectTotal,
 	}
 }

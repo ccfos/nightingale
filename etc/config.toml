@@ -133,6 +133,29 @@ EngineName = "default"
 # [Alert.Alerting]
 # NotifyConcurrency = 10
 
+# eval execution records: what each rule evaluation queried and judged,
+# stored on local disk of the alert engine, queryable on the rule page
+# [Alert.EvalLog]
+# Disable = false
+# Dir = "./evallog"
+# RetentionHours = 192
+# MaxSeriesPerQuery = 100
+# MaxPointsPerSeries = 60
+# MaxRecordBytes = 262144
+# PerRuleDailyMB = 1024
+# write queue length; also caps memory retained when the disk stalls (the queue
+# holds in-memory records, ~200KB each at the default caps)
+# QueueSize = 512
+# MaxDiskGB = 20
+# read-side caps: keep query load off the eval loop.
+# MaxQueryBytes is the serialized-bytes budget of one query's result; a query that hits it
+# returns the newest records it fits plus an explicit "truncated" note. Raising it costs
+# roughly MaxConcurrentQueries x MaxQueryBytes x 3.7 of extra heap on this engine (decoded
+# records measure ~2.7x their on-disk bytes, plus one marshalled copy in the handler), and it
+# must stay below the 48MB per-node response cap on the center side.
+# MaxQueryBytes = 33554432
+# MaxConcurrentQueries = 2
+
 [Center]
 MetricsYamlFile = "./etc/metrics.yaml"
 I18NHeaderKey = "X-Language"
