@@ -255,7 +255,7 @@ POST /api/n9e/ai-llm-config/test
 
 ### 测试行为
 
-根据 `api_type` 向对应的 API 发送一个最小请求（"Hi"，max_tokens=5）：
+根据 `api_type` 向对应的 API 发送一个最小请求（"Hi"，最大输出 Token 数为 5）。OpenAI 兼容请求中，gpt-5、o1、o3 系列使用 `max_completion_tokens=5`，其他模型使用 `max_tokens=5`：
 
 | api_type | 请求地址 | 认证方式 |
 |----------|---------|---------|

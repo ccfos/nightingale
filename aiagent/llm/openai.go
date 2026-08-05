@@ -62,13 +62,14 @@ func (o *OpenAI) Name() string {
 
 // OpenAI API request/response structures
 type openAIRequest struct {
-	Model       string          `json:"model"`
-	Messages    []openAIMessage `json:"messages"`
-	Tools       []openAITool    `json:"tools,omitempty"`
-	MaxTokens   int             `json:"max_tokens,omitempty"`
-	Temperature float64         `json:"temperature,omitempty"`
-	TopP        float64         `json:"top_p,omitempty"`
-	Stream      bool            `json:"stream,omitempty"`
+	Model               string          `json:"model"`
+	Messages            []openAIMessage `json:"messages"`
+	Tools               []openAITool    `json:"tools,omitempty"`
+	MaxTokens           int             `json:"max_tokens,omitempty"`
+	MaxCompletionTokens int             `json:"max_completion_tokens,omitempty"`
+	Temperature         float64         `json:"temperature,omitempty"`
+	TopP                float64         `json:"top_p,omitempty"`
+	Stream              bool            `json:"stream,omitempty"`
 
 	// extraBody 不出现在 JSON tag 里——由 MarshalJSON 平铺到顶层。
 	// 用于把 LLMConfig.ExtraBody 透传给厂商特定字段（如 dashscope 的 enable_thinking）。
@@ -81,7 +82,15 @@ type openAIRequest struct {
 // 已存在的 key 由显式字段优先（不让 extraBody 偷偷覆盖 model/messages 等关键字段）。
 func (r openAIRequest) MarshalJSON() ([]byte, error) {
 	type alias openAIRequest
-	data, err := json.Marshal(alias(r))
+	useMaxCompletionTokens := usesMaxCompletionTokens(r.Model)
+	normalized := r
+	if useMaxCompletionTokens {
+		normalized.MaxTokens = 0
+	} else {
+		normalized.MaxCompletionTokens = 0
+	}
+
+	data, err := json.Marshal(alias(normalized))
 	if err != nil {
 		return nil, err
 	}
@@ -93,12 +102,22 @@ func (r openAIRequest) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	for k, v := range r.extraBody {
+		if (useMaxCompletionTokens && k == "max_tokens") || (!useMaxCompletionTokens && k == "max_completion_tokens") {
+			continue
+		}
 		if _, occupied := m[k]; occupied {
 			continue
 		}
 		m[k] = v
 	}
 	return json.Marshal(m)
+}
+
+func usesMaxCompletionTokens(model string) bool {
+	m := strings.ToLower(strings.TrimSpace(model))
+	return m == "gpt-5" || strings.HasPrefix(m, "gpt-5-") ||
+		m == "o1" || strings.HasPrefix(m, "o1-") ||
+		m == "o3" || strings.HasPrefix(m, "o3-")
 }
 
 type openAIMessage struct {
@@ -391,11 +410,17 @@ func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 	}
 
 	// MaxTokens: 同上
+	var maxTokens int
 	switch {
 	case req.MaxTokens != nil:
-		openAIReq.MaxTokens = *req.MaxTokens
+		maxTokens = *req.MaxTokens
 	case o.config.MaxTokens != nil:
-		openAIReq.MaxTokens = *o.config.MaxTokens
+		maxTokens = *o.config.MaxTokens
+	}
+	if usesMaxCompletionTokens(openAIReq.Model) {
+		openAIReq.MaxCompletionTokens = maxTokens
+	} else {
+		openAIReq.MaxTokens = maxTokens
 	}
 
 	// Convert messages. 结构化工具轮：assistant 的 ToolCalls 与 RoleTool 结果轮

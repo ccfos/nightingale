@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -211,5 +212,82 @@ func TestConvertRequest_ToolTurnEmptyContent(t *testing.T) {
 	}
 	if out.Messages[2].Content != "real result" {
 		t.Errorf("non-empty tool result must pass through, got %q", out.Messages[2].Content)
+	}
+}
+
+func TestOpenAIRequest_MaxTokensFieldByModel(t *testing.T) {
+	tests := []struct {
+		model     string
+		wantField string
+	}{
+		{model: "gpt-5-mini", wantField: "max_completion_tokens"},
+		{model: "o1", wantField: "max_completion_tokens"},
+		{model: "o1-preview", wantField: "max_completion_tokens"},
+		{model: "o3", wantField: "max_completion_tokens"},
+		{model: "o3-mini", wantField: "max_completion_tokens"},
+		{model: "gpt-50", wantField: "max_tokens"},
+		{model: "gpt-4o", wantField: "max_tokens"},
+		{model: "deepseek-chat", wantField: "max_tokens"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.model, func(t *testing.T) {
+			tokenLimit := 123
+			otherField := "max_tokens"
+			if tt.wantField == "max_tokens" {
+				otherField = "max_completion_tokens"
+			}
+
+			o := &OpenAI{config: &Config{
+				Model:     tt.model,
+				MaxTokens: &tokenLimit,
+				ExtraBody: map[string]any{otherField: 456},
+			}}
+			data, err := json.Marshal(o.convertRequest(&GenerateRequest{}))
+			if err != nil {
+				t.Fatalf("marshal request: %v", err)
+			}
+
+			var body map[string]json.RawMessage
+			if err := json.Unmarshal(data, &body); err != nil {
+				t.Fatalf("unmarshal request: %v", err)
+			}
+			if _, ok := body[otherField]; ok {
+				t.Fatalf("request contains both token fields: %s", data)
+			}
+
+			var got int
+			if err := json.Unmarshal(body[tt.wantField], &got); err != nil {
+				t.Fatalf("unmarshal %s: %v; body: %s", tt.wantField, err, data)
+			}
+			if got != tokenLimit {
+				t.Errorf("%s = %d, want %d; body: %s", tt.wantField, got, tokenLimit, data)
+			}
+		})
+	}
+}
+
+func TestOpenAIRequest_RequestMaxTokensForGPT5Probe(t *testing.T) {
+	requestMaxTokens := 5
+	o := &OpenAI{config: &Config{Model: "gpt-5-mini"}}
+	data, err := json.Marshal(o.convertRequest(&GenerateRequest{MaxTokens: &requestMaxTokens}))
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+
+	var body map[string]json.RawMessage
+	if err := json.Unmarshal(data, &body); err != nil {
+		t.Fatalf("unmarshal request: %v", err)
+	}
+	if _, ok := body["max_tokens"]; ok {
+		t.Fatalf("request unexpectedly contains max_tokens: %s", data)
+	}
+
+	var got int
+	if err := json.Unmarshal(body["max_completion_tokens"], &got); err != nil {
+		t.Fatalf("unmarshal max_completion_tokens: %v; body: %s", err, data)
+	}
+	if got != requestMaxTokens {
+		t.Errorf("max_completion_tokens = %d, want %d; body: %s", got, requestMaxTokens, data)
 	}
 }
