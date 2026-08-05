@@ -2,6 +2,7 @@ package evallog
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
@@ -51,54 +52,122 @@ func clampFromToRetention(cfg Config, fromMs int64, now time.Time) int64 {
 	return fromMs
 }
 
+// futureSkewAllowance 查询上界允许超出当前时刻的余量。
+//
+// 留 1 小时而不是几分钟：多出来的只有 1 轮小时循环（微秒级），却能覆盖前端 to 取自
+// **浏览器时钟**（fe 侧是 moment(range.end).unix()）、NTP 跳变、时区配错导致的整小时
+// 偏移这三类现实偏差。再放大就纯属遮蔽问题了——真出现比 now 大一天的 to，说明某个
+// 时钟是坏的，早暴露比默默兼容好。
+const futureSkewAllowance = time.Hour
+
+// clampToToNow 把查询上界钳到「当前时刻 + futureSkewAllowance」。
+//
+// 与 clampFromToRetention 成对出现，缺一不可：下界钳住了、上界不钳，小时循环的轮数
+// 依然由调用方随意指定的 to 决定。两个 handler 的 to 都不校验（center 侧是
+// ginx.QueryInt64(c, "to", now) 之后 to*1000），传 to=253402300799（公元 9999 年）
+// 就是约 7000 万轮、每轮 2 次 os.Open——实测约 4 分钟纯 syscall，具备 /alert-rules
+// 权限的普通用户即可反复触发。两个钳制合起来，轮数被 RetentionHours 自动封顶
+// （默认 192 轮，实测 0.63ms），因此不需要再单独设「最大查询跨度」。
+//
+// 记录的 Ts 取评估开始时刻，本就不存在未来数据，钳掉的全是空轮，不会藏数据。
+func clampToToNow(toMs int64, now time.Time) int64 {
+	ceil := now.Add(futureSkewAllowance).UnixMilli()
+	if toMs > ceil {
+		return ceil
+	}
+	return toMs
+}
+
+// QueryResult 一次查询的结果与容量说明。
+//
+// Truncated 不能省：字节预算生效时返回的条数会少于 limit，而前端判断「还有更多」用的是
+// 「本页条数 == limit」，少一条就会被读成「这段时间就这么多记录」——本功能全篇都在防的
+// 正是这种「容量上限被读成数据缺失」。所以预算一旦生效，必须带着可读的原因浮到接口上。
+type QueryResult struct {
+	Records   []EvalRecord
+	Truncated bool
+	Note      string // 人可读的截断原因，仅 Truncated 时非空
+}
+
 // queryRecords 扫描 [fromMs, toMs] 覆盖的小时文件，返回按 ts 倒序的记录。
 // 小时文件按文件名直接定位，无需索引；beforeMs > 0 时作为翻页游标（ts < beforeMs）。
-func queryRecords(cfg Config, ruleId, datasourceId int64, fromMs, toMs, beforeMs int64, limit int) ([]EvalRecord, error) {
+func queryRecords(cfg Config, ruleId, datasourceId int64, fromMs, toMs, beforeMs int64, limit int) (QueryResult, error) {
 	if limit <= 0 {
 		limit = DefaultQueryLimit
 	}
 	if limit > MaxQueryLimit {
 		limit = MaxQueryLimit
 	}
+	now := time.Now()
 	if toMs <= 0 {
-		toMs = time.Now().UnixMilli()
+		toMs = now.UnixMilli()
 	}
+	// 入参本身就倒挂属于调用方错误，先于任何钳制判定，保持原有报错语义
 	if fromMs < 0 || fromMs > toMs {
-		return nil, fmt.Errorf("invalid time range: from %d > to %d", fromMs, toMs)
+		return QueryResult{}, fmt.Errorf("invalid time range: from %d > to %d", fromMs, toMs)
 	}
-	fromMs = clampFromToRetention(cfg, fromMs, time.Now())
+	// 上下界成对钳制，把小时循环的轮数封顶在 RetentionHours 以内
+	toMs = clampToToNow(toMs, now)
+	fromMs = clampFromToRetention(cfg, fromMs, now)
+	// 钳制之后才出现的倒挂（例如整个窗口都在未来）不是调用方错误，返回空即可
+	empty := QueryResult{Records: []EvalRecord{}}
 	if fromMs > toMs {
-		return []EvalRecord{}, nil
+		return empty, nil
 	}
 	upper := toMs
 	if beforeMs > 0 && beforeMs-1 < upper {
 		upper = beforeMs - 1
 	}
 	if upper < fromMs {
-		return []EvalRecord{}, nil
+		return empty, nil
 	}
 
 	ruleDir := filepath.Join(cfg.Dir, fmt.Sprintf("%d_%d", ruleId, datasourceId))
 	if _, err := os.Stat(ruleDir); os.IsNotExist(err) {
-		return []EvalRecord{}, nil
+		return empty, nil
 	}
 
-	result := make([]EvalRecord, 0, 64)
-	// 从最新小时向旧遍历，攒够 limit 即止
+	budget := int64(cfg.MaxQueryBytes)
+	if budget <= 0 {
+		budget = defMaxQueryBytes
+	}
+	// budgetFloor 预算剩不下一条像样的记录时就收手：为了榨干最后这点余量去整读一个可能
+	// 几十 MB 的小时文件并不划算，何况环形缓冲"至少留一条"的兜底还会让结果里多出一条
+	// 孤零零的旧记录，看起来像是数据断续。
+	budgetFloor := budget / 64
+	res := QueryResult{Records: make([]EvalRecord, 0, 64)}
+	// 环形缓冲整个查询只建一次、逐小时复用槽位，避免每小时都重新分配
+	ring := newLineRing(limit)
+	// 从最新小时向旧遍历，攒够 limit 或用光字节预算即止
 	for h := truncHour(msTime(upper)); !h.Before(truncHour(msTime(fromMs))); h = h.Add(-time.Hour) {
-		remaining := limit - len(result)
+		remaining := limit - len(res.Records)
 		if remaining <= 0 {
 			break
 		}
-		// 把剩余 limit 下推到扫描环节：每个小时只留该小时内最新的 remaining 条，
-		// 常驻内存由 limit 决定，而不是由小时文件大小决定
-		ring := newRecordRing(remaining)
-		if err := scanHourFile(ruleDir, h, fromMs, upper, ring); err != nil {
-			return nil, err
+		if budget <= budgetFloor {
+			// 预算见底：更早的小时文件连打开都不打开。返回的是最新的那一段，
+			// 丢的是更旧的，符合"先看最近发生了什么"的排障顺序
+			res.Truncated = true
+			break
 		}
-		result = ring.appendDesc(result)
+		// 把剩余 limit 与剩余字节预算一起下推到扫描环节：每个小时只留该小时内最新的
+		// remaining 条、且总字节不超预算，常驻内存由预算决定，而不是由小时文件大小决定
+		ring.reset(remaining, budget)
+		if err := scanHourFile(ruleDir, h, fromMs, upper, ring); err != nil {
+			return QueryResult{}, err
+		}
+		res.Records = ring.appendDesc(res.Records)
+		budget -= ring.bytes
+		if ring.dropped {
+			res.Truncated = true
+		}
 	}
-	return result, nil
+	if res.Truncated {
+		res.Note = fmt.Sprintf("result truncated by the per-query byte budget ([Alert.EvalLog] MaxQueryBytes = %d): "+
+			"only the newest %d records in this range are included; narrow the time range or lower limit",
+			cfg.MaxQueryBytes, len(res.Records))
+	}
+	return res, nil
 }
 
 // tsProbe 只解出 ts 字段。区间外的行占绝大多数，对它们做整条反序列化纯属浪费。
@@ -106,52 +175,140 @@ type tsProbe struct {
 	Ts int64 `json:"ts"`
 }
 
-// recordRing 定长环形缓冲，保留扫描过程中最后 cap 条命中记录。
+// tsFieldPrefix EvalRecord.Ts 是结构体第一个字段，encoding/json 按声明顺序输出，
+// 所以本包写出的每一行都以它开头。
+const tsFieldPrefix = `{"ts":`
+
+// probeTs 取出一行的 ts。
 //
-// 小时文件内是时间升序，"最后 N 条"就是该小时里最新的 N 条，正是倒序结果需要的那段。
-// 之所以不能像原先那样先把整个文件读成切片再截取：单条记录硬上限接近 4MB、
-// PerRuleDailyMB 默认允许每规则每天写 1GB，单个小时文件可达数十 MB，解码成结构体后
-// 还要再放大几倍，一次合法查询就能在告警引擎上造成数百 MB 级堆分配。
-type recordRing struct {
-	buf   []EvalRecord
-	cap   int
-	start int // 最旧元素下标
-	size  int
+// 先走前缀快路径：热点是「把整个小时文件的每一行都过一遍」，而绝大多数行最终会因为
+// 落在区间外、或被环形缓冲淘汰而丢掉，为它们做一次 json.Unmarshal（即使只解一个字段，
+// 也要完整扫描整行 JSON）纯属浪费。快路径不匹配时（手工改过的文件、未来字段顺序调整）
+// 退回通用解析，保证只快不错。
+func probeTs(line []byte) (int64, bool) {
+	if v, ok := fastProbeTs(line); ok {
+		return v, true
+	}
+	var p tsProbe
+	if err := json.Unmarshal(line, &p); err != nil {
+		return 0, false
+	}
+	return p.Ts, true
 }
 
-// newRecordRing 惰性分配：一次查询最多要扫 RetentionHours 个小时，其中绝大多数小时
-// 根本没有文件，每轮都按 limit 预分配底层数组只是白白制造垃圾。
-func newRecordRing(capacity int) *recordRing {
+func fastProbeTs(line []byte) (int64, bool) {
+	if !bytes.HasPrefix(line, []byte(tsFieldPrefix)) {
+		return 0, false
+	}
+	i := len(tsFieldPrefix)
+	start := i
+	var v int64
+	for ; i < len(line); i++ {
+		c := line[i]
+		if c < '0' || c > '9' {
+			break
+		}
+		// 毫秒时间戳 13 位，留到 18 位就足够，再长一律退回通用解析而不是悄悄溢出
+		if i-start >= 18 {
+			return 0, false
+		}
+		v = v*10 + int64(c-'0')
+	}
+	if i == start || i >= len(line) || (line[i] != ',' && line[i] != '}') {
+		return 0, false
+	}
+	return v, true
+}
+
+// lineRing 定长环形缓冲，保留扫描过程中最后若干条命中记录的**原始行**。
+//
+// 小时文件内是时间升序，"最后 N 条"就是该小时里最新的 N 条，正是倒序结果需要的那段。
+// 两处刻意的设计：
+//
+//   - 存原始行而不是解码后的 EvalRecord：进环的记录里只有最后 N 条会被真正返回，其余都
+//     会被覆盖掉。原先对每条命中记录都做整条 json.Unmarshal（含 labels map 分配），解码
+//     次数是 O(区间内记录数)；改成出环时才解码后变成 O(limit)，一个被写满的小时文件能少
+//     掉几万次结构体分配，GC 压力直接落在告警引擎的评估延迟上。
+//   - 除条数外还有字节上限：单条记录默认可到 176KB（100 曲线 × 60 点），前端一页取 1000
+//     条，光是解码后的常驻就有百 MB 级，handler 再 json.Marshal 一份、center 侧还要再持有
+//     一份——一次普通的翻页就能让告警引擎抖动。条数闸挡不住这个，必须按字节挡。
+//
+// 槽位底层数组跨小时复用（append(buf[i][:0], line...)），环写满后基本不再分配。
+type lineRing struct {
+	buf      [][]byte
+	maxLines int   // 本小时允许保留的条数，不超过 len(buf)
+	maxBytes int64 // 本小时可用的字节预算
+	bytes    int64 // 环内当前占用字节
+	start    int   // 最旧元素下标
+	size     int
+	dropped  bool // 因字节预算淘汰过更旧的记录（条数淘汰不算：那是正常的 limit 语义）
+}
+
+func newLineRing(capacity int) *lineRing {
 	if capacity < 1 {
 		capacity = 1
 	}
-	return &recordRing{cap: capacity}
+	return &lineRing{buf: make([][]byte, capacity), maxLines: capacity}
 }
 
-func (r *recordRing) push(rec EvalRecord) {
-	if len(r.buf) < r.cap {
-		r.buf = append(r.buf, rec)
-		r.size = len(r.buf)
+// reset 复用底层槽位开始新一轮（下一个小时文件）的收集。
+func (r *lineRing) reset(maxLines int, maxBytes int64) {
+	if maxLines < 1 {
+		maxLines = 1
+	}
+	if maxLines > len(r.buf) {
+		maxLines = len(r.buf)
+	}
+	r.maxLines = maxLines
+	r.maxBytes = maxBytes
+	r.bytes = 0
+	r.start = 0
+	r.size = 0
+	r.dropped = false
+}
+
+func (r *lineRing) push(line []byte) {
+	n := int64(len(line))
+	// 字节预算：淘汰更旧的直到放得下。环空了还放不下说明单条就超预算，
+	// 那也要留下这一条——宁可超预算一条，也不能返回空列表让人以为没数据
+	for r.size > 0 && r.bytes+n > r.maxBytes {
+		r.bytes -= int64(len(r.buf[r.start]))
+		r.start = (r.start + 1) % r.maxLines
+		r.size--
+		r.dropped = true
+	}
+
+	if r.size == r.maxLines {
+		// 条数满：覆盖最旧的一条并前移起点
+		idx := r.start
+		r.bytes -= int64(len(r.buf[idx]))
+		r.buf[idx] = append(r.buf[idx][:0], line...)
+		r.bytes += n
+		r.start = (r.start + 1) % r.maxLines
 		return
 	}
-	// 满了：覆盖最旧的一条并前移起点
-	r.buf[r.start] = rec
-	r.start = (r.start + 1) % len(r.buf)
+
+	idx := (r.start + r.size) % r.maxLines
+	r.buf[idx] = append(r.buf[idx][:0], line...)
+	r.bytes += n
+	r.size++
 }
 
-// appendDesc 按时间倒序（最新在前）把环内元素追加到 dst。
-func (r *recordRing) appendDesc(dst []EvalRecord) []EvalRecord {
-	if r.size == 0 {
-		return dst
-	}
+// appendDesc 按时间倒序（最新在前）解码环内元素并追加到 dst。
+func (r *lineRing) appendDesc(dst []EvalRecord) []EvalRecord {
 	for i := r.size - 1; i >= 0; i-- {
-		dst = append(dst, r.buf[(r.start+i)%len(r.buf)])
+		var rec EvalRecord
+		if err := json.Unmarshal(r.buf[(r.start+i)%r.maxLines], &rec); err != nil {
+			// probeTs 能过说明行首正常，整条解不出来只可能是尾部损坏，跳过即可
+			continue
+		}
+		dst = append(dst, rec)
 	}
 	return dst
 }
 
 // scanHourFile 流式扫描某小时的记录文件，把 [fromMs, upperMs] 内的记录喂给 ring。
-func scanHourFile(ruleDir string, hour time.Time, fromMs, upperMs int64, ring *recordRing) error {
+func scanHourFile(ruleDir string, hour time.Time, fromMs, upperMs int64, ring *lineRing) error {
 	base := filepath.Join(ruleDir, hour.Format(dateLayout), hour.Format(hourLayout))
 
 	// 顺序固定为 .gz 在前、.jsonl 在后：滚动压缩与写入存在短暂共存窗口，两个文件都要读，
@@ -170,7 +327,7 @@ func scanHourFile(ruleDir string, hour time.Time, fromMs, upperMs int64, ring *r
 	return nil
 }
 
-func scanJsonlFile(path string, gzipped bool, fromMs, upperMs int64, ring *recordRing) error {
+func scanJsonlFile(path string, gzipped bool, fromMs, upperMs int64, ring *lineRing) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -193,23 +350,21 @@ func scanJsonlFile(path string, gzipped bool, fromMs, upperMs int64, ring *recor
 	// 写入侧的 enforceLineCeiling 保证不会写出超过这个长度的行
 	scanner.Buffer(make([]byte, 64*1024), maxScanLineBytes)
 	for scanner.Scan() {
+		// scanner.Bytes() 指向扫描器内部缓冲，下一次 Scan 就会被覆盖；
+		// ring.push 内部做拷贝（并复用槽位底层数组），这里不能自己再留引用
 		line := scanner.Bytes()
 		if len(line) == 0 {
 			continue
 		}
-		var probe tsProbe
-		if err := json.Unmarshal(line, &probe); err != nil {
+		ts, ok := probeTs(line)
+		if !ok {
 			// 尾部半行（进程崩溃或并发追加中）跳过
 			continue
 		}
-		if probe.Ts < fromMs || probe.Ts > upperMs {
+		if ts < fromMs || ts > upperMs {
 			continue
 		}
-		var rec EvalRecord
-		if err := json.Unmarshal(line, &rec); err != nil {
-			continue
-		}
-		ring.push(rec)
+		ring.push(line)
 		matched++
 	}
 	if err := scanner.Err(); err != nil {

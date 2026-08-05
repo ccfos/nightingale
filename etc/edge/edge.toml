@@ -76,6 +76,9 @@ EngineName = "edge"
 # Dir = "./evallog"
 # RetentionHours = 192
 # MaxDiskGB = 20
+# read-side caps: bytes budget per query, and concurrent queries allowed on this engine
+# MaxQueryBytes = 33554432
+# MaxConcurrentQueries = 2
 
 [Pushgw]
 # use target labels in database instead of in series

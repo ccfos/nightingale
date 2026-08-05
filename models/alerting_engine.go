@@ -129,6 +129,18 @@ func AlertingEngineGetsInstances(ctx *ctx.Context, where string, args ...interfa
 	return arr, err
 }
 
+// AlertingEngineGetsAlive 返回 clock > aliveSince 的全部心跳行（含 datasource_id 与
+// engine_cluster），供调用方在内存里按 datasource / cluster 分桶。
+//
+// 存在的意义是替掉「每个 datasource 查一次库」：按 cate 匹配的告警规则可能命中几十个
+// 数据源，逐个查就是几十条串行 SQL，而这张表本身只有「引擎实例 × 数据源」这么几行，
+// 一次取回再分桶更划算。
+func AlertingEngineGetsAlive(ctx *ctx.Context, aliveSince int64) ([]AlertingEngines, error) {
+	var arr []AlertingEngines
+	err := DB(ctx).Model(new(AlertingEngines)).Where("clock > ?", aliveSince).Order("instance").Find(&arr).Error
+	return arr, err
+}
+
 type HeartbeatInfo struct {
 	Instance      string `json:"instance"`
 	EngineCluster string `json:"engine_cluster"`

@@ -1,11 +1,14 @@
 package evallog
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -17,11 +20,17 @@ func initForTest(t *testing.T, mutate func(*Config)) Config {
 	if mutate != nil {
 		mutate(&cfg)
 	}
-	if err := Init(cfg, nil); err != nil {
+	if err := Init(cfg, Hooks{}); err != nil {
 		t.Fatalf("init error: %v", err)
 	}
 	t.Cleanup(Shutdown)
 	return cfg
+}
+
+// queryRecs 只取记录列表，供不关心截断信息的用例使用。
+func queryRecs(cfg Config, ruleId, datasourceId int64, fromMs, toMs, beforeMs int64, limit int) ([]EvalRecord, error) {
+	res, err := queryRecords(cfg, ruleId, datasourceId, fromMs, toMs, beforeMs, limit)
+	return res.Records, err
 }
 
 func mkRecord(ruleId int64, ts time.Time, nSeries int) *EvalRecord {
@@ -100,7 +109,7 @@ func TestEventTrailPersistedAndDegraded(t *testing.T) {
 	Push(r)
 	Shutdown()
 
-	recs, err := queryRecords(cfg, 21, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
+	recs, err := queryRecs(cfg, 21, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
 	if err != nil || len(recs) != 1 {
 		t.Fatalf("query: %v n=%d", err, len(recs))
 	}
@@ -143,7 +152,7 @@ func TestEventTrailSkeletonWhenStillOverLimit(t *testing.T) {
 	Push(r)
 	Shutdown()
 
-	recs, err := queryRecords(cfg, 22, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
+	recs, err := queryRecs(cfg, 22, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
 	if err != nil || len(recs) != 1 {
 		t.Fatalf("query: %v n=%d", err, len(recs))
 	}
@@ -176,7 +185,7 @@ func TestWriteQueryRoundtrip(t *testing.T) {
 	}
 	Shutdown() // 刷盘
 
-	recs, err := queryRecords(cfg, 100, 1, now.Add(-time.Hour).UnixMilli(), now.Add(time.Hour).UnixMilli(), 0, 0)
+	recs, err := queryRecs(cfg, 100, 1, now.Add(-time.Hour).UnixMilli(), now.Add(time.Hour).UnixMilli(), 0, 0)
 	if err != nil {
 		t.Fatalf("query error: %v", err)
 	}
@@ -197,17 +206,17 @@ func TestWriteQueryRoundtrip(t *testing.T) {
 	}
 
 	// limit + before 游标
-	page1, _ := queryRecords(cfg, 100, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 3)
+	page1, _ := queryRecs(cfg, 100, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 3)
 	if len(page1) != 3 {
 		t.Fatalf("expect 3, got %d", len(page1))
 	}
-	page2, _ := queryRecords(cfg, 100, 1, 0, now.Add(time.Hour).UnixMilli(), page1[2].Ts, 3)
+	page2, _ := queryRecs(cfg, 100, 1, 0, now.Add(time.Hour).UnixMilli(), page1[2].Ts, 3)
 	if len(page2) != 3 || page2[0].Ts >= page1[2].Ts {
 		t.Fatalf("cursor page wrong: %+v", page2)
 	}
 
 	// 其他规则查不到
-	other, _ := queryRecords(cfg, 200, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
+	other, _ := queryRecs(cfg, 200, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
 	if len(other) != 0 {
 		t.Fatalf("expect empty for other rule, got %d", len(other))
 	}
@@ -230,7 +239,7 @@ func TestHourRollAndGzip(t *testing.T) {
 	}
 
 	// 跨小时查询要能同时读到 gz 与当前文件
-	recs, err := queryRecords(cfg, 7, 1, old.Add(-time.Minute).UnixMilli(), time.Now().UnixMilli(), 0, 0)
+	recs, err := queryRecs(cfg, 7, 1, old.Add(-time.Minute).UnixMilli(), time.Now().UnixMilli(), 0, 0)
 	if err != nil {
 		t.Fatalf("query error: %v", err)
 	}
@@ -285,7 +294,7 @@ func TestMaxRecordBytesStrip(t *testing.T) {
 	Push(r)
 	Shutdown()
 
-	recs, err := queryRecords(cfg, 9, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
+	recs, err := queryRecs(cfg, 9, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
 	if err != nil || len(recs) != 1 {
 		t.Fatalf("query: %v, n=%d", err, len(recs))
 	}
@@ -318,7 +327,7 @@ func TestDailyBudgetDegrade(t *testing.T) {
 	}
 	Shutdown()
 
-	recs, err := queryRecords(cfg, 11, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
+	recs, err := queryRecs(cfg, 11, 1, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
 	if err != nil || len(recs) != 30 {
 		t.Fatalf("query: %v, n=%d", err, len(recs))
 	}
@@ -381,7 +390,7 @@ func TestCompressAppendsInsteadOfOverwritingGz(t *testing.T) {
 		t.Fatalf("compress late file: %v", err)
 	}
 
-	recs, err := queryRecords(cfg, 101, 1, past.Add(-time.Hour).UnixMilli(), past.Add(time.Hour).UnixMilli(), 0, 0)
+	recs, err := queryRecs(cfg, 101, 1, past.Add(-time.Hour).UnixMilli(), past.Add(time.Hour).UnixMilli(), 0, 0)
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}
@@ -429,7 +438,7 @@ func TestNonFiniteValuesDoNotDropRecord(t *testing.T) {
 	Push(r)
 	Shutdown()
 
-	recs, err := queryRecords(cfg, 31, 1, now.Add(-time.Hour).UnixMilli(), now.Add(time.Hour).UnixMilli(), 0, 0)
+	recs, err := queryRecs(cfg, 31, 1, now.Add(-time.Hour).UnixMilli(), now.Add(time.Hour).UnixMilli(), 0, 0)
 	if err != nil || len(recs) != 1 {
 		t.Fatalf("record must survive non-finite values: err=%v n=%d", err, len(recs))
 	}
@@ -468,6 +477,70 @@ func TestClampFromToRetention(t *testing.T) {
 	inRange := now.Add(-time.Hour).UnixMilli()
 	if got := clampFromToRetention(cfg, inRange, now); got != inRange {
 		t.Fatalf("in-range from must be untouched, got %d", got)
+	}
+}
+
+// 回归：只钳 from 不钳 to 时，to=公元 9999 年会让小时循环跑约 7000 万轮
+// （每轮 2 次 os.Open，实测约 4 分钟纯 syscall），与 from 侧那个已修的慢速 DoS 完全对称。
+func TestClampToToNow(t *testing.T) {
+	now := time.Date(2026, 8, 5, 12, 0, 0, 0, time.UTC)
+	ceil := now.Add(futureSkewAllowance).UnixMilli()
+
+	// 远未来的 to 被钳到 now + 余量
+	if got := clampToToNow(time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC).UnixMilli(), now); got != ceil {
+		t.Fatalf("far-future to should be clamped to %d, got %d", ceil, got)
+	}
+	// 余量之内的 to 原样保留（覆盖浏览器时钟快几分钟这类现实偏差）
+	inSkew := now.Add(30 * time.Minute).UnixMilli()
+	if got := clampToToNow(inSkew, now); got != inSkew {
+		t.Fatalf("to within the skew allowance must be untouched, got %d", got)
+	}
+	// 过去的 to 原样保留
+	past := now.Add(-3 * time.Hour).UnixMilli()
+	if got := clampToToNow(past, now); got != past {
+		t.Fatalf("past to must be untouched, got %d", got)
+	}
+}
+
+// 端到端：to 传成公元 9999 年时既要立刻返回，也不能因为钳制而漏掉区间内的记录。
+// 未钳制时这个用例会跑上百秒，超时本身就是失败信号。
+func TestQueryWithFarFutureToStaysBounded(t *testing.T) {
+	cfg := initForTest(t, nil)
+
+	now := time.Now()
+	Push(mkRecord(66, now.Add(-2*time.Minute), 1))
+	Shutdown()
+
+	farFuture := time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
+
+	start := time.Now()
+	recs, err := queryRecs(cfg, 66, 1, now.Add(-time.Hour).UnixMilli(), farFuture, 0, 0)
+	elapsed := time.Since(start)
+
+	if err != nil {
+		t.Fatalf("query error: %v", err)
+	}
+	if len(recs) != 1 {
+		t.Fatalf("clamping to must not drop in-range records, got %d", len(recs))
+	}
+	// 钳制后轮数被 RetentionHours（默认 192）封顶，实测亚毫秒级；
+	// 这里留足两个数量级的余量，只用来拦住「完全没钳」的情况
+	if elapsed > 5*time.Second {
+		t.Fatalf("query took %v, to is probably not clamped", elapsed)
+	}
+
+	// 整个窗口都在未来：返回空而不是报错
+	recs, err = queryRecs(cfg, 66, 1, now.Add(24*time.Hour).UnixMilli(), farFuture, 0, 0)
+	if err != nil {
+		t.Fatalf("a fully-future window should return empty, not error: %v", err)
+	}
+	if len(recs) != 0 {
+		t.Fatalf("expect no records for a fully-future window, got %d", len(recs))
+	}
+
+	// 入参本身倒挂仍应保持原有报错语义
+	if _, err = queryRecs(cfg, 66, 1, now.UnixMilli(), now.Add(-time.Hour).UnixMilli(), 0, 0); err == nil {
+		t.Fatal("expect error when from > to on input")
 	}
 }
 
@@ -801,7 +874,7 @@ func TestQueryLimitPushdownAcrossHours(t *testing.T) {
 	from := now.Add(-4 * time.Hour).UnixMilli()
 	to := now.Add(time.Hour).UnixMilli()
 
-	all, err := queryRecords(cfg, 55, 1, from, to, 0, 0)
+	all, err := queryRecs(cfg, 55, 1, from, to, 0, 0)
 	if err != nil || len(all) != 15 {
 		t.Fatalf("expect 15 records: err=%v n=%d", err, len(all))
 	}
@@ -812,7 +885,7 @@ func TestQueryLimitPushdownAcrossHours(t *testing.T) {
 	}
 
 	// limit 小于单个小时的条数：只能拿到最新小时里最新的 3 条
-	top3, err := queryRecords(cfg, 55, 1, from, to, 0, 3)
+	top3, err := queryRecs(cfg, 55, 1, from, to, 0, 3)
 	if err != nil || len(top3) != 3 {
 		t.Fatalf("expect 3 records: err=%v n=%d", err, len(top3))
 	}
@@ -823,7 +896,7 @@ func TestQueryLimitPushdownAcrossHours(t *testing.T) {
 	}
 
 	// limit 跨越小时边界：第 7 条落在第二个小时里
-	page, err := queryRecords(cfg, 55, 1, from, to, 0, 7)
+	page, err := queryRecs(cfg, 55, 1, from, to, 0, 7)
 	if err != nil || len(page) != 7 {
 		t.Fatalf("expect 7 records: err=%v n=%d", err, len(page))
 	}
@@ -834,7 +907,7 @@ func TestQueryLimitPushdownAcrossHours(t *testing.T) {
 	}
 
 	// 游标翻页仍从上一页末尾继续
-	next, err := queryRecords(cfg, 55, 1, from, to, page[6].Ts, 4)
+	next, err := queryRecs(cfg, 55, 1, from, to, page[6].Ts, 4)
 	if err != nil || len(next) != 4 {
 		t.Fatalf("expect 4 records: err=%v n=%d", err, len(next))
 	}
@@ -845,49 +918,400 @@ func TestQueryLimitPushdownAcrossHours(t *testing.T) {
 	}
 }
 
-func TestRecordRing(t *testing.T) {
-	r := newRecordRing(3)
-	for i := 1; i <= 5; i++ {
-		r.push(EvalRecord{Ts: int64(i)})
+// pushTs 往环里塞一条只有 ts 的行，pad 用于把行撑到指定字节数以测试字节预算。
+func pushTs(r *lineRing, ts int64, pad int) {
+	rec := EvalRecord{Ts: ts}
+	if pad > 0 {
+		rec.Error = strings.Repeat("x", pad)
 	}
-	got := r.appendDesc(nil)
-	if len(got) != 3 {
-		t.Fatalf("expect 3 kept, got %d", len(got))
+	line, err := json.Marshal(&rec)
+	if err != nil {
+		panic(err)
+	}
+	r.push(line)
+}
+
+func tsOf(recs []EvalRecord) []int64 {
+	out := make([]int64, 0, len(recs))
+	for _, r := range recs {
+		out = append(out, r.Ts)
+	}
+	return out
+}
+
+func TestLineRing(t *testing.T) {
+	r := newLineRing(3)
+	r.reset(3, 1<<20)
+	for i := 1; i <= 5; i++ {
+		pushTs(r, int64(i), 0)
 	}
 	// 保留最后 3 条（3/4/5），倒序输出
-	for i, want := range []int64{5, 4, 3} {
-		if got[i].Ts != want {
-			t.Fatalf("at %d: got %d want %d", i, got[i].Ts, want)
-		}
+	if got := tsOf(r.appendDesc(nil)); !reflect.DeepEqual(got, []int64{5, 4, 3}) {
+		t.Fatalf("count eviction wrong: %v", got)
+	}
+	if r.dropped {
+		t.Fatal("count eviction is normal limit semantics, must not raise the byte-budget flag")
 	}
 
 	// 未填满时同样按倒序输出
-	r2 := newRecordRing(10)
-	r2.push(EvalRecord{Ts: 1})
-	r2.push(EvalRecord{Ts: 2})
-	got2 := r2.appendDesc(nil)
-	if len(got2) != 2 || got2[0].Ts != 2 || got2[1].Ts != 1 {
-		t.Fatalf("unexpected: %+v", got2)
+	r.reset(10, 1<<20)
+	pushTs(r, 1, 0)
+	pushTs(r, 2, 0)
+	if got := tsOf(r.appendDesc(nil)); !reflect.DeepEqual(got, []int64{2, 1}) {
+		t.Fatalf("partial ring wrong: %v", got)
 	}
 
-	// 一条都没 push 过：惰性分配下底层数组还是 nil，不能在此处取模 panic
-	if got3 := newRecordRing(5).appendDesc(nil); len(got3) != 0 {
-		t.Fatalf("empty ring should yield nothing, got %+v", got3)
+	// 一条都没 push 过
+	r.reset(5, 1<<20)
+	if got := r.appendDesc(nil); len(got) != 0 {
+		t.Fatalf("empty ring should yield nothing, got %+v", got)
 	}
 
 	// 恰好填满、以及绕圈多轮后的顺序
-	r4 := newRecordRing(2)
-	for i := 1; i <= 2; i++ {
-		r4.push(EvalRecord{Ts: int64(i)})
-	}
-	if got := r4.appendDesc(nil); len(got) != 2 || got[0].Ts != 2 || got[1].Ts != 1 {
-		t.Fatalf("exactly-full ring wrong: %+v", got)
+	r.reset(2, 1<<20)
+	pushTs(r, 1, 0)
+	pushTs(r, 2, 0)
+	if got := tsOf(r.appendDesc(nil)); !reflect.DeepEqual(got, []int64{2, 1}) {
+		t.Fatalf("exactly-full ring wrong: %v", got)
 	}
 	for i := 3; i <= 8; i++ {
-		r4.push(EvalRecord{Ts: int64(i)})
+		pushTs(r, int64(i), 0)
 	}
-	if got := r4.appendDesc(nil); len(got) != 2 || got[0].Ts != 8 || got[1].Ts != 7 {
-		t.Fatalf("wrapped ring wrong: %+v", got)
+	if got := tsOf(r.appendDesc(nil)); !reflect.DeepEqual(got, []int64{8, 7}) {
+		t.Fatalf("wrapped ring wrong: %v", got)
+	}
+}
+
+// 字节预算：条数还没满就先撞上字节上限时，淘汰的必须是更旧的那几条，并把 dropped 立起来。
+func TestLineRingByteBudget(t *testing.T) {
+	r := newLineRing(100)
+	// 单条约 1KB，预算 3KB：条数闸（100）用不上，只有字节闸生效
+	r.reset(100, 3*1024)
+	for i := 1; i <= 10; i++ {
+		pushTs(r, int64(i), 1000)
+	}
+	got := tsOf(r.appendDesc(nil))
+	if len(got) == 0 || len(got) >= 10 {
+		t.Fatalf("byte budget should keep a middle number of records, got %d", len(got))
+	}
+	if !r.dropped {
+		t.Fatal("byte-budget eviction must be flagged, otherwise a capacity cap looks like missing data")
+	}
+	if r.bytes > 3*1024 {
+		t.Fatalf("ring holds %d bytes, over the %d budget", r.bytes, 3*1024)
+	}
+	// 留下的必须是最新的那一段且连续倒序
+	for i, ts := range got {
+		if want := int64(10 - i); ts != want {
+			t.Fatalf("expect newest records kept, at %d got %d want %d", i, ts, want)
+		}
+	}
+
+	// 单条就超预算：宁可超一条，也不能返回空——空列表会被读成"当时没有记录"
+	r.reset(100, 16)
+	pushTs(r, 42, 500)
+	if got := tsOf(r.appendDesc(nil)); !reflect.DeepEqual(got, []int64{42}) {
+		t.Fatalf("an oversized single record must still be returned, got %v", got)
+	}
+}
+
+// 环形缓冲的三个不变量：条数不超上限、bytes 与在环元素的实际长度始终一致、
+// 输出严格倒序。bytes 有三处加减（字节淘汰、条数覆盖、追加），只有直接查不变量才能确认
+// 它们互相对得上——记错了会让 queryRecords 的预算扣减跟着错。
+func TestLineRingInvariants(t *testing.T) {
+	const capacity = 8
+	r := newLineRing(capacity)
+
+	check := func(step string) {
+		t.Helper()
+		if r.size > r.maxLines {
+			t.Fatalf("%s: size %d exceeds maxLines %d", step, r.size, r.maxLines)
+		}
+		var want int64
+		var prev int64 = -1
+		for i := 0; i < r.size; i++ {
+			line := r.buf[(r.start+i)%r.maxLines]
+			want += int64(len(line))
+			ts, ok := probeTs(line)
+			if !ok {
+				t.Fatalf("%s: unreadable line in ring", step)
+			}
+			if ts <= prev {
+				t.Fatalf("%s: ring not in ascending order: %d after %d", step, ts, prev)
+			}
+			prev = ts
+		}
+		if r.bytes != want {
+			t.Fatalf("%s: bytes accounting drifted: tracked %d, actual %d", step, r.bytes, want)
+		}
+	}
+
+	// 伪随机但确定的一串 (maxLines, maxBytes, pad) 组合，覆盖字节闸与条数闸交替生效
+	seed := 1
+	next := func(mod int) int {
+		seed = (seed*1103515245 + 12345) & 0x7fffffff
+		return seed % mod
+	}
+	var ts int64
+	for round := 0; round < 200; round++ {
+		r.reset(1+next(capacity), int64(64+next(4096)))
+		check("after reset")
+		for i := 0; i < 20; i++ {
+			ts++
+			pushTs(r, ts, next(600))
+			check(fmt.Sprintf("round %d push %d", round, i))
+		}
+		r.appendDesc(nil)
+	}
+
+	// 单条超预算：允许超出 maxBytes（否则只能返回空），但仍要保持账目一致
+	r.reset(4, 32)
+	ts++
+	pushTs(r, ts, 500)
+	check("single oversized line")
+	if r.size != 1 {
+		t.Fatalf("an oversized single line must be kept, size=%d", r.size)
+	}
+	if r.bytes <= r.maxBytes {
+		t.Fatal("this case is meant to exercise bytes > maxBytes; adjust the padding")
+	}
+}
+
+// probeTs 的前缀快路径必须与通用 JSON 解析等价，快路径不匹配时要能退回去。
+func TestProbeTs(t *testing.T) {
+	line, err := json.Marshal(&EvalRecord{Ts: 1754400000123, RuleId: 9})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ts, ok := fastProbeTs(line); !ok || ts != 1754400000123 {
+		t.Fatalf("fast path failed on our own output: ts=%d ok=%v line=%s", ts, ok, line)
+	}
+
+	cases := []struct {
+		name string
+		line string
+		want int64
+		ok   bool
+	}{
+		{"字段顺序变了退回通用解析", `{"rule_id":9,"ts":123}`, 123, true},
+		{"ts 为负退回通用解析", `{"ts":-5,"rule_id":9}`, -5, true},
+		{"只有 ts 一个字段", `{"ts":123}`, 123, true},
+		// 浮点 ts 本包写不出来，通用解析也解不进 int64，判为坏行跳过即可
+		{"ts 是浮点", `{"ts":123.0}`, 0, false},
+		{"半行", `{"ts":12`, 0, false},
+		{"整行不是 JSON", `not json at all`, 0, false},
+		{"超长数字不静默溢出", `{"ts":123456789012345678901234,"a":1}`, 0, false},
+	}
+	for _, c := range cases {
+		got, ok := probeTs([]byte(c.line))
+		if ok != c.ok || (ok && got != c.want) {
+			t.Fatalf("%s: probeTs(%s) = (%d,%v), want (%d,%v)", c.name, c.line, got, ok, c.want, c.ok)
+		}
+	}
+}
+
+// 字节预算端到端：一次查询能拉进内存的记录必须按**字节**封顶，而不是只按条数。
+// 单条记录满载可达 176KB，只按条数封顶的话，前端默认的一页 1000 条就是百 MB 级堆分配。
+func TestQueryByteBudgetTruncates(t *testing.T) {
+	const budget = 64 * 1024
+	cfg := initForTest(t, func(c *Config) { c.MaxQueryBytes = budget })
+
+	// 同一个小时文件内写 50 条较胖的记录（各约 2KB），总量明显超出预算
+	base := truncHour(time.Now()).Add(5 * time.Minute)
+	const total = 50
+	for i := 0; i < total; i++ {
+		Push(mkRecord(88, base.Add(time.Duration(i)*time.Millisecond), 30))
+	}
+	Shutdown()
+
+	from := base.Add(-time.Hour).UnixMilli()
+	to := base.Add(time.Hour).UnixMilli()
+
+	res, err := queryRecords(cfg, 88, 1, from, to, 0, 100)
+	if err != nil {
+		t.Fatalf("query error: %v", err)
+	}
+	if len(res.Records) == 0 {
+		t.Fatal("byte budget must not swallow the whole result")
+	}
+	if len(res.Records) >= total {
+		t.Fatalf("expect the byte budget to cut the result, got all %d records", len(res.Records))
+	}
+	// 容量上限绝不能长得像"这段时间就这么多记录"：必须带标记和可读原因
+	if !res.Truncated || res.Note == "" {
+		t.Fatalf("truncation must be reported: truncated=%v note=%q", res.Truncated, res.Note)
+	}
+	// 留下的必须是最新的一段（排障先看最近发生了什么）
+	newest := base.Add(time.Duration(total-1) * time.Millisecond).UnixMilli()
+	if res.Records[0].Ts != newest {
+		t.Fatalf("expect newest record first: got %d want %d", res.Records[0].Ts, newest)
+	}
+	for i := 1; i < len(res.Records); i++ {
+		if res.Records[i].Ts >= res.Records[i-1].Ts {
+			t.Fatalf("records not desc at %d", i)
+		}
+	}
+
+	// 跨小时：预算在最新的小时就被吃光时，更老的小时文件应当连开都不开，且照样带截断标记
+	cfg2 := initForTest(t, func(c *Config) { c.MaxQueryBytes = budget })
+	newestHour := truncHour(time.Now()).Add(5 * time.Minute)
+	olderHour := newestHour.Add(-time.Hour)
+	for i := 0; i < total; i++ {
+		Push(mkRecord(87, newestHour.Add(time.Duration(i)*time.Millisecond), 30))
+		Push(mkRecord(87, olderHour.Add(time.Duration(i)*time.Millisecond), 30))
+	}
+	Shutdown()
+
+	res3, err := queryRecords(cfg2, 87, 1, olderHour.Add(-time.Hour).UnixMilli(), newestHour.Add(time.Hour).UnixMilli(), 0, 1000)
+	if err != nil {
+		t.Fatalf("query error: %v", err)
+	}
+	if !res3.Truncated {
+		t.Fatal("cross-hour budget exhaustion must be reported too")
+	}
+	for _, r := range res3.Records {
+		if r.Ts < newestHour.UnixMilli() {
+			t.Fatalf("budget should be spent on the newest hour first, got a record from %v", msTime(r.Ts))
+		}
+	}
+
+	// 预算够用时不该有任何截断标记
+	full := initForTest(t, nil)
+	base2 := truncHour(time.Now()).Add(5 * time.Minute)
+	for i := 0; i < total; i++ {
+		Push(mkRecord(89, base2.Add(time.Duration(i)*time.Millisecond), 30))
+	}
+	Shutdown()
+	res2, err := queryRecords(full, 89, 1, from, to, 0, 100)
+	if err != nil {
+		t.Fatalf("query error: %v", err)
+	}
+	if len(res2.Records) != total || res2.Truncated {
+		t.Fatalf("default budget must not truncate: n=%d truncated=%v", len(res2.Records), res2.Truncated)
+	}
+}
+
+// 回归：解码次数应正比于**返回条数**，而不是区间内的记录总数。
+//
+// 原实现对每条命中记录都做整条 json.Unmarshal（含 labels map 分配），再靠环形缓冲丢掉
+// 绝大多数——一个被写满的小时文件就是几万次白白的结构体分配，GC 压力直接落到评估延迟上。
+// 用分配次数来卡：真退回"每条都解码"的话，这里会差一个数量级。
+func TestQueryDecodesOnlyReturnedRecords(t *testing.T) {
+	cfg := initForTest(t, nil)
+
+	base := truncHour(time.Now()).Add(5 * time.Minute)
+	const total = 3000
+	for i := 0; i < total; i++ {
+		Push(mkRecord(90, base.Add(time.Duration(i)*time.Millisecond), 3))
+	}
+	Shutdown()
+
+	from := base.Add(-time.Hour).UnixMilli()
+	to := base.Add(time.Hour).UnixMilli()
+
+	const limit = 10
+	allocs := testing.AllocsPerRun(1, func() {
+		res, err := queryRecords(cfg, 90, 1, from, to, 0, limit)
+		if err != nil {
+			t.Fatalf("query error: %v", err)
+		}
+		if len(res.Records) != limit {
+			t.Fatalf("expect %d records, got %d", limit, len(res.Records))
+		}
+	})
+
+	t.Logf("scanned %d in-range records, returned %d, allocated %.0f objects", total, limit, allocs)
+	// 每条命中记录都解码的话，光 3000 条 × (记录 + queries + series + labels map) 就远超这个数；
+	// 只解返回的 10 条时实测两位数量级以下，留足余量只用来拦住退化
+	if allocs > total {
+		t.Fatalf("query allocated %.0f objects for %d in-range records (limit %d); "+
+			"looks like every matched record is being decoded again", allocs, total, limit)
+	}
+}
+
+// 并发闸：查询排不上队时必须给出可区分的 ErrBusy，而不是空列表。
+func TestQueryConcurrencyGate(t *testing.T) {
+	// 缩短排队等待，否则本用例要空等 queryAcquireTimeout
+	old := queryAcquireTimeout
+	queryAcquireTimeout = 50 * time.Millisecond
+	defer func() { queryAcquireTimeout = old }()
+
+	var rejected int32
+	cfg := Config{Dir: t.TempDir(), MaxConcurrentQueries: 1}
+	if err := Init(cfg, Hooks{OnQueryReject: func() { atomic.AddInt32(&rejected, 1) }}); err != nil {
+		t.Fatalf("init error: %v", err)
+	}
+	t.Cleanup(Shutdown)
+
+	now := time.Now()
+	Push(mkRecord(91, now, 1))
+
+	// 闸没占满时正常返回
+	if _, err := QueryRecords(91, 1, now.Add(-time.Hour).UnixMilli(), now.UnixMilli(), 0, 10); err != nil {
+		t.Fatalf("query should succeed when the gate is free: %v", err)
+	}
+
+	// 手工占满唯一的槽位
+	mu.RLock()
+	sem := querySem
+	mu.RUnlock()
+	sem <- struct{}{}
+
+	start := time.Now()
+	_, err := QueryRecords(91, 1, now.Add(-time.Hour).UnixMilli(), now.UnixMilli(), 0, 10)
+	if err != ErrBusy {
+		t.Fatalf("expect ErrBusy when the gate is full, got %v", err)
+	}
+	if elapsed := time.Since(start); elapsed < queryAcquireTimeout {
+		t.Fatalf("should have queued for a while before giving up, gave up after %v", elapsed)
+	}
+	if atomic.LoadInt32(&rejected) != 1 {
+		t.Fatalf("reject hook should fire exactly once, got %d", rejected)
+	}
+
+	// 槽位释放后立刻恢复
+	<-sem
+	if _, err := QueryRecords(91, 1, now.Add(-time.Hour).UnixMilli(), now.UnixMilli(), 0, 10); err != nil {
+		t.Fatalf("query should recover once the slot is released: %v", err)
+	}
+}
+
+// 并发数不超过闸值时一律不该被拒——center 的本机扇出正是按 QueryConcurrency() 对齐的，
+// 这个约定一旦破了，合并部署下一次普通的页面请求就会看到半屏"引擎忙"。
+func TestQueryGateAdmitsUpToItsSize(t *testing.T) {
+	old := queryAcquireTimeout
+	queryAcquireTimeout = 50 * time.Millisecond
+	defer func() { queryAcquireTimeout = old }()
+
+	const gate = 4
+	initForTest(t, func(c *Config) { c.MaxConcurrentQueries = gate })
+
+	if got := QueryConcurrency(); got != gate {
+		t.Fatalf("QueryConcurrency() = %d, want %d; center sizes its local fanout by this", got, gate)
+	}
+
+	now := time.Now()
+	Push(mkRecord(92, now, 1))
+
+	mu.RLock()
+	sem := querySem
+	mu.RUnlock()
+	if cap(sem) != gate {
+		t.Fatalf("gate cap = %d, want %d", cap(sem), gate)
+	}
+
+	// 占住 gate-1 个槽位，最后一路查询仍必须畅通
+	for i := 0; i < gate-1; i++ {
+		sem <- struct{}{}
+	}
+	defer func() {
+		for i := 0; i < gate-1; i++ {
+			<-sem
+		}
+	}()
+
+	if _, err := QueryRecords(92, 1, now.Add(-time.Hour).UnixMilli(), now.UnixMilli(), 0, 10); err != nil {
+		t.Fatalf("query at exactly the gate size must not be rejected: %v", err)
 	}
 }
 

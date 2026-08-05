@@ -38,13 +38,22 @@ func (rt *Router) evalRecordsGet(c *gin.Context) {
 		toMs = to * 1000
 	}
 
-	recs, err := evallog.QueryRecords(ruleId, datasourceId, from*1000, toMs, before, limit)
+	res, err := evallog.QueryRecords(ruleId, datasourceId, from*1000, toMs, before, limit)
 	if err == evallog.ErrNotEnabled {
 		// 该节点未开启 evallog，返回空列表而非错误，center 聚合时不受影响
 		ginx.NewRender(c).Data(gin.H{"list": []evallog.EvalRecord{}, "enabled": false}, nil)
 		return
 	}
+	// ErrBusy 走错误通道而不是空列表：center 会把它原样透到前端的失败节点列表里，
+	// 用户看到的是"忙，稍后重试"，而不是一个会被读成"当时没有评估"的空结果
 	ginx.Dangerous(err)
 
-	ginx.NewRender(c).Data(gin.H{"list": recs, "enabled": true}, nil)
+	// truncated/note 必须跟着结果一起返回：前端判断"还有更多"用的是本页条数是否等于
+	// limit，字节预算生效时条数会变少，不带这个标记就会被读成"这段时间就这么多记录"
+	ginx.NewRender(c).Data(gin.H{
+		"list":      res.Records,
+		"enabled":   true,
+		"truncated": res.Truncated,
+		"note":      res.Note,
+	}, nil)
 }

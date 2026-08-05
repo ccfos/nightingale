@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,17 +21,35 @@ import (
 )
 
 const (
-	// evalRecordsFanout 同时查询的引擎节点数上限
+	// evalRecordsFanout 同时查询的引擎节点数上限。
+	// 它同时也是内存扇出系数：并发中的每个节点最坏持有一份 evalRecordsMaxRespBytes
+	// 量级的解码结果，center 的峰值堆约等于本值 × evalRecordsMaxRespBytes。
 	evalRecordsFanout = 8
-	// evalRecordsMaxRespBytes 单个节点响应体的读取上限；超出即报错而不是静默截断
-	evalRecordsMaxRespBytes = 64 * 1024 * 1024
+	// evalRecordsMaxRespBytes 单个节点响应体的读取上限；超出即报错而不是静默截断。
+	// 必须大于引擎侧的 MaxQueryBytes（默认 32MB），否则正常查询会被这里判成超限；
+	// 留 1.5 倍余量给 JSON 外层与字段名开销。
+	evalRecordsMaxRespBytes = 48 * 1024 * 1024
 	// evalRecordsEngineAliveSec 判定引擎实例仍在心跳的时间窗，与 naming.ActiveServers 一致
 	evalRecordsEngineAliveSec = 30
 	// evalRecordsExtraTargets 「历史 owner 兜底」额外查询的实例数预算。
 	// 每个 datasource 的当前 owner 一律纳入、不受此限；只有兜底这部分会被裁，
 	// 免得它把主路径的扇出撑爆（扇出并发只有 evalRecordsFanout，每个还带 5s 超时）。
 	evalRecordsExtraTargets = 32
+	// evalRecordsNodeTimeout 单个节点的转发超时：edge 节点可能被防火墙 drop，长超时会拖住整个请求
+	evalRecordsNodeTimeout = 5 * time.Second
+	// evalRecordsTotalTimeout 整个扇出的总时限。
+	//
+	// 没有它，耗时上限是「目标数 ÷ 并发 × 单节点超时」：一条按 cate 匹配到几十个数据源的
+	// 规则，遇上一批不可达的 edge 节点就是几十秒——这期间 center 侧一直占着这个请求的
+	// goroutine 与已收到的结果内存，用户则对着转圈的抽屉毫无信息。超时后剩余节点直接记为
+	// 失败并透出，已查到的记录照常返回。
+	evalRecordsTotalTimeout = 15 * time.Second
 )
+
+// evalRecordsClient 转发用的共享客户端。
+// Timeout 与请求 context 双保险：前者兜住整次请求（含读响应体），后者让扇出总时限一到
+// 就立刻掐断在途连接，不必再等满单节点超时。
+var evalRecordsClient = &http.Client{Timeout: evalRecordsNodeTimeout}
 
 // alertRuleEvalRecords 查询告警规则的评估执行记录。
 // GET /api/n9e/alert-rule/:arid/eval-records?datasource_id=&from=&to=&before=&limit=
@@ -96,6 +115,9 @@ func (rt *Router) alertRuleEvalRecords(c *gin.Context) {
 		targets = append(targets, dsNode{dsId: dsId, node: node, owner: owner})
 	}
 
+	// 存活实例只取这一次，owner 解析与兜底两轮共用
+	peerInstances := rt.evalRecordsPeerInstances(rule, dsIds)
+
 	// 第一轮：每个 datasource 的当前 owner，全部纳入（与只查 owner 时的行为一致）
 	owners := make(map[int64]string, len(dsIds))
 	for _, dsId := range dsIds {
@@ -105,7 +127,7 @@ func (rt *Router) alertRuleEvalRecords(c *gin.Context) {
 			// host 规则以 EngineName 为 hashring key
 			node, err = naming.DatasourceHashRing.GetNode(rt.Alert.Heartbeat.EngineName, ruleIdStr)
 		} else {
-			node, err = rt.getNodeForDatasource(dsId, ruleIdStr)
+			node, err = evalRecordsOwner(dsId, ruleIdStr, peerInstances[dsId])
 		}
 		if err != nil {
 			// hashring 未就绪等场景，退化为本机查询
@@ -119,7 +141,7 @@ func (rt *Router) alertRuleEvalRecords(c *gin.Context) {
 	extra := 0
 peers:
 	for _, dsId := range dsIds {
-		for _, node := range rt.evalRecordsPeerInstances(rule, dsId) {
+		for _, node := range peerInstances[dsId] {
 			if node == owners[dsId] {
 				continue
 			}
@@ -140,6 +162,9 @@ peers:
 	// 失败节点不静默丢弃，透出给前端以区分"没有记录"和"取不到记录"。
 	// 扇出加信号量限流：一条按 cate 匹配的规则可能命中几十个数据源，每个 goroutine
 	// 最坏会驻留一份 evalRecordsMaxRespBytes 的响应，不限流内存会成倍放大。
+	ctx, cancel := context.WithTimeout(c.Request.Context(), evalRecordsTotalTimeout)
+	defer cancel()
+
 	var (
 		mu        sync.Mutex
 		wg        sync.WaitGroup
@@ -147,6 +172,7 @@ peers:
 		instances []string
 		nodeErrs  []evalRecordsNodeErr
 		disabled  []string
+		truncated bool
 		// 兜底实例的失败信息单独收集：正常集群里绝大多数 peer 本来就没存过这条规则的记录，
 		// 把它们的「不可达 / 没开 evallog」一律抛到前端，会把原本只有一行的告警条变成 N 行。
 		// 只在最终一条记录都没查到时才并入——那时用户正对着空列表发问，peer 取不到才真的
@@ -154,25 +180,49 @@ peers:
 		peerErrs     []evalRecordsNodeErr
 		peerDisabled []string
 		sem          = make(chan struct{}, evalRecordsFanout)
+		localSem = make(chan struct{}, evalRecordsLocalFanout())
 	)
 	for _, t := range targets {
 		wg.Add(1)
 		go func(t dsNode) {
 			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			var recs []evallog.EvalRecord
-			var enabled bool
-			var err error
+			gate := sem
 			if t.node == instance {
-				recs, err = evallog.QueryRecords(ruleId, t.dsId, from*1000, to*1000, before, limit)
-				enabled = err != evallog.ErrNotEnabled
+				gate = localSem
+			}
+			// acquired 必须显式记：没拿到令牌的 goroutine 若也去 <-gate 释放，
+			// 放走的是别人的令牌，扇出并发就被悄悄放大了
+			var acquired bool
+			select {
+			case gate <- struct{}{}:
+				acquired = true
+			case <-ctx.Done():
+				// 总时限已到，排在后面的节点不必再发起查询
+			}
+			if acquired {
+				defer func() { <-gate }()
+			}
+
+			var res evalRecordsNodeResult
+			var err error
+			switch {
+			case ctx.Err() != nil:
+				err = fmt.Errorf("fanout deadline exceeded before querying %s (%v); "+
+					"the rule spans too many engine instances, narrow it down with datasource_id", t.node, ctx.Err())
+			case t.node == instance:
+				var local evallog.QueryResult
+				local, err = evallog.QueryRecords(ruleId, t.dsId, from*1000, to*1000, before, limit)
+				res = evalRecordsNodeResult{
+					records:   local.Records,
+					enabled:   err != evallog.ErrNotEnabled,
+					truncated: local.Truncated,
+					note:      local.Note,
+				}
 				if err == evallog.ErrNotEnabled {
 					err = nil
 				}
-			} else {
-				recs, enabled, err = rt.forwardEvalRecords(t.node, ruleId, t.dsId, from, to, before, limit)
+			default:
+				res, err = rt.forwardEvalRecords(ctx, t.node, ruleId, t.dsId, from, to, before, limit)
 			}
 
 			mu.Lock()
@@ -190,7 +240,7 @@ peers:
 				}
 				return
 			}
-			if !enabled {
+			if !res.enabled {
 				// 该节点没开 evallog：既不是"没有记录"也不是"取不到记录"，必须单独透出，
 				// 否则前端只能看到一个空列表，会被读成"当时确实没有数据"
 				e := evalRecordsNodeErr{
@@ -207,16 +257,28 @@ peers:
 				}
 				return
 			}
-			merged = append(merged, recs...)
+			if res.truncated {
+				// 节点侧的字节预算生效了：条数变少不是"就这么多记录"，必须说出来。
+				// 走 errors 通道是因为前端已有的提示条正是「以下节点的记录未包含在结果中」，
+				// 连同它给出的按节点直查命令一起，恰好是用户此时该做的下一步。
+				truncated = true
+				nodeErrs = append(nodeErrs, evalRecordsNodeErr{
+					Instance:     t.node,
+					DatasourceId: t.dsId,
+					Error:        res.noteOrDefault(),
+				})
+			}
+			merged = append(merged, res.records...)
+			// 边收边收口：不这么做的话，扇出到 N 个节点就会在 center 侧同时驻留 N × limit
+			// 条记录（每条最大可到 176KB），最后却只用其中 limit 条。收口后常驻只有 limit 条
+			// 加当前这一批
+			merged = sortTruncEvalRecords(merged, limit)
 			instances = append(instances, t.node)
 		}(t)
 	}
 	wg.Wait()
 
-	sort.Slice(merged, func(i, j int) bool { return merged[i].Ts > merged[j].Ts })
-	if len(merged) > limit {
-		merged = merged[:limit]
-	}
+	merged = sortTruncEvalRecords(merged, limit)
 	if merged == nil {
 		merged = []evallog.EvalRecord{}
 	}
@@ -236,7 +298,68 @@ peers:
 		"instances":          instances,
 		"errors":             nodeErrs,
 		"disabled_instances": disabled,
+		// 任一节点触发了字节预算：本页条数少于 limit 也不代表"就这么多记录"
+		"truncated": truncated,
 	}, nil)
+}
+
+// evalRecordsLocalFanout 本机目标的并发上限，对齐引擎侧的并发闸。
+//
+// center 与 alert 合并部署时（默认形态），一条命中多个数据源的规则，它的 owner 往往全是
+// 本机，于是这些目标全走进程内的 evallog.QueryRecords。若照 evalRecordsFanout 并发压进去，
+// 超出闸值的那几路只会排队到超时、各拿一个 ErrBusy——用户看到的是半屏"引擎忙"，而这纯粹
+// 是自己把自己挤住的。本机查询是本地文件读，没有网络延迟要靠并发掩盖，按闸值对齐即可。
+//
+// 引擎未启用时 QueryConcurrency() 返回 0，兜到 1：那种情况下本机查询会立刻返回未启用。
+func evalRecordsLocalFanout() int {
+	return max(1, evallog.QueryConcurrency())
+}
+
+// evalRecordsOwner 解析某 datasource 当前的 hashring 归属节点。
+//
+// 与 getNodeForDatasource 同义，区别只在于 hashring 里没有这个 datasource 时（常见于该
+// 数据源属于另一个 engine_cluster），用**已经取回的**存活实例就地建环，而不是再查一次库：
+// 按 cate 匹配的规则可能命中几十个数据源，逐个回查就是几十条串行 SQL 压在页面接口上。
+func evalRecordsOwner(dsId int64, pk string, alive []string) (string, error) {
+	node, err := naming.DatasourceHashRing.GetNode(strconv.FormatInt(dsId, 10), pk)
+	if err == nil {
+		return node, nil
+	}
+	if len(alive) == 0 {
+		return "", fmt.Errorf("no active instances for datasource %d", dsId)
+	}
+	return naming.NewConsistentHashRing(int32(naming.NodeReplicas), alive).Get(pk)
+}
+
+// evalRecordsNodeResult 单个节点的查询结果。
+type evalRecordsNodeResult struct {
+	records   []evallog.EvalRecord
+	enabled   bool // 该节点是否开启了 evallog
+	truncated bool // 该节点因字节预算提前收口
+	note      string
+}
+
+func (r evalRecordsNodeResult) noteOrDefault() string {
+	if r.note != "" {
+		return r.note
+	}
+	return "result truncated by the engine's per-query byte budget, older records in this range are not included; narrow the time range"
+}
+
+// sortTruncEvalRecords 按 ts 倒序并只保留前 limit 条。
+func sortTruncEvalRecords(recs []evallog.EvalRecord, limit int) []evallog.EvalRecord {
+	if len(recs) <= limit {
+		// 仍需保证有序：调用方拿到的必须是可直接返回的倒序结果
+		sort.Slice(recs, func(i, j int) bool { return recs[i].Ts > recs[j].Ts })
+		return recs
+	}
+	sort.Slice(recs, func(i, j int) bool { return recs[i].Ts > recs[j].Ts })
+	// 截掉的部分显式置零，让被丢弃记录里的曲线数据能立刻被 GC 回收，
+	// 而不是被底层数组一直引用到这次请求结束
+	for i := limit; i < len(recs); i++ {
+		recs[i] = evallog.EvalRecord{}
+	}
+	return recs[:limit]
 }
 
 // uniqStrings 去重并保持出现顺序；返回非 nil 切片，保证序列化成 [] 而不是 null。
@@ -253,27 +376,42 @@ func uniqStrings(in []string) []string {
 	return out
 }
 
-// evalRecordsPeerInstances 返回某 datasource 上仍在心跳的全部引擎实例，
+// evalRecordsPeerInstances 返回每个 datasource 上仍在心跳的全部引擎实例，
 // 用于覆盖 hashring 重新分配之前的历史 owner（记录留在原节点磁盘上，不会跟着迁移）。
 // 查询失败时返回 nil：兜底路径不该让主查询失败，当前 owner 已经单独纳入了。
-func (rt *Router) evalRecordsPeerInstances(rule *models.AlertRule, dsId int64) []string {
+//
+// 一次取回全部存活心跳再在内存里分桶，而不是每个 datasource 查一次库：按 cate 匹配的
+// 规则可能命中几十个数据源，逐个查就是几十条串行 SQL 压在这个页面接口上。
+func (rt *Router) evalRecordsPeerInstances(rule *models.AlertRule, dsIds []int64) map[int64][]string {
 	aliveSince := time.Now().Unix() - evalRecordsEngineAliveSec
 
-	var instances []string
-	var err error
-	if rule.IsHostRule() || dsId == 0 {
-		// host 规则的 worker 以 datasourceId=0 运行、按 engine_cluster 组成 hashring
-		instances, err = models.AlertingEngineGetsInstances(rt.Ctx,
-			"engine_cluster = ? and clock > ?", rt.Alert.Heartbeat.EngineName, aliveSince)
-	} else {
-		instances, err = models.AlertingEngineGetsInstances(rt.Ctx,
-			"datasource_id = ? and clock > ?", dsId, aliveSince)
-	}
+	engines, err := models.AlertingEngineGetsAlive(rt.Ctx, aliveSince)
 	if err != nil {
-		logger.Warningf("eval records: list alive engine instances for rule %d ds %d error: %v", rule.Id, dsId, err)
+		logger.Warningf("eval records: list alive engine instances for rule %d error: %v", rule.Id, err)
 		return nil
 	}
-	return instances
+
+	out := make(map[int64][]string, len(dsIds))
+	for _, dsId := range dsIds {
+		seen := make(map[string]struct{}, len(engines))
+		for _, e := range engines {
+			// host 规则的 worker 以 datasourceId=0 运行、按 engine_cluster 组成 hashring；
+			// 同一实例在这张表里每个 datasource 一行，cluster 分支下必然重复，要去重
+			if rule.IsHostRule() || dsId == 0 {
+				if e.EngineCluster != rt.Alert.Heartbeat.EngineName {
+					continue
+				}
+			} else if e.DatasourceId != dsId {
+				continue
+			}
+			if _, ok := seen[e.Instance]; ok {
+				continue
+			}
+			seen[e.Instance] = struct{}{}
+			out[dsId] = append(out[dsId], e.Instance)
+		}
+	}
+	return out
 }
 
 // evalRecordsNodeErr 单个引擎节点查询失败信息。前端据此提示：
@@ -284,13 +422,18 @@ type evalRecordsNodeErr struct {
 	Error        string `json:"error"`
 }
 
-// forwardEvalRecords 向目标引擎节点转发查询，返回 (记录, 该节点是否启用 evallog, 错误)。
-func (rt *Router) forwardEvalRecords(node string, ruleId, dsId, from, to, before int64, limit int) ([]evallog.EvalRecord, bool, error) {
+// forwardEvalRecords 向目标引擎节点转发查询。
+func (rt *Router) forwardEvalRecords(ctx context.Context, node string, ruleId, dsId, from, to, before int64, limit int) (evalRecordsNodeResult, error) {
+	var zero evalRecordsNodeResult
+
 	url := fmt.Sprintf("http://%s/v1/n9e/eval-records?rule_id=%d&datasource_id=%d&from=%d&to=%d&before=%d&limit=%d",
 		node, ruleId, dsId, from, to, before, limit)
-	req, err := http.NewRequest("GET", url, nil)
+	// 挂上扇出的总时限：整体已经超时了就不该再为某个慢节点单独等满 5s
+	reqCtx, cancel := context.WithTimeout(ctx, evalRecordsNodeTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(reqCtx, "GET", url, nil)
 	if err != nil {
-		return nil, false, err
+		return zero, err
 	}
 
 	for user, pass := range rt.HTTP.APIForService.BasicAuth {
@@ -298,39 +441,60 @@ func (rt *Router) forwardEvalRecords(node string, ruleId, dsId, from, to, before
 		break
 	}
 
-	// 超时收窄：edge 节点可能被防火墙 drop，长超时会拖住整个请求
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := evalRecordsClient.Do(req)
 	if err != nil {
-		return nil, false, fmt.Errorf("forward to %s failed: %v", node, err)
+		return zero, fmt.Errorf("forward to %s failed: %v", node, err)
 	}
 	defer resp.Body.Close()
 
-	// 多读 1 字节用于判断是否触到上限：LimitReader 截断时不报错，直接 Unmarshal
-	// 会得到"JSON 语法错误"这种看不出根因的信息
-	body, err := io.ReadAll(io.LimitReader(resp.Body, evalRecordsMaxRespBytes+1))
-	if err != nil {
-		return nil, false, err
-	}
-	if int64(len(body)) > evalRecordsMaxRespBytes {
-		return nil, false, fmt.Errorf("response from %s exceeds %d bytes, narrow the time range or lower limit",
+	// 边读边解，不再先 io.ReadAll 出一份完整响应体：一个节点最大可返回几十 MB，
+	// 而扇出并发是 evalRecordsFanout，「原始字节 + 解码结果」同时驻留就是双倍的峰值堆。
+	// 多给 1 字节的额度用于判断是否触到上限——LimitReader 截断时不报错，
+	// 直接解码只会得到"JSON 语法错误"这种看不出根因的信息。
+	counter := &countingReader{r: io.LimitReader(resp.Body, evalRecordsMaxRespBytes+1)}
+	overSize := func() error {
+		return fmt.Errorf("response from %s exceeds %d bytes, narrow the time range or lower limit",
 			node, evalRecordsMaxRespBytes)
 	}
 
 	var result struct {
 		Dat struct {
-			List    []evallog.EvalRecord `json:"list"`
-			Enabled *bool                `json:"enabled"`
+			List      []evallog.EvalRecord `json:"list"`
+			Enabled   *bool                `json:"enabled"`
+			Truncated bool                 `json:"truncated"`
+			Note      string               `json:"note"`
 		} `json:"dat"`
 		Err string `json:"err"`
 	}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, false, err
+	if err := json.NewDecoder(counter).Decode(&result); err != nil {
+		if counter.n > evalRecordsMaxRespBytes {
+			return zero, overSize()
+		}
+		return zero, err
+	}
+	if counter.n > evalRecordsMaxRespBytes {
+		return zero, overSize()
 	}
 	if result.Err != "" {
-		return nil, false, fmt.Errorf("%s", result.Err)
+		return zero, fmt.Errorf("%s", result.Err)
 	}
-	// 老版本引擎不返回 enabled 字段，缺省按启用处理，保持向后兼容
-	enabled := result.Dat.Enabled == nil || *result.Dat.Enabled
-	return result.Dat.List, enabled, nil
+	return evalRecordsNodeResult{
+		records: result.Dat.List,
+		// 老版本引擎不返回 enabled 字段，缺省按启用处理，保持向后兼容
+		enabled:   result.Dat.Enabled == nil || *result.Dat.Enabled,
+		truncated: result.Dat.Truncated,
+		note:      result.Dat.Note,
+	}, nil
+}
+
+// countingReader 记录已读字节数，用于区分"响应超限"与"响应本身是坏 JSON"。
+type countingReader struct {
+	r io.Reader
+	n int64
+}
+
+func (c *countingReader) Read(p []byte) (int, error) {
+	n, err := c.r.Read(p)
+	c.n += int64(n)
+	return n, err
 }

@@ -111,7 +111,10 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	targetsOfAlertRulesCache := memsto.NewTargetOfAlertRuleCache(ctx, alertc.Heartbeat.EngineName, syncStats)
 
 	// 评估执行记录：本地文件存储，支持按规则+时间范围查询评估现场
-	if err := evallog.Init(alertc.EvalLog, func() { alertStats.CounterEvalLogDropTotal.Inc() }); err != nil {
+	if err := evallog.Init(alertc.EvalLog, evallog.Hooks{
+		OnDrop:        func() { alertStats.CounterEvalLogDropTotal.Inc() },
+		OnQueryReject: func() { alertStats.CounterEvalLogQueryRejectTotal.Inc() },
+	}); err != nil {
 		logger.Errorf("failed to init evallog: %v", err)
 	}
 
