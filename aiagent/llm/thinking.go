@@ -4,9 +4,9 @@ import "strings"
 
 // NormalizeThinkingParams 在 extra 上叠加"关闭深度思考"的厂商特定字段，返回新 map。
 //
-// 当前仅用于连接测试 probe 路径（aiagent/llmconfig）：探测请求 MaxTokens=5，
-// 思考模型会把 token 全烧在 reasoning 上导致 content 为空、误报失败，所以探测前
-// 按 BaseURL > Provider > Model 三层路由自动注入"关思考"字段。chat 路径不再注入
+// 当前仅用于连接测试 probe 路径（aiagent/llmconfig）：探测只发一句 "Hi"，让思考模型
+// 把 token 全烧在 reasoning 上既慢又容易 content 为空，所以探测前按
+// BaseURL > Provider > Model 三层路由自动注入"关思考"字段。chat 路径不再注入
 // ——思考是一等公民（思考流接入 thinking 通道），想关思考的用户在 CustomParams
 // 里显式配置。
 //
