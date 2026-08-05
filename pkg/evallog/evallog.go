@@ -15,7 +15,7 @@ type Config struct {
 	MaxSeriesPerQuery  int    // 闸1a：单查询保留的原始曲线条数，默认 100
 	MaxPointsPerSeries int    // 闸1b：单曲线保留的点数，默认 60
 	MaxRecordBytes     int    // 闸1c：单条记录序列化后硬上限，默认 256KB
-	PerRuleDailyMB     int    // 闸2：单规则单日写入预算（未压缩），超出后当日降级为摘要，默认 1024
+	PerRuleDailyMB     int    // 闸2：单规则单日写入预算（未压缩，跨该规则命中的全部数据源合计），超出后当日降级为摘要，默认 1024
 	QueueSize          int    // 闸3：异步写入队列长度，默认 4096
 	MaxDiskGB          int    // 兜底：目录总量上限，超出从最旧小时删起，默认 20
 

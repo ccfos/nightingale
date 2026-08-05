@@ -587,13 +587,13 @@ func TestDailyBudgetSurvivesAppenderClose(t *testing.T) {
 	}
 	now := time.Now()
 	date := now.Format(dateLayout)
-	key := "77_1"
+	key := "77" // 预算按 rule_id 计，appender 才是 {rule_id}_{ds_id}
 
 	b := w.budgetFor(key, date, now)
 	b.bytes = 900 * 1024
 
 	// 模拟 housekeep 因空闲关闭句柄：appender 没了，预算必须还在
-	delete(w.appenders, key)
+	delete(w.appenders, "77_1")
 
 	again := w.budgetFor(key, date, now)
 	if again.bytes != 900*1024 {
@@ -602,6 +602,45 @@ func TestDailyBudgetSurvivesAppenderClose(t *testing.T) {
 	// 跨日才清零
 	if next := w.budgetFor(key, "2999-01-01", now); next.bytes != 0 {
 		t.Fatalf("budget must reset on new date, got %d", next.bytes)
+	}
+}
+
+// 回归：日预算的 key 曾复用 appender 的 {rule_id}_{ds_id}，于是一条按 cate 匹配到 N 个
+// 数据源的规则实际拿到 N × PerRuleDailyMB 的额度，闸2 先于 MaxDiskGB 失效；而 MaxDiskGB
+// 的兜底是从最旧小时全局删起，一条胖规则会把其他规则的历史记录一起挤掉。
+func TestDailyBudgetSharedAcrossDatasources(t *testing.T) {
+	cfg := initForTest(t, func(c *Config) {
+		c.PerRuleDailyMB = 1
+	})
+
+	// 单条约 60KB（100 series × 500B labels）。同一规则的两个数据源交替写，
+	// 合计超过 1MB 后**两个数据源**都应降级为摘要
+	now := time.Now().Truncate(time.Minute)
+	for i := 0; i < 30; i++ {
+		dsId := int64(1 + i%2)
+		r := NewRecord(88, dsId, now.Add(time.Duration(i)*time.Second).UnixMilli())
+		q := QueryRecord{Ref: "A", SeriesTotal: 100}
+		for j := 0; j < 100; j++ {
+			q.Series = append(q.Series, SeriesSample{
+				Labels: map[string]string{"pad": strings.Repeat("x", 500), "i": fmt.Sprintf("%d", j)},
+				Points: [][2]float64{{1, 1}},
+			})
+		}
+		r.AddQuery(q)
+		Push(r)
+	}
+	Shutdown()
+
+	for _, dsId := range []int64{1, 2} {
+		recs, err := queryRecs(cfg, 88, dsId, 0, now.Add(time.Hour).UnixMilli(), 0, 0)
+		if err != nil || len(recs) == 0 {
+			t.Fatalf("query ds %d: %v, n=%d", dsId, err, len(recs))
+		}
+		// recs 倒序：最新一条必然在预算用尽之后，两个数据源都应已降级
+		if len(recs[0].Queries[0].Series) != 0 || !recs[0].Truncated {
+			t.Fatalf("ds %d: expect newest degraded to summary once the rule's shared budget is used up, series=%d",
+				dsId, len(recs[0].Queries[0].Series))
+		}
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -39,7 +40,7 @@ type Writer struct {
 	dropHook func()
 
 	appenders map[string]*appender   // key: {rule_id}_{ds_id}
-	budgets   map[string]*ruleBudget // key 同上；生命周期独立于 appender
+	budgets   map[string]*ruleBudget // key: {rule_id}（跨该规则的全部数据源共用）；生命周期独立于 appender
 
 	// gzMu 同时保护 gzClosed、gzInflight 与「向 gzCh 投递」：投递方除消费 goroutine 外
 	// 还有启动时的 sweepLeftovers，若不互斥，Close 关闭 gzCh 后的残余投递会 panic
@@ -67,6 +68,11 @@ type appender struct {
 // 刻意不挂在 appender 上：appender 会因空闲 5 分钟（appenderIdleTimeout）或句柄数超过
 // maxOpenAppenders 被关闭并从 map 删除，计数跟着一起没了。评估间隔大于 5 分钟的规则
 // 每两次评估之间必然被关一次，预算永远累加不到门限，PerRuleDailyMB 等于完全失效。
+//
+// 也刻意**只按 rule_id 计**，而不是跟着 appender 用 {rule_id}_{ds_id}：一条按 cate 匹配的
+// 规则可以命中几十个数据源，按组合键计等于把预算放大了同样的倍数（30 个数据源就是
+// 30 × PerRuleDailyMB），闸2 先于 MaxDiskGB 失效。而 MaxDiskGB 的兜底是**从最旧小时全局
+// 删起**，一条胖规则会把其他规则的历史记录一起挤掉，「保留 RetentionHours」的承诺就没了。
 type ruleBudget struct {
 	date    string // "2006-01-02"
 	bytes   int64
@@ -177,9 +183,9 @@ func (w *Writer) write(r *EvalRecord) {
 		return
 	}
 
-	// 闸2：单规则单日预算，超出后降级为摘要模式
+	// 闸2：单规则单日预算（跨该规则的全部数据源合计），超出后降级为摘要模式
 	now := time.Now()
-	b := w.budgetFor(key, msTime(r.Ts).Format(dateLayout), now)
+	b := w.budgetFor(strconv.FormatInt(r.RuleId, 10), msTime(r.Ts).Format(dateLayout), now)
 	limit := int64(w.cfg.PerRuleDailyMB) * 1024 * 1024
 	if b.bytes+int64(len(line)) > limit && (len(r.Queries) > 0 || len(r.Events) > 0) {
 		// 超预算后降级为摘要模式：同样先丢曲线，事件轨迹保留骨架
@@ -280,7 +286,7 @@ func (w *Writer) dropRecord(r *EvalRecord, reason string, err error) {
 	}
 }
 
-// budgetFor 取出（必要时创建）某 rule_ds 的当日预算计数，跨日自动清零。
+// budgetFor 取出（必要时创建）某规则（key = rule_id）的当日预算计数，跨日自动清零。
 func (w *Writer) budgetFor(key, date string, now time.Time) *ruleBudget {
 	b, ok := w.budgets[key]
 	if !ok {
