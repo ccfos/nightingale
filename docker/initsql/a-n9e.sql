@@ -573,7 +573,9 @@ CREATE TABLE notification_record (
     `target` varchar(1024) NOT NULL COMMENT 'notification target',
     `details` varchar(2048) DEFAULT '' COMMENT 'notification other info',
     `created_at` bigint NOT NULL COMMENT 'create time',
-    INDEX idx_evt (event_id)
+    INDEX idx_evt (event_id),
+    INDEX idx_nr_rule_created_evt (notify_rule_id, created_at, event_id),
+    INDEX idx_nr_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `task_tpl`

@@ -159,6 +159,63 @@ func isPostgres(db *gorm.DB) bool {
 	dialect := db.Dialector.Name()
 	return dialect == "postgres"
 }
+
+// notificationRecordIndexes 通知记录查询与清理所需的索引，见 models.NotificationRecord 的说明
+var notificationRecordIndexes = []struct {
+	name string
+	cols string
+}{
+	{"idx_nr_rule_created_evt", "notify_rule_id, created_at, event_id"},
+	{"idx_nr_created_at", "created_at"},
+}
+
+// migrateNotificationRecordIndexes 给存量 notification_record 补索引。
+// 不交给 AutoMigrate 按 tag 建：通知记录是持续高频写入的大表，而 PostgreSQL 的普通
+// CREATE INDEX 会在整个构建期间持 SHARE 锁，把该表的 INSERT 全部挡住——放进 goroutine
+// 只是不阻塞启动线程，数据库锁依旧存在，通知记录会在内存队列里积压直至被丢弃。
+// 故 PostgreSQL 必须走 CONCURRENTLY，MySQL 显式要求 INPLACE/LOCK=NONE
+func migrateNotificationRecordIndexes(db *gorm.DB) {
+	for _, idx := range notificationRecordIndexes {
+		var err error
+		switch {
+		case isPostgres(db):
+			// CREATE INDEX CONCURRENTLY 中途失败会留下 indisvalid=false 的残次索引，
+			// 而 IF NOT EXISTS 会认为它已存在从而跳过重建：这个索引永远不被查询选用，
+			// 却仍要承担每次写入的维护开销，必须先清掉
+			if err = dropInvalidPgIndex(db, idx.name); err != nil {
+				logger.Errorf("failed to drop invalid index %s on notification_record: %v", idx.name, err)
+				continue
+			}
+			// CONCURRENTLY 不能在事务块里执行，gorm 的 Exec 不会自动开启事务
+			err = db.Exec(fmt.Sprintf("CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON notification_record(%s)", idx.name, idx.cols)).Error
+		case db.Dialector.Name() == "mysql":
+			if db.Migrator().HasIndex("notification_record", idx.name) {
+				continue
+			}
+			// 显式声明 LOCK=NONE：不支持在线加索引时宁可报错交给 DBA 用 gh-ost /
+			// pt-online-schema-change 处理，也不要静默退化成阻塞写入的 DDL
+			err = db.Exec(fmt.Sprintf("ALTER TABLE notification_record ADD INDEX %s (%s), ALGORITHM=INPLACE, LOCK=NONE", idx.name, idx.cols)).Error
+		default:
+			// SQLite 单写入者、数据量有限，普通建索引即可
+			err = db.Exec(fmt.Sprintf("CREATE INDEX IF NOT EXISTS %s ON notification_record(%s)", idx.name, idx.cols)).Error
+		}
+
+		if err != nil {
+			logger.Errorf("failed to create index %s on notification_record, please create it manually with an online DDL tool (gh-ost / pt-online-schema-change): %v", idx.name, err)
+		}
+	}
+}
+
+func dropInvalidPgIndex(db *gorm.DB, name string) error {
+	var invalid int64
+	err := db.Raw("select count(1) from pg_index i join pg_class c on c.oid = i.indexrelid where c.relname = ? and not i.indisvalid", name).Scan(&invalid).Error
+	if err != nil || invalid == 0 {
+		return err
+	}
+
+	logger.Infof("dropping invalid index %s left behind by a failed CREATE INDEX CONCURRENTLY", name)
+	return db.Exec("DROP INDEX CONCURRENTLY IF EXISTS " + name).Error
+}
 func MigrateTables(db *gorm.DB) error {
 	var tableOptions string
 	switch db.Dialector.(type) {
@@ -221,6 +278,8 @@ func MigrateTables(db *gorm.DB) error {
 				logger.Errorf("failed to create index idx_group_last_eval_time on alert_his_event: %v", err)
 			}
 		}
+
+		migrateNotificationRecordIndexes(asyncDB)
 	}()
 
 	if !db.Migrator().HasTable(&models.BuiltinPayload{}) {
