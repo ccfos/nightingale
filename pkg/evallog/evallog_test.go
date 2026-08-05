@@ -1488,28 +1488,64 @@ func TestQueryGateAdmitsUpToItsSize(t *testing.T) {
 	}
 }
 
+// 预算兜底按小时桶两遍执行：分界之前的小时整桶删、分界小时只删到腾够为止、
+// 当前小时永不动；同一小时跨规则的文件属于同一个桶。
 func TestPruneToBudget(t *testing.T) {
-	dir := t.TempDir()
-	var files []hourFile
-	var total int64
-	for i := 0; i < 5; i++ {
-		p := filepath.Join(dir, fmt.Sprintf("%d.jsonl.gz", i))
-		os.WriteFile(p, make([]byte, 100), 0644)
-		files = append(files, hourFile{path: p, hour: time.Now().Add(time.Duration(i) * time.Hour), size: 100})
-		total += 100
+	cfg := Config{Dir: t.TempDir()}
+	cfg.normalize()
+
+	now := truncHour(time.Now())
+	mk := func(rule string, hoursAgo int, size int64) string {
+		at := now.Add(-time.Duration(hoursAgo) * time.Hour)
+		dir := filepath.Join(cfg.Dir, rule, at.Format(dateLayout))
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			t.Fatal(err)
+		}
+		p := filepath.Join(dir, at.Format(hourLayout)+".jsonl.gz")
+		if err := os.WriteFile(p, make([]byte, size), 0644); err != nil {
+			t.Fatal(err)
+		}
+		return p
 	}
 
-	pruneToBudget(files, total, 250)
+	// 桶（从旧到新）：h-5 = 200（跨两个规则）、h-4 = 100、h-3 = 200（跨两个规则）；
+	// 当前小时 100 只计 total 不进候选。total = 600。
+	h5a := mk("1_1", 5, 100)
+	h5b := mk("2_1", 5, 100)
+	h4 := mk("1_1", 4, 100)
+	h3a := mk("1_1", 3, 100)
+	h3b := mk("2_1", 3, 100)
+	cur := mk("1_1", 0, 100)
 
-	// 最旧的 3 个（0/1/2）应被删，留下 2 个
-	for i := 0; i < 3; i++ {
-		if _, err := os.Stat(files[i].path); !os.IsNotExist(err) {
-			t.Fatalf("expect %s removed", files[i].path)
+	total, buckets := sweepExpiredAndMeasure(cfg)
+	if total != 600 {
+		t.Fatalf("total = %d, want 600 (current hour must be counted)", total)
+	}
+	if len(buckets) != 3 {
+		t.Fatalf("buckets = %d, want 3 (current hour must not be a candidate)", len(buckets))
+	}
+	if got := buckets[now.Add(-5*time.Hour).Unix()]; got != 200 {
+		t.Fatalf("same hour across rules must share one bucket, got %d", got)
+	}
+
+	// 预算 250 → 超出 350：h-5 整桶(200) + h-4 整桶(100) + h-3 桶里腾 50（即一个文件）
+	pruneToBudget(cfg, buckets, total, 250)
+
+	for _, p := range []string{h5a, h5b, h4} {
+		if _, err := os.Stat(p); !os.IsNotExist(err) {
+			t.Fatalf("hours before the boundary must be fully pruned: %s survived", p)
 		}
 	}
-	for i := 3; i < 5; i++ {
-		if _, err := os.Stat(files[i].path); err != nil {
-			t.Fatalf("expect %s kept", files[i].path)
+	h3Left := 0
+	for _, p := range []string{h3a, h3b} {
+		if _, err := os.Stat(p); err == nil {
+			h3Left++
 		}
+	}
+	if h3Left != 1 {
+		t.Fatalf("boundary hour must be pruned only until enough is freed, %d of 2 files left", h3Left)
+	}
+	if _, err := os.Stat(cur); err != nil {
+		t.Fatalf("current hour file must never be pruned: %v", err)
 	}
 }
