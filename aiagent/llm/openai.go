@@ -156,7 +156,8 @@ func isMaxCompletionTokensError(err error) bool {
 //
 // 主要覆盖 Azure 自定义部署名——那里 model 填的是部署名（如 my-gpt5），任何基于
 // 模型名的前缀匹配都会漏判。用户在 CustomParams 里手填的 max_tokens 同样会触发这个
-// 400，一并摘掉。
+// 400，一并摘掉并把值迁过去——只删不迁的话重试请求会彻底没有上限，推理模型能跑出
+// 远超用户预期的输出长度和费用。
 //
 // 改完之后 MaxTokens == 0 且 extraBody 里不再有 max_tokens，第二次调用必然返回
 // false，因此不会出现反复重试。
@@ -170,11 +171,35 @@ func swapToMaxCompletionTokens(req *openAIRequest, err error) bool {
 		req.MaxTokens = 0
 		changed = true
 	}
-	if _, ok := req.extraBody["max_tokens"]; ok {
+	if v, ok := req.extraBody["max_tokens"]; ok {
 		delete(req.extraBody, "max_tokens")
+		// 显式字段优先，与 MarshalJSON 里"extraBody 不覆盖显式字段"的规则保持一致
+		if n, ok := positiveInt(v); ok && req.MaxCompletionTokens == 0 {
+			req.MaxCompletionTokens = n
+		}
 		changed = true
 	}
 	return changed
+}
+
+// positiveInt 从 extra body 取正整数。CustomParams 由 JSON 反序列化而来，数值落地是
+// float64；程序内构造的则可能是 int/int64。取不到就返回 false，由调用方决定兜底。
+func positiveInt(v any) (int, bool) {
+	var n int
+	switch x := v.(type) {
+	case float64:
+		n = int(x)
+	case int:
+		n = x
+	case int64:
+		n = int(x)
+	default:
+		return 0, false
+	}
+	if n <= 0 {
+		return 0, false
+	}
+	return n, true
 }
 
 type openAIMessage struct {

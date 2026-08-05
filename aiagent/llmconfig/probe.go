@@ -70,10 +70,9 @@ func Test(p *models.AILLMConfig) error {
 	defer cancel()
 
 	// 统一给足预算：推理/思考模型（o1 系列、gpt-5、deepseek-r1、gemini-2.5-pro 等）会先把
-	// token 花在思考上，预算过小会让 content 为空而误报「无内容」——尤其 o1 系列在
-	// isPureThinkingModel 里被判定为「思考关不掉」，连 reasoning_effort 都注入不了。
-	// 普通模型对 "Hi" 会 finish_reason=stop 提前收尾，抬高上限并不增加实际消耗，
-	// 故不按模型名分档、不再多维护一张表。
+	// token 花在思考上，预算过小会让 content 为空而误报「无内容」。普通模型对 "Hi" 会
+	// finish_reason=stop 提前收尾，抬高上限并不增加实际消耗，故不按模型名分档、不再多
+	// 维护一张表。512 仍可能被推理模型烧光，那种情况由下面的截断判定兜底。
 	maxTokens := 512
 	resp, err := client.Generate(ctx, &llm.GenerateRequest{
 		Messages:  []llm.Message{{Role: llm.RoleUser, Content: "Hi"}},
@@ -82,7 +81,16 @@ func Test(p *models.AILLMConfig) error {
 	if err != nil {
 		return classifyProbeError(p, err)
 	}
-	if resp == nil || (strings.TrimSpace(resp.Content) == "" && strings.TrimSpace(resp.ReasoningContent) == "") {
+	if resp == nil {
+		return &ProbeError{Kind: ProbeErrorNoContent, Model: p.Model}
+	}
+	// 预算被 reasoning 吃光时正文为空、finish_reason=length，但这轮请求本身是成功的
+	// ——端点、鉴权、模型都验证过了，探测目的已达成，不能判失败。o1 系列关不掉思考，
+	// Azure 自定义部署名下的 gpt-5 也命不中前缀、注入不了 reasoning_effort，都会走到这里。
+	if llm.ClassifyFinish(resp.FinishReason) == llm.FinishTruncated {
+		return nil
+	}
+	if strings.TrimSpace(resp.Content) == "" && strings.TrimSpace(resp.ReasoningContent) == "" {
 		return &ProbeError{Kind: ProbeErrorNoContent, Model: p.Model}
 	}
 	return nil

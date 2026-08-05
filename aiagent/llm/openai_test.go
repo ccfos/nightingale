@@ -328,16 +328,39 @@ func TestSwapToMaxCompletionTokens(t *testing.T) {
 		t.Fatal("unrelated error must leave request untouched")
 	}
 
-	// 用户在 CustomParams 里手填的 max_tokens 同样会触发 400，兜底要一并摘掉
-	viaExtra := &openAIRequest{extraBody: map[string]any{"max_tokens": 456, "enable_thinking": false}}
+	// 用户在 CustomParams 里手填的 max_tokens 同样会触发 400，兜底要一并摘掉；
+	// 值必须迁到新字段，只删不迁会让重试请求彻底没有输出上限。CustomParams 走 JSON
+	// 反序列化，数值落地是 float64。
+	viaExtra := &openAIRequest{extraBody: map[string]any{"max_tokens": float64(456), "enable_thinking": false}}
 	if !swapToMaxCompletionTokens(viaExtra, err400) {
 		t.Fatal("expected swap to strip max_tokens from extra body")
 	}
 	if _, ok := viaExtra.extraBody["max_tokens"]; ok {
 		t.Fatal("extra body max_tokens must be removed")
 	}
+	if viaExtra.MaxCompletionTokens != 456 {
+		t.Fatalf("extra body max_tokens should move to max_completion_tokens, got %d", viaExtra.MaxCompletionTokens)
+	}
 	if _, ok := viaExtra.extraBody["enable_thinking"]; !ok {
 		t.Fatal("unrelated extra body keys must survive")
+	}
+
+	// 显式字段优先：两边都有时不能让 extraBody 的值盖掉配置里的上限
+	both := &openAIRequest{MaxTokens: 100, extraBody: map[string]any{"max_tokens": float64(456)}}
+	if !swapToMaxCompletionTokens(both, err400) {
+		t.Fatal("expected swap to trigger")
+	}
+	if both.MaxCompletionTokens != 100 {
+		t.Fatalf("explicit field must win, got %d", both.MaxCompletionTokens)
+	}
+
+	// 非数值 / 非正数的 max_tokens 只删不迁，不能被 int() 转成 0 之外的怪值
+	garbage := &openAIRequest{extraBody: map[string]any{"max_tokens": "lots"}}
+	if !swapToMaxCompletionTokens(garbage, err400) {
+		t.Fatal("expected swap to strip an unparsable max_tokens")
+	}
+	if garbage.MaxCompletionTokens != 0 {
+		t.Fatalf("unparsable max_tokens must not be migrated, got %d", garbage.MaxCompletionTokens)
 	}
 }
 

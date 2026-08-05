@@ -257,9 +257,11 @@ POST /api/n9e/ai-llm-config/test
 
 根据 `api_type` 向对应的 API 发送一个最小请求（"Hi"，最大输出 Token 数为 512）。
 
-Token 上限字段名按模型家族路由：OpenAI 兼容请求中，`gpt-5*`（含 gpt-5.1）、`o1`/`o3`/`o4` 系列使用 `max_completion_tokens`，其他模型使用 `max_tokens`。若模型名未命中（例如 Azure 自定义部署名），服务端返回 `Use 'max_completion_tokens' instead` 的 400 时会自动改名重试一次。
+Token 上限字段名按模型家族路由：OpenAI 兼容请求中，`gpt-5*`（含 gpt-5.1）、`o1`/`o3`/`o4` 系列使用 `max_completion_tokens`，其他模型使用 `max_tokens`。若模型名未命中（例如 Azure 自定义部署名），服务端返回 `Use 'max_completion_tokens' instead` 的 400 时会自动改名重试一次；此时 `custom_params` 里手填的 `max_tokens` 也会被一并迁移到 `max_completion_tokens`，用户配置的上限不会丢。
 
 之所以不用更小的值：推理模型会先把 token 花在思考上，预算过小会导致 `content` 为空而误报「无内容」；普通模型对 "Hi" 会提前结束，抬高上限并不增加实际消耗。
+
+若推理模型把 512 全部花在思考上（`finish_reason=length`、正文为空），仍判定为连接正常——端点、鉴权、模型都已经验证通过，探测目的已达成。只有正常收尾（`finish_reason=stop`）却没有任何内容时才报「无内容」。
 
 | api_type | 请求地址 | 认证方式 |
 |----------|---------|---------|
