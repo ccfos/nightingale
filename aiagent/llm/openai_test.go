@@ -302,6 +302,60 @@ func TestOpenAIRequest_RequestMaxTokensForGPT5Probe(t *testing.T) {
 	}
 }
 
+// TestConvertRequest_GPT5MigratesExtraBodyMaxTokens：模型名已经命中新家族时，
+// CustomParams 里手填的 max_tokens 必须在首个请求里就迁到 max_completion_tokens。
+// 留到服务端 400 再靠兜底改名的话，每次调用都要白跑一个往返。
+func TestConvertRequest_GPT5MigratesExtraBodyMaxTokens(t *testing.T) {
+	cfg := &Config{
+		Model: "gpt-5",
+		// 用户只在 custom_params 里配了上限，没配 extra_config.max_tokens
+		ExtraBody: map[string]any{"max_tokens": float64(4096), "reasoning_effort": "minimal"},
+	}
+	o := &OpenAI{config: cfg}
+
+	data, err := json.Marshal(o.convertRequest(&GenerateRequest{}))
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+
+	var body map[string]json.RawMessage
+	if err := json.Unmarshal(data, &body); err != nil {
+		t.Fatalf("unmarshal request: %v", err)
+	}
+	if _, ok := body["max_tokens"]; ok {
+		t.Fatalf("first request must not carry max_tokens: %s", data)
+	}
+	var got int
+	if err := json.Unmarshal(body["max_completion_tokens"], &got); err != nil {
+		t.Fatalf("unmarshal max_completion_tokens: %v; body: %s", err, data)
+	}
+	if got != 4096 {
+		t.Errorf("max_completion_tokens = %d, want 4096; body: %s", got, data)
+	}
+	// 迁移只针对 token 上限，其他 extra 字段照常透传
+	if _, ok := body["reasoning_effort"]; !ok {
+		t.Errorf("unrelated extra body keys must survive: %s", data)
+	}
+	// 迁移动的是副本，共享的 config 不能被改坏
+	if _, ok := cfg.ExtraBody["max_tokens"]; !ok {
+		t.Error("config extra body must not be mutated by a single request")
+	}
+
+	// 显式上限存在时以显式值为准，extraBody 的只删不迁
+	limit := 100
+	o = &OpenAI{config: &Config{Model: "gpt-5", MaxTokens: &limit,
+		ExtraBody: map[string]any{"max_tokens": float64(4096)}}}
+	if out := o.convertRequest(&GenerateRequest{}); out.MaxCompletionTokens != 100 {
+		t.Errorf("explicit field must win, got %d", out.MaxCompletionTokens)
+	}
+
+	// 非新家族模型不动 extraBody：老模型本来就该发 max_tokens
+	o = &OpenAI{config: &Config{Model: "gpt-4o", ExtraBody: map[string]any{"max_tokens": float64(4096)}}}
+	if _, ok := o.convertRequest(&GenerateRequest{}).extraBody["max_tokens"]; !ok {
+		t.Error("legacy models must keep extra body max_tokens")
+	}
+}
+
 // TestSwapToMaxCompletionTokens 覆盖模型名漏判时的 400 兜底改名：命中提示就把
 // max_tokens 迁到 max_completion_tokens，无关错误或已经改过名时保持请求不变。
 func TestSwapToMaxCompletionTokens(t *testing.T) {

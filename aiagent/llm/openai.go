@@ -154,10 +154,9 @@ func isMaxCompletionTokensError(err error) bool {
 // 服务端要求改用 max_completion_tokens 时，就地把值迁到新字段并返回 true（供调用方
 // 重试一次）；不满足条件则不动请求、返回 false。
 //
-// 主要覆盖 Azure 自定义部署名——那里 model 填的是部署名（如 my-gpt5），任何基于
-// 模型名的前缀匹配都会漏判。用户在 CustomParams 里手填的 max_tokens 同样会触发这个
-// 400，一并摘掉并把值迁过去——只删不迁的话重试请求会彻底没有上限，推理模型能跑出
-// 远超用户预期的输出长度和费用。
+// 只覆盖模型名漏判的场景——主要是 Azure 自定义部署名，那里 model 填的是部署名
+// （如 my-gpt5），任何基于模型名的前缀匹配都会漏判。模型名能认出来的走
+// convertRequest 里的提前迁移，不必先吃一个 400。
 //
 // 改完之后 MaxTokens == 0 且 extraBody 里不再有 max_tokens，第二次调用必然返回
 // false，因此不会出现反复重试。
@@ -171,15 +170,27 @@ func swapToMaxCompletionTokens(req *openAIRequest, err error) bool {
 		req.MaxTokens = 0
 		changed = true
 	}
-	if v, ok := req.extraBody["max_tokens"]; ok {
-		delete(req.extraBody, "max_tokens")
-		// 显式字段优先，与 MarshalJSON 里"extraBody 不覆盖显式字段"的规则保持一致
-		if n, ok := positiveInt(v); ok && req.MaxCompletionTokens == 0 {
-			req.MaxCompletionTokens = n
-		}
+	if takeExtraBodyMaxTokens(req) {
 		changed = true
 	}
 	return changed
+}
+
+// takeExtraBodyMaxTokens 把 extraBody 里用户手填的 max_tokens 摘掉，值迁到
+// MaxCompletionTokens，返回是否动过请求。
+//
+// 只删不迁的话请求会彻底没有输出上限，推理模型能跑出远超用户预期的长度和费用。
+// 显式字段已有值时只删不迁，与 MarshalJSON 里"extraBody 不覆盖显式字段"的规则保持一致。
+func takeExtraBodyMaxTokens(req *openAIRequest) bool {
+	v, ok := req.extraBody["max_tokens"]
+	if !ok {
+		return false
+	}
+	delete(req.extraBody, "max_tokens")
+	if n, ok := positiveInt(v); ok && req.MaxCompletionTokens == 0 {
+		req.MaxCompletionTokens = n
+	}
+	return true
 }
 
 // positiveInt 从 extra body 取正整数。CustomParams 由 JSON 反序列化而来，数值落地是
@@ -521,6 +532,11 @@ func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 	}
 	if usesMaxCompletionTokens(openAIReq.Model) {
 		openAIReq.MaxCompletionTokens = maxTokens
+		// 模型名已经确定该用新字段：CustomParams 里手填的 max_tokens 现在就迁走。
+		// 留着的话（没配 MaxTokens 时 MarshalJSON 的互斥剔除不生效）会被平铺进请求体，
+		// 每次调用都要先吃一个 400 再靠 swapToMaxCompletionTokens 兜底重试——agent
+		// 工具循环里一轮十几次调用就是十几个白跑的往返。
+		takeExtraBodyMaxTokens(openAIReq)
 	} else {
 		openAIReq.MaxTokens = maxTokens
 	}
