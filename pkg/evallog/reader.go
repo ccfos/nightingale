@@ -234,6 +234,12 @@ func fastProbeTs(line []byte) (int64, bool) {
 //     一份——一次普通的翻页就能让告警引擎抖动。条数闸挡不住这个，必须按字节挡。
 //
 // 槽位底层数组跨小时复用（append(buf[i][:0], line...)），环写满后基本不再分配。
+//
+// 复用与「字节预算真的约束驻留」这两件事要靠 push 里的**换位**同时成立，不能只挪 start：
+// 字节闸主导时 size 会长期停在远低于 maxLines 的水位，新元素落在 start+size 处、逐格前移，
+// 若被淘汰的槽位原地不动，start 会走遍全部 maxLines 个槽位、每个各留一份大数组——
+// 在册字节合规，sum(cap(buf[i])) 却能到预算的十倍（limit=2000、145KB 行、32MB 预算实测 296.9MB）。
+// 因此淘汰时把腾出的数组换到下一个写入位：持有大数组的槽位数恒等于在册条数，且零重新分配。
 type lineRing struct {
 	buf      [][]byte
 	maxLines int   // 本小时允许保留的条数，不超过 len(buf)
@@ -259,6 +265,11 @@ func (r *lineRing) reset(maxLines int, maxBytes int64) {
 	if maxLines > len(r.buf) {
 		maxLines = len(r.buf)
 	}
+	// maxLines 随剩余 limit 单调收窄，超出的槽位这次查询内不会再被索引到
+	//（下标运算全部 % maxLines），但可能还压着上一个小时留下的大数组，就地释放
+	for i := maxLines; i < len(r.buf); i++ {
+		r.buf[i] = nil
+	}
 	r.maxLines = maxLines
 	r.maxBytes = maxBytes
 	r.bytes = 0
@@ -273,6 +284,11 @@ func (r *lineRing) push(line []byte) {
 	// 那也要留下这一条——宁可超预算一条，也不能返回空列表让人以为没数据
 	for r.size > 0 && r.bytes+n > r.maxBytes {
 		r.bytes -= int64(len(r.buf[r.start]))
+		// 把腾出的底层数组换到下一个写入位（start+size 在 start++/size-- 前后恒等），
+		// 而不是留在原地：留在原地就是「持有大数组的槽位数一路涨到 maxLines」，
+		// 字节预算只约束在册字节、约束不到实际驻留。换位后复用照旧，不产生新分配。
+		dst := (r.start + r.size) % r.maxLines
+		r.buf[r.start], r.buf[dst] = r.buf[dst], r.buf[r.start]
 		r.start = (r.start + 1) % r.maxLines
 		r.size--
 		r.dropped = true

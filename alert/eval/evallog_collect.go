@@ -43,8 +43,9 @@ func EvalLogSamplesFromValue(value model.Value) ([]evallog.SeriesSample, int) {
 		}
 		total = len(items)
 		for i := 0; i < len(items) && i < cap; i++ {
-			var points [][2]float64
-			for _, v := range items[i].Values {
+			skip := pointsSkip(len(items[i].Values))
+			points := make([][2]float64, 0, len(items[i].Values)-skip)
+			for _, v := range items[i].Values[skip:] {
 				points = append(points, [2]float64{float64(v.Timestamp.Unix()), float64(v.Value)})
 			}
 			samples = append(samples, evallog.SeriesSample{
@@ -56,6 +57,20 @@ func EvalLogSamplesFromValue(value model.Value) ([]evallog.SeriesSample, int) {
 	return samples, total
 }
 
+// pointsSkip 返回按 PointsCap 只保留最新点时应跳过的前缀长度（n 为原始点数）。
+//
+// 必须在**复制之前**就截断：先复制全量再让 AddQuery 从尾部重新切片，切片仍指向那块完整
+// 分配，Go 以整块为单位回收，闸1b 就只限住了序列化长度、限不住堆。非 prom 数据源的
+// range 查询单曲线点数可达千级，100 条曲线即多驻留十几 MB，且记录在写入队列里排队期间
+// 一直不释放。cap<=0（evallog 未启用）时不截断——调用方此时根本不会走到这里。
+func pointsSkip(n int) int {
+	pcap := evallog.PointsCap()
+	if pcap <= 0 || n <= pcap {
+		return 0
+	}
+	return n - pcap
+}
+
 // EvalLogSamplesFromDataResps 将非 prom 数据源查询结果转为 evallog 采样。
 func EvalLogSamplesFromDataResps(series []models.DataResp) ([]evallog.SeriesSample, int) {
 	cap := evallog.SeriesCap()
@@ -65,8 +80,11 @@ func EvalLogSamplesFromDataResps(series []models.DataResp) ([]evallog.SeriesSamp
 
 	var samples []evallog.SeriesSample
 	for i := 0; i < len(series) && i < cap; i++ {
-		var points [][2]float64
-		for _, v := range series[i].Values {
+		// 同 EvalLogSamplesFromValue：先按 PointsCap 截断再复制，否则整条曲线的点会被
+		// 记录一直引用（详见 pointsSkip）
+		skip := pointsSkip(len(series[i].Values))
+		points := make([][2]float64, 0, len(series[i].Values)-skip)
+		for _, v := range series[i].Values[skip:] {
 			if len(v) >= 2 {
 				points = append(points, [2]float64{v[0], v[1]})
 			}

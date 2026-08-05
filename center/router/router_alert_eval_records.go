@@ -21,10 +21,32 @@ import (
 )
 
 const (
-	// evalRecordsFanout 同时查询的引擎节点数上限。
-	// 它同时也是内存扇出系数：并发中的每个节点最坏持有一份 evalRecordsMaxRespBytes
-	// 量级的解码结果，center 的峰值堆约等于本值 × evalRecordsMaxRespBytes。
+	// evalRecordsFanout 单次请求同时在途的**查询任务**数上限。
+	//
+	// 计量单位是 (datasource_id, 实例) 二元组而不是实例：targets 的去重键是
+	// `dsId@node`，转发也是一个 datasource 发一次请求，所以同一个引擎进程负责这条规则的
+	// 几个 datasource，就会占用几个槽位——极端情况下这 8 个可以全落在同一个进程上。
+	//
+	// 它同时也是内存扇出系数：并发中的每个任务最坏持有一份 evalRecordsMaxRespBytes
+	// 量级的解码结果，单次请求的峰值堆约等于本值 × evalRecordsMaxRespBytes。
 	evalRecordsFanout = 8
+	// evalRecordsPerNodeFanout 单次请求打向**同一个引擎实例**的并发上限。
+	//
+	// 与 evalRecordsLocalFanout 同理，只是管的是远端：引擎侧的并发闸默认
+	// MaxConcurrentQueries=2，center 若照 evalRecordsFanout 对着同一个远端实例压 8 个请求，
+	// 超出闸值的那几路只会排队到 queryAcquireTimeout(2s) 再拿一个 ErrBusy，用户看到的是
+	// 半屏「引擎忙」，而这纯粹是 center 自己造成的。本机路径当初已经对齐过，远端漏了。
+	// 取引擎默认值 2；远端配得更高时，单次请求只是不把它压满，不影响正确性。
+	evalRecordsPerNodeFanout = 2
+	// evalRecordsMaxAggregations 本进程同时执行的**聚合查询**数上限（跨请求）。
+	//
+	// evalRecordsFanout 只约束单次请求，多个用户同时刷新抽屉时峰值堆仍是它的整数倍：
+	// 该 handler 只有 auth+user+perm("/alert-rules") 一道权限门，具备该权限的普通用户
+	// 反复刷新即可让 center 的堆成倍放大。与引擎侧 MaxConcurrentQueries 取同一个数量级，
+	// 排队等待也复用同样的语义（排到超时就给明确的可重试错误，而不是含糊的客户端超时）。
+	evalRecordsMaxAggregations = 2
+	// evalRecordsAcquireTimeout 聚合闸的排队等待上限，与引擎侧 queryAcquireTimeout 对齐。
+	evalRecordsAcquireTimeout = 2 * time.Second
 	// evalRecordsMaxRespBytes 单个节点响应体的读取上限；超出即报错而不是静默截断。
 	// 必须大于引擎侧的 MaxQueryBytes（默认 32MB），否则正常查询会被这里判成超限；
 	// 留 1.5 倍余量给 JSON 外层与字段名开销。
@@ -51,6 +73,29 @@ const (
 // 就立刻掐断在途连接，不必再等满单节点超时。
 var evalRecordsClient = &http.Client{Timeout: evalRecordsNodeTimeout}
 
+// evalRecordsAggSem 跨请求的聚合并发闸，见 evalRecordsMaxAggregations。
+var evalRecordsAggSem = make(chan struct{}, evalRecordsMaxAggregations)
+
+// acquireEvalRecordsAgg 取一个聚合令牌，排队超过 evalRecordsAcquireTimeout 则放弃。
+// 不做「拿不到就立刻拒」：单次聚合通常几十毫秒，几个用户同时点开抽屉属于常态，排一下队就过去了。
+func acquireEvalRecordsAgg(ctx context.Context) bool {
+	select {
+	case evalRecordsAggSem <- struct{}{}:
+		return true
+	default:
+	}
+	timer := time.NewTimer(evalRecordsAcquireTimeout)
+	defer timer.Stop()
+	select {
+	case evalRecordsAggSem <- struct{}{}:
+		return true
+	case <-timer.C:
+		return false
+	case <-ctx.Done():
+		return false
+	}
+}
+
 // alertRuleEvalRecords 查询告警规则的评估执行记录。
 // GET /api/n9e/alert-rule/:arid/eval-records?datasource_id=&from=&to=&before=&limit=
 // from/to 为 unix 秒（默认最近 1 小时），before 为毫秒游标，结果按 ts 倒序。
@@ -65,6 +110,13 @@ func (rt *Router) alertRuleEvalRecords(c *gin.Context) {
 
 	// 业务组权限校验：非管理员需可读该规则所属业务组
 	rt.bgroCheck(c, rule.GroupId)
+
+	// 跨请求聚合闸：放在权限校验之后、扇出与心跳查库之前，让所有吃内存/吃 DB 的动作都在闸内。
+	// 拿不到就给一个明确的可重试错误，而不是让它去和别的请求抢堆——空结果会被读成"当时没有记录"。
+	if !acquireEvalRecordsAgg(c.Request.Context()) {
+		ginx.Bomb(200, "too many concurrent eval-record queries on this center instance, please retry")
+	}
+	defer func() { <-evalRecordsAggSem }()
 
 	now := time.Now().Unix()
 	from := ginx.QueryInt64(c, "from", now-3600)
@@ -180,27 +232,49 @@ peers:
 		peerErrs     []evalRecordsNodeErr
 		peerDisabled []string
 		sem          = make(chan struct{}, evalRecordsFanout)
-		localSem = make(chan struct{}, evalRecordsLocalFanout())
+		localSem     = make(chan struct{}, evalRecordsLocalFanout())
 	)
+
+	// 每个远端实例单独一个闸，见 evalRecordsPerNodeFanout。构造完即只读，goroutine 里直接查。
+	nodeSems := make(map[string]chan struct{}, len(targets))
+	for _, t := range targets {
+		if t.node == instance {
+			continue // 本机走 localSem，它已经对齐过引擎的并发闸
+		}
+		if _, ok := nodeSems[t.node]; !ok {
+			nodeSems[t.node] = make(chan struct{}, evalRecordsPerNodeFanout)
+		}
+	}
+
 	for _, t := range targets {
 		wg.Add(1)
 		go func(t dsNode) {
 			defer wg.Done()
-			gate := sem
-			if t.node == instance {
-				gate = localSem
+			// 远端要过两道闸：先本节点闸、再总扇出闸。
+			// 顺序对所有 goroutine 一致才不会死锁；且**先节点后总闸**很关键——反过来的话，
+			// 同一个节点的多个任务会占着总闸的令牌去排节点闸，把其余节点的名额全占住。
+			gates := []chan struct{}{localSem}
+			if t.node != instance {
+				gates = []chan struct{}{nodeSems[t.node], sem}
 			}
-			// acquired 必须显式记：没拿到令牌的 goroutine 若也去 <-gate 释放，
+			// 已拿到的必须显式记：没拿到令牌的 goroutine 若也去 <-gate 释放，
 			// 放走的是别人的令牌，扇出并发就被悄悄放大了
-			var acquired bool
-			select {
-			case gate <- struct{}{}:
-				acquired = true
-			case <-ctx.Done():
-				// 总时限已到，排在后面的节点不必再发起查询
-			}
-			if acquired {
-				defer func() { <-gate }()
+			held := make([]chan struct{}, 0, len(gates))
+			defer func() {
+				for i := len(held) - 1; i >= 0; i-- {
+					<-held[i]
+				}
+			}()
+			for _, g := range gates {
+				select {
+				case g <- struct{}{}:
+					held = append(held, g)
+				case <-ctx.Done():
+					// 总时限已到，排在后面的节点不必再发起查询
+				}
+				if ctx.Err() != nil {
+					break
+				}
 			}
 
 			var res evalRecordsNodeResult

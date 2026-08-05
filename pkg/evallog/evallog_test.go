@@ -249,7 +249,7 @@ func TestHourRollAndGzip(t *testing.T) {
 }
 
 func TestSeriesAndPointsCap(t *testing.T) {
-	initForTest(t, func(c *Config) {
+	cfg := initForTest(t, func(c *Config) {
 		c.MaxSeriesPerQuery = 3
 		c.MaxPointsPerSeries = 2
 	})
@@ -257,9 +257,16 @@ func TestSeriesAndPointsCap(t *testing.T) {
 	r := NewRecord(1, 1, time.Now().UnixMilli())
 	q := QueryRecord{Ref: "A", SeriesTotal: 5}
 	for i := 0; i < 5; i++ {
+		// 底层数组刻意留出远大于 len 的容量，模拟真实的 range 查询结果（千级点数）。
+		// 用 [][2]float64{...} 字面量的话 cap==len，从尾部重新切片后 cap 恰好等于闸值，
+		// 「是否还牵着整块原数组」这件事就被掩盖了，下面那条 cap 断言会永远通过。
+		pts := make([][2]float64, 0, 1024)
+		for j := 1; j <= 4; j++ {
+			pts = append(pts, [2]float64{float64(j), float64(j)})
+		}
 		q.Series = append(q.Series, SeriesSample{
 			Labels: map[string]string{"i": fmt.Sprintf("%d", i)},
-			Points: [][2]float64{{1, 1}, {2, 2}, {3, 3}, {4, 4}},
+			Points: pts,
 		})
 	}
 	r.AddQuery(q)
@@ -270,6 +277,11 @@ func TestSeriesAndPointsCap(t *testing.T) {
 	pts := r.Queries[0].Series[0].Points
 	if len(pts) != 2 || pts[0][0] != 3 || pts[1][0] != 4 {
 		t.Fatalf("expect last 2 points kept, got %v", pts)
+	}
+	// 截断必须换成新分配，不能是从尾部重新切片：切片仍指向原来那块分配，Go 以整块为单位
+	// 回收，记录会一直压着整条曲线的全部点——闸1b 就只限住了序列化长度、限不住堆。
+	if cap(pts) > cfg.MaxPointsPerSeries {
+		t.Fatalf("trimmed points still reference the original %d-cap array; copy instead of resliceing", cap(pts))
 	}
 	if !r.Truncated {
 		t.Fatal("expect truncated flag")
@@ -1012,6 +1024,44 @@ func TestLineRingByteBudget(t *testing.T) {
 	pushTs(r, 42, 500)
 	if got := tsOf(r.appendDesc(nil)); !reflect.DeepEqual(got, []int64{42}) {
 		t.Fatalf("an oversized single record must still be returned, got %v", got)
+	}
+}
+
+// 字节预算必须约束**实际驻留**，而不只是在册字节。
+//
+// TestLineRingByteBudget 只断言 r.bytes，看不到被淘汰槽位仍压着的底层数组：字节闸主导时
+// size 长期停在远低于 maxLines 的水位，新元素落在 start+size 处逐格前移，若淘汰只挪 start，
+// start 会走遍全部 maxLines 个槽位、每个各留一份大数组。修复前本用例实测 296.9MB / 32MB
+// 预算（9.3 倍），修复后驻留与在册条数同阶。
+func TestLineRingRetainedCapBounded(t *testing.T) {
+	const (
+		capacity = 2000
+		lineSize = 145 * 1024
+		budget   = int64(32 * 1024 * 1024)
+	)
+	r := newLineRing(capacity)
+	r.reset(capacity, budget)
+
+	line := []byte(strings.Repeat("x", lineSize))
+	for i := 0; i < 5*capacity; i++ {
+		r.push(line)
+	}
+
+	var retained int64
+	holding := 0
+	for i := range r.buf {
+		retained += int64(cap(r.buf[i]))
+		if cap(r.buf[i]) > 0 {
+			holding++
+		}
+	}
+	// 留一倍余量给 append 的扩容策略；真正要挡住的是「驻留随 maxLines 线性增长」
+	if retained > 2*budget {
+		t.Fatalf("ring retains %d bytes of backing arrays, over twice the %d byte budget: "+
+			"evicted slots are not being handed to the next write position", retained, budget)
+	}
+	if holding > r.size+1 {
+		t.Fatalf("%d slots still hold a backing array but only %d records are live", holding, r.size)
 	}
 }
 

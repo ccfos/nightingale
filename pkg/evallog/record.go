@@ -163,8 +163,14 @@ func (r *EvalRecord) AddQuery(q QueryRecord) {
 	}
 	for i := range q.Series {
 		if len(q.Series[i].Points) > cfg.MaxPointsPerSeries {
-			// 保留最新的点
-			q.Series[i].Points = q.Series[i].Points[len(q.Series[i].Points)-cfg.MaxPointsPerSeries:]
+			// 保留最新的点。必须**拷贝**而不是从尾部重新切片：切片仍指向原来那块分配，
+			// Go 以整块为单位回收，于是记录会一直压着整条曲线的全部点，闸1b 就只限住了
+			// 序列化长度、限不住堆。采集侧（EvalLogSamplesFrom*）已按 PointsCap 提前截断，
+			// 这里是对其他调用方的兜底，正常路径不会命中。
+			tail := q.Series[i].Points[len(q.Series[i].Points)-cfg.MaxPointsPerSeries:]
+			trimmed := make([][2]float64, cfg.MaxPointsPerSeries)
+			copy(trimmed, tail)
+			q.Series[i].Points = trimmed
 			r.Truncated = true
 		}
 	}

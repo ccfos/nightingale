@@ -178,6 +178,20 @@ func SeriesCap() int {
 	return cfg.MaxSeriesPerQuery
 }
 
+// PointsCap 单曲线保留的点数上限，供采集侧提前截断避免无谓分配；未启用时返回 0。
+//
+// 与 SeriesCap 成对：采集侧若先把整条曲线的点全复制一份、再交给 AddQuery 从尾部重新切片，
+// Go 会因为 slice 仍指向那块分配而保留**整份**原始点数组——闸1b 就只限住了序列化长度，
+// 限不住堆。非 prom 数据源的 range 查询单曲线点数可达千级，100 条曲线就是十几 MB，
+// 且记录在写入队列里排队期间一直不释放。
+func PointsCap() int {
+	cfg := currentConfig()
+	if cfg == nil {
+		return 0
+	}
+	return cfg.MaxPointsPerSeries
+}
+
 // QueryConcurrency 本进程允许的并发查询数（闸5）；未启用时返回 0。
 //
 // 给同进程的调用方（center 与 alert 合并部署时，center 的扇出会直接打到本地）用：
