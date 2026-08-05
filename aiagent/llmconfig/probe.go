@@ -69,7 +69,12 @@ func Test(p *models.AILLMConfig) error {
 	ctx, cancel := context.WithTimeout(context.Background(), ProbeTimeout(p.ExtraConfig))
 	defer cancel()
 
-	maxTokens := 5
+	// 统一给足预算：推理/思考模型（o1 系列、gpt-5、deepseek-r1、gemini-2.5-pro 等）会先把
+	// token 花在思考上，预算过小会让 content 为空而误报「无内容」——尤其 o1 系列在
+	// isPureThinkingModel 里被判定为「思考关不掉」，连 reasoning_effort 都注入不了。
+	// 普通模型对 "Hi" 会 finish_reason=stop 提前收尾，抬高上限并不增加实际消耗，
+	// 故不按模型名分档、不再多维护一张表。
+	maxTokens := 512
 	resp, err := client.Generate(ctx, &llm.GenerateRequest{
 		Messages:  []llm.Message{{Role: llm.RoleUser, Content: "Hi"}},
 		MaxTokens: &maxTokens,

@@ -82,15 +82,7 @@ type openAIRequest struct {
 // 已存在的 key 由显式字段优先（不让 extraBody 偷偷覆盖 model/messages 等关键字段）。
 func (r openAIRequest) MarshalJSON() ([]byte, error) {
 	type alias openAIRequest
-	useMaxCompletionTokens := usesMaxCompletionTokens(r.Model)
-	normalized := r
-	if useMaxCompletionTokens {
-		normalized.MaxTokens = 0
-	} else {
-		normalized.MaxCompletionTokens = 0
-	}
-
-	data, err := json.Marshal(alias(normalized))
+	data, err := json.Marshal(alias(r))
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +94,12 @@ func (r openAIRequest) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	for k, v := range r.extraBody {
-		if (useMaxCompletionTokens && k == "max_tokens") || (!useMaxCompletionTokens && k == "max_completion_tokens") {
+		// 两个 token 上限字段互斥：只要显式字段已经选定了一个，就不让 extraBody
+		// 把另一个也带上（同时出现会被 OpenAI 判 400）。这里按"实际填了哪个字段"
+		// 判断而不是重算模型名，否则 swapToMaxCompletionTokens 兜底改名之后
+		// （模型名命不中前缀）这层剔除就会站错队。
+		if (r.MaxCompletionTokens > 0 && k == "max_tokens") ||
+			(r.MaxTokens > 0 && k == "max_completion_tokens") {
 			continue
 		}
 		if _, occupied := m[k]; occupied {
@@ -113,11 +110,71 @@ func (r openAIRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
+// usesMaxCompletionTokens 判断模型是否属于 OpenAI 新一代推理模型家族
+// （gpt-5 / o1 / o3 / o4）。这些模型废弃了 max_tokens，只认 max_completion_tokens。
+//
+// gpt-5 用宽前缀而不是 "gpt-5-"：官方型号里既有 gpt-5-mini 也有 gpt-5.1，
+// 卡横杠会漏掉后者。o 系列反过来要卡精确值或带横杠的前缀，否则 o1x 之类会误伤。
+//
+// 与 thinking.go 的模型判断相互独立：那边管"是否注入关思考字段"，这里管"token
+// 字段名"，成员集合不同（如 isPureThinkingModel 含 qwq/deepseek-r1/gemini 却不含
+// gpt-5），故单列一个判断而非复用。
 func usesMaxCompletionTokens(model string) bool {
 	m := strings.ToLower(strings.TrimSpace(model))
-	return m == "gpt-5" || strings.HasPrefix(m, "gpt-5-") ||
-		m == "o1" || strings.HasPrefix(m, "o1-") ||
-		m == "o3" || strings.HasPrefix(m, "o3-")
+	switch {
+	case strings.HasPrefix(m, "gpt-5"),
+		m == "o1", strings.HasPrefix(m, "o1-"),
+		m == "o3", strings.HasPrefix(m, "o3-"),
+		m == "o4", strings.HasPrefix(m, "o4-"):
+		return true
+	}
+	return false
+}
+
+// cloneExtraBody 浅拷贝 extra body，让单次请求可以安全地增删自己的字段。
+func cloneExtraBody(src map[string]any) map[string]any {
+	if len(src) == 0 {
+		return nil
+	}
+	out := make(map[string]any, len(src))
+	for k, v := range src {
+		out[k] = v
+	}
+	return out
+}
+
+// isMaxCompletionTokensError 命中"服务端因 max_tokens 不被支持而 400，并提示改用
+// max_completion_tokens"的错误。错误串形如 `OpenAI API error (status 400): ...
+// Use 'max_completion_tokens' instead.`，故以是否提到 max_completion_tokens 为判据。
+func isMaxCompletionTokensError(err error) bool {
+	return err != nil && strings.Contains(strings.ToLower(err.Error()), "max_completion_tokens")
+}
+
+// swapToMaxCompletionTokens 是模型名识别的运行时兜底：当请求发了 max_tokens 却被
+// 服务端要求改用 max_completion_tokens 时，就地把值迁到新字段并返回 true（供调用方
+// 重试一次）；不满足条件则不动请求、返回 false。
+//
+// 主要覆盖 Azure 自定义部署名——那里 model 填的是部署名（如 my-gpt5），任何基于
+// 模型名的前缀匹配都会漏判。用户在 CustomParams 里手填的 max_tokens 同样会触发这个
+// 400，一并摘掉。
+//
+// 改完之后 MaxTokens == 0 且 extraBody 里不再有 max_tokens，第二次调用必然返回
+// false，因此不会出现反复重试。
+func swapToMaxCompletionTokens(req *openAIRequest, err error) bool {
+	if !isMaxCompletionTokensError(err) {
+		return false
+	}
+	changed := false
+	if req.MaxTokens > 0 {
+		req.MaxCompletionTokens = req.MaxTokens
+		req.MaxTokens = 0
+		changed = true
+	}
+	if _, ok := req.extraBody["max_tokens"]; ok {
+		delete(req.extraBody, "max_tokens")
+		changed = true
+	}
+	return changed
 }
 
 type openAIMessage struct {
@@ -182,7 +239,13 @@ func (o *OpenAI) Generate(ctx context.Context, req *GenerateRequest) (*GenerateR
 	// Make request
 	respBody, err := o.doRequest(ctx, openAIReq)
 	if err != nil {
-		return nil, err
+		// 模型名没命中家族前缀（如 Azure 自定义部署名）时，按服务端 400 的提示改名重试一次
+		if !swapToMaxCompletionTokens(openAIReq, err) {
+			return nil, err
+		}
+		if respBody, err = o.doRequest(ctx, openAIReq); err != nil {
+			return nil, err
+		}
 	}
 
 	// Parse response
@@ -207,7 +270,26 @@ func (o *OpenAI) GenerateStream(ctx context.Context, req *GenerateRequest) (<-ch
 	openAIReq := o.convertRequest(req)
 	openAIReq.Stream = true
 
-	jsonData, err := json.Marshal(openAIReq)
+	resp, err := o.doStreamRequest(ctx, openAIReq)
+	if err != nil {
+		// 与 Generate 一致的兜底：名字识别漏判时按 400 提示改名重试一次
+		if !swapToMaxCompletionTokens(openAIReq, err) {
+			return nil, err
+		}
+		if resp, err = o.doStreamRequest(ctx, openAIReq); err != nil {
+			return nil, err
+		}
+	}
+
+	ch := make(chan StreamChunk, 100)
+	go o.streamResponse(ctx, resp, ch)
+	return ch, nil
+}
+
+// doStreamRequest 序列化请求并发起流式调用，成功时返回打开的响应交由调用方读取 Body。
+// 序列化必须放在函数内部：兜底改名后要重新 marshal，复用旧 body 会把改名前的请求再发一遍。
+func (o *OpenAI) doStreamRequest(ctx context.Context, req *openAIRequest) (*http.Response, error) {
+	jsonData, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
@@ -221,19 +303,12 @@ func (o *OpenAI) GenerateStream(ctx context.Context, req *GenerateRequest) (<-ch
 		logger.Debugf("[OpenAI] stream request body (with extra): %s", preview)
 	}
 
-	resp, err := doHTTPStreamWithRetry(ctx, o.client, "OpenAI",
+	return doHTTPStreamWithRetry(ctx, o.client, "OpenAI",
 		func() (*http.Request, error) {
 			return http.NewRequestWithContext(ctx, "POST", o.config.BaseURL, bytes.NewBuffer(jsonData))
 		},
 		o.setHeaders,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	ch := make(chan StreamChunk, 100)
-	go o.streamResponse(ctx, resp, ch)
-	return ch, nil
 }
 
 // openAIToolCallAggregator 按 index 聚合流式下发的 tool_call 分片。
@@ -396,9 +471,11 @@ func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 	openAIReq := &openAIRequest{
-		Model:     o.config.Model,
-		TopP:      req.TopP,
-		extraBody: o.config.ExtraBody,
+		Model: o.config.Model,
+		TopP:  req.TopP,
+		// 复制一份：config 被 client_cache 复用并发共享，而 swapToMaxCompletionTokens
+		// 兜底时需要就地摘掉 extraBody 里的 max_tokens，直接引用会写坏共享 map。
+		extraBody: cloneExtraBody(o.config.ExtraBody),
 	}
 
 	// Temperature: request 优先，fallback 到 config 默认值
