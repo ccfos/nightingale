@@ -3,9 +3,11 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -21,10 +23,24 @@ func init() {
 }
 
 const (
-	n9eDocIndexURL       = "https://flashcat.cloud/index.json"
-	n9eDocSyncInterval   = 24 * time.Hour
-	n9eDocSyncRetryDelay = 1 * time.Minute
-	n9eDocIndexMaxBytes  = 12 << 20 // 12 MiB — index is ~10 MB today, leave headroom
+	n9eDocIndexURL      = "https://flashcat.cloud/index.json"
+	n9eDocSyncInterval  = 24 * time.Hour
+	n9eDocIndexMaxBytes = 12 << 20 // 12 MiB — index is ~10 MB today, leave headroom
+
+	// 失败重试从 1 分钟起翻倍退避，封顶 1 小时。之前是固定 1 分钟无限重试：
+	// 内网/断网部署里 flashcat.cloud 永远拉不通，等于每分钟往日志里塞一条
+	// WARNING，把真正要看的日志淹掉。
+	n9eDocSyncRetryDelay    = 1 * time.Minute
+	n9eDocSyncRetryMaxDelay = 1 * time.Hour
+
+	// 连续失败到这个次数后，索引仍为空就认定是稳态不可用（而非启动预热），
+	// 检索工具改口告诉 LLM「别再重试」。见 docIndexUnavailableErr。
+	n9eDocSyncFailsTerminal = 2
+
+	// 关闭远程同步的操作提示，同步失败日志里原样给运维看。写成自然语言而不是
+	// 伪造成一行配置片段：toml 的表头和键值不能同行，"[Center.AIAgent]
+	// DisableDocIndexSync = true" 照抄进去只会让配置解析失败。
+	n9eDocSyncDisableHint = "set DisableDocIndexSync = true under [Center.AIAgent] in config.toml"
 
 	// 返回给 LLM 的单篇 contents 截断上限（rune）。
 	//
@@ -62,9 +78,43 @@ var (
 	docIndexMu     sync.RWMutex
 	docIndex       []docEntry
 	docIndexLoaded bool
+	// docSyncDisabled（配置关掉了远程同步）与 docSyncFails（连续失败次数）只用于
+	// 在索引为空时区分「稳态不可用」和「启动预热中」，给 LLM 不同的措辞。
+	docSyncDisabled bool
+	docSyncFails    int
 
 	docSyncOnce sync.Once
 )
+
+// 远程索引同步的进程级配置，由 center/router 在启动期（开始收请求之前）用
+// [Center.AIAgent] 初始化，默认与历史行为一致：同步开启 + 官方地址。
+//
+// 刻意不走 ToolDeps：ProcessorAdapter 之类的路径构造 Agent 时根本不注入
+// ToolDeps，谁先调用 search_n9e_docs 谁就会拿零值配置把 docSyncOnce 消费掉——
+// 那样配置里的「关闭同步」永远没机会生效，出网也停不掉。
+var (
+	docSyncCfgMu       sync.RWMutex
+	docSyncCfgDisabled bool
+	docSyncCfgURL      = n9eDocIndexURL
+)
+
+// InitDocIndexSync 配置远程文档索引同步：disabled 为真则彻底不出网，
+// indexURL 为空时用官方地址。须在开始接收请求前调用。
+func InitDocIndexSync(disabled bool, indexURL string) {
+	docSyncCfgMu.Lock()
+	defer docSyncCfgMu.Unlock()
+	docSyncCfgDisabled = disabled
+	docSyncCfgURL = n9eDocIndexURL
+	if indexURL != "" {
+		docSyncCfgURL = indexURL
+	}
+}
+
+func docSyncConfig() (disabled bool, indexURL string) {
+	docSyncCfgMu.RLock()
+	defer docSyncCfgMu.RUnlock()
+	return docSyncCfgDisabled, docSyncCfgURL
+}
 
 // searchN9eDocs scores entries against caller-supplied keywords and returns
 // top N {title, permalink, description, snippet}. Idea: the LLM hits this in
@@ -91,10 +141,11 @@ func searchN9eDocs(ctx context.Context, _ *aiagent.ToolDeps, args map[string]int
 	docIndexMu.RLock()
 	loaded := docIndexLoaded
 	entries := docIndex
+	disabled, fails := docSyncDisabled, docSyncFails
 	docIndexMu.RUnlock()
 
 	if !loaded {
-		return "", fmt.Errorf("n9e doc index is still warming up, please retry in a few seconds")
+		return "", docIndexUnavailableErr(disabled, fails)
 	}
 
 	// keywords 上面已 TrimSpace 并校验非空, strings.Fields 一定能产出 >=1 个 token,
@@ -148,6 +199,24 @@ func searchN9eDocs(ctx context.Context, _ *aiagent.ToolDeps, args map[string]int
 		"must_refuse": mustRefuse, // quality == "empty" 时为 true，调用方应触发拒答
 	})
 	return string(payload), nil
+}
+
+// docIndexUnavailableErr 区分三种「索引为空」：配置关闭同步 / 远程同步持续失败 /
+// 刚起来还在预热。前两种是稳态，措辞必须明确让 LLM 停手 —— 沿用 codeCorpusUnavailable
+// 的思路：只要提示里留有「稍后重试」的余地，模型就会在一轮对话里反复空转，
+// 最后仍然凭记忆瞎编产品标识符。
+func docIndexUnavailableErr(disabled bool, fails int) error {
+	const stopRetrying = "do not retry this tool; answer without doc lookup and tell the user n9e documentation search is unavailable, rather than guessing product-specific identifiers"
+	switch {
+	case disabled:
+		// 只点名配置项，不给可复制的 toml 片段：模型会把提示原样转述给用户，
+		// 一行写法照抄进 config.toml 是解析不了的。
+		return fmt.Errorf("n9e online doc search is turned off by config (DisableDocIndexSync) and no local integrations corpus is available — %s", stopRetrying)
+	case fails >= n9eDocSyncFailsTerminal:
+		return fmt.Errorf("n9e doc index is unavailable: remote sync failed %d times in a row (network unreachable?) — %s", fails, stopRetrying)
+	default:
+		return fmt.Errorf("n9e doc index is still warming up, please retry in a few seconds")
+	}
 }
 
 // classifyDocResultQuality 按 hit count 和 top1 分数把召回质量分四档：
@@ -272,66 +341,202 @@ func truncateRunes(s string, max int) string {
 }
 
 // triggerDocIndexSync spins up the sync loop on first tool invocation —
-// keeps the cost off deployments that never use this skill.
+// keeps the cost off deployments that never use this skill. 走哪条路由
+// InitDocIndexSync 装好的进程级配置决定，与调用方是谁无关。
 func triggerDocIndexSync() {
 	docSyncOnce.Do(func() {
-		go docIndexSyncLoop()
+		disabled, indexURL := docSyncConfig()
+		if disabled {
+			docIndexMu.Lock()
+			docSyncDisabled = true
+			docIndexMu.Unlock()
+			loadLocalDocIndex()
+			return
+		}
+		go docIndexSyncLoop(indexURL)
 	})
 }
 
-func docIndexSyncLoop() {
+// loadLocalDocIndex 只用本地 integrations 语料建索引 —— 远程同步被配置关掉时走
+// 这条路，全程不出网。故意同步执行（不像远程那样起 goroutine）：一次本地目录扫描
+// 而已，换来第一次检索就有确定结果，而不是先回一句「预热中」。
+func loadLocalDocIndex() {
+	entries := loadIntegrationEntries()
+	if len(entries) == 0 {
+		logger.Warningf("n9e doc index: remote sync disabled by config and no local integrations corpus found, search_n9e_docs will report itself unavailable")
+		return
+	}
+	setDocIndex(entries)
+	logger.Infof("n9e doc index: remote sync disabled by config, serving %d local integration entries only", len(entries))
+}
+
+func docIndexSyncLoop(indexURL string) {
+	// 自建镜像常把访问凭据放在 user:password@ 或 ?token= 里，日志只写脱敏地址
+	logURL := redactIndexURL(indexURL)
+	fails, lastErr := 0, ""
 	for {
-		if err := refreshDocIndex(); err != nil {
-			logger.Warningf("sync n9e doc index failed: %v", err)
-			if !isDocIndexLoaded() {
-				time.Sleep(n9eDocSyncRetryDelay)
-				continue
-			}
-		} else {
+		err := refreshDocIndex(indexURL)
+		if err == nil {
+			fails, lastErr = 0, ""
+			setDocSyncFails(0)
 			logger.Infof("sync n9e doc index ok, next refresh in %s", n9eDocSyncInterval)
+			time.Sleep(n9eDocSyncInterval)
+			continue
 		}
-		time.Sleep(n9eDocSyncInterval)
+
+		fails++
+		setDocSyncFails(fails)
+		delay := docSyncRetryDelay(fails)
+		// 断网部署里这条会一直失败下去，所以只有首次失败、以及错误换了一种时才打
+		// WARNING，重复的同类错误降级到 DEBUG。
+		//
+		// 额外卡一个 3 次的上界：dial 错误串里带解析到的 IP（"dial tcp
+		// 211.93.211.234:443: ..."），CDN 轮换 A 记录就会让"错误换了一种"反复成立，
+		// 单靠内容去重挡不住。超过上界后一律降级，靠退避+首轮 WARNING 保留可见性。
+		if msg := err.Error(); msg != lastErr && fails <= 3 {
+			lastErr = msg
+			logger.Warningf("sync n9e doc index from %s failed (attempt %d, retry in %s): %v. "+
+				"Only the AI assistant's online doc search is affected, monitoring itself is not; "+
+				"to stop this sync, %s", logURL, fails, delay, err, n9eDocSyncDisableHint)
+		} else {
+			logger.Debugf("sync n9e doc index from %s failed again (attempt %d, retry in %s): %v", logURL, fails, delay, err)
+		}
+		time.Sleep(delay)
 	}
 }
 
-func refreshDocIndex() error {
+// docSyncRetryDelay 按失败次数翻倍退避，封顶 n9eDocSyncRetryMaxDelay。
+func docSyncRetryDelay(fails int) time.Duration {
+	d := n9eDocSyncRetryDelay
+	for i := 1; i < fails && d < n9eDocSyncRetryMaxDelay; i++ {
+		d *= 2
+	}
+	if d > n9eDocSyncRetryMaxDelay {
+		return n9eDocSyncRetryMaxDelay
+	}
+	return d
+}
+
+// refreshDocIndex 拉远程索引，与本地 integrations 语料合并后整体替换。
+//
+// 远程失败不再直接返回：本地 integrations 语料压根不需要联网，之前一失败就 return
+// 导致断网部署连本地语料都进不了索引，检索工具永远停在「预热中」。现在远程挂了也
+// 先用本地语料把索引建起来（至少能答 categraf 采集配置类问题），错误照常返回给
+// 调用方去退避重试。
+func refreshDocIndex(indexURL string) error {
+	remote, err := fetchRemoteDocIndex(indexURL)
+	if err != nil && isDocIndexLoaded() {
+		// 已经有一份可用索引：这次刷新失败就保留旧的，别用半量结果覆盖它
+		return err
+	}
+
+	entries := append(remote, loadIntegrationEntries()...)
+	if len(entries) == 0 {
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("doc index is empty: no usable entries from %s and no local integrations corpus", redactIndexURL(indexURL))
+	}
+
+	setDocIndex(entries)
+	logger.Infof("n9e doc index loaded: %d entries (remote %d, integrations %d)",
+		len(entries), len(remote), len(entries)-len(remote))
+	return err
+}
+
+// loadIntegrationEntries 包一层错误处理：本地语料读不出来只降级，不影响远程索引。
+func loadIntegrationEntries() []docEntry {
+	entries, err := loadIntegrationsEntries()
+	if err != nil {
+		logger.Warningf("integrations: load failed, doc index continues without local corpus: %v", err)
+		return nil
+	}
+	return entries
+}
+
+func setDocIndex(entries []docEntry) {
+	docIndexMu.Lock()
+	docIndex = entries
+	docIndexLoaded = true
+	docIndexMu.Unlock()
+}
+
+func setDocSyncFails(n int) {
+	docIndexMu.Lock()
+	docSyncFails = n
+	docIndexMu.Unlock()
+}
+
+// redactIndexURL 去掉 userinfo / query / fragment 后再进日志和错误：自建镜像
+// 常把访问凭据放在 https://user:token@host/ 或 ?token= 里，原样打出去等于把
+// 凭据抄进日志系统。解析不了就不猜，直接给占位符，绝不回退成原串。
+func redactIndexURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "(unparsable doc index url)"
+	}
+	u.User = nil
+	u.RawQuery = ""
+	u.Fragment = ""
+	return u.String()
+}
+
+// urlErrCause 剥掉 *url.Error 外壳。它的 Error() 会把请求 URL 整串打出来
+// （net/http 只抹了 password，query 里的 token 照留），日志里只能用脱敏地址。
+func urlErrCause(err error) error {
+	var uerr *url.Error
+	if errors.As(err, &uerr) {
+		return uerr.Err
+	}
+	return err
+}
+
+// fetchRemoteDocIndex 拉取并过滤远程索引，返回可直接入库的条目。
+func fetchRemoteDocIndex(indexURL string) ([]docEntry, error) {
+	safeURL := redactIndexURL(indexURL)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	transport := &http.Transport{
-		DialContext:           safeDialContext,
 		TLSHandshakeTimeout:   5 * time.Second,
 		ResponseHeaderTimeout: 30 * time.Second,
 		DisableKeepAlives:     true,
 	}
+	if indexURL == n9eDocIndexURL {
+		// 官方地址是编译期常量，仍然过一道 SSRF 兜底，挡住 DNS rebinding。
+		// 运维显式配置的 DocIndexURL 不设限：内网镜像正好是私网地址，套上
+		// isPublicIP 会被一律拒掉，功能就废了。这个地址来自 config.toml 而非
+		// 模型输入，不在 SSRF 的威胁模型里。
+		transport.DialContext = safeDialContext
+	}
 	client := &http.Client{Timeout: 60 * time.Second, Transport: transport}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, n9eDocIndexURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, indexURL, nil)
 	if err != nil {
-		return fmt.Errorf("build request: %v", err)
+		return nil, fmt.Errorf("build request for %s: %v", safeURL, urlErrCause(err))
 	}
 	req.Header.Set("User-Agent", "n9e-aiagent-doc-sync/1.0")
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("http fetch: %v", err)
+		return nil, fmt.Errorf("http fetch %s: %v", safeURL, urlErrCause(err))
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("status %d", resp.StatusCode)
+		return nil, fmt.Errorf("status %d", resp.StatusCode)
 	}
 
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, n9eDocIndexMaxBytes+1))
 	if err != nil {
-		return fmt.Errorf("read body: %v", err)
+		return nil, fmt.Errorf("read body: %v", err)
 	}
 	if len(raw) > n9eDocIndexMaxBytes {
-		return fmt.Errorf("index exceeds %d bytes, bump n9eDocIndexMaxBytes", n9eDocIndexMaxBytes)
+		return nil, fmt.Errorf("index exceeds %d bytes, bump n9eDocIndexMaxBytes", n9eDocIndexMaxBytes)
 	}
 
 	var all []docEntry
 	if err := json.Unmarshal(raw, &all); err != nil {
-		return fmt.Errorf("parse json: %v", err)
+		return nil, fmt.Errorf("parse json: %v", err)
 	}
 
 	filtered := make([]docEntry, 0, len(all))
@@ -355,23 +560,9 @@ func refreshDocIndex() error {
 		filtered = append(filtered, e)
 	}
 
-	// 合并 integrations/ 下的配置样例和 README。失败不影响远程索引可用性 —
-	// 走部署里没 integrations/ 目录的场景就只有远程文档撑底。
-	integrationCount := 0
-	if extras, ierr := loadIntegrationsEntries(); ierr == nil && len(extras) > 0 {
-		filtered = append(filtered, extras...)
-		integrationCount = len(extras)
-	} else if ierr != nil {
-		logger.Warningf("integrations: load failed, continuing with remote index only: %v", ierr)
-	}
-
-	docIndexMu.Lock()
-	docIndex = filtered
-	docIndexLoaded = true
-	docIndexMu.Unlock()
-	logger.Infof("n9e doc index loaded: %d entries (raw %d bytes, skipped %d old-version, integrations %d)",
-		len(filtered), len(raw), skippedOld, integrationCount)
-	return nil
+	logger.Infof("n9e doc index fetched from %s: %d entries (raw %d bytes, skipped %d old-version)",
+		safeURL, len(filtered), len(raw), skippedOld)
+	return filtered, nil
 }
 
 // isOldNightingaleDoc 判断 permalink 是否指向旧版本 n9e 文档（V5/V6/V7/V8）。

@@ -171,6 +171,20 @@ I18NHeaderKey = "X-Language"
 PromQuerier = true
 AlertDetail = true
 
+[Center.AIAgent]
+# the AI assistant's doc search (search_n9e_docs) refreshes a documentation
+# index from flashcat.cloud once a day. offline / intranet deployments can
+# never reach it, which shows up as repeated
+# "sync n9e doc index failed: http fetch ..." warnings in the log.
+# set this true to stop the sync (and any outbound request) entirely; doc
+# search then answers from the local integrations/ corpus only.
+# only the AI assistant is affected, monitoring itself is not.
+# DisableDocIndexSync = false
+# self-hosted mirror of the doc index, so doc search keeps working without
+# egress. empty means the official https://flashcat.cloud/index.json;
+# ignored when DisableDocIndexSync is true.
+# DocIndexURL = ""
+
 [EmbeddedTSDB]
 # built-in time series database. When enabled, metrics pushed by categraf are
 # stored locally, no external TSDB (Prometheus/VictoriaMetrics) is needed to

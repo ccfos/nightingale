@@ -152,6 +152,11 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	// models 包级权威值，供 DB 写入(ai_skill_file) 与归档解压(aiagent/skill) 共用。
 	models.MaxFilesPerSkill = rt.Center.AIAgent.MaxFilesPerSkill
 
+	// search_n9e_docs 的远程文档索引同步：开关与地址在这里一次性装进 tools 包。
+	// 必须早于任何请求——同步循环在工具首次被调用时惰性启动且只启动一次，而调用
+	// 方不一定是 http 路由（如事件处理器里的 Agent），装晚了配置就形同虚设。
+	aitools.InitDocIndexSync(rt.Center.AIAgent.DisableDocIndexSync, rt.Center.AIAgent.DocIndexURL)
+
 	// Skill 脚本执行的隔离 sandbox：启动期探测宿主能力、选定引擎（或在能力不足/
 	// 非 Linux 时禁用），全程只构建一次。run_skill_script 工具经 ToolDeps.Sandbox 用它。
 	rt.Sandbox = sandbox.New(rt.Center.Sandbox)

@@ -59,6 +59,19 @@ type AIAgent struct {
 	// upload). Defaults to 1000; a value <= 0 falls back to the default.
 	MaxFilesPerSkill int `toml:"MaxFilesPerSkill"`
 
+	// DisableDocIndexSync turns off the periodic fetch of the remote n9e doc
+	// index (flashcat.cloud/index.json) that backs the search_n9e_docs tool.
+	// Offline / intranet deployments can never reach it, so the sync just piles
+	// up warnings in the log; set this true and the process stops going out at
+	// all — the tool then serves the local integrations/ corpus only (and
+	// reports itself unavailable if that is missing too). Defaults to false.
+	DisableDocIndexSync bool `toml:"DisableDocIndexSync"`
+
+	// DocIndexURL points the doc index sync at a self-hosted mirror instead of
+	// flashcat.cloud — the way to keep doc search working without egress.
+	// Empty means the official URL. Ignored when DisableDocIndexSync is true.
+	DocIndexURL string `toml:"DocIndexURL"`
+
 	// HideBuiltinSkills hides the embedded builtin skills from the skill list
 	// page (GET /ai-skills) and their read-only detail view (negative ids in
 	// GET /ai-skill/:id). It has NO effect on the agent runtime — builtin skills
