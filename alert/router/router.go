@@ -54,6 +54,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	service.POST("/make-event", rt.makeEvent)
 	service.GET("/event-detail/:hash", rt.eventDetail)
 	service.GET("/alert-eval-detail/:id", rt.alertEvalDetail)
+	service.GET("/eval-records", rt.evalRecordsGet)
 	service.GET("/trace-logs/:traceid", rt.traceLogs)
 }
 

@@ -29,6 +29,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/models/migrate"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/evallog"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/i18nx"
@@ -229,6 +230,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 				logger.Errorf("failed to close embedded tsdb: %v", err)
 			}
 		}
+		// 同 alert.Initialize：排空 evallog 的写入队列与文件缓冲，且必须早于 logxClean
+		evallog.Shutdown()
 		logxClean()
 	}, nil
 }
