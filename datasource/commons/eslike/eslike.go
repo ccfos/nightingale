@@ -37,6 +37,8 @@ type Query struct {
 	Index          string     `json:"index" mapstructure:"index"`
 	IndexPatternId int64      `json:"index_pattern" mapstructure:"index_pattern"`
 	Filter         string     `json:"filter" mapstructure:"filter"`
+	FilterLanguage string     `json:"filter_language" mapstructure:"filter_language"`
+	KQLOptions     KQLOptions `json:"kql_options" mapstructure:"kql_options"`
 	Offset         int64      `json:"offset" mapstructure:"offset"`
 	MetricAggr     MetricAggr `json:"value" mapstructure:"value"`
 	GroupBy        []GroupBy  `json:"group_by" mapstructure:"group_by"`
@@ -416,7 +418,10 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	field := param.MetricAggr.Field
 	groupBys := param.GroupBy
 
-	queryString := GetQueryString(param.Filter, q)
+	queryString, err := GetFilterQuery(param, q)
+	if err != nil {
+		return nil, err
+	}
 
 	var aggr elastic.Aggregation
 	switch param.MetricAggr.Func {
@@ -704,7 +709,10 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	q.Lt(time.Unix(end, 0).UnixMilli())
 	q.Format("epoch_millis")
 
-	queryString := GetQueryString(param.Filter, q)
+	queryString, err := GetFilterQuery(param, q)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	if param.Limit <= 0 {
 		param.Limit = 10
