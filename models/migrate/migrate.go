@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
@@ -160,7 +161,10 @@ func isPostgres(db *gorm.DB) bool {
 	return dialect == "postgres"
 }
 
-// notificationRecordIndexes 通知记录查询与清理所需的索引，见 models.NotificationRecord 的说明
+// notificationRecordIndexes 通知记录查询与清理所需的索引，见 models.NotificationRecord 的说明。
+// cols 必须保持「逗号分隔的裸列名」这一形态：它既被拼进 CREATE INDEX，也被
+// notificationRecordIndexColumnsReady 拆开逐列判存在性，写成 `created_at DESC`
+// 或表达式索引会让后者永远判为缺列、索引再也建不出来
 var notificationRecordIndexes = []struct {
 	name string
 	cols string
@@ -176,6 +180,11 @@ var notificationRecordIndexes = []struct {
 // 故 PostgreSQL 必须走 CONCURRENTLY，MySQL 显式要求 INPLACE/LOCK=NONE
 func migrateNotificationRecordIndexes(db *gorm.DB) {
 	for _, idx := range notificationRecordIndexes {
+		if !notificationRecordIndexColumnsReady(db, idx.cols) {
+			logger.Warningf("skip index %s on notification_record: column(%s) not migrated yet, will retry on next start", idx.name, idx.cols)
+			continue
+		}
+
 		var err error
 		switch {
 		case isPostgres(db):
@@ -204,6 +213,22 @@ func migrateNotificationRecordIndexes(db *gorm.DB) {
 			logger.Errorf("failed to create index %s on notification_record, please create it manually with an online DDL tool (gh-ost / pt-online-schema-change): %v", idx.name, err)
 		}
 	}
+}
+
+// notificationRecordIndexColumnsReady 判断建该索引所需的列是否都已就位。
+// 建索引跑在 MigrateTables 的异步 goroutine 里，而给 notification_record 补列的
+// AutoMigrate 在主协程的同步循环里，两者没有先后保证：从 notify rule 特性之前升级、
+// 或用旧版 docker/sqlite.sql 初始化出来的库，此刻可能还没有 notify_rule_id 列，
+// 抢在补列之前建索引会报 Unknown column，只留下一行看起来像真故障的错误日志。
+// 逐个索引门控而不是整体跳过：只依赖 created_at 的那个索引不受缺列影响，照常创建；
+// 缺列的那个等下次启动列已补齐时自然建上
+func notificationRecordIndexColumnsReady(db *gorm.DB, cols string) bool {
+	for _, col := range strings.Split(cols, ",") {
+		if !db.Migrator().HasColumn(&models.NotificationRecord{}, strings.TrimSpace(col)) {
+			return false
+		}
+	}
+	return true
 }
 
 func dropInvalidPgIndex(db *gorm.DB, name string) error {
