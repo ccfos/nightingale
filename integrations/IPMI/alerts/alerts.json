@@ -69,8 +69,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "服务器 CPU 温度超过 90℃，已接近throttling 阈值，CPU 会降频导致性能骤降，持续高温还可能触发保护性关机。",
-            "action": "1) 用 ipmitool sdr type temperature 确认各温度传感器的实际读数与门限；2) 检查机箱风扇是否全部正常转动（ipmitool sdr type fan）、滤网与散热片是否积灰；3) 确认机房空调与冷通道温度是否正常，同机柜其他机器是否同样高温；4) 短期可降低该机负载或迁走关键业务，为停机除尘/换风扇争取时间。"
+            "action": "1) 用 ipmitool sdr type temperature 确认各温度传感器的实际读数与门限；\n2) 检查机箱风扇是否全部正常转动（ipmitool sdr type fan）、滤网与散热片是否积灰；\n3) 确认机房空调与冷通道温度是否正常，同机柜其他机器是否同样高温；\n4) 短期可降低该机负载或迁走关键业务，为停机除尘/换风扇争取时间。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -149,8 +148,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "BMC 报告 CPU 供电电压已越过临界门限（lcr/ucr），供电异常可能导致 CPU 不稳定、随机重启甚至硬件损坏。",
-            "action": "1) 用 ipmitool sdr type voltage 看各电压传感器的读数与上下门限，确认偏离方向；2) 检查电源模块状态（ipmitool sdr type 'Power Supply'），双电源机型确认是否有一路失效；3) 检查供电线路与 PDU 输出是否稳定，同机柜是否有其他机器同时报警；4) 确认为电源模块故障的安排更换，期间把关键业务迁走。"
+            "action": "1) 用 ipmitool sdr type voltage 看各电压传感器的读数与上下门限，确认偏离方向；\n2) 检查电源模块状态（ipmitool sdr type 'Power Supply'），双电源机型确认是否有一路失效；\n3) 检查供电线路与 PDU 输出是否稳定，同机柜是否有其他机器同时报警；\n4) 确认为电源模块故障的安排更换，期间把关键业务迁走。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -229,8 +227,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "BMC 报告有风扇转速越过门限。转速过低通常意味着风扇故障或卡死，会直接导致 CPU 与磁盘过热；转速异常高则说明散热压力已经很大。",
-            "action": "1) 用 ipmitool sdr type fan 看每个风扇的转速与门限，定位是哪一颗异常；2) 转速为 0 或远低于同型号其他风扇的，基本可判定风扇故障，安排更换；3) 全部风扇都在高转速则说明进风温度或负载过高，检查机房温度、滤网积灰与风道遮挡；4) 换风扇前先用 ipmitool sdr type temperature 确认温度是否已经上来，必要时先迁走业务。"
+            "action": "1) 用 ipmitool sdr type fan 看每个风扇的转速与门限，定位是哪一颗异常；\n2) 转速为 0 或远低于同型号其他风扇的，基本可判定风扇故障，安排更换；\n3) 全部风扇都在高转速则说明进风温度或负载过高，检查机房温度、滤网积灰与风道遮挡；\n4) 换风扇前先用 ipmitool sdr type temperature 确认温度是否已经上来，必要时先迁走业务。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -309,8 +306,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "主板/PCH 温度超过 90℃，主板供电与芯片组长期高温会导致不稳定与元件老化，可能引发随机宕机。",
-            "action": "1) 用 ipmitool sdr type temperature 确认是哪个传感器高温及其门限；2) 检查机箱风扇与风道，重点看主板区域是否有线缆遮挡进风；3) 确认机房空调与机柜内温度，以及机器是否被塞在密闭位置；4) 除尘并整理线缆后复测，仍不下降则联系厂商检查散热组件。"
+            "action": "1) 用 ipmitool sdr type temperature 确认是哪个传感器高温及其门限；\n2) 检查机箱风扇与风道，重点看主板区域是否有线缆遮挡进风；\n3) 确认机房空调与机柜内温度，以及机器是否被塞在密闭位置；\n4) 除尘并整理线缆后复测，仍不下降则联系厂商检查散热组件。"
         },
         "extra_config": null,
         "create_at": 0,

@@ -75,9 +75,7 @@
             "alertname=XskyOssUserQuotaHigh"
         ],
         "annotations": {
-            "summary": "该对象存储用户已使用超过配额的 85%，配额用尽后该用户的所有上传请求都会被拒绝（返回 QuotaExceeded）。",
-            "action": "1) 从告警标签取 name（用户名）与 server，在 XSKY 控制台确认该用户的配额与实际用量；2) 与业务方确认增长是否符合预期，异常增长的先排查是否有重复上传或未清理的临时对象；3) 确属正常增长的在控制台调大用户配额；4) 长期建议给该用户的 bucket 配置生命周期规则，自动清理过期对象。",
-            "runbook_url": "https://www.xsky.com/"
+            "action": "1) 从告警标签取 name（用户名）与 server，在 XSKY 控制台确认该用户的配额与实际用量；\n2) 与业务方确认增长是否符合预期，异常增长的先排查是否有重复上传或未清理的临时对象；\n3) 确属正常增长的在控制台调大用户配额；\n4) 长期建议给该用户的 bucket 配置生命周期规则，自动清理过期对象。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=XskyOssBucketQuotaHigh"
         ],
         "annotations": {
-            "summary": "该存储桶已使用超过配额的 85%，配额用尽后写入该桶的对象都会失败，依赖它的业务会出现上传报错。",
-            "action": "1) 从告警标签取 name（桶名）与 user_name，在控制台查看该桶的对象数量与容量趋势；2) 检查桶内是否有大量历史版本或分片上传残留（未完成的 multipart upload 会一直占用空间）；3) 清理残留后仍不足的调大桶配额；4) 给桶配置生命周期规则自动过期历史版本，避免反复触发。",
-            "runbook_url": "https://www.xsky.com/"
+            "action": "1) 从告警标签取 name（桶名）与 user_name，在控制台查看该桶的对象数量与容量趋势；\n2) 检查桶内是否有大量历史版本或分片上传残留（未完成的 multipart upload 会一直占用空间）；\n3) 清理残留后仍不足的调大桶配额；\n4) 给桶配置生命周期规则自动过期历史版本，避免反复触发。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -249,9 +245,7 @@
             "alertname=XskyBlockVolumeUsageHigh"
         ],
         "annotations": {
-            "summary": "该块存储卷已使用超过其容量的 85%，写满后挂载该卷的主机会出现写入失败，文件系统可能进入只读状态。",
-            "action": "1) 从告警标签取 name（卷名）与 server，确认该卷挂载在哪台主机上；2) 登录该主机执行 df -h 与 du -sh /挂载点/* | sort -rh | head 找出占用大头，优先清理日志与临时文件；3) 清理后仍不足的在 XSKY 控制台扩容该卷，再在主机侧执行文件系统扩容（resize2fs 或 xfs_growfs）；4) 精简置备的卷要额外确认后端存储池的实际剩余空间，避免超分后集体写满。",
-            "runbook_url": "https://www.xsky.com/"
+            "action": "1) 从告警标签取 name（卷名）与 server，确认该卷挂载在哪台主机上；\n2) 登录该主机执行 df -h 与 du -sh /挂载点/* | sort -rh | head 找出占用大头，优先清理日志与临时文件；\n3) 清理后仍不足的在 XSKY 控制台扩容该卷，再在主机侧执行文件系统扩容（resize2fs 或 xfs_growfs）；\n4) 精简置备的卷要额外确认后端存储池的实际剩余空间，避免超分后集体写满。"
         },
         "extra_config": null,
         "create_at": 0,

@@ -73,8 +73,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "配置热加载 sidecar 报错，Prometheus/Alertmanager 的新配置可能没有生效——你改的规则或抓取配置实际上还没上线。",
-            "action": "1) kubectl logs \u003cpod\u003e -c config-reloader -n \u003cns\u003e 看具体报错；2) 常见为配置文件语法错误导致 reload 被拒绝；3) 用 promtool check config / amtool check-config 校验配置；4) 修正后确认 reload 成功，并在 Prometheus 的 /config 页核对配置已更新。"
+            "action": "1) kubectl logs \u003cpod\u003e -c config-reloader -n \u003cns\u003e 看具体报错；\n2) 常见为配置文件语法错误导致 reload 被拒绝；\n3) 用 promtool check config / amtool check-config 校验配置；\n4) 修正后确认 reload 成功，并在 Prometheus 的 /config 页核对配置已更新。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -157,9 +156,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus Operator 出现异常，它管理的 Prometheus/Alertmanager 配置可能无法正确同步，监控配置的变更不会生效。",
-            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus-operator/prometheusoperatorlisterrors/"
+            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；\n2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；\n3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；\n4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -242,9 +239,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus Operator 出现异常，它管理的 Prometheus/Alertmanager 配置可能无法正确同步，监控配置的变更不会生效。",
-            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus-operator/prometheusoperatornodelookuperrors/"
+            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；\n2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；\n3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；\n4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -327,9 +322,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus Operator 出现异常，它管理的 Prometheus/Alertmanager 配置可能无法正确同步，监控配置的变更不会生效。",
-            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus-operator/prometheusoperatornotready/"
+            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；\n2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；\n3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；\n4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -412,9 +405,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus Operator 出现异常，它管理的 Prometheus/Alertmanager 配置可能无法正确同步，监控配置的变更不会生效。",
-            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus-operator/prometheusoperatorreconcileerrors/"
+            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；\n2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；\n3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；\n4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -497,9 +488,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus Operator 出现异常，它管理的 Prometheus/Alertmanager 配置可能无法正确同步，监控配置的变更不会生效。",
-            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus-operator/prometheusoperatorrejectedresources/"
+            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；\n2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；\n3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；\n4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -582,9 +571,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus Operator 出现异常，它管理的 Prometheus/Alertmanager 配置可能无法正确同步，监控配置的变更不会生效。",
-            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus-operator/prometheusoperatorsyncfailed/"
+            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；\n2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；\n3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；\n4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -667,9 +654,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus Operator 出现异常，它管理的 Prometheus/Alertmanager 配置可能无法正确同步，监控配置的变更不会生效。",
-            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus-operator/prometheusoperatorwatcherrors/"
+            "action": "1) kubectl logs -n \u003cns\u003e deploy/prometheus-operator 看具体报错；\n2) 权限类报错核对 Operator 的 ClusterRole 是否覆盖了所需资源；\n3) Reconcile/Sync 失败的检查对应的 CRD 对象是否配置有误（kubectl describe servicemonitor/prometheusrule）；\n4) 被拒绝的资源用 kubectl describe 看拒绝原因，通常是字段校验不通过。"
         },
         "extra_config": null,
         "create_at": 0,

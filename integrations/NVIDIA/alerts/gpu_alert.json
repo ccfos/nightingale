@@ -28,9 +28,7 @@
         "callbacks": [],
         "append_tags": [],
         "annotations": {
-            "summary": "GPU 上报了严重级别的 XID 错误码（含显存 ECC 不可纠正、GPU 掉卡、Xid 79 GPU has fallen off the bus 等），跑在该卡上的训练或推理任务通常已经失败或即将失败。",
-            "action": "1) 用 nvidia-smi -q -d PAGE_RETIREMENT,ECC 与 dmesg -T | grep -i xid 确认具体 XID 码和涉及的卡；2) 对照 NVIDIA XID 文档判断是软件（驱动/CUDA）还是硬件故障；3) Xid 48/63/64（ECC）与 79（掉卡）基本可判定硬件问题，先把该卡从调度池摘除（K8s 上给节点打 taint）；4) 软件类的升级驱动/CUDA 后复测，硬件类的走返修流程。",
-            "runbook_url": "https://docs.nvidia.com/deploy/xid-errors/index.html"
+            "action": "1) 用 nvidia-smi -q -d PAGE_RETIREMENT,ECC 与 dmesg -T | grep -i xid 确认具体 XID 码和涉及的卡；\n2) 对照 NVIDIA XID 文档判断是软件（驱动/CUDA）还是硬件故障；\n3) Xid 48/63/64（ECC）与 79（掉卡）基本可判定硬件问题，先把该卡从调度池摘除（K8s 上给节点打 taint）；\n4) 软件类的升级驱动/CUDA 后复测，硬件类的走返修流程。"
         },
         "uuid": 1751791234000037,
         "cur_event_count": 0,
@@ -66,9 +64,7 @@
         "callbacks": [],
         "append_tags": [],
         "annotations": {
-            "summary": "GPU 温度超过 85℃，已接近降频阈值，算力会明显下降，长期高温还会缩短硬件寿命。",
-            "action": "1) 用 nvidia-smi -q -d TEMPERATURE,PERFORMANCE 确认当前温度与是否已触发 SW/HW Slowdown；2) 检查机箱风道、风扇转速与滤网积灰，确认机房进风温度正常；3) 多卡机型确认是否所有卡都高温——单卡高温多为散热器接触或风扇问题；4) 短期可用 nvidia-smi -pl 降低功耗上限或降低任务并发，为停机除尘争取时间。",
-            "runbook_url": "https://docs.nvidia.com/datacenter/dcgm/latest/user-guide/index.html"
+            "action": "1) 用 nvidia-smi -q -d TEMPERATURE,PERFORMANCE 确认当前温度与是否已触发 SW/HW Slowdown；\n2) 检查机箱风道、风扇转速与滤网积灰，确认机房进风温度正常；\n3) 多卡机型确认是否所有卡都高温——单卡高温多为散热器接触或风扇问题；\n4) 短期可用 nvidia-smi -pl 降低功耗上限或降低任务并发，为停机除尘争取时间。"
         },
         "uuid": 1751791234000038,
         "cur_event_count": 0,

@@ -75,9 +75,7 @@
             "alertname=NginxDown"
         ],
         "annotations": {
-            "summary": "采集端已连续 1 分钟拉不到 Nginx 的 stub_status，Nginx 进程可能已退出或状态接口不可访问，经由该 Nginx 的流量可能已经中断。",
-            "action": "1) 登录主机执行 systemctl status nginx 或 ps -ef | grep nginx，确认 master 进程是否存活；2) 进程存活则执行 curl -s http://127.0.0.1/nginx_status 手工验证 stub_status 是否被 allow/deny 或防火墙挡住；3) 进程不在则先执行 nginx -t 校验配置再 systemctl start nginx，并查看 error_log 尾部定位退出原因；4) 确认上游 VIP 或负载均衡已把该节点摘除，避免继续打流量。",
-            "runbook_url": "https://nginx.org/en/docs/http/ngx_http_stub_status_module.html"
+            "action": "1) 登录主机执行 systemctl status nginx 或 ps -ef | grep nginx，确认 master 进程是否存活；\n2) 进程存活则执行 curl -s http://127.0.0.1/nginx_status 手工验证 stub_status 是否被 allow/deny 或防火墙挡住；\n3) 进程不在则先执行 nginx -t 校验配置再 systemctl start nginx，并查看 error_log 尾部定位退出原因；\n4) 确认上游 VIP 或负载均衡已把该节点摘除，避免继续打流量。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=NginxDroppedConnections"
         ],
         "annotations": {
-            "summary": "Nginx 接受了连接却没能处理完（accepts 与 handled 出现差值），通常是 worker_connections 或文件句柄触顶，部分客户端连接会被直接断开。",
-            "action": "1) 查看 error_log 是否有 worker_connections are not enough 或 too many open files；2) 按 worker_processes × worker_connections 估算连接上限，对照 nginx_active 当前水位后调大 worker_connections；3) 同步调大 worker_rlimit_nofile 与 systemd 的 LimitNOFILE；4) 执行 nginx -s reload 生效后确认 accepts 与 handled 的差值不再增长。",
-            "runbook_url": "https://nginx.org/en/docs/ngx_core_module.html"
+            "action": "1) 查看 error_log 是否有 worker_connections are not enough 或 too many open files；\n2) 按 worker_processes × worker_connections 估算连接上限，对照 nginx_active 当前水位后调大 worker_connections；\n3) 同步调大 worker_rlimit_nofile 与 systemd 的 LimitNOFILE；\n4) 执行 nginx -s reload 生效后确认 accepts 与 handled 的差值不再增长。"
         },
         "extra_config": null,
         "create_at": 0,

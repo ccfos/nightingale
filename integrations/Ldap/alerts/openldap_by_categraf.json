@@ -75,9 +75,7 @@
             "alertname=OpenldapConnectionsHigh"
         ],
         "annotations": {
-            "summary": "当前连接数已占到 slapd 可用文件描述符上限的 80%，打满后新的 LDAP 绑定请求会直接失败，依赖 LDAP 做认证的系统会集体登录失败。",
-            "action": "1) 执行 ldapsearch -x -D \u003cbind_dn\u003e -w \u003cpw\u003e -b 'cn=Connections,cn=Monitor' 查看当前连接明细，定位连接数最多的客户端 IP；2) 大量连接来自同一应用，说明它没有复用连接或没有关闭连接，推动应用侧改用连接池；3) 应急可调大 slapd 的 ulimit -n（systemd 下改 LimitNOFILE）并重启；4) 同步检查 olcIdleTimeout 是否配置，未配置时空闲连接会一直占用描述符。",
-            "runbook_url": "https://www.openldap.org/doc/admin24/monitoringslapd.html"
+            "action": "1) 执行 ldapsearch -x -D \u003cbind_dn\u003e -w \u003cpw\u003e -b 'cn=Connections,cn=Monitor' 查看当前连接明细，定位连接数最多的客户端 IP；\n2) 大量连接来自同一应用，说明它没有复用连接或没有关闭连接，推动应用侧改用连接池；\n3) 应急可调大 slapd 的 ulimit -n（systemd 下改 LimitNOFILE）并重启；\n4) 同步检查 olcIdleTimeout 是否配置，未配置时空闲连接会一直占用描述符。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=OpenldapPendingThreads"
         ],
         "annotations": {
-            "summary": "slapd 线程池中有请求在排队等待线程，说明工作线程已全部占满，LDAP 查询延迟会显著上升。",
-            "action": "1) 执行 ldapsearch -x -D \u003cbind_dn\u003e -w \u003cpw\u003e -b 'cn=Operations,cn=Monitor' 看哪类操作（Search/Bind/Modify）量最大；2) Search 占大头时检查慢查询：在 slapd.conf 打开 loglevel stats 后从日志里找 SRCH 耗时高的过滤器，给对应属性建索引（olcDbIndex）；3) 索引补完执行 slapindex 重建（需先停 slapd）；4) 确认不是索引问题则调大 olcThreads（默认 16），并评估 CPU 核数是否成为瓶颈。",
-            "runbook_url": "https://www.openldap.org/doc/admin24/monitoringslapd.html"
+            "action": "1) 执行 ldapsearch -x -D \u003cbind_dn\u003e -w \u003cpw\u003e -b 'cn=Operations,cn=Monitor' 看哪类操作（Search/Bind/Modify）量最大；\n2) Search 占大头时检查慢查询：在 slapd.conf 打开 loglevel stats 后从日志里找 SRCH 耗时高的过滤器，给对应属性建索引（olcDbIndex）；\n3) 索引补完执行 slapindex 重建（需先停 slapd）；\n4) 确认不是索引问题则调大 olcThreads（默认 16），并评估 CPU 核数是否成为瓶颈。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -249,9 +245,7 @@
             "alertname=OpenldapThreadSaturation"
         ],
         "annotations": {
-            "summary": "活跃工作线程已占到线程池上限的 90%，再涨请求就会开始排队，属于线程池打满的前兆。",
-            "action": "1) 执行 ldapsearch -x -D \u003cbind_dn\u003e -w \u003cpw\u003e -b 'cn=Threads,cn=Monitor' 确认 Active/Max 的实时值；2) 打开 stats 日志定位慢操作，重点看是否存在无索引的 substring 过滤（如 (cn=*abc*)）导致全库扫描；3) 给高频过滤属性补 olcDbIndex 并 slapindex 重建，这是最有效的降负载手段；4) 索引已完备仍饱和的，调大 olcThreads 或增加只读副本（syncrepl consumer）分流查询。",
-            "runbook_url": "https://www.openldap.org/doc/admin24/monitoringslapd.html"
+            "action": "1) 执行 ldapsearch -x -D \u003cbind_dn\u003e -w \u003cpw\u003e -b 'cn=Threads,cn=Monitor' 确认 Active/Max 的实时值；\n2) 打开 stats 日志定位慢操作，重点看是否存在无索引的 substring 过滤（如 (cn=*abc*)）导致全库扫描；\n3) 给高频过滤属性补 olcDbIndex 并 slapindex 重建，这是最有效的降负载手段；\n4) 索引已完备仍饱和的，调大 olcThreads 或增加只读副本（syncrepl consumer）分流查询。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -336,9 +330,7 @@
             "alertname=OpenldapOperationsLagging"
         ],
         "annotations": {
-            "summary": "已发起但未完成的 LDAP 操作累计超过 100 个，说明有操作长时间阻塞未返回，客户端侧会表现为请求挂起。",
-            "action": "1) 执行 ldapsearch -x -D \u003cbind_dn\u003e -w \u003cpw\u003e -b 'cn=Operations,cn=Monitor' 对比各类操作的 Initiated 与 Completed，定位卡住的操作类型；2) 卡在 Modify/Add 的检查后端数据库锁与磁盘 IO（iostat -x 1），mdb 后端写放大时容易阻塞；3) 卡在 Search 的按慢查询思路补索引；4) 若是复制（syncrepl）拖住主库，检查各 consumer 的连通性与延迟，必要时先摘掉异常 consumer。",
-            "runbook_url": "https://www.openldap.org/doc/admin24/monitoringslapd.html"
+            "action": "1) 执行 ldapsearch -x -D \u003cbind_dn\u003e -w \u003cpw\u003e -b 'cn=Operations,cn=Monitor' 对比各类操作的 Initiated 与 Completed，定位卡住的操作类型；\n2) 卡在 Modify/Add 的检查后端数据库锁与磁盘 IO（iostat -x 1），mdb 后端写放大时容易阻塞；\n3) 卡在 Search 的按慢查询思路补索引；\n4) 若是复制（syncrepl）拖住主库，检查各 consumer 的连通性与延迟，必要时先摘掉异常 consumer。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -423,9 +415,7 @@
             "alertname=OpenldapRecentlyRestarted"
         ],
         "annotations": {
-            "summary": "slapd 运行时间不足 5 分钟，说明刚重启过；若不是计划内操作，可能是崩溃、被 OOM Killer 杀掉或配置重载失败。",
-            "action": "1) 先确认是否是计划内变更；2) 非计划则执行 journalctl -u slapd --since '-30min' 定位退出原因；3) 执行 dmesg -T | grep -i 'killed process' 确认是否被 OOM 杀掉，mdb 后端的 olcDbMaxSize 配置过大是常见诱因；4) 重启后执行 ldapsearch -x -b '' -s base namingContexts 验证服务已正常提供，并确认副本同步已追平。",
-            "runbook_url": "https://www.openldap.org/doc/admin24/monitoringslapd.html"
+            "action": "1) 先确认是否是计划内变更；\n2) 非计划则执行 journalctl -u slapd --since '-30min' 定位退出原因；\n3) 执行 dmesg -T | grep -i 'killed process' 确认是否被 OOM 杀掉，mdb 后端的 olcDbMaxSize 配置过大是常见诱因；\n4) 重启后执行 ldapsearch -x -b '' -s base namingContexts 验证服务已正常提供，并确认副本同步已追平。"
         },
         "extra_config": null,
         "create_at": 0,

@@ -45,9 +45,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 四层入带宽使用率超过 80%，接近规格上限，触顶后新流量会被丢弃。",
-            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；2) 确认是正常业务增长还是异常流量（爬虫、攻击）；3) 正常增长的在控制台调整 ELB 规格或带宽上限；4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -107,9 +105,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 四层出带宽使用率超过 80%，接近规格上限，触顶后响应会被丢弃。",
-            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；2) 确认是正常业务增长还是异常流量（爬虫、攻击）；3) 正常增长的在控制台调整 ELB 规格或带宽上限；4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -169,9 +165,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 四层并发连接数使用率超过 80%，触顶后新连接会被直接拒绝。",
-            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；3) 后端正常的按业务增长在控制台升级 ELB 规格；4) 检查客户端是否未复用连接。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；\n2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；\n3) 后端正常的按业务增长在控制台升级 ELB 规格；\n4) 检查客户端是否未复用连接。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -231,9 +225,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 四层新建连接速率使用率超过 80%，触顶后新建连接会失败，表现为客户端连接超时。",
-            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；3) 后端正常的按业务增长在控制台升级 ELB 规格；4) 检查客户端是否未复用连接。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；\n2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；\n3) 后端正常的按业务增长在控制台升级 ELB 规格；\n4) 检查客户端是否未复用连接。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -293,9 +285,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 七层入带宽使用率超过 80%，接近规格上限。",
-            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；2) 确认是正常业务增长还是异常流量（爬虫、攻击）；3) 正常增长的在控制台调整 ELB 规格或带宽上限；4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -355,9 +345,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 七层出带宽使用率超过 80%，接近规格上限。",
-            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；2) 确认是正常业务增长还是异常流量（爬虫、攻击）；3) 正常增长的在控制台调整 ELB 规格或带宽上限；4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -417,9 +405,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 七层并发连接数使用率超过 80%，触顶后新连接会被拒绝。",
-            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；3) 后端正常的按业务增长在控制台升级 ELB 规格；4) 检查客户端是否未复用连接。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；\n2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；\n3) 后端正常的按业务增长在控制台升级 ELB 规格；\n4) 检查客户端是否未复用连接。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -479,9 +465,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 七层新建连接速率使用率超过 80%，触顶后新建连接会失败。",
-            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；3) 后端正常的按业务增长在控制台升级 ELB 规格；4) 检查客户端是否未复用连接。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；\n2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；\n3) 后端正常的按业务增长在控制台升级 ELB 规格；\n4) 检查客户端是否未复用连接。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -541,9 +525,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 后端有健康检查失败的主机，该主机已被摘出转发，剩余节点承担其流量，后端接连失败会导致服务整体不可用。",
-            "action": "1) 在控制台的后端服务器组里定位健康检查失败的实例；2) 登录该实例确认应用进程与端口存活；3) 应用正常则核对健康检查配置（路径、端口、超时、间隔）是否与实际相符；4) 确认后端组剩余健康实例数是否足够承载流量，不足时立即扩容。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在控制台的后端服务器组里定位健康检查失败的实例；\n2) 登录该实例确认应用进程与端口存活；\n3) 应用正常则核对健康检查配置（路径、端口、超时、间隔）是否与实际相符；\n4) 确认后端组剩余健康实例数是否足够承载流量，不足时立即扩容。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -603,9 +585,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "ELB 七层 QPS 使用率超过 80%，接近规格上限，触顶后请求会被拒绝。",
-            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；2) 确认是正常业务增长还是异常流量（爬虫、攻击）；3) 正常增长的在控制台调整 ELB 规格或带宽上限；4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
         },
         "extra_config": null,
         "create_at": 0,
