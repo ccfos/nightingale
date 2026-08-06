@@ -123,11 +123,13 @@ func NotifiedEventIdsScope(ctx *ctx.Context, notifyRuleID, stime, etime int64) f
 // 先取主键再按主键删：DELETE ... LIMIT 只有 MySQL 支持，PostgreSQL 上会语法报错，
 // 而 DELETE 里对自身表做子查询又过不了 MySQL 的限制，取 id 再删是三种数据库都成立的写法
 func NotificationRecordDeleteBefore(ctx *ctx.Context, before int64, batchSize int) (int64, error) {
-	// 按 created_at 排序而不是按 id：这样必定走 idx_nr_created_at 的覆盖索引区间扫描，
-	// 不依赖「created_at 与自增 id 同序」这一假设（回填、时钟回拨都会打破它）
+	// 不加 ORDER BY：删哪一批都等价，而排序会让「idx_nr_created_at 没建出来」这一
+	// 本就允许发生的状态（在线 DDL 不被支持时只记日志）代价急剧放大——带排序必须把
+	// 所有满足条件的行都扫一遍做 top-N，每批都是一次全表扫描 + filesort；不带排序则
+	// 攒够 batchSize 行即停。有索引时优化器照样能用它做范围扫描
 	var ids []int64
 	err := DB(ctx).Model(&NotificationRecord{}).Where("created_at < ?", before).
-		Order("created_at").Limit(batchSize).Pluck("id", &ids).Error
+		Limit(batchSize).Pluck("id", &ids).Error
 	if err != nil {
 		return 0, err
 	}
