@@ -11,7 +11,28 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
+	"gopkg.in/yaml.v2"
 )
+
+// verifyCollectContent 校验采集模板内容。绝大多数 categraf 采集插件配置是 TOML，
+// 因此先按 TOML 解析；失败再尝试 YAML（prometheus-agent 等外挂配置为 YAML）。
+// 两者都无法解析时返回 TOML 的报错——历史模板默认是 TOML，沿用 TOML 错误更贴近用户预期。
+// 这里的宽松程度与 n9e-plus 采集配置的校验保持一致，避免模板能存、
+// 由模板生成的采集配置却存不下。
+func verifyCollectContent(content string) error {
+	var tomlMap map[string]interface{}
+	tomlErr := toml.Unmarshal([]byte(content), &tomlMap)
+	if tomlErr == nil {
+		return nil
+	}
+
+	var yamlMap map[string]interface{}
+	if yamlErr := yaml.Unmarshal([]byte(content), &yamlMap); yamlErr == nil && len(yamlMap) > 0 {
+		return nil
+	}
+
+	return tomlErr
+}
 
 type Board struct {
 	Name    string      `json:"name"`
@@ -176,8 +197,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 		} else {
 			if lst[i].Type == "collect" {
-				c := make(map[string]interface{})
-				if _, err := toml.Decode(lst[i].Content, &c); err != nil {
+				if err := verifyCollectContent(lst[i].Content); err != nil {
 					reterr[lst[i].Name] = err.Error()
 					continue
 				}
@@ -282,8 +302,7 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 		req.Tags = dashboard.Tags
 		req.Note = dashboard.Note
 	} else if req.Type == "collect" {
-		c := make(map[string]interface{})
-		if _, err := toml.Decode(req.Content, &c); err != nil {
+		if err := verifyCollectContent(req.Content); err != nil {
 			bombErr(http.StatusBadRequest, err)
 		}
 	}
