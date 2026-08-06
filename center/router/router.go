@@ -152,6 +152,12 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	// models 包级权威值，供 DB 写入(ai_skill_file) 与归档解压(aiagent/skill) 共用。
 	models.MaxFilesPerSkill = rt.Center.AIAgent.MaxFilesPerSkill
 
+	// search_n9e_docs 远程索引同步配置的兜底装载。首选位置在 center.Initialize
+	// （早于 alert.Start 等后台 goroutine），但 n9e-plus 这类下游是直接 New 出
+	// Router、不走 center.Initialize 的，漏装的话同步永远起不来。重复调用无害：
+	// 未初始化分支不消费 docSyncOnce，所以这里不会把已经按配置停掉的同步复活。
+	aitools.InitDocIndexSync(rt.Center.AIAgent.DisableDocIndexSync, rt.Center.AIAgent.DocIndexURL)
+
 	// Skill 脚本执行的隔离 sandbox：启动期探测宿主能力、选定引擎（或在能力不足/
 	// 非 Linux 时禁用），全程只构建一次。run_skill_script 工具经 ToolDeps.Sandbox 用它。
 	rt.Sandbox = sandbox.New(rt.Center.Sandbox)

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -307,18 +308,74 @@ func TestDocSyncRetryDelay(t *testing.T) {
 
 func TestInitDocIndexSync(t *testing.T) {
 	resetDocSyncConfig(t, false, "")
-	if disabled, u := docSyncConfig(); disabled || u != n9eDocIndexURL {
-		t.Errorf("defaults should be sync-on + official URL, got disabled=%v url=%s", disabled, u)
+	initialized, disabled, u := docSyncConfig()
+	if !initialized || disabled || u != n9eDocIndexURL {
+		t.Errorf("after init: want sync-on + official URL, got initialized=%v disabled=%v url=%s", initialized, disabled, u)
 	}
 	mirror := "http://10.1.2.3/index.json"
 	InitDocIndexSync(false, mirror)
-	if _, u := docSyncConfig(); u != mirror {
+	if _, _, u := docSyncConfig(); u != mirror {
 		t.Errorf("configured mirror should win, got %s", u)
 	}
 	// 清空地址要退回官方地址，而不是留着上一次的镜像
 	InitDocIndexSync(true, "")
-	if disabled, u := docSyncConfig(); !disabled || u != n9eDocIndexURL {
+	if _, disabled, u := docSyncConfig(); !disabled || u != n9eDocIndexURL {
 		t.Errorf("empty URL should fall back to the official one, got disabled=%v url=%s", disabled, u)
+	}
+}
+
+// 镜像地址写错时不能静默回退到官方地址——运维配镜像本就是为了不出网。
+func TestInitDocIndexSyncRejectsInvalidURL(t *testing.T) {
+	resetDocSyncConfig(t, false, "https:user:s3cret@mirror.intra/index")
+	_, disabled, u := docSyncConfig()
+	if !disabled {
+		t.Error("an unusable DocIndexURL must disable the sync, not fall back to the public index")
+	}
+	if u != n9eDocIndexURL {
+		t.Errorf("the malformed URL must not be kept as the fetch target, got %s", u)
+	}
+}
+
+// 配置装载之前（center.Initialize 早期之前，或嵌入方还没 New 出 Router）就有
+// 调用打进来时：不许出网，更不许消费 docSyncOnce —— 否则之后配置里的
+// disabled=true 就再也停不掉那个已经起飞的同步循环。
+func TestTriggerDocIndexSyncBeforeInitDoesNotGoOut(t *testing.T) {
+	resetDocIndexState(t)
+	resetDocSyncOnce(t)
+	withIntegrationsFixture(t)
+
+	var hits int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt64(&hits, 1)
+		w.Write([]byte("[]"))
+	}))
+	defer srv.Close()
+
+	// 未初始化态：地址替换成本地服务器，一旦实现抢跑，计数器立刻加一
+	docSyncCfgMu.Lock()
+	docSyncCfgInitialized, docSyncCfgDisabled, docSyncCfgURL = false, false, srv.URL
+	docSyncCfgMu.Unlock()
+	t.Cleanup(func() { InitDocIndexSync(false, "") })
+
+	// 告警流水线里的 ai.agent 抢在配置装载前调用工具（这条路不带 ToolDeps）
+	if _, err := searchN9eDocs(context.Background(), nil, map[string]interface{}{"keywords": "mysql"}, nil); err == nil {
+		t.Error("the index cannot be ready before the config is loaded")
+	}
+	consumed := true
+	docSyncOnce.Do(func() { consumed = false })
+	if consumed {
+		t.Fatal("docSyncOnce must not be consumed before InitDocIndexSync")
+	}
+	docSyncOnce = sync.Once{} // 上面的探测用掉了一次，复位继续演下半场
+
+	// 配置装载：关闭同步。此后即便再有调用，也只能走本地语料。
+	InitDocIndexSync(true, "")
+	if _, err := searchN9eDocs(context.Background(), nil, map[string]interface{}{"keywords": "mysql 配置"}, nil); err != nil {
+		t.Fatalf("local corpus should serve the search: %v", err)
+	}
+	time.Sleep(50 * time.Millisecond) // 给"万一起了 goroutine"留出发请求的时间
+	if n := atomic.LoadInt64(&hits); n != 0 {
+		t.Errorf("no remote request may be made across the whole flow, got %d", n)
 	}
 }
 
@@ -368,11 +425,17 @@ func TestTriggerDocIndexSyncDisabledUsesLocalCorpus(t *testing.T) {
 
 // 镜像地址里的凭据（userinfo / query token）不能进日志或错误。
 func TestRedactIndexURL(t *testing.T) {
+	const placeholder = "(invalid doc index url)"
 	cases := []struct{ raw, want string }{
 		{"https://flashcat.cloud/index.json", "https://flashcat.cloud/index.json"},
 		{"https://user:s3cret@mirror.intra/index.json", "https://mirror.intra/index.json"},
 		{"https://mirror.intra/index.json?token=abc#frag", "https://mirror.intra/index.json"},
-		{"://bad url", "(unparsable doc index url)"},
+		{"://bad url", placeholder},
+		// 漏写双斜杠：整串落进 Opaque，凭据不在 User 里，抹不掉，只能整条丢弃
+		{"https:user:s3cret@mirror.intra/index?token=abc", placeholder},
+		{"//mirror.intra/index.json", placeholder}, // 无 scheme
+		{"mirror.intra/index.json", placeholder},   // 相对地址，无 host
+		{"ftp://mirror.intra/index.json", placeholder},
 	}
 	for _, c := range cases {
 		if got := redactIndexURL(c.raw); got != c.want {
