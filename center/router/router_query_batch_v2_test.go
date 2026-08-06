@@ -91,7 +91,7 @@ func TestQueryBatchV2ElasticsearchKQLEndToEnd(t *testing.T) {
 	engine.POST("/api/n9e/v2/query-batch", func(c *gin.Context) {
 		QueryBatchV2(c, true, nil, nil)
 	})
-	body := []byte(`{"from":1710000000,"to":1710003600,"queries":[{"kind":"query","ref_id":"ES","datasource":{"cate":"elasticsearch","id":987654322},"result_type":"logs","query":{"index_type":"index","index":"logs-*","date_field":"@timestamp","limit":10,"filter_language":"kql","filter":"message: *timeout*"}}]}`)
+	body := []byte(`{"from":1710000000,"to":1710003600,"queries":[{"kind":"query","ref_id":"ES","datasource":{"cate":"elasticsearch","id":987654322},"result_type":"logs","query":{"index_type":"index","index":"logs-*","date_field":"@timestamp","limit":10,"filter_language":"kql","filter":"message: timeout*"}}]}`)
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/api/n9e/v2/query-batch", bytes.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
@@ -114,9 +114,10 @@ func TestQueryBatchV2ElasticsearchKQLEndToEnd(t *testing.T) {
 	if len(filters) != 2 {
 		t.Fatalf("ES filters = %#v", filters)
 	}
-	wildcard := filters[1].(map[string]interface{})["wildcard"].(map[string]interface{})["message"].(map[string]interface{})
-	if wildcard["value"] != "*timeout*" {
-		t.Fatalf("KQL was not compiled to wildcard DSL: %#v", receivedQuery)
+	should := filters[1].(map[string]interface{})["bool"].(map[string]interface{})["should"].([]interface{})
+	queryString := should[0].(map[string]interface{})["query_string"].(map[string]interface{})
+	if queryString["query"] != "timeout*" {
+		t.Fatalf("KQL was not compiled to frontend-compatible query_string DSL: %#v", receivedQuery)
 	}
 }
 
@@ -559,6 +560,54 @@ func TestQueryBatchV2ExpressionValidationDoesNotExecute(t *testing.T) {
 	}
 	if results[2].Error == nil || results[2].Error.Code != "EXPRESSION_INVALID" {
 		t.Fatalf("invalid syntax result = %#v", results[2])
+	}
+}
+
+func TestQueryBatchV2ExpressionRuntimeError(t *testing.T) {
+	scalar := float64(2)
+	values := map[string]queryBatchV2Value{
+		"A": {
+			ResultType: resultTypeTimeSeries,
+			Series: []QueryBatchV2Series{{
+				Labels:  map[string]string{},
+				Samples: []QueryBatchV2Sample{{Timestamp: 10, Value: 4}},
+			}},
+		},
+		"S": {ResultType: resultTypeTimeSeries, Scalar: &scalar},
+	}
+	req := QueryBatchV2Request{To: 20, Queries: []QueryBatchV2Query{
+		{Kind: queryKindDatasource, RefID: "A"},
+		{Kind: queryKindDatasource, RefID: "S"},
+		{Kind: queryKindExpression, RefID: "B", Expression: "nosuchfunc($A)"},
+		{Kind: queryKindExpression, RefID: "C", Expression: "nosuchfunc($S)"},
+	}}
+	results := []QueryBatchV2Result{
+		queryBatchV2Success("A", values["A"]),
+		queryBatchV2Success("S", values["S"]),
+		{}, {},
+	}
+
+	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	for _, index := range []int{2, 3} {
+		if results[index].Error == nil || results[index].Error.Code != "EXPRESSION_EVALUATION_ERROR" {
+			t.Fatalf("runtime error result[%d] = %#v", index, results[index])
+		}
+	}
+}
+
+func TestQueryBatchV2ExpressionRuntimeErrorWithEmptySeries(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": {ResultType: resultTypeTimeSeries, Series: []QueryBatchV2Series{}},
+	}
+	req := QueryBatchV2Request{Queries: []QueryBatchV2Query{
+		{Kind: queryKindDatasource, RefID: "A"},
+		{Kind: queryKindExpression, RefID: "B", Expression: "nosuchfunc($A)"},
+	}}
+	results := []QueryBatchV2Result{queryBatchV2Success("A", values["A"]), {}}
+
+	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	if results[1].Error == nil || results[1].Error.Code != "EXPRESSION_EVALUATION_ERROR" {
+		t.Fatalf("empty-series runtime error result = %#v", results[1])
 	}
 }
 

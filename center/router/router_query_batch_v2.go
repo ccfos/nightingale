@@ -24,6 +24,7 @@ import (
 	n9eprom "github.com/ccfos/nightingale/v6/prom"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
+	"github.com/toolkits/pkg/logger"
 )
 
 // Keep per-request fan-out bounded: datasource clients may target the same
@@ -909,7 +910,10 @@ func queryBatchV2EvaluateMath(
 			input["$"+refID] = value
 		}
 		number, err := parser.MathCalc(expression, input)
-		if err == nil && queryBatchV2Finite(number) {
+		if err != nil {
+			return result, fmt.Errorf("expression evaluation failed: %s", err.Error())
+		}
+		if queryBatchV2Finite(number) {
 			result.Scalar = &number
 			result.Series = append(result.Series, QueryBatchV2Series{
 				Labels:  map[string]string{},
@@ -925,6 +929,12 @@ func queryBatchV2EvaluateMath(
 	}
 	sort.Strings(groupKeys)
 	evaluationPoints := 0
+	evaluationAttempts := 0
+	// A failure that depends on the sample values must not discard the points
+	// that did evaluate, so the error is only reported when nothing evaluated
+	// at all, which is what a broken expression such as an unknown function
+	// produces.
+	var evaluationError error
 	for _, groupKey := range groupKeys {
 		group := groups[groupKey]
 		timestamps := make(map[int64]struct{})
@@ -979,8 +989,15 @@ func queryBatchV2EvaluateMath(
 			if !matched {
 				continue
 			}
+			evaluationAttempts++
 			number, err := parser.MathCalc(expression, input)
-			if err != nil || !queryBatchV2Finite(number) {
+			if err != nil {
+				if evaluationError == nil {
+					evaluationError = err
+				}
+				continue
+			}
+			if !queryBatchV2Finite(number) {
 				continue
 			}
 			output.Samples = append(output.Samples, QueryBatchV2Sample{Timestamp: timestamp, Value: number})
@@ -988,6 +1005,30 @@ func queryBatchV2EvaluateMath(
 		if len(output.Samples) > 0 {
 			result.Series = append(result.Series, output)
 		}
+	}
+	// Empty or unjoinable series otherwise never reach MathCalc, allowing an
+	// invalid runtime expression (for example an unknown function) to look like
+	// a successful empty result. Probe once with the same float-shaped inputs
+	// used for series points; this is validation only and never creates a sample.
+	if evaluationAttempts == 0 {
+		input := make(map[string]interface{}, len(dependencies))
+		for _, dependency := range dependencies {
+			if scalar, ok := scalars[dependency]; ok {
+				input["$"+dependency] = scalar
+			} else {
+				input["$"+dependency] = float64(0)
+			}
+		}
+		if _, err := parser.MathCalc(expression, input); err != nil {
+			return result, fmt.Errorf("expression evaluation failed: %s", err.Error())
+		}
+	}
+	if evaluationError != nil {
+		if len(result.Series) == 0 {
+			return result, fmt.Errorf("expression evaluation failed: %s", evaluationError.Error())
+		}
+		logger.Warningf("query-batch-v2 expression %q skipped points that failed to evaluate: %v",
+			expression, evaluationError)
 	}
 	return result, nil
 }
