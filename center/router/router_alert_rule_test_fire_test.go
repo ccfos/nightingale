@@ -285,6 +285,10 @@ func TestAlertRuleTestFire_RecoverEvent(t *testing.T) {
 	if got := resp.Dat.Event["is_recovered"]; got != true {
 		t.Fatalf("is_recovered: got %v, want true", got)
 	}
+	// 零值恢复时间会被前端渲染成 1970-01-01
+	if sec, ok := resp.Dat.Event["recover_time"].(float64); !ok || sec <= 0 {
+		t.Fatalf("recover_time should be set on recovered test event, got %v", resp.Dat.Event["recover_time"])
+	}
 	notify := stageByName(t, resp, "notify")
 	if notify.Status != "warn" || notify.Data["recover_notify_disabled"] != true {
 		t.Fatalf("notify stage should warn recover_notify_disabled, got %+v", notify)
