@@ -15,7 +15,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// traceLogsPage renders an HTML log viewer page for trace logs.
+// traceLogsPage renders the HTML log viewer shell for trace logs. Like
+// eventDetailPage, the shell carries no log data; the login check happens on
+// the /logs sibling route its JS fetches.
 func (rt *Router) traceLogsPage(c *gin.Context) {
 	traceId := ginx.UrlParamStr(c, "traceid")
 	if !loggrep.IsValidTraceID(traceId) {
@@ -23,25 +25,15 @@ func (rt *Router) traceLogsPage(c *gin.Context) {
 		return
 	}
 
-	logs, instance, err := rt.getTraceLogs(traceId)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error: %v", err)
-		return
-	}
-
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	err = loggrep.RenderTraceLogsHTML(c.Writer, loggrep.TraceLogsPageData{
-		TraceID:  traceId,
-		Instance: instance,
-		Logs:     logs,
-		Total:    len(logs),
-	})
+	err := loggrep.RenderTraceLogsHTML(c.Writer, loggrep.TraceLogsPageData{TraceID: traceId})
 	if err != nil {
 		c.String(http.StatusInternalServerError, "render error: %v", err)
 	}
 }
 
-// traceLogsJSON returns JSON for trace logs.
+// traceLogsJSON returns trace logs; the route requires a login. Trace logs
+// span rules and busi groups, so there is no single group to check against.
 func (rt *Router) traceLogsJSON(c *gin.Context) {
 	traceId := ginx.UrlParamStr(c, "traceid")
 	if !loggrep.IsValidTraceID(traceId) {

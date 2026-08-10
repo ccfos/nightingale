@@ -10,13 +10,17 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/naming"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 
 	"github.com/gin-gonic/gin"
 )
 
-// eventDetailPage renders an HTML log viewer page (for pages group).
+// eventDetailPage renders the HTML log viewer shell (for pages group). The
+// shell carries no log data: its JS fetches the /logs sibling route with the
+// login JWT the UI keeps in localStorage, and the permission check happens
+// there. That is why the shell itself needs no authentication even though it
+// is opened via a plain link in a new browser tab.
 func (rt *Router) eventDetailPage(c *gin.Context) {
 	hash := ginx.UrlParamStr(c, "hash")
 	if !loggrep.IsValidHash(hash) {
@@ -24,32 +28,32 @@ func (rt *Router) eventDetailPage(c *gin.Context) {
 		return
 	}
 
-	logs, instance, err := rt.getEventLogs(hash)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error: %v", err)
-		return
-	}
-
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	err = loggrep.RenderHTML(c.Writer, loggrep.PageData{
-		Hash:     hash,
-		Instance: instance,
-		Logs:     logs,
-		Total:    len(logs),
-	})
+	err := loggrep.RenderHTML(c.Writer, loggrep.PageData{Hash: hash})
 	if err != nil {
 		c.String(http.StatusInternalServerError, "render error: %v", err)
 	}
 }
 
-// eventDetailJSON returns JSON (for service group).
+// eventDetailJSON returns the processing logs of an event. The logs may
+// contain sensitive content such as notify channel credentials, so knowing
+// the hash alone must not grant access: the route requires a login and this
+// handler checks read permission on the busi group the event belongs to.
 func (rt *Router) eventDetailJSON(c *gin.Context) {
 	hash := ginx.UrlParamStr(c, "hash")
 	if !loggrep.IsValidHash(hash) {
 		ginx.Bomb(200, "invalid hash format")
 	}
 
-	logs, instance, err := rt.getEventLogs(hash)
+	event, err := models.AlertHisEventGetByHash(rt.Ctx, hash)
+	ginx.Dangerous(err)
+	if event == nil {
+		ginx.Bomb(404, "no such alert event")
+	}
+
+	rt.bgroCheck(c, event.GroupId)
+
+	logs, instance, err := rt.getEventLogsByEvent(event)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(loggrep.EventDetailResp{
@@ -95,6 +99,10 @@ func (rt *Router) getEventLogs(hash string) ([]string, string, error) {
 		return nil, "", fmt.Errorf("no such alert event")
 	}
 
+	return rt.getEventLogsByEvent(event)
+}
+
+func (rt *Router) getEventLogsByEvent(event *models.AlertHisEvent) ([]string, string, error) {
 	ruleId := strconv.FormatInt(event.RuleId, 10)
 
 	instance := fmt.Sprintf("%s:%d", rt.Alert.Heartbeat.IP, rt.HTTP.Port)
@@ -102,12 +110,12 @@ func (rt *Router) getEventLogs(hash string) ([]string, string, error) {
 	node, err := rt.getNodeForDatasource(event.DatasourceId, ruleId)
 	if err != nil || node == instance {
 		// hashring not ready or target is self, handle locally
-		logs, err := loggrep.GrepLogDir(rt.LogDir, hash)
+		logs, err := loggrep.GrepLogDir(rt.LogDir, event.Hash)
 		return logs, instance, err
 	}
 
 	// forward to the target alert instance
-	return rt.forwardEventDetail(node, hash)
+	return rt.forwardEventDetail(node, event.Hash)
 }
 
 func (rt *Router) forwardEventDetail(node, hash string) ([]string, string, error) {

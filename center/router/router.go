@@ -562,9 +562,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
 		pages.GET("/notification-records/used", rt.auth(), rt.user(), rt.notificationRecordUsed)
 		pages.GET("/event-detail/:hash", rt.eventDetailPage)
+		pages.GET("/event-detail/:hash/logs", rt.auth(), rt.user(), rt.eventDetailJSON)
 		pages.GET("/alert-eval-detail/:id", rt.alertEvalDetailPage)
+		pages.GET("/alert-eval-detail/:id/logs", rt.auth(), rt.user(), rt.alertEvalDetailJSON)
 		pages.GET("/alert-rule/:arid/eval-records", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleEvalRecords)
 		pages.GET("/trace-logs/:traceid", rt.traceLogsPage)
+		pages.GET("/trace-logs/:traceid/logs", rt.auth(), rt.user(), rt.traceLogsJSON)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)

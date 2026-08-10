@@ -11,13 +11,15 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 
 	"github.com/gin-gonic/gin"
 )
 
-// alertEvalDetailPage renders an HTML log viewer page for alert rule evaluation logs.
+// alertEvalDetailPage renders the HTML log viewer shell for alert rule
+// evaluation logs. Like eventDetailPage, the shell carries no log data; the
+// permission check happens on the /logs sibling route its JS fetches.
 func (rt *Router) alertEvalDetailPage(c *gin.Context) {
 	id := ginx.UrlParamStr(c, "id")
 	if !loggrep.IsValidRuleID(id) {
@@ -25,32 +27,31 @@ func (rt *Router) alertEvalDetailPage(c *gin.Context) {
 		return
 	}
 
-	logs, instance, err := rt.getAlertEvalLogs(id)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error: %v", err)
-		return
-	}
-
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	err = loggrep.RenderAlertEvalHTML(c.Writer, loggrep.AlertEvalPageData{
-		RuleID:   id,
-		Instance: instance,
-		Logs:     logs,
-		Total:    len(logs),
-	})
+	err := loggrep.RenderAlertEvalHTML(c.Writer, loggrep.AlertEvalPageData{RuleID: id})
 	if err != nil {
 		c.String(http.StatusInternalServerError, "render error: %v", err)
 	}
 }
 
-// alertEvalDetailJSON returns JSON for alert rule evaluation logs.
+// alertEvalDetailJSON returns alert rule evaluation logs; requires a login
+// and read permission on the busi group the rule belongs to.
 func (rt *Router) alertEvalDetailJSON(c *gin.Context) {
 	id := ginx.UrlParamStr(c, "id")
 	if !loggrep.IsValidRuleID(id) {
 		ginx.Bomb(200, "invalid rule id format")
 	}
 
-	logs, instance, err := rt.getAlertEvalLogs(id)
+	ruleId, _ := strconv.ParseInt(id, 10, 64)
+	rule, err := models.AlertRuleGetById(rt.Ctx, ruleId)
+	ginx.Dangerous(err)
+	if rule == nil {
+		ginx.Bomb(404, "no such alert rule")
+	}
+
+	rt.bgroCheck(c, rule.GroupId)
+
+	logs, instance, err := rt.getAlertEvalLogsByRule(rule, id)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(loggrep.EventDetailResp{
@@ -70,6 +71,10 @@ func (rt *Router) getAlertEvalLogs(id string) ([]string, string, error) {
 		return nil, "", fmt.Errorf("no such alert rule")
 	}
 
+	return rt.getAlertEvalLogsByRule(rule, id)
+}
+
+func (rt *Router) getAlertEvalLogsByRule(rule *models.AlertRule, id string) ([]string, string, error) {
 	instance := fmt.Sprintf("%s:%d", rt.Alert.Heartbeat.IP, rt.HTTP.Port)
 	keyword := fmt.Sprintf("alert_eval_%s", id)
 
