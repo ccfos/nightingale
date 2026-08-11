@@ -1,9 +1,8 @@
 package router
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -40,26 +39,32 @@ func (rt *Router) traceLogsJSON(c *gin.Context) {
 		ginx.Bomb(200, "invalid trace id format")
 	}
 
-	logs, instance, err := rt.getTraceLogs(traceId)
+	resp, err := rt.getTraceLogs(c.Request.Context(), traceId)
 	ginx.Dangerous(err)
 
-	ginx.NewRender(c).Data(loggrep.EventDetailResp{
-		Logs:     logs,
-		Instance: instance,
-	}, nil)
+	ginx.NewRender(c).Data(resp, nil)
 }
 
 // getTraceLogs finds the same-engine instances and queries each one
 // until trace logs are found. Trace logs belong to a single instance.
-func (rt *Router) getTraceLogs(traceId string) ([]string, string, error) {
+func (rt *Router) getTraceLogs(ctx context.Context, traceId string) (loggrep.EventDetailResp, error) {
 	keyword := "trace_id=" + traceId
 	instance := fmt.Sprintf("%s:%d", rt.Alert.Heartbeat.IP, rt.HTTP.Port)
 	engineName := rt.Alert.Heartbeat.EngineName
 
+	// every instance may have to be asked before the owning one is found, so
+	// they share one budget rather than each getting the full one
+	deadline := time.Now().Add(loggrep.DefaultTimeout)
+
 	// try local first
-	logs, err := loggrep.GrepLatestLogFiles(rt.LogDir, keyword)
-	if err == nil && len(logs) > 0 {
-		return logs, instance, nil
+	res := loggrep.GrepLatestLogFiles(ctx, rt.LogDir, keyword, loggrep.GrepOptions{Deadline: deadline})
+	if len(res.Logs) > 0 {
+		return loggrep.EventDetailResp{
+			Logs:      res.Logs,
+			Instance:  instance,
+			Truncated: res.Truncated,
+			Reason:    res.Reason,
+		}, nil
 	}
 
 	// find all instances with the same engineName
@@ -67,7 +72,7 @@ func (rt *Router) getTraceLogs(traceId string) ([]string, string, error) {
 		"engine_cluster = ? and clock > ?",
 		engineName, time.Now().Unix()-30)
 	if err != nil {
-		return nil, "", err
+		return loggrep.EventDetailResp{}, err
 	}
 
 	// loop through remote instances until we find logs
@@ -76,53 +81,23 @@ func (rt *Router) getTraceLogs(traceId string) ([]string, string, error) {
 			continue // already tried local
 		}
 
-		logs, nodeAddr, err := rt.forwardTraceLogs(node, traceId)
+		if time.Now().After(deadline) {
+			return loggrep.EventDetailResp{
+				Instance:  instance,
+				Truncated: true,
+				Reason:    loggrep.ReasonTimeout,
+			}, nil
+		}
+
+		resp, err := rt.forwardLogQuery(ctx, node, "/trace-logs/"+traceId, time.Time{}, time.Until(deadline))
 		if err != nil {
 			logger.Errorf("forwardTraceLogs failed: %v", err)
 			continue
 		}
-		if len(logs) > 0 {
-			return logs, nodeAddr, nil
+		if len(resp.Logs) > 0 {
+			return resp, nil
 		}
 	}
 
-	return nil, instance, nil
-}
-
-func (rt *Router) forwardTraceLogs(node, traceId string) ([]string, string, error) {
-	url := fmt.Sprintf("http://%s/v1/n9e/trace-logs/%s", node, traceId)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, node, err
-	}
-
-	for user, pass := range rt.HTTP.APIForService.BasicAuth {
-		req.SetBasicAuth(user, pass)
-		break
-	}
-
-	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, node, fmt.Errorf("forward to %s failed: %v", node, err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024*1024))
-	if err != nil {
-		return nil, node, err
-	}
-
-	var result struct {
-		Dat loggrep.EventDetailResp `json:"dat"`
-		Err string                  `json:"err"`
-	}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, node, err
-	}
-	if result.Err != "" {
-		return nil, node, fmt.Errorf("%s", result.Err)
-	}
-
-	return result.Dat.Logs, result.Dat.Instance, nil
+	return loggrep.EventDetailResp{Instance: instance}, nil
 }

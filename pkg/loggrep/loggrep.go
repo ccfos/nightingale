@@ -2,6 +2,7 @@ package loggrep
 
 import (
 	"bufio"
+	"context"
 	"html/template"
 	"io"
 	"os"
@@ -9,9 +10,48 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 )
 
 const MaxLogLines = 5000
+
+// DefaultTimeout bounds a single search. A log dir routinely reaches several
+// GB (size based rotation keeps RotateNum files per level), and scanning all
+// of it on a cold page cache outlives the read timeout of any reverse proxy
+// in front of n9e. Rather than let the request die there, the search returns
+// whatever it collected within the budget and marks the result truncated.
+const DefaultTimeout = 10 * time.Second
+
+// deadlineCheckInterval is how many lines are scanned between two clock reads.
+const deadlineCheckInterval = 4096
+
+const (
+	// ReasonTimeout means the budget ran out before every candidate file was
+	// scanned, so older matches may be missing.
+	ReasonTimeout = "timeout"
+	// ReasonLimit means more lines matched than Limit allows, so the oldest
+	// matches were dropped.
+	ReasonLimit = "limit"
+)
+
+// GrepOptions bounds a search. The zero value is valid and applies defaults.
+type GrepOptions struct {
+	// Deadline stops the scan. Zero means DefaultTimeout from the start.
+	Deadline time.Time
+	// Limit caps the returned lines, newest kept. Zero means MaxLogLines.
+	Limit int
+	// Since skips log files last written before it. This is what makes an
+	// event lookup cheap: a file rotated away before the event existed cannot
+	// mention it, so the big historical files never get opened.
+	Since time.Time
+}
+
+// GrepResult carries the matched lines plus whether they are the complete set.
+type GrepResult struct {
+	Logs      []string `json:"logs"`
+	Truncated bool     `json:"truncated"`
+	Reason    string   `json:"reason,omitempty"`
+}
 
 var hashPattern = regexp.MustCompile(`^[a-f0-9]{32,64}$`)
 var idPattern = regexp.MustCompile(`^[1-9]\d*$`)
@@ -33,8 +73,10 @@ func IsValidTraceID(s string) bool {
 }
 
 type EventDetailResp struct {
-	Logs     []string `json:"logs"`
-	Instance string   `json:"instance"`
+	Logs      []string `json:"logs"`
+	Instance  string   `json:"instance"`
+	Truncated bool     `json:"truncated"`
+	Reason    string   `json:"reason,omitempty"`
 }
 
 type PageData struct {
@@ -49,80 +91,185 @@ type TraceLogsPageData struct {
 	TraceID string
 }
 
-// GrepLogDir searches all log files in logDir for lines containing keyword,
-// sorts them by timestamp descending, and truncates to MaxLogLines.
-func GrepLogDir(logDir string, keyword string) ([]string, error) {
-	logFiles, err := filepath.Glob(filepath.Join(logDir, "*.log*"))
-	if err != nil {
-		return nil, err
+// GrepLogDir searches all log files in logDir, rotated ones included, for
+// lines containing keyword and returns the newest matches.
+func GrepLogDir(ctx context.Context, logDir, keyword string, opts GrepOptions) GrepResult {
+	return grep(ctx, filepath.Join(logDir, "*.log*"), keyword, opts)
+}
+
+// GrepLatestLogFiles searches only the current (non-rotated) log files in
+// logDir, i.e. files matching *.log without a suffix like .log.20240101.
+func GrepLatestLogFiles(ctx context.Context, logDir, keyword string, opts GrepOptions) GrepResult {
+	return grep(ctx, filepath.Join(logDir, "*.log"), keyword, opts)
+}
+
+// logFile is a scan candidate. group is the log file's name with any rotation
+// suffix stripped ("INFO.log.000" -> "INFO.log"), which identifies the
+// rotation chain the file belongs to.
+type logFile struct {
+	path    string
+	group   string
+	modTime time.Time
+}
+
+// grep scans the files matching pattern newest first and returns the newest
+// matches, bounded by both the deadline and the line limit. Scanning newest
+// first is what makes a partial result useful: whatever the budget buys is the
+// most recent activity, which is what these log pages are read for.
+func grep(ctx context.Context, pattern, keyword string, opts GrepOptions) GrepResult {
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = MaxLogLines
 	}
 
+	deadline := opts.Deadline
+	if deadline.IsZero() {
+		deadline = time.Now().Add(DefaultTimeout)
+	}
+	if ctxDeadline, ok := ctx.Deadline(); ok && ctxDeadline.Before(deadline) {
+		deadline = ctxDeadline
+	}
+
+	files := candidates(pattern, opts.Since)
+
 	var logs []string
-	for _, logFile := range logFiles {
-		lines, err := GrepFile(logFile, keyword)
-		if err != nil {
+	var timedOut bool
+
+	// matched counts matches per rotation chain. Once a chain has yielded
+	// limit lines, its older files are skipped: every line in them is older
+	// than limit lines already held from the same chain, so none can survive
+	// the final truncation. The count is per chain rather than global because
+	// the level files (INFO.log, ERROR.log, ...) are concurrent streams, not
+	// successive rotations - a global count would let a chatty INFO stream
+	// hide the ERROR lines of the very event being investigated.
+	matched := make(map[string]int, len(files))
+
+	for _, f := range files {
+		if matched[f.group] >= limit {
 			continue
 		}
+
+		// checked per file as well as inside the scan: a dir made of many
+		// small files would otherwise never reach the in-loop check
+		if ctx.Err() != nil || time.Now().After(deadline) {
+			timedOut = true
+			break
+		}
+
+		lines, stopped := grepFile(ctx, f.path, keyword, deadline)
 		logs = append(logs, lines...)
+		matched[f.group] += len(lines)
+
+		if stopped {
+			timedOut = true
+			break
+		}
 	}
 
 	sort.Slice(logs, func(i, j int) bool {
 		return logs[i] > logs[j]
 	})
 
-	if len(logs) > MaxLogLines {
-		logs = logs[:MaxLogLines]
+	result := GrepResult{Logs: logs}
+
+	if len(logs) > limit {
+		result.Logs = logs[:limit]
+		result.Truncated = true
+		result.Reason = ReasonLimit
 	}
 
-	return logs, nil
+	// timeout wins the reason: it means whole files went unread, which hides
+	// more than dropping the tail of an over-long result does
+	if timedOut {
+		result.Truncated = true
+		result.Reason = ReasonTimeout
+	}
+
+	return result
 }
 
-// GrepLatestLogFiles searches only the current (non-rotated) log files in logDir
-// (i.e. files matching *.log without any additional suffix like .log.20240101).
-func GrepLatestLogFiles(logDir string, keyword string) ([]string, error) {
-	logFiles, err := filepath.Glob(filepath.Join(logDir, "*.log"))
+// candidates returns the files matching pattern, newest first, dropping those
+// last written before since.
+func candidates(pattern string, since time.Time) []logFile {
+	paths, err := filepath.Glob(pattern)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
-	var logs []string
-	for _, logFile := range logFiles {
-		lines, err := GrepFile(logFile, keyword)
-		if err != nil {
+	files := make([]logFile, 0, len(paths))
+	for _, path := range paths {
+		st, err := os.Stat(path)
+		if err != nil || st.IsDir() || st.Size() == 0 {
 			continue
 		}
-		logs = append(logs, lines...)
+
+		// mtime is the file's last write, so a file untouched since before
+		// the cutoff holds nothing newer than it
+		if !since.IsZero() && st.ModTime().Before(since) {
+			continue
+		}
+
+		files = append(files, logFile{
+			path:    path,
+			group:   rotationGroup(path),
+			modTime: st.ModTime(),
+		})
 	}
 
-	sort.Slice(logs, func(i, j int) bool {
-		return logs[i] > logs[j]
+	sort.Slice(files, func(i, j int) bool {
+		if files[i].modTime.Equal(files[j].modTime) {
+			return files[i].path < files[j].path
+		}
+		return files[i].modTime.After(files[j].modTime)
 	})
 
-	if len(logs) > MaxLogLines {
-		logs = logs[:MaxLogLines]
-	}
-
-	return logs, nil
+	return files
 }
 
-// GrepFile scans a file line by line and returns lines containing the keyword.
-func GrepFile(filePath string, keyword string) ([]string, error) {
+// rotationGroup maps a log file onto its rotation chain by dropping whatever
+// the rotation appended after ".log" ("INFO.log.000" and "INFO.log.2026072711"
+// both belong to "INFO.log").
+func rotationGroup(path string) string {
+	name := filepath.Base(path)
+	if i := strings.Index(name, ".log"); i >= 0 {
+		return name[:i+len(".log")]
+	}
+	return name
+}
+
+// grepFile scans a file line by line, returning the lines containing keyword
+// and whether it gave up on the deadline before reaching the end. The deadline
+// is checked inside the loop, not just between files: a single size-rotated
+// file can be hundreds of MB and blow the whole budget on its own.
+func grepFile(ctx context.Context, filePath, keyword string, deadline time.Time) ([]string, bool) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, false
 	}
 	defer f.Close()
 
 	var lines []string
+	var scanned int
+
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
 	for scanner.Scan() {
+		scanned++
+		if scanned%deadlineCheckInterval == 0 {
+			if ctx.Err() != nil || time.Now().After(deadline) {
+				return lines, true
+			}
+		}
+
 		line := scanner.Text()
 		if strings.Contains(line, keyword) {
 			lines = append(lines, line)
 		}
 	}
-	return lines, scanner.Err()
+
+	// a read error (an over-long line, a file rotated away mid scan) leaves
+	// the matches found so far usable, so it is not surfaced as a hard failure
+	return lines, false
 }
 
 // RenderHTML writes the event detail HTML page to w.
@@ -248,6 +395,10 @@ const logPageTplText = `<!DOCTYPE html>
     text-align: center; padding: 64px 24px; color: #bfbfbf; font-size: 14px;
   }
   .match-count { font-size: 12px; color: #999; white-space: nowrap; }
+  .notice {
+    margin: 12px 12px 0; padding: 8px 12px; border-radius: 6px;
+    background: #fffbe6; border: 1px solid #ffe58f; color: #ad6800; font-size: 12px;
+  }
 </style>
 </head>
 <body>
@@ -274,6 +425,7 @@ const logPageTplText = `<!DOCTYPE html>
     <span class="match-count" id="matchCount"></span>
   </div>
 </div>
+<div class="notice hidden" id="notice"></div>
 <div class="log-container" id="logContainer">
   <div class="empty-state">Loading logs...</div>
 </div>
@@ -311,10 +463,19 @@ const logPageTplText = `<!DOCTYPE html>
       return;
     }
     var dat = (r.body && r.body.dat) || {};
+    if (dat.truncated) { showNotice(dat.reason); }
     renderLines(dat.logs || [], dat.instance || '-');
   }).catch(function(e) {
     showStatus('failed to load logs: ' + e);
   });
+
+  function showNotice(reason) {
+    var notice = document.getElementById('notice');
+    notice.textContent = reason === 'limit'
+      ? 'Partial result: more lines matched than can be shown. Only the most recent ones are listed.'
+      : 'Partial result: the search hit its time budget and stopped. The most recent logs are listed; older ones were not read.';
+    notice.classList.remove('hidden');
+  }
 
   function statusMsg(status, err) {
     if (status === 401) return 'unauthorized: please sign in to Nightingale in this browser, then reload this page';

@@ -18,11 +18,12 @@ func (rt *Router) traceLogs(c *gin.Context) {
 	instance := fmt.Sprintf("%s:%d", rt.Alert.Heartbeat.IP, rt.HTTP.Port)
 
 	keyword := "trace_id=" + traceId
-	logs, err := loggrep.GrepLatestLogFiles(rt.LogDir, keyword)
-	ginx.Dangerous(err)
+	res := loggrep.GrepLatestLogFiles(c.Request.Context(), rt.LogDir, keyword, logGrepOptions(c))
 
 	ginx.NewRender(c).Data(loggrep.EventDetailResp{
-		Logs:     logs,
-		Instance: instance,
+		Logs:      res.Logs,
+		Instance:  instance,
+		Truncated: res.Truncated,
+		Reason:    res.Reason,
 	}, nil)
 }

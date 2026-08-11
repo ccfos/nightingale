@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -53,13 +54,10 @@ func (rt *Router) eventDetailJSON(c *gin.Context) {
 
 	rt.bgroCheck(c, event.GroupId)
 
-	logs, instance, err := rt.getEventLogsByEvent(event)
+	resp, err := rt.getEventLogsByEvent(c.Request.Context(), event)
 	ginx.Dangerous(err)
 
-	ginx.NewRender(c).Data(loggrep.EventDetailResp{
-		Logs:     logs,
-		Instance: instance,
-	}, nil)
+	ginx.NewRender(c).Data(resp, nil)
 }
 
 // getNodeForDatasource returns the alert engine instance responsible for the given
@@ -89,7 +87,8 @@ func (rt *Router) getNodeForDatasource(datasourceId int64, pk string) (string, e
 	return ring.Get(pk)
 }
 
-// getEventLogs resolves the target instance and retrieves logs.
+// getEventLogs resolves the target instance and retrieves logs. It keeps the
+// plain (logs, instance, error) shape the aiagent troubleshooting tool binds to.
 func (rt *Router) getEventLogs(hash string) ([]string, string, error) {
 	event, err := models.AlertHisEventGetByHash(rt.Ctx, hash)
 	if err != nil {
@@ -99,10 +98,31 @@ func (rt *Router) getEventLogs(hash string) ([]string, string, error) {
 		return nil, "", fmt.Errorf("no such alert event")
 	}
 
-	return rt.getEventLogsByEvent(event)
+	resp, err := rt.getEventLogsByEvent(context.Background(), event)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return resp.Logs, resp.Instance, nil
 }
 
-func (rt *Router) getEventLogsByEvent(event *models.AlertHisEvent) ([]string, string, error) {
+// eventLogsSince is the point before which log files cannot mention the event,
+// and so need not be opened at all. The slack absorbs clock skew between the
+// database timestamps and the log host, plus the evaluation logs written in
+// the cycle that produced the event.
+func eventLogsSince(event *models.AlertHisEvent) time.Time {
+	ts := event.FirstTriggerTime
+	if ts == 0 || (event.TriggerTime > 0 && event.TriggerTime < ts) {
+		ts = event.TriggerTime
+	}
+	if ts == 0 {
+		return time.Time{}
+	}
+
+	return time.Unix(ts, 0).Add(-time.Hour)
+}
+
+func (rt *Router) getEventLogsByEvent(ctx context.Context, event *models.AlertHisEvent) (loggrep.EventDetailResp, error) {
 	ruleId := strconv.FormatInt(event.RuleId, 10)
 
 	instance := fmt.Sprintf("%s:%d", rt.Alert.Heartbeat.IP, rt.HTTP.Port)
@@ -110,19 +130,40 @@ func (rt *Router) getEventLogsByEvent(event *models.AlertHisEvent) ([]string, st
 	node, err := rt.getNodeForDatasource(event.DatasourceId, ruleId)
 	if err != nil || node == instance {
 		// hashring not ready or target is self, handle locally
-		logs, err := loggrep.GrepLogDir(rt.LogDir, event.Hash)
-		return logs, instance, err
+		res := loggrep.GrepLogDir(ctx, rt.LogDir, event.Hash, loggrep.GrepOptions{
+			Since: eventLogsSince(event),
+		})
+		return loggrep.EventDetailResp{
+			Logs:      res.Logs,
+			Instance:  instance,
+			Truncated: res.Truncated,
+			Reason:    res.Reason,
+		}, nil
 	}
 
 	// forward to the target alert instance
-	return rt.forwardEventDetail(node, event.Hash)
+	return rt.forwardEventDetail(ctx, node, event.Hash, eventLogsSince(event))
 }
 
-func (rt *Router) forwardEventDetail(node, hash string) ([]string, string, error) {
-	url := fmt.Sprintf("http://%s/v1/n9e/event-detail/%s", node, hash)
-	req, err := http.NewRequest("GET", url, nil)
+// forwardLogQuery calls a log endpoint on another engine instance. The budget
+// is the wall clock the remote side gets: it is passed on as a query parameter
+// so the remote grep stops on the same deadline instead of running on after
+// this side has already given up.
+func (rt *Router) forwardLogQuery(ctx context.Context, node, path string, since time.Time, budget time.Duration) (loggrep.EventDetailResp, error) {
+	out := loggrep.EventDetailResp{Instance: node}
+
+	if budget <= 0 {
+		return out, fmt.Errorf("no time left to query %s", node)
+	}
+
+	url := fmt.Sprintf("http://%s/v1/n9e%s?timeout=%d", node, path, int64(budget/time.Millisecond))
+	if !since.IsZero() {
+		url = fmt.Sprintf("%s&since=%d", url, since.Unix())
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		return nil, node, err
+		return out, err
 	}
 
 	for user, pass := range rt.HTTP.APIForService.BasicAuth {
@@ -130,16 +171,18 @@ func (rt *Router) forwardEventDetail(node, hash string) ([]string, string, error
 		break
 	}
 
-	client := &http.Client{Timeout: 15 * time.Second}
+	// the remote is expected to answer within its own budget; allow a margin
+	// for connect and transfer on top of it
+	client := &http.Client{Timeout: budget + 5*time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, node, fmt.Errorf("forward to %s failed: %v", node, err)
+		return out, fmt.Errorf("forward to %s failed: %v", node, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024*1024)) // 10MB limit
 	if err != nil {
-		return nil, node, err
+		return out, err
 	}
 
 	var result struct {
@@ -147,11 +190,19 @@ func (rt *Router) forwardEventDetail(node, hash string) ([]string, string, error
 		Err string                  `json:"err"`
 	}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, node, err
+		return out, err
 	}
 	if result.Err != "" {
-		return nil, node, fmt.Errorf("%s", result.Err)
+		return out, fmt.Errorf("%s", result.Err)
 	}
 
-	return result.Dat.Logs, result.Dat.Instance, nil
+	if result.Dat.Instance == "" {
+		result.Dat.Instance = node
+	}
+
+	return result.Dat, nil
+}
+
+func (rt *Router) forwardEventDetail(ctx context.Context, node, hash string, since time.Time) (loggrep.EventDetailResp, error) {
+	return rt.forwardLogQuery(ctx, node, "/event-detail/"+hash, since, loggrep.DefaultTimeout)
 }
