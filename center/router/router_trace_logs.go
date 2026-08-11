@@ -1,9 +1,8 @@
 package router
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -15,7 +14,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// traceLogsPage renders an HTML log viewer page for trace logs.
+// traceLogsPage renders the HTML log viewer shell for trace logs. Like
+// eventDetailPage, the shell carries no log data; the login check happens on
+// the /logs sibling route its JS fetches.
 func (rt *Router) traceLogsPage(c *gin.Context) {
 	traceId := ginx.UrlParamStr(c, "traceid")
 	if !loggrep.IsValidTraceID(traceId) {
@@ -23,59 +24,73 @@ func (rt *Router) traceLogsPage(c *gin.Context) {
 		return
 	}
 
-	logs, instance, err := rt.getTraceLogs(traceId)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error: %v", err)
-		return
-	}
-
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	err = loggrep.RenderTraceLogsHTML(c.Writer, loggrep.TraceLogsPageData{
-		TraceID:  traceId,
-		Instance: instance,
-		Logs:     logs,
-		Total:    len(logs),
-	})
+	err := loggrep.RenderTraceLogsHTML(c.Writer, loggrep.TraceLogsPageData{TraceID: traceId})
 	if err != nil {
 		c.String(http.StatusInternalServerError, "render error: %v", err)
 	}
 }
 
-// traceLogsJSON returns JSON for trace logs.
+// traceLogsJSON returns trace logs; the route requires a login. Trace logs
+// span rules and busi groups, so there is no single group to check against.
 func (rt *Router) traceLogsJSON(c *gin.Context) {
 	traceId := ginx.UrlParamStr(c, "traceid")
 	if !loggrep.IsValidTraceID(traceId) {
 		ginx.Bomb(200, "invalid trace id format")
 	}
 
-	logs, instance, err := rt.getTraceLogs(traceId)
+	resp, err := rt.getTraceLogs(c.Request.Context(), traceId)
 	ginx.Dangerous(err)
 
-	ginx.NewRender(c).Data(loggrep.EventDetailResp{
-		Logs:     logs,
-		Instance: instance,
-	}, nil)
+	ginx.NewRender(c).Data(resp, nil)
 }
 
 // getTraceLogs finds the same-engine instances and queries each one
 // until trace logs are found. Trace logs belong to a single instance.
-func (rt *Router) getTraceLogs(traceId string) ([]string, string, error) {
+func (rt *Router) getTraceLogs(ctx context.Context, traceId string) (loggrep.EventDetailResp, error) {
 	keyword := "trace_id=" + traceId
 	instance := fmt.Sprintf("%s:%d", rt.Alert.Heartbeat.IP, rt.HTTP.Port)
 	engineName := rt.Alert.Heartbeat.EngineName
 
-	// try local first
-	logs, err := loggrep.GrepLatestLogFiles(rt.LogDir, keyword)
-	if err == nil && len(logs) > 0 {
-		return logs, instance, nil
+	// every instance may have to be asked before the owning one is found, so
+	// they share one budget rather than each getting the full one
+	deadline := time.Now().Add(loggrep.DefaultTimeout)
+
+	// A search that did not finish must say so even when it found nothing:
+	// otherwise an aborted scan and a genuine "this trace was never logged
+	// here" are indistinguishable, and the page reports the second one.
+	// These carry that across every instance that gets asked.
+	var truncated bool
+	var reason string
+
+	note := func(t bool, r string) {
+		if !t {
+			return
+		}
+		truncated = true
+		if reason == "" {
+			reason = r
+		}
 	}
+
+	// try local first
+	res := loggrep.GrepLatestLogFiles(ctx, rt.LogDir, keyword, loggrep.GrepOptions{Deadline: deadline})
+	if len(res.Logs) > 0 {
+		return loggrep.EventDetailResp{
+			Logs:      res.Logs,
+			Instance:  instance,
+			Truncated: res.Truncated,
+			Reason:    res.Reason,
+		}, nil
+	}
+	note(res.Truncated, res.Reason)
 
 	// find all instances with the same engineName
 	servers, err := models.AlertingEngineGetsInstances(rt.Ctx,
 		"engine_cluster = ? and clock > ?",
 		engineName, time.Now().Unix()-30)
 	if err != nil {
-		return nil, "", err
+		return loggrep.EventDetailResp{}, err
 	}
 
 	// loop through remote instances until we find logs
@@ -84,53 +99,27 @@ func (rt *Router) getTraceLogs(traceId string) ([]string, string, error) {
 			continue // already tried local
 		}
 
-		logs, nodeAddr, err := rt.forwardTraceLogs(node, traceId)
+		if time.Now().After(deadline) {
+			note(true, loggrep.ReasonTimeout)
+			break
+		}
+
+		resp, err := rt.forwardLogQuery(ctx, node, "/trace-logs/"+traceId, time.Time{}, time.Until(deadline))
 		if err != nil {
+			// an instance that could not be asked leaves a hole in the answer
 			logger.Errorf("forwardTraceLogs failed: %v", err)
+			note(true, loggrep.ReasonTimeout)
 			continue
 		}
-		if len(logs) > 0 {
-			return logs, nodeAddr, nil
+		if len(resp.Logs) > 0 {
+			return resp, nil
 		}
+		note(resp.Truncated, resp.Reason)
 	}
 
-	return nil, instance, nil
-}
-
-func (rt *Router) forwardTraceLogs(node, traceId string) ([]string, string, error) {
-	url := fmt.Sprintf("http://%s/v1/n9e/trace-logs/%s", node, traceId)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, node, err
-	}
-
-	for user, pass := range rt.HTTP.APIForService.BasicAuth {
-		req.SetBasicAuth(user, pass)
-		break
-	}
-
-	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, node, fmt.Errorf("forward to %s failed: %v", node, err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024*1024))
-	if err != nil {
-		return nil, node, err
-	}
-
-	var result struct {
-		Dat loggrep.EventDetailResp `json:"dat"`
-		Err string                  `json:"err"`
-	}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, node, err
-	}
-	if result.Err != "" {
-		return nil, node, fmt.Errorf("%s", result.Err)
-	}
-
-	return result.Dat.Logs, result.Dat.Instance, nil
+	return loggrep.EventDetailResp{
+		Instance:  instance,
+		Truncated: truncated,
+		Reason:    reason,
+	}, nil
 }

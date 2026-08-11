@@ -376,6 +376,10 @@ func (rt *Router) synthesizeTestEvent(cfg *models.AlertRule, f *AlertRuleTestFir
 	event.Hash = "test-fire-" + uuid.NewString()
 	event.Severity = f.Severity
 	event.IsRecovered = f.EventType == "recover"
+	if event.IsRecovered {
+		// 与 newMockEvent 的约定一致：恢复事件必须带恢复时间，否则前端把零值渲染成 1970-01-01
+		event.RecoverTime = now
+	}
 	event.TriggerTime = now
 	event.FirstTriggerTime = now
 	event.LastEvalTime = now
