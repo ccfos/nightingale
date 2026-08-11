@@ -52,7 +52,9 @@ func (rt *Router) eventDetailJSON(c *gin.Context) {
 		ginx.Bomb(404, "no such alert event")
 	}
 
-	rt.bgroCheck(c, event.GroupId)
+	// history events outlive their busi group, so a group that is gone must
+	// not turn into a 404 that reads like "no such event"
+	rt.bgroCheckAllowMissing(c, event.GroupId)
 
 	resp, err := rt.getEventLogsByEvent(c.Request.Context(), event)
 	ginx.Dangerous(err)
@@ -88,22 +90,37 @@ func (rt *Router) getNodeForDatasource(datasourceId int64, pk string) (string, e
 }
 
 // getEventLogs resolves the target instance and retrieves logs. It keeps the
-// plain (logs, instance, error) shape the aiagent troubleshooting tool binds to.
-func (rt *Router) getEventLogs(hash string) ([]string, string, error) {
+// flat shape the aiagent troubleshooting tool binds to, and passes the
+// truncation reason out with it: the search runs on a time budget, so an empty
+// or short result is not proof that nothing was logged, and the model has to
+// be told which of the two it is looking at.
+func (rt *Router) getEventLogs(hash string) ([]string, string, string, error) {
 	event, err := models.AlertHisEventGetByHash(rt.Ctx, hash)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 	if event == nil {
-		return nil, "", fmt.Errorf("no such alert event")
+		return nil, "", "", fmt.Errorf("no such alert event")
 	}
 
 	resp, err := rt.getEventLogsByEvent(context.Background(), event)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
-	return resp.Logs, resp.Instance, nil
+	return resp.Logs, resp.Instance, truncatedReason(resp), nil
+}
+
+// truncatedReason turns the response flags into the reason string the aiagent
+// tools carry, empty when the result is known to be complete.
+func truncatedReason(resp loggrep.EventDetailResp) string {
+	if !resp.Truncated {
+		return ""
+	}
+	if resp.Reason == "" {
+		return loggrep.ReasonTimeout
+	}
+	return resp.Reason
 }
 
 // eventLogsSince is the point before which log files cannot mention the event,

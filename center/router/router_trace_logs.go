@@ -56,6 +56,23 @@ func (rt *Router) getTraceLogs(ctx context.Context, traceId string) (loggrep.Eve
 	// they share one budget rather than each getting the full one
 	deadline := time.Now().Add(loggrep.DefaultTimeout)
 
+	// A search that did not finish must say so even when it found nothing:
+	// otherwise an aborted scan and a genuine "this trace was never logged
+	// here" are indistinguishable, and the page reports the second one.
+	// These carry that across every instance that gets asked.
+	var truncated bool
+	var reason string
+
+	note := func(t bool, r string) {
+		if !t {
+			return
+		}
+		truncated = true
+		if reason == "" {
+			reason = r
+		}
+	}
+
 	// try local first
 	res := loggrep.GrepLatestLogFiles(ctx, rt.LogDir, keyword, loggrep.GrepOptions{Deadline: deadline})
 	if len(res.Logs) > 0 {
@@ -66,6 +83,7 @@ func (rt *Router) getTraceLogs(ctx context.Context, traceId string) (loggrep.Eve
 			Reason:    res.Reason,
 		}, nil
 	}
+	note(res.Truncated, res.Reason)
 
 	// find all instances with the same engineName
 	servers, err := models.AlertingEngineGetsInstances(rt.Ctx,
@@ -82,22 +100,26 @@ func (rt *Router) getTraceLogs(ctx context.Context, traceId string) (loggrep.Eve
 		}
 
 		if time.Now().After(deadline) {
-			return loggrep.EventDetailResp{
-				Instance:  instance,
-				Truncated: true,
-				Reason:    loggrep.ReasonTimeout,
-			}, nil
+			note(true, loggrep.ReasonTimeout)
+			break
 		}
 
 		resp, err := rt.forwardLogQuery(ctx, node, "/trace-logs/"+traceId, time.Time{}, time.Until(deadline))
 		if err != nil {
+			// an instance that could not be asked leaves a hole in the answer
 			logger.Errorf("forwardTraceLogs failed: %v", err)
+			note(true, loggrep.ReasonTimeout)
 			continue
 		}
 		if len(resp.Logs) > 0 {
 			return resp, nil
 		}
+		note(resp.Truncated, resp.Reason)
 	}
 
-	return loggrep.EventDetailResp{Instance: instance}, nil
+	return loggrep.EventDetailResp{
+		Instance:  instance,
+		Truncated: truncated,
+		Reason:    reason,
+	}, nil
 }

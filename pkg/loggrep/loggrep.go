@@ -22,8 +22,22 @@ const MaxLogLines = 5000
 // whatever it collected within the budget and marks the result truncated.
 const DefaultTimeout = 10 * time.Second
 
-// deadlineCheckInterval is how many lines are scanned between two clock reads.
-const deadlineCheckInterval = 4096
+// scanWindow bounds how much of a file is read in one pass. A file is read one
+// window at a time from its end backwards, so a scan cut short by the deadline
+// has already covered the newest part of it. Reading a large file forward would
+// hand back its oldest lines instead, and the lines being looked for - the event
+// that just fired, the trace that was just served - are the ones at the end.
+// The window is also the granularity at which the deadline is checked, so it
+// has to stay small enough to finish well inside the budget on a cold cache.
+// A var rather than a const so the tests can shrink it instead of writing
+// multi-MB fixtures to prove the windows tile the file correctly.
+var scanWindow int64 = 16 << 20 // 16MB
+
+// maxLineBytes caps how much of one line is kept for matching. Anything longer
+// is matched on its head and the remainder is consumed and dropped - unlike a
+// bufio.Scanner buffer overflow, which used to abandon the rest of the file
+// without saying so. A var for the same reason as scanWindow.
+var maxLineBytes = 1 << 20 // 1MB
 
 const (
 	// ReasonTimeout means the budget ran out before every candidate file was
@@ -115,7 +129,9 @@ type logFile struct {
 // grep scans the files matching pattern newest first and returns the newest
 // matches, bounded by both the deadline and the line limit. Scanning newest
 // first is what makes a partial result useful: whatever the budget buys is the
-// most recent activity, which is what these log pages are read for.
+// most recent activity, which is what these log pages are read for. That holds
+// inside a file as well - see grepFile - so a result cut short by the deadline
+// is missing older lines, never newer ones.
 func grep(ctx context.Context, pattern, keyword string, opts GrepOptions) GrepResult {
 	limit := opts.Limit
 	if limit <= 0 {
@@ -134,6 +150,10 @@ func grep(ctx context.Context, pattern, keyword string, opts GrepOptions) GrepRe
 
 	var logs []string
 	var timedOut bool
+	// unread marks that some candidate data was never looked at, whether the
+	// deadline cut the scan short or a file could not be read to its start.
+	// Either way the missing lines are the older ones.
+	var unread bool
 
 	// matched counts matches per rotation chain. Once a chain has yielded
 	// limit lines, its older files are skipped: every line in them is older
@@ -156,10 +176,17 @@ func grep(ctx context.Context, pattern, keyword string, opts GrepOptions) GrepRe
 			break
 		}
 
-		lines, stopped := grepFile(ctx, f.path, keyword, deadline)
+		lines, stopped, incomplete := grepFile(ctx, f.path, keyword, deadline, limit)
 		logs = append(logs, lines...)
 		matched[f.group] += len(lines)
 
+		if incomplete {
+			unread = true
+		}
+
+		// the deadline is gone for every remaining file too, so stop here;
+		// a file that merely could not be read to its start does not say
+		// anything about the others, so that one only sets the flag
 		if stopped {
 			timedOut = true
 			break
@@ -178,9 +205,9 @@ func grep(ctx context.Context, pattern, keyword string, opts GrepOptions) GrepRe
 		result.Reason = ReasonLimit
 	}
 
-	// timeout wins the reason: it means whole files went unread, which hides
-	// more than dropping the tail of an over-long result does
-	if timedOut {
+	// an unread remainder wins the reason: it means log data was never looked
+	// at, which hides more than dropping the tail of an over-long result does
+	if timedOut || unread {
 		result.Truncated = true
 		result.Reason = ReasonTimeout
 	}
@@ -237,39 +264,162 @@ func rotationGroup(path string) string {
 	return name
 }
 
-// grepFile scans a file line by line, returning the lines containing keyword
-// and whether it gave up on the deadline before reaching the end. The deadline
-// is checked inside the loop, not just between files: a single size-rotated
-// file can be hundreds of MB and blow the whole budget on its own.
-func grepFile(ctx context.Context, filePath, keyword string, deadline time.Time) ([]string, bool) {
+// grepFile returns the lines of a file containing keyword, newest first. The
+// file is read one scanWindow at a time from its end backwards, so the budget
+// is spent on the most recent lines: a single size-rotated file can be hundreds
+// of MB and blow the whole budget on its own, and reading it forward would hand
+// back its oldest lines while the event being investigated sits at the end.
+//
+// stopped reports that the deadline (or the context) cut the scan short, which
+// says nothing more can be scanned at all. incomplete reports that this file
+// was not read back to its start for any reason - the deadline, or a read error
+// - so older matches in it may be missing.
+func grepFile(ctx context.Context, filePath, keyword string, deadline time.Time, limit int) (lines []string, stopped bool, incomplete bool) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		return nil, false
+		return nil, false, true
 	}
 	defer f.Close()
 
-	var lines []string
-	var scanned int
+	size, err := f.Seek(0, io.SeekEnd)
+	if err != nil {
+		return nil, false, true
+	}
 
-	scanner := bufio.NewScanner(f)
-	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
-	for scanner.Scan() {
-		scanned++
-		if scanned%deadlineCheckInterval == 0 {
-			if ctx.Err() != nil || time.Now().After(deadline) {
-				return lines, true
-			}
+	// a non-positive window would leave the loop below never advancing
+	window := scanWindow
+	if window <= 0 {
+		window = 16 << 20
+	}
+
+	for end := size; end > 0; {
+		if ctx.Err() != nil || time.Now().After(deadline) {
+			return lines, true, true
 		}
 
-		line := scanner.Text()
-		if strings.Contains(line, keyword) {
-			lines = append(lines, line)
+		start := end - window
+		if start < 0 {
+			start = 0
+		}
+
+		found, err := grepWindow(f, start, end, keyword)
+		lines = append(lines, found...)
+		if err != nil {
+			// a file rotated away mid scan, a bad sector: the matches already
+			// collected stay usable, but the older part of the file is lost
+			return lines, false, true
+		}
+
+		// one match past the limit already proves the result is truncated, and
+		// every remaining match in this file is older than the ones in hand, so
+		// none of them could survive the final truncation anyway
+		if len(lines) > limit {
+			return lines, false, false
+		}
+
+		end = start
+	}
+
+	return lines, false, false
+}
+
+// grepWindow returns the lines containing keyword that begin inside
+// [start, end). A line beginning before start belongs to the next window down
+// and is skipped here; a line beginning inside the window but running past end
+// is read whole. Together those two rules make the windows tile the file
+// exactly - no line is dropped at a boundary and none is returned twice.
+func grepWindow(f *os.File, start, end int64, keyword string) ([]string, error) {
+	if _, err := f.Seek(start, io.SeekStart); err != nil {
+		return nil, err
+	}
+
+	r := bufio.NewReaderSize(f, 256*1024)
+	off := start
+
+	if start > 0 {
+		// the line straddling start is the previous window's business
+		n, err := readLine(r, io.Discard)
+		off += n
+		if err != nil {
+			return nil, ignoreEOF(err)
 		}
 	}
 
-	// a read error (an over-long line, a file rotated away mid scan) leaves
-	// the matches found so far usable, so it is not surfaced as a hard failure
-	return lines, false
+	var lines []string
+	var sb strings.Builder
+
+	for off <= end {
+		sb.Reset()
+		n, err := readLine(r, &sb)
+		off += n
+
+		if n > 0 {
+			if line := sb.String(); strings.Contains(line, keyword) {
+				lines = append(lines, line)
+			}
+		}
+
+		if err != nil {
+			return lines, ignoreEOF(err)
+		}
+	}
+
+	return lines, nil
+}
+
+// readLine consumes up to and including the next newline, writing the line
+// without its trailing newline to out, and returns how many bytes it consumed.
+// Only the first maxLineBytes of a line are written; the rest is consumed and
+// dropped, so an over-long line costs that one line rather than the remainder
+// of the file.
+func readLine(r *bufio.Reader, out io.Writer) (int64, error) {
+	var consumed int64
+	var written int
+
+	for {
+		chunk, err := r.ReadSlice('\n')
+		consumed += int64(len(chunk))
+
+		if err == nil || err == io.EOF {
+			chunk = trimEOL(chunk)
+		}
+
+		if room := maxLineBytes - written; room > 0 && len(chunk) > 0 {
+			if len(chunk) > room {
+				chunk = chunk[:room]
+			}
+			n, werr := out.Write(chunk)
+			written += n
+			if werr != nil {
+				return consumed, werr
+			}
+		}
+
+		// ReadSlice fills its buffer and returns without the delimiter when a
+		// line is longer than the buffer; keep going until the line ends
+		if err == bufio.ErrBufferFull {
+			continue
+		}
+
+		return consumed, err
+	}
+}
+
+func trimEOL(b []byte) []byte {
+	if n := len(b); n > 0 && b[n-1] == '\n' {
+		b = b[:n-1]
+		if n = len(b); n > 0 && b[n-1] == '\r' {
+			b = b[:n-1]
+		}
+	}
+	return b
+}
+
+func ignoreEOF(err error) error {
+	if err == io.EOF {
+		return nil
+	}
+	return err
 }
 
 // RenderHTML writes the event detail HTML page to w.

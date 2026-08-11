@@ -126,17 +126,143 @@ func TestGrepFileStopsMidFileOnDeadline(t *testing.T) {
 	dir := t.TempDir()
 	path := writeLog(t, dir, "INFO.log", time.Now().Add(-time.Hour), 50000, 10, "hash-g")
 
-	lines, stopped := grepFile(context.Background(), path, "hash-g", time.Now().Add(-time.Second))
+	lines, stopped, incomplete := grepFile(context.Background(), path, "hash-g", time.Now().Add(-time.Second), MaxLogLines)
 
-	if !stopped {
-		t.Fatal("expected the scan to stop on the deadline")
-	}
-	if len(lines) == 0 {
-		t.Fatal("expected the lines matched before the deadline to be returned")
+	if !stopped || !incomplete {
+		t.Fatalf("expected the scan to stop on the deadline, got stopped=%v incomplete=%v", stopped, incomplete)
 	}
 	if len(lines) >= 5000 {
 		t.Fatalf("expected to stop early, but got %d of the 5000 matches", len(lines))
 	}
+}
+
+// The whole point of the windowed backward scan: a scan that cannot read the
+// whole file must give back the newest lines, not the oldest. Before the fix
+// the file was read forward, so a budget that ran out mid file returned its
+// oldest lines - and the event being investigated, which sits at the end, was
+// exactly what got dropped.
+func TestGrepFileReturnsNewestMatchesFirst(t *testing.T) {
+	dir := t.TempDir()
+	base := time.Now().Add(-time.Hour)
+	// 400 lines, every 4th matches -> 100 matches spread over the whole file
+	path := writeLog(t, dir, "INFO.log", base, 400, 4, "hash-h")
+
+	// a window per handful of lines, so the scan really does walk the file in
+	// pieces the way it does on a multi-hundred-MB production log
+	defer withScanWindow(200)()
+
+	lines, stopped, incomplete := grepFile(context.Background(), path, "hash-h", time.Now().Add(time.Minute), 5)
+
+	if stopped || incomplete {
+		t.Fatalf("a limit stop is not a truncated read of the file, got stopped=%v incomplete=%v", stopped, incomplete)
+	}
+	// it stops as soon as it is past the limit, so nowhere near all 100
+	if len(lines) <= 5 || len(lines) > 20 {
+		t.Fatalf("expected to stop just past the limit of 5, got %d of the 100 matches", len(lines))
+	}
+
+	// every returned line must come from the newest end of the file: the
+	// oldest of them is still newer than the ~80 matches left unread
+	oldestKept := lines[0]
+	for _, l := range lines {
+		if l < oldestKept {
+			oldestKept = l
+		}
+	}
+	cutoff := base.Add(300 * time.Second).Format("2006-01-02 15:04:05")
+	if oldestKept < cutoff {
+		t.Fatalf("expected only matches from the tail of the file, got %q (cutoff %q)", oldestKept, cutoff)
+	}
+}
+
+// The windows have to tile the file exactly: a line straddling a boundary must
+// be returned once, by the window it starts in, and never dropped or doubled.
+func TestGrepFileWindowsTileTheFile(t *testing.T) {
+	dir := t.TempDir()
+	path := writeLog(t, dir, "INFO.log", time.Now().Add(-time.Hour), 500, 1, "hash-i")
+
+	want, _, _ := grepFile(context.Background(), path, "hash-i", time.Now().Add(time.Minute), MaxLogLines)
+	if len(want) != 500 {
+		t.Fatalf("expected all 500 matches in a single window, got %d", len(want))
+	}
+
+	// every window size, including ones that land mid line, must agree
+	for _, w := range []int64{7, 13, 64, 199, 1024} {
+		t.Run(fmt.Sprintf("window=%d", w), func(t *testing.T) {
+			defer withScanWindow(w)()
+
+			got, _, _ := grepFile(context.Background(), path, "hash-i", time.Now().Add(time.Minute), MaxLogLines)
+			if len(got) != len(want) {
+				t.Fatalf("window %d returned %d lines, want %d", w, len(got), len(want))
+			}
+
+			seen := make(map[string]int, len(got))
+			for _, l := range got {
+				seen[l]++
+			}
+			for _, l := range want {
+				if seen[l] != 1 {
+					t.Fatalf("window %d: line %q appeared %d times, want exactly 1", w, l, seen[l])
+				}
+			}
+		})
+	}
+}
+
+// An over-long line used to blow the bufio.Scanner buffer and silently
+// abandon everything after it in that file.
+func TestGrepFileOverLongLineDoesNotDropTheRest(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "INFO.log")
+
+	base := time.Now().Add(-time.Hour)
+	stamp := func(d time.Duration) string {
+		return base.Add(d).Format("2006-01-02 15:04:05.000000")
+	}
+	body := strings.Repeat("x", 4096)
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "%s INFO hash-j before\n", stamp(0))
+	fmt.Fprintf(&sb, "%s INFO %s hash-j past-the-cap\n", stamp(time.Second), body)
+	fmt.Fprintf(&sb, "%s INFO hash-j after\n", stamp(2*time.Second))
+
+	if err := os.WriteFile(path, []byte(sb.String()), 0644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	defer withMaxLineBytes(64)()
+
+	lines, stopped, incomplete := grepFile(context.Background(), path, "hash-j", time.Now().Add(time.Minute), MaxLogLines)
+	if stopped || incomplete {
+		t.Fatalf("an over-long line is not a failed read, got stopped=%v incomplete=%v", stopped, incomplete)
+	}
+
+	// the giant line's keyword sits past the cap so it cannot match, but the
+	// lines on either side of it must both be found
+	var before, after bool
+	for _, l := range lines {
+		if strings.Contains(l, "before") {
+			before = true
+		}
+		if strings.Contains(l, "after") {
+			after = true
+		}
+	}
+	if !before || !after {
+		t.Fatalf("expected the lines around the over-long one to survive, got before=%v after=%v (%d lines)", before, after, len(lines))
+	}
+}
+
+func withScanWindow(n int64) func() {
+	prev := scanWindow
+	scanWindow = n
+	return func() { scanWindow = prev }
+}
+
+func withMaxLineBytes(n int) func() {
+	prev := maxLineBytes
+	maxLineBytes = n
+	return func() { maxLineBytes = prev }
 }
 
 // Skipping files last written before the cutoff is what keeps an event lookup

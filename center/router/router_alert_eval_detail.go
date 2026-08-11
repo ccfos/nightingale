@@ -49,7 +49,7 @@ func (rt *Router) alertEvalDetailJSON(c *gin.Context) {
 		ginx.Bomb(404, "no such alert rule")
 	}
 
-	rt.bgroCheck(c, rule.GroupId)
+	rt.bgroCheckAllowMissing(c, rule.GroupId)
 
 	resp, err := rt.getAlertEvalLogsByRule(c.Request.Context(), rule, id)
 	ginx.Dangerous(err)
@@ -58,24 +58,25 @@ func (rt *Router) alertEvalDetailJSON(c *gin.Context) {
 }
 
 // getAlertEvalLogs resolves the target instance(s) and retrieves alert eval
-// logs. It keeps the plain (logs, instance, error) shape the aiagent
-// troubleshooting tool binds to.
-func (rt *Router) getAlertEvalLogs(id string) ([]string, string, error) {
+// logs. It keeps the flat shape the aiagent troubleshooting tool binds to, and
+// passes the truncation reason out with it - see getEventLogs for why the
+// model must not be handed a partial result that looks complete.
+func (rt *Router) getAlertEvalLogs(id string) ([]string, string, string, error) {
 	ruleId, _ := strconv.ParseInt(id, 10, 64)
 	rule, err := models.AlertRuleGetById(rt.Ctx, ruleId)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 	if rule == nil {
-		return nil, "", fmt.Errorf("no such alert rule")
+		return nil, "", "", fmt.Errorf("no such alert rule")
 	}
 
 	resp, err := rt.getAlertEvalLogsByRule(context.Background(), rule, id)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
-	return resp.Logs, resp.Instance, nil
+	return resp.Logs, resp.Instance, truncatedReason(resp), nil
 }
 
 func (rt *Router) getAlertEvalLogsByRule(ctx context.Context, rule *models.AlertRule, id string) (loggrep.EventDetailResp, error) {
