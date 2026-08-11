@@ -142,13 +142,16 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
 
-	// 生效时段非法属于用户输入错误，要以 4xx 返回，页面才会弹出提示；
-	// 而 alertRuleAdd 是把逐条错误塞进 dat 里、外层仍是 200，页面会当成保存成功。
-	// 先整体校验再逐条入库，避免前面几条已写库、后面一条才报错的半截结果。
+	// 生效时段非法是纯输入错误，先整体校验再逐条入库，避免前面几条已写库、后面一条才报错的半截结果。
+	// 一次收齐所有不合法的规则再报，批量提交时调用方才知道是哪几条出了问题。
+	var invalidTimes []string
 	for i := 0; i < count; i++ {
 		if err := lst[i].ValidateEffectiveTimes(); err != nil {
-			ginx.Bomb(http.StatusBadRequest, "%s", err.Error())
+			invalidTimes = append(invalidTimes, fmt.Sprintf("%s: %s", lst[i].Name, err.Error()))
 		}
+	}
+	if len(invalidTimes) > 0 {
+		ginx.Bomb(http.StatusBadRequest, "%s", strings.Join(invalidTimes, "; "))
 	}
 
 	bgid := ginx.UrlParamInt64(c, "id")
@@ -471,10 +474,6 @@ func (rt *Router) alertRulePutByFE(c *gin.Context) {
 
 	rt.bgrwCheck(c, ar.GroupId)
 
-	if err := f.ValidateEffectiveTimes(); err != nil {
-		ginx.Bomb(http.StatusBadRequest, "%s", err.Error())
-	}
-
 	if err := RuleChangeHook(c, &f); err != nil {
 		ginx.Bomb(http.StatusForbidden, "%s", err.Error())
 	}
@@ -494,10 +493,6 @@ func (rt *Router) alertRulePutByService(c *gin.Context) {
 	if ar == nil {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
 		return
-	}
-
-	if err := f.ValidateEffectiveTimes(); err != nil {
-		ginx.Bomb(http.StatusBadRequest, "%s", err.Error())
 	}
 
 	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f))

@@ -111,8 +111,14 @@ func TestAlertRuleVerify_EffectiveTimeFormat(t *testing.T) {
 		}, true},
 		{"invalid time in second span", func(ar *models.AlertRule) {
 			ar.EnableStimesJSON = []string{"00:00", "10:00"}
-			ar.EnableEtimesJSON = []string{"09:59", "24:00"}
+			ar.EnableEtimesJSON = []string{"09:59", "24:30"}
 			ar.EnableDaysOfWeeksJSON = [][]string{{"1"}, {"2"}}
+		}, true},
+		// 24:00 只作为结束时间成立：触发时刻最大 23:59，恒小于 24:00，即生效到当日结束。
+		{"start time 24:00 is rejected", func(ar *models.AlertRule) {
+			ar.EnableStimesJSON = []string{"24:00"}
+			ar.EnableEtimesJSON = []string{"23:59"}
+			ar.EnableDaysOfWeeksJSON = [][]string{{"1"}}
 		}, true},
 		{"invalid legacy single time field", func(ar *models.AlertRule) {
 			ar.EnableStimeJSON = "Invalid"
@@ -122,6 +128,11 @@ func TestAlertRuleVerify_EffectiveTimeFormat(t *testing.T) {
 		{"valid cross-day span", func(ar *models.AlertRule) {
 			ar.EnableStimesJSON = []string{"22:00"}
 			ar.EnableEtimesJSON = []string{"06:00"}
+			ar.EnableDaysOfWeeksJSON = [][]string{{"1"}}
+		}, false},
+		{"valid span ending at 24:00", func(ar *models.AlertRule) {
+			ar.EnableStimesJSON = []string{"02:00"}
+			ar.EnableEtimesJSON = []string{"24:00"}
 			ar.EnableDaysOfWeeksJSON = [][]string{{"1"}}
 		}, false},
 		{"valid all day span", func(ar *models.AlertRule) {
