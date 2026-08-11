@@ -230,7 +230,9 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 		suffix := arr[len(arr)-1]
 
 		switch suffix {
-		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "md":
+		// 前端发布包里出现的静态资源后缀都要列在这里，否则会被当成前端路由返回 index.html。
+		// 新增前端资源类型（如 n9e-collect-templates/*.toml、字体 woff2）时记得同步补充
+		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "woff2", "md", "toml":
 			if !rt.Center.UseFileAssets {
 				c.FileFromFS(c.Request.URL.Path, *fs)
 			} else {
