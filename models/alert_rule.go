@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -625,6 +626,10 @@ func (ar *AlertRule) Verify() error {
 			enableStimeCount, enableEtimeCount, enableWeekCount)
 	}
 
+	if err := ar.ValidateEffectiveTimes(); err != nil {
+		return err
+	}
+
 	if err := ar.validateCronPattern(); err != nil {
 		return err
 	}
@@ -646,6 +651,40 @@ func (ar *AlertRule) Verify() error {
 		ar.NotifyGroups = ""
 		ar.Callbacks = ""
 		ar.CallbacksJSON = []string{}
+	}
+
+	return nil
+}
+
+// hhmmPattern 严格匹配 24 小时制 HH:MM。不接受 8:00 这类缺前导零的写法：生效时段在运行时是把
+// 当前时间格式化成 HH:MM 后按字符串直接比大小的，位数不齐会让时段判断出错。
+var hhmmPattern = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
+
+// ValidateEffectiveTimes 校验生效时段的起止时间格式。前端用 moment 格式化时间，moment 拿到脏数据
+// 会格式化出 「Invalid date」 这类字符串并原样提交，存进 DB 后按空格切分会让时段数组长度错乱，
+// 所以必须拦在入库前。取值口径与上面的段数校验一致：复数字段为空时回退到已废弃的单数字段。
+// 除了被 Verify 调用，页面侧的新增/编辑接口还会在写库前单独调它，以便把非法输入渲染成 4xx。
+func (ar *AlertRule) ValidateEffectiveTimes() error {
+	stimes := ar.EnableStimesJSON
+	if len(stimes) == 0 && ar.EnableStimeJSON != "" {
+		stimes = []string{ar.EnableStimeJSON}
+	}
+
+	etimes := ar.EnableEtimesJSON
+	if len(etimes) == 0 && ar.EnableEtimeJSON != "" {
+		etimes = []string{ar.EnableEtimeJSON}
+	}
+
+	for i := range stimes {
+		if !hhmmPattern.MatchString(stimes[i]) {
+			return fmt.Errorf("invalid effective time span %d: start time(%s) must be in HH:MM format", i+1, stimes[i])
+		}
+	}
+
+	for i := range etimes {
+		if !hhmmPattern.MatchString(etimes[i]) {
+			return fmt.Errorf("invalid effective time span %d: end time(%s) must be in HH:MM format", i+1, etimes[i])
+		}
 	}
 
 	return nil
