@@ -75,9 +75,7 @@
             "alertname=WhoisDomainExpiringSoon"
         ],
         "annotations": {
-            "summary": "域名距离到期不足 30 天。域名过期会导致解析立即失效，所有依赖该域名的服务（含证书签发校验）都会中断。",
-            "action": "1) 从告警标签取 domain，登录域名注册商控制台确认到期时间与续费状态；2) 立即完成续费，并把自动续费打开，同时确认绑定的支付方式未过期；3) 核对域名注册联系人邮箱是否仍然有效，注册商的到期提醒发到废弃邮箱是最常见的失守原因；4) 续费完成后等待 whois 数据刷新（通常数小时），确认该告警自动恢复。",
-            "runbook_url": "https://www.icann.org/resources/pages/registrant-rights-responsibilities-2014-03-14-en"
+            "action": "1) 从告警标签取 domain，登录域名注册商控制台确认到期时间与续费状态；\n2) 立即完成续费，并把自动续费打开，同时确认绑定的支付方式未过期；\n3) 核对域名注册联系人邮箱是否仍然有效，注册商的到期提醒发到废弃邮箱是最常见的失守原因；\n4) 续费完成后等待 whois 数据刷新（通常数小时），确认该告警自动恢复。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=WhoisDomainExpiringCritical"
         ],
         "annotations": {
-            "summary": "域名距离到期不足 7 天，属于必须当天处理的事项。一旦进入过期状态，域名会先停止解析，随后进入赎回期，赎回费用远高于续费。",
-            "action": "1) 从告警标签取 domain，立刻登录注册商完成续费，不要等待自动续费；2) 自动续费失败的核对支付方式、余额与实名认证状态，这三项任一异常都会导致扣款失败；3) 若域名已被转出或注册商账号无法登录，立即联系注册商客服走紧急通道；4) 续费后确认域名状态从 clientHold/pendingDelete 恢复为 ok，并验证 dig \u003cdomain\u003e 能正常解析。",
-            "runbook_url": "https://www.icann.org/resources/pages/registrant-rights-responsibilities-2014-03-14-en"
+            "action": "1) 从告警标签取 domain，立刻登录注册商完成续费，不要等待自动续费；\n2) 自动续费失败的核对支付方式、余额与实名认证状态，这三项任一异常都会导致扣款失败；\n3) 若域名已被转出或注册商账号无法登录，立即联系注册商客服走紧急通道；\n4) 续费后确认域名状态从 clientHold/pendingDelete 恢复为 ok，并验证 dig \u003cdomain\u003e 能正常解析。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -249,9 +245,7 @@
             "alertname=WhoisDomainRecordChanged"
         ],
         "annotations": {
-            "summary": "域名的 whois 最后更新时间在最近 1 天内发生了变化，说明注册信息被修改过。若不是己方操作，可能是域名被劫持或转移。",
-            "action": "1) 从告警标签取 domain，执行 whois \u003cdomain\u003e 对比 NS 记录、注册商、注册联系人是否与预期一致；2) 确认是否是己方发起的续费、改 NS、转移注册商等操作，核对变更记录；3) 非己方操作的立即登录注册商修改密码、开启二次验证，并检查是否有异常的转移申请；4) 确认被劫持的立刻联系注册商冻结域名并启用注册商锁（clientTransferProhibited）。",
-            "runbook_url": "https://www.icann.org/resources/pages/transfer-policy-2016-06-01-en"
+            "action": "1) 从告警标签取 domain，执行 whois \u003cdomain\u003e 对比 NS 记录、注册商、注册联系人是否与预期一致；\n2) 确认是否是己方发起的续费、改 NS、转移注册商等操作，核对变更记录；\n3) 非己方操作的立即登录注册商修改密码、开启二次验证，并检查是否有异常的转移申请；\n4) 确认被劫持的立刻联系注册商冻结域名并启用注册商锁（clientTransferProhibited）。"
         },
         "extra_config": null,
         "create_at": 0,

@@ -72,9 +72,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "RocketMQ broker 不可用，该 broker 上的 topic 分区无法读写，生产与消费都会失败。",
-            "action": "1) 在华为云控制台确认实例与 broker 状态；2) 确认客户端是否已自动切换到其他 broker——多 broker 部署时部分分区不可用；3) 控制台无异常但客户端报错的，检查网络与安全组、以及客户端的 nameserver 地址配置；4) 持续不可用的提工单给华为云。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在华为云控制台确认实例与 broker 状态；\n2) 确认客户端是否已自动切换到其他 broker——多 broker 部署时部分分区不可用；\n3) 控制台无异常但客户端报错的，检查网络与安全组、以及客户端的 nameserver 地址配置；\n4) 持续不可用的提工单给华为云。"
         },
         "extra_config": {
             "enrich_queries": [],
@@ -168,9 +166,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "RocketMQ broker 每核平均负载超过 1.5，消息收发会开始排队，延迟上升。",
-            "action": "1) 在控制台看该 broker 的 TPS 与消息堆积曲线，确认是生产还是消费侧压力；2) 消费堆积严重的先扩消费者实例；3) 生产量突增的评估是否需要升级实例规格；4) 确认没有大消息或大批量发送把 broker 压住。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在控制台看该 broker 的 TPS 与消息堆积曲线，确认是生产还是消费侧压力；\n2) 消费堆积严重的先扩消费者实例；\n3) 生产量突增的评估是否需要升级实例规格；\n4) 确认没有大消息或大批量发送把 broker 压住。"
         },
         "extra_config": {
             "enrich_queries": [],
@@ -264,9 +260,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "RocketMQ broker 内存使用率超过 85%，继续增长会影响消息刷盘与消费性能。",
-            "action": "1) 在控制台看消息堆积量——堆积会显著占用内存；2) 优先恢复消费把堆积清掉，这是最直接的止血；3) 确认消息保留时长配置是否过长；4) 长期需求增长的升级实例规格。",
-            "runbook_url": "https://support.huaweicloud.com/ces/index.html"
+            "action": "1) 在控制台看消息堆积量——堆积会显著占用内存；\n2) 优先恢复消费把堆积清掉，这是最直接的止血；\n3) 确认消息保留时长配置是否过长；\n4) 长期需求增长的升级实例规格。"
         },
         "extra_config": {
             "enrich_queries": [],

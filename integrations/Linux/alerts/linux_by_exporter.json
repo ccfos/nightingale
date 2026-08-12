@@ -73,9 +73,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "磁盘设备报错，通常意味着硬件层面已经出现坏道或控制器异常，数据有丢失风险。",
-            "action": "1) 用 dmesg -T | grep -iE 'i/o error|ata|scsi' 看内核报的具体错误与设备名；2) 用 smartctl -a /dev/sdX 看 SMART 属性，重点关注 Reallocated_Sector_Ct 与 Current_Pending_Sector；3) 确认该盘上的数据是否有副本或备份，优先保证数据安全再处理硬件；4) 确认为硬件故障的，安排停机换盘，RAID 环境下先确认阵列降级状态再操作。",
-            "runbook_url": "https://www.smartmontools.org/wiki/TocDoc"
+            "action": "1) 用 dmesg -T | grep -iE 'i/o error|ata|scsi' 看内核报的具体错误与设备名；\n2) 用 smartctl -a /dev/sdX 看 SMART 属性，重点关注 Reallocated_Sector_Ct 与 Current_Pending_Sector；\n3) 确认该盘上的数据是否有副本或备份，优先保证数据安全再处理硬件；\n4) 确认为硬件故障的，安排停机换盘，RAID 环境下先确认阵列降级状态再操作。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -160,9 +158,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "小于 200G 的磁盘使用率已超过 90%，小盘余量本来就少，触顶会很快。",
-            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 \u003c挂载点\u003e | sort -h 找出占用最大的目录；2) 系统盘常见是 /var/log 与容器镜像层（docker system df 看占用，docker system prune 清理）；3) 用 lsof +L1 检查已删除但句柄未释放的文件；4) 长期需扩容或把大数据目录迁到独立磁盘。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 \u003c挂载点\u003e | sort -h 找出占用最大的目录；\n2) 系统盘常见是 /var/log 与容器镜像层（docker system df 看占用，docker system prune 清理）；\n3) 用 lsof +L1 检查已删除但句柄未释放的文件；\n4) 长期需扩容或把大数据目录迁到独立磁盘。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -245,9 +241,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "每核平均负载持续偏高，说明可运行与等待 IO 的任务数超过了 CPU 的处理能力，请求会明显排队。",
-            "action": "1) 用 uptime 看 1/5/15 分钟负载趋势，判断是突发还是持续；2) 用 top 看 %wa（IO 等待）——高说明瓶颈在磁盘而非 CPU，按磁盘 IO 处理；3) 用 vmstat 1 看 r（运行队列）与 b（阻塞）列区分 CPU 密集与 IO 阻塞；4) 定位到具体进程后按 CPU 或 IO 的路径继续排查，必要时扩容。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 uptime 看 1/5/15 分钟负载趋势，判断是突发还是持续；\n2) 用 top 看 %wa（IO 等待）——高说明瓶颈在磁盘而非 CPU，按磁盘 IO 处理；\n3) 用 vmstat 1 看 r（运行队列）与 b（阻塞）列区分 CPU 密集与 IO 阻塞；\n4) 定位到具体进程后按 CPU 或 IO 的路径继续排查，必要时扩容。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -330,9 +324,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "系统级文件句柄使用率超过 90%，触顶后所有进程都无法打开新文件或建立新连接，报 Too many open files。",
-            "action": "1) 用 cat /proc/sys/fs/file-nr 确认已分配与上限；2) 用 lsof | awk '{print $2}' | sort | uniq -c | sort -rn | head 找出占用句柄最多的进程；3) 应急调大：sysctl -w fs.file-max=\u003c更大值\u003e，并检查该进程的 ulimit -n 与 systemd LimitNOFILE；4) 根因通常是连接或文件未关闭，需在应用侧修复泄漏。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 cat /proc/sys/fs/file-nr 确认已分配与上限；\n2) 用 lsof | awk '{print $2}' | sort | uniq -c | sort -rn | head 找出占用句柄最多的进程；\n3) 应急调大：sysctl -w fs.file-max=\u003c更大值\u003e，并检查该进程的 ulimit -n 与 systemd LimitNOFILE；\n4) 根因通常是连接或文件未关闭，需在应用侧修复泄漏。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -415,9 +407,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "磁盘 inode 使用率超过 90%。inode 耗尽后即使还有剩余空间也无法创建新文件，表现为「磁盘未满却写不进去」，很容易误判。",
-            "action": "1) 用 df -i 确认是哪个挂载点的 inode 吃紧；2) 用 for d in /path/*; do echo \"$(find $d | wc -l) $d\"; done | sort -rn | head 逐层找出小文件最多的目录；3) 常见来源是 session 文件、邮件队列、缓存碎片、未清理的容器层——按业务确认后批量删除；4) 长期可在格式化时调大 inode 密度，或把小文件业务迁到独立分区。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 df -i 确认是哪个挂载点的 inode 吃紧；\n2) 用 for d in /path/*; do echo \"$(find $d | wc -l) $d\"; done | sort -rn | head 逐层找出小文件最多的目录；\n3) 常见来源是 session 文件、邮件队列、缓存碎片、未清理的容器层——按业务确认后批量删除；\n4) 长期可在格式化时调大 inode 密度，或把小文件业务迁到独立分区。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -502,9 +492,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "可用内存低于 25%，继续下降会触发 swap 抖动甚至 OOM Killer 杀进程。",
-            "action": "1) 用 free -h 确认 available 与 swap 使用情况；2) 用 ps aux --sort=-%mem | head 找出占用最高的进程，对比它们的历史内存曲线判断是否泄漏；3) 内核回收不及时可用 sync; echo 1 \u003e /proc/sys/vm/drop_caches 释放 page cache（生产慎用）；4) 确认是业务增长还是进程泄漏——泄漏要在应用侧抓堆定位，不能只靠重启。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 free -h 确认 available 与 swap 使用情况；\n2) 用 ps aux --sort=-%mem | head 找出占用最高的进程，对比它们的历史内存曲线判断是否泄漏；\n3) 内核回收不及时可用 sync; echo 1 \u003e /proc/sys/vm/drop_caches 释放 page cache（生产慎用）；\n4) 确认是业务增长还是进程泄漏——泄漏要在应用侧抓堆定位，不能只靠重启。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -589,9 +577,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "可用内存低于 25%，继续下降会触发 swap 抖动甚至 OOM Killer 杀进程。",
-            "action": "1) 用 free -h 确认 available 与 swap 使用情况；2) 用 ps aux --sort=-%mem | head 找出占用最高的进程，对比它们的历史内存曲线判断是否泄漏；3) 内核回收不及时可用 sync; echo 1 \u003e /proc/sys/vm/drop_caches 释放 page cache（生产慎用）；4) 确认是业务增长还是进程泄漏——泄漏要在应用侧抓堆定位，不能只靠重启。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 free -h 确认 available 与 swap 使用情况；\n2) 用 ps aux --sort=-%mem | head 找出占用最高的进程，对比它们的历史内存曲线判断是否泄漏；\n3) 内核回收不及时可用 sync; echo 1 \u003e /proc/sys/vm/drop_caches 释放 page cache（生产慎用）；\n4) 确认是业务增长还是进程泄漏——泄漏要在应用侧抓堆定位，不能只靠重启。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -674,9 +660,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "网卡入方向出现丢包，说明接收侧处理不过来或链路有问题，表现为请求超时、重传增多。",
-            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 RX dropped/errors 的增长；2) 用 ethtool -S \u003c网卡\u003e 看具体丢包原因（rx_no_buffer、rx_missed_errors 等）；3) 环形缓冲区不足可用 ethtool -G \u003c网卡\u003e rx \u003c更大值\u003e 调大，并检查 net.core.netdev_max_backlog；4) 若伴随 CPU 软中断偏高（top 里 %si），开启 RPS/RSS 把中断分散到多核。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 RX dropped/errors 的增长；\n2) 用 ethtool -S \u003c网卡\u003e 看具体丢包原因（rx_no_buffer、rx_missed_errors 等）；\n3) 环形缓冲区不足可用 ethtool -G \u003c网卡\u003e rx \u003c更大值\u003e 调大，并检查 net.core.netdev_max_backlog；\n4) 若伴随 CPU 软中断偏高（top 里 %si），开启 RPS/RSS 把中断分散到多核。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -759,9 +743,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "网卡出方向出现丢包，发送队列已经拥塞，对外请求与响应会出现超时和重传。",
-            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 TX dropped/errors 的增长；2) 用 ethtool -S \u003c网卡\u003e 看具体计数，并用 tc -s qdisc show dev \u003c网卡\u003e 看队列是否溢出；3) 发送队列不足可调大 txqueuelen 与 ethtool -G \u003c网卡\u003e tx；4) 确认是否已跑满带宽——是则限流或扩带宽，不是则排查网卡驱动与对端设备。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 TX dropped/errors 的增长；\n2) 用 ethtool -S \u003c网卡\u003e 看具体计数，并用 tc -s qdisc show dev \u003c网卡\u003e 看队列是否溢出；\n3) 发送队列不足可调大 txqueuelen 与 ethtool -G \u003c网卡\u003e tx；\n4) 确认是否已跑满带宽——是则限流或扩带宽，不是则排查网卡驱动与对端设备。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -844,9 +826,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "内核连接跟踪表使用率超过 80%，表满之后新连接会被直接丢弃，内核日志出现 nf_conntrack: table full, dropping packet，表现为大面积连接超时。",
-            "action": "1) 用 sysctl net.netfilter.nf_conntrack_count 与 nf_conntrack_max 确认当前水位；2) 用 conntrack -L | awk '{print $4}' | sort | uniq -c | sort -rn 看连接集中在哪类协议或来源；3) 应急调大：sysctl -w net.netfilter.nf_conntrack_max=\u003c更大值\u003e，并同步调大 nf_conntrack_buckets；4) 同时缩短 nf_conntrack_tcp_timeout_time_wait 等超时，或对不需要跟踪的流量用 iptables raw 表 NOTRACK。",
-            "runbook_url": "https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt"
+            "action": "1) 用 sysctl net.netfilter.nf_conntrack_count 与 nf_conntrack_max 确认当前水位；\n2) 用 conntrack -L | awk '{print $4}' | sort | uniq -c | sort -rn 看连接集中在哪类协议或来源；\n3) 应急调大：sysctl -w net.netfilter.nf_conntrack_max=\u003c更大值\u003e，并同步调大 nf_conntrack_buckets；\n4) 同时缩短 nf_conntrack_tcp_timeout_time_wait 等超时，或对不需要跟踪的流量用 iptables raw 表 NOTRACK。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -929,9 +909,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "系统触发了 OOM Killer，已有进程被内核强制杀死，被杀进程上的请求全部中断。",
-            "action": "1) 用 dmesg -T | grep -i 'killed process' 确认被杀的是哪个进程、当时占用多少内存；2) 用 free -h 与该进程的内存曲线判断是内存泄漏还是配置的上限过高；3) 给关键进程调整 oom_score_adj 降低被杀优先级，同时给次要进程设 cgroup 内存上限；4) 根因是泄漏的要在应用侧抓堆定位，只扩内存会反复复发。",
-            "runbook_url": "https://www.kernel.org/doc/gorman/html/understand/understand016.html"
+            "action": "1) 用 dmesg -T | grep -i 'killed process' 确认被杀的是哪个进程、当时占用多少内存；\n2) 用 free -h 与该进程的内存曲线判断是内存泄漏还是配置的上限过高；\n3) 给关键进程调整 oom_score_adj 降低被杀优先级，同时给次要进程设 cgroup 内存上限；\n4) 根因是泄漏的要在应用侧抓堆定位，只扩内存会反复复发。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1014,9 +992,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "系统进程总数超过 600，进程表膨胀会拖慢调度并消耗内存，也可能是有程序在失控地 fork。",
-            "action": "1) 用 ps -eo ppid | sort | uniq -c | sort -rn | head 找出 fork 子进程最多的父进程；2) 确认是正常的多进程模型（如 php-fpm、nginx worker）还是失控 fork；3) 失控的先停掉该父进程止血，再修复代码里的 fork 逻辑；4) 正常业务增长则调整 worker 数配置并评估是否需要扩容。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 ps -eo ppid | sort | uniq -c | sort -rn | head 找出 fork 子进程最多的父进程；\n2) 确认是正常的多进程模型（如 php-fpm、nginx worker）还是失控 fork；\n3) 失控的先停掉该父进程止血，再修复代码里的 fork 逻辑；\n4) 正常业务增长则调整 worker 数配置并评估是否需要扩容。"
         },
         "extra_config": null,
         "create_at": 0,

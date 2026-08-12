@@ -75,9 +75,7 @@
             "alertname=MysqlHighThreadsRunning"
         ],
         "annotations": {
-            "summary": "正在执行的线程数已达 max_connections 的 60%，说明 SQL 大量堆积未能及时返回，再涨会耗尽连接、新请求被拒。",
-            "action": "1) SHOW FULL PROCESSLIST 看堆积的线程集中在哪条 SQL、哪张表；2) SHOW ENGINE INNODB STATUS 查是否存在锁等待或死锁；3) 对元凶 SQL 执行 KILL 止血后补索引或限流；4) 排查上游是否有突发流量或慢依赖导致连接迟迟不释放。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/too-many-connections.html"
+            "action": "1) SHOW FULL PROCESSLIST 看堆积的线程集中在哪条 SQL、哪张表；\n2) SHOW ENGINE INNODB STATUS 查是否存在锁等待或死锁；\n3) 对元凶 SQL 执行 KILL 止血后补索引或限流；\n4) 排查上游是否有突发流量或慢依赖导致连接迟迟不释放。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=MysqlHighOpenFiles"
         ],
         "annotations": {
-            "summary": "已打开文件句柄数达到 open_files_limit 的 80%，触顶后 MySQL 将无法打开新的表文件，直接报 Too many open files。",
-            "action": "1) 用 SHOW GLOBAL STATUS LIKE 'Open_files' 和 SHOW VARIABLES LIKE 'open_files_limit' 确认当前水位；2) 调大 my.cnf 中的 open_files_limit，并同步放开系统 ulimit -n 与 systemd 的 LimitNOFILE；3) 检查 table_open_cache 是否设置过大导致句柄膨胀；4) 排查是否有大量分区表或小表被同时访问。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html"
+            "action": "1) 用 SHOW GLOBAL STATUS LIKE 'Open_files' 和 SHOW VARIABLES LIKE 'open_files_limit' 确认当前水位；\n2) 调大 my.cnf 中的 open_files_limit，并同步放开系统 ulimit -n 与 systemd 的 LimitNOFILE；\n3) 检查 table_open_cache 是否设置过大导致句柄膨胀；\n4) 排查是否有大量分区表或小表被同时访问。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -249,9 +245,7 @@
             "alertname=MysqlTooManyConnections"
         ],
         "annotations": {
-            "summary": "已建立连接数达到 max_connections 的 80%，再涨新连接会被拒绝并报 Too many connections，业务直接报错。",
-            "action": "1) SHOW FULL PROCESSLIST 按来源主机统计连接，找出连接数异常的应用；2) 区分是业务突增还是应用连接池泄漏（大量长时间 Sleep 的连接堆积）；3) 应急可调大 max_connections，同时核对内存余量避免 OOM；4) 根因侧收敛应用连接池上限、缩短 wait_timeout。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/too-many-connections.html"
+            "action": "1) SHOW FULL PROCESSLIST 按来源主机统计连接，找出连接数异常的应用；\n2) 区分是业务突增还是应用连接池泄漏（大量长时间 Sleep 的连接堆积）；\n3) 应急可调大 max_connections，同时核对内存余量避免 OOM；\n4) 根因侧收敛应用连接池上限、缩短 wait_timeout。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -336,9 +330,7 @@
             "alertname=MysqlRestarted"
         ],
         "annotations": {
-            "summary": "MySQL 实例在 1 分钟内重启过，重启期间连接全部中断、InnoDB 缓冲池冷启动，业务会有一段时间的抖动。",
-            "action": "1) 查看 error log（SHOW VARIABLES LIKE 'log_error' 指向的文件）确认是崩溃、被 OOM kill 还是人工重启；2) 若是 OOM，核对 innodb_buffer_pool_size 与机器物理内存后调小；3) 若非计划内重启，检查 systemd 或容器编排是否在反复拉起；4) 重启后确认主从复制已自动恢复、应用连接池已重连。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/error-log.html"
+            "action": "1) 查看 error log（SHOW VARIABLES LIKE 'log_error' 指向的文件）确认是崩溃、被 OOM kill 还是人工重启；\n2) 若是 OOM，核对 innodb_buffer_pool_size 与机器物理内存后调小；\n3) 若非计划内重启，检查 systemd 或容器编排是否在反复拉起；\n4) 重启后确认主从复制已自动恢复、应用连接池已重连。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -423,9 +415,7 @@
             "alertname=MysqlSlowQueries"
         ],
         "annotations": {
-            "summary": "最近 5 分钟慢查询累计超过 10 条，超过 long_query_time 的 SQL 会长时间占住连接和 IO，并发上来后容易连锁拖垮实例。",
-            "action": "1) SHOW FULL PROCESSLIST 找当前长时间运行的 SQL，必要时 KILL \u003cid\u003e 先止血；2) 用 mysqldumpslow -s t -t 10 \u003cslow_log\u003e 或 pt-query-digest 定位 TOP 慢 SQL；3) 对定位到的 SQL 执行 EXPLAIN 看执行计划，补索引或改写；4) 若是 long_query_time 设置过低导致的噪音，调整该参数而不是忽略告警。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/slow-query-log.html"
+            "action": "1) SHOW FULL PROCESSLIST 找当前长时间运行的 SQL，必要时 KILL \u003cid\u003e 先止血；\n2) 用 mysqldumpslow -s t -t 10 \u003cslow_log\u003e 或 pt-query-digest 定位 TOP 慢 SQL；\n3) 对定位到的 SQL 执行 EXPLAIN 看执行计划，补索引或改写；\n4) 若是 long_query_time 设置过低导致的噪音，调整该参数而不是忽略告警。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -510,9 +500,7 @@
             "alertname=MysqlInnodbLogWaits"
         ],
         "annotations": {
-            "summary": "InnoDB 因 redo log buffer 空间不足而等待刷盘，写入被阻塞，写事务的延迟会明显上升。",
-            "action": "1) 调大 innodb_log_buffer_size（通常从默认 16M 翻倍到 64M~256M）；2) 检查 innodb_log_file_size 是否过小导致频繁 checkpoint；3) 用 iostat -x 1 看 redo log 所在磁盘的 util 是否已经打满；4) 排查是否有大事务一次性写入过多数据，拆成小批次提交。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/innodb-redo-log.html"
+            "action": "1) 调大 innodb_log_buffer_size（通常从默认 16M 翻倍到 64M~256M）；\n2) 检查 innodb_log_file_size 是否过小导致频繁 checkpoint；\n3) 用 iostat -x 1 看 redo log 所在磁盘的 util 是否已经打满；\n4) 排查是否有大事务一次性写入过多数据，拆成小批次提交。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -597,9 +585,7 @@
             "alertname=MysqlSlaveIoThreadNotRunning"
         ],
         "annotations": {
-            "summary": "从库 IO 线程已停止，不再从主库拉取 binlog，从库数据停止更新，读流量会读到过期数据。",
-            "action": "1) 在从库执行 SHOW SLAVE STATUS\\G 看 Last_IO_Error；2) 常见原因是主库连不上、复制账号失效、或所需 binlog 已被 purge——分别处理网络、用 CHANGE MASTER TO 重设账号、或用备份重建从库；3) 处理完执行 START SLAVE IO_THREAD 并确认 Slave_IO_Running=Yes；4) 恢复前先把读流量从该从库摘走。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/replication-problems.html"
+            "action": "1) 在从库执行 SHOW SLAVE STATUS\\G 看 Last_IO_Error；\n2) 常见原因是主库连不上、复制账号失效、或所需 binlog 已被 purge——分别处理网络、用 CHANGE MASTER TO 重设账号、或用备份重建从库；\n3) 处理完执行 START SLAVE IO_THREAD 并确认 Slave_IO_Running=Yes；\n4) 恢复前先把读流量从该从库摘走。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -684,9 +670,7 @@
             "alertname=MysqlSlaveReplicationLag"
         ],
         "annotations": {
-            "summary": "从库复制延迟已超过 30 秒，读写分离场景下会读到明显过期的数据。",
-            "action": "1) SHOW SLAVE STATUS\\G 看 Seconds_Behind_Master 与 SQL 线程当前正在执行的事件；2) 到主库用 SHOW PROCESSLIST 找是否有大事务或批量 DML 正在灌数据；3) 从库若是单线程回放，开启并行复制（slave_parallel_workers / slave_parallel_type=LOGICAL_CLOCK）；4) 延迟持续扩大时先把读流量切回主库或其他从库。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/replication-problems.html"
+            "action": "1) SHOW SLAVE STATUS\\G 看 Seconds_Behind_Master 与 SQL 线程当前正在执行的事件；\n2) 到主库用 SHOW PROCESSLIST 找是否有大事务或批量 DML 正在灌数据；\n3) 从库若是单线程回放，开启并行复制（slave_parallel_workers / slave_parallel_type=LOGICAL_CLOCK）；\n4) 延迟持续扩大时先把读流量切回主库或其他从库。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -771,9 +755,7 @@
             "alertname=MysqlSlaveSqlThreadNotRunning"
         ],
         "annotations": {
-            "summary": "从库 SQL 线程已停止，binlog 拉回来了但不再回放，从库数据停止更新且延迟会持续扩大。",
-            "action": "1) SHOW SLAVE STATUS\\G 看 Last_SQL_Error 定位卡住的事件；2) 若是可安全跳过的冲突（如重复主键），核对数据一致后执行 SET GLOBAL sql_slave_skip_counter=1 再 START SLAVE SQL_THREAD；3) 若主从数据已经分叉，用备份重建从库，不要盲目跳过；4) 恢复前先把读流量从该从库摘走。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/replication-problems.html"
+            "action": "1) SHOW SLAVE STATUS\\G 看 Last_SQL_Error 定位卡住的事件；\n2) 若是可安全跳过的冲突（如重复主键），核对数据一致后执行 SET GLOBAL sql_slave_skip_counter=1 再 START SLAVE SQL_THREAD；\n3) 若主从数据已经分叉，用备份重建从库，不要盲目跳过；\n4) 恢复前先把读流量从该从库摘走。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -858,9 +840,7 @@
             "alertname=MysqlDown"
         ],
         "annotations": {
-            "summary": "采集端已无法连上 MySQL，实例可能已崩溃或网络不通，依赖该库的业务全部不可用。",
-            "action": "1) 登录主机用 systemctl status mysqld 或 docker ps 确认进程是否存活；2) 进程存活则用 mysql -h\u003chost\u003e -P\u003cport\u003e -u\u003cuser\u003e -p 手工连一次，区分是实例夯住还是网络/账号问题；3) 进程不在则先看 error log 尾部定位崩溃原因（OOM、磁盘满、数据文件损坏）再拉起，不要盲目重启；4) 有主从的立即评估是否需要切主，并确认应用已摘除该节点。",
-            "runbook_url": "https://dev.mysql.com/doc/refman/8.0/en/error-log.html"
+            "action": "1) 登录主机用 systemctl status mysqld 或 docker ps 确认进程是否存活；\n2) 进程存活则用 mysql -h\u003chost\u003e -P\u003cport\u003e -u\u003cuser\u003e -p 手工连一次，区分是实例夯住还是网络/账号问题；\n3) 进程不在则先看 error log 尾部定位崩溃原因（OOM、磁盘满、数据文件损坏）再拉起，不要盲目重启；\n4) 有主从的立即评估是否需要切主，并确认应用已摘除该节点。"
         },
         "extra_config": null,
         "create_at": 0,

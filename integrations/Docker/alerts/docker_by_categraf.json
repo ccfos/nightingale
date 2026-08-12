@@ -75,9 +75,7 @@
             "alertname=DockerDaemonDown"
         ],
         "annotations": {
-            "summary": "采集端已连续 1 分钟连不上 Docker daemon，该宿主机上所有容器的状态与资源数据都已失联，容器编排操作也会失败。",
-            "action": "1) 登录主机执行 systemctl status docker 确认 daemon 是否存活；2) 执行 docker ps 手工验证，若卡住不返回说明 daemon 夯死，用 journalctl -u docker -n 200 查看日志定位；3) 确认 /var/run/docker.sock 权限与采集账号是否匹配；4) 确认磁盘（尤其 /var/lib/docker 所在分区）未写满，磁盘满是 daemon 夯死的常见原因。",
-            "runbook_url": "https://docs.docker.com/engine/daemon/troubleshoot/"
+            "action": "1) 登录主机执行 systemctl status docker 确认 daemon 是否存活；\n2) 执行 docker ps 手工验证，若卡住不返回说明 daemon 夯死，用 journalctl -u docker -n 200 查看日志定位；\n3) 确认 /var/run/docker.sock 权限与采集账号是否匹配；\n4) 确认磁盘（尤其 /var/lib/docker 所在分区）未写满，磁盘满是 daemon 夯死的常见原因。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=DockerContainerUnhealthy"
         ],
         "annotations": {
-            "summary": "容器的 HEALTHCHECK 已连续 3 分钟返回失败，容器进程虽在但对外不可用，编排层可能正准备重建它。",
-            "action": "1) 从告警标签取 container_name，执行 docker inspect \u003c容器名\u003e，看输出中 State.Health 字段里最近几次健康检查的输出；2) 执行 docker logs --tail 200 \u003c容器名\u003e 定位应用报错；3) 按健康检查命令手工复现（docker exec \u003c容器名\u003e \u003c健康检查命令\u003e）确认是应用故障还是检查命令本身写错；4) 应用故障且短期修不好时，先把该实例从上游负载均衡摘除再排查。",
-            "runbook_url": "https://docs.docker.com/reference/dockerfile/"
+            "action": "1) 从告警标签取 container_name，执行 docker inspect \u003c容器名\u003e，看输出中 State.Health 字段里最近几次健康检查的输出；\n2) 执行 docker logs --tail 200 \u003c容器名\u003e 定位应用报错；\n3) 按健康检查命令手工复现（docker exec \u003c容器名\u003e \u003c健康检查命令\u003e）确认是应用故障还是检查命令本身写错；\n4) 应用故障且短期修不好时，先把该实例从上游负载均衡摘除再排查。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -249,9 +245,7 @@
             "alertname=DockerContainerOOMKilled"
         ],
         "annotations": {
-            "summary": "容器因超出内存限制被内核 OOM Killer 杀掉，进程内的请求全部中断，未持久化的数据会丢失。",
-            "action": "1) 从告警标签取 container_name，执行 docker inspect \u003c容器名\u003e | grep -i memory 确认当前 limit；2) 对照 docker_container_mem_max_usage 的历史峰值，判断是 limit 设太小还是应用内存泄漏；3) limit 偏小则调大 --memory 后重建容器；4) 疑似泄漏则在应用侧抓堆（Java 用 jmap、Go 用 pprof）定位，不要只靠调大 limit 掩盖问题。",
-            "runbook_url": "https://docs.docker.com/engine/containers/resource_constraints/"
+            "action": "1) 从告警标签取 container_name，执行 docker inspect \u003c容器名\u003e | grep -i memory 确认当前 limit；\n2) 对照 docker_container_mem_max_usage 的历史峰值，判断是 limit 设太小还是应用内存泄漏；\n3) limit 偏小则调大 --memory 后重建容器；\n4) 疑似泄漏则在应用侧抓堆（Java 用 jmap、Go 用 pprof）定位，不要只靠调大 limit 掩盖问题。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -336,9 +330,7 @@
             "alertname=DockerContainerRestartLoop"
         ],
         "annotations": {
-            "summary": "容器 10 分钟内重启超过 3 次，已进入崩溃重启循环，服务实际处于不可用状态且会持续消耗宿主机资源。",
-            "action": "1) 从告警标签取 container_name，执行 docker logs --tail 200 \u003c容器名\u003e 看每次退出前的报错；2) 执行 docker inspect \u003c容器名\u003e，看输出中 State.ExitCode 退出码（137 通常是 OOM 或被 kill，1/2 多为应用自身启动失败）；3) 配置或依赖问题（连不上数据库、配置文件缺失）先修复依赖再拉起；4) 为避免持续刷日志占满磁盘，定位期间可先 docker stop 该容器并从负载均衡摘除。",
-            "runbook_url": "https://docs.docker.com/engine/containers/start-containers-automatically/"
+            "action": "1) 从告警标签取 container_name，执行 docker logs --tail 200 \u003c容器名\u003e 看每次退出前的报错；\n2) 执行 docker inspect \u003c容器名\u003e，看输出中 State.ExitCode 退出码（137 通常是 OOM 或被 kill，1/2 多为应用自身启动失败）；\n3) 配置或依赖问题（连不上数据库、配置文件缺失）先修复依赖再拉起；\n4) 为避免持续刷日志占满磁盘，定位期间可先 docker stop 该容器并从负载均衡摘除。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -423,9 +415,7 @@
             "alertname=DockerContainerMemoryHigh"
         ],
         "annotations": {
-            "summary": "容器内存使用率已连续 5 分钟超过 limit 的 90%，再涨就会被 OOM Killer 杀掉。",
-            "action": "1) 从告警标签取 container_name，执行 docker stats --no-stream \u003c容器名\u003e 确认当前用量与 limit；2) 对照历史曲线判断是持续爬升（疑似泄漏）还是业务高峰的正常波动；3) 正常波动则调大 --memory 并预留 20% 余量后重建；4) 持续爬升则在应用侧抓堆定位泄漏点，同时先把 limit 调高争取排查时间。",
-            "runbook_url": "https://docs.docker.com/engine/containers/resource_constraints/"
+            "action": "1) 从告警标签取 container_name，执行 docker stats --no-stream \u003c容器名\u003e 确认当前用量与 limit；\n2) 对照历史曲线判断是持续爬升（疑似泄漏）还是业务高峰的正常波动；\n3) 正常波动则调大 --memory 并预留 20% 余量后重建；\n4) 持续爬升则在应用侧抓堆定位泄漏点，同时先把 limit 调高争取排查时间。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -510,9 +500,7 @@
             "alertname=DockerContainerCPUThrottled"
         ],
         "annotations": {
-            "summary": "容器超过 25% 的 CPU 调度周期被限流，说明 CPU quota 已经不够用，应用的响应时间会明显变长。",
-            "action": "1) 从告警标签取 container_name，执行 docker inspect \u003c容器名\u003e | grep -iE 'cpuquota|cpuperiod|nanocpus' 确认当前配额；2) 对照 docker_container_cpu_usage_percent 判断是业务量上涨还是应用出现忙等/死循环；3) 业务量上涨则调大 --cpus 后重建容器，或水平扩容多个实例分摊；4) 用量异常则在应用侧抓 CPU profile 定位热点函数。",
-            "runbook_url": "https://docs.docker.com/engine/containers/resource_constraints/"
+            "action": "1) 从告警标签取 container_name，执行 docker inspect \u003c容器名\u003e | grep -iE 'cpuquota|cpuperiod|nanocpus' 确认当前配额；\n2) 对照 docker_container_cpu_usage_percent 判断是业务量上涨还是应用出现忙等/死循环；\n3) 业务量上涨则调大 --cpus 后重建容器，或水平扩容多个实例分摊；\n4) 用量异常则在应用侧抓 CPU profile 定位热点函数。"
         },
         "extra_config": null,
         "create_at": 0,

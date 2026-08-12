@@ -230,7 +230,9 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 		suffix := arr[len(arr)-1]
 
 		switch suffix {
-		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "md":
+		// 前端发布包里出现的静态资源后缀都要列在这里，否则会被当成前端路由返回 index.html。
+		// 新增前端资源类型（如 n9e-collect-templates/*.toml、字体 woff2）时记得同步补充
+		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "woff2", "md", "toml":
 			if !rt.Center.UseFileAssets {
 				c.FileFromFS(c.Request.URL.Path, *fs)
 			} else {
@@ -564,9 +566,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
 		pages.GET("/notification-records/used", rt.auth(), rt.user(), rt.notificationRecordUsed)
 		pages.GET("/event-detail/:hash", rt.eventDetailPage)
+		pages.GET("/event-detail/:hash/logs", rt.auth(), rt.user(), rt.eventDetailJSON)
 		pages.GET("/alert-eval-detail/:id", rt.alertEvalDetailPage)
+		pages.GET("/alert-eval-detail/:id/logs", rt.auth(), rt.user(), rt.alertEvalDetailJSON)
 		pages.GET("/alert-rule/:arid/eval-records", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleEvalRecords)
 		pages.GET("/trace-logs/:traceid", rt.traceLogsPage)
+		pages.GET("/trace-logs/:traceid/logs", rt.auth(), rt.user(), rt.traceLogsJSON)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)

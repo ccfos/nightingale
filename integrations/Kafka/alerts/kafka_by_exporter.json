@@ -75,9 +75,7 @@
             "service=kafka"
         ],
         "annotations": {
-            "summary": "消费组积压消息数超过 1 万条，消费能力跟不上生产速度，下游看到的数据延迟会持续扩大。",
-            "action": "1) 从告警标签取 consumergroup 与 topic，执行 kafka-consumer-groups.sh --describe --group \u003cgroup\u003e --bootstrap-server \u003cbroker\u003e 看各分区 LAG 分布；2) 积压集中在个别分区说明数据倾斜，检查生产端分区键；3) 均匀积压则是消费者处理慢——先看消费端日志有无异常重试，再考虑扩consumer 实例（不超过分区数）或提高单条处理效率；4) 确认消费者没有全部掉线（MEMBERS 为 0 要先把消费者拉起来）。",
-            "runbook_url": "https://kafka.apache.org/documentation/#basic_ops_consumer_lag"
+            "action": "1) 从告警标签取 consumergroup 与 topic，执行 kafka-consumer-groups.sh --describe --group \u003cgroup\u003e --bootstrap-server \u003cbroker\u003e 看各分区 LAG 分布；\n2) 积压集中在个别分区说明数据倾斜，检查生产端分区键；\n3) 均匀积压则是消费者处理慢——先看消费端日志有无异常重试，再考虑扩consumer 实例（不超过分区数）或提高单条处理效率；\n4) 确认消费者没有全部掉线（MEMBERS 为 0 要先把消费者拉起来）。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "service=kafka"
         ],
         "annotations": {
-            "summary": "有分区处于副本未同步（under-replicated）状态，该分区已失去冗余，再挂一个 broker 就会丢数据或不可写。",
-            "action": "1) 从告警标签取 topic，执行 kafka-topics.sh --describe --topic \u003ctopic\u003e --bootstrap-server \u003cbroker\u003e，对比 Isr 与 Replicas 找出缺失的副本所在 broker；2) 到该 broker 看 server.log 是否有磁盘满、GC 卡顿或网络超时；3) broker 已下线则先恢复它，副本会自动追平；4) 长时间追不平可用 kafka-reassign-partitions.sh 把副本迁到健康 broker。",
-            "runbook_url": "https://kafka.apache.org/documentation/#monitoring"
+            "action": "1) 从告警标签取 topic，执行 kafka-topics.sh --describe --topic \u003ctopic\u003e --bootstrap-server \u003cbroker\u003e，对比 Isr 与 Replicas 找出缺失的副本所在 broker；\n2) 到该 broker 看 server.log 是否有磁盘满、GC 卡顿或网络超时；\n3) broker 已下线则先恢复它，副本会自动追平；\n4) 长时间追不平可用 kafka-reassign-partitions.sh 把副本迁到健康 broker。"
         },
         "extra_config": null,
         "create_at": 0,
