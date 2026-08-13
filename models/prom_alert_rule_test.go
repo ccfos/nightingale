@@ -22,9 +22,9 @@ func TestConvertAlert(t *testing.T) {
 	}
 	t.Logf("jobMissing: %+v", jobMissing[0])
 	convJobMissing := models.ConvertAlert(jobMissing[0], "30s", []models.DatasourceQuery{}, 0)
-	if convJobMissing.PromEvalInterval != 30 {
-		t.Errorf("PromEvalInterval is expected to be 30, but got %d",
-			convJobMissing.PromEvalInterval)
+	if convJobMissing.CronPattern != "@every 30s" {
+		t.Errorf("CronPattern is expected to be @every 30s, but got %s",
+			convJobMissing.CronPattern)
 	}
 	if convJobMissing.PromForDuration != 60 {
 		t.Errorf("PromForDuration is expected to be 60, but got %d",
@@ -46,16 +46,16 @@ func TestConvertAlert(t *testing.T) {
 `), &ruleEvaluationSlow)
 	t.Logf("ruleEvaluationSlow: %+v", ruleEvaluationSlow[0])
 	convRuleEvaluationSlow := models.ConvertAlert(ruleEvaluationSlow[0], "1m", []models.DatasourceQuery{}, 0)
-	if convRuleEvaluationSlow.PromEvalInterval != 60 {
-		t.Errorf("PromEvalInterval is expected to be 60, but got %d",
-			convJobMissing.PromEvalInterval)
+	if convRuleEvaluationSlow.CronPattern != "@every 60s" {
+		t.Errorf("CronPattern is expected to be @every 60s, but got %s",
+			convRuleEvaluationSlow.CronPattern)
 	}
 	if convRuleEvaluationSlow.PromForDuration != 180 {
 		t.Errorf("PromForDuration is expected to be 180, but got %d",
-			convJobMissing.PromForDuration)
+			convRuleEvaluationSlow.PromForDuration)
 	}
 	if convRuleEvaluationSlow.Severity != 3 {
-		t.Errorf("Severity is expected to be 3, but got %d", convJobMissing.Severity)
+		t.Errorf("Severity is expected to be 3, but got %d", convRuleEvaluationSlow.Severity)
 	}
 
 	targetMissing := []models.PromRule{}
@@ -70,9 +70,9 @@ func TestConvertAlert(t *testing.T) {
 `), &targetMissing)
 	t.Logf("targetMissing: %+v", targetMissing[0])
 	convTargetMissing := models.ConvertAlert(targetMissing[0], "1h", []models.DatasourceQuery{}, 0)
-	if convTargetMissing.PromEvalInterval != 3600 {
-		t.Errorf("PromEvalInterval is expected to be 3600, but got %d",
-			convTargetMissing.PromEvalInterval)
+	if convTargetMissing.CronPattern != "@every 3600s" {
+		t.Errorf("CronPattern is expected to be @every 3600s, but got %s",
+			convTargetMissing.CronPattern)
 	}
 	if convTargetMissing.PromForDuration != 90 {
 		t.Errorf("PromForDuration is expected to be 90, but got %d",
