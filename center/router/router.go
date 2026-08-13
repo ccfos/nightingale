@@ -708,6 +708,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		// AI Assistant Chat
 		pages.POST("/assistant/chat/new", rt.auth(), rt.user(), rt.assistantChatNew)
 		pages.GET("/assistant/chat/history", rt.auth(), rt.user(), rt.assistantChatHistory)
+		pages.POST("/assistant/chat/rename", rt.auth(), rt.user(), rt.assistantChatRename)
 		pages.DELETE("/assistant/chat/:chatId", rt.auth(), rt.user(), rt.assistantChatDel)
 
 		// AI Assistant Message
@@ -945,6 +946,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			// AI Assistant (for external service, reuses frontend handlers via serviceUser middleware)
 			service.POST("/assistant/chat/new", rt.serviceUser(), rt.assistantChatNew)
 			service.GET("/assistant/chat/history", rt.serviceUser(), rt.assistantChatHistory)
+			service.POST("/assistant/chat/rename", rt.serviceUser(), rt.assistantChatRename)
 			service.DELETE("/assistant/chat/:chatId", rt.serviceUser(), rt.assistantChatDel)
 			service.POST("/assistant/message/new", rt.serviceUser(), rt.assistantMessageNew)
 			service.POST("/assistant/message/detail", rt.serviceUser(), rt.assistantMessageDetail)
