@@ -10,7 +10,7 @@ import (
 // 默认启用，Disable=true 关闭（对齐 Alert.Disable 的语义，配置段缺省即启用）。
 type Config struct {
 	Disable            bool
-	Dir                string // 记录目录，默认 ./evallog
+	Dir                string // 记录目录，缺省时由 aconf.Alert.PreCheck 填成 <[Log] Dir>/evallog
 	RetentionHours     int    // 保留时长，默认 192（8 天）
 	MaxSeriesPerQuery  int    // 闸1a：单查询保留的原始曲线条数，默认 100
 	MaxPointsPerSeries int    // 闸1b：单曲线保留的点数，默认 60
@@ -26,6 +26,8 @@ type Config struct {
 }
 
 const (
+	// defDir 只在绕过配置层（直接构造 Config）且 [Log] Dir 也为空时兜底，
+	// 正常路径的默认值由 aconf.Alert.PreCheck 按 [Log] Dir 拼出来。
 	defDir                = "./evallog"
 	defRetentionHours     = 192
 	defMaxSeriesPerQuery  = 100

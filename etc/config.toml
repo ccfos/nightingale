@@ -137,7 +137,8 @@ EngineName = "default"
 # stored on local disk of the alert engine, queryable on the rule page
 # [Alert.EvalLog]
 # Disable = false
-# Dir = "./evallog"
+# records dir, defaults to <[Log] Dir>/evallog
+# Dir = "logs/evallog"
 # RetentionHours = 192
 # MaxSeriesPerQuery = 100
 # MaxPointsPerSeries = 60
