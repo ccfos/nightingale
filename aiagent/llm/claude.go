@@ -95,9 +95,20 @@ type claudeContentBlock struct {
 
 	// 扩展思考块（type=thinking / redacted_thinking）。开启 thinking 后工具
 	// 续轮必须把这些块带签名回填进 assistant 消息（native 下放开 thinking 的前提）。
-	Thinking  string `json:"thinking"`
+	Thinking  string `json:"thinking,omitempty"`
 	Signature string `json:"signature,omitempty"`
 	Data      string `json:"data,omitempty"`
+}
+
+func (b claudeContentBlock) MarshalJSON() ([]byte, error) {
+	type alias claudeContentBlock
+	if b.Type != "thinking" {
+		return json.Marshal(alias(b))
+	}
+	return json.Marshal(struct {
+		alias
+		Thinking string `json:"thinking"`
+	}{alias: alias(b), Thinking: b.Thinking})
 }
 
 type claudeTool struct {

@@ -17,7 +17,7 @@ func TestClaudeRequest_MarshalExtraBody(t *testing.T) {
 		},
 		extraBody: map[string]any{
 			"thinking": map[string]any{"type": "disabled"},
-			"model":    "evil-override",      // 必须被显式字段挡掉
+			"model":    "evil-override", // 必须被显式字段挡掉
 			"foo":      "bar",
 		},
 	}
@@ -82,5 +82,29 @@ func TestClaudeContentBlock_EmptyThinkingKept(t *testing.T) {
 	}
 	if !strings.Contains(s, `"signature":"sig"`) {
 		t.Errorf("signature missing: %s", s)
+	}
+}
+
+func TestClaudeContentBlock_ThinkingOmittedFromOtherTypes(t *testing.T) {
+	blocks := []claudeContentBlock{
+		{Type: "text", Text: "hello"},
+		{Type: "tool_use", ID: "call-1", Name: "lookup", Input: map[string]any{}},
+		{Type: "tool_result", ToolUseID: "call-1", Content: "done"},
+	}
+
+	for _, block := range blocks {
+		t.Run(block.Type, func(t *testing.T) {
+			data, err := json.Marshal(block)
+			if err != nil {
+				t.Fatalf("marshal failed: %v", err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(data, &payload); err != nil {
+				t.Fatalf("unmarshal back failed: %v", err)
+			}
+			if _, exists := payload["thinking"]; exists {
+				t.Errorf("thinking leaked into %s block: %s", block.Type, data)
+			}
+		})
 	}
 }
