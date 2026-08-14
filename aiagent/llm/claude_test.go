@@ -2,6 +2,7 @@ package llm
 
 import (
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -86,15 +87,31 @@ func TestClaudeContentBlock_EmptyThinkingKept(t *testing.T) {
 }
 
 func TestClaudeContentBlock_ThinkingOmittedFromOtherTypes(t *testing.T) {
-	blocks := []claudeContentBlock{
-		{Type: "text", Text: "hello"},
-		{Type: "tool_use", ID: "call-1", Name: "lookup", Input: map[string]any{}},
-		{Type: "tool_result", ToolUseID: "call-1", Content: "done"},
+	tests := []struct {
+		block claudeContentBlock
+		want  map[string]any
+	}{
+		{
+			block: claudeContentBlock{Type: "text", Text: "hello"},
+			want:  map[string]any{"type": "text", "text": "hello"},
+		},
+		{
+			block: claudeContentBlock{Type: "tool_use", ID: "call-1", Name: "lookup", Input: map[string]any{}},
+			want:  map[string]any{"type": "tool_use", "id": "call-1", "name": "lookup", "input": map[string]any{}},
+		},
+		{
+			block: claudeContentBlock{Type: "tool_result", ToolUseID: "call-1", Content: "done"},
+			want:  map[string]any{"type": "tool_result", "tool_use_id": "call-1", "content": "done"},
+		},
+		{
+			block: claudeContentBlock{Type: "redacted_thinking", Data: "encrypted"},
+			want:  map[string]any{"type": "redacted_thinking", "data": "encrypted"},
+		},
 	}
 
-	for _, block := range blocks {
-		t.Run(block.Type, func(t *testing.T) {
-			data, err := json.Marshal(block)
+	for _, test := range tests {
+		t.Run(test.block.Type, func(t *testing.T) {
+			data, err := json.Marshal(test.block)
 			if err != nil {
 				t.Fatalf("marshal failed: %v", err)
 			}
@@ -102,8 +119,8 @@ func TestClaudeContentBlock_ThinkingOmittedFromOtherTypes(t *testing.T) {
 			if err := json.Unmarshal(data, &payload); err != nil {
 				t.Fatalf("unmarshal back failed: %v", err)
 			}
-			if _, exists := payload["thinking"]; exists {
-				t.Errorf("thinking leaked into %s block: %s", block.Type, data)
+			if !reflect.DeepEqual(payload, test.want) {
+				t.Errorf("payload = %#v, want %#v", payload, test.want)
 			}
 		})
 	}
