@@ -63,3 +63,24 @@ func TestClaudeRequest_MarshalNoExtraBody(t *testing.T) {
 		t.Errorf("baseline marshal broke: %s", data)
 	}
 }
+
+// TestClaudeContentBlock_EmptyThinkingKept 空 thinking + signature 回放时
+// 不能被 omitempty 丢掉，否则 Anthropic 续轮 400（#3327）。
+func TestClaudeContentBlock_EmptyThinkingKept(t *testing.T) {
+	block := claudeContentBlock{
+		Type:      "thinking",
+		Thinking:  "",
+		Signature: "sig",
+	}
+	data, err := json.Marshal(block)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+	s := string(data)
+	if !strings.Contains(s, `"thinking":""`) {
+		t.Errorf("empty thinking dropped from replay payload: %s", s)
+	}
+	if !strings.Contains(s, `"signature":"sig"`) {
+		t.Errorf("signature missing: %s", s)
+	}
+}
