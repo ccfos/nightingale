@@ -163,22 +163,18 @@ type WebhookQueue struct {
 }
 
 func PushEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
-	EventQueueLock.RLock()
+	EventQueueLock.Lock()
 	queue := EventQueue[webhook.Url]
-	EventQueueLock.RUnlock()
-
 	if queue == nil {
 		queue = &WebhookQueue{
 			eventQueue: NewSafeEventQueue(QueueMaxSize),
 			closeCh:    make(chan struct{}),
 		}
-
-		EventQueueLock.Lock()
 		EventQueue[webhook.Url] = queue
-		EventQueueLock.Unlock()
 
-		StartConsumer(ctx, queue, webhook.Batch, webhook, stats)
+		go StartConsumer(ctx, queue, webhook.Batch, webhook, stats)
 	}
+	EventQueueLock.Unlock()
 
 	succ := queue.eventQueue.Push(event)
 	if !succ {
