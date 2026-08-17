@@ -117,6 +117,9 @@ func (vl *VictoriaLogs) Validate(ctx context.Context) error {
 	if vl.MaxQueryRows == 0 {
 		vl.MaxQueryRows = 1000
 	}
+	if vl.MaxLogEntrySize <= 0 {
+		vl.MaxLogEntrySize = victorialogs.DefaultMaxLogEntrySize
+	}
 
 	return nil
 }
@@ -134,6 +137,7 @@ func (vl *VictoriaLogs) Equal(other datasource.Datasource) bool {
 		vl.VictorialogsTls.SkipTlsVerify == o.VictorialogsTls.SkipTlsVerify &&
 		vl.Timeout == o.Timeout &&
 		vl.MaxQueryRows == o.MaxQueryRows &&
+		vl.MaxLogEntrySize == o.MaxLogEntrySize &&
 		vl.EnableWrite == o.EnableWrite &&
 		reflect.DeepEqual(vl.Headers, o.Headers) &&
 		reflect.DeepEqual(vl.WriteAddrs, o.WriteAddrs)

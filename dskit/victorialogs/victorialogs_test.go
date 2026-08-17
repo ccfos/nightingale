@@ -2,6 +2,10 @@ package victorialogs
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -18,6 +22,27 @@ func TestVictoriaLogs_InitHTTPClient(t *testing.T) {
 	}
 	if v.HTTPClient == nil {
 		t.Fatal("HTTPClient should not be nil after initialization")
+	}
+}
+
+func TestVictoriaLogs_QueryAllowsLargeLogEntries(t *testing.T) {
+	largeMessage := strings.Repeat("x", 128*1024)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		fmt.Fprintf(w, `{"_msg":%q}`+"\n", largeMessage)
+	}))
+	defer server.Close()
+
+	vl := VictoriaLogs{VictorialogsAddr: server.URL, HTTPClient: server.Client()}
+	logs, err := vl.Query(context.Background(), "*", 0, 0, 1)
+	if err != nil {
+		t.Fatalf("Query failed for large log entry: %v", err)
+	}
+	if len(logs) != 1 {
+		t.Fatalf("got %d log entries, want 1", len(logs))
+	}
+	if got := logs[0]["_msg"]; got != largeMessage {
+		t.Fatalf("large log message was not preserved")
 	}
 }
 

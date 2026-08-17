@@ -86,6 +86,24 @@ func TestResolveLogTimeDesc(t *testing.T) {
 	}
 }
 
+func TestVictoriaLogsValidateDefaultsMaxLogEntrySize(t *testing.T) {
+	vl := &VictoriaLogs{VictoriaLogs: vlkit.VictoriaLogs{VictorialogsAddr: "http://victorialogs.example"}}
+	if err := vl.Validate(context.Background()); err != nil {
+		t.Fatalf("Validate error: %v", err)
+	}
+	if vl.MaxLogEntrySize != vlkit.DefaultMaxLogEntrySize {
+		t.Fatalf("unexpected default max log entry size: got %d want %d", vl.MaxLogEntrySize, vlkit.DefaultMaxLogEntrySize)
+	}
+}
+
+func TestVictoriaLogsEqualIncludesMaxLogEntrySize(t *testing.T) {
+	left := &VictoriaLogs{VictoriaLogs: vlkit.VictoriaLogs{MaxLogEntrySize: 1024}}
+	right := &VictoriaLogs{VictoriaLogs: vlkit.VictoriaLogs{MaxLogEntrySize: 2048}}
+	if left.Equal(right) {
+		t.Fatal("datasources with different max log entry sizes must not be equal")
+	}
+}
+
 func TestQueryLogAddsSort(t *testing.T) {
 	var queryQuery string
 	var hitsQuery string

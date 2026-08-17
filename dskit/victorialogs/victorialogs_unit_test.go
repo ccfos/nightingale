@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -15,11 +16,28 @@ func newTestVictoriaLogs(serverURL string) *VictoriaLogs {
 		VictorialogsAddr: serverURL,
 		Headers:          make(map[string]string),
 		MaxQueryRows:     1000,
+		MaxLogEntrySize:  256 * 1024,
 	}
 	if err := vl.InitHTTPClient(); err != nil {
 		panic(err)
 	}
 	return vl
+}
+
+func TestVictoriaLogsQueryUsesConfiguredLogEntrySize(t *testing.T) {
+	largeMessage := strings.Repeat("x", 128*1024)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `{"_msg":%q}`+"\n", largeMessage)
+	}))
+	defer server.Close()
+
+	logs, err := newTestVictoriaLogs(server.URL).Query(context.Background(), "*", 0, 0, 1)
+	if err != nil {
+		t.Fatalf("Query failed for configured log entry size: %v", err)
+	}
+	if len(logs) != 1 {
+		t.Fatalf("got %d log entries, want 1", len(logs))
+	}
 }
 
 func TestVictoriaLogs_QueryWithOffsetAddsOffset(t *testing.T) {

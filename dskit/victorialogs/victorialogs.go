@@ -16,6 +16,8 @@ import (
 	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 )
 
+const DefaultMaxLogEntrySize = 1024 * 1024
+
 type VictoriaLogs struct {
 	VictorialogsAddr  string `json:"victorialogs.addr" mapstructure:"victorialogs.addr"`
 	VictorialogsBasic struct {
@@ -26,12 +28,13 @@ type VictoriaLogs struct {
 	VictorialogsTls struct {
 		SkipTlsVerify bool `json:"victorialogs.tls.skip_tls_verify" mapstructure:"victorialogs.tls.skip_tls_verify"`
 	} `json:"victorialogs.tls" mapstructure:"victorialogs.tls"`
-	Headers      map[string]string `json:"victorialogs.headers" mapstructure:"victorialogs.headers"`
-	Timeout      int64             `json:"victorialogs.timeout" mapstructure:"victorialogs.timeout"` // millis
-	ClusterName  string            `json:"victorialogs.cluster_name" mapstructure:"victorialogs.cluster_name"`
-	MaxQueryRows int               `json:"victorialogs.max_query_rows" mapstructure:"victorialogs.max_query_rows"`
-	EnableWrite  bool              `json:"victorialogs.enable_write" mapstructure:"victorialogs.enable_write"`
-	WriteAddrs   []string          `json:"victorialogs.write_addrs" mapstructure:"victorialogs.write_addrs"`
+	Headers         map[string]string `json:"victorialogs.headers" mapstructure:"victorialogs.headers"`
+	Timeout         int64             `json:"victorialogs.timeout" mapstructure:"victorialogs.timeout"` // millis
+	ClusterName     string            `json:"victorialogs.cluster_name" mapstructure:"victorialogs.cluster_name"`
+	MaxQueryRows    int               `json:"victorialogs.max_query_rows" mapstructure:"victorialogs.max_query_rows"`
+	MaxLogEntrySize int               `json:"victorialogs.max_log_entry_size" mapstructure:"victorialogs.max_log_entry_size"`
+	EnableWrite     bool              `json:"victorialogs.enable_write" mapstructure:"victorialogs.enable_write"`
+	WriteAddrs      []string          `json:"victorialogs.write_addrs" mapstructure:"victorialogs.write_addrs"`
 
 	HTTPClient *http.Client `json:"-" mapstructure:"-"`
 }
@@ -143,6 +146,11 @@ func (vl *VictoriaLogs) QueryWithOffset(ctx context.Context, query string, start
 	// VictoriaLogs returns NDJSON format (one JSON object per line)
 	var logs []LogEntry
 	scanner := bufio.NewScanner(strings.NewReader(string(body)))
+	maxLogEntrySize := vl.MaxLogEntrySize
+	if maxLogEntrySize <= 0 {
+		maxLogEntrySize = DefaultMaxLogEntrySize
+	}
+	scanner.Buffer(nil, maxLogEntrySize)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
