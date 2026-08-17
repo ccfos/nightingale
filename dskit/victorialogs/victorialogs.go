@@ -39,6 +39,14 @@ type VictoriaLogs struct {
 // LogEntry 日志条目
 type LogEntry map[string]interface{}
 
+type LogContextRequest struct {
+	Query    string
+	Time     int64
+	StreamID string
+	Before   int
+	After    int
+}
+
 // PrometheusResponse Prometheus 响应格式
 type PrometheusResponse struct {
 	Status string         `json:"status"`
@@ -108,6 +116,52 @@ func (vl *VictoriaLogs) InitHTTPClient() error {
 // GET/POST /select/logsql/query?query=<query>&start=<start>&end=<end>&limit=<limit>
 func (vl *VictoriaLogs) Query(ctx context.Context, query string, start, end int64, limit int) ([]LogEntry, error) {
 	return vl.QueryWithOffset(ctx, query, start, end, limit, 0)
+}
+
+func (vl *VictoriaLogs) QueryContext(ctx context.Context, req LogContextRequest) ([]LogEntry, error) {
+	target := normalizeVictoriaLogsTimestamp(req.Time)
+	var result []LogEntry
+	query := strings.TrimSpace(req.Query)
+	if query == "" {
+		query = "*"
+	}
+	if req.StreamID != "" {
+		query = addContextFilter(query, "_stream_id:"+strconv.Quote(req.StreamID))
+	}
+
+	if req.Before > 0 {
+		before, err := vl.QueryWithOffset(ctx, addContextSort(query, true), 0, target, req.Before, 0)
+		if err != nil {
+			return nil, err
+		}
+		for i := len(before) - 1; i >= 0; i-- {
+			result = append(result, before[i])
+		}
+	}
+
+	if req.After > 0 {
+		after, err := vl.QueryWithOffset(ctx, addContextSort(query, false), target, 0, req.After, 0)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, after...)
+	}
+
+	return result, nil
+}
+
+func addContextFilter(query, filter string) string {
+	if pipe := strings.IndexByte(query, '|'); pipe >= 0 {
+		return strings.TrimSpace(query[:pipe]) + " " + filter + " " + strings.TrimSpace(query[pipe:])
+	}
+	return strings.TrimSpace(query) + " " + filter
+}
+
+func addContextSort(query string, desc bool) string {
+	if desc {
+		return query + " | sort by (_time) desc"
+	}
+	return query + " | sort by (_time)"
 }
 
 func (vl *VictoriaLogs) QueryWithOffset(ctx context.Context, query string, start, end int64, limit, offset int) ([]LogEntry, error) {
