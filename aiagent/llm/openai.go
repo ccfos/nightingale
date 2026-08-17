@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/toolkits/pkg/logger"
@@ -46,14 +47,17 @@ func NormalizeOpenAIURL(rawURL string) string {
 	if strings.HasSuffix(u, "/chat/completions") {
 		return u
 	}
-	if strings.HasSuffix(u, "/v1") {
-		return u + "/chat/completions"
-	}
 	// DeepSeek 使用标准 OpenAI 兼容路径，用户填写根域名时自动补全
 	if u == "https://api.deepseek.com" || u == "http://api.deepseek.com" {
 		return u + "/v1/chat/completions"
 	}
-	return u
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return rawURL
+	}
+	parsed.Path += "/chat/completions"
+	return parsed.String()
 }
 
 func (o *OpenAI) Name() string {
