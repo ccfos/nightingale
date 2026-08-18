@@ -870,8 +870,8 @@ func (InitPostgresAlertHisEvent) TableName() string {
 }
 
 type InitBoardBusiGroup struct {
-	BusiGroupID int64 `primaryKey;gorm:"not null;default:0;comment:busi group id"`
-	BoardID     int64 `primaryKey;gorm:"not null;default:0;comment:board id"`
+	BusiGroupID int64 `gorm:"primaryKey;not null;default:0;comment:busi group id"`
+	BoardID     int64 `gorm:"primaryKey;not null;default:0;comment:board id"`
 }
 
 func (InitBoardBusiGroup) TableName() string {
