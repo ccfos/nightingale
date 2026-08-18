@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/toolkits/pkg/logger"
@@ -36,24 +38,33 @@ func NewOpenAI(cfg *Config, client *http.Client) (*OpenAI, error) {
 	}, nil
 }
 
+// versionSuffixRe 匹配版本号结尾的 base URL path，如 /v1、/api/v3、/api/paas/v4。
+var versionSuffixRe = regexp.MustCompile(`(?i)/v\d+$`)
+
 // NormalizeOpenAIURL 归一化 OpenAI 兼容端点：
-// 用户常见填法包括 `https://host/v1` 或 `https://host/compatible-mode/v1`，
-// 这里自动补 `/chat/completions`，避免漏路径时返回 404。
+// 用户常见填法是版本号结尾的 base URL（如 `https://host/v1`、智谱的 `/api/paas/v4`、
+// 方舟的 `/api/v3`），对这类 URL 自动补 `/chat/completions`，避免漏路径时返回 404。
+// 其余形态视为完整端点原样透传——存量配置里可能是不带标准路径的自定义网关地址，
+// 不能改写；后缀判断基于 parse 后的 path，避免带 query 的完整端点被重复拼路径。
 // 对于已知需要 /v1/chat/completions 路径的提供商（如 DeepSeek），
 // 当用户只填写了根域名时自动补全完整路径。
 func NormalizeOpenAIURL(rawURL string) string {
 	u := strings.TrimRight(rawURL, "/")
-	if strings.HasSuffix(u, "/chat/completions") {
-		return u
-	}
-	if strings.HasSuffix(u, "/v1") {
-		return u + "/chat/completions"
-	}
 	// DeepSeek 使用标准 OpenAI 兼容路径，用户填写根域名时自动补全
 	if u == "https://api.deepseek.com" || u == "http://api.deepseek.com" {
 		return u + "/v1/chat/completions"
 	}
-	return u
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return u
+	}
+	path := strings.TrimRight(parsed.Path, "/")
+	if strings.HasSuffix(path, "/chat/completions") || !versionSuffixRe.MatchString(path) {
+		return u
+	}
+	parsed.Path = path + "/chat/completions"
+	return parsed.String()
 }
 
 func (o *OpenAI) Name() string {
