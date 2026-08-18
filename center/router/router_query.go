@@ -269,7 +269,16 @@ func (rt *Router) QueryData(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
-	resp, err := QueryDataConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
+	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
+	if _, ok := boardTokenBid(c); ok {
+		// 分享 token 请求：SQL 家族数据源禁止匿名查询，其余数据源按板内集合校验，
+		// 跳过基于登录用户的 CheckDsPerm
+		denyBoardTokenSQLCate(c, f.Cate)
+		rt.checkBoardTokenDsPerm(c, f.DatasourceId)
+		anonymousAccess = true
+	}
+
+	resp, err := QueryDataConcurrently(anonymousAccess, c, f)
 	if err != nil {
 		ginx.Bomb(200, "err:%v", err)
 	}
@@ -337,7 +346,16 @@ func (rt *Router) QueryLogV2(c *gin.Context) {
 	logQueryAccess(c, f.Cate, f.DatasourceId, f.Queries)
 	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
-	resp, err := QueryLogConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
+	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
+	if _, ok := boardTokenBid(c); ok {
+		// 分享 token 请求：SQL 家族数据源禁止匿名查询，其余数据源按板内集合校验，
+		// 跳过基于登录用户的 CheckDsPerm
+		denyBoardTokenSQLCate(c, f.Cate)
+		rt.checkBoardTokenDsPerm(c, f.DatasourceId)
+		anonymousAccess = true
+	}
+
+	resp, err := QueryLogConcurrently(anonymousAccess, c, f)
 	ginx.NewRender(c).Data(resp, err)
 }
 

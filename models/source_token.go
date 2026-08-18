@@ -6,6 +6,11 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
+const (
+	SourceTypeEvent = "event"
+	SourceTypeBoard = "board"
+)
+
 type SourceToken struct {
 	Id         int64  `json:"id" gorm:"primaryKey"`
 	SourceType string `json:"source_type" gorm:"column:source_type;type:varchar(64);not null;default:''"`
@@ -32,6 +37,26 @@ func GetSourceTokenBySource(ctx *ctx.Context, sourceType, sourceId, token string
 		return nil, err
 	}
 	return &st, nil
+}
+
+// GetSourceTokenByToken 按令牌反查记录，调用方无需预知 source_id，
+// 用于携带 __token 的数据查询请求定位其绑定的资源。未找到时返回 (nil, nil)
+func GetSourceTokenByToken(ctx *ctx.Context, sourceType, token string) (*SourceToken, error) {
+	if token == "" {
+		return nil, nil
+	}
+
+	var lst []*SourceToken
+	err := DB(ctx).Where("source_type = ? AND token = ?", sourceType, token).Limit(1).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+
+	return lst[0], nil
 }
 
 func (st *SourceToken) IsExpired() bool {

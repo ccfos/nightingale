@@ -40,6 +40,7 @@ type BatchQueryForm struct {
 func (rt *Router) promBatchQueryRange(c *gin.Context) {
 	var f BatchQueryForm
 	ginx.Dangerous(c.BindJSON(&f))
+	rt.checkBoardTokenDsPerm(c, f.DatasourceId)
 
 	lst, err := PromBatchQueryRange(c.Request.Context(), rt.PromClients, f)
 	ginx.NewRender(c).Data(lst, err)
@@ -85,6 +86,7 @@ type InstantFormItem struct {
 func (rt *Router) promBatchQueryInstant(c *gin.Context) {
 	var f BatchInstantForm
 	ginx.Dangerous(c.BindJSON(&f))
+	rt.checkBoardTokenDsPerm(c, f.DatasourceId)
 
 	lst, err := PromBatchQueryInstant(c.Request.Context(), rt.PromClients, f)
 	ginx.NewRender(c).Data(lst, err)
@@ -113,6 +115,21 @@ func PromBatchQueryInstant(ctx context.Context, pc *prom.PromClientMap, f BatchI
 
 func (rt *Router) dsProxy(c *gin.Context) {
 	dsId := ginx.UrlParamInt64(c, "id")
+
+	if _, ok := boardTokenBid(c); ok {
+		// 分享 token 态：数据源须属于板内集合，且仅放行只读查询路径，
+		// 避免匿名请求经全反代的 proxy 触达写/管理类端点
+		rt.checkBoardTokenDsPerm(c, dsId)
+		if !isReadOnlyProxyPath(c.Request.Method, c.Param("url")) {
+			ginx.Bomb(http.StatusForbidden, "proxy path is not allowed for anonymous dashboard sharing")
+		}
+		// __token 只用于本服务鉴权，不应随反代透传给上游数据源（会进其访问日志）
+		if q := c.Request.URL.Query(); q.Get("__token") != "" {
+			q.Del("__token")
+			c.Request.URL.RawQuery = q.Encode()
+		}
+	}
+
 	ds := rt.DatasourceCache.GetById(dsId)
 
 	if ds == nil {

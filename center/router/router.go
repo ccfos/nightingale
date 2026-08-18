@@ -320,14 +320,19 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/log-query", rt.QueryLog)
 			pages.POST("/es-cluster-info", rt.ESClusterInfo)
 		} else {
-			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
-			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
-			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
-			pages.GET("/datasource/brief", rt.auth(), rt.user(), rt.datasourceBriefs)
+			// proxy 也纳入分享 token 通道：dsProxy 内部按板内集合校验数据源，并只放行
+			// 只读查询路径（见 router_board_share.go isReadOnlyProxyPath），供 ES 面板与
+			// query 类型变量在匿名分享下取数；非 token 请求照常登录鉴权
+			pages.Any("/proxy/:id/*url", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.dsProxy)
+			// 仪表盘限时分享：带有效 board 分享 token 的匿名请求可走以下查询接口，
+			// 数据源被收敛到板内引用集合（见 router_board_share.go），其余照常登录鉴权
+			pages.POST("/query-range-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.promBatchQueryRange)
+			pages.POST("/query-instant-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.promBatchQueryInstant)
+			pages.GET("/datasource/brief", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.datasourceBriefs)
 			pages.POST("/datasource/query", rt.auth(), rt.user(), rt.datasourceQuery)
 
-			pages.POST("/ds-query", rt.auth(), rt.user(), rt.QueryData)
-			pages.POST("/logs-query", rt.auth(), rt.user(), rt.QueryLogV2)
+			pages.POST("/ds-query", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.QueryData)
+			pages.POST("/logs-query", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.QueryLogV2)
 
 			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
