@@ -149,7 +149,7 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 
 ## 🌟 Stargazers over time
 
-[![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)
+[![Stargazers over time](https://star-history.dera.page/svg?repos=ccfos/nightingale&type=Date)](https://star-history.dera.page/#ccfos/nightingale&Date)
 
 ## 🔥 Users
 

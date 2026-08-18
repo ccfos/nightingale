@@ -156,7 +156,7 @@
 - 因为夜莺有个业务组的概念，机器可以归属不同的业务组，有时在仪表盘里只想查看当前所属业务组的机器，所以夜莺的仪表盘可以和业务组联动
 
 ## 广受关注
-[![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)
+[![Stargazers over time](https://star-history.dera.page/svg?repos=ccfos/nightingale&type=Date)](https://star-history.dera.page/#ccfos/nightingale&Date)
 
 ## 感谢众多企业的信赖
 
