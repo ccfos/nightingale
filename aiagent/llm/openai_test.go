@@ -602,6 +602,15 @@ func TestNormalizeOpenAIURL(t *testing.T) {
 		// 边界场景放最后
 		{name: "trailing slash trim", input: "https://open.bigmodel.cn/api/paas/v4/", expected: "https://open.bigmodel.cn/api/paas/v4/chat/completions"},
 		{name: "already full endpoint", input: "https://demo.test.com/chat/completions", expected: "https://demo.test.com/chat/completions"},
+
+		// 带 query 的完整端点（如 Azure 的 api-version）必须原样透传，不能重复拼路径
+		{name: "full endpoint with query passes through", input: "https://res.openai.azure.com/openai/deployments/gpt4/chat/completions?api-version=2024-02-01", expected: "https://res.openai.azure.com/openai/deployments/gpt4/chat/completions?api-version=2024-02-01"},
+		// 非版本号结尾的自定义网关端点原样透传，保证存量配置不被改写
+		{name: "custom gateway endpoint passes through", input: "https://gw.example.com/llm/proxy", expected: "https://gw.example.com/llm/proxy"},
+		// query 参数在补路径后保留
+		{name: "v1 base with query keeps query", input: "https://host.example.com/v1?key=abc", expected: "https://host.example.com/v1/chat/completions?key=abc"},
+		{name: "v1 trailing slash before query", input: "https://host.example.com/v1/?key=abc", expected: "https://host.example.com/v1/chat/completions?key=abc"},
+		{name: "azure v1 endpoint with query", input: "https://res.openai.azure.com/openai/v1?api-version=preview", expected: "https://res.openai.azure.com/openai/v1/chat/completions?api-version=preview"},
 	}
 
 	for _, c := range cases {
