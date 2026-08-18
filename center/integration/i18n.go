@@ -18,6 +18,7 @@ import (
 // 词条缺失时按单字段粒度回退源语言原文。
 const (
 	LangSource = "zh_CN"
+	LangZhHK   = "zh_HK"
 	LangEnUS   = "en_US"
 )
 
@@ -28,11 +29,36 @@ type ComponentDict map[string]string
 // 其余（含 en 前缀和未支持语言）归入 en_US——en_US 桶对全部内置内容完整存在
 // （无词条的组件为 pass-through），因此不需要列表级回退。
 // 大小写不敏感：前端只发 zh_CN，但第三方直连 API 可能传 ZH-CN
+//
+// 注意：integrations 词条只有 zh_CN / en_US 两桶，故繁体 zh_HK 也归入 zh_CN。
+// Skill README 有独立繁体文件，请用 ClassifySkillReadmeLang，勿复用本函数。
 func NormalizeLang(lang string) string {
 	if lang == "" || strings.HasPrefix(strings.ToLower(lang), "zh") {
 		return LangSource
 	}
 	return LangEnUS
+}
+
+// ClassifySkillReadmeLang 将 X-Language 映射到 Skill 面向用户 README 桶：
+//   - 简体（空 / zh / zh_CN / 其它非繁体 zh_*）→ zh_CN → README.md
+//   - 繁体（zh_HK / zh_TW / *-Hant*）→ zh_HK → README.zh_HK.md
+//   - 其余语言一律 → en_US → README.en_US.md
+//
+// 与 languageDetector 输出对齐（zh_HK / zh_CN / en / 透传其它），大小写与 -/_ 不敏感。
+func ClassifySkillReadmeLang(lang string) string {
+	l := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(lang), "-", "_"))
+	switch {
+	case l == "" || l == "zh" || l == "zh_cn" || strings.HasPrefix(l, "zh_cn_"):
+		return LangSource
+	case strings.HasPrefix(l, "zh_hk") || strings.HasPrefix(l, "zh_tw") ||
+		strings.Contains(l, "hant"):
+		return LangZhHK
+	case strings.HasPrefix(l, "zh"):
+		// 其它 zh_*（如 zh_SG）按简体
+		return LangSource
+	default:
+		return LangEnUS
+	}
 }
 
 // LoadComponentDicts 读取组件目录下 i18n/<lang>.json 词条文件

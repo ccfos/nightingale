@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent/skill"
+	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
@@ -316,17 +317,42 @@ func (rt *Router) aiSkillGet(c *gin.Context) {
 	obj.CanEdit = obj.CanBeEditedBy(me, gids)
 
 	if obj.CreatedBy == "system" {
-		// 内置 skill 不需要看 skill 细节，只能看 readme 文档
+		// 内置 skill 不需要看 skill 细节，只能看面向用户的 README（按 UI 语言选文件）
 		files, err := models.AISkillFileGets(rt.Ctx, id)
 		ginx.Dangerous(err)
+		// 勿用 NormalizeLang：它会把 zh_HK 并进简体；Skill README 有独立繁体文件。
+		bucket := integration.ClassifySkillReadmeLang(c.GetHeader("X-Language"))
+		names := make([]string, 0, len(files))
+		byLower := make(map[string]int64, len(files))
 		for _, file := range files {
-			if strings.EqualFold(file.Name, "readme.md") {
-				filedetail, err := models.AISkillFileGetById(rt.Ctx, file.Id)
-				ginx.Dangerous(err)
-				if filedetail != nil {
-					obj.Instructions = filedetail.Content
-				}
-				break
+			names = append(names, file.Name)
+			byLower[strings.ToLower(file.Name)] = file.Id
+		}
+		_, variants := integration.PickReadmeFiles(names)
+		pickName := "README.md"
+		switch bucket {
+		case integration.LangZhHK:
+			if v, ok := variants[integration.LangZhHK]; ok {
+				pickName = v
+			} else if v, ok := variants["zh_TW"]; ok {
+				pickName = v
+			}
+			// 缺繁体副本时回退简体 README.md
+		case integration.LangEnUS:
+			if v, ok := variants[integration.LangEnUS]; ok {
+				pickName = v
+			}
+			// 缺英文副本时回退简体 README.md
+		}
+		fileId, ok := byLower[strings.ToLower(pickName)]
+		if !ok {
+			fileId, ok = byLower["readme.md"]
+		}
+		if ok {
+			filedetail, err := models.AISkillFileGetById(rt.Ctx, fileId)
+			ginx.Dangerous(err)
+			if filedetail != nil {
+				obj.Instructions = filedetail.Content
 			}
 		}
 	} else {
