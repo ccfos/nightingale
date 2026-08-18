@@ -16,7 +16,10 @@ import (
 	"sync"
 	"time"
 
+	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
@@ -24,14 +27,17 @@ import (
 
 const boardTokenBidKey = "board_share_bid"
 
-// boardTokenDetect 解析并校验 __token，有效则把绑定的 board id 放进 context；
-// 本身不拦截，后续的 skipIfBoardToken(auth/user) 据此决定是否跳过登录鉴权。
+// BoardTokenDetect 解析并校验 __token，有效则把绑定的 board id 放进 context；
+// 本身不拦截，后续的 SkipIfBoardToken(auth/user) 据此决定是否跳过登录鉴权。
 // 注意不能在单个中间件里"校验失败就内联调用 rt.auth()(c)"——auth 成功时内部
-// 会 c.Next()，把最终 handler 提前执行掉，user 对象反而在其之后才注入
-func (rt *Router) boardTokenDetect() gin.HandlerFunc {
+// 会 c.Next()，把最终 handler 提前执行掉，user 对象反而在其之后才注入。
+//
+// 导出为包级函数供 n9e-plus 复用：plus 的仪表盘查询接口在 /api/n9e-plus 下，
+// 需要同一套分享 token 判定（plus 版前端的 N9E_PATHNAME 即 n9e-plus）。
+func BoardTokenDetect(bctx *ctx.Context) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if token := ginx.QueryStr(c, "__token", ""); token != "" {
-			st, err := models.GetSourceTokenByToken(rt.Ctx, models.SourceTypeBoard, token)
+			st, err := models.GetSourceTokenByToken(bctx, models.SourceTypeBoard, token)
 			if err == nil && st != nil && !st.IsExpired() {
 				if bid, e := strconv.ParseInt(st.SourceId, 10, 64); e == nil && bid > 0 {
 					c.Set(boardTokenBidKey, bid)
@@ -42,8 +48,12 @@ func (rt *Router) boardTokenDetect() gin.HandlerFunc {
 	}
 }
 
-// skipIfBoardToken 请求已被分享 token 放行时跳过 mw（登录鉴权），否则照常执行
-func skipIfBoardToken(mw gin.HandlerFunc) gin.HandlerFunc {
+func (rt *Router) boardTokenDetect() gin.HandlerFunc {
+	return BoardTokenDetect(rt.Ctx)
+}
+
+// SkipIfBoardToken 请求已被分享 token 放行时跳过 mw（登录鉴权），否则照常执行
+func SkipIfBoardToken(mw gin.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if _, ok := boardTokenBid(c); ok {
 			c.Next()
@@ -53,8 +63,12 @@ func skipIfBoardToken(mw gin.HandlerFunc) gin.HandlerFunc {
 	}
 }
 
-// boardTokenBid 返回当前请求经分享 token 放行时绑定的 board id
-func boardTokenBid(c *gin.Context) (int64, bool) {
+func skipIfBoardToken(mw gin.HandlerFunc) gin.HandlerFunc { return SkipIfBoardToken(mw) }
+
+func boardTokenBid(c *gin.Context) (int64, bool) { return BoardTokenBid(c) }
+
+// BoardTokenBid 返回当前请求经分享 token 放行时绑定的 board id
+func BoardTokenBid(c *gin.Context) (int64, bool) {
 	v, ok := c.Get(boardTokenBidKey)
 	if !ok {
 		return 0, false
@@ -63,15 +77,15 @@ func boardTokenBid(c *gin.Context) (int64, bool) {
 	return bid, ok
 }
 
-// checkBoardTokenDsPerm 分享 token 请求的目标数据源必须属于板内集合；
+// CheckBoardTokenDsPerm 分享 token 请求的目标数据源必须属于板内集合；
 // 非 token 请求（登录态或全局匿名）不做处理，由调用方原有逻辑兜底
-func (rt *Router) checkBoardTokenDsPerm(c *gin.Context, dsId int64) {
-	bid, ok := boardTokenBid(c)
+func CheckBoardTokenDsPerm(bctx *ctx.Context, dsCache *memsto.DatasourceCacheType, c *gin.Context, dsId int64) {
+	bid, ok := BoardTokenBid(c)
 	if !ok {
 		return
 	}
 
-	set, err := rt.boardDsSet(bid)
+	set, err := boardDsSet(bctx, dsCache, bid)
 	ginx.Dangerous(err)
 
 	if _, has := set[dsId]; !has {
@@ -79,19 +93,40 @@ func (rt *Router) checkBoardTokenDsPerm(c *gin.Context, dsId int64) {
 	}
 }
 
-// denyBoardTokenSQLCate 在 token 态拒绝 SQL 家族数据源查询。这些 cate 的查询
-// 会把 SQL 原文经 sqlbase.Query 用数据源凭证下发，其唯一只读保护是按空格切词的
-// BannedOp 黑名单（`DELETE\tFROM` 即可绕过），无法保证「匿名持链接者只读」，故
-// 在匿名分享通道整体拒绝；非 token 请求（登录态）不受影响，仍走原有逻辑。
-// 仅对走 sqlbase 弱黑名单的四个 cate 生效——tdengine/iotdb 不经该路径。
-func denyBoardTokenSQLCate(c *gin.Context, cate string) {
-	if _, ok := boardTokenBid(c); !ok {
-		return
+func (rt *Router) checkBoardTokenDsPerm(c *gin.Context, dsId int64) {
+	CheckBoardTokenDsPerm(rt.Ctx, rt.DatasourceCache, c, dsId)
+}
+
+// boardTokenQueryContext 为分享 token 请求准备查询上下文：校验数据源属于板内集合，
+// 并置位 EnforceReadOnly，让 SQL 数据源在执行前走 sqlbase.ValidateReadOnly 严格
+// 只读校验（各方言原有的关键字黑名单按空格切词，`DELETE\tFROM` 即可绕过，
+// 不构成安全边界）。
+//
+// 无条件置位而非按 cate 判断，是刻意的 fail-closed：该标记由 dskit 的 SQL 执行
+// 收口点（sqlbase.Query / clickhouse.Query / doris.Query）读取，凡是走这些收口点
+// 的查询——包括将来新增的 SQL 类插件——都自动受保护；非 SQL 插件不读该标记，
+// 因而没有副作用。若按 cate 清单置位，新增插件忘记登记就会静默失去保护。
+//
+// 返回是否为 token 请求，供调用方决定是否跳过基于登录用户的权限校验。
+// 导出为包级函数供 n9e-plus 的仪表盘查询接口复用。
+func BoardTokenQueryContext(bctx *ctx.Context, dsCache *memsto.DatasourceCacheType, c *gin.Context, dsIds ...int64) bool {
+	if _, ok := BoardTokenBid(c); !ok {
+		return false
 	}
-	switch cate {
-	case models.MYSQL, models.POSTGRESQL, models.CLICKHOUSE, models.DORIS:
-		ginx.Bomb(http.StatusForbidden, "sql datasource is not allowed for anonymous dashboard sharing")
+
+	for _, dsId := range dsIds {
+		CheckBoardTokenDsPerm(bctx, dsCache, c, dsId)
 	}
+
+	cc, _ := dskittypes.CallContextFromCtx(c.Request.Context())
+	cc.EnforceReadOnly = true
+	c.Request = c.Request.WithContext(dskittypes.WithCallContext(c.Request.Context(), cc))
+
+	return true
+}
+
+func (rt *Router) boardTokenQueryContext(c *gin.Context, dsIds ...int64) bool {
+	return BoardTokenQueryContext(rt.Ctx, rt.DatasourceCache, c, dsIds...)
 }
 
 // 板内数据源集合的进程内 TTL 缓存：一屏渲染会并发几十个 panel 请求，
@@ -108,7 +143,7 @@ var (
 
 const boardDsSetTTL = 30 * time.Second
 
-func (rt *Router) boardDsSet(bid int64) (map[int64]struct{}, error) {
+func boardDsSet(bctx *ctx.Context, dsCache *memsto.DatasourceCacheType, bid int64) (map[int64]struct{}, error) {
 	boardDsSetMu.Lock()
 	if item, ok := boardDsSetItems[bid]; ok && time.Now().Before(item.expireAt) {
 		boardDsSetMu.Unlock()
@@ -116,12 +151,12 @@ func (rt *Router) boardDsSet(bid int64) (map[int64]struct{}, error) {
 	}
 	boardDsSetMu.Unlock()
 
-	payload, err := models.BoardPayloadGet(rt.Ctx, bid)
+	payload, err := models.BoardPayloadGet(bctx, bid)
 	if err != nil {
 		return nil, err
 	}
 
-	set := collectBoardDatasourceIds(payload, rt.datasourceIdsByCate)
+	set := collectBoardDatasourceIds(payload, datasourceIdsByCate(dsCache))
 
 	boardDsSetMu.Lock()
 	boardDsSetItems[bid] = boardDsSetItem{set: set, expireAt: time.Now().Add(boardDsSetTTL)}
@@ -130,13 +165,19 @@ func (rt *Router) boardDsSet(bid int64) (map[int64]struct{}, error) {
 	return set, nil
 }
 
-func (rt *Router) datasourceIdsByCate(cate string) []int64 {
-	dss := rt.DatasourceCache.GetByCate(cate)
-	ids := make([]int64, 0, len(dss))
-	for _, ds := range dss {
-		ids = append(ids, ds.Id)
+func (rt *Router) boardDsSet(bid int64) (map[int64]struct{}, error) {
+	return boardDsSet(rt.Ctx, rt.DatasourceCache, bid)
+}
+
+func datasourceIdsByCate(dsCache *memsto.DatasourceCacheType) func(string) []int64 {
+	return func(cate string) []int64 {
+		dss := dsCache.GetByCate(cate)
+		ids := make([]int64, 0, len(dss))
+		for _, ds := range dss {
+			ids = append(ids, ds.Id)
+		}
+		return ids
 	}
-	return ids
 }
 
 // collectBoardDatasourceIds 从 board payload 提取引用的数据源 id 集合。
@@ -197,11 +238,11 @@ func addLiteralDatasourceValue(v interface{}, set map[int64]struct{}) {
 	}
 }
 
-// isReadOnlyProxyPath 判定分享 token 态下允许经 proxy 透传的只读查询路径。
+// IsReadOnlyProxyPath 判定分享 token 态下允许经 proxy 透传的只读查询路径。
 // urlPath 是 /api/n9e/proxy/:id 之后的部分（含前导斜杠），如 /api/v1/query、
 // /myindex/_search。只放行仪表盘渲染与变量取值实际需要的只读端点，写/管理类
 // 端点（_bulk、_doc、/-/reload、/api/v1/admin/* 等）不在白名单即拒。
-func isReadOnlyProxyPath(method, urlPath string) bool {
+func IsReadOnlyProxyPath(method, urlPath string) bool {
 	switch strings.ToUpper(method) {
 	case http.MethodGet, http.MethodHead, http.MethodPost:
 	default:

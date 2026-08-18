@@ -120,7 +120,7 @@ func (rt *Router) dsProxy(c *gin.Context) {
 		// 分享 token 态：数据源须属于板内集合，且仅放行只读查询路径，
 		// 避免匿名请求经全反代的 proxy 触达写/管理类端点
 		rt.checkBoardTokenDsPerm(c, dsId)
-		if !isReadOnlyProxyPath(c.Request.Method, c.Param("url")) {
+		if !IsReadOnlyProxyPath(c.Request.Method, c.Param("url")) {
 			ginx.Bomb(http.StatusForbidden, "proxy path is not allowed for anonymous dashboard sharing")
 		}
 		// __token 只用于本服务鉴权，不应随反代透传给上游数据源（会进其访问日志）

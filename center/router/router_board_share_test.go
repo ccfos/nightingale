@@ -1,52 +1,8 @@
 package router
 
 import (
-	"net/http/httptest"
 	"testing"
-
-	"github.com/ccfos/nightingale/v6/models"
-
-	"github.com/gin-gonic/gin"
 )
-
-// token 态下 SQL 家族 cate 必须被拒绝（会 panic ginx.Bomb），非 SQL cate 放行；
-// 非 token 请求一律放行（由调用方原有鉴权兜底）
-func TestDenyBoardTokenSQLCate(t *testing.T) {
-	newCtx := func(withToken bool) *gin.Context {
-		gin.SetMode(gin.TestMode)
-		c, _ := gin.CreateTestContext(httptest.NewRecorder())
-		if withToken {
-			c.Set(boardTokenBidKey, int64(1))
-		}
-		return c
-	}
-
-	bombed := func(c *gin.Context, cate string) (blocked bool) {
-		defer func() {
-			if recover() != nil {
-				blocked = true
-			}
-		}()
-		denyBoardTokenSQLCate(c, cate)
-		return false
-	}
-
-	sqlCates := []string{models.MYSQL, models.POSTGRESQL, models.CLICKHOUSE, models.DORIS}
-	for _, cate := range sqlCates {
-		if !bombed(newCtx(true), cate) {
-			t.Errorf("token request with sql cate %q should be blocked", cate)
-		}
-		if bombed(newCtx(false), cate) {
-			t.Errorf("non-token request with sql cate %q should pass", cate)
-		}
-	}
-
-	for _, cate := range []string{models.PROMETHEUS, models.ELASTICSEARCH, models.LOKI, models.TDENGINE} {
-		if bombed(newCtx(true), cate) {
-			t.Errorf("token request with non-sql cate %q should pass", cate)
-		}
-	}
-}
 
 // proxy 只读白名单：分享页所需的只读查询路径放行，写/管理端点与非只读方法拒绝
 func TestIsReadOnlyProxyPath(t *testing.T) {
@@ -62,7 +18,7 @@ func TestIsReadOnlyProxyPath(t *testing.T) {
 		{"GET", "/select/logsql/query"},
 	}
 	for _, c := range allow {
-		if !isReadOnlyProxyPath(c.method, c.path) {
+		if !IsReadOnlyProxyPath(c.method, c.path) {
 			t.Errorf("expected read-only allow: %s %s", c.method, c.path)
 		}
 	}
@@ -78,7 +34,7 @@ func TestIsReadOnlyProxyPath(t *testing.T) {
 		{"GET", "/api/v2/write"},
 	}
 	for _, c := range deny {
-		if isReadOnlyProxyPath(c.method, c.path) {
+		if IsReadOnlyProxyPath(c.method, c.path) {
 			t.Errorf("expected deny: %s %s", c.method, c.path)
 		}
 	}

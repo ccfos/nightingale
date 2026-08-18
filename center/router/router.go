@@ -348,7 +348,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/loki-parsed-fields", rt.auth(), rt.user(), rt.QueryLokiParsedFields)
 			pages.POST("/loki-histogram", rt.auth(), rt.user(), rt.QueryLokiHistogram)
 
-			pages.POST("/log-query-batch", rt.auth(), rt.user(), rt.QueryLogBatch)
+			pages.POST("/log-query-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.QueryLogBatch)
 
 			// 数据库元数据接口
 			pages.POST("/db-databases", rt.auth(), rt.user(), rt.ShowDatabases)

@@ -197,7 +197,17 @@ func (rt *Router) QueryLogBatch(c *gin.Context) {
 		logQueryAccess(c, f.Queries[i].DsCate, f.Queries[i].Did, f.Queries[i].Query)
 	}
 
-	resp, err := QueryLogBatchConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
+	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
+	// 分享 token 请求：本接口每条 query 自带数据源 id，需逐条校验板内归属
+	dsIds := make([]int64, 0, len(f.Queries))
+	for i := range f.Queries {
+		dsIds = append(dsIds, f.Queries[i].Did)
+	}
+	if rt.boardTokenQueryContext(c, dsIds...) {
+		anonymousAccess = true
+	}
+
+	resp, err := QueryLogBatchConcurrently(anonymousAccess, c, f)
 	if err != nil {
 		ginx.Bomb(200, "err:%v", err)
 	}
@@ -270,11 +280,9 @@ func (rt *Router) QueryData(c *gin.Context) {
 	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
 	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
-	if _, ok := boardTokenBid(c); ok {
-		// 分享 token 请求：SQL 家族数据源禁止匿名查询，其余数据源按板内集合校验，
-		// 跳过基于登录用户的 CheckDsPerm
-		denyBoardTokenSQLCate(c, f.Cate)
-		rt.checkBoardTokenDsPerm(c, f.DatasourceId)
+	// 分享 token 请求：数据源按板内集合校验、SQL 家族置位强只读，
+	// 跳过基于登录用户的 CheckDsPerm
+	if rt.boardTokenQueryContext(c, f.DatasourceId) {
 		anonymousAccess = true
 	}
 
@@ -347,11 +355,9 @@ func (rt *Router) QueryLogV2(c *gin.Context) {
 	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
 	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
-	if _, ok := boardTokenBid(c); ok {
-		// 分享 token 请求：SQL 家族数据源禁止匿名查询，其余数据源按板内集合校验，
-		// 跳过基于登录用户的 CheckDsPerm
-		denyBoardTokenSQLCate(c, f.Cate)
-		rt.checkBoardTokenDsPerm(c, f.DatasourceId)
+	// 分享 token 请求：数据源按板内集合校验、SQL 家族置位强只读，
+	// 跳过基于登录用户的 CheckDsPerm
+	if rt.boardTokenQueryContext(c, f.DatasourceId) {
 		anonymousAccess = true
 	}
 
