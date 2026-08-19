@@ -18,10 +18,20 @@ CATEGRAF_VERSION='{{ .Version }}'
 BUNDLED_ARCHES='{{ .Arches }}'
 GITHUB_BASE='{{ .GitHubBase }}'
 # Where the package is fetched from — deliberately NOT the same knob as the
-# address above. DOWNLOAD_BASE is the server that served this very script and
-# cannot be redirected by ?host=, --server or $N9E_HOST; the tarball it returns
-# is unpacked and run as root, so it must come from the host the operator chose
-# to trust, not from an address someone appended to a link.
+# address above. DOWNLOAD_BASE cannot be redirected by ?host= or by $N9E_HOST /
+# --server; the tarball it returns is unpacked and run as root, so it must come
+# from the host the operator chose to trust, not from an address someone
+# appended to a link. The ONLY way to change it is the explicit
+# --download-base flag below, which the operator can read in the command they
+# are about to pipe into sudo — that is what keeps the guarantee.
+#
+# It needs to be overridable because this default is derived from the request
+# headers, and a reverse proxy routinely gets them wrong: nginx's ubiquitous
+# `proxy_set_header Host $host` drops the port, so a deployment on
+# https://n9e.example.com:10443 renders https://n9e.example.com here, every
+# intranet download 404s and the install silently falls back to GitHub — fatal
+# on an air-gapped network, and with no knob there was nothing the operator
+# could do about it. See issue #3330.
 DOWNLOAD_BASE='{{ .DownloadBase }}'
 # -----------------------------------------------------------------------------
 
@@ -42,8 +52,12 @@ usage() {
 Usage: curl -fsSL <url>/api/n9e/agents/categraf/install.sh | sudo bash -s -- [options]
 
   --server <url>        nightingale address to report to (default: auto-detected).
-                        Only the reported address; the package is always fetched
-                        from the server this script came from.
+                        Only the reported address; it never changes where the
+                        package is downloaded from — use --download-base for that.
+  --download-base <url> nightingale address to download the package from
+                        (default: the address that served this script). Set it
+                        when that default is wrong, e.g. a reverse proxy that
+                        drops the port from the Host header.
   --dir <path>          install directory (default: /opt/categraf)
   --arch <amd64|arm64>  override architecture detection
   --auth <user:pass>    basic auth credentials, when the n9e agent API requires them
@@ -61,6 +75,8 @@ need_value() { [ "$2" -ge 2 ] || die "$1 requires a value (use --help)"; }
 while [ $# -gt 0 ]; do
     case "$1" in
         --server) need_value "$1" $#; N9E_HOST="$2"; shift 2 ;;
+        # Only ever from this explicit flag; never defaulted off --server.
+        --download-base) need_value "$1" $#; DOWNLOAD_BASE="$2"; shift 2 ;;
         --dir) need_value "$1" $#; INSTALL_DIR="$2"; shift 2 ;;
         --arch) need_value "$1" $#; ARCH_OVERRIDE="$2"; shift 2 ;;
         --auth)
@@ -108,11 +124,19 @@ N9E_HOST="${N9E_HOST:-$DEFAULT_N9E_HOST}"
 N9E_HOST="${N9E_HOST%/}"
 [ -n "$N9E_HOST" ] || die "nightingale address unknown; rerun with: | sudo bash -s -- --server http://<ip>:17000"
 
-# Defence in depth: the server already allowlists this value, but this script
-# runs as root, so it re-checks rather than trusting what it was handed.
+# Defence in depth: the server already allowlists the value it rendered, but
+# this script runs as root and --server / --download-base are raw command-line
+# input, so every address is re-checked here rather than trusted.
 # POSIX bracket form: ']' first, '-' last.
-printf '%s' "$N9E_HOST" | grep -Eq '^https?://[][A-Za-z0-9._:/-]+$' \
-    || die "refusing to use address '$N9E_HOST' (unsupported characters)"
+addr_ok() { printf '%s' "$1" | grep -Eq '^https?://[][A-Za-z0-9._:/-]+$'; }
+
+addr_ok "$N9E_HOST" || die "refusing to use address '$N9E_HOST' (unsupported characters)"
+
+DOWNLOAD_BASE="${DOWNLOAD_BASE%/}"
+# Empty is legal and means "this server has no package, go straight to GitHub".
+if [ -n "$DOWNLOAD_BASE" ]; then
+    addr_ok "$DOWNLOAD_BASE" || die "refusing to download from '$DOWNLOAD_BASE' (unsupported characters)"
+fi
 
 if [ -n "$ARCH_OVERRIDE" ]; then
     ARCH="$ARCH_OVERRIDE"
@@ -166,7 +190,24 @@ if [ -n "$DOWNLOAD_BASE" ]; then
     fi
 fi
 if [ "$GOT" -eq 0 ]; then
-    warn "nightingale did not serve a bundled package (arches available: ${BUNDLED_ARCHES:-none})"
+    # Name the reason this specific run missed. Blaming the address is only
+    # correct when the fetch was actually attempted AND this server bundles the
+    # arch we asked for; a single-arch server (what "copy the package manually"
+    # below produces) would otherwise send the operator hunting a URL that is
+    # perfectly fine.
+    BUNDLES_ARCH=0
+    case ",$BUNDLED_ARCHES," in *",$ARCH,"*) BUNDLES_ARCH=1 ;; esac
+    if [ -z "$DOWNLOAD_BASE" ]; then
+        warn "no nightingale address to download from (arches bundled there: ${BUNDLED_ARCHES:-none})"
+    elif [ "$BUNDLES_ARCH" -eq 0 ]; then
+        warn "nightingale has no bundled $ARCH package (arches available: ${BUNDLED_ARCHES:-none})"
+    else
+        # Otherwise the only visible symptom is "it downloaded from the
+        # internet", which reads like a policy choice rather than a broken
+        # intranet URL.
+        warn "could not fetch the $ARCH package from $DOWNLOAD_BASE, although this server does bundle it"
+        warn "if that address is wrong (missing port? wrong scheme?), rerun with --download-base '<address you reach nightingale at>'"
+    fi
     ASSET="categraf-$CATEGRAF_VERSION-linux-$ARCH.tar.gz"
     # GitHub is the only public fallback: it is where this pinned version was
     # taken from, so it is guaranteed to have that exact release. Needs internet
@@ -175,7 +216,7 @@ if [ "$GOT" -eq 0 ]; then
     URL="$GITHUB_BASE/$CATEGRAF_VERSION/$ASSET"
     log "falling back to $URL"
     DL "$URL" "$TARBALL" \
-        || die "download failed from both ${DOWNLOAD_BASE:-nightingale} and GitHub; if this host has no internet access, upgrade nightingale so it bundles categraf, or copy the package to the nightingale server manually"
+        || die "download failed from both ${DOWNLOAD_BASE:-nightingale} and GitHub; if this host has no internet access, check that --download-base points at an address it can reach, upgrade nightingale so it bundles categraf, or copy the package to the nightingale server manually"
 fi
 [ -s "$TARBALL" ] || die "downloaded package is empty"
 

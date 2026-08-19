@@ -195,6 +195,41 @@ func TestCategrafInstallScriptDownloadBaseIgnoresHostParam(t *testing.T) {
 	}
 }
 
+// The UI emits --download-base next to --server (fe
+// InstallCategraf/buildCommand.ts), because the rendered DOWNLOAD_BASE is
+// derived from request headers and a reverse proxy that drops the port from
+// Host makes it point nowhere — with no flag, the intranet download simply
+// fails and the install silently falls back to GitHub (issue #3330). If the
+// flag ever disappears from the script, every generated command starts dying
+// with "unknown option", so the contract is pinned here.
+func TestCategrafInstallScriptAcceptsDownloadBaseFlag(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rt := &Router{}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/api/n9e/agents/categraf/install.sh", nil)
+	c.Request.Host = "n9e.internal:17000"
+
+	rt.categrafInstallScript(c)
+
+	body := w.Body.String()
+	for _, want := range []string{
+		"--download-base) need_value", // parsed
+		"--download-base <url>",       // documented in --help
+		"refusing to download from",   // and re-validated, like every other address
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("rendered script is missing %q; the UI's generated command needs it", want)
+		}
+	}
+	// The flag is the ONLY way in: deriving it from --server would hand a link
+	// back the power over the download source that ?host= is denied.
+	if strings.Contains(body, `DOWNLOAD_BASE="$N9E_HOST"`) {
+		t.Error("DOWNLOAD_BASE must never be defaulted off --server; that is a root RCE vector")
+	}
+}
+
 // A bad ?host= is rejected outright rather than silently replaced by the
 // request Host: the script would otherwise bake in an address the user never
 // asked for, and categraf reports nowhere while looking perfectly healthy.
