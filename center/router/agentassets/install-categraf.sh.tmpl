@@ -190,15 +190,23 @@ if [ -n "$DOWNLOAD_BASE" ]; then
     fi
 fi
 if [ "$GOT" -eq 0 ]; then
-    if [ -n "$BUNDLED_ARCHES" ]; then
-        # The server told us it bundles packages, yet the fetch failed: the
-        # address is the suspect, not the package. Say so — otherwise the only
-        # visible symptom is "it downloaded from the internet", which reads like
-        # a policy choice rather than a broken intranet URL.
-        warn "could not fetch the package from ${DOWNLOAD_BASE:-nightingale}, although this server does bundle: $BUNDLED_ARCHES"
-        warn "if that address is wrong (missing port? wrong scheme?), rerun with --download-base '<address you reach nightingale at>'"
+    # Name the reason this specific run missed. Blaming the address is only
+    # correct when the fetch was actually attempted AND this server bundles the
+    # arch we asked for; a single-arch server (what "copy the package manually"
+    # below produces) would otherwise send the operator hunting a URL that is
+    # perfectly fine.
+    BUNDLES_ARCH=0
+    case ",$BUNDLED_ARCHES," in *",$ARCH,"*) BUNDLES_ARCH=1 ;; esac
+    if [ -z "$DOWNLOAD_BASE" ]; then
+        warn "no nightingale address to download from (arches bundled there: ${BUNDLED_ARCHES:-none})"
+    elif [ "$BUNDLES_ARCH" -eq 0 ]; then
+        warn "nightingale has no bundled $ARCH package (arches available: ${BUNDLED_ARCHES:-none})"
     else
-        warn "nightingale did not serve a bundled package (arches available: none)"
+        # Otherwise the only visible symptom is "it downloaded from the
+        # internet", which reads like a policy choice rather than a broken
+        # intranet URL.
+        warn "could not fetch the $ARCH package from $DOWNLOAD_BASE, although this server does bundle it"
+        warn "if that address is wrong (missing port? wrong scheme?), rerun with --download-base '<address you reach nightingale at>'"
     fi
     ASSET="categraf-$CATEGRAF_VERSION-linux-$ARCH.tar.gz"
     # GitHub is the only public fallback: it is where this pinned version was
