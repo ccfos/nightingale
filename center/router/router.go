@@ -284,6 +284,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/datasource/series", rt.auth(), rt.admin(), rt.deleteDatasourceSeries)
 		if rt.Center.AnonymousAccess.PromQuerier {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
+			pages.POST("/v2/query-batch", rt.queryBatchV2)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.datasourceBriefs)
@@ -321,6 +322,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/es-cluster-info", rt.ESClusterInfo)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
+			pages.POST("/v2/query-batch", rt.auth(), rt.user(), rt.queryBatchV2)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.auth(), rt.user(), rt.datasourceBriefs)
