@@ -171,7 +171,7 @@ func (rt *Router) StartAssistantMessage(userID int64, chat *models.AssistantChat
 		return nil, 0, err
 	}
 
-	if seqID == 1 {
+	if seqID == 1 && !chat.IsRenamed {
 		title := query.Content
 		if runes := []rune(title); len(runes) > 50 {
 			title = string(runes[:50]) + "..."

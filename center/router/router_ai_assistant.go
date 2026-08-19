@@ -103,6 +103,32 @@ func (rt *Router) assistantChatHistory(c *gin.Context) {
 	ginx.NewRender(c).Data(chats, nil)
 }
 
+func (rt *Router) assistantChatRename(c *gin.Context) {
+	var req struct {
+		ChatID string `json:"chat_id"`
+		Title  string `json:"title"`
+	}
+	ginx.BindJSON(c, &req)
+
+	if req.ChatID == "" {
+		ginx.Bomb(http.StatusBadRequest, "chat_id is required")
+		return
+	}
+	if strings.TrimSpace(req.Title) == "" {
+		ginx.Bomb(http.StatusBadRequest, "title is required")
+		return
+	}
+
+	me := c.MustGet("user").(*models.User)
+	chat, err := models.AssistantChatCheckOwner(rt.Ctx, req.ChatID, me.Id)
+	ginx.Dangerous(err)
+
+	chat.Title = req.Title
+	chat.IsRenamed = true
+	ginx.Dangerous(models.AssistantChatSet(rt.Ctx, *chat))
+	ginx.NewRender(c).Data(chat, nil)
+}
+
 func (rt *Router) assistantChatDel(c *gin.Context) {
 	chatID := c.Param("chatId")
 	me := c.MustGet("user").(*models.User)
