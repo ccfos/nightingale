@@ -44,6 +44,24 @@ func TestValidateReadOnlyRejectsWrites(t *testing.T) {
 		{"call procedure", "CALL do_something()"},
 		{"load data", "LOAD DATA INFILE '/tmp/x' INTO TABLE users"},
 
+		// MySQL/MariaDB/Doris 可执行注释：内容会被服务端当正文执行，
+		// 按普通注释剥掉会让校验器看到的骨架与实际执行的语句不一致
+		{"executable comment outfile", "SELECT 1 /*!50000 INTO OUTFILE '/tmp/x' */"},
+		{"executable comment mariadb", "SELECT 1 /*M!100000 INTO OUTFILE '/tmp/x' */"},
+		{"executable comment no version", "SELECT 1 /*! DROP TABLE users */"},
+		{"executable comment union", "SELECT * FROM t /*!50000 UNION SELECT * FROM mysql.user */"},
+
+		// 裸 SELECT ... INTO：PG / SQL Server / Redshift 上是建表写操作，
+		// 起始关键字是 SELECT，只能靠全句关键字扫描拦住
+		{"select into table", "SELECT * INTO pwn FROM source"},
+		{"select into with where", "SELECT a,b INTO newtbl FROM t WHERE x = 1"},
+		{"select into temp table", "SELECT * INTO TEMP TABLE tmp1 FROM t"},
+		{"cte select into", "WITH x AS (SELECT 1) SELECT * INTO y FROM x"},
+
+		// 同时是函数名的关键字，语句形态仍须拒绝
+		{"replace into", "REPLACE INTO users VALUES (1)"},
+		{"merge into", "MERGE INTO t USING s ON t.id = s.id"},
+
 		// 空语句
 		{"empty", "   "},
 		{"comment only", "/* nothing */"},
@@ -84,6 +102,15 @@ func TestValidateReadOnlyAllowsReads(t *testing.T) {
 		{"column named deleted_at", "SELECT deleted_at FROM users"},
 		{"table named updates", "SELECT * FROM updates"},
 		{"ck settings modifier", "SELECT * FROM metrics SETTINGS max_rows_to_read = 100"},
+
+		// 既是语句关键字又是标准函数名/常见列名的词，函数与列名形态必须放行，
+		// 否则分享链接下面板报错、登录态却正常，排查成本极高
+		{"replace function", "SELECT REPLACE(name, 'a', 'b') FROM t"},
+		{"replace function lowercase", "SELECT replace(host, '-', '_') AS h FROM metrics"},
+		{"column named load", "SELECT ts, load FROM metrics"},
+		{"ck merge table function", "SELECT merge(x) FROM t"},
+		{"column named copy_count", "SELECT copy_count FROM t"},
+		{"column named call_count", "SELECT call_count FROM t"},
 
 		// 变量插值后的常见形态（多选变量拼成正则/IN 列表）
 		{"multi value variable", "SELECT * FROM t WHERE host IN ('a','b','c') AND ts > 1755500000"},

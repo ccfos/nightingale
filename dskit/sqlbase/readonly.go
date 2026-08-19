@@ -31,14 +31,43 @@ var readOnlyLeadingKeywords = map[string]struct{}{
 
 // 写/管理类关键字，用词边界匹配全句扫描——覆盖 PG 的 data-modifying CTE
 // （`WITH t AS (DELETE FROM foo RETURNING *) SELECT * FROM t` 以 WITH 开头，
-// 起始关键字检查放行，只能靠这里拦），以及 `SELECT ... INTO OUTFILE` 落盘。
-var writeKeywordRe = regexp.MustCompile(`(?i)\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|RENAME|REPLACE|GRANT|REVOKE|ATTACH|DETACH|OPTIMIZE|CALL|EXEC|EXECUTE|MERGE|UPSERT|LOAD|COPY|OUTFILE|DUMPFILE|INTO\s+OUTFILE|INTO\s+DUMPFILE|LOCK|UNLOCK|SET|USE|KILL|SHUTDOWN|RESTORE|BACKUP)\b`)
+// 起始关键字检查放行，只能靠这里拦），以及 `SELECT ... INTO ...` 落盘/建表。
+//
+// 这里只收「永远不会是函数名或普通列名」的关键字。裸 INTO 必须在列表内：
+// PG / SQL Server / Redshift 的 `SELECT * INTO newtbl FROM t` 就是建表写操作，
+// 起始关键字是 SELECT，只能靠这里拦；它同时覆盖了 INTO OUTFILE / INTO DUMPFILE。
+var writeKeywordRe = regexp.MustCompile(`(?i)\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|RENAME|GRANT|REVOKE|ATTACH|DETACH|OPTIMIZE|EXEC|EXECUTE|UPSERT|OUTFILE|DUMPFILE|INTO|LOCK|UNLOCK|SET|USE|KILL|SHUTDOWN|RESTORE|BACKUP)\b`)
+
+// 既是语句关键字、又是标准函数名/常见列名的词，必须按「语句形态」匹配，不能裸用
+// 词边界扫全句——否则会误杀大量常规只读查询：
+//   REPLACE(str, from, to) 是 MySQL/CK/Doris/TDengine 的标准字符串函数（面板里
+//   做标签清洗极常见）、load 是系统负载面板的典型列名、merge() 是 CK 表函数。
+// 这类误杀只在匿名分享通道触发，表现为「分享出去的看板报错、自己登录看正常」，
+// 排查成本很高，所以宁可让这几个词走更精确的形态匹配。
+var writeStatementRe = regexp.MustCompile(`(?i)\b(REPLACE\s+INTO|LOAD\s+(DATA|XML|INFILE)|MERGE\s+INTO|COPY\s+\w+\s+(FROM|TO)\b|CALL\s+\w)`)
+
+// MySQL / MariaDB / Doris 的可执行注释：/*!...*/、/*!50000 ...*/、/*M!...*/。
+// 注释符后紧跟 ! 或 M! 即认定，不做版本号解析——正常查询不需要这种写法。
+//
+// 这一条刻意作用在未掩码的原文上（必须早于 stripSQLComments），代价是字符串
+// 字面量里恰好含 `/*!` 的查询会被误拒。相比本文件其它误伤（REPLACE( 之类是
+// 日常写法），字面量里出现 `/*!` 属于极罕见形态，这里按「宁可错杀」处理。
+var executableCommentRe = regexp.MustCompile(`/\*\s*[Mm]?!`)
 
 // 允许出现在只读语句里的例外：SETTINGS 是 ClickHouse 查询修饰符（会被 \bSET\b 误伤
 // 需靠词边界区分，这里显式说明）、SET 在 `SETTINGS` 中不构成独立词，无需额外处理。
 
 // ValidateReadOnly 对不可信调用方的 SQL 做严格只读校验。通过返回 nil。
 func ValidateReadOnly(sql string) error {
+	// 可执行注释必须在剥注释之前拒绝：MySQL/MariaDB/Doris 的 /*!... */、
+	// /*!50000 ... */、/*M!... */ 里的内容会被服务端当作 SQL 正文执行，而
+	// stripSQLComments 会把它当普通注释剥掉——校验器看到的骨架与数据库实际
+	// 执行的语句不是同一个，`SELECT 1 /*!50000 INTO OUTFILE '/tmp/x' */`
+	// 就是这么绕过去的。这类形态在正常面板查询里没有用途，直接拒绝。
+	if executableCommentRe.MatchString(sql) {
+		return fmt.Errorf("executable comments are not allowed in read-only mode")
+	}
+
 	// 先剥注释，再把字符串/标识符字面量掩成等长空白：字面量里的分号
 	// （`SELECT 'a;b'`）和关键字（`WHERE action = 'delete'`）都不该触发判定，
 	// 否则会大面积错杀合法查询。
@@ -61,9 +90,14 @@ func ValidateReadOnly(sql string) error {
 		return fmt.Errorf("only read-only statements are allowed in read-only mode, got %q", leading)
 	}
 
-	// 全句扫描写操作关键字（词边界），兜住 CTE 内嵌写、INTO OUTFILE 等
+	// 全句扫描写操作关键字（词边界），兜住 CTE 内嵌写、SELECT ... INTO 等
 	if m := writeKeywordRe.FindString(body); m != "" {
 		return fmt.Errorf("operation %s is forbidden in read-only mode", strings.ToUpper(m))
+	}
+
+	// 再按语句形态扫一遍那些同时是函数名的关键字
+	if m := writeStatementRe.FindString(body); m != "" {
+		return fmt.Errorf("operation %s is forbidden in read-only mode", strings.ToUpper(strings.Join(strings.Fields(m), " ")))
 	}
 
 	return nil

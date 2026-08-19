@@ -16,6 +16,8 @@ func TestIsReadOnlyProxyPath(t *testing.T) {
 		{"POST", "/myindex/_search"},
 		{"POST", "/_msearch"},
 		{"GET", "/select/logsql/query"},
+		// 名字里含两个点不是路径穿越，不应被按段判定误伤
+		{"POST", "/myindex..old/_search"},
 	}
 	for _, c := range allow {
 		if !IsReadOnlyProxyPath(c.method, c.path) {
@@ -32,6 +34,16 @@ func TestIsReadOnlyProxyPath(t *testing.T) {
 		{"GET", "/-/reload"},
 		{"POST", "/api/v1/admin/tsdb/delete_series"},
 		{"GET", "/api/v2/write"},
+
+		// 路径穿越：gin 不 clean URL.Path，%2e%2e 到 c.Param 时已解码成 ..，
+		// director 又把这段原样转发给上游。若只做前缀匹配，下面这些会以
+		// /api/v1/query 前缀骗过白名单，而上游（前置 nginx 会先归一化）看到的
+		// 是 /-/reload 之类白名单外的端点
+		{"GET", "/api/v1/query/../../../-/reload"},
+		{"POST", "/api/v1/query/../../../api/v1/admin/tsdb/delete_series"},
+		{"GET", "/api/v1/query/../.."},
+		{"POST", "/myindex/../../_bulk/_search"},
+		{"GET", "/select/logsql/../../-/reload"},
 	}
 	for _, c := range deny {
 		if IsReadOnlyProxyPath(c.method, c.path) {

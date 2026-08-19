@@ -15,7 +15,7 @@ type SourceToken struct {
 	Id         int64  `json:"id" gorm:"primaryKey"`
 	SourceType string `json:"source_type" gorm:"column:source_type;type:varchar(64);not null;default:''"`
 	SourceId   string `json:"source_id" gorm:"column:source_id;type:varchar(255);not null;default:''"`
-	Token      string `json:"token" gorm:"column:token;type:varchar(255);not null;default:''"`
+	Token      string `json:"token" gorm:"column:token;type:varchar(255);not null;default:'';index:idx_source_token_token"`
 	Note       string `json:"note" gorm:"type:varchar(255);not null;default:''"`
 	ExpireAt   int64  `json:"expire_at" gorm:"type:bigint;not null;default:0"`
 	CreateAt   int64  `json:"create_at" gorm:"type:bigint;not null;default:0"`

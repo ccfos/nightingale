@@ -927,6 +927,7 @@ CREATE TABLE source_token (
 );
 
 CREATE INDEX idx_source_token_type_id_token ON source_token (source_type, source_id, token);
+CREATE INDEX idx_source_token_token ON source_token (token);
 
 CREATE TABLE notification_record (
     id BIGSERIAL PRIMARY KEY,

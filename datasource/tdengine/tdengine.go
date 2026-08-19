@@ -167,6 +167,15 @@ func (td *TDengine) QueryLog(ctx context.Context, queryParam interface{}) ([]int
 		q.Query = q.Query + " limit 200"
 	}
 
+	// 与 Query 同样的守卫：/rest/sql 可执行任意语句（含 INSERT / DROP），且这条
+	// 路径同样对匿名分享通道开放（/logs-query、/log-query-batch 都落到 QueryLog）。
+	// TDengine 没有 BannedOp 之类的旧黑名单兜底，漏了这里就是零防护。
+	if dskittypes.ReadOnlyEnforced(ctx) {
+		if err := sqlbase.ValidateReadOnly(q.Query); err != nil {
+			return nil, 0, err
+		}
+	}
+
 	data, err := td.QueryTable(q.Query)
 	if err != nil {
 		return nil, 0, err

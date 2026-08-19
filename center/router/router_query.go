@@ -68,11 +68,18 @@ func logQueryAccess(c *gin.Context, cate string, dsID int64, query interface{}) 
 
 // withCallContext
 // Operator is best-effort: empty for anonymous endpoints.
+//
+// Inherit the CallContext already on the parent instead of rebuilding it, then
+// overwrite only what this call resolves. Rebuilding drops every other field —
+// notably EnforceReadOnly, which the board-share channel sets at the entry
+// handler; QueryLogBatchConcurrently derives a per-query context *after* that,
+// so a literal here silently cleared the strict read-only check on exactly the
+// path that needs it. Any field added to CallContext later inherits for free.
 func withCallContext(parent context.Context, dsID int64, operator string) context.Context {
-	return dskittypes.WithCallContext(parent, dskittypes.CallContext{
-		DatasourceID: dsID,
-		Operator:     operator,
-	})
+	cc, _ := dskittypes.CallContextFromCtx(parent)
+	cc.DatasourceID = dsID
+	cc.Operator = operator
+	return dskittypes.WithCallContext(parent, cc)
 }
 
 type CheckDsPermFunc func(c *gin.Context, dsId int64, cate string, q interface{}) bool

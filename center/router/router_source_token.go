@@ -68,7 +68,16 @@ func (rt *Router) sourceTokenAdd(c *gin.Context) {
 }
 
 // checkBoardTokenOwner 校验调用者对该仪表盘有权限（签发/查看/注销分享令牌共用），
-// 返回规范化后的 board id
+// 返回规范化后的 board id。
+//
+// 用 bgrwCheck 而非 bgroCheck：bgroCheck 走的是不带 permFlag 的 CanDoBusiGroup，
+// 业务组的只读成员也会通过。而这三个接口的能力比「把看板设为 public」更敏感——
+// 签发一条令牌等于把看板配置连同板内全部数据源的匿名查询能力交给任意第三方，
+// 且链接在过期前持续有效（即便签发者之后被移出业务组）。对齐同等能力的
+// PUT /board/:bid/public：它要求 perm("/dashboards/put") + bgrwCheck。
+//
+// 列表接口同样按写权限判定，不给只读成员开口子：SourceTokenGets 的响应里带
+// token 原文，能列举就等于能拿到一条可用的匿名链接转发出去，与签发无实质差别。
 func (rt *Router) checkBoardTokenOwner(c *gin.Context, sourceId string) int64 {
 	boardId, err := strconv.ParseInt(sourceId, 10, 64)
 	if err != nil || boardId <= 0 {
@@ -83,7 +92,16 @@ func (rt *Router) checkBoardTokenOwner(c *gin.Context, sourceId string) int64 {
 
 	me := c.MustGet("user").(*models.User)
 	if !me.IsAdmin() {
-		rt.bgroCheck(c, board.GroupId)
+		// 权限点在 handler 内判定而不是挂到路由上：POST /source-token 是 board 与
+		// event 两种令牌共用的入口，挂 rt.perm("/dashboards/put") 会让原有的事件
+		// 分享也要求仪表盘写权限。这里只对 board 分支生效，event 流程不受影响。
+		can, err := me.CheckPerm(rt.Ctx, "/dashboards/put")
+		ginx.Dangerous(err)
+		if !can {
+			ginx.Bomb(http.StatusForbidden, "forbidden")
+		}
+
+		rt.bgrwCheck(c, board.GroupId)
 	}
 
 	return boardId

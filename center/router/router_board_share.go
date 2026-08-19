@@ -11,6 +11,7 @@ package router
 import (
 	"encoding/json"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -242,10 +243,30 @@ func addLiteralDatasourceValue(v interface{}, set map[int64]struct{}) {
 // urlPath 是 /api/n9e/proxy/:id 之后的部分（含前导斜杠），如 /api/v1/query、
 // /myindex/_search。只放行仪表盘渲染与变量取值实际需要的只读端点，写/管理类
 // 端点（_bulk、_doc、/-/reload、/api/v1/admin/* 等）不在白名单即拒。
+//
+// 路径穿越必须在这里挡住，不能只靠调用方：gin 不会 clean URL.Path（路由命中时
+// 不触发 RedirectFixedPath），%2e%2e 到 c.Param 时已被 net/url 解码成 ..，而
+// dsProxy 的 director 又把这段路径原样拼给上游、http.Transport 按 RequestURI()
+// 逐字发出——全链路无人归一化。于是 /api/v1/query/../../../-/reload 会以
+// /api/v1/query 前缀骗过下面的匹配，上游若前置 nginx（会先归一化再路由）就真的
+// 落到 /-/reload。判定放在函数内部，n9e-plus 的 dsProxy 调的是同一个导出函数，
+// 无需两仓各改一遍。
 func IsReadOnlyProxyPath(method, urlPath string) bool {
 	switch strings.ToUpper(method) {
 	case http.MethodGet, http.MethodHead, http.MethodPost:
 	default:
+		return false
+	}
+
+	// 含 .. 段一律拒绝：无法保证「这里匹配到的路径」与「上游最终解析到的路由」
+	// 是同一个，而这正是白名单唯一的安全价值
+	if hasDotDotSegment(urlPath) {
+		return false
+	}
+
+	// 归一化后再匹配，避免 /./ 、// 之类形态让前缀/后缀判定与实际转发对不上
+	urlPath = path.Clean(urlPath)
+	if !strings.HasPrefix(urlPath, "/") {
 		return false
 	}
 
@@ -274,6 +295,17 @@ func IsReadOnlyProxyPath(method, urlPath string) bool {
 		return true
 	}
 
+	return false
+}
+
+// hasDotDotSegment 判断路径里是否存在独立的 ".." 段。按段比较而不是 strings.Contains，
+// 以免误伤 /myindex..old/_search 这类合法名字里含两个点的路径
+func hasDotDotSegment(p string) bool {
+	for _, seg := range strings.Split(p, "/") {
+		if seg == ".." {
+			return true
+		}
+	}
 	return false
 }
 
