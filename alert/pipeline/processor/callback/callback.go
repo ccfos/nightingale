@@ -1,6 +1,7 @@
 package callback
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -17,17 +18,56 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+// HTTPHeaders accepts both {"X-Token":"v"} and the UI form [{"key":"X-Token","value":"v"}].
+type HTTPHeaders map[string]string
+
+func (h *HTTPHeaders) UnmarshalJSON(data []byte) error {
+	data = bytes.TrimSpace(data)
+	if len(data) == 0 || string(data) == "null" {
+		return nil
+	}
+
+	switch data[0] {
+	case '{':
+		var asMap map[string]string
+		if err := json.Unmarshal(data, &asMap); err != nil {
+			return err
+		}
+		*h = asMap
+		return nil
+	case '[':
+		var pairs []struct {
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		}
+		if err := json.Unmarshal(data, &pairs); err != nil {
+			return err
+		}
+		out := make(HTTPHeaders, len(pairs))
+		for _, p := range pairs {
+			if p.Key == "" {
+				continue
+			}
+			out[p.Key] = p.Value
+		}
+		*h = out
+		return nil
+	default:
+		return fmt.Errorf("header: expected object or array")
+	}
+}
+
 type HTTPConfig struct {
-	URL           string            `json:"url"`
-	Method        string            `json:"method,omitempty"`
-	Body          string            `json:"body,omitempty"`
-	Headers       map[string]string `json:"header"`
-	AuthUsername  string            `json:"auth_username"`
-	AuthPassword  string            `json:"auth_password"`
-	Timeout       int               `json:"timeout"` // 单位:ms
-	SkipSSLVerify bool              `json:"skip_ssl_verify"`
-	Proxy         string            `json:"proxy"`
-	Client        *http.Client      `json:"-"`
+	URL           string       `json:"url"`
+	Method        string       `json:"method,omitempty"`
+	Body          string       `json:"body,omitempty"`
+	Headers       HTTPHeaders  `json:"header"`
+	AuthUsername  string       `json:"auth_username"`
+	AuthPassword  string       `json:"auth_password"`
+	Timeout       int          `json:"timeout"` // 单位:ms
+	SkipSSLVerify bool         `json:"skip_ssl_verify"`
+	Proxy         string       `json:"proxy"`
+	Client        *http.Client `json:"-"`
 }
 
 // RelabelConfig

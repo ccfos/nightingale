@@ -134,7 +134,7 @@ func TestAISummaryConfig_Process(t *testing.T) {
 			URL:           srv.URL,
 			Timeout:       30000,
 			SkipSSLVerify: true,
-			Headers: map[string]string{
+			Headers: callback.HTTPHeaders{
 				"Content-Type": "application/json",
 			},
 		},
