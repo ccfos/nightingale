@@ -95,7 +95,8 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 
 			// PromDefaultDatasourceId 是全局写入目标（pingmesh 转发等），与本引擎集群归属无关，
 			// 必须在按引擎过滤之前用全量列表探测，否则默认数据源挂在其他集群时会被清零。
-			// disabled 源不参与探测，与下方跳过 InitClient 的语义保持一致。
+			// disabled 源不参与探测：这里选出来的是数据写入目标，停用的数据源不该继续被写入。
+			// 注意这条只约束写入，读取（即时查询）不受 status 影响，见下方注释。
 			foundDefaultDatasource := false
 			for _, item := range items {
 				if item.Status == "disabled" {
@@ -127,13 +128,6 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 
 			var dss []datasource.DatasourceInfo
 			for _, item := range items {
-
-				// disabled 数据源不建立运行时查询 client：既符合「禁用」语义，也避免导入的待补充鉴权
-				// (pending_auth) 源每 2s 反复 InitClient，堆积连接/goroutine/DB 句柄。排除后
-				// 它们不进 PutDatasources 的 validIds，已注册的会被一并从缓存移除。
-				if item.Status == "disabled" {
-					continue
-				}
 
 				// logger.Debugf("get datasource: %+v", item)
 				ds := datasource.DatasourceInfo{
