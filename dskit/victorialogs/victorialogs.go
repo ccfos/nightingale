@@ -1,7 +1,7 @@
 package victorialogs
 
 import (
-	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -12,9 +12,19 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 )
+
+// maxLogFieldSize 单个日志字段值的字节上限，超出部分截断。
+// 取 64KB 是因为它对一条 Java 堆栈足够（数百个栈帧），同时能挡住把上百 MB
+// 的单行日志原样甩给浏览器或 LLM。
+const maxLogFieldSize = 64 * 1024
+
+// maxErrLineSnippet 解析失败时回传的原始行片段上限。定位一处 JSON 语法错误 1KB 足够，
+// 再大就是把整段响应体写进 HTTP 响应和日志。
+const maxErrLineSnippet = 1024
 
 type VictoriaLogs struct {
 	VictorialogsAddr  string `json:"victorialogs.addr" mapstructure:"victorialogs.addr"`
@@ -141,24 +151,77 @@ func (vl *VictoriaLogs) QueryWithOffset(ctx context.Context, query string, start
 	}
 
 	// VictoriaLogs returns NDJSON format (one JSON object per line)
+	// 这里手工按 \n 切分而不用 bufio.Scanner：Scanner 单行超过 64KB 就会返回
+	// token too long 并中断整批解析，一条超长的 Java 堆栈会把同批其他日志一起带走。
 	var logs []LogEntry
-	scanner := bufio.NewScanner(strings.NewReader(string(body)))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if line == "" {
+	for rest := body; len(rest) > 0; {
+		var line []byte
+		if idx := bytes.IndexByte(rest, '\n'); idx >= 0 {
+			line, rest = rest[:idx], rest[idx+1:]
+		} else {
+			line, rest = rest, nil
+		}
+		line = bytes.TrimSpace(line) // 顺带吃掉 CRLF 的 \r
+		if len(line) == 0 {
 			continue
 		}
+
 		var entry LogEntry
-		if err := json.Unmarshal([]byte(line), &entry); err != nil {
-			return nil, fmt.Errorf("decode log entry failed: %w, line=%s", err, line)
+		if err := json.Unmarshal(line, &entry); err != nil {
+			return nil, fmt.Errorf("decode log entry failed: %w, line=%s", err, errLineSnippet(line))
 		}
+		truncateLogEntry(entry)
 		logs = append(logs, entry)
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("scan response failed: %w", err)
 	}
 
 	return logs, nil
+}
+
+// truncateLogEntry 把 entry 里超长的字符串字段截到 maxLogFieldSize 并附上尾注，
+// 让使用者知道内容被截过、原始有多大。
+// 只改写已有 key、不新增字段：range 期间新增的 key 是否被遍历没有保证，
+// 而且多出来的字段会混进前端的日志字段列表里。
+func truncateLogEntry(entry LogEntry) {
+	for k, v := range entry {
+		s, ok := v.(string)
+		if !ok || len(s) <= maxLogFieldSize {
+			continue
+		}
+		entry[k] = fmt.Sprintf("%s...(truncated, total %d bytes)", truncateUTF8(s, maxLogFieldSize), len(s))
+	}
+}
+
+// truncateUTF8 按字节上限截断字符串，并回退到合法 UTF-8 边界，
+// 避免切断多字节字符（如中文）导致前端显示成乱码。
+func truncateUTF8(s string, maxBytes int) string {
+	if len(s) <= maxBytes {
+		return s
+	}
+	return trimPartialRune(s[:maxBytes])
+}
+
+// errLineSnippet 取坏行开头的一段用于报错。坏行本身可能有上百 MB，
+// 先在 []byte 上切一刀再转 string，避免整行拷贝。
+func errLineSnippet(line []byte) string {
+	if len(line) <= maxErrLineSnippet {
+		return string(line)
+	}
+	return trimPartialRune(string(line[:maxErrLineSnippet]))
+}
+
+// trimPartialRune 剥掉按字节切断后尾部残缺的多字节序列，最多回退 UTFMax-1 字节。
+// 不用 utf8.ValidString 整段校验：未经 json 解码的原始响应字节中段就可能有非法字节，
+// 那时「校验整段 + 逐字节回退」会退化成 O(n²)。
+func trimPartialRune(s string) string {
+	for i := 0; i < utf8.UTFMax-1 && len(s) > 0; i++ {
+		// size <= 1 的 RuneError 才是非法编码，合法的 U+FFFD 自身占 3 字节
+		if r, size := utf8.DecodeLastRuneInString(s); r == utf8.RuneError && size <= 1 {
+			s = s[:len(s)-1]
+			continue
+		}
+		break
+	}
+	return s
 }
 
 // StatsQuery 执行统计查询（单点时间）
