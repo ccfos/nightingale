@@ -2236,6 +2236,7 @@ CREATE TABLE `source_token` (
     `source_type` varchar(64) NOT NULL DEFAULT '' COMMENT 'source type',
     `source_id` varchar(255) NOT NULL DEFAULT '' COMMENT 'source identifier',
     `token` varchar(255) NOT NULL DEFAULT '' COMMENT 'access token',
+    `note` varchar(255) NOT NULL DEFAULT '' COMMENT 'note',
     `expire_at` bigint NOT NULL DEFAULT 0 COMMENT 'expire timestamp',
     `create_at` bigint NOT NULL DEFAULT 0 COMMENT 'create timestamp',
     `create_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',

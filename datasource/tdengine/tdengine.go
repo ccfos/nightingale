@@ -15,7 +15,9 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 
 	"github.com/ccfos/nightingale/v6/datasource"
+	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
 	td "github.com/ccfos/nightingale/v6/dskit/tdengine"
+	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/mitchellh/mapstructure"
@@ -213,6 +215,14 @@ func (td *TDengine) Query(ctx context.Context, query interface{}, delay ...int) 
 
 	for key, val := range replacements {
 		q.Query = strings.ReplaceAll(q.Query, key, val)
+	}
+
+	// 仪表盘匿名分享通道要求严格只读：TDengine 的 /rest/sql 端点可执行任意语句
+	// （含 INSERT / DROP），且这里原本没有任何写操作防护
+	if dskittypes.ReadOnlyEnforced(ctx) {
+		if err := sqlbase.ValidateReadOnly(q.Query); err != nil {
+			return nil, err
+		}
 	}
 
 	data, err := td.QueryTable(q.Query)

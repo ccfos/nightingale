@@ -506,3 +506,7 @@ ALTER TABLE `ai_agent` MODIFY `description` text COMMENT 'description';
    不要去掉 LOCK=NONE 直接执行——那会在整个建索引期间阻塞该表写入 */
 ALTER TABLE `notification_record` ADD KEY `idx_nr_rule_created_evt` (`notify_rule_id`, `created_at`, `event_id`), ALGORITHM=INPLACE, LOCK=NONE;
 ALTER TABLE `notification_record` ADD KEY `idx_nr_created_at` (`created_at`), ALGORITHM=INPLACE, LOCK=NONE;
+
+/* v9 2026-08-18 source_token note: 仪表盘匿名分享链接的备注，便于在管理列表里
+   分辨每条链接的用途与去向 */
+ALTER TABLE `source_token` ADD COLUMN `note` varchar(255) NOT NULL DEFAULT '' COMMENT 'note';

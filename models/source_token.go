@@ -16,6 +16,7 @@ type SourceToken struct {
 	SourceType string `json:"source_type" gorm:"column:source_type;type:varchar(64);not null;default:''"`
 	SourceId   string `json:"source_id" gorm:"column:source_id;type:varchar(255);not null;default:''"`
 	Token      string `json:"token" gorm:"column:token;type:varchar(255);not null;default:''"`
+	Note       string `json:"note" gorm:"type:varchar(255);not null;default:''"`
 	ExpireAt   int64  `json:"expire_at" gorm:"type:bigint;not null;default:0"`
 	CreateAt   int64  `json:"create_at" gorm:"type:bigint;not null;default:0"`
 	CreateBy   string `json:"create_by" gorm:"type:varchar(64);not null;default:''"`
@@ -57,6 +58,35 @@ func GetSourceTokenByToken(ctx *ctx.Context, sourceType, token string) (*SourceT
 	}
 
 	return lst[0], nil
+}
+
+// SourceTokenGets 列出某个资源已签发的令牌，按创建时间倒序。
+// 含已过期记录：过期项也要让使用者看到并可清理
+func SourceTokenGets(ctx *ctx.Context, sourceType, sourceId string) ([]*SourceToken, error) {
+	var lst []*SourceToken
+	err := DB(ctx).Where("source_type = ? AND source_id = ?", sourceType, sourceId).
+		Order("create_at desc").Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+	return lst, nil
+}
+
+func SourceTokenGetById(ctx *ctx.Context, id int64) (*SourceToken, error) {
+	var lst []*SourceToken
+	err := DB(ctx).Where("id = ?", id).Limit(1).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+	if len(lst) == 0 {
+		return nil, nil
+	}
+	return lst[0], nil
+}
+
+// SourceTokenDel 注销令牌：删除后该分享链接立即失效
+func SourceTokenDel(ctx *ctx.Context, id int64) error {
+	return DB(ctx).Where("id = ?", id).Delete(&SourceToken{}).Error
 }
 
 func (st *SourceToken) IsExpired() bool {

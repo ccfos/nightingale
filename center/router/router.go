@@ -724,6 +724,8 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		// source token 相关路由
 		pages.POST("/source-token", rt.auth(), rt.user(), rt.sourceTokenAdd)
+		pages.GET("/source-tokens", rt.auth(), rt.user(), rt.sourceTokenGets)
+		pages.DELETE("/source-token/:id", rt.auth(), rt.user(), rt.sourceTokenDel)
 
 		// for admin api
 		pages.GET("/user/busi-groups", rt.auth(), rt.admin(), rt.userBusiGroupsGets)

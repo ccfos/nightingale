@@ -34,24 +34,17 @@ func (rt *Router) sourceTokenAdd(c *gin.Context) {
 	// 仪表盘分享令牌：校验资源存在与签发者权限，且必须限时——
 	// token 会把板内数据源的只读查询能力开放给链接持有者，不允许永不过期
 	if f.SourceType == models.SourceTypeBoard {
-		boardId, err := strconv.ParseInt(f.SourceId, 10, 64)
-		if err != nil || boardId <= 0 {
-			ginx.Bomb(http.StatusBadRequest, "invalid source_id")
-		}
-
-		board, err := models.BoardGetByID(rt.Ctx, boardId)
-		ginx.Dangerous(err)
-		if board == nil {
-			ginx.Bomb(http.StatusNotFound, "No such dashboard")
-		}
-
-		me := c.MustGet("user").(*models.User)
-		if !me.IsAdmin() {
-			rt.bgroCheck(c, board.GroupId)
-		}
+		boardId := rt.checkBoardTokenOwner(c, f.SourceId)
 
 		if f.ExpireAt <= 0 {
 			ginx.Bomb(http.StatusBadRequest, "expire time is required")
+		}
+
+		// 备注必填：一个板可能同时存在多条长期有效的分享链接，没有备注就无从
+		// 判断哪条该注销。前端已做必填校验，这里是接口层的兜底
+		f.Note = strings.TrimSpace(f.Note)
+		if f.Note == "" {
+			ginx.Bomb(http.StatusBadRequest, "note is required")
 		}
 
 		// 规范化回解析结果，避免 `05`、`5 ` 这类写入形态与 boardGet 读取时
@@ -72,4 +65,61 @@ func (rt *Router) sourceTokenAdd(c *gin.Context) {
 
 	go models.CleanupExpiredTokens(rt.Ctx)
 	ginx.NewRender(c).Data(token, nil)
+}
+
+// checkBoardTokenOwner 校验调用者对该仪表盘有权限（签发/查看/注销分享令牌共用），
+// 返回规范化后的 board id
+func (rt *Router) checkBoardTokenOwner(c *gin.Context, sourceId string) int64 {
+	boardId, err := strconv.ParseInt(sourceId, 10, 64)
+	if err != nil || boardId <= 0 {
+		ginx.Bomb(http.StatusBadRequest, "invalid source_id")
+	}
+
+	board, err := models.BoardGetByID(rt.Ctx, boardId)
+	ginx.Dangerous(err)
+	if board == nil {
+		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+	}
+
+	me := c.MustGet("user").(*models.User)
+	if !me.IsAdmin() {
+		rt.bgroCheck(c, board.GroupId)
+	}
+
+	return boardId
+}
+
+// sourceTokenGets 列出某个资源已签发的分享令牌，供页面展示与注销
+func (rt *Router) sourceTokenGets(c *gin.Context) {
+	sourceType := strings.ToLower(strings.TrimSpace(ginx.QueryStr(c, "source_type", "")))
+	sourceId := ginx.QueryStr(c, "source_id", "")
+
+	if sourceType != models.SourceTypeBoard {
+		// 目前只有仪表盘分享需要管理界面；其余类型不开放列举，避免泄露令牌
+		ginx.Bomb(http.StatusBadRequest, "invalid source_type")
+	}
+
+	boardId := rt.checkBoardTokenOwner(c, sourceId)
+
+	lst, err := models.SourceTokenGets(rt.Ctx, sourceType, strconv.FormatInt(boardId, 10))
+	ginx.NewRender(c).Data(lst, err)
+}
+
+// sourceTokenDel 注销分享令牌，链接立即失效
+func (rt *Router) sourceTokenDel(c *gin.Context) {
+	id := ginx.UrlParamInt64(c, "id")
+
+	st, err := models.SourceTokenGetById(rt.Ctx, id)
+	ginx.Dangerous(err)
+	if st == nil {
+		ginx.NewRender(c).Message(nil)
+		return
+	}
+
+	if st.SourceType != models.SourceTypeBoard {
+		ginx.Bomb(http.StatusBadRequest, "invalid source_type")
+	}
+	rt.checkBoardTokenOwner(c, st.SourceId)
+
+	ginx.NewRender(c).Message(models.SourceTokenDel(rt.Ctx, id))
 }

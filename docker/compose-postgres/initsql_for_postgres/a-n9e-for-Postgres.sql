@@ -920,6 +920,7 @@ CREATE TABLE source_token (
     source_type varchar(64) NOT NULL DEFAULT '',
     source_id varchar(255) NOT NULL DEFAULT '',
     token varchar(255) NOT NULL DEFAULT '',
+    note varchar(255) NOT NULL DEFAULT '',
     expire_at bigint NOT NULL DEFAULT 0,
     create_at bigint NOT NULL DEFAULT 0,
     create_by varchar(64) NOT NULL DEFAULT ''
