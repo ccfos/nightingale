@@ -24,10 +24,12 @@ func (p *FeishuCardProvider) Notify(ctx context.Context, req *NotifyRequest) *No
 
 	// 当事件包含截图、且显式提供 app_id/app_secret 时，先上传图片并注入 shot_image_key，供卡片模板引用。
 	imageBase64 := pickImageBase64(req.Events)
-	appConfig := req.Config.RequestConfig.FeishuRequestConfig
-
 	var appID, appSecret string
-	if appConfig != nil {
+	if appConfig := req.Config.RequestConfig.FeishuCardRequestConfig; appConfig != nil {
+		appID = strings.TrimSpace(appConfig.AppID)
+		appSecret = strings.TrimSpace(appConfig.AppSecret)
+	} else if appConfig := req.Config.RequestConfig.FeishuRequestConfig; appConfig != nil {
+		// 兼容旧版本字段 feishu_request_config
 		appID = strings.TrimSpace(appConfig.AppID)
 		appSecret = strings.TrimSpace(appConfig.AppSecret)
 	}

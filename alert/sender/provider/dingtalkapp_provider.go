@@ -252,9 +252,6 @@ func UploadMedia(ctx context.Context, client *http.Client, accessToken, mediaTyp
 
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
-	if err = writer.WriteField("type", mediaType); err != nil {
-		return "", fmt.Errorf("write media type failed: %w", err)
-	}
 	part, err := writer.CreateFormFile("media", defaultMediaFileName(mediaType))
 	if err != nil {
 		return "", fmt.Errorf("create form file failed: %w", err)
@@ -266,7 +263,8 @@ func UploadMedia(ctx context.Context, client *http.Client, accessToken, mediaTyp
 		return "", fmt.Errorf("close multipart writer failed: %w", err)
 	}
 
-	uploadURL := fmt.Sprintf("%s?access_token=%s", dingtalkAppMediaUploadURL, url.QueryEscape(accessToken))
+	// 钉钉 media/upload 老接口要求 type 作为 URL query 参数传递，放在表单字段里不会被识别。
+	uploadURL := fmt.Sprintf("%s?access_token=%s&type=%s", dingtalkAppMediaUploadURL, url.QueryEscape(accessToken), url.QueryEscape(mediaType))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, &body)
 	if err != nil {
 		return "", err
@@ -679,7 +677,8 @@ func normalizedDingtalkCode(raw json.RawMessage) string {
 func defaultMediaFileName(mediaType string) string {
 	switch strings.ToLower(strings.TrimSpace(mediaType)) {
 	case "image":
-		return "image.png"
+		// shot 服务现返回 JPEG 数据，文件名后缀与内容格式保持一致
+		return "image.jpg"
 	case "voice":
 		return "voice.amr"
 	case "file":

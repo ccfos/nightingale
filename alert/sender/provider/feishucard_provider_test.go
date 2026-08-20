@@ -22,7 +22,7 @@ func TestFeishuCardProviderNotifyWithImage(t *testing.T) {
 	cfg := &models.NotifyChannelConfig{
 		RequestType: "feishucard",
 		RequestConfig: &models.RequestConfig{
-			FeishuRequestConfig: &models.FeishuRequestConfig{
+			FeishuCardRequestConfig: &models.FeishuCardRequestConfig{
 				AppID:     appID,
 				AppSecret: appSecret,
 			},

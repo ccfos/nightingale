@@ -31,9 +31,13 @@ func (p *LarkCardProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 	// 与 feishucard 一致：事件里有截图，且传入 app_id/app_secret 时，先上传并注入 shot_image_key。
 	imageBase64 := pickImageBase64(req.Events)
 	var appID, appSecret string
-	if req.Config.RequestConfig.FeishuRequestConfig != nil {
-		appID = strings.TrimSpace(req.Config.RequestConfig.FeishuRequestConfig.AppID)
-		appSecret = strings.TrimSpace(req.Config.RequestConfig.FeishuRequestConfig.AppSecret)
+	if appConfig := req.Config.RequestConfig.FeishuCardRequestConfig; appConfig != nil {
+		appID = strings.TrimSpace(appConfig.AppID)
+		appSecret = strings.TrimSpace(appConfig.AppSecret)
+	} else if appConfig := req.Config.RequestConfig.FeishuRequestConfig; appConfig != nil {
+		// 兼容旧版本字段 feishu_request_config
+		appID = strings.TrimSpace(appConfig.AppID)
+		appSecret = strings.TrimSpace(appConfig.AppSecret)
 	}
 	if imageBase64 != "" && appID != "" && appSecret != "" {
 		token, err := getLarkTenantAccessToken(ctx, req.HttpClient, appID, appSecret)

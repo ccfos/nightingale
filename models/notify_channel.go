@@ -60,6 +60,7 @@ type RequestConfig struct {
 	PagerDutyRequestConfig   *PagerDutyRequestConfig   `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
 	DingtalkAppRequestConfig *DingtalkAppRequestConfig `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
 	FeishuAppRequestConfig   *FeishuAppRequestConfig   `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
+	FeishuCardRequestConfig  *FeishuCardRequestConfig  `json:"feishucard_request_config,omitempty" gorm:"serializer:json"`
 	WecomAppRequestConfig    *WecomAppRequestConfig    `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
 	// 兼容旧版本
 	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
@@ -157,6 +158,13 @@ type FeishuAppRequestConfig struct {
 }
 
 type FeishuRequestConfig struct {
+	AppID     string `json:"app_id"`
+	AppSecret string `json:"app_secret"`
+}
+
+// FeishuCardRequestConfig 飞书卡片(feishucard)媒介的应用凭证，
+// 事件含截图时用于上传图片并注入 shot_image_key 供卡片模板引用
+type FeishuCardRequestConfig struct {
 	AppID     string `json:"app_id"`
 	AppSecret string `json:"app_secret"`
 }
