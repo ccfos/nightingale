@@ -270,6 +270,14 @@ func IsReadOnlyProxyPath(method, urlPath string) bool {
 		return false
 	}
 
+	// 集群根路径只返回版本等元信息，没有副作用。ES 面板必须靠它拿版本号才能决定
+	// date_histogram 用 interval 还是 fixed_interval（见 fe 的
+	// dashboard/Renderer/datasource/elasticsearch）——挡掉这条，ES 8 上会退化成
+	// 已被移除的 interval，整块面板画不出来
+	if urlPath == "/" {
+		return strings.ToUpper(method) == http.MethodGet
+	}
+
 	// Elasticsearch 只读查询端点（_search / _msearch，POST 但只读）
 	if strings.HasSuffix(urlPath, "/_search") || strings.HasSuffix(urlPath, "/_msearch") {
 		return true

@@ -18,6 +18,8 @@ func TestIsReadOnlyProxyPath(t *testing.T) {
 		{"GET", "/select/logsql/query"},
 		// 名字里含两个点不是路径穿越，不应被按段判定误伤
 		{"POST", "/myindex..old/_search"},
+		// ES 版本探测：面板据此决定 date_histogram 用 interval 还是 fixed_interval
+		{"GET", "/"},
 	}
 	for _, c := range allow {
 		if !IsReadOnlyProxyPath(c.method, c.path) {
@@ -44,6 +46,11 @@ func TestIsReadOnlyProxyPath(t *testing.T) {
 		{"GET", "/api/v1/query/../.."},
 		{"POST", "/myindex/../../_bulk/_search"},
 		{"GET", "/select/logsql/../../-/reload"},
+
+		// 根路径只放行 GET：写方法即便打在根上也不该透传
+		{"POST", "/"},
+		{"DELETE", "/"},
+		{"GET", "/../"},
 	}
 	for _, c := range deny {
 		if IsReadOnlyProxyPath(c.method, c.path) {
