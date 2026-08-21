@@ -123,6 +123,14 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	go models.InitNotifyChannel(ctx)
 	models.VerifyByProvider = provider.VerifyChannelConfig
 
+	// 通知媒介的 URL / 请求头 / 查询参数 / 请求体可以引用「变量配置」里的变量（{{.my_token}}），
+	// 凭证因此不必明文写在媒介配置里。这里把变量缓存挂给 provider 包，避免为传递变量去改
+	// BuildNotifyContext / SendByNotifyRule 的签名（后者 n9e-plus 侧有自己的实现）。
+	// center 与独立 alert 都经由本函数启动，注册一次即覆盖两种部署形态。
+	if notifyConfigCache != nil && notifyConfigCache.ConfigCache != nil {
+		provider.UserVariableGetter = notifyConfigCache.ConfigCache.Get
+	}
+
 	naming := naming.NewNaming(ctx, alertc.Heartbeat, alertStats)
 	// TODO(dingtalkapp): 钉钉应用本次不上线，先屏蔽 Stream 主备选举入口，避免启动回调长连接；待上线时恢复本行。
 	// notifyChannelCache.SetDingtalkLeaderNaming(naming)
