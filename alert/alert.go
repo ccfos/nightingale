@@ -126,7 +126,8 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	// 通知媒介的 URL / 请求头 / 查询参数 / 请求体可以引用「变量配置」里的变量（{{.my_token}}），
 	// 凭证因此不必明文写在媒介配置里。这里把变量缓存挂给 provider 包，避免为传递变量去改
 	// BuildNotifyContext / SendByNotifyRule 的签名（后者 n9e-plus 侧有自己的实现）。
-	// center 与独立 alert 都经由本函数启动，注册一次即覆盖两种部署形态。
+	// 开源的 center / 独立 alert / edge 都经由本函数启动，注册一次即覆盖；n9e-plus 不调用
+	// 本函数，需在其 plus.go 与 alert.Start 里各自注册，否则变量静默渲染成空串。
 	if notifyConfigCache != nil && notifyConfigCache.ConfigCache != nil {
 		provider.UserVariableGetter = notifyConfigCache.ConfigCache.Get
 	}
