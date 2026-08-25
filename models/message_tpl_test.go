@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	texttemplate "text/template"
+	"unicode"
 
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 )
@@ -77,6 +78,58 @@ func TestTplBodiesHaveNoLeftoverLabels(t *testing.T) {
 			for _, label := range labels {
 				if strings.Contains(stripped, label) {
 					t.Errorf("%s template %s still contains untranslated label %q", v.Lang, key, label)
+				}
+			}
+		}
+	}
+}
+
+// hasHan 判断字符串是否含汉字
+func hasHan(s string) bool {
+	for _, r := range s {
+		if unicode.Is(unicode.Han, r) {
+			return true
+		}
+	}
+	return false
+}
+
+// TestLangVariantContentNotChinese 扫各语言版本「实际引用到的」模板正文。
+//
+// 前一个测试只扫 v.Bodies，而 20 行里有 11 行（Jira/Slack/Discord/Mattermost/
+// 语音短信等）直接复用中文表 NewTplMap——它们当前恰好不含中文，但这是巧合不是
+// 约束：NewTplMap 里的 Mm 就是中文的。真正要钉住的是「非中文版本渲染不出中文」，
+// 所以这里顺着 Content 取值查，而不是查词条表
+func TestLangVariantContentNotChinese(t *testing.T) {
+	zhByChannel := make(map[string]MessageTemplate, len(MsgTplMap))
+	for _, tpl := range MsgTplMap {
+		zhByChannel[tpl.Ident] = tpl
+	}
+
+	for _, v := range BuiltinMsgTplLangVariants {
+		for _, tpl := range v.Templates {
+			zhTpl, ok := zhByChannel[tpl.NotifyChannelIdent]
+			if !ok {
+				continue // 一一对应由镜像测试保证，这里不重复报错
+			}
+
+			for key, text := range tpl.Content {
+				zhText := zhTpl.Content[key]
+
+				// 与中文版共用同一份正文，且那份正文含中文 —— 等于没翻译。
+				// 共用本身没问题（Jira/Slack 等语言无关模板就该共用），
+				// 前提是那份正文里没有中文
+				if text == zhText && hasHan(zhText) {
+					t.Errorf("%s template %s content[%q] still shares the Chinese body", v.Lang, tpl.Ident, key)
+					continue
+				}
+
+				// 日文本身用汉字，无法按字符集判定，交给上面的共用检查兜底
+				if v.Lang == MsgTplLangJa {
+					continue
+				}
+				if hasHan(text) {
+					t.Errorf("%s template %s content[%q] contains Chinese characters", v.Lang, tpl.Ident, key)
 				}
 			}
 		}
