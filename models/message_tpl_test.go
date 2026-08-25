@@ -3,6 +3,7 @@ package models
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 	texttemplate "text/template"
@@ -10,12 +11,60 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 )
 
-// 与 eventsMessage 渲染链路一致：拼上 $event 等变量定义后，英文模板都应能正常解析
-func TestNewTplMapEnParse(t *testing.T) {
-	for key, text := range NewTplMapEn {
-		full := strings.Join(append(getDefs(nil), text), "")
-		if _, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(full); err != nil {
-			t.Errorf("built-in en template %s parse error: %v", key, err)
+// 与 eventsMessage 渲染链路一致：拼上 $event 等变量定义后，各语言模板都应能正常解析
+func TestNewTplMapLangVariantsParse(t *testing.T) {
+	for lang, m := range map[string]map[string]string{"en": NewTplMapEn, "ja": NewTplMapJa} {
+		for key, text := range m {
+			full := strings.Join(append(getDefs(nil), text), "")
+			if _, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(full); err != nil {
+				t.Errorf("built-in %s template %s parse error: %v", lang, key, err)
+			}
+		}
+	}
+}
+
+// tplActionRe 匹配模板动作 {{...}}
+var tplActionRe = regexp.MustCompile(`(?s)\{\{.*?\}\}`)
+
+// TestNewTplMapJaKeepsEnActions 日文模板是从英文版逐字替换标签文案生成的，
+// 两者的模板动作序列必须完全一致：只要有一处 {{...}} 被翻译动作误伤，
+// 渲染结果就会静默丢字段（模板仍能解析，只是取不到值）
+func TestNewTplMapJaKeepsEnActions(t *testing.T) {
+	if len(NewTplMapJa) != len(NewTplMapEn)+1 { // 多一条日文 EmailSubject
+		t.Fatalf("NewTplMapJa has %d entries, NewTplMapEn has %d", len(NewTplMapJa), len(NewTplMapEn))
+	}
+
+	for key, enText := range NewTplMapEn {
+		jaText, ok := NewTplMapJa[key]
+		if !ok {
+			t.Errorf("NewTplMapJa missing %s", key)
+			continue
+		}
+
+		enActions := tplActionRe.FindAllString(enText, -1)
+		jaActions := tplActionRe.FindAllString(jaText, -1)
+		if len(enActions) != len(jaActions) {
+			t.Errorf("%s: ja has %d template actions, en has %d", key, len(jaActions), len(enActions))
+			continue
+		}
+		for i := range enActions {
+			if enActions[i] != jaActions[i] {
+				t.Errorf("%s: action %d differs\n en: %s\n ja: %s", key, i, enActions[i], jaActions[i])
+			}
+		}
+	}
+}
+
+// TestNewTplMapJaHasNoLeftoverLabels 生成脚本漏译时标签会原样留在日文模板里，
+// 这里抽查几个高频标签兜底
+func TestNewTplMapJaHasNoLeftoverLabels(t *testing.T) {
+	labels := []string{"Level Status", "Rule Name", "Trigger Time", "Recovery Time", "Send Time", "Trigger Value"}
+	for key, text := range NewTplMapJa {
+		stripped := tplActionRe.ReplaceAllString(text, "")
+		for _, label := range labels {
+			if strings.Contains(stripped, label) {
+				t.Errorf("ja template %s still contains untranslated label %q", key, label)
+			}
 		}
 	}
 }
@@ -83,35 +132,82 @@ func TestFilterMsgTplsByLang(t *testing.T) {
 	}
 }
 
-// 内置模板中英文一一对应：英文版 ident 为中文版 ident 加 -en 后缀，渠道一致，内容 key 一致
-func TestMsgTplMapEnMirrorsMsgTplMap(t *testing.T) {
+// 内置模板各语言版本与中文版一一对应：ident 为中文版 ident 加语言后缀，
+// 渠道一致，内容 key 一致。新增语言时在这里加一行即可
+func TestMsgTplMapLangVariantsMirrorMsgTplMap(t *testing.T) {
+	variants := []struct {
+		lang   string
+		suffix string
+		tpls   []MessageTemplate
+	}{
+		{MsgTplLangEn, "-en", MsgTplMapEn},
+		{MsgTplLangJa, "-ja", MsgTplMapJa},
+	}
+
 	zhByIdent := make(map[string]MessageTemplate, len(MsgTplMap))
 	for _, tpl := range MsgTplMap {
 		zhByIdent[tpl.Ident] = tpl
 	}
 
-	if len(MsgTplMapEn) != len(MsgTplMap) {
-		t.Fatalf("MsgTplMapEn has %d templates, MsgTplMap has %d", len(MsgTplMapEn), len(MsgTplMap))
-	}
-
-	for _, enTpl := range MsgTplMapEn {
-		if enTpl.Lang != MsgTplLangEn {
-			t.Errorf("built-in en template %s lang = %q, want %q", enTpl.Ident, enTpl.Lang, MsgTplLangEn)
-		}
-
-		if enTpl.Ident != enTpl.NotifyChannelIdent+"-en" {
-			t.Errorf("built-in en template ident %q should be %q", enTpl.Ident, enTpl.NotifyChannelIdent+"-en")
-		}
-
-		zhTpl, ok := zhByIdent[enTpl.NotifyChannelIdent]
-		if !ok {
-			t.Errorf("built-in en template %s has no zh counterpart", enTpl.Ident)
+	for _, v := range variants {
+		if len(v.tpls) != len(MsgTplMap) {
+			t.Errorf("%s variant has %d templates, MsgTplMap has %d", v.lang, len(v.tpls), len(MsgTplMap))
 			continue
 		}
 
-		for key := range zhTpl.Content {
-			if _, ok := enTpl.Content[key]; !ok {
-				t.Errorf("built-in en template %s missing content key %q", enTpl.Ident, key)
+		for _, tpl := range v.tpls {
+			if tpl.Lang != v.lang {
+				t.Errorf("built-in %s template %s lang = %q, want %q", v.lang, tpl.Ident, tpl.Lang, v.lang)
+			}
+
+			if tpl.Ident != tpl.NotifyChannelIdent+v.suffix {
+				t.Errorf("built-in %s template ident %q should be %q", v.lang, tpl.Ident, tpl.NotifyChannelIdent+v.suffix)
+			}
+
+			zhTpl, ok := zhByIdent[tpl.NotifyChannelIdent]
+			if !ok {
+				t.Errorf("built-in %s template %s has no zh counterpart", v.lang, tpl.Ident)
+				continue
+			}
+
+			for key := range zhTpl.Content {
+				if _, ok := tpl.Content[key]; !ok {
+					t.Errorf("built-in %s template %s missing content key %q", v.lang, tpl.Ident, key)
+				}
+			}
+		}
+	}
+}
+
+// TestBuiltinMsgTplIdentsUnique 三套内置模板共用 message_template.ident 唯一键，
+// 后缀写错会让 Upsert 互相覆盖，落库后只剩一门语言
+func TestBuiltinMsgTplIdentsUnique(t *testing.T) {
+	seen := make(map[string]string)
+	for name, tpls := range map[string][]MessageTemplate{
+		"zh": MsgTplMap, "en": MsgTplMapEn, "ja": MsgTplMapJa,
+	} {
+		for _, tpl := range tpls {
+			if prev, dup := seen[tpl.Ident]; dup {
+				t.Errorf("ident %q used by both %s and %s", tpl.Ident, prev, name)
+			}
+			seen[tpl.Ident] = name
+		}
+	}
+}
+
+// TestBuiltinMsgTplLangMatchesHeader 种子行的 Lang 必须等于 NormalizeMsgTplLang
+// 对该语言请求头的返回值，否则 FilterMsgTplsByLang 永远筛不出这套模板
+func TestBuiltinMsgTplLangMatchesHeader(t *testing.T) {
+	cases := map[string][]MessageTemplate{
+		"en_US": MsgTplMapEn,
+		"ja_JP": MsgTplMapJa,
+	}
+	for header, tpls := range cases {
+		want := NormalizeMsgTplLang(header)
+		for _, tpl := range tpls {
+			if got := NormalizeMsgTplLang(tpl.Lang); got != want {
+				t.Errorf("template %s: NormalizeMsgTplLang(%q) = %q, header %q normalizes to %q",
+					tpl.Ident, tpl.Lang, got, header, want)
 			}
 		}
 	}
