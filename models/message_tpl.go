@@ -194,7 +194,12 @@ const MsgTplLangEn = "en"
 
 // NormalizeMsgTplLang 归一化 X-Language 请求头或模板 lang 字段：
 // 空值与 zh 前缀（zh_CN、zh_HK）均视为中文，返回空串（存量模板 lang 为空）；
-// en 前缀（en、en_US）归一为 en；其他语言原样返回
+// en 前缀（en、en_US）归一为 en；其他语言原样返回。
+//
+// 这里不接 i18nx.NormalizeLang：DB 里存量行的 lang 是 "" 和 "en"，改归一化结果
+// 会让 FilterMsgTplsByLang 的英文兜底对不上存量数据。因此增补其他语言的内置模板时，
+// 种子行的 Lang 必须与本函数对该语言请求头的返回值逐字相同——日语请求头到这里是
+// "ja_JP"（原样返回），种子行写 "ja" 则永远匹配不上
 func NormalizeMsgTplLang(lang string) string {
 	switch {
 	case lang == "" || strings.HasPrefix(lang, "zh"):
