@@ -717,7 +717,7 @@ en:
   node_filesystem_free_bytes: Filesystem free space in bytes
   node_filesystem_size_bytes: Filesystem size in bytes
   node_filesystem_files_free: Filesystem total free file nodes
-  node_filesystem_files: Filesystem total free file nodes
+  node_filesystem_files: Filesystem total file nodes
   node_filefd_maximum: Max open files
   node_filefd_allocated: Open files
   node_filesystem_readonly: Filesystem read-only status
@@ -736,8 +736,8 @@ en:
   # NET
   node_network_receive_bytes_total: Network device statistic receive_bytes (counter)
   node_network_transmit_bytes_total: Network device statistic transmit_bytes (counter)
-  node_network_receive_packets_total: Network device statistic receive_bytes
-  node_network_transmit_packets_total: Network device statistic transmit_bytes
+  node_network_receive_packets_total: Network device statistic receive_packets
+  node_network_transmit_packets_total: Network device statistic transmit_packets
   node_network_receive_errs_total: Network device statistic receive_errs
   node_network_transmit_errs_total: Network device statistic transmit_errs
   node_network_receive_drop_total: Network device statistic receive_drop
@@ -770,8 +770,139 @@ en:
   zk_open_file_descriptor_count: Number of file descriptors that a zookeeper server has open
   zk_max_file_descriptor_count: Maximum number of file descriptors that a zookeeper server can open
   zk_avg_latency: Average time in milliseconds for requests to be processed
-  zk_min_latency: Maximum time in milliseconds for a request to be processed
-  zk_max_latency: Minimum time in milliseconds for a request to be processed
+  zk_min_latency: Minimum time in milliseconds for a request to be processed
+  zk_max_latency: Maximum time in milliseconds for a request to be processed
+  netstat_sockets_used: Total number of sockets in use across all protocols
+  netstat_tcp_inuse: Number of TCP sockets in use (listening)
+  netstat_tcp_orphan: "Number of orphaned TCP connections, that is, sockets no longer owned by any process and waiting to be destroyed"
+  netstat_tcp_tw: Number of TCP connections in TIME_WAIT state
+  netstat_tcp_alloc: "Number of allocated TCP sockets, that is, sockets established with an sk_buff assigned"
+  netstat_tcp_mem: Memory pages used by TCP sockets
+  netstat_udp_inuse: Number of UDP sockets in use
+  netstat_udp_mem: Memory pages used by UDP sockets
+  netstat_udplite_inuse: Number of UDP-Lite sockets in use
+  netstat_raw_inuse: Number of raw sockets in use
+  netstat_frag_inuse: Number of IP fragments
+  netstat_frag_memory: "Memory allocated to IP fragments, in bytes"
+  ping_percent_packet_loss: "Percentage of ping packets lost (%)"
+  ping_result_code: "Ping return code ('0','1')"
+  net_response_result_code: "Network probe result, 0 means normal and any other value means abnormal"
+  net_response_response_time: "Network probe latency, in seconds"
+  cloudwatch_aws_rds_bin_log_disk_usage_average: "Disk space occupied by binary logs on the RDS primary, in bytes (average)"
+  cloudwatch_aws_rds_bin_log_disk_usage_maximum: "Disk space occupied by binary logs on the RDS primary, in bytes (maximum)"
+  cloudwatch_aws_rds_bin_log_disk_usage_minimum: "Disk space occupied by binary logs on the RDS primary, in bytes (minimum)"
+  cloudwatch_aws_rds_bin_log_disk_usage_sample_count: "Disk space occupied by binary logs on the RDS primary, in bytes (sample count)"
+  cloudwatch_aws_rds_bin_log_disk_usage_sum: "Disk space occupied by binary logs on the RDS primary, in bytes (sum)"
+  cloudwatch_aws_rds_burst_balance_average: Percentage of General Purpose SSD (gp2) burst-bucket I/O credits available (average)
+  cloudwatch_aws_rds_burst_balance_maximum: Percentage of General Purpose SSD (gp2) burst-bucket I/O credits available (maximum)
+  cloudwatch_aws_rds_burst_balance_minimum: Percentage of General Purpose SSD (gp2) burst-bucket I/O credits available (minimum)
+  cloudwatch_aws_rds_burst_balance_sample_count: Percentage of General Purpose SSD (gp2) burst-bucket I/O credits available (sample count)
+  cloudwatch_aws_rds_burst_balance_sum: Percentage of General Purpose SSD (gp2) burst-bucket I/O credits available (sum)
+  cloudwatch_aws_rds_cpu_utilization_average: "CPU utilization of the RDS instance, in percent (average)"
+  cloudwatch_aws_rds_cpu_utilization_maximum: "CPU utilization of the RDS instance, in percent (maximum)"
+  cloudwatch_aws_rds_cpu_utilization_minimum: "CPU utilization of the RDS instance, in percent (minimum)"
+  cloudwatch_aws_rds_cpu_utilization_sample_count: "CPU utilization of the RDS instance, in percent (sample count)"
+  cloudwatch_aws_rds_cpu_utilization_sum: "CPU utilization of the RDS instance, in percent (sum)"
+  cloudwatch_aws_rds_database_connections_average: Number of client network connections to the RDS instance (average)
+  cloudwatch_aws_rds_database_connections_maximum: Number of client network connections to the RDS instance (maximum)
+  cloudwatch_aws_rds_database_connections_minimum: Number of client network connections to the RDS instance (minimum)
+  cloudwatch_aws_rds_database_connections_sample_count: Number of client network connections to the RDS instance (sample count)
+  cloudwatch_aws_rds_database_connections_sum: Number of client network connections to the RDS instance (sum)
+  cloudwatch_aws_rds_db_load_average: Number of active sessions on the DB engine (average)
+  cloudwatch_aws_rds_db_load_cpu_average: Number of active sessions whose wait event type is CPU (average)
+  cloudwatch_aws_rds_db_load_cpu_maximum: Number of active sessions whose wait event type is CPU (maximum)
+  cloudwatch_aws_rds_db_load_cpu_minimum: Number of active sessions whose wait event type is CPU (minimum)
+  cloudwatch_aws_rds_db_load_cpu_sample_count: Number of active sessions whose wait event type is CPU (sample count)
+  cloudwatch_aws_rds_db_load_cpu_sum: Number of active sessions whose wait event type is CPU (sum)
+  cloudwatch_aws_rds_db_load_maximum: Number of active sessions on the DB engine (maximum)
+  cloudwatch_aws_rds_db_load_minimum: Number of active sessions on the DB engine (minimum)
+  cloudwatch_aws_rds_db_load_non_cpu_average: Number of active sessions whose wait event type is not CPU (average)
+  cloudwatch_aws_rds_db_load_non_cpu_maximum: Number of active sessions whose wait event type is not CPU (maximum)
+  cloudwatch_aws_rds_db_load_non_cpu_minimum: Number of active sessions whose wait event type is not CPU (minimum)
+  cloudwatch_aws_rds_db_load_non_cpu_sample_count: Number of active sessions whose wait event type is not CPU (sample count)
+  cloudwatch_aws_rds_db_load_non_cpu_sum: Number of active sessions whose wait event type is not CPU (sum)
+  cloudwatch_aws_rds_db_load_sample_count: Number of active sessions on the DB engine (sample count)
+  cloudwatch_aws_rds_db_load_sum: Number of active sessions on the DB engine (sum)
+  cloudwatch_aws_rds_disk_queue_depth_average: Number of outstanding I/O requests waiting to access the disk (average)
+  cloudwatch_aws_rds_disk_queue_depth_maximum: Number of outstanding I/O requests waiting to access the disk (maximum)
+  cloudwatch_aws_rds_disk_queue_depth_minimum: Number of outstanding I/O requests waiting to access the disk (minimum)
+  cloudwatch_aws_rds_disk_queue_depth_sample_count: Number of outstanding I/O requests waiting to access the disk (sample count)
+  cloudwatch_aws_rds_disk_queue_depth_sum: Number of outstanding I/O requests waiting to access the disk (sum)
+  cloudwatch_aws_rds_ebs_byte_balance__average: Percentage of throughput credits remaining in the EBS burst bucket (average)
+  cloudwatch_aws_rds_ebs_byte_balance__maximum: Percentage of throughput credits remaining in the EBS burst bucket (maximum)
+  cloudwatch_aws_rds_ebs_byte_balance__minimum: Percentage of throughput credits remaining in the EBS burst bucket (minimum)
+  cloudwatch_aws_rds_ebs_byte_balance__sample_count: Percentage of throughput credits remaining in the EBS burst bucket (sample count)
+  cloudwatch_aws_rds_ebs_byte_balance__sum: Percentage of throughput credits remaining in the EBS burst bucket (sum)
+  cloudwatch_aws_rds_ebsio_balance__average: Percentage of I/O credits remaining in the EBS burst bucket (average)
+  cloudwatch_aws_rds_ebsio_balance__maximum: Percentage of I/O credits remaining in the EBS burst bucket (maximum)
+  cloudwatch_aws_rds_ebsio_balance__minimum: Percentage of I/O credits remaining in the EBS burst bucket (minimum)
+  cloudwatch_aws_rds_ebsio_balance__sample_count: Percentage of I/O credits remaining in the EBS burst bucket (sample count)
+  cloudwatch_aws_rds_ebsio_balance__sum: Percentage of I/O credits remaining in the EBS burst bucket (sum)
+  cloudwatch_aws_rds_free_storage_space_average: "Available storage space on the RDS instance, in bytes (average)"
+  cloudwatch_aws_rds_free_storage_space_maximum: "Available storage space on the RDS instance, in bytes (maximum)"
+  cloudwatch_aws_rds_free_storage_space_minimum: "Available storage space on the RDS instance, in bytes (minimum)"
+  cloudwatch_aws_rds_free_storage_space_sample_count: "Available storage space on the RDS instance, in bytes (sample count)"
+  cloudwatch_aws_rds_free_storage_space_sum: "Available storage space on the RDS instance, in bytes (sum)"
+  cloudwatch_aws_rds_freeable_memory_average: "Available random access memory on the RDS instance, in bytes (average)"
+  cloudwatch_aws_rds_freeable_memory_maximum: "Available random access memory on the RDS instance, in bytes (maximum)"
+  cloudwatch_aws_rds_freeable_memory_minimum: "Available random access memory on the RDS instance, in bytes (minimum)"
+  cloudwatch_aws_rds_freeable_memory_sample_count: "Available random access memory on the RDS instance, in bytes (sample count)"
+  cloudwatch_aws_rds_freeable_memory_sum: "Available random access memory on the RDS instance, in bytes (sum)"
+  cloudwatch_aws_rds_lvm_read_iops_average: Number of LVM disk read operations per second (average)
+  cloudwatch_aws_rds_lvm_read_iops_maximum: Number of LVM disk read operations per second (maximum)
+  cloudwatch_aws_rds_lvm_read_iops_minimum: Number of LVM disk read operations per second (minimum)
+  cloudwatch_aws_rds_lvm_read_iops_sample_count: Number of LVM disk read operations per second (sample count)
+  cloudwatch_aws_rds_lvm_read_iops_sum: Number of LVM disk read operations per second (sum)
+  cloudwatch_aws_rds_lvm_write_iops_average: Number of LVM disk write operations per second (average)
+  cloudwatch_aws_rds_lvm_write_iops_maximum: Number of LVM disk write operations per second (maximum)
+  cloudwatch_aws_rds_lvm_write_iops_minimum: Number of LVM disk write operations per second (minimum)
+  cloudwatch_aws_rds_lvm_write_iops_sample_count: Number of LVM disk write operations per second (sample count)
+  cloudwatch_aws_rds_lvm_write_iops_sum: Number of LVM disk write operations per second (sum)
+  cloudwatch_aws_rds_network_receive_throughput_average: "Incoming network traffic on the RDS instance, in bytes per second (average)"
+  cloudwatch_aws_rds_network_receive_throughput_maximum: "Incoming network traffic on the RDS instance, in bytes per second (maximum)"
+  cloudwatch_aws_rds_network_receive_throughput_minimum: "Incoming network traffic on the RDS instance, in bytes per second (minimum)"
+  cloudwatch_aws_rds_network_receive_throughput_sample_count: "Incoming network traffic on the RDS instance, in bytes per second (sample count)"
+  cloudwatch_aws_rds_network_receive_throughput_sum: "Incoming network traffic on the RDS instance, in bytes per second (sum)"
+  cloudwatch_aws_rds_network_transmit_throughput_average: "Outgoing network traffic on the RDS instance, in bytes per second (average)"
+  cloudwatch_aws_rds_network_transmit_throughput_maximum: "Outgoing network traffic on the RDS instance, in bytes per second (maximum)"
+  cloudwatch_aws_rds_network_transmit_throughput_minimum: "Outgoing network traffic on the RDS instance, in bytes per second (minimum)"
+  cloudwatch_aws_rds_network_transmit_throughput_sample_count: "Outgoing network traffic on the RDS instance, in bytes per second (sample count)"
+  cloudwatch_aws_rds_network_transmit_throughput_sum: "Outgoing network traffic on the RDS instance, in bytes per second (sum)"
+  cloudwatch_aws_rds_read_iops_average: Number of disk read operations per second (average)
+  cloudwatch_aws_rds_read_iops_maximum: Number of disk read operations per second (maximum)
+  cloudwatch_aws_rds_read_iops_minimum: Number of disk read operations per second (minimum)
+  cloudwatch_aws_rds_read_iops_sample_count: Number of disk read operations per second (sample count)
+  cloudwatch_aws_rds_read_iops_sum: Number of disk read operations per second (sum)
+  cloudwatch_aws_rds_read_latency_average: "Time taken per disk read operation, in seconds (average)"
+  cloudwatch_aws_rds_read_latency_maximum: "Time taken per disk read operation, in seconds (maximum)"
+  cloudwatch_aws_rds_read_latency_minimum: "Time taken per disk read operation, in seconds (minimum)"
+  cloudwatch_aws_rds_read_latency_sample_count: "Time taken per disk read operation, in seconds (sample count)"
+  cloudwatch_aws_rds_read_latency_sum: "Time taken per disk read operation, in seconds (sum)"
+  cloudwatch_aws_rds_read_throughput_average: Number of bytes read from disk per second (average)
+  cloudwatch_aws_rds_read_throughput_maximum: Number of bytes read from disk per second (maximum)
+  cloudwatch_aws_rds_read_throughput_minimum: Number of bytes read from disk per second (minimum)
+  cloudwatch_aws_rds_read_throughput_sample_count: Number of bytes read from disk per second (sample count)
+  cloudwatch_aws_rds_read_throughput_sum: Number of bytes read from disk per second (sum)
+  cloudwatch_aws_rds_swap_usage_average: "Swap space used by the RDS instance, in bytes (average)"
+  cloudwatch_aws_rds_swap_usage_maximum: "Swap space used by the RDS instance, in bytes (maximum)"
+  cloudwatch_aws_rds_swap_usage_minimum: "Swap space used by the RDS instance, in bytes (minimum)"
+  cloudwatch_aws_rds_swap_usage_sample_count: "Swap space used by the RDS instance, in bytes (sample count)"
+  cloudwatch_aws_rds_swap_usage_sum: "Swap space used by the RDS instance, in bytes (sum)"
+  cloudwatch_aws_rds_write_iops_average: Number of disk write operations per second (average)
+  cloudwatch_aws_rds_write_iops_maximum: Number of disk write operations per second (maximum)
+  cloudwatch_aws_rds_write_iops_minimum: Number of disk write operations per second (minimum)
+  cloudwatch_aws_rds_write_iops_sample_count: Number of disk write operations per second (sample count)
+  cloudwatch_aws_rds_write_iops_sum: Number of disk write operations per second (sum)
+  cloudwatch_aws_rds_write_latency_average: "Time taken per disk write operation, in seconds (average)"
+  cloudwatch_aws_rds_write_latency_maximum: "Time taken per disk write operation, in seconds (maximum)"
+  cloudwatch_aws_rds_write_latency_minimum: "Time taken per disk write operation, in seconds (minimum)"
+  cloudwatch_aws_rds_write_latency_sample_count: "Time taken per disk write operation, in seconds (sample count)"
+  cloudwatch_aws_rds_write_latency_sum: "Time taken per disk write operation, in seconds (sum)"
+  cloudwatch_aws_rds_write_throughput_average: Number of bytes written to disk per second (average)
+  cloudwatch_aws_rds_write_throughput_maximum: Number of bytes written to disk per second (maximum)
+  cloudwatch_aws_rds_write_throughput_minimum: Number of bytes written to disk per second (minimum)
+  cloudwatch_aws_rds_write_throughput_sample_count: Number of bytes written to disk per second (sample count)
+  cloudwatch_aws_rds_write_throughput_sum: Number of bytes written to disk per second (sum)
 
 ja:
   ip_conntrack_count: "コネクション追跡テーブルのエントリ総数（単位：int, count）"
@@ -1207,3 +1338,134 @@ ja:
   zk_avg_latency: リクエスト処理にかかった平均時間（ミリ秒）
   zk_min_latency: リクエスト処理にかかった最小時間（ミリ秒）
   zk_max_latency: リクエスト処理にかかった最大時間（ミリ秒）
+  netstat_sockets_used: 全プロトコルで使用中のソケット総数
+  netstat_tcp_inuse: 使用中（リッスン中）の TCP ソケット数
+  netstat_tcp_orphan: どのプロセスにも属さない孤児 TCP 接続数。破棄待ちの不要なソケット
+  netstat_tcp_tw: TIME_WAIT 状態の TCP 接続数
+  netstat_tcp_alloc: 割り当て済み（確立され sk_buff を確保した）TCP ソケット数
+  netstat_tcp_mem: TCP ソケットが使用しているメモリページ数
+  netstat_udp_inuse: 使用中の UDP ソケット数
+  netstat_udp_mem: UDP ソケットが使用しているメモリページ数
+  netstat_udplite_inuse: 使用中の UDP-Lite ソケット数
+  netstat_raw_inuse: 使用中の raw ソケット数
+  netstat_frag_inuse: IP フラグメント数
+  netstat_frag_memory: IP フラグメントに割り当てられたメモリ（バイト）
+  ping_percent_packet_loss: "ping パケットの損失率（%）"
+  ping_result_code: "ping の戻り値（'0','1'）"
+  net_response_result_code: ネットワーク監視の結果。0 が正常、それ以外は異常
+  net_response_response_time: ネットワーク監視の応答時間（秒）
+  cloudwatch_aws_rds_bin_log_disk_usage_average: RDS プライマリのバイナリログが占めるディスク容量（バイト）（平均）
+  cloudwatch_aws_rds_bin_log_disk_usage_maximum: RDS プライマリのバイナリログが占めるディスク容量（バイト）（最大）
+  cloudwatch_aws_rds_bin_log_disk_usage_minimum: RDS プライマリのバイナリログが占めるディスク容量（バイト）（最小）
+  cloudwatch_aws_rds_bin_log_disk_usage_sample_count: RDS プライマリのバイナリログが占めるディスク容量（バイト）（サンプル数）
+  cloudwatch_aws_rds_bin_log_disk_usage_sum: RDS プライマリのバイナリログが占めるディスク容量（バイト）（合計）
+  cloudwatch_aws_rds_burst_balance_average: 汎用 SSD（gp2）のバーストバケットに残っている I/O クレジットの割合（平均）
+  cloudwatch_aws_rds_burst_balance_maximum: 汎用 SSD（gp2）のバーストバケットに残っている I/O クレジットの割合（最大）
+  cloudwatch_aws_rds_burst_balance_minimum: 汎用 SSD（gp2）のバーストバケットに残っている I/O クレジットの割合（最小）
+  cloudwatch_aws_rds_burst_balance_sample_count: 汎用 SSD（gp2）のバーストバケットに残っている I/O クレジットの割合（サンプル数）
+  cloudwatch_aws_rds_burst_balance_sum: 汎用 SSD（gp2）のバーストバケットに残っている I/O クレジットの割合（合計）
+  cloudwatch_aws_rds_cpu_utilization_average: "RDS インスタンスの CPU 使用率（%）（平均）"
+  cloudwatch_aws_rds_cpu_utilization_maximum: "RDS インスタンスの CPU 使用率（%）（最大）"
+  cloudwatch_aws_rds_cpu_utilization_minimum: "RDS インスタンスの CPU 使用率（%）（最小）"
+  cloudwatch_aws_rds_cpu_utilization_sample_count: "RDS インスタンスの CPU 使用率（%）（サンプル数）"
+  cloudwatch_aws_rds_cpu_utilization_sum: "RDS インスタンスの CPU 使用率（%）（合計）"
+  cloudwatch_aws_rds_database_connections_average: RDS インスタンスへのクライアント接続数（平均）
+  cloudwatch_aws_rds_database_connections_maximum: RDS インスタンスへのクライアント接続数（最大）
+  cloudwatch_aws_rds_database_connections_minimum: RDS インスタンスへのクライアント接続数（最小）
+  cloudwatch_aws_rds_database_connections_sample_count: RDS インスタンスへのクライアント接続数（サンプル数）
+  cloudwatch_aws_rds_database_connections_sum: RDS インスタンスへのクライアント接続数（合計）
+  cloudwatch_aws_rds_db_load_average: DB エンジン上のアクティブセッション数（平均）
+  cloudwatch_aws_rds_db_load_cpu_average: 待機イベントの種別が CPU であるアクティブセッション数（平均）
+  cloudwatch_aws_rds_db_load_cpu_maximum: 待機イベントの種別が CPU であるアクティブセッション数（最大）
+  cloudwatch_aws_rds_db_load_cpu_minimum: 待機イベントの種別が CPU であるアクティブセッション数（最小）
+  cloudwatch_aws_rds_db_load_cpu_sample_count: 待機イベントの種別が CPU であるアクティブセッション数（サンプル数）
+  cloudwatch_aws_rds_db_load_cpu_sum: 待機イベントの種別が CPU であるアクティブセッション数（合計）
+  cloudwatch_aws_rds_db_load_maximum: DB エンジン上のアクティブセッション数（最大）
+  cloudwatch_aws_rds_db_load_minimum: DB エンジン上のアクティブセッション数（最小）
+  cloudwatch_aws_rds_db_load_non_cpu_average: 待機イベントの種別が CPU 以外であるアクティブセッション数（平均）
+  cloudwatch_aws_rds_db_load_non_cpu_maximum: 待機イベントの種別が CPU 以外であるアクティブセッション数（最大）
+  cloudwatch_aws_rds_db_load_non_cpu_minimum: 待機イベントの種別が CPU 以外であるアクティブセッション数（最小）
+  cloudwatch_aws_rds_db_load_non_cpu_sample_count: 待機イベントの種別が CPU 以外であるアクティブセッション数（サンプル数）
+  cloudwatch_aws_rds_db_load_non_cpu_sum: 待機イベントの種別が CPU 以外であるアクティブセッション数（合計）
+  cloudwatch_aws_rds_db_load_sample_count: DB エンジン上のアクティブセッション数（サンプル数）
+  cloudwatch_aws_rds_db_load_sum: DB エンジン上のアクティブセッション数（合計）
+  cloudwatch_aws_rds_disk_queue_depth_average: ディスクへのアクセスを待っている未処理 I/O リクエスト数（平均）
+  cloudwatch_aws_rds_disk_queue_depth_maximum: ディスクへのアクセスを待っている未処理 I/O リクエスト数（最大）
+  cloudwatch_aws_rds_disk_queue_depth_minimum: ディスクへのアクセスを待っている未処理 I/O リクエスト数（最小）
+  cloudwatch_aws_rds_disk_queue_depth_sample_count: ディスクへのアクセスを待っている未処理 I/O リクエスト数（サンプル数）
+  cloudwatch_aws_rds_disk_queue_depth_sum: ディスクへのアクセスを待っている未処理 I/O リクエスト数（合計）
+  cloudwatch_aws_rds_ebs_byte_balance__average: EBS バーストバケットに残っているスループットクレジットの割合（平均）
+  cloudwatch_aws_rds_ebs_byte_balance__maximum: EBS バーストバケットに残っているスループットクレジットの割合（最大）
+  cloudwatch_aws_rds_ebs_byte_balance__minimum: EBS バーストバケットに残っているスループットクレジットの割合（最小）
+  cloudwatch_aws_rds_ebs_byte_balance__sample_count: EBS バーストバケットに残っているスループットクレジットの割合（サンプル数）
+  cloudwatch_aws_rds_ebs_byte_balance__sum: EBS バーストバケットに残っているスループットクレジットの割合（合計）
+  cloudwatch_aws_rds_ebsio_balance__average: EBS バーストバケットに残っている I/O クレジットの割合（平均）
+  cloudwatch_aws_rds_ebsio_balance__maximum: EBS バーストバケットに残っている I/O クレジットの割合（最大）
+  cloudwatch_aws_rds_ebsio_balance__minimum: EBS バーストバケットに残っている I/O クレジットの割合（最小）
+  cloudwatch_aws_rds_ebsio_balance__sample_count: EBS バーストバケットに残っている I/O クレジットの割合（サンプル数）
+  cloudwatch_aws_rds_ebsio_balance__sum: EBS バーストバケットに残っている I/O クレジットの割合（合計）
+  cloudwatch_aws_rds_free_storage_space_average: RDS インスタンスの空きストレージ容量（バイト）（平均）
+  cloudwatch_aws_rds_free_storage_space_maximum: RDS インスタンスの空きストレージ容量（バイト）（最大）
+  cloudwatch_aws_rds_free_storage_space_minimum: RDS インスタンスの空きストレージ容量（バイト）（最小）
+  cloudwatch_aws_rds_free_storage_space_sample_count: RDS インスタンスの空きストレージ容量（バイト）（サンプル数）
+  cloudwatch_aws_rds_free_storage_space_sum: RDS インスタンスの空きストレージ容量（バイト）（合計）
+  cloudwatch_aws_rds_freeable_memory_average: RDS インスタンスの利用可能なメモリ量（バイト）（平均）
+  cloudwatch_aws_rds_freeable_memory_maximum: RDS インスタンスの利用可能なメモリ量（バイト）（最大）
+  cloudwatch_aws_rds_freeable_memory_minimum: RDS インスタンスの利用可能なメモリ量（バイト）（最小）
+  cloudwatch_aws_rds_freeable_memory_sample_count: RDS インスタンスの利用可能なメモリ量（バイト）（サンプル数）
+  cloudwatch_aws_rds_freeable_memory_sum: RDS インスタンスの利用可能なメモリ量（バイト）（合計）
+  cloudwatch_aws_rds_lvm_read_iops_average: LVM ディスクの 1 秒あたりの読み取り操作数（平均）
+  cloudwatch_aws_rds_lvm_read_iops_maximum: LVM ディスクの 1 秒あたりの読み取り操作数（最大）
+  cloudwatch_aws_rds_lvm_read_iops_minimum: LVM ディスクの 1 秒あたりの読み取り操作数（最小）
+  cloudwatch_aws_rds_lvm_read_iops_sample_count: LVM ディスクの 1 秒あたりの読み取り操作数（サンプル数）
+  cloudwatch_aws_rds_lvm_read_iops_sum: LVM ディスクの 1 秒あたりの読み取り操作数（合計）
+  cloudwatch_aws_rds_lvm_write_iops_average: LVM ディスクの 1 秒あたりの書き込み操作数（平均）
+  cloudwatch_aws_rds_lvm_write_iops_maximum: LVM ディスクの 1 秒あたりの書き込み操作数（最大）
+  cloudwatch_aws_rds_lvm_write_iops_minimum: LVM ディスクの 1 秒あたりの書き込み操作数（最小）
+  cloudwatch_aws_rds_lvm_write_iops_sample_count: LVM ディスクの 1 秒あたりの書き込み操作数（サンプル数）
+  cloudwatch_aws_rds_lvm_write_iops_sum: LVM ディスクの 1 秒あたりの書き込み操作数（合計）
+  cloudwatch_aws_rds_network_receive_throughput_average: RDS インスタンスの受信ネットワークトラフィック（バイト/秒）（平均）
+  cloudwatch_aws_rds_network_receive_throughput_maximum: RDS インスタンスの受信ネットワークトラフィック（バイト/秒）（最大）
+  cloudwatch_aws_rds_network_receive_throughput_minimum: RDS インスタンスの受信ネットワークトラフィック（バイト/秒）（最小）
+  cloudwatch_aws_rds_network_receive_throughput_sample_count: RDS インスタンスの受信ネットワークトラフィック（バイト/秒）（サンプル数）
+  cloudwatch_aws_rds_network_receive_throughput_sum: RDS インスタンスの受信ネットワークトラフィック（バイト/秒）（合計）
+  cloudwatch_aws_rds_network_transmit_throughput_average: RDS インスタンスの送信ネットワークトラフィック（バイト/秒）（平均）
+  cloudwatch_aws_rds_network_transmit_throughput_maximum: RDS インスタンスの送信ネットワークトラフィック（バイト/秒）（最大）
+  cloudwatch_aws_rds_network_transmit_throughput_minimum: RDS インスタンスの送信ネットワークトラフィック（バイト/秒）（最小）
+  cloudwatch_aws_rds_network_transmit_throughput_sample_count: RDS インスタンスの送信ネットワークトラフィック（バイト/秒）（サンプル数）
+  cloudwatch_aws_rds_network_transmit_throughput_sum: RDS インスタンスの送信ネットワークトラフィック（バイト/秒）（合計）
+  cloudwatch_aws_rds_read_iops_average: ディスクの 1 秒あたりの読み取り操作数（平均）
+  cloudwatch_aws_rds_read_iops_maximum: ディスクの 1 秒あたりの読み取り操作数（最大）
+  cloudwatch_aws_rds_read_iops_minimum: ディスクの 1 秒あたりの読み取り操作数（最小）
+  cloudwatch_aws_rds_read_iops_sample_count: ディスクの 1 秒あたりの読み取り操作数（サンプル数）
+  cloudwatch_aws_rds_read_iops_sum: ディスクの 1 秒あたりの読み取り操作数（合計）
+  cloudwatch_aws_rds_read_latency_average: ディスク読み取り 1 回あたりの所要時間（秒）（平均）
+  cloudwatch_aws_rds_read_latency_maximum: ディスク読み取り 1 回あたりの所要時間（秒）（最大）
+  cloudwatch_aws_rds_read_latency_minimum: ディスク読み取り 1 回あたりの所要時間（秒）（最小）
+  cloudwatch_aws_rds_read_latency_sample_count: ディスク読み取り 1 回あたりの所要時間（秒）（サンプル数）
+  cloudwatch_aws_rds_read_latency_sum: ディスク読み取り 1 回あたりの所要時間（秒）（合計）
+  cloudwatch_aws_rds_read_throughput_average: 1 秒あたりにディスクから読み取ったバイト数（平均）
+  cloudwatch_aws_rds_read_throughput_maximum: 1 秒あたりにディスクから読み取ったバイト数（最大）
+  cloudwatch_aws_rds_read_throughput_minimum: 1 秒あたりにディスクから読み取ったバイト数（最小）
+  cloudwatch_aws_rds_read_throughput_sample_count: 1 秒あたりにディスクから読み取ったバイト数（サンプル数）
+  cloudwatch_aws_rds_read_throughput_sum: 1 秒あたりにディスクから読み取ったバイト数（合計）
+  cloudwatch_aws_rds_swap_usage_average: RDS インスタンスが使用しているスワップ容量（バイト）（平均）
+  cloudwatch_aws_rds_swap_usage_maximum: RDS インスタンスが使用しているスワップ容量（バイト）（最大）
+  cloudwatch_aws_rds_swap_usage_minimum: RDS インスタンスが使用しているスワップ容量（バイト）（最小）
+  cloudwatch_aws_rds_swap_usage_sample_count: RDS インスタンスが使用しているスワップ容量（バイト）（サンプル数）
+  cloudwatch_aws_rds_swap_usage_sum: RDS インスタンスが使用しているスワップ容量（バイト）（合計）
+  cloudwatch_aws_rds_write_iops_average: ディスクの 1 秒あたりの書き込み操作数（平均）
+  cloudwatch_aws_rds_write_iops_maximum: ディスクの 1 秒あたりの書き込み操作数（最大）
+  cloudwatch_aws_rds_write_iops_minimum: ディスクの 1 秒あたりの書き込み操作数（最小）
+  cloudwatch_aws_rds_write_iops_sample_count: ディスクの 1 秒あたりの書き込み操作数（サンプル数）
+  cloudwatch_aws_rds_write_iops_sum: ディスクの 1 秒あたりの書き込み操作数（合計）
+  cloudwatch_aws_rds_write_latency_average: ディスク書き込み 1 回あたりの所要時間（秒）（平均）
+  cloudwatch_aws_rds_write_latency_maximum: ディスク書き込み 1 回あたりの所要時間（秒）（最大）
+  cloudwatch_aws_rds_write_latency_minimum: ディスク書き込み 1 回あたりの所要時間（秒）（最小）
+  cloudwatch_aws_rds_write_latency_sample_count: ディスク書き込み 1 回あたりの所要時間（秒）（サンプル数）
+  cloudwatch_aws_rds_write_latency_sum: ディスク書き込み 1 回あたりの所要時間（秒）（合計）
+  cloudwatch_aws_rds_write_throughput_average: 1 秒あたりにディスクへ書き込んだバイト数（平均）
+  cloudwatch_aws_rds_write_throughput_maximum: 1 秒あたりにディスクへ書き込んだバイト数（最大）
+  cloudwatch_aws_rds_write_throughput_minimum: 1 秒あたりにディスクへ書き込んだバイト数（最小）
+  cloudwatch_aws_rds_write_throughput_sample_count: 1 秒あたりにディスクへ書き込んだバイト数（サンプル数）
+  cloudwatch_aws_rds_write_throughput_sum: 1 秒あたりにディスクへ書き込んだバイト数（合計）

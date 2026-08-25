@@ -142,9 +142,22 @@ func TestBundledMetricsYamlLangCoverage(t *testing.T) {
 		t.Fatalf("load bundled metrics.yaml fail: %v", err)
 	}
 
-	en, ja := MetricDesc.Langs["en"], MetricDesc.Langs["ja"]
+	zh, en, ja := MetricDesc.Langs["zh"], MetricDesc.Langs["en"], MetricDesc.Langs["ja"]
 	if len(en) == 0 || len(ja) == 0 {
 		t.Fatalf("bundled metrics.yaml missing en(%d) or ja(%d) section", len(en), len(ja))
+	}
+
+	// 中文是这份文件的源语言，英文必须覆盖它的全部条目：只写中文的指标，
+	// 非中文用户看到的是空白说明
+	var noEn []string
+	for metric := range zh {
+		if _, ok := en[metric]; !ok {
+			noEn = append(noEn, metric)
+		}
+	}
+	sort.Strings(noEn)
+	if len(noEn) > 0 {
+		t.Errorf("%d metrics have zh desc but no en: %v", len(noEn), noEn)
 	}
 
 	var missing, extra []string
