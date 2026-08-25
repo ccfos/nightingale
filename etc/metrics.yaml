@@ -1469,3 +1469,569 @@ ja:
   cloudwatch_aws_rds_write_throughput_minimum: 1 秒あたりにディスクへ書き込んだバイト数（最小）
   cloudwatch_aws_rds_write_throughput_sample_count: 1 秒あたりにディスクへ書き込んだバイト数（サンプル数）
   cloudwatch_aws_rds_write_throughput_sum: 1 秒あたりにディスクへ書き込んだバイト数（合計）
+
+ru:
+  ip_conntrack_count: "Общее число записей в таблице отслеживания соединений (единица: int, count)"
+  ip_conntrack_max: "Максимальная ёмкость таблицы отслеживания соединений (единица: int, size)"
+  cpu_usage_idle: "Доля простоя CPU (единица: %)"
+  cpu_usage_active: "Загрузка CPU (единица: %)"
+  cpu_usage_system: "Доля времени CPU в режиме ядра (единица: %)"
+  cpu_usage_user: "Доля времени CPU в пользовательском режиме (единица: %)"
+  cpu_usage_nice: "Доля времени CPU в пользовательском режиме с низким приоритетом, то есть время процессов, у которых значение nice изменено в диапазоне 1—19. Обратите внимание: nice принимает значения от -20 до 19, и чем больше значение, тем ниже приоритет (единица: %)"
+  cpu_usage_iowait: "Доля времени ожидания ввода-вывода CPU (единица: %)"
+  cpu_usage_irq: "Доля времени обработки аппаратных прерываний CPU (единица: %)"
+  cpu_usage_softirq: "Доля времени обработки программных прерываний CPU (единица: %)"
+  cpu_usage_steal: "Метрика доступна в виртуальной среде и показывает долю времени, отобранного у CPU другими виртуальными машинами. Значение выше 20 говорит о серьёзной конкуренции (единица: %)"
+  cpu_usage_guest: "Время работы других ОС через виртуализацию, то есть доля времени CPU, потраченного на виртуальные машины (единица: %)"
+  cpu_usage_guest_nice: "Доля времени работы виртуальной машины с низким приоритетом (единица: %)"
+  disk_free: "Свободное место дискового раздела (единица: byte)"
+  disk_used: "Использованное место дискового раздела (единица: byte)"
+  disk_used_percent: "Доля использования дискового раздела (единица: %)"
+  disk_total: "Общий объём дискового раздела (единица: byte)"
+  disk_inodes_free: Свободные inode дискового раздела
+  disk_inodes_used: Использованные inode дискового раздела
+  disk_inodes_total: Всего inode в дисковом разделе
+  diskio_io_time: "Суммарное время запросов ввода-вывода с точки зрения устройства: считается, пока в очереди есть запросы (единица: миллисекунда). Тип counter, значение имеет смысл только после применения функции rate"
+  diskio_iops_in_progress: "Запросы ввода-вывода, уже переданные драйверу устройства и ещё не завершённые. Запросы, стоящие в очереди, но не переданные драйверу, не учитываются. Тип gauge"
+  diskio_merged_reads: Число слияний соседних запросов чтения. Тип counter
+  diskio_merged_writes: Число слияний соседних запросов записи. Тип counter
+  diskio_read_bytes: "Число прочитанных байт. Тип counter, значение имеет смысл только после применения функции rate"
+  diskio_read_time: "Суммарное время запросов чтения (единица: миллисекунда). Тип counter, значение имеет смысл только после применения функции rate"
+  diskio_reads: "Число запросов чтения. Тип counter, значение имеет смысл только после применения функции rate"
+  diskio_weighted_io_time: "Суммарное время ожидания с точки зрения запросов ввода-вывода: при нескольких одновременных запросах время суммируется (единица: миллисекунда)"
+  diskio_write_bytes: "Число записанных байт. Тип counter, значение имеет смысл только после применения функции rate"
+  diskio_write_time: "Суммарное время запросов записи (единица: миллисекунда). Тип counter, значение имеет смысл только после применения функции rate"
+  diskio_writes: "Число запросов записи. Тип counter, значение имеет смысл только после применения функции rate"
+  kernel_boot_time: Время загрузки ядра
+  kernel_context_switches: Число переключений контекста в ядре
+  kernel_entropy_avail: Пул энтропии внутри системы Linux
+  kernel_interrupts: Число прерываний ядра
+  kernel_processes_forked: "Число процессов, созданных через fork"
+  mem_active: Общий объём активно используемой памяти (включая cache и buffer)
+  mem_available: Объём доступной памяти (bytes)
+  mem_available_percent: Доля свободной памяти (0—100)
+  mem_buffered: "Размер буфера, отведённого под файлы"
+  mem_cached: "Объём памяти, занятый кэшем (cache memory), равен diskcache минус SwapCache"
+  mem_commit_limit: "Общий объём памяти, который можно выделить в системе согласно коэффициенту переподписки ('vm.overcommit_ratio'). Ограничение действует только в режиме 2 ('vm.overcommit_memory')"
+  mem_committed_as: "Объём памяти, выделенный в системе на текущий момент. Сумма памяти, запрошенной всеми процессами"
+  mem_dirty: "Объём памяти, ожидающей записи обратно на диск"
+  mem_free: Объём свободной памяти (bytes)
+  mem_high_free: Объём неиспользуемой памяти в области high
+  mem_high_total: "Общий объём памяти в области high (HighMem — вся физическая память выше 860 МБ; область используется пользовательскими программами и страничным кэшем. Она не отображается напрямую в пространство ядра, поэтому ядро обращается к ней иначе)"
+  mem_huge_page_size: Размер одной huge page
+  mem_huge_pages_free: Число ещё не выделенных HugePages в пуле
+  mem_huge_pages_total: Общее число зарезервированных HugePages
+  mem_inactive: Объём неиспользуемой памяти (включая free и available)
+  mem_low_free: Объём неиспользуемой памяти в области low
+  mem_low_total: "Общий объём памяти в области low. Область low может выполнять те же задачи, что и high, и вдобавок используется ядром для хранения собственных структур данных"
+  mem_mapped: Объём отображений устройств и файлов
+  mem_page_tables: "Размер таблиц страниц, управляющих страничной организацией памяти"
+  mem_shared: "Общий объём памяти, разделяемой несколькими процессами"
+  mem_slab: Размер кэша структур данных ядра. Позволяет сократить расходы на выделение и освобождение памяти
+  mem_sreclaimable: Размер возвращаемой части Slab
+  mem_sunreclaim: Размер невозвращаемой части Slab (SUnreclaim + SReclaimable = Slab)
+  mem_swap_cached: "Объём пространства подкачки, занятый кэшем (cache memory): память, уже вытесненная в swap, но всё ещё хранящаяся в swapfile. Позволяет быстро вернуть данные без повторного обращения к вводу-выводу"
+  mem_swap_free: Объём неиспользуемого пространства подкачки
+  mem_swap_total: Общий объём пространства подкачки
+  mem_total: Общий объём памяти
+  mem_used: Объём использованной памяти
+  mem_used_percent: Доля использованной памяти (0—100)
+  mem_vmalloc_chunk: Наибольшая непрерывная неиспользуемая область vmalloc
+  mem_vmalloc_totalL: "Объём виртуальной памяти, доступной для vmalloc"
+  mem_vmalloc_used: "Объём виртуальной памяти, уже занятой vmalloc"
+  mem_write_back: "Объём памяти, записываемой обратно на диск"
+  mem_write_back_tmp: "Память, используемая FUSE под временный буфер обратной записи"
+  net_bytes_recv: Всего принято байт сетевым интерфейсом (bytes). Для скорости в секунду используйте функции rate/irate
+  net_bytes_sent: Всего отправлено байт сетевым интерфейсом (bytes). Для скорости в секунду используйте функции rate/irate
+  net_bits_recv: Всего принято бит сетевым интерфейсом (bits). Для скорости в секунду используйте функции rate/irate
+  net_bits_sent: Всего отправлено бит сетевым интерфейсом (bits). Для скорости в секунду используйте функции rate/irate
+  net_drop_in: Число отброшенных входящих пакетов сетевого интерфейса
+  net_drop_out: Число отброшенных исходящих пакетов сетевого интерфейса
+  net_err_in: Число ошибочных входящих пакетов сетевого интерфейса
+  net_err_out: Число ошибочных исходящих пакетов сетевого интерфейса
+  net_packets_recv: Число принятых пакетов сетевого интерфейса
+  net_packets_sent: Число отправленных пакетов сетевого интерфейса
+  netstat_tcp_established: Число сетевых соединений в состоянии ESTABLISHED
+  netstat_tcp_fin_wait1: Число сетевых соединений в состоянии FIN_WAIT1
+  netstat_tcp_fin_wait2: Число сетевых соединений в состоянии FIN_WAIT2
+  netstat_tcp_last_ack: Число сетевых соединений в состоянии LAST_ACK
+  netstat_tcp_listen: Число сетевых соединений в состоянии LISTEN
+  netstat_tcp_syn_recv: Число сетевых соединений в состоянии SYN_RECV
+  netstat_tcp_syn_sent: Число сетевых соединений в состоянии SYN_SENT
+  netstat_tcp_time_wait: Число сетевых соединений в состоянии TIME_WAIT
+  netstat_udp_socket: Число сетевых соединений в состоянии UDP
+  processes_blocked: "Число процессов в непрерываемом состоянии сна ('U','D','L')"
+  processes_dead: "Число процессов в состоянии освобождения ('X')"
+  processes_idle: "Число простаивающих приостановленных процессов ('I')"
+  processes_paging: "Число процессов в состоянии подкачки страниц ('P')"
+  processes_running: "Число выполняющихся процессов ('R')"
+  processes_sleeping: "Число процессов в прерываемом сне ('S')"
+  processes_stopped: "Число остановленных процессов ('T')"
+  processes_total: Общее число процессов
+  processes_total_threads: Общее число потоков
+  processes_unknown: Число процессов с неизвестным состоянием
+  processes_zombies: "Число процессов-зомби ('Z')"
+  swap_used_percent: "Объём данных, вытесненных в пространство подкачки"
+  system_load1: Средняя загрузка за 1 минуту
+  system_load5: Средняя загрузка за 5 минут
+  system_load15: Средняя загрузка за 15 минут
+  system_load_norm_1: Средняя загрузка за 1 минуту / число логических CPU
+  system_load_norm_5: Средняя загрузка за 5 минут / число логических CPU
+  system_load_norm_15: Средняя загрузка за 15 минут / число логических CPU
+  system_n_users: Число пользователей
+  system_n_cpus: Число ядер CPU
+  system_uptime: Время работы системы
+  nginx_accepts: "Общее число соединений, установленных с клиентами с момента запуска nginx"
+  nginx_active: "Число активных соединений, обрабатываемых nginx сейчас. Равно сумме Reading/Writing/Waiting"
+  nginx_handled: "Общее число клиентских соединений, обработанных с момента запуска nginx"
+  nginx_reading: "Число соединений, у которых сейчас читается заголовок HTTP-запроса"
+  nginx_requests: "Общее число клиентских запросов, обработанных с момента запуска nginx. Из-за HTTP Keep-Alive значение больше, чем handled"
+  nginx_upstream_check_fall: Число обнаруженных модулем upstream_check отказов бэкенда
+  nginx_upstream_check_rise: Число проверок бэкенда модулем upstream_check
+  nginx_upstream_check_status_code: "Состояние бэкенда upstream: 1 — up, 0 — down"
+  nginx_waiting: "При включённом keep-alive равно active − (reading + writing), то есть постоянные соединения, которые nginx уже обработал и которые ждут следующего запроса"
+  nginx_writing: "Число соединений, которым сейчас отправляется ответ клиенту"
+  http_response_content_length: Длина передаваемого тела HTTP-сообщения
+  http_response_http_response_code: Код состояния HTTP-ответа
+  http_response_response_time: Время HTTP-ответа
+  http_response_result_code: "Результат проверки URL: 0 — норма, иначе URL недоступен"
+  mysql_global_status_uptime: Число секунд с момента запуска сервера (Gauge)
+  mysql_global_status_uptime_since_flush_status: Число секунд с последнего выполнения FLUSH STATUS (Gauge)
+  mysql_global_status_queries: "Число выполненных сервером операторов. В отличие от Questions, включает операторы внутри хранимых программ. Команды COM_PING и COM_STATISTICS не учитываются (Counter)"
+  mysql_global_status_threads_connected: Число открытых сейчас подключений (Counter)
+  mysql_global_status_connections: "Число попыток подключения к серверу MySQL, успешных и неуспешных (Gauge)"
+  mysql_global_status_max_used_connections: Максимальное число одновременно использованных подключений с момента запуска сервера (Gauge)
+  mysql_global_status_threads_running: "Число потоков, не находящихся в состоянии сна (Gauge)"
+  mysql_global_status_questions: "Число выполненных сервером операторов. В отличие от Queries, учитываются только операторы, присланные клиентами, без операторов внутри хранимых программ. Команды COM_PING, COM_STATISTICS, COM_STMT_PREPARE, COM_STMT_CLOSE и COM_STMT_RESET не учитываются (Counter)"
+  mysql_global_status_threads_cached: Число потоков в кэше потоков (Counter)
+  mysql_global_status_threads_created: "Число потоков, созданных для обработки подключений. Если значение велико, стоит увеличить thread_cache_size. Доля промахов кэша считается как Threads_created/Connections (Counter)"
+  mysql_global_status_created_tmp_tables: "Число внутренних временных таблиц, созданных сервером при выполнении операторов (Counter)"
+  mysql_global_status_created_tmp_disk_tables: "Число внутренних временных таблиц на диске, созданных сервером при выполнении операторов. Сравнение Created_tmp_disk_tables и Created_tmp_tables показывает, какая доля ушла на диск (Counter)"
+  mysql_global_status_created_tmp_files: "Число временных файлов, созданных mysqld (Counter)"
+  mysql_global_status_select_full_join: "Число соединений таблиц, выполненных полным сканированием из-за отсутствия индексов. Если значение не 0, проверьте индексы таблиц (Counter)"
+  mysql_global_status_select_full_range_join: "Число соединений, использовавших поиск по диапазону в справочной таблице (Counter)"
+  mysql_global_status_select_range: "Число соединений, использовавших диапазоны в первой таблице. Даже большое значение обычно не является проблемой (Counter)"
+  mysql_global_status_select_range_check: "Число соединений без ключей, проверяющих возможность использования ключа после каждой строки. Если значение не 0, проверьте индексы таблиц (Counter)"
+  mysql_global_status_select_scan: "Число соединений, выполнивших полное сканирование первой таблицы (Counter)"
+  mysql_global_status_sort_rows: Число отсортированных строк (Counter)
+  mysql_global_status_sort_range: "Число сортировок, выполненных по диапазонам (Counter)"
+  mysql_global_status_sort_merge_passes: "Число проходов слияния, выполненных алгоритмом сортировки. При большом значении стоит увеличить sort_buffer_size (Counter)"
+  mysql_global_status_sort_scan: "Число сортировок, выполненных сканированием таблицы (Counter)"
+  mysql_global_status_slow_queries: "Число запросов, выполнявшихся дольше long_query_time секунд. Счётчик растёт независимо от того, включён ли лог медленных запросов (Counter)"
+  mysql_global_status_aborted_connects: Число неудачных попыток подключения к серверу MySQL (Counter)
+  mysql_global_status_aborted_clients: "Число соединений, прерванных из-за того, что клиент завершился, не закрыв соединение корректно (Counter)"
+  mysql_global_status_table_locks_immediate: "Число случаев, когда блокировка таблицы была выдана немедленно. Рост и спад этого значения — нормальное поведение (Counter)"
+  mysql_global_status_table_locks_waited: "Число случаев, когда блокировку таблицы пришлось ждать. При высоком значении и проблемах с производительностью сначала оптимизируйте запросы, затем рассмотрите разделение таблиц или репликацию (Counter)"
+  mysql_global_status_bytes_received: "Число байт, принятых от всех клиентов (Counter)"
+  mysql_global_status_bytes_sent: "Число байт, отправленных всем клиентам (Counter)"
+  mysql_global_status_innodb_page_size: "Размер страницы InnoDB (по умолчанию 16 КБ). Многие величины считаются в страницах, и через этот размер их легко перевести в байты (Gauge)"
+  mysql_global_status_buffer_pool_pages: Число страниц в буферном пуле InnoDB (Gauge)
+  mysql_global_status_commands_total: Число выполнений каждого оператора (Counter)
+  mysql_global_status_handlers_total: "Статистика обработчиков — внутренняя статистика того, как MySQL выбирает, обновляет, вставляет и изменяет строки, таблицы и индексы. Это слой между движком хранения и MySQL (Counter)"
+  mysql_global_status_opened_files: "Число файлов, открытых через my_open() — функцию библиотеки mysys. Части сервера, открывающие файлы без неё, счётчик не увеличивают (Counter)"
+  mysql_global_status_open_tables: Число открытых таблиц (Gauge)
+  mysql_global_status_opened_tables: "Общее число открытых таблиц. Если значение велико, table_open_cache, вероятно, слишком мал (Counter)"
+  mysql_global_status_table_open_cache_hits: Число попаданий при обращении к кэшу открытых таблиц (Counter)
+  mysql_global_status_table_open_cache_misses: Число промахов при обращении к кэшу открытых таблиц (Counter)
+  mysql_global_status_table_open_cache_overflows: Число переполнений кэша открытых таблиц (Counter)
+  mysql_global_status_innodb_num_open_files: "Число файлов, открытых InnoDB сейчас (Gauge)"
+  mysql_global_status_connection_errors_total: "Информация об ошибках, возникших при подключении клиентов (Counter)"
+  mysql_global_status_innodb_buffer_pool_read_requests: Число логических запросов чтения (Counter)
+  mysql_global_status_innodb_buffer_pool_reads: "Число логических чтений, которые InnoDB не смог выполнить из буферного пула и был вынужден читать с диска (Counter)"
+  mysql_global_variables_thread_cache_size: Сколько потоков сервер держит в кэше для повторного использования (Gauge)
+  mysql_global_variables_max_connections: Максимально допустимое число одновременных клиентских подключений (Gauge)
+  mysql_global_variables_innodb_buffer_pool_size: "Размер буферного пула в байтах — области памяти, где InnoDB кэширует данные таблиц и индексов. Значение по умолчанию 134217728 байт (128 МБ) (Gauge)"
+  mysql_global_variables_innodb_log_buffer_size: "Размер буфера в байтах, который InnoDB использует для записи в файлы журнала на диске (Gauge)"
+  mysql_global_variables_key_buffer_size: Размер буфера для блоков индексов таблиц MyISAM. Буфер общий для всех потоков (Gauge)
+  mysql_global_variables_query_cache_size: "Объём памяти, выделенный под кэширование результатов запросов (Gauge)"
+  mysql_global_variables_table_open_cache: Число открытых таблиц для всех потоков (Gauge)
+  mysql_global_variables_open_files_limit: "Число файловых дескрипторов, доступных mysqld от операционной системы (Gauge)"
+  redis_active_defrag_running: "Когда включён activedefrag, показывает, идёт ли дефрагментация сейчас и какую долю CPU она собирается использовать"
+  redis_allocator_active_bytes: "Всего байт в активных страницах аллокатора, включая внешнюю фрагментацию"
+  redis_allocator_allocated_bytes: "Всего байт, выделенных аллокатором, включая внутреннюю фрагментацию. Обычно совпадает с used_memory"
+  redis_allocator_frag_bytes: Разница между allocator_active и allocator_allocated. См. также примечание к mem_fragmentation_bytes
+  redis_allocator_frag_ratio: "Отношение allocator_active к allocator_allocated. Именно это настоящая метрика внешней фрагментации, а не mem_fragmentation_ratio"
+  redis_allocator_resident_bytes: "Всего резидентных байт (RSS) в аллокаторе, включая страницы, которые могут быть возвращены ОС через MEMORY PURGE или со временем"
+  redis_allocator_rss_bytes: Разница между allocator_resident и allocator_active
+  redis_allocator_rss_ratio: "Отношение allocator_resident к allocator_active. Обычно показывает объём страниц, которые аллокатор может вскоре вернуть ОС"
+  redis_aof_current_rewrite_duration_sec: "Длительность идущей сейчас перезаписи AOF, если она выполняется"
+  redis_aof_enabled: "Признак того, что журналирование AOF включено"
+  redis_aof_last_bgrewrite_status: Статус последней операции перезаписи AOF
+  redis_aof_last_cow_size_bytes: "Размер памяти copy-on-write во время последней перезаписи AOF, в байтах"
+  redis_aof_last_rewrite_duration_sec: "Длительность последней перезаписи AOF, в секундах"
+  redis_aof_last_write_status: Статус последней операции записи в AOF
+  redis_aof_rewrite_in_progress: "Признак того, что перезапись AOF выполняется сейчас"
+  redis_aof_rewrite_scheduled: "Признак того, что перезапись AOF запланирована после завершения текущего сохранения RDB"
+  redis_blocked_clients: "Число клиентов, ожидающих на блокирующей команде (BLPOP, BRPOP, BRPOPLPUSH, BLMOVE, BZPOPMIN, BZPOPMAX)"
+  redis_client_recent_max_input_buffer_bytes: Наибольший входной буфер среди текущих клиентских подключений
+  redis_client_recent_max_output_buffer_bytes: Наибольший выходной буфер среди текущих клиентских подключений
+  redis_cluster_enabled: "Признак того, что кластер Redis включён"
+  redis_commands_duration_seconds_total: "Суммарное время CPU, затраченное этими командами (Counter)"
+  redis_commands_processed_total: "Общее число команд, обработанных сервером (Counter)"
+  redis_commands_total: "Число вызовов, дошедших до выполнения команды и не отклонённых (Counter)"
+  redis_config_maxclients: "Значение параметра maxclients. Это верхний предел суммы connected_clients, connected_slaves и cluster_connections"
+  redis_config_maxmemory: Значение параметра maxmemory
+  redis_connected_clients: "Число клиентских подключений, не считая подключений от реплик"
+  redis_connected_slaves: Число подключённых реплик
+  redis_connections_received_total: "Общее число подключений, принятых сервером (Counter)"
+  redis_cpu_sys_children_seconds_total: "Системное время CPU, израсходованное фоновыми процессами (Counter)"
+  redis_cpu_sys_seconds_total: "Системное время CPU, израсходованное сервером Redis: сумма по всем потокам процесса, основному и фоновым (Counter)"
+  redis_cpu_user_children_seconds_total: "Пользовательское время CPU, израсходованное фоновыми процессами (Counter)"
+  redis_cpu_user_seconds_total: "Пользовательское время CPU, израсходованное сервером Redis: сумма по всем потокам процесса, основному и фоновым (Counter)"
+  redis_db_keys: Общее число ключей по каждой БД
+  redis_db_keys_expiring: Общее число ключей с установленным сроком жизни по каждой БД
+  redis_defrag_hits: "Число перемещений значений, выполненных активной дефрагментацией"
+  redis_defrag_misses: "Число прерванных перемещений значений, начатых активной дефрагментацией"
+  redis_defrag_key_hits: "Число ключей, дефрагментированных активно"
+  redis_defrag_key_misses: "Число ключей, пропущенных активной дефрагментацией"
+  redis_evicted_keys_total: "Число ключей, вытесненных из-за ограничения maxmemory (Counter)"
+  redis_expired_keys_total: Общее число событий истечения срока жизни ключей (Counter)
+  redis_expired_stale_percentage: "Доля ключей, срок жизни которых, вероятно, уже истёк"
+  redis_expired_time_cap_reached_total: Число случаев досрочного завершения циклов активного удаления просроченных ключей
+  redis_exporter_last_scrape_connect_time_seconds: "Время установления соединения при сборе метрик, в секундах"
+  redis_exporter_last_scrape_duration_seconds: Длительность последнего сбора метрик
+  redis_exporter_last_scrape_error: Состояние ошибки при последнем сборе метрик
+  redis_exporter_scrape_duration_seconds_count: Длительности сборов метрик экспортером
+  redis_exporter_scrape_duration_seconds_sum: Длительности сборов метрик экспортером
+  redis_exporter_scrapes_total: Общее число сборов метрик Redis на текущий момент (Counter)
+  redis_instance_info: Информация об экземпляре Redis
+  redis_keyspace_hits_total: Общее число попаданий (Counter)
+  redis_keyspace_misses_total: Общее число промахов (Counter)
+  redis_last_key_groups_scrape_duration_milliseconds: "Длительность последнего сбора метрик по группам ключей, в миллисекундах"
+  redis_last_slow_execution_duration_seconds: "Время последнего медленного выполнения, в секундах"
+  redis_latest_fork_seconds: "Время последнего вызова fork, в секундах"
+  redis_lazyfree_pending_objects: "Число объектов, ожидающих освобождения после вызова UNLINK либо FLUSHDB и FLUSHALL с параметром ASYNC"
+  redis_master_repl_offset: Текущее смещение репликации на сервере
+  redis_mem_clients_normal: "Память, используемая обычными клиентами (Gauge)"
+  redis_mem_clients_slaves: "Память, используемая клиентами-репликами. Начиная с Redis 7.0 буферы реплик делят память с журналом отставания репликации, поэтому значение может быть 0, когда реплики не вызывают роста потребления памяти"
+  redis_mem_fragmentation_bytes: "Разница между used_memory_rss и used_memory. Учтите: когда суммарная фрагментация невелика (несколько мегабайт), высокое отношение, например 1.5 и выше, ещё не говорит о проблеме"
+  redis_mem_fragmentation_ratio: "Отношение used_memory_rss к used_memory. Включает не только фрагментацию, но и накладные расходы процесса (см. метрики allocator_*), а также код, разделяемые библиотеки, стек и прочее"
+  redis_mem_not_counted_for_eviction_bytes: "Память, не учитываемая при вытеснении (Gauge)"
+  redis_memory_max_bytes: "Ограничение памяти, в байтах"
+  redis_memory_used_bytes: "Всего байт, выделенных Redis через свой аллокатор — стандартный libc, jemalloc либо иной, например tcmalloc"
+  redis_memory_used_dataset_bytes: "Размер набора данных в байтах: used_memory за вычетом used_memory_overhead"
+  redis_memory_used_lua_bytes: "Число байт, используемых движком Lua"
+  redis_memory_used_overhead_bytes: "Суммарный объём накладных расходов в байтах, выделенных сервером на управление внутренними структурами данных"
+  redis_memory_used_peak_bytes: "Пиковое потребление памяти Redis, в байтах"
+  redis_memory_used_rss_bytes: "Число байт, выделенных Redis с точки зрения операционной системы, то есть resident set size. Это значение показывают утилиты top(1) и ps(1)"
+  redis_memory_used_scripts_bytes: "Число байт, занятых закэшированными сценариями Lua"
+  redis_memory_used_startup_bytes: "Начальный объём памяти, потреблённый Redis при запуске, в байтах"
+  redis_migrate_cached_sockets_total: "Число сокетов, открытых для нужд MIGRATE"
+  redis_net_input_bytes_total: Всего входящих байт (Counter)
+  redis_net_output_bytes_total: Всего исходящих байт (Counter)
+  redis_process_id: Идентификатор процесса
+  redis_pubsub_channels: Общее число каналов pub/sub с подписками клиентов
+  redis_pubsub_patterns: Общее число шаблонов pub/sub с подписками клиентов
+  redis_rdb_bgsave_in_progress: "Признак того, что сохранение RDB выполняется сейчас"
+  redis_rdb_changes_since_last_save: Число изменений с момента последнего дампа
+  redis_rdb_current_bgsave_duration_sec: "Длительность идущего сейчас сохранения RDB, если оно выполняется"
+  redis_rdb_last_bgsave_duration_sec: "Длительность последнего сохранения RDB, в секундах"
+  redis_rdb_last_bgsave_status: Статус последней операции сохранения RDB
+  redis_rdb_last_cow_size_bytes: "Размер памяти copy-on-write во время последнего сохранения RDB, в байтах"
+  redis_rdb_last_save_timestamp_seconds: Отметка времени последнего успешного сохранения RDB в формате UNIX
+  redis_rejected_connections_total: "Число подключений, отклонённых из-за ограничения maxclients (Counter)"
+  redis_repl_backlog_first_byte_offset: Смещение мастера в буфере журнала отставания репликации
+  redis_repl_backlog_history_bytes: "Размер данных в буфере журнала отставания репликации, в байтах"
+  redis_repl_backlog_is_active: "Признак того, что журнал отставания репликации активен"
+  redis_replica_partial_resync_accepted: Число принятых запросов частичной ресинхронизации (Gauge)
+  redis_replica_partial_resync_denied: Число отклонённых запросов частичной ресинхронизации (Gauge)
+  redis_replica_resyncs_full: Число полных ресинхронизаций с репликами
+  redis_replication_backlog_bytes: "Память, занятая журналом отставания репликации"
+  redis_second_repl_offset: "Смещение, до которого принимаются идентификаторы репликации"
+  redis_slave_expires_tracked_keys: "Число ключей, отслеживаемых для истечения срока жизни. Применимо только к репликам, доступным на запись (Gauge)"
+  redis_slowlog_last_id: Последний идентификатор в журнале медленных запросов
+  redis_slowlog_length: Общее число записей в журнале медленных запросов
+  redis_start_time_seconds: Время запуска экземпляра Redis в секундах от начала эпохи UNIX
+  redis_target_scrape_request_errors_total: Число ошибок в запросах к экспортеру
+  redis_up: "Признак того, что экземпляр Redis работает"
+  redis_uptime_in_seconds: Число секунд с момента запуска сервера Redis
+  windows_cpu_clock_interrupts_total: Общее число принятых и обслуженных прерываний системного таймера (counter)
+  windows_cpu_core_frequency_mhz: Частота ядра в мегагерцах (gauge)
+  windows_cpu_cstate_seconds_total: "Время, проведённое в энергосберегающем состоянии простоя (counter)"
+  windows_cpu_dpcs_total: Общее число принятых и обслуженных отложенных вызовов процедур (DPC) (counter)
+  windows_cpu_idle_break_events_total: Общее число выходов процессора из состояния простоя (counter)
+  windows_cpu_interrupts_total: Общее число принятых и обслуженных аппаратных прерываний (counter)
+  windows_cpu_parking_status: "Признак того, находится ли процессор в состоянии парковки (gauge)"
+  windows_cpu_processor_performance: "Средняя производительность процессора при выполнении инструкций в процентах от номинальной. На некоторых процессорах значение может превышать 100% (gauge)"
+  windows_cpu_time_total: "Время, проведённое процессором в разных режимах (idle, user, system и других) (counter)"
+  windows_cs_hostname: "Имя узла из ComputerSystem.DNSHostName и ComputerSystem.Domain, передаётся в метках (gauge)"
+  windows_cs_logical_processors: ComputerSystem.NumberOfLogicalProcessors (gauge)
+  windows_cs_physical_memory_bytes: ComputerSystem.TotalPhysicalMemory (gauge)
+  windows_exporter_build_info: "Метрика с постоянным значением 1 и метками version, revision, branch и goversion, из которых собран windows_exporter (gauge)"
+  windows_exporter_collector_duration_seconds: Длительность сбора (gauge)
+  windows_exporter_collector_success: Признак успешного выполнения сборщика (gauge)
+  windows_exporter_collector_timeout: "Признак того, что сборщик завершился по таймауту (gauge)"
+  windows_exporter_perflib_snapshot_duration_seconds: Длительность получения снимка perflib (gauge)
+  windows_logical_disk_free_bytes: Свободное место в байтах (LogicalDisk.PercentFreeSpace) (gauge)
+  windows_logical_disk_idle_seconds_total: Число секунд простоя диска (LogicalDisk.PercentIdleTime) (counter)
+  windows_logical_disk_read_bytes_total: "Число байт, переданных с диска при операциях чтения (LogicalDisk.DiskReadBytesPerSec) (counter)"
+  windows_logical_disk_read_latency_seconds_total: "Среднее время операции чтения с диска, в секундах (LogicalDisk.AvgDiskSecPerRead) (counter)"
+  windows_logical_disk_read_seconds_total: "Число секунд, в течение которых диск был занят обслуживанием запросов чтения (LogicalDisk.PercentDiskReadTime) (counter)"
+  windows_logical_disk_read_write_latency_seconds_total: "Среднее время одной передачи данных на диск или с диска, в секундах (LogicalDisk.AvgDiskSecPerTransfer) (counter)"
+  windows_logical_disk_reads_total: Число операций чтения с диска (LogicalDisk.DiskReadsPerSec) (counter)
+  windows_logical_disk_requests_queued: Число запросов в очереди к диску (LogicalDisk.CurrentDiskQueueLength) (gauge)
+  windows_logical_disk_size_bytes: Общий объём в байтах (LogicalDisk.PercentFreeSpace_Base) (gauge)
+  windows_logical_disk_split_ios_total: "Число дисковых операций ввода-вывода, разбитых на несколько (LogicalDisk.SplitIOPerSec) (counter)"
+  windows_logical_disk_write_bytes_total: "Число байт, переданных на диск при операциях записи (LogicalDisk.DiskWriteBytesPerSec) (counter)"
+  windows_logical_disk_write_latency_seconds_total: "Среднее время операции записи на диск, в секундах (LogicalDisk.AvgDiskSecPerWrite) (counter)"
+  windows_logical_disk_write_seconds_total: "Число секунд, в течение которых диск был занят обслуживанием запросов записи (LogicalDisk.PercentDiskWriteTime) (counter)"
+  windows_logical_disk_writes_total: Число операций записи на диск (LogicalDisk.DiskWritesPerSec) (counter)
+  windows_net_bytes_received_total: Число принятых байт сетевым интерфейсом (Network.BytesReceivedPerSec) (counter)
+  windows_net_bytes_sent_total: Число отправленных байт сетевым интерфейсом (Network.BytesSentPerSec) (counter)
+  windows_net_bytes_total: Суммарное число принятых и отправленных байт (Network.BytesTotalPerSec) (counter)
+  windows_net_current_bandwidth: Текущая пропускная способность сетевого интерфейса (Network.CurrentBandwidth) (gauge)
+  windows_net_packets_outbound_discarded_total: Число отброшенных исходящих пакетов (Network.PacketsOutboundDiscarded) (counter)
+  windows_net_packets_outbound_errors_total: Число ошибочных исходящих пакетов (Network.PacketsOutboundErrors) (counter)
+  windows_net_packets_received_discarded_total: Число отброшенных входящих пакетов (Network.PacketsReceivedDiscarded) (counter)
+  windows_net_packets_received_errors_total: Число ошибочных входящих пакетов (Network.PacketsReceivedErrors) (counter)
+  windows_net_packets_received_total: Число принятых пакетов (Network.PacketsReceivedPerSec) (counter)
+  windows_net_packets_received_unknown_total: Число входящих пакетов неизвестного типа (Network.PacketsReceivedUnknown) (counter)
+  windows_net_packets_sent_total: Число отправленных пакетов (Network.PacketsSentPerSec) (counter)
+  windows_net_packets_total: Суммарное число принятых и отправленных пакетов (Network.PacketsPerSec) (counter)
+  windows_os_info: "OperatingSystem.Caption, OperatingSystem.Version (gauge)"
+  windows_os_paging_free_bytes: OperatingSystem.FreeSpaceInPagingFiles (gauge)
+  windows_os_paging_limit_bytes: OperatingSystem.SizeStoredInPagingFiles (gauge)
+  windows_os_physical_memory_free_bytes: OperatingSystem.FreePhysicalMemory (gauge)
+  windows_os_process_memory_limix_bytes: OperatingSystem.MaxProcessMemorySize (gauge)
+  windows_os_processes: OperatingSystem.NumberOfProcesses (gauge)
+  windows_os_processes_limit: OperatingSystem.MaxNumberOfProcesses (gauge)
+  windows_os_time: OperatingSystem.LocalDateTime (gauge)
+  windows_os_timezone: OperatingSystem.LocalDateTime (gauge)
+  windows_os_users: OperatingSystem.NumberOfUsers (gauge)
+  windows_os_virtual_memory_bytes: OperatingSystem.TotalVirtualMemorySize (gauge)
+  windows_os_virtual_memory_free_bytes: OperatingSystem.FreeVirtualMemory (gauge)
+  windows_os_visible_memory_bytes: OperatingSystem.TotalVisibleMemorySize (gauge)
+  windows_service_info: "Метрика с постоянным значением 1 и метками, описывающими службу (gauge)"
+  windows_service_start_mode: Режим запуска службы (StartMode) (gauge)
+  windows_service_state: Состояние службы (State) (gauge)
+  windows_service_status: Статус службы (Status) (gauge)
+  windows_system_context_switches_total: Общее число переключений контекста (источник WMI — PerfOS_System.ContextSwitchesPersec) (counter)
+  windows_system_exception_dispatches_total: Общее число обработанных исключений (источник WMI — PerfOS_System.ExceptionDispatchesPersec) (counter)
+  windows_system_processor_queue_length: Длина очереди к процессору (источник WMI — PerfOS_System.ProcessorQueueLength) (gauge)
+  windows_system_system_calls_total: Общее число системных вызовов (источник WMI — PerfOS_System.SystemCallsPersec) (counter)
+  windows_system_system_up_time: Время загрузки системы (источник WMI — PerfOS_System.SystemUpTime) (gauge)
+  windows_system_threads: Текущее число потоков (источник WMI — PerfOS_System.Threads) (gauge)
+  node_context_switches_total: Число переключений контекста
+  node_intr_total: Число прерываний
+  node_procs_running: Число процессов в состоянии готовности к выполнению
+  node_entropy_available_bits: "Энтропия, доступная генераторам случайных чисел"
+  node_time_seconds: Системное время в секундах от начала эпохи (1970)
+  node_boot_time_seconds: Время загрузки узла в формате UNIX
+  node_cpu_seconds_total: "Число секунд, проведённых CPU в каждом режиме"
+  node_load1: Загрузка CPU за 1 минуту
+  node_load5: Загрузка CPU за 5 минут
+  node_load15: Загрузка CPU за 15 минут
+  node_memory_Slab_bytes: "Память, используемая ядром для кэширования собственных структур данных"
+  node_memory_SReclaimable_bytes: "SReclaimable — часть Slab, которая может быть возвращена, например кэши"
+  node_memory_SUnreclaim_bytes: "Часть Slab, которая не может быть возвращена при нехватке памяти"
+  node_memory_VmallocTotal_bytes: Общий размер области памяти vmalloc
+  node_memory_VmallocUsed_bytes: Объём используемой области vmalloc
+  node_memory_VmallocChunk_bytes: Наибольший непрерывный свободный блок области vmalloc
+  node_memory_HardwareCorrupted_bytes: "Объём оперативной памяти, признанной ядром повреждённой или неисправной"
+  node_memory_PageTables_bytes: "Память, используемая для отображения виртуальных адресов в физические (gauge)"
+  node_memory_KernelStack_bytes: Стек памяти ядра. Не возвращается
+  node_memory_Bounce_bytes: Память под bounce-буферы блочных устройств
+  node_memory_Hugepagesize_bytes: Размер huge page
+  node_memory_HugePages_Total: Общий размер пула huge pages
+  node_memory_HugePages_Free: "Huge pages в пуле, ещё не выделенные"
+  node_memory_HugePages_Rsvd: "Huge pages, выделение которых из пула уже подтверждено, но ещё не выполнено"
+  node_memory_HugePages_Surp: Huge pages в пуле сверх значения /proc/sys/vm/nr_hugepages
+  node_memory_AnonHugePages_bytes: Память в анонимных huge pages
+  node_memory_Inactive_file_bytes: "Память, связанная с файлами, в неактивном списке LRU"
+  node_memory_Inactive_anon_bytes: "Анонимная память и кэш подкачки в неактивном списке LRU, включая tmpfs (shmem)"
+  node_memory_Active_file_bytes: "Память, связанная с файлами, в активном списке LRU"
+  node_memory_Active_anon_bytes: "Анонимная память и кэш подкачки в активном списке LRU, включая tmpfs"
+  node_memory_Unevictable_bytes: "Объём памяти, которую по разным причинам нельзя вытеснить в swap"
+  node_memory_Shmem_bytes: "Используемая разделяемая память, общая для нескольких процессов, включая RAM-диски"
+  node_memory_AnonPages_bytes: "Память в пользовательских страницах, не связанных с файлами"
+  node_memory_Mapped_bytes: "Память, занятая отображёнными файлами, например библиотеками"
+  node_memory_Cached_bytes: Кэш содержимого файлов
+  node_memory_SwapCached_bytes: "Память, отслеживающая страницы, прочитанные из swap и ещё не изменённые"
+  node_memory_Mlocked_bytes: "Размер страниц, заблокированных в памяти системным вызовом mlock()"
+  node_memory_Buffers_bytes: "Кэш блочных устройств, например жёстких дисков"
+  node_memory_SwapTotal_bytes: Поле сведений о памяти SwapTotal_bytes
+  node_memory_SwapFree_bytes: Поле сведений о памяти SwapFree_bytes
+  node_filesystem_avail_bytes: "Место в файловой системе, доступное пользователям без прав root, в байтах"
+  node_filesystem_free_bytes: "Свободное место в файловой системе, в байтах"
+  node_filesystem_size_bytes: "Размер файловой системы, в байтах"
+  node_filesystem_files_free: Общее число свободных файловых узлов в файловой системе
+  node_filesystem_files: Общее число файловых узлов в файловой системе
+  node_filefd_maximum: Максимальное число открытых файлов
+  node_filefd_allocated: Число открытых файлов
+  node_filesystem_readonly: "Признак того, что файловая система доступна только для чтения"
+  node_filesystem_device_error: Признак ошибки при получении статистики по устройству
+  node_disk_reads_completed_total: Общее число успешно завершённых операций чтения
+  node_disk_writes_completed_total: Общее число успешно завершённых операций записи
+  node_disk_reads_merged_total: Число объединённых операций чтения
+  node_disk_writes_merged_total: Число объединённых операций записи
+  node_disk_read_bytes_total: Общее число успешно прочитанных байт
+  node_disk_written_bytes_total: Общее число успешно записанных байт
+  node_disk_io_time_seconds_total: "Общее число секунд, потраченных на операции ввода-вывода"
+  node_disk_read_time_seconds_total: "Общее число секунд, потраченных на все операции чтения"
+  node_disk_write_time_seconds_total: "Общее число секунд, потраченных на все операции записи"
+  node_disk_io_time_weighted_seconds_total: "Взвешенное число секунд, потраченных на операции ввода-вывода"
+  node_network_receive_bytes_total: Статистика сетевого устройства receive_bytes (counter)
+  node_network_transmit_bytes_total: Статистика сетевого устройства transmit_bytes (counter)
+  node_network_receive_packets_total: Статистика сетевого устройства receive_packets
+  node_network_transmit_packets_total: Статистика сетевого устройства transmit_packets
+  node_network_receive_errs_total: Статистика сетевого устройства receive_errs
+  node_network_transmit_errs_total: Статистика сетевого устройства transmit_errs
+  node_network_receive_drop_total: Статистика сетевого устройства receive_drop
+  node_network_transmit_drop_total: Статистика сетевого устройства transmit_drop
+  node_nf_conntrack_entries: "Число записей о потоках, выделенных сейчас для отслеживания соединений"
+  node_sockstat_TCP_alloc: Число TCP-сокетов в состоянии alloc
+  node_sockstat_TCP_inuse: Число TCP-сокетов в состоянии inuse
+  node_sockstat_TCP_orphan: Число TCP-сокетов в состоянии orphan
+  node_sockstat_TCP_tw: Число TCP-сокетов в состоянии tw (TIME_WAIT)
+  node_netstat_Tcp_CurrEstab: Показатель TcpCurrEstab
+  node_sockstat_sockets_used: Число используемых сокетов IPv4
+  kafka_brokers: Число брокеров kafka (gauge)
+  kafka_topic_partitions: Число разделов этого топика (gauge)
+  kafka_topic_partition_current_offset: Текущее смещение брокера в топике или разделе (gauge)
+  kafka_consumergroup_current_offset: Текущее смещение группы потребителей в топике или разделе (gauge)
+  kafka_consumer_lag_millis: Текущая оценка отставания группы потребителей в топике или разделе (gauge)
+  kafka_topic_partition_under_replicated_partition: "Равно 1, если у топика или раздела недостаточно реплик"
+  zk_znode_count: Общее число хранимых znode
+  zk_ephemerals_count: Число эфемерных узлов
+  zk_watch_count: "Число наблюдателей, установленных на узлах ZooKeeper"
+  zk_approximate_data_size: "Размер данных в байтах, хранимых сервером ZooKeeper в дереве данных"
+  zk_outstanding_requests: Число выполняемых сейчас запросов
+  zk_packets_sent: "Число пакетов ZooKeeper, отправленных сервером"
+  zk_packets_received: "Число пакетов ZooKeeper, принятых сервером"
+  zk_num_alive_connections: "Число активных клиентов, подключённых к серверу ZooKeeper"
+  zk_open_file_descriptor_count: "Число файловых дескрипторов, открытых сервером ZooKeeper"
+  zk_max_file_descriptor_count: "Максимальное число файловых дескрипторов, которое может открыть сервер ZooKeeper"
+  zk_avg_latency: "Среднее время обработки запросов, в миллисекундах"
+  zk_min_latency: "Минимальное время обработки запроса, в миллисекундах"
+  zk_max_latency: "Максимальное время обработки запроса, в миллисекундах"
+  netstat_sockets_used: Общее число используемых сокетов по всем протоколам
+  netstat_tcp_inuse: Число используемых (слушающих) TCP-сокетов
+  netstat_tcp_orphan: "Число осиротевших TCP-соединений: сокеты, не принадлежащие ни одному процессу и ожидающие уничтожения"
+  netstat_tcp_tw: Число TCP-соединений в состоянии TIME_WAIT
+  netstat_tcp_alloc: "Число выделенных TCP-сокетов: установленных и получивших sk_buff"
+  netstat_tcp_mem: "Число страниц памяти, занятых TCP-сокетами"
+  netstat_udp_inuse: Число используемых UDP-сокетов
+  netstat_udp_mem: "Число страниц памяти, занятых UDP-сокетами"
+  netstat_udplite_inuse: Число используемых сокетов UDP-Lite
+  netstat_raw_inuse: Число используемых raw-сокетов
+  netstat_frag_inuse: Число IP-фрагментов
+  netstat_frag_memory: "Память, выделенная под IP-фрагменты, в байтах"
+  ping_percent_packet_loss: "Доля потерянных ping-пакетов (%)"
+  ping_result_code: "Код возврата ping ('0','1')"
+  net_response_result_code: "Результат сетевой проверки: 0 — норма, любое другое значение — ошибка"
+  net_response_response_time: "Задержка сетевой проверки, в секундах"
+  cloudwatch_aws_rds_bin_log_disk_usage_average: "Объём диска, занятый бинарными логами на первичном экземпляре RDS, в байтах (среднее)"
+  cloudwatch_aws_rds_bin_log_disk_usage_maximum: "Объём диска, занятый бинарными логами на первичном экземпляре RDS, в байтах (максимум)"
+  cloudwatch_aws_rds_bin_log_disk_usage_minimum: "Объём диска, занятый бинарными логами на первичном экземпляре RDS, в байтах (минимум)"
+  cloudwatch_aws_rds_bin_log_disk_usage_sample_count: "Объём диска, занятый бинарными логами на первичном экземпляре RDS, в байтах (число измерений)"
+  cloudwatch_aws_rds_bin_log_disk_usage_sum: "Объём диска, занятый бинарными логами на первичном экземпляре RDS, в байтах (сумма)"
+  cloudwatch_aws_rds_burst_balance_average: Доля оставшихся кредитов ввода-вывода в burst-корзине General Purpose SSD (gp2) (среднее)
+  cloudwatch_aws_rds_burst_balance_maximum: Доля оставшихся кредитов ввода-вывода в burst-корзине General Purpose SSD (gp2) (максимум)
+  cloudwatch_aws_rds_burst_balance_minimum: Доля оставшихся кредитов ввода-вывода в burst-корзине General Purpose SSD (gp2) (минимум)
+  cloudwatch_aws_rds_burst_balance_sample_count: Доля оставшихся кредитов ввода-вывода в burst-корзине General Purpose SSD (gp2) (число измерений)
+  cloudwatch_aws_rds_burst_balance_sum: Доля оставшихся кредитов ввода-вывода в burst-корзине General Purpose SSD (gp2) (сумма)
+  cloudwatch_aws_rds_cpu_utilization_average: "Загрузка CPU экземпляра RDS, в процентах (среднее)"
+  cloudwatch_aws_rds_cpu_utilization_maximum: "Загрузка CPU экземпляра RDS, в процентах (максимум)"
+  cloudwatch_aws_rds_cpu_utilization_minimum: "Загрузка CPU экземпляра RDS, в процентах (минимум)"
+  cloudwatch_aws_rds_cpu_utilization_sample_count: "Загрузка CPU экземпляра RDS, в процентах (число измерений)"
+  cloudwatch_aws_rds_cpu_utilization_sum: "Загрузка CPU экземпляра RDS, в процентах (сумма)"
+  cloudwatch_aws_rds_database_connections_average: Число клиентских сетевых подключений к экземпляру RDS (среднее)
+  cloudwatch_aws_rds_database_connections_maximum: Число клиентских сетевых подключений к экземпляру RDS (максимум)
+  cloudwatch_aws_rds_database_connections_minimum: Число клиентских сетевых подключений к экземпляру RDS (минимум)
+  cloudwatch_aws_rds_database_connections_sample_count: Число клиентских сетевых подключений к экземпляру RDS (число измерений)
+  cloudwatch_aws_rds_database_connections_sum: Число клиентских сетевых подключений к экземпляру RDS (сумма)
+  cloudwatch_aws_rds_db_load_average: Число активных сессий в движке БД (среднее)
+  cloudwatch_aws_rds_db_load_cpu_average: "Число активных сессий, у которых тип события ожидания — CPU (среднее)"
+  cloudwatch_aws_rds_db_load_cpu_maximum: "Число активных сессий, у которых тип события ожидания — CPU (максимум)"
+  cloudwatch_aws_rds_db_load_cpu_minimum: "Число активных сессий, у которых тип события ожидания — CPU (минимум)"
+  cloudwatch_aws_rds_db_load_cpu_sample_count: "Число активных сессий, у которых тип события ожидания — CPU (число измерений)"
+  cloudwatch_aws_rds_db_load_cpu_sum: "Число активных сессий, у которых тип события ожидания — CPU (сумма)"
+  cloudwatch_aws_rds_db_load_maximum: Число активных сессий в движке БД (максимум)
+  cloudwatch_aws_rds_db_load_minimum: Число активных сессий в движке БД (минимум)
+  cloudwatch_aws_rds_db_load_non_cpu_average: "Число активных сессий, у которых тип события ожидания отличен от CPU (среднее)"
+  cloudwatch_aws_rds_db_load_non_cpu_maximum: "Число активных сессий, у которых тип события ожидания отличен от CPU (максимум)"
+  cloudwatch_aws_rds_db_load_non_cpu_minimum: "Число активных сессий, у которых тип события ожидания отличен от CPU (минимум)"
+  cloudwatch_aws_rds_db_load_non_cpu_sample_count: "Число активных сессий, у которых тип события ожидания отличен от CPU (число измерений)"
+  cloudwatch_aws_rds_db_load_non_cpu_sum: "Число активных сессий, у которых тип события ожидания отличен от CPU (сумма)"
+  cloudwatch_aws_rds_db_load_sample_count: Число активных сессий в движке БД (число измерений)
+  cloudwatch_aws_rds_db_load_sum: Число активных сессий в движке БД (сумма)
+  cloudwatch_aws_rds_disk_queue_depth_average: "Число незавершённых запросов ввода-вывода, ожидающих доступа к диску (среднее)"
+  cloudwatch_aws_rds_disk_queue_depth_maximum: "Число незавершённых запросов ввода-вывода, ожидающих доступа к диску (максимум)"
+  cloudwatch_aws_rds_disk_queue_depth_minimum: "Число незавершённых запросов ввода-вывода, ожидающих доступа к диску (минимум)"
+  cloudwatch_aws_rds_disk_queue_depth_sample_count: "Число незавершённых запросов ввода-вывода, ожидающих доступа к диску (число измерений)"
+  cloudwatch_aws_rds_disk_queue_depth_sum: "Число незавершённых запросов ввода-вывода, ожидающих доступа к диску (сумма)"
+  cloudwatch_aws_rds_ebs_byte_balance__average: Доля оставшихся кредитов пропускной способности в burst-корзине EBS (среднее)
+  cloudwatch_aws_rds_ebs_byte_balance__maximum: Доля оставшихся кредитов пропускной способности в burst-корзине EBS (максимум)
+  cloudwatch_aws_rds_ebs_byte_balance__minimum: Доля оставшихся кредитов пропускной способности в burst-корзине EBS (минимум)
+  cloudwatch_aws_rds_ebs_byte_balance__sample_count: Доля оставшихся кредитов пропускной способности в burst-корзине EBS (число измерений)
+  cloudwatch_aws_rds_ebs_byte_balance__sum: Доля оставшихся кредитов пропускной способности в burst-корзине EBS (сумма)
+  cloudwatch_aws_rds_ebsio_balance__average: Доля оставшихся кредитов ввода-вывода в burst-корзине EBS (среднее)
+  cloudwatch_aws_rds_ebsio_balance__maximum: Доля оставшихся кредитов ввода-вывода в burst-корзине EBS (максимум)
+  cloudwatch_aws_rds_ebsio_balance__minimum: Доля оставшихся кредитов ввода-вывода в burst-корзине EBS (минимум)
+  cloudwatch_aws_rds_ebsio_balance__sample_count: Доля оставшихся кредитов ввода-вывода в burst-корзине EBS (число измерений)
+  cloudwatch_aws_rds_ebsio_balance__sum: Доля оставшихся кредитов ввода-вывода в burst-корзине EBS (сумма)
+  cloudwatch_aws_rds_free_storage_space_average: "Свободное место в хранилище экземпляра RDS, в байтах (среднее)"
+  cloudwatch_aws_rds_free_storage_space_maximum: "Свободное место в хранилище экземпляра RDS, в байтах (максимум)"
+  cloudwatch_aws_rds_free_storage_space_minimum: "Свободное место в хранилище экземпляра RDS, в байтах (минимум)"
+  cloudwatch_aws_rds_free_storage_space_sample_count: "Свободное место в хранилище экземпляра RDS, в байтах (число измерений)"
+  cloudwatch_aws_rds_free_storage_space_sum: "Свободное место в хранилище экземпляра RDS, в байтах (сумма)"
+  cloudwatch_aws_rds_freeable_memory_average: "Доступная оперативная память экземпляра RDS, в байтах (среднее)"
+  cloudwatch_aws_rds_freeable_memory_maximum: "Доступная оперативная память экземпляра RDS, в байтах (максимум)"
+  cloudwatch_aws_rds_freeable_memory_minimum: "Доступная оперативная память экземпляра RDS, в байтах (минимум)"
+  cloudwatch_aws_rds_freeable_memory_sample_count: "Доступная оперативная память экземпляра RDS, в байтах (число измерений)"
+  cloudwatch_aws_rds_freeable_memory_sum: "Доступная оперативная память экземпляра RDS, в байтах (сумма)"
+  cloudwatch_aws_rds_lvm_read_iops_average: Число операций чтения с LVM-диска в секунду (среднее)
+  cloudwatch_aws_rds_lvm_read_iops_maximum: Число операций чтения с LVM-диска в секунду (максимум)
+  cloudwatch_aws_rds_lvm_read_iops_minimum: Число операций чтения с LVM-диска в секунду (минимум)
+  cloudwatch_aws_rds_lvm_read_iops_sample_count: Число операций чтения с LVM-диска в секунду (число измерений)
+  cloudwatch_aws_rds_lvm_read_iops_sum: Число операций чтения с LVM-диска в секунду (сумма)
+  cloudwatch_aws_rds_lvm_write_iops_average: Число операций записи на LVM-диск в секунду (среднее)
+  cloudwatch_aws_rds_lvm_write_iops_maximum: Число операций записи на LVM-диск в секунду (максимум)
+  cloudwatch_aws_rds_lvm_write_iops_minimum: Число операций записи на LVM-диск в секунду (минимум)
+  cloudwatch_aws_rds_lvm_write_iops_sample_count: Число операций записи на LVM-диск в секунду (число измерений)
+  cloudwatch_aws_rds_lvm_write_iops_sum: Число операций записи на LVM-диск в секунду (сумма)
+  cloudwatch_aws_rds_network_receive_throughput_average: "Входящий сетевой трафик экземпляра RDS, байт в секунду (среднее)"
+  cloudwatch_aws_rds_network_receive_throughput_maximum: "Входящий сетевой трафик экземпляра RDS, байт в секунду (максимум)"
+  cloudwatch_aws_rds_network_receive_throughput_minimum: "Входящий сетевой трафик экземпляра RDS, байт в секунду (минимум)"
+  cloudwatch_aws_rds_network_receive_throughput_sample_count: "Входящий сетевой трафик экземпляра RDS, байт в секунду (число измерений)"
+  cloudwatch_aws_rds_network_receive_throughput_sum: "Входящий сетевой трафик экземпляра RDS, байт в секунду (сумма)"
+  cloudwatch_aws_rds_network_transmit_throughput_average: "Исходящий сетевой трафик экземпляра RDS, байт в секунду (среднее)"
+  cloudwatch_aws_rds_network_transmit_throughput_maximum: "Исходящий сетевой трафик экземпляра RDS, байт в секунду (максимум)"
+  cloudwatch_aws_rds_network_transmit_throughput_minimum: "Исходящий сетевой трафик экземпляра RDS, байт в секунду (минимум)"
+  cloudwatch_aws_rds_network_transmit_throughput_sample_count: "Исходящий сетевой трафик экземпляра RDS, байт в секунду (число измерений)"
+  cloudwatch_aws_rds_network_transmit_throughput_sum: "Исходящий сетевой трафик экземпляра RDS, байт в секунду (сумма)"
+  cloudwatch_aws_rds_read_iops_average: Число операций чтения с диска в секунду (среднее)
+  cloudwatch_aws_rds_read_iops_maximum: Число операций чтения с диска в секунду (максимум)
+  cloudwatch_aws_rds_read_iops_minimum: Число операций чтения с диска в секунду (минимум)
+  cloudwatch_aws_rds_read_iops_sample_count: Число операций чтения с диска в секунду (число измерений)
+  cloudwatch_aws_rds_read_iops_sum: Число операций чтения с диска в секунду (сумма)
+  cloudwatch_aws_rds_read_latency_average: "Время одной операции чтения с диска, в секундах (среднее)"
+  cloudwatch_aws_rds_read_latency_maximum: "Время одной операции чтения с диска, в секундах (максимум)"
+  cloudwatch_aws_rds_read_latency_minimum: "Время одной операции чтения с диска, в секундах (минимум)"
+  cloudwatch_aws_rds_read_latency_sample_count: "Время одной операции чтения с диска, в секундах (число измерений)"
+  cloudwatch_aws_rds_read_latency_sum: "Время одной операции чтения с диска, в секундах (сумма)"
+  cloudwatch_aws_rds_read_throughput_average: "Число байт, прочитанных с диска в секунду (среднее)"
+  cloudwatch_aws_rds_read_throughput_maximum: "Число байт, прочитанных с диска в секунду (максимум)"
+  cloudwatch_aws_rds_read_throughput_minimum: "Число байт, прочитанных с диска в секунду (минимум)"
+  cloudwatch_aws_rds_read_throughput_sample_count: "Число байт, прочитанных с диска в секунду (число измерений)"
+  cloudwatch_aws_rds_read_throughput_sum: "Число байт, прочитанных с диска в секунду (сумма)"
+  cloudwatch_aws_rds_swap_usage_average: "Объём swap, используемый экземпляром RDS, в байтах (среднее)"
+  cloudwatch_aws_rds_swap_usage_maximum: "Объём swap, используемый экземпляром RDS, в байтах (максимум)"
+  cloudwatch_aws_rds_swap_usage_minimum: "Объём swap, используемый экземпляром RDS, в байтах (минимум)"
+  cloudwatch_aws_rds_swap_usage_sample_count: "Объём swap, используемый экземпляром RDS, в байтах (число измерений)"
+  cloudwatch_aws_rds_swap_usage_sum: "Объём swap, используемый экземпляром RDS, в байтах (сумма)"
+  cloudwatch_aws_rds_write_iops_average: Число операций записи на диск в секунду (среднее)
+  cloudwatch_aws_rds_write_iops_maximum: Число операций записи на диск в секунду (максимум)
+  cloudwatch_aws_rds_write_iops_minimum: Число операций записи на диск в секунду (минимум)
+  cloudwatch_aws_rds_write_iops_sample_count: Число операций записи на диск в секунду (число измерений)
+  cloudwatch_aws_rds_write_iops_sum: Число операций записи на диск в секунду (сумма)
+  cloudwatch_aws_rds_write_latency_average: "Время одной операции записи на диск, в секундах (среднее)"
+  cloudwatch_aws_rds_write_latency_maximum: "Время одной операции записи на диск, в секундах (максимум)"
+  cloudwatch_aws_rds_write_latency_minimum: "Время одной операции записи на диск, в секундах (минимум)"
+  cloudwatch_aws_rds_write_latency_sample_count: "Время одной операции записи на диск, в секундах (число измерений)"
+  cloudwatch_aws_rds_write_latency_sum: "Время одной операции записи на диск, в секундах (сумма)"
+  cloudwatch_aws_rds_write_throughput_average: "Число байт, записанных на диск в секунду (среднее)"
+  cloudwatch_aws_rds_write_throughput_maximum: "Число байт, записанных на диск в секунду (максимум)"
+  cloudwatch_aws_rds_write_throughput_minimum: "Число байт, записанных на диск в секунду (минимум)"
+  cloudwatch_aws_rds_write_throughput_sample_count: "Число байт, записанных на диск в секунду (число измерений)"
+  cloudwatch_aws_rds_write_throughput_sum: "Число байт, записанных на диск в секунду (сумма)"

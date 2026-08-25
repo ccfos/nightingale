@@ -133,18 +133,22 @@ zh_CN:
 	}
 }
 
+// bundledMetricLangs 随包发布的 etc/metrics.yaml 里应当齐备的翻译语言。
+// 新增一门语言时在这里加一行，覆盖门禁自动生效
+var bundledMetricLangs = []string{"ja", "ru"}
+
 // TestBundledMetricsYamlLangCoverage 钉住随包发布的 etc/metrics.yaml：
-// 日语必须与英文覆盖同一批指标。新增英文条目却漏掉日语时，日语用户会静默退回英文，
-// 这里让它在 CI 暴露而不是等用户发现
+// 英文要覆盖中文的全部条目，各翻译语言又要与英文严格对齐。漏掉条目时用户
+// 只会静默看到别的语言，这里让它在 CI 暴露而不是等用户发现
 func TestBundledMetricsYamlLangCoverage(t *testing.T) {
 	MetricDesc = MetricDescType{}
 	if err := LoadMetricsYaml("../../etc", ""); err != nil {
 		t.Fatalf("load bundled metrics.yaml fail: %v", err)
 	}
 
-	zh, en, ja := MetricDesc.Langs["zh"], MetricDesc.Langs["en"], MetricDesc.Langs["ja"]
-	if len(en) == 0 || len(ja) == 0 {
-		t.Fatalf("bundled metrics.yaml missing en(%d) or ja(%d) section", len(en), len(ja))
+	zh, en := MetricDesc.Langs["zh"], MetricDesc.Langs["en"]
+	if len(en) == 0 {
+		t.Fatalf("bundled metrics.yaml has no en section")
 	}
 
 	// 中文是这份文件的源语言，英文必须覆盖它的全部条目：只写中文的指标，
@@ -160,33 +164,41 @@ func TestBundledMetricsYamlLangCoverage(t *testing.T) {
 		t.Errorf("%d metrics have zh desc but no en: %v", len(noEn), noEn)
 	}
 
-	var missing, extra []string
-	for metric := range en {
-		if _, ok := ja[metric]; !ok {
-			missing = append(missing, metric)
+	for _, lang := range bundledMetricLangs {
+		dict := MetricDesc.Langs[lang]
+		if len(dict) == 0 {
+			t.Errorf("bundled metrics.yaml has no %s section", lang)
+			continue
 		}
-	}
-	for metric := range ja {
-		if _, ok := en[metric]; !ok {
-			extra = append(extra, metric)
+
+		var missing, extra []string
+		for metric := range en {
+			if _, ok := dict[metric]; !ok {
+				missing = append(missing, metric)
+			}
 		}
-	}
-	sort.Strings(missing)
-	sort.Strings(extra)
+		for metric := range dict {
+			if _, ok := en[metric]; !ok {
+				extra = append(extra, metric)
+			}
+		}
+		sort.Strings(missing)
+		sort.Strings(extra)
 
-	if len(missing) > 0 {
-		t.Errorf("%d metrics have en desc but no ja: %v", len(missing), missing)
-	}
-	if len(extra) > 0 {
-		t.Errorf("%d metrics have ja desc but no en: %v", len(extra), extra)
-	}
+		if len(missing) > 0 {
+			t.Errorf("%d metrics have en desc but no %s: %v", len(missing), lang, missing)
+		}
+		if len(extra) > 0 {
+			t.Errorf("%d metrics have %s desc but no en: %v", len(extra), lang, extra)
+		}
 
-	// 漏译的中文会原样留在日语段里。日语本身也用汉字，无法按字符集判定，
-	// 只能挑几个简体中文特有的词做抽查
-	for metric, desc := range ja {
-		for _, bad := range []string{"个数", "总数量", "已用内存数", "网卡收包", "剩余量", "空闲率"} {
-			if strings.Contains(desc, bad) {
-				t.Errorf("ja desc of %s looks like untranslated Chinese: %q", metric, desc)
+		// 漏译时中文会原样留在译文里。日语本身也用汉字，无法按字符集判定，
+		// 只能挑几个简体中文特有的词做抽查
+		for metric, desc := range dict {
+			for _, bad := range []string{"个数", "总数量", "已用内存数", "网卡收包", "剩余量", "空闲率"} {
+				if strings.Contains(desc, bad) {
+					t.Errorf("%s desc of %s looks like untranslated Chinese: %q", lang, metric, desc)
+				}
 			}
 		}
 	}
