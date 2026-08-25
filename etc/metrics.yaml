@@ -772,3 +772,438 @@ en:
   zk_avg_latency: Average time in milliseconds for requests to be processed
   zk_min_latency: Maximum time in milliseconds for a request to be processed
   zk_max_latency: Minimum time in milliseconds for a request to be processed
+
+ja:
+  ip_conntrack_count: "コネクション追跡テーブルのエントリ総数（単位：int, count）"
+  ip_conntrack_max: "コネクション追跡テーブルの最大容量（単位：int, size）"
+  cpu_usage_idle: "CPU アイドル率（単位：%）"
+  cpu_usage_active: "CPU 使用率（単位：%）"
+  cpu_usage_system: "CPU カーネルモード時間の割合（単位：%）"
+  cpu_usage_user: "CPU ユーザーモード時間の割合（単位：%）"
+  cpu_usage_nice: "低優先度ユーザーモードの CPU 時間の割合。つまりプロセスの nice 値が 1〜19 に調整された CPU 時間。なお nice の値域は -20〜19 で、値が大きいほど優先度は低くなる（単位：%）"
+  cpu_usage_iowait: "CPU が I/O を待機した時間の割合（単位：%）"
+  cpu_usage_irq: "CPU がハードウェア割り込みを処理した時間の割合（単位：%）"
+  cpu_usage_softirq: "CPU がソフトウェア割り込みを処理した時間の割合（単位：%）"
+  cpu_usage_steal: "仮想マシン環境で取得できる指標で、CPU が他の仮想マシンに奪われた時間の割合。20 を超えると競合が深刻（単位：%）"
+  cpu_usage_guest: "仮想化により他の OS を実行した時間、つまり仮想マシンを動かした CPU 時間の割合（単位：%）"
+  cpu_usage_guest_nice: "低優先度で仮想マシンを実行した時間の割合（単位：%）"
+  disk_free: ディスクパーティションの空き容量（単位：byte）
+  disk_used: ディスクパーティションの使用量（単位：byte）
+  disk_used_percent: "ディスクパーティションの使用率（単位：%）"
+  disk_total: ディスクパーティションの総容量（単位：byte）
+  disk_inodes_free: ディスクパーティションの inode 残量
+  disk_inodes_used: ディスクパーティションの inode 使用量
+  disk_inodes_total: ディスクパーティションの inode 総数
+  diskio_io_time: デバイス視点での I/O リクエスト総時間。キューに I/O リクエストがあればカウントされる（単位：ミリ秒）。counter 型のため、rate 関数で変化率を求めて使う
+  diskio_iops_in_progress: デバイスドライバに割り当て済みで未完了の IO リクエスト。キューにあるがまだドライバに割り当てられていないものは含まない。gauge 型
+  diskio_merged_reads: 隣接する読み取りリクエストがマージされた回数。counter 型
+  diskio_merged_writes: 隣接する書き込みリクエストがマージされた回数。counter 型
+  diskio_read_bytes: 読み取ったバイト数。counter 型のため、rate 関数で変化率を求めて使う
+  diskio_read_time: 読み取りリクエストの総時間（単位：ミリ秒）。counter 型のため、rate 関数で変化率を求めて使う
+  diskio_reads: 読み取りリクエストの回数。counter 型のため、rate 関数で変化率を求めて使う
+  diskio_weighted_io_time: I/O リクエスト視点での待機総時間。複数の I/O リクエストが同時にある場合は時間が加算される（単位：ミリ秒）
+  diskio_write_bytes: 書き込んだバイト数。counter 型のため、rate 関数で変化率を求めて使う
+  diskio_write_time: 書き込みリクエストの総時間（単位：ミリ秒）。counter 型のため、rate 関数で変化率を求めて使う
+  diskio_writes: 書き込みリクエストの回数。counter 型のため、rate 関数で変化率を求めて使う
+  kernel_boot_time: カーネルの起動時刻
+  kernel_context_switches: カーネルのコンテキストスイッチ回数
+  kernel_entropy_avail: Linux システム内部のエントロピープール
+  kernel_interrupts: カーネルの割り込み回数
+  kernel_processes_forked: fork されたプロセス数
+  mem_active: アクティブに使用されているメモリの総量（cache と buffer を含む）
+  mem_available: 利用可能なメモリサイズ（bytes）
+  mem_available_percent: メモリ残量の割合（0〜100）
+  mem_buffered: ファイルのバッファに使われているサイズ
+  mem_cached: キャッシュメモリ（cache memory）が使用しているメモリサイズ（diskcache から SwapCache を引いた値）
+  mem_commit_limit: "オーバーコミット率（'vm.overcommit_ratio'）に基づき、現在システムに割り当て可能なメモリ総量。この制限はモード 2（'vm.overcommit_memory'）のときのみ有効"
+  mem_committed_as: 現在システム上で割り当てられているメモリ量。全プロセスが要求したメモリの合計
+  mem_dirty: ディスクへの書き戻しを待っているメモリサイズ
+  mem_free: 空きメモリサイズ（bytes）
+  mem_high_free: 使用されていない high メモリのサイズ
+  mem_high_total: high メモリの総サイズ（HighMem は 860MB を超える物理メモリを指し、ユーザープログラムやページキャッシュに使われる。この領域はカーネル空間に直接マップされないため、カーネルは別の方法でアクセスする必要がある）
+  mem_huge_page_size: ヒュージページ 1 枚あたりのサイズ
+  mem_huge_pages_free: プール内でまだ割り当てられていない HugePages の数
+  mem_huge_pages_total: 予約された HugePages の総数
+  mem_inactive: 未使用のメモリ量（free と available の両方を含む）
+  mem_low_free: 使用されていない low メモリのサイズ
+  mem_low_total: low メモリの総サイズ。low メモリは high メモリと同じ用途に使えるうえ、カーネル自身のデータ構造の保持にも使える
+  mem_mapped: デバイスやファイルなどのマッピングのサイズ
+  mem_page_tables: メモリページング管理用インデックステーブルのサイズ
+  mem_shared: 複数プロセスで共有されているメモリの総量
+  mem_slab: カーネルデータ構造キャッシュのサイズ。メモリの確保と解放にかかるコストを削減できる
+  mem_sreclaimable: 回収可能な Slab のサイズ
+  mem_sunreclaim: 回収できない Slab のサイズ（SUnreclaim + SReclaimable ＝ Slab）
+  mem_swap_cached: キャッシュメモリ（cache memory）が使用しているスワップ空間のサイズ。すでにスワップアウトされたが swapfile にも残っているメモリで、必要時に I/O を再度開かずに素早く復帰できる
+  mem_swap_free: 使用されていないスワップ空間のサイズ
+  mem_swap_total: スワップ空間の総サイズ
+  mem_total: メモリ総量
+  mem_used: 使用済みメモリ量
+  mem_used_percent: 使用済みメモリの割合（0〜100）
+  mem_vmalloc_chunk: 未使用で連続した最大の vmalloc 領域
+  mem_vmalloc_totalL: vmalloc 可能な仮想メモリのサイズ
+  mem_vmalloc_used: vmalloc が使用済みの仮想メモリサイズ
+  mem_write_back: ディスクへ書き戻し中のメモリサイズ
+  mem_write_back_tmp: FUSE が一時的な書き戻しバッファに使用しているメモリ
+  net_bytes_recv: NIC の受信バイト総数（bytes）。毎秒レートを求めるには rate/irate 関数を使う
+  net_bytes_sent: NIC の送信バイト総数（bytes）。毎秒レートを求めるには rate/irate 関数を使う
+  net_bits_recv: NIC の受信ビット総数（bits）。毎秒レートを求めるには rate/irate 関数を使う
+  net_bits_sent: NIC の送信ビット総数（bits）。毎秒レートを求めるには rate/irate 関数を使う
+  net_drop_in: NIC の受信ドロップパケット数
+  net_drop_out: NIC の送信ドロップパケット数
+  net_err_in: NIC の受信エラーパケット数
+  net_err_out: NIC の送信エラーパケット数
+  net_packets_recv: NIC の受信パケット数
+  net_packets_sent: NIC の送信パケット数
+  netstat_tcp_established: ESTABLISHED 状態のネットワーク接続数
+  netstat_tcp_fin_wait1: FIN_WAIT1 状態のネットワーク接続数
+  netstat_tcp_fin_wait2: FIN_WAIT2 状態のネットワーク接続数
+  netstat_tcp_last_ack: LAST_ACK 状態のネットワーク接続数
+  netstat_tcp_listen: LISTEN 状態のネットワーク接続数
+  netstat_tcp_syn_recv: SYN_RECV 状態のネットワーク接続数
+  netstat_tcp_syn_sent: SYN_SENT 状態のネットワーク接続数
+  netstat_tcp_time_wait: TIME_WAIT 状態のネットワーク接続数
+  netstat_udp_socket: UDP 状態のネットワーク接続数
+  processes_blocked: "割り込み不可能なスリープ状態のプロセス数（'U','D','L'）"
+  processes_dead: "回収中のプロセス数（'X'）"
+  processes_idle: "サスペンド中のアイドルプロセス数（'I'）"
+  processes_paging: "ページング中のプロセス数（'P'）"
+  processes_running: "実行中のプロセス数（'R'）"
+  processes_sleeping: "割り込み可能なプロセス数（'S'）"
+  processes_stopped: "停止状態のプロセス数（'T'）"
+  processes_total: 総プロセス数
+  processes_total_threads: 総スレッド数
+  processes_unknown: 状態が不明なプロセス数
+  processes_zombies: "ゾンビ状態のプロセス数（'Z'）"
+  swap_used_percent: Swap 空間へスワップアウトされたデータ量
+  system_load1: 1 分間の平均ロード値
+  system_load5: 5 分間の平均ロード値
+  system_load15: 15 分間の平均ロード値
+  system_load_norm_1: 1 分間の平均ロード値 / 論理 CPU 数
+  system_load_norm_5: 5 分間の平均ロード値 / 論理 CPU 数
+  system_load_norm_15: 15 分間の平均ロード値 / 論理 CPU 数
+  system_n_users: ユーザー数
+  system_n_cpus: CPU コア数
+  system_uptime: システムの稼働時間
+  nginx_accepts: nginx 起動以降にクライアントと確立した接続の総数
+  nginx_active: nginx が現在処理中のアクティブ接続数。Reading/Writing/Waiting の合計に等しい
+  nginx_handled: nginx 起動以降に処理したクライアント接続の総数
+  nginx_reading: HTTP リクエストヘッダを読み取り中の接続総数
+  nginx_requests: nginx 起動以降に処理したクライアントリクエストの総数。HTTP Keep-Alive があるため handled より大きくなる
+  nginx_upstream_check_fall: upstream_check モジュールがバックエンドの障害を検知した回数
+  nginx_upstream_check_rise: upstream_check モジュールがバックエンドを検査した回数
+  nginx_upstream_check_status_code: バックエンド upstream の状態。up が 1、down が 0
+  nginx_waiting: keep-alive が有効な場合、この値は active −（reading + writing）に等しい。つまり nginx が処理を終え、次のリクエストを待っている常駐接続
+  nginx_writing: クライアントへレスポンスを送信中の接続総数
+  http_response_content_length: HTTP メッセージボディの転送長
+  http_response_http_response_code: HTTP レスポンスステータスコード
+  http_response_response_time: HTTP レスポンスにかかった時間
+  http_response_result_code: URL 監視の結果。0 が正常で、それ以外は URL にアクセスできないことを示す
+  mysql_global_status_uptime: サーバーが起動してからの秒数（Gauge）
+  mysql_global_status_uptime_since_flush_status: 直近の FLUSH STATUS 実行からの秒数（Gauge）
+  mysql_global_status_queries: サーバーが実行したステートメント数。Questions と異なり、ストアドプログラム内で実行されたものも含む。COM_PING と COM_STATISTICS はカウントしない（Counter）
+  mysql_global_status_threads_connected: 現在オープンしている接続の数（Counter）
+  mysql_global_status_connections: MySQL サーバーへの接続試行回数（成功・失敗を問わない）（Gauge）
+  mysql_global_status_max_used_connections: サーバー起動以降に同時使用された接続数の最大値（Gauge）
+  mysql_global_status_threads_running: スリープ状態にないスレッドの数（Gauge）
+  mysql_global_status_questions: サーバーが実行したステートメント数。Queries と異なり、クライアントから送られたものだけを数え、ストアドプログラム内の実行は含まない。COM_PING、COM_STATISTICS、COM_STMT_PREPARE、COM_STMT_CLOSE、COM_STMT_RESET もカウントしない（Counter）
+  mysql_global_status_threads_cached: スレッドキャッシュ内のスレッド数（Counter）
+  mysql_global_status_threads_created: 接続処理のために作成されたスレッド数。この値が大きい場合は thread_cache_size を増やすとよい。キャッシュミス率は Threads_created/Connections で計算できる（Counter）
+  mysql_global_status_created_tmp_tables: ステートメント実行中にサーバーが作成した内部一時テーブルの数（Counter）
+  mysql_global_status_created_tmp_disk_tables: ステートメント実行中にサーバーが作成したディスク上の内部一時テーブル数。Created_tmp_disk_tables と Created_tmp_tables を比較すると、ディスクに落ちた割合が分かる（Counter）
+  mysql_global_status_created_tmp_files: mysqld が作成した一時ファイルの数（Counter）
+  mysql_global_status_select_full_join: インデックスを使わずテーブルスキャンを行った結合の数。0 でない場合はテーブルのインデックスを見直すこと（Counter）
+  mysql_global_status_select_full_range_join: 参照テーブルに対して範囲検索を使った結合の数（Counter）
+  mysql_global_status_select_range: 最初のテーブルで範囲検索を使った結合の数。値が大きくても通常は問題にならない（Counter）
+  mysql_global_status_select_range_check: キーを使わず、各行ごとにキー利用可否を確認した結合の数。0 でない場合はテーブルのインデックスを見直すこと（Counter）
+  mysql_global_status_select_scan: 最初のテーブルをフルスキャンした結合の数（Counter）
+  mysql_global_status_sort_rows: ソートされた行数（Counter）
+  mysql_global_status_sort_range: 範囲を使って行われたソートの数（Counter）
+  mysql_global_status_sort_merge_passes: ソートアルゴリズムが実行したマージパスの数。値が大きい場合は sort_buffer_size を増やすことを検討する（Counter）
+  mysql_global_status_sort_scan: テーブルスキャンによって行われたソートの数（Counter）
+  mysql_global_status_slow_queries: long_query_time 秒を超えたクエリの数。スロークエリログの有効・無効に関わらずカウントされる（Counter）
+  mysql_global_status_aborted_connects: MySQL サーバーへの接続に失敗した回数（Counter）
+  mysql_global_status_aborted_clients: クライアントが接続を正しく閉じずに終了したため中断された接続の数（Counter）
+  mysql_global_status_table_locks_immediate: テーブルロック要求が即座に許可された回数。増減すること自体は正常な挙動（Counter）
+  mysql_global_status_table_locks_waited: テーブルロック要求が即座に許可されず待機が必要だった回数。この値が高く性能問題がある場合は、まずクエリを最適化し、次にテーブル分割やレプリケーションを検討する（Counter）
+  mysql_global_status_bytes_received: 全クライアントから受信したバイト数（Counter）
+  mysql_global_status_bytes_sent: 全クライアントへ送信したバイト数（Counter）
+  mysql_global_status_innodb_page_size: InnoDB のページサイズ（デフォルト 16KB）。多くの値がページ単位で数えられるため、これを使ってバイトへ換算できる（Gauge）
+  mysql_global_status_buffer_pool_pages: InnoDB バッファプール内のページ数（Gauge）
+  mysql_global_status_commands_total: 各ステートメントが実行された回数（Counter）
+  mysql_global_status_handlers_total: ハンドラ統計。MySQL が行・テーブル・インデックスをどのように選択、更新、挿入、変更しているかを示す内部統計で、ストレージエンジンと MySQL の間の層にあたる（Counter）
+  mysql_global_status_opened_files: my_open()（mysys ライブラリの関数）でオープンされたファイルの数。この関数を使わずにファイルを開く部分はカウントされない（Counter）
+  mysql_global_status_open_tables: オープン中のテーブル数（Gauge）
+  mysql_global_status_opened_tables: オープンされたテーブルの累計数。この値が大きい場合は table_open_cache が小さすぎる可能性がある（Counter）
+  mysql_global_status_table_open_cache_hits: オープンテーブルキャッシュ参照のヒット数（Counter）
+  mysql_global_status_table_open_cache_misses: オープンテーブルキャッシュ参照のミス数（Counter）
+  mysql_global_status_table_open_cache_overflows: オープンテーブルキャッシュのオーバーフロー回数（Counter）
+  mysql_global_status_innodb_num_open_files: InnoDB が現在オープンしているファイルの数（Gauge）
+  mysql_global_status_connection_errors_total: クライアント接続処理中に発生したエラーの情報（Counter）
+  mysql_global_status_innodb_buffer_pool_read_requests: 論理読み取りリクエストの数（Counter）
+  mysql_global_status_innodb_buffer_pool_reads: InnoDB がバッファプールから返せず、ディスクから直接読む必要があった論理読み取りの数（Counter）
+  mysql_global_variables_thread_cache_size: 再利用のためにサーバーがキャッシュするスレッド数（Gauge）
+  mysql_global_variables_max_connections: 同時クライアント接続の許容最大数（Gauge）
+  mysql_global_variables_innodb_buffer_pool_size: バッファプールのサイズ（バイト）。InnoDB がテーブルとインデックスのデータをキャッシュするメモリ領域で、デフォルトは 134217728 バイト（128MB）（Gauge）
+  mysql_global_variables_innodb_log_buffer_size: InnoDB がディスク上のログファイルへ書き込むために使うバッファのサイズ（バイト）（Gauge）
+  mysql_global_variables_key_buffer_size: MyISAM テーブルのインデックスブロックをバッファリングするサイズ。全スレッドで共有される（Gauge）
+  mysql_global_variables_query_cache_size: クエリ結果のキャッシュに割り当てられたメモリ量（Gauge）
+  mysql_global_variables_table_open_cache: 全スレッド分のオープンテーブル数（Gauge）
+  mysql_global_variables_open_files_limit: OS から mysqld に割り当てられたファイルディスクリプタの数（Gauge）
+  redis_active_defrag_running: activedefrag が有効な場合に、デフラグが現在実行中かどうかと、使用予定の CPU 割合を示す
+  redis_allocator_active_bytes: アロケータのアクティブページ内の総バイト数。外部フラグメンテーションを含む
+  redis_allocator_allocated_bytes: アロケータから割り当てられた総バイト数。内部フラグメンテーションを含む。通常は used_memory と同じ
+  redis_allocator_frag_bytes: allocator_active と allocator_allocated の差分。mem_fragmentation_bytes の注意書きも参照
+  redis_allocator_frag_ratio: allocator_active と allocator_allocated の比率。これが真の（外部）フラグメンテーション指標であり、mem_fragmentation_ratio ではない
+  redis_allocator_resident_bytes: アロケータ内で常駐（RSS）している総バイト数。MEMORY PURGE などで OS に返却できるページも含む
+  redis_allocator_rss_bytes: allocator_resident と allocator_active の差分
+  redis_allocator_rss_ratio: allocator_resident と allocator_active の比率。通常、アロケータが近く OS へ返却できるページの量を示す
+  redis_aof_current_rewrite_duration_sec: 進行中の AOF リライト処理の経過時間
+  redis_aof_enabled: AOF ログが有効かどうかを示すフラグ
+  redis_aof_last_bgrewrite_status: 直近の AOF リライト処理のステータス
+  redis_aof_last_cow_size_bytes: 直近の AOF リライト処理中のコピーオンライトメモリのサイズ（バイト）
+  redis_aof_last_rewrite_duration_sec: 直近の AOF リライト処理にかかった秒数
+  redis_aof_last_write_status: 直近の AOF 書き込み処理のステータス
+  redis_aof_rewrite_in_progress: AOF リライト処理が進行中かどうかを示すフラグ
+  redis_aof_rewrite_scheduled: 進行中の RDB 保存完了後に AOF リライトが予定されているかを示すフラグ
+  redis_blocked_clients: ブロッキングコマンド（BLPOP、BRPOP、BRPOPLPUSH、BLMOVE、BZPOPMIN、BZPOPMAX）で待機中のクライアント数
+  redis_client_recent_max_input_buffer_bytes: 現在のクライアント接続のうち最大の入力バッファ
+  redis_client_recent_max_output_buffer_bytes: 現在のクライアント接続のうち最大の出力バッファ
+  redis_cluster_enabled: Redis クラスタが有効かどうかを示す
+  redis_commands_duration_seconds_total: これらのコマンドが消費した CPU 時間の合計（Counter）
+  redis_commands_processed_total: サーバーが処理したコマンドの総数（Counter）
+  redis_commands_total: コマンド実行に到達した（拒否されなかった）呼び出しの数（Counter）
+  redis_config_maxclients: maxclients 設定の値。connected_clients、connected_slaves、cluster_connections の合計の上限になる
+  redis_config_maxmemory: maxmemory 設定の値
+  redis_connected_clients: クライアント接続数（レプリカからの接続を除く）
+  redis_connected_slaves: 接続中のレプリカ数
+  redis_connections_received_total: サーバーが受け付けた接続の総数（Counter）
+  redis_cpu_sys_children_seconds_total: バックグラウンドプロセスが消費したシステム CPU（Counter）
+  redis_cpu_sys_seconds_total: Redis サーバーが消費したシステム CPU。サーバープロセスの全スレッド（メインスレッドとバックグラウンドスレッド）の合計（Counter）
+  redis_cpu_user_children_seconds_total: バックグラウンドプロセスが消費したユーザー CPU（Counter）
+  redis_cpu_user_seconds_total: Redis サーバーが消費したユーザー CPU。サーバープロセスの全スレッド（メインスレッドとバックグラウンドスレッド）の合計（Counter）
+  redis_db_keys: DB ごとのキー総数
+  redis_db_keys_expiring: DB ごとの有効期限付きキーの総数
+  redis_defrag_hits: アクティブデフラグ処理によって再配置された値の数
+  redis_defrag_misses: アクティブデフラグ処理が開始したが中断された値の再配置の数
+  redis_defrag_key_hits: アクティブにデフラグされたキーの数
+  redis_defrag_key_misses: アクティブデフラグ処理がスキップしたキーの数
+  redis_evicted_keys_total: maxmemory 制限により退避されたキーの数（Counter）
+  redis_expired_keys_total: キーの有効期限切れイベントの総数（Counter）
+  redis_expired_stale_percentage: 期限切れと推定されるキーの割合
+  redis_expired_time_cap_reached_total: アクティブ期限切れサイクルが早期終了した回数
+  redis_exporter_last_scrape_connect_time_seconds: スクレイプ時の接続にかかった時間（秒）
+  redis_exporter_last_scrape_duration_seconds: 直近のスクレイプ所要時間
+  redis_exporter_last_scrape_error: 直近のスクレイプのエラー状態
+  redis_exporter_scrape_duration_seconds_count: exporter によるスクレイプの所要時間
+  redis_exporter_scrape_duration_seconds_sum: exporter によるスクレイプの所要時間
+  redis_exporter_scrapes_total: 現在までの Redis スクレイプ総数（Counter）
+  redis_instance_info: Redis インスタンスの情報
+  redis_keyspace_hits_total: ヒット総数（Counter）
+  redis_keyspace_misses_total: ミス総数（Counter）
+  redis_last_key_groups_scrape_duration_milliseconds: 直近のキーグループメトリクス収集の所要時間（ミリ秒）
+  redis_last_slow_execution_duration_seconds: 直近のスロー実行に要した時間（秒）
+  redis_latest_fork_seconds: 直近の fork に要した時間（秒）
+  redis_lazyfree_pending_objects: 解放待ちのオブジェクト数（UNLINK、または ASYNC 付きの FLUSHDB / FLUSHALL の結果）
+  redis_master_repl_offset: サーバーの現在のレプリケーションオフセット
+  redis_mem_clients_normal: 通常クライアントが使用しているメモリ（Gauge）
+  redis_mem_clients_slaves: レプリカクライアントが使用しているメモリ。Redis 7.0 以降はレプリカバッファがレプリケーションバックログとメモリを共有するため、レプリカがメモリ増加を引き起こさない場合は 0 になることがある
+  redis_mem_fragmentation_bytes: used_memory_rss と used_memory の差分。総フラグメンテーションが小さい（数 MB 程度）場合は、比率が高くても（例：1.5 以上）問題を示すものではない
+  redis_mem_fragmentation_ratio: "used_memory_rss と used_memory の比率。フラグメンテーションだけでなく、プロセスのオーバーヘッド（allocator_* メトリクス参照）やコード、共有ライブラリ、スタックなども含む点に注意"
+  redis_mem_not_counted_for_eviction_bytes: 退避対象として計上されないメモリ（Gauge）
+  redis_memory_max_bytes: メモリ上限（バイト）
+  redis_memory_used_bytes: Redis がアロケータ（標準 libc、jemalloc、tcmalloc などの代替アロケータ）を通じて割り当てた総バイト数
+  redis_memory_used_dataset_bytes: データセットのサイズ（バイト）。used_memory から used_memory_overhead を引いた値
+  redis_memory_used_lua_bytes: Lua エンジンが使用しているバイト数
+  redis_memory_used_overhead_bytes: サーバーが内部データ構造の管理のために確保したオーバーヘッドの合計（バイト）
+  redis_memory_used_peak_bytes: Redis が消費したメモリのピーク値（バイト）
+  redis_memory_used_rss_bytes: OS から見て Redis が確保しているバイト数（いわゆる resident set size）。top(1) や ps(1) が表示する値
+  redis_memory_used_scripts_bytes: キャッシュされた Lua スクリプトが使用しているバイト数
+  redis_memory_used_startup_bytes: 起動時に Redis が消費したメモリの初期値（バイト）
+  redis_migrate_cached_sockets_total: MIGRATE 用にオープンされているソケットの数
+  redis_net_input_bytes_total: 入力バイト総数（Counter）
+  redis_net_output_bytes_total: 出力バイト総数（Counter）
+  redis_process_id: プロセス ID
+  redis_pubsub_channels: クライアントが購読している pub/sub チャネルの総数
+  redis_pubsub_patterns: クライアントが購読している pub/sub パターンの総数
+  redis_rdb_bgsave_in_progress: RDB 保存が進行中かどうかを示すフラグ
+  redis_rdb_changes_since_last_save: 直近のダンプ以降の変更数
+  redis_rdb_current_bgsave_duration_sec: 進行中の RDB 保存処理の経過時間
+  redis_rdb_last_bgsave_duration_sec: 直近の RDB 保存処理にかかった秒数
+  redis_rdb_last_bgsave_status: 直近の RDB 保存処理のステータス
+  redis_rdb_last_cow_size_bytes: 直近の RDB 保存処理中のコピーオンライトメモリのサイズ（バイト）
+  redis_rdb_last_save_timestamp_seconds: 直近に成功した RDB 保存の UNIX タイムスタンプ
+  redis_rejected_connections_total: maxclients 制限により拒否された接続の数（Counter）
+  redis_repl_backlog_first_byte_offset: レプリケーションバックログバッファのマスターオフセット
+  redis_repl_backlog_history_bytes: レプリケーションバックログバッファ内のデータサイズ（バイト）
+  redis_repl_backlog_is_active: レプリケーションバックログが有効かどうかを示すフラグ
+  redis_replica_partial_resync_accepted: 受理された部分再同期リクエストの数（Gauge）
+  redis_replica_partial_resync_denied: 拒否された部分再同期リクエストの数（Gauge）
+  redis_replica_resyncs_full: レプリカとの完全再同期の回数
+  redis_replication_backlog_bytes: レプリケーションバックログが使用しているメモリ
+  redis_second_repl_offset: レプリケーション ID が受け付けられる上限オフセット
+  redis_slave_expires_tracked_keys: 有効期限管理のために追跡されているキーの数（書き込み可能レプリカのみ該当）（Gauge）
+  redis_slowlog_last_id: スローログの最終 ID
+  redis_slowlog_length: スローログの総件数
+  redis_start_time_seconds: Redis インスタンスの起動時刻（UNIX エポックからの秒数）
+  redis_target_scrape_request_errors_total: exporter へのリクエストで発生したエラー数
+  redis_up: Redis インスタンスが稼働しているかを示すフラグ
+  redis_uptime_in_seconds: Redis サーバー起動からの経過秒数
+  windows_cpu_clock_interrupts_total: 受信・処理されたクロックティック割り込みの総数（counter）
+  windows_cpu_core_frequency_mhz: コア周波数（メガヘルツ）（gauge）
+  windows_cpu_cstate_seconds_total: 低電力アイドル状態で過ごした時間（counter）
+  windows_cpu_dpcs_total: 受信・処理された遅延プロシージャコール（DPC）の総数（counter）
+  windows_cpu_idle_break_events_total: プロセッサがアイドルから復帰した回数の総数（counter）
+  windows_cpu_interrupts_total: 受信・処理されたハードウェア割り込みの総数（counter）
+  windows_cpu_parking_status: プロセッサがパーキング状態かどうかを示す（gauge）
+  windows_cpu_processor_performance: "命令実行中のプロセッサの平均性能を、公称性能に対する割合で示す。プロセッサによっては 100% を超えることがある（gauge）"
+  windows_cpu_time_total: プロセッサが各モード（idle、user、system など）で過ごした時間（counter）
+  windows_cs_hostname: ComputerSystem.DNSHostName と ComputerSystem.Domain から取得したホスト名情報をラベルとして持つ（gauge）
+  windows_cs_logical_processors: ComputerSystem.NumberOfLogicalProcessors（gauge）
+  windows_cs_physical_memory_bytes: ComputerSystem.TotalPhysicalMemory（gauge）
+  windows_exporter_build_info: windows_exporter のビルド元となった version、revision、branch、goversion をラベルに持つ定数 1 のメトリック（gauge）
+  windows_exporter_collector_duration_seconds: 収集にかかった時間（gauge）
+  windows_exporter_collector_success: コレクタが成功したかどうか（gauge）
+  windows_exporter_collector_timeout: コレクタがタイムアウトしたかどうか（gauge）
+  windows_exporter_perflib_snapshot_duration_seconds: perflib スナップショット取得にかかった時間（gauge）
+  windows_logical_disk_free_bytes: 空き容量（バイト）（LogicalDisk.PercentFreeSpace）（gauge）
+  windows_logical_disk_idle_seconds_total: ディスクがアイドルだった秒数（LogicalDisk.PercentIdleTime）（counter）
+  windows_logical_disk_read_bytes_total: 読み取り操作でディスクから転送されたバイト数（LogicalDisk.DiskReadBytesPerSec）（counter）
+  windows_logical_disk_read_latency_seconds_total: ディスクからの読み取り操作の平均所要時間（秒）（LogicalDisk.AvgDiskSecPerRead）（counter）
+  windows_logical_disk_read_seconds_total: 読み取りリクエストの処理でディスクがビジーだった秒数（LogicalDisk.PercentDiskReadTime）（counter）
+  windows_logical_disk_read_write_latency_seconds_total: ディスク転送 1 回あたりの平均所要時間（秒）（LogicalDisk.AvgDiskSecPerTransfer）（counter）
+  windows_logical_disk_reads_total: ディスクへの読み取り操作の回数（LogicalDisk.DiskReadsPerSec）（counter）
+  windows_logical_disk_requests_queued: ディスクにキューイングされているリクエストの数（LogicalDisk.CurrentDiskQueueLength）（gauge）
+  windows_logical_disk_size_bytes: 総容量（バイト）（LogicalDisk.PercentFreeSpace_Base）（gauge）
+  windows_logical_disk_split_ios_total: 複数の I/O に分割されたディスク I/O の数（LogicalDisk.SplitIOPerSec）（counter）
+  windows_logical_disk_write_bytes_total: 書き込み操作でディスクへ転送されたバイト数（LogicalDisk.DiskWriteBytesPerSec）（counter）
+  windows_logical_disk_write_latency_seconds_total: ディスクへの書き込み操作の平均所要時間（秒）（LogicalDisk.AvgDiskSecPerWrite）（counter）
+  windows_logical_disk_write_seconds_total: 書き込みリクエストの処理でディスクがビジーだった秒数（LogicalDisk.PercentDiskWriteTime）（counter）
+  windows_logical_disk_writes_total: ディスクへの書き込み操作の回数（LogicalDisk.DiskWritesPerSec）（counter）
+  windows_net_bytes_received_total: NIC の受信バイト数（Network.BytesReceivedPerSec）（counter）
+  windows_net_bytes_sent_total: NIC の送信バイト数（Network.BytesSentPerSec）（counter）
+  windows_net_bytes_total: NIC の送受信バイト数の合計（Network.BytesTotalPerSec）（counter）
+  windows_net_current_bandwidth: NIC の現在の帯域幅（Network.CurrentBandwidth）（gauge）
+  windows_net_packets_outbound_discarded_total: 破棄された送信パケット数（Network.PacketsOutboundDiscarded）（counter）
+  windows_net_packets_outbound_errors_total: 送信エラーパケット数（Network.PacketsOutboundErrors）（counter）
+  windows_net_packets_received_discarded_total: 破棄された受信パケット数（Network.PacketsReceivedDiscarded）（counter）
+  windows_net_packets_received_errors_total: 受信エラーパケット数（Network.PacketsReceivedErrors）（counter）
+  windows_net_packets_received_total: 受信パケット数（Network.PacketsReceivedPerSec）（counter）
+  windows_net_packets_received_unknown_total: 不明な受信パケット数（Network.PacketsReceivedUnknown）（counter）
+  windows_net_packets_sent_total: 送信パケット数（Network.PacketsSentPerSec）（counter）
+  windows_net_packets_total: 送受信パケット数の合計（Network.PacketsPerSec）（counter）
+  windows_os_info: OperatingSystem.Caption、OperatingSystem.Version（gauge）
+  windows_os_paging_free_bytes: OperatingSystem.FreeSpaceInPagingFiles（gauge）
+  windows_os_paging_limit_bytes: OperatingSystem.SizeStoredInPagingFiles（gauge）
+  windows_os_physical_memory_free_bytes: OperatingSystem.FreePhysicalMemory（gauge）
+  windows_os_process_memory_limix_bytes: OperatingSystem.MaxProcessMemorySize（gauge）
+  windows_os_processes: OperatingSystem.NumberOfProcesses（gauge）
+  windows_os_processes_limit: OperatingSystem.MaxNumberOfProcesses（gauge）
+  windows_os_time: OperatingSystem.LocalDateTime（gauge）
+  windows_os_timezone: OperatingSystem.LocalDateTime（gauge）
+  windows_os_users: OperatingSystem.NumberOfUsers（gauge）
+  windows_os_virtual_memory_bytes: OperatingSystem.TotalVirtualMemorySize（gauge）
+  windows_os_virtual_memory_free_bytes: OperatingSystem.FreeVirtualMemory（gauge）
+  windows_os_visible_memory_bytes: OperatingSystem.TotalVisibleMemorySize（gauge）
+  windows_service_info: サービス情報をラベルに持つ定数 1 のメトリック（gauge）
+  windows_service_start_mode: サービスの開始モード（StartMode）（gauge）
+  windows_service_state: サービスの状態（State）（gauge）
+  windows_service_status: サービスのステータス（Status）（gauge）
+  windows_system_context_switches_total: コンテキストスイッチの総数（WMI ソースは PerfOS_System.ContextSwitchesPersec）（counter）
+  windows_system_exception_dispatches_total: ディスパッチされた例外の総数（WMI ソースは PerfOS_System.ExceptionDispatchesPersec）（counter）
+  windows_system_processor_queue_length: プロセッサキューの長さ（WMI ソースは PerfOS_System.ProcessorQueueLength）（gauge）
+  windows_system_system_calls_total: システムコールの総数（WMI ソースは PerfOS_System.SystemCallsPersec）（counter）
+  windows_system_system_up_time: システムの起動時刻（WMI ソースは PerfOS_System.SystemUpTime）（gauge）
+  windows_system_threads: 現在のスレッド数（WMI ソースは PerfOS_System.Threads）（gauge）
+  node_context_switches_total: コンテキストスイッチ回数
+  node_intr_total: 割り込み回数
+  node_procs_running: 実行可能状態のプロセス数
+  node_entropy_available_bits: 乱数生成器が利用できるエントロピー
+  node_time_seconds: エポック（1970 年）からの経過秒数で表したシステム時刻
+  node_boot_time_seconds: ノードの起動時刻（UNIX 時刻）
+  node_cpu_seconds_total: CPU が各モードで過ごした秒数
+  node_load1: 1 分間の CPU ロード
+  node_load5: 5 分間の CPU ロード
+  node_load15: 15 分間の CPU ロード
+  node_memory_Slab_bytes: カーネルが自身のデータ構造をキャッシュするために使用しているメモリ
+  node_memory_SReclaimable_bytes: SReclaimable ー Slab のうちキャッシュなど回収可能な部分
+  node_memory_SUnreclaim_bytes: Slab のうちメモリ逼迫時にも回収できない部分
+  node_memory_VmallocTotal_bytes: vmalloc メモリ領域の総サイズ
+  node_memory_VmallocUsed_bytes: 使用中の vmalloc 領域の量
+  node_memory_VmallocChunk_bytes: vmalloc 領域のうち空いている最大の連続ブロック
+  node_memory_HardwareCorrupted_bytes: カーネルが破損・故障と判定した RAM の量
+  node_memory_PageTables_bytes: 仮想アドレスと物理アドレスのマッピングに使われているメモリ（gauge）
+  node_memory_KernelStack_bytes: カーネルメモリスタック。回収不可
+  node_memory_Bounce_bytes: ブロックデバイスのバウンスバッファに使われているメモリ
+  node_memory_Hugepagesize_bytes: ヒュージページのサイズ
+  node_memory_HugePages_Total: ヒュージページプールの総サイズ
+  node_memory_HugePages_Free: プール内でまだ割り当てられていないヒュージページ
+  node_memory_HugePages_Rsvd: プールからの割り当てが確約されているが、まだ割り当てられていないヒュージページ
+  node_memory_HugePages_Surp: /proc/sys/vm/nr_hugepages の値を超えてプールに存在するヒュージページ
+  node_memory_AnonHugePages_bytes: 匿名ヒュージページ内のメモリ
+  node_memory_Inactive_file_bytes: 非アクティブ LRU リスト上のファイルバックドメモリ
+  node_memory_Inactive_anon_bytes: 非アクティブ LRU リスト上の匿名メモリとスワップキャッシュ（tmpfs / shmem を含む）
+  node_memory_Active_file_bytes: アクティブ LRU リスト上のファイルバックドメモリ
+  node_memory_Active_anon_bytes: アクティブ LRU リスト上の匿名メモリとスワップキャッシュ（tmpfs を含む）
+  node_memory_Unevictable_bytes: さまざまな理由でスワップアウトできないメモリの量
+  node_memory_Shmem_bytes: 使用中の共有メモリ（複数プロセス間で共有され、RAM ディスクも含む）
+  node_memory_AnonPages_bytes: ファイルに紐づかないユーザーページ内のメモリ
+  node_memory_Mapped_bytes: ライブラリなど、マップされたファイルのページが使用しているメモリ
+  node_memory_Cached_bytes: ファイルデータ（ファイル内容）のキャッシュ
+  node_memory_SwapCached_bytes: スワップから読み戻されたがまだ変更されていないページを追跡しているメモリ
+  node_memory_Mlocked_bytes: mlock() システムコールでメモリにロックされたページのサイズ
+  node_memory_Buffers_bytes: ブロックデバイス（ハードディスクなど）のキャッシュ
+  node_memory_SwapTotal_bytes: メモリ情報項目 SwapTotal_bytes
+  node_memory_SwapFree_bytes: メモリ情報項目 SwapFree_bytes
+  node_filesystem_avail_bytes: 非 root ユーザーが使用できるファイルシステムの空き容量（バイト）
+  node_filesystem_free_bytes: ファイルシステムの空き容量（バイト）
+  node_filesystem_size_bytes: ファイルシステムのサイズ（バイト）
+  node_filesystem_files_free: ファイルシステムの空きファイルノード総数
+  node_filesystem_files: ファイルシステムのファイルノード総数
+  node_filefd_maximum: オープンできるファイルの最大数
+  node_filefd_allocated: オープン中のファイル数
+  node_filesystem_readonly: ファイルシステムが読み取り専用かどうか
+  node_filesystem_device_error: 対象デバイスの統計取得時にエラーが発生したかどうか
+  node_disk_reads_completed_total: 正常に完了した読み取りの総数
+  node_disk_writes_completed_total: 正常に完了した書き込みの総数
+  node_disk_reads_merged_total: マージされた読み取りの数
+  node_disk_writes_merged_total: マージされた書き込みの数
+  node_disk_read_bytes_total: 正常に読み取られたバイトの総数
+  node_disk_written_bytes_total: 正常に書き込まれたバイトの総数
+  node_disk_io_time_seconds_total: I/O 処理に費やした総秒数
+  node_disk_read_time_seconds_total: 全読み取りに費やした総秒数
+  node_disk_write_time_seconds_total: 全書き込みに費やした総秒数
+  node_disk_io_time_weighted_seconds_total: I/O 処理に費やした重み付き秒数
+  node_network_receive_bytes_total: ネットワークデバイス統計 receive_bytes（counter）
+  node_network_transmit_bytes_total: ネットワークデバイス統計 transmit_bytes（counter）
+  node_network_receive_packets_total: ネットワークデバイス統計 receive_packets
+  node_network_transmit_packets_total: ネットワークデバイス統計 transmit_packets
+  node_network_receive_errs_total: ネットワークデバイス統計 receive_errs
+  node_network_transmit_errs_total: ネットワークデバイス統計 transmit_errs
+  node_network_receive_drop_total: ネットワークデバイス統計 receive_drop
+  node_network_transmit_drop_total: ネットワークデバイス統計 transmit_drop
+  node_nf_conntrack_entries: コネクション追跡用に現在割り当てられているフローエントリ数
+  node_sockstat_TCP_alloc: alloc 状態の TCP ソケット数
+  node_sockstat_TCP_inuse: inuse 状態の TCP ソケット数
+  node_sockstat_TCP_orphan: orphan 状態の TCP ソケット数
+  node_sockstat_TCP_tw: tw（TIME_WAIT）状態の TCP ソケット数
+  node_netstat_Tcp_CurrEstab: 統計項目 TcpCurrEstab
+  node_sockstat_sockets_used: 使用中の IPv4 ソケット数
+  kafka_brokers: kafka ブローカーの数（gauge）
+  kafka_topic_partitions: このトピックのパーティション数（gauge）
+  kafka_topic_partition_current_offset: トピック/パーティションにおけるブローカーの現在のオフセット（gauge）
+  kafka_consumergroup_current_offset: トピック/パーティションにおけるコンシューマーグループの現在のオフセット（gauge）
+  kafka_consumer_lag_millis: トピック/パーティションにおけるコンシューマーグループの現在の推定ラグ（gauge）
+  kafka_topic_partition_under_replicated_partition: トピック/パーティションのレプリカが不足している場合は 1
+  zk_znode_count: 保存されている znode の総数
+  zk_ephemerals_count: エフェメラルノードの数
+  zk_watch_count: ZooKeeper ノードに設定されている watcher の数
+  zk_approximate_data_size: ZooKeeper サーバーがデータツリーに保持しているデータのサイズ（バイト）
+  zk_outstanding_requests: 現在実行中のリクエスト数
+  zk_packets_sent: サーバーが送信した ZooKeeper パケットの数
+  zk_packets_received: サーバーが受信した ZooKeeper パケットの数
+  zk_num_alive_connections: ZooKeeper サーバーに接続しているアクティブなクライアント数
+  zk_open_file_descriptor_count: ZooKeeper サーバーがオープンしているファイルディスクリプタの数
+  zk_max_file_descriptor_count: ZooKeeper サーバーがオープンできるファイルディスクリプタの最大数
+  zk_avg_latency: リクエスト処理にかかった平均時間（ミリ秒）
+  zk_min_latency: リクエスト処理にかかった最小時間（ミリ秒）
+  zk_max_latency: リクエスト処理にかかった最大時間（ミリ秒）
