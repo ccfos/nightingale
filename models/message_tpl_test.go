@@ -132,6 +132,73 @@ func TestFilterMsgTplsByLang(t *testing.T) {
 	}
 }
 
+// TestFilterMsgTplsByLangFallsBackPerChannel 语言回退必须按渠道做。
+// 下游（n9e-plus）追加的内置模板只有中英两套，若按整个列表取一个语言，
+// 日语请求会因为开源侧存在 ja 模板而把这些渠道整批筛掉，而不是让它们回退英文
+func TestFilterMsgTplsByLangFallsBackPerChannel(t *testing.T) {
+	// dingtalk 三语齐全；northstar-dingtalk 只有中英（下游追加的渠道）
+	full := []*MessageTemplate{
+		{ID: 1, Ident: "dingtalk", NotifyChannelIdent: "dingtalk", Lang: "", CreateBy: SYSTEM},
+		{ID: 2, Ident: "dingtalk-en", NotifyChannelIdent: "dingtalk", Lang: MsgTplLangEn, CreateBy: SYSTEM},
+		{ID: 3, Ident: "dingtalk-ja", NotifyChannelIdent: "dingtalk", Lang: MsgTplLangJa, CreateBy: SYSTEM},
+		{ID: 4, Ident: "northstar-dingtalk", NotifyChannelIdent: "northstar-dingtalk", Lang: "", CreateBy: SYSTEM},
+		{ID: 5, Ident: "northstar-dingtalk-en", NotifyChannelIdent: "northstar-dingtalk", Lang: MsgTplLangEn, CreateBy: SYSTEM},
+	}
+
+	tests := []struct {
+		name    string
+		reqLang string
+		wantIds []int64
+	}{
+		// 日语渠道取日语，缺日语的渠道回退英文——两个渠道都要在列表里
+		{"日语请求：有 ja 的取 ja，没有的回退英文", "ja_JP", []int64{3, 5}},
+		{"英文请求：两个渠道都取英文", "en_US", []int64{2, 5}},
+		{"中文请求：两个渠道都取中文", "zh_CN", []int64{1, 4}},
+		// 俄语两个渠道都没有，各自回退英文
+		{"未覆盖语言：两个渠道都回退英文", "ru_RU", []int64{2, 5}},
+	}
+
+	for _, tt := range tests {
+		got := FilterMsgTplsByLang(full, tt.reqLang)
+		gotIds := make([]int64, 0, len(got))
+		for _, tpl := range got {
+			gotIds = append(gotIds, tpl.ID)
+		}
+		if len(gotIds) != len(tt.wantIds) {
+			t.Errorf("%s: got ids %v, want %v", tt.name, gotIds, tt.wantIds)
+			continue
+		}
+		for i := range gotIds {
+			if gotIds[i] != tt.wantIds[i] {
+				t.Errorf("%s: got ids %v, want %v", tt.name, gotIds, tt.wantIds)
+				break
+			}
+		}
+	}
+}
+
+// TestFilterMsgTplsByLangChannelWithOnlyChinese 只有中文一套的渠道，
+// 任何语言的请求都必须能看到它，否则该渠道对非中文用户彻底不可选
+func TestFilterMsgTplsByLangChannelWithOnlyChinese(t *testing.T) {
+	lst := []*MessageTemplate{
+		{ID: 1, Ident: "dingtalk-ja", NotifyChannelIdent: "dingtalk", Lang: MsgTplLangJa, CreateBy: SYSTEM},
+		{ID: 2, Ident: "legacy", NotifyChannelIdent: "legacy", Lang: "", CreateBy: SYSTEM},
+	}
+
+	for _, lang := range []string{"ja_JP", "en_US", "ru_RU", "zh_CN"} {
+		got := FilterMsgTplsByLang(lst, lang)
+		var seenLegacy bool
+		for _, tpl := range got {
+			if tpl.ID == 2 {
+				seenLegacy = true
+			}
+		}
+		if !seenLegacy {
+			t.Errorf("lang %q: chinese-only channel disappeared from the list", lang)
+		}
+	}
+}
+
 // 内置模板各语言版本与中文版一一对应：ident 为中文版 ident 加语言后缀，
 // 渠道一致，内容 key 一致。新增语言时在这里加一行即可
 func TestMsgTplMapLangVariantsMirrorMsgTplMap(t *testing.T) {

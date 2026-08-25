@@ -215,35 +215,62 @@ func NormalizeMsgTplLang(lang string) string {
 	}
 }
 
-// FilterMsgTplsByLang 按请求语言过滤内置模板（CreateBy=="system"，有中英两套），
-// 请求语言没有对应的内置模板时先回退英文，英文也没有则回退中文。
+// msgTplChannelKey 取模板所属渠道，用于按渠道分组做语言回退。
+// NotifyChannelIdent 为空是存量数据的形态（当年中文内置模板不显式设置渠道，
+// 由 InitMessageTemplate 落库时补上），此时退回 ident：ident 带语言后缀，
+// 各语言变体会各自成组、全部保留，宁可多显示也不让模板凭空消失
+func msgTplChannelKey(t *MessageTemplate) string {
+	if t.NotifyChannelIdent != "" {
+		return t.NotifyChannelIdent
+	}
+	return t.Ident
+}
+
+// FilterMsgTplsByLang 按请求语言过滤内置模板（CreateBy=="system"），
+// 请求语言没有对应内置模板时先回退英文，英文也没有则回退中文。
 // 用户自建模板与语言无关，始终保留：其 lang 仅记录创建时的界面语言，若参与过滤，
 // 存量自建模板（迁移后 lang 默认为空）和跨语言团队互建的模板会对对方隐藏，
 // 导致配置通知规则时无法从列表选中。
+//
+// 回退按「渠道」而不是按整个列表做。若取一个全局语言，只要该语言存在任意一条内置
+// 模板，缺这门语言的渠道就会被整个筛掉而不是回退——下游追加的内置模板（n9e-plus
+// 的北极星/灭火图等渠道只有中英两套）最先踩到，表现为模板列表里整批渠道消失。
 func FilterMsgTplsByLang(lst []*MessageTemplate, reqLang string) []*MessageTemplate {
 	want := NormalizeMsgTplLang(reqLang)
 
-	hasSysLang := func(lang string) bool {
-		for _, t := range lst {
-			if t.CreateBy == "system" && NormalizeMsgTplLang(t.Lang) == lang {
-				return true
-			}
+	// 渠道 -> 该渠道的内置模板覆盖了哪些语言
+	langsByChannel := make(map[string]map[string]bool)
+	for _, t := range lst {
+		if t.CreateBy != SYSTEM {
+			continue
 		}
-		return false
+		ch := msgTplChannelKey(t)
+		if langsByChannel[ch] == nil {
+			langsByChannel[ch] = make(map[string]bool)
+		}
+		langsByChannel[ch][NormalizeMsgTplLang(t.Lang)] = true
 	}
 
-	// 回退兜底，避免英文模板缺失（如手工执行 SQL 迁移滞后）时内置模板整体被过滤成空
-	if !hasSysLang(want) {
-		if want != MsgTplLangEn && hasSysLang(MsgTplLangEn) {
-			want = MsgTplLangEn
-		} else {
-			want = ""
+	// 每个渠道各自定语言：请求语言 → 英文 → 中文（中文即空串，存量模板的取值）
+	pick := func(ch string) string {
+		langs := langsByChannel[ch]
+		switch {
+		case langs[want]:
+			return want
+		case langs[MsgTplLangEn]:
+			return MsgTplLangEn
+		default:
+			return ""
 		}
 	}
 
 	res := make([]*MessageTemplate, 0, len(lst))
 	for _, t := range lst {
-		if t.CreateBy != "system" || NormalizeMsgTplLang(t.Lang) == want {
+		if t.CreateBy != SYSTEM {
+			res = append(res, t)
+			continue
+		}
+		if NormalizeMsgTplLang(t.Lang) == pick(msgTplChannelKey(t)) {
 			res = append(res, t)
 		}
 	}
