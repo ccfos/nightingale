@@ -11,6 +11,7 @@ const (
 	LangRuRU = "ru_RU"
 	LangPtBR = "pt_BR"
 	LangEsES = "es_ES"
+	LangIdID = "id_ID"
 )
 
 // NormalizeLang 把各种写法的语言标识归一为标准语言码：大小写不敏感，"-" 与 "_"
@@ -34,6 +35,8 @@ func NormalizeLang(lang string) string {
 		return LangPtBR
 	case "es", "es_es", "es_419", "es_mx":
 		return LangEsES
+	case "id", "id_id", "in", "in_id":
+		return LangIdID
 	default:
 		return lang
 	}

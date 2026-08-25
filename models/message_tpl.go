@@ -198,6 +198,7 @@ const (
 	MsgTplLangRu = "ru_RU"
 	MsgTplLangPt = "pt_BR"
 	MsgTplLangEs = "es_ES"
+	MsgTplLangId = "id_ID"
 )
 
 // NormalizeMsgTplLang 归一化 X-Language 请求头或模板 lang 字段：
@@ -1795,6 +1796,351 @@ var NewTplMapRu = map[string]string{
 	EmailSubject: `{{if $event.IsRecovered}}Восстановлено{{else}}Сработало{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
 }
 
+// NewTplMapId 内置模板的id_ID文案，仅收录与 NewTplMap 中文内容不同的模板；
+// 本身即为英文或语言无关的模板（Jira、Slack、Discord、Mattermost、语音/短信等）直接复用 NewTplMap
+var NewTplMapId = map[string]string{
+	"tx-sms": `Tingkat dan status: S{{$event.Severity}} {{if $event.IsRecovered}}Pulih{{else}}Terpicu{{end}} Nama aturan: {{$event.RuleName}}`,
+	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
+---
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
+- **Tingkat keparahan**: S{{$event.Severity}}
+{{- if $event.RuleNote}}
+	- **Catatan aturan**: {{$event.RuleNote}}
+{{- end}}
+{{- if not $event.IsRecovered}}
+- **Nilai saat terpicu**: {{$event.TriggerValue}}
+- **Waktu terpicu**: {{timeformat $event.TriggerTime}}
+- **Durasi**: {{humanizeDurationInterface $time_duration}}
+{{- else}}
+{{- if $event.AnnotationsJSON.recovery_value}}
+- **Nilai saat pulih**: {{formatDecimal $event.AnnotationsJSON.recovery_value 4}}
+{{- end}}
+- **Waktu pemulihan**: {{timeformat $event.LastEvalTime}}
+- **Durasi**: {{humanizeDurationInterface $time_duration}}
+{{- end}}
+- **Label event**:
+{{- range $key, $val := $event.TagsMap}}
+{{- if ne $key "rulename" }}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{- end}}
+{{if $event.AnnotationsJSON}}
+- **Anotasi**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{end}}
+[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Bisukan 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Email: `<!DOCTYPE html>
+	<html lang="id">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>Notifikasi alert Nightingale</title>
+		<style type="text/css">
+			.wrapper {
+				background-color: #f8f8f8;
+				padding: 15px;
+				height: 100%;
+			}
+			.main {
+				width: 600px;
+				padding: 30px;
+				margin: 0 auto;
+				background-color: #fff;
+				font-size: 12px;
+				font-family: verdana,'Microsoft YaHei',Consolas,'Deja Vu Sans Mono','Bitstream Vera Sans Mono';
+			}
+			header {
+				border-radius: 2px 2px 0 0;
+			}
+			header .title {
+				font-size: 14px;
+				color: #333333;
+				margin: 0;
+			}
+			header .sub-desc {
+				color: #333;
+				font-size: 14px;
+				margin-top: 6px;
+				margin-bottom: 0;
+			}
+			hr {
+				margin: 20px 0;
+				height: 0;
+				border: none;
+				border-top: 1px solid #e5e5e5;
+			}
+			em {
+				font-weight: 600;
+			}
+			table {
+				margin: 20px 0;
+				width: 100%;
+			}
+	
+			table tbody tr{
+				font-weight: 200;
+				font-size: 12px;
+				color: #666;
+				height: 32px;
+			}
+	
+			.succ {
+				background-color: green;
+				color: #fff;
+			}
+	
+			.fail {
+				background-color: red;
+				color: #fff;
+			}
+	
+			.succ th, .succ td, .fail th, .fail td {
+				color: #fff;
+			}
+	
+			table tbody tr th {
+				width: 80px;
+				text-align: right;
+			}
+			.text-right {
+				text-align: right;
+			}
+			.body {
+				margin-top: 24px;
+			}
+			.body-text {
+				color: #666666;
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra {
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra.text-right a {
+				text-decoration: none;
+				color: #333;
+			}
+			.body-extra.text-right a:hover {
+				color: #666;
+			}
+			.button {
+				width: 200px;
+				height: 50px;
+				margin-top: 20px;
+				text-align: center;
+				border-radius: 2px;
+				background: #2D77EE;
+				line-height: 50px;
+				font-size: 20px;
+				color: #FFFFFF;
+				cursor: pointer;
+			}
+			.button:hover {
+				background: rgb(25, 115, 255);
+				border-color: rgb(25, 115, 255);
+				color: #fff;
+			}
+			footer {
+				margin-top: 10px;
+				text-align: right;
+			}
+			.footer-logo {
+				text-align: right;
+			}
+			.footer-logo-image {
+				width: 108px;
+				height: 27px;
+				margin-right: 10px;
+			}
+			.copyright {
+				margin-top: 10px;
+				font-size: 12px;
+				text-align: right;
+				color: #999;
+				-webkit-font-smoothing: antialiased;
+			}
+		</style>
+	</head>
+	<body>
+	<div class="wrapper">
+		<div class="main">
+			<header>
+				<h3 class="title">{{$event.RuleName}}</h3>
+				<p class="sub-desc"></p>
+			</header>
+	
+			<hr>
+	
+			<div class="body">
+				<table cellspacing="0" cellpadding="0" border="0">
+					<tbody>
+					{{if $event.IsRecovered}}
+					<tr class="succ">
+						<th>Tingkat dan status:</th>
+						<td>S{{$event.Severity}} Pulih</td>
+					</tr>
+					{{else}}
+					<tr class="fail">
+						<th>Tingkat dan status:</th>
+						<td>S{{$event.Severity}} Terpicu</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>Catatan aturan:</th>
+						<td>{{$event.RuleNote}}</td>
+					</tr>
+					<tr>
+						<th>Catatan objek:</th>
+						<td>{{$event.TargetNote}}</td>
+					</tr>
+					{{if not $event.IsRecovered}}
+					<tr>
+						<th>Nilai saat terpicu:</th>
+						<td>{{$event.TriggerValue}}</td>
+					</tr>
+					{{end}}
+	
+					{{if $event.TargetIdent}}
+					<tr>
+						<th>Objek yang dipantau:</th>
+						<td>{{$event.TargetIdent}}</td>
+					</tr>
+					{{end}}
+					<tr>
+						<th>Metrik:</th>
+						<td>{{$event.TagsJSON}}</td>
+					</tr>
+	
+					{{if $event.IsRecovered}}
+					<tr>
+						<th>Waktu pemulihan:</th>
+						<td>{{timeformat $event.LastEvalTime}}</td>
+					</tr>
+					{{else}}
+					<tr>
+						<th>Waktu terpicu:</th>
+						<td>
+							{{timeformat $event.TriggerTime}}
+						</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>Waktu pengiriman:</th>
+						<td>
+							{{timestamp}}
+						</td>
+					</tr>
+					</tbody>
+				</table>
+	
+				<hr>
+	
+				<footer>
+					<div class="copyright" style="font-style: italic">
+						Terlalu banyak alert? Coba <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> untuk menggabungkan alert, mengurangi kebisingan, dan mengatur jadwal jaga.
+					</div>
+				</footer>
+			</div>
+		</div>
+	</div>
+	</body>
+	</html>`,
+	Feishu: `Tingkat dan status: S{{$event.Severity}} {{if $event.IsRecovered}}Pulih{{else}}Terpicu{{end}}
+Nama aturan: {{$event.RuleName}}{{if $event.RuleNote}}
+Catatan aturan: {{$event.RuleNote}}{{end}}
+Metrik: {{$event.TagsJSON}}
+Anotasi:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}
+{{if $event.IsRecovered}}Waktu pemulihan: {{timeformat $event.LastEvalTime}}{{else}}Waktu terpicu: {{timeformat $event.TriggerTime}}
+Nilai saat terpicu: {{$event.TriggerValue}}{{end}}
+Waktu pengiriman: {{timestamp}}
+Detail event: {{.domain}}/share/alert-his-events/{{$event.Id}}
+Bisukan 1 jam: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+	FeishuCard: `{{- if $event.IsRecovered -}}
+{{- if ne $event.Cate "host" -}}
+**Kluster:** {{$event.Cluster}}{{end}}
+**Tingkat dan status:** S{{$event.Severity}} Pulih
+**Nama aturan:** {{$event.RuleName}}
+**Label event:** {{$event.TagsJSON}}
+**Waktu pemulihan:** {{timeformat $event.LastEvalTime}}
+**Deskripsi:** **Layanan pulih**
+{{- else }}
+{{- if ne $event.Cate "host"}}
+**Kluster:** {{$event.Cluster}}{{end}}
+**Tingkat dan status:** S{{$event.Severity}} Terpicu
+**Nama aturan:** {{$event.RuleName}}
+**Label event:** {{$event.TagsJSON}}
+**Waktu terpicu:** {{timeformat $event.TriggerTime}}
+**Waktu pengiriman:** {{timestamp}}
+**Nilai saat terpicu:** {{$event.TriggerValue}}
+{{if $event.RuleNote }}**Deskripsi:** **{{$event.RuleNote}}**{{end}}
+{{- end -}}
+{{if $event.AnnotationsJSON}}
+**Anotasi**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}
+{{- end}}
+[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Bisukan 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Telegram: `<b>Tingkat dan status: {{if $event.IsRecovered}}💚 S{{$event.Severity}} Pulih{{else}}⚠️ S{{$event.Severity}} Terpicu{{end}}</b>
+<b>Nama aturan</b>: {{$event.RuleName}}{{if $event.RuleNote}}
+<b>Catatan aturan</b>: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
+<b>Objek yang dipantau</b>: {{$event.TargetIdent}}{{end}}
+<b>Metrik</b>: {{$event.TagsJSON}}{{if not $event.IsRecovered}}
+<b>Nilai saat terpicu</b>: {{$event.TriggerValue}}{{end}}
+{{if $event.IsRecovered}}<b>Waktu pemulihan</b>: {{timeformat $event.LastEvalTime}}{{else}}<b>Pertama kali terpicu</b>: {{timeformat $event.FirstTriggerTime}}{{end}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}<b>Waktu sejak alert pertama</b>: {{humanizeDurationInterface $time_duration}}
+<b>Waktu pengiriman</b>: {{timestamp}}`,
+	Wecom: `**Tingkat dan status**: {{if $event.IsRecovered}}<font color="info">💚S{{$event.Severity}} Pulih</font>{{else}}<font color="warning">💔S{{$event.Severity}} Terpicu</font>{{end}}
+**Nama aturan**: {{$event.RuleName}}{{if $event.RuleNote}}
+**Catatan aturan**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
+**Objek yang dipantau**: {{$event.TargetIdent}}{{end}}
+**Metrik**: {{$event.TagsJSON}}
+{{if $event.AnnotationsJSON}}**Anotasi**:{{range $key, $val := $event.AnnotationsJSON}}{{$key}}:{{$val}}  {{end}}   {{end}}{{if not $event.IsRecovered}}
+**Nilai saat terpicu**: {{$event.TriggerValue}}{{end}}
+{{if $event.IsRecovered}}**Waktu pemulihan**: {{timeformat $event.LastEvalTime}}{{else}}**Pertama kali terpicu**: {{timeformat $event.FirstTriggerTime}}{{end}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Waktu sejak alert pertama**: {{humanizeDurationInterface $time_duration}}
+**Waktu pengiriman**: {{timestamp}}
+[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Bisukan 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Lark: `Tingkat dan status: S{{$event.Severity}} {{if $event.IsRecovered}}Pulih{{else}}Terpicu{{end}}
+Nama aturan: {{$event.RuleName}}{{if $event.RuleNote}}
+Catatan aturan: {{$event.RuleNote}}{{end}}
+Metrik: {{$event.TagsJSON}}
+{{if $event.IsRecovered}}Waktu pemulihan: {{timeformat $event.LastEvalTime}}{{else}}Waktu terpicu: {{timeformat $event.TriggerTime}}
+Nilai saat terpicu: {{$event.TriggerValue}}{{end}}
+Waktu pengiriman: {{timestamp}}
+Detail event: {{.domain}}/share/alert-his-events/{{$event.Id}}
+Bisukan 1 jam: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+	LarkCard: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+**Kluster:** {{$event.Cluster}}{{end}}
+**Tingkat dan status:** S{{$event.Severity}} Pulih
+**Nama aturan:** {{$event.RuleName}}
+**Label event:** {{$event.TagsJSON}}
+**Waktu pemulihan:** {{timeformat $event.LastEvalTime}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Durasi**: {{humanizeDurationInterface $time_duration}}
+**Deskripsi:** **Layanan pulih**
+{{- else }}
+{{- if ne $event.Cate "host"}}
+**Kluster:** {{$event.Cluster}}{{end}}
+**Tingkat dan status:** S{{$event.Severity}} Terpicu
+**Nama aturan:** {{$event.RuleName}}
+**Label event:** {{$event.TagsJSON}}
+**Waktu terpicu:** {{timeformat $event.TriggerTime}}
+**Waktu pengiriman:** {{timestamp}}
+**Nilai saat terpicu:** {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Durasi**: {{humanizeDurationInterface $time_duration}}
+{{if $event.RuleNote }}**Deskripsi:** **{{$event.RuleNote}}**{{end}}
+{{- end -}}
+[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Bisukan 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	EmailSubject: `{{if $event.IsRecovered}}Pulih{{else}}Terpicu{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
+}
+
 // NewTplMapEs 内置模板的es_ES文案，仅收录与 NewTplMap 中文内容不同的模板；
 // 本身即为英文或语言无关的模板（Jira、Slack、Discord、Mattermost、语音/短信等）直接复用 NewTplMap
 var NewTplMapEs = map[string]string{
@@ -2176,7 +2522,7 @@ var NewTplMapPt = map[string]string{
 {{end}}
 [Detalhes do evento]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Silenciar 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [Ver gráfico]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	Email: `<!DOCTYPE html>
-	<html lang="pt">
+	<html lang="es">
 	<head>
 		<meta charset="UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="ie=edge">
@@ -2560,6 +2906,31 @@ var MsgTplMapRu = []MessageTemplate{
 	{Name: "Email", Ident: Email + "-ru", NotifyChannelIdent: Email, Lang: MsgTplLangRu, Weight: 1, Content: map[string]string{"subject": NewTplMapRu[EmailSubject], "content": NewTplMapRu[Email]}},
 }
 
+// MsgTplMapId 内置模板的id_ID版本，与 MsgTplMap 一一对应；
+// ident 追加 -id 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
+var MsgTplMapId = []MessageTemplate{
+	{Name: "Jira", Ident: Jira + "-id", NotifyChannelIdent: Jira, Lang: MsgTplLangId, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-id", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangId, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Callback", Ident: "callback-id", NotifyChannelIdent: "callback", Lang: MsgTplLangId, Weight: 16, Content: map[string]string{"content": ""}},
+	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-id", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangId, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "MattermostBot", Ident: MattermostBot + "-id", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangId, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "SlackWebhook", Ident: SlackWebhook + "-id", NotifyChannelIdent: SlackWebhook, Lang: MsgTplLangId, Weight: 13, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "SlackBot", Ident: SlackBot + "-id", NotifyChannelIdent: SlackBot, Lang: MsgTplLangId, Weight: 12, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "Discord", Ident: Discord + "-id", NotifyChannelIdent: Discord, Lang: MsgTplLangId, Weight: 11, Content: map[string]string{"content": NewTplMap[Discord]}},
+	{Name: "Aliyun Voice", Ident: "ali-voice-id", NotifyChannelIdent: "ali-voice", Lang: MsgTplLangId, Weight: 10, Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
+	{Name: "Aliyun SMS", Ident: "ali-sms-id", NotifyChannelIdent: "ali-sms", Lang: MsgTplLangId, Weight: 9, Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
+	{Name: "Tencent Voice", Ident: "tx-voice-id", NotifyChannelIdent: "tx-voice", Lang: MsgTplLangId, Weight: 8, Content: map[string]string{"content": NewTplMap["tx-voice"]}},
+	{Name: "Tencent SMS", Ident: "tx-sms-id", NotifyChannelIdent: "tx-sms", Lang: MsgTplLangId, Weight: 7, Content: map[string]string{"content": NewTplMapId["tx-sms"]}},
+	{Name: "Telegram", Ident: Telegram + "-id", NotifyChannelIdent: Telegram, Lang: MsgTplLangId, Weight: 6, Content: map[string]string{"content": NewTplMapId[Telegram]}},
+	{Name: "LarkCard", Ident: LarkCard + "-id", NotifyChannelIdent: LarkCard, Lang: MsgTplLangId, Weight: 5, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMapId[LarkCard]}},
+	{Name: "Lark", Ident: Lark + "-id", NotifyChannelIdent: Lark, Lang: MsgTplLangId, Weight: 5, Content: map[string]string{"content": NewTplMapId[Lark]}},
+	{Name: "Feishu", Ident: Feishu + "-id", NotifyChannelIdent: Feishu, Lang: MsgTplLangId, Weight: 4, Content: map[string]string{"content": NewTplMapId[Feishu]}},
+	{Name: "FeishuCard", Ident: FeishuCard + "-id", NotifyChannelIdent: FeishuCard, Lang: MsgTplLangId, Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMapId[FeishuCard]}},
+	{Name: "Wecom", Ident: Wecom + "-id", NotifyChannelIdent: Wecom, Lang: MsgTplLangId, Weight: 3, Content: map[string]string{"content": NewTplMapId[Wecom]}},
+	{Name: "Dingtalk", Ident: Dingtalk + "-id", NotifyChannelIdent: Dingtalk, Lang: MsgTplLangId, Weight: 2, Content: map[string]string{"title": NewTplMapId[EmailSubject], "content": NewTplMapId[Dingtalk]}},
+	{Name: "Email", Ident: Email + "-id", NotifyChannelIdent: Email, Lang: MsgTplLangId, Weight: 1, Content: map[string]string{"subject": NewTplMapId[EmailSubject], "content": NewTplMapId[Email]}},
+}
+
 // MsgTplMapEs 内置模板的es_ES版本，与 MsgTplMap 一一对应；
 // ident 追加 -es 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapEs = []MessageTemplate{
@@ -2622,8 +2993,9 @@ var BuiltinMsgTplLangVariants = []struct {
 	{MsgTplLangEn, "-en", NewTplMapEn, MsgTplMapEn},
 	{MsgTplLangJa, "-ja", NewTplMapJa, MsgTplMapJa},
 	{MsgTplLangRu, "-ru", NewTplMapRu, MsgTplMapRu},
-	{MsgTplLangEs, "-es", NewTplMapEs, MsgTplMapEs},
 	{MsgTplLangPt, "-pt", NewTplMapPt, MsgTplMapPt},
+	{MsgTplLangEs, "-es", NewTplMapEs, MsgTplMapEs},
+	{MsgTplLangId, "-id", NewTplMapId, MsgTplMapId},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
