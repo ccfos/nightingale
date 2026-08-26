@@ -2150,7 +2150,7 @@ var NewTplMapKo = map[string]string{
 	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
 ---
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
-- **심각도**: S{{$event.Severity}}
+- **등급**: S{{$event.Severity}}
 {{- if $event.RuleNote}}
 	- **규칙 메모**: {{$event.RuleNote}}
 {{- end}}
@@ -2177,7 +2177,7 @@ var NewTplMapKo = map[string]string{
 	- {{$key}}: {{$val}}
 {{- end}}
 {{end}}
-[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [1시간 음소거]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [1시간 차단]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	Email: `<!DOCTYPE html>
 	<html lang="ko">
 	<head>
@@ -2407,7 +2407,7 @@ var NewTplMapKo = map[string]string{
 발생 당시 값: {{$event.TriggerValue}}{{end}}
 전송 시각: {{timestamp}}
 이벤트 상세: {{.domain}}/share/alert-his-events/{{$event.Id}}
-1시간 음소거: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+1시간 차단: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 	FeishuCard: `{{- if $event.IsRecovered -}}
 {{- if ne $event.Cate "host" -}}
 **클러스터:** {{$event.Cluster}}{{end}}
@@ -2433,7 +2433,7 @@ var NewTplMapKo = map[string]string{
 {{$key}}: {{$val}}
 {{- end}}
 {{- end}}
-[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}})|[1시간 음소거]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}})|[1시간 차단]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	Telegram: `<b>등급과 상태: {{if $event.IsRecovered}}💚 S{{$event.Severity}} 복구됨{{else}}⚠️ S{{$event.Severity}} 발생함{{end}}</b>
 <b>규칙 이름</b>: {{$event.RuleName}}{{if $event.RuleNote}}
 <b>규칙 메모</b>: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
@@ -2453,7 +2453,7 @@ var NewTplMapKo = map[string]string{
 {{if $event.IsRecovered}}**복구 시각**: {{timeformat $event.LastEvalTime}}{{else}}**최초 발생 시각**: {{timeformat $event.FirstTriggerTime}}{{end}}
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**최초 알림 이후 경과 시간**: {{humanizeDurationInterface $time_duration}}
 **전송 시각**: {{timestamp}}
-[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}})|[1시간 음소거]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}})|[1시간 차단]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	Lark: `등급과 상태: S{{$event.Severity}} {{if $event.IsRecovered}}복구됨{{else}}발생함{{end}}
 규칙 이름: {{$event.RuleName}}{{if $event.RuleNote}}
 규칙 메모: {{$event.RuleNote}}{{end}}
@@ -2462,7 +2462,7 @@ var NewTplMapKo = map[string]string{
 발생 당시 값: {{$event.TriggerValue}}{{end}}
 전송 시각: {{timestamp}}
 이벤트 상세: {{.domain}}/share/alert-his-events/{{$event.Id}}
-1시간 음소거: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+1시간 차단: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 	LarkCard: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
 **클러스터:** {{$event.Cluster}}{{end}}
@@ -2484,7 +2484,7 @@ var NewTplMapKo = map[string]string{
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**지속 시간**: {{humanizeDurationInterface $time_duration}}
 {{if $event.RuleNote }}**설명:** **{{$event.RuleNote}}**{{end}}
 {{- end -}}
-[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}})|[1시간 음소거]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}})|[1시간 차단]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	EmailSubject: `{{if $event.IsRecovered}}복구됨{{else}}발생함{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
 }
 
@@ -2522,7 +2522,7 @@ var NewTplMapId = map[string]string{
 	- {{$key}}: {{$val}}
 {{- end}}
 {{end}}
-[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Bisukan 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Redam 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	Email: `<!DOCTYPE html>
 	<html lang="id">
 	<head>
@@ -2732,7 +2732,7 @@ var NewTplMapId = map[string]string{
 	
 				<footer>
 					<div class="copyright" style="font-style: italic">
-						Terlalu banyak alert? Coba <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> untuk menggabungkan alert, mengurangi kebisingan, dan mengatur jadwal jaga.
+						Terlalu banyak alert? Coba <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> untuk menggabungkan alert, mengurangi noise, dan mengatur jadwal jaga.
 					</div>
 				</footer>
 			</div>
@@ -2752,7 +2752,7 @@ Anotasi:
 Nilai saat terpicu: {{$event.TriggerValue}}{{end}}
 Waktu pengiriman: {{timestamp}}
 Detail event: {{.domain}}/share/alert-his-events/{{$event.Id}}
-Bisukan 1 jam: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+Redam 1 jam: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 	FeishuCard: `{{- if $event.IsRecovered -}}
 {{- if ne $event.Cate "host" -}}
 **Kluster:** {{$event.Cluster}}{{end}}
@@ -2778,7 +2778,7 @@ Bisukan 1 jam: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 {{$key}}: {{$val}}
 {{- end}}
 {{- end}}
-[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Bisukan 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Redam 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	Telegram: `<b>Tingkat dan status: {{if $event.IsRecovered}}💚 S{{$event.Severity}} Pulih{{else}}⚠️ S{{$event.Severity}} Terpicu{{end}}</b>
 <b>Nama aturan</b>: {{$event.RuleName}}{{if $event.RuleNote}}
 <b>Catatan aturan</b>: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
@@ -2798,7 +2798,7 @@ Bisukan 1 jam: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 {{if $event.IsRecovered}}**Waktu pemulihan**: {{timeformat $event.LastEvalTime}}{{else}}**Pertama kali terpicu**: {{timeformat $event.FirstTriggerTime}}{{end}}
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Waktu sejak alert pertama**: {{humanizeDurationInterface $time_duration}}
 **Waktu pengiriman**: {{timestamp}}
-[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Bisukan 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Redam 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	Lark: `Tingkat dan status: S{{$event.Severity}} {{if $event.IsRecovered}}Pulih{{else}}Terpicu{{end}}
 Nama aturan: {{$event.RuleName}}{{if $event.RuleNote}}
 Catatan aturan: {{$event.RuleNote}}{{end}}
@@ -2807,7 +2807,7 @@ Metrik: {{$event.TagsJSON}}
 Nilai saat terpicu: {{$event.TriggerValue}}{{end}}
 Waktu pengiriman: {{timestamp}}
 Detail event: {{.domain}}/share/alert-his-events/{{$event.Id}}
-Bisukan 1 jam: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+Redam 1 jam: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 	LarkCard: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
 **Kluster:** {{$event.Cluster}}{{end}}
@@ -2829,7 +2829,7 @@ Bisukan 1 jam: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Durasi**: {{humanizeDurationInterface $time_duration}}
 {{if $event.RuleNote }}**Deskripsi:** **{{$event.RuleNote}}**{{end}}
 {{- end -}}
-[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Bisukan 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+[Detail event]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Redam 1 jam]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[Lihat grafik]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	EmailSubject: `{{if $event.IsRecovered}}Pulih{{else}}Terpicu{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
 }
 
