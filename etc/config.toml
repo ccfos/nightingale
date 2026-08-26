@@ -76,11 +76,14 @@ Enable = true
 OpenRSA = false
 
 [DB]
-# mysql postgres sqlite
+# mysql postgres sqlite dm
 DBType = "sqlite"
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
 # postgres: DSN="host=127.0.0.1 port=5432 user=root dbname=n9e_v6 password=1234 sslmode=disable"
 # mysql: DSN="root:1234@tcp(localhost:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local"
+# dm(达梦): DSN="dm://user:password@127.0.0.1:5236?schema=n9e_v6"
+#   schema 省略时取登录用户名。要求实例 COMPATIBLE_MODE 不为 2（Oracle 模式下空串等同
+#   NULL，会与代码中大量的 default:'' 冲突）。
 DSN = "n9e.db"
 # enable debug mode or not
 Debug = false

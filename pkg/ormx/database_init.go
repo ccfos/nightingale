@@ -1145,8 +1145,8 @@ func (InitSSOConfig) TableOptions() string {
 
 type InitESIndexPattern struct {
 	ID                     uint64 `gorm:"primaryKey;autoIncrement"`
-	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource_name"`
-	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_datasource_name"`
+	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_ds_name"`
+	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_ds_name"`
 	TimeField              string `gorm:"size:128;not null;default:'@timestamp'"`
 	AllowHideSystemIndices bool   `gorm:"type:tinyint;not null;default:0"`
 	FieldsFormat           string `gorm:"size:4096;not null;default:''"`
@@ -1183,8 +1183,8 @@ func (InitSqliteESIndexPattern) TableName() string {
 
 type InitPostgresESIndexPattern struct {
 	ID                     uint64 `gorm:"primaryKey;autoIncrement"`
-	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource_name"`
-	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_datasource_name"`
+	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_ds_name"`
+	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_ds_name"`
 	TimeField              string `gorm:"size:128;not null;default:'@timestamp'"`
 	AllowHideSystemIndices int16  `gorm:"type:smallint;not null;default:0"`
 	FieldsFormat           string `gorm:"size:4096;not null;default:''"`
@@ -1407,9 +1407,62 @@ func DataBaseInit(c DBConfig, db *gorm.DB) error {
 		return postgresDataBaseInit(db)
 	case "sqlite":
 		return sqliteDataBaseInit(db)
+	case "dm":
+		return dmDataBaseInit(db)
 	default:
 		return fmt.Errorf("unsupported database type: %s", c.DBType)
 	}
+}
+
+// dmDataBaseInit 复用 mysql 那套 Init 结构建表，只有两点不同：
+//
+//   - task_host_0..99 共用一个模型，而达梦的索引名在 schema 内全局唯一，所以不能用带
+//     具名 uniqueIndex 的 InitTaskHost。这里改用无具名索引的变体建表，再按分表名各建
+//     一个 (id, host) 复合唯一索引，既避开撞名又保住唯一性约束。
+//   - 建表失败直接返回错误。mysql 分支只记日志，代价是表没建成进程照样起来，问题要到
+//     很久以后才暴露；新接的方言不沿用这个行为。
+func dmDataBaseInit(db *gorm.DB) error {
+	for _, dt := range initTables(&InitSqliteTaskHost{}) {
+		if err := db.AutoMigrate(dt); err != nil {
+			return fmt.Errorf("dmDataBaseInit AutoMigrate %T: %v", dt, err)
+		}
+	}
+
+	for i := 0; i <= 99; i++ {
+		tableName := "task_host_" + strconv.Itoa(i)
+		if i > 0 {
+			if err := db.Table(tableName).AutoMigrate(&InitSqliteTaskHost{}); err != nil {
+				return fmt.Errorf("dmDataBaseInit AutoMigrate %s: %v", tableName, err)
+			}
+		}
+		if err := createDMTaskHostIndex(db, tableName); err != nil {
+			return err
+		}
+	}
+
+	return seedInitialData(db, "dm")
+}
+
+// createDMTaskHostIndex 为单张 task_host 分表建 (id, host) 复合唯一索引。
+// 索引名带表名前缀，避免 100 张分表在 schema 全局的索引名空间里互相撞名。
+func createDMTaskHostIndex(db *gorm.DB, tableName string) error {
+	indexName := "idx_" + tableName + "_id_host"
+
+	var count int64
+	if err := db.Raw(
+		"SELECT COUNT(*) FROM ALL_INDEXES WHERE INDEX_NAME = ?", indexName,
+	).Scan(&count).Error; err != nil {
+		return fmt.Errorf("dmDataBaseInit check index %s: %v", indexName, err)
+	}
+	if count > 0 {
+		return nil
+	}
+
+	sql := fmt.Sprintf(`CREATE UNIQUE INDEX "%s" ON "%s"("id", "host")`, indexName, tableName)
+	if err := db.Exec(sql).Error; err != nil {
+		return fmt.Errorf("dmDataBaseInit create index %s: %v", indexName, err)
+	}
+	return nil
 }
 
 func sqliteDataBaseInit(db *gorm.DB) error {
@@ -1604,14 +1657,16 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 	return nil
 }
 
-func mysqlDataBaseInit(db *gorm.DB) error {
-	dts := []interface{}{
+// initTables 返回首次建库需要 AutoMigrate 的全部表，mysql 与 dm 共用。
+// taskHostModel 用于 task_host_0 —— 达梦需要换成不带具名唯一索引的变体，见 dmDataBaseInit。
+func initTables(taskHostModel interface{}) []interface{} {
+	return []interface{}{
 		&InitTaskMeta{},
 		&InitTaskAction{},
 		&InitTaskScheduler{},
 		&InitTaskSchedulerHealth{},
 		&InitTaskHostDoing{},
-		&InitTaskHost{},
+		taskHostModel,
 		&InitBoardBusiGroup{},
 		&InitBuiltinComponent{},
 		&InitBuiltinPayload{},
@@ -1650,23 +1705,13 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
-		&InitAlertRule{}}
-
-	for _, dt := range dts {
-		err := db.AutoMigrate(dt)
-		if err != nil {
-			logger.Errorf("mysqlDataBaseInit AutoMigrate error: %v\n", err)
-		}
+		&InitAlertRule{},
 	}
+}
 
-	for i := 1; i <= 99; i++ {
-		tableName := "task_host_" + strconv.Itoa(i)
-		err := db.Table(tableName).AutoMigrate(&InitTaskHost{})
-		if err != nil {
-			logger.Errorf("mysqlDataBaseInit AutoMigrate task_host_%d error: %v\n", i, err)
-		}
-	}
-
+// seedInitialData 写入首次建库的种子数据（角色权限、root 用户、默认业务组等）。
+// 失败只记录日志：种子数据可能因重复执行而冲突，不应阻断启动。
+func seedInitialData(db *gorm.DB, dbType string) error {
 	roleOperations := []InitRoleOperation{
 		{RoleName: "Guest", Operation: "/metric/explorer"},
 		{RoleName: "Guest", Operation: "/object/explorer"},
@@ -1780,19 +1825,35 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 	}
 
 	for _, roleOperation := range roleOperations {
-		err := db.Create(&roleOperation).Error
-		if err != nil {
-			logger.Errorf("[mysql database init]create role operation error: %v", err)
+		if err := db.Create(&roleOperation).Error; err != nil {
+			logger.Errorf("[%s database init]create role operation error: %v", dbType, err)
 		}
 	}
 
 	for _, entry := range entries {
 		if err := db.Create(entry.entry).Error; err != nil {
-			logger.Errorf("[mysql database init]create %s error: %v", entry.name, err)
+			logger.Errorf("[%s database init]create %s error: %v", dbType, entry.name, err)
 		}
 	}
 
 	return nil
+}
+
+func mysqlDataBaseInit(db *gorm.DB) error {
+	for _, dt := range initTables(&InitTaskHost{}) {
+		if err := db.AutoMigrate(dt); err != nil {
+			logger.Errorf("mysqlDataBaseInit AutoMigrate error: %v\n", err)
+		}
+	}
+
+	for i := 1; i <= 99; i++ {
+		tableName := "task_host_" + strconv.Itoa(i)
+		if err := db.Table(tableName).AutoMigrate(&InitTaskHost{}); err != nil {
+			logger.Errorf("mysqlDataBaseInit AutoMigrate task_host_%d error: %v\n", i, err)
+		}
+	}
+
+	return seedInitialData(db, "mysql")
 }
 
 func postgresDataBaseInit(db *gorm.DB) error {
