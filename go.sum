@@ -158,6 +158,8 @@ github.com/flashcatcloud/ibex v1.3.6 h1:lJShPFxcZksmkB0w99a3uROGB+Fie1NsqOlkAdar
 github.com/flashcatcloud/ibex v1.3.6/go.mod h1:iTU1dKT9TnDNllRPRHUOjXe+HDTQkPH2TeaucHtSuh4=
 github.com/flashcatcloud/ibex v1.3.10 h1:dW2qph0x/yqCCxqAI2FfCLh0dkaS6FIClth5c+6oO54=
 github.com/flashcatcloud/ibex v1.3.10/go.mod h1:iTU1dKT9TnDNllRPRHUOjXe+HDTQkPH2TeaucHtSuh4=
+github.com/flashcatcloud/ibex v1.3.11 h1:zigEqOWMRBoGdmE2CAjbSDBJtM4vBODpeKceKME4o7I=
+github.com/flashcatcloud/ibex v1.3.11/go.mod h1:iTU1dKT9TnDNllRPRHUOjXe+HDTQkPH2TeaucHtSuh4=
 github.com/fortytw2/leaktest v1.3.0 h1:u8491cBMTQ8ft8aeV+adlcytMZylmA5nnwwkRZjI8vw=
 github.com/fortytw2/leaktest v1.3.0/go.mod h1:jDsjWgpAGjm2CA7WthBh/CdZYEPF31XHquHwclZch5g=
 github.com/gabriel-vasile/mimetype v1.4.2 h1:w5qFW6JKBz9Y393Y4q372O9A7cUSequkh1Q7OhCmWKU=
