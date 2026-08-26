@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
@@ -65,6 +66,68 @@ func TargetGroupIdsGetByIdents(ctx *ctx.Context, idents []string) ([]int64, erro
 	return groupIds, nil
 }
 
+// insertTargetBusiGroupsIgnoreDup 批量写入 target 与业务组的关联，已存在的跳过。
+//
+// 各方言的"忽略重复"写法不通用：MySQL 用 INSERT IGNORE，SQLite 用 INSERT OR IGNORE，
+// PostgreSQL 用 ON CONFLICT DO NOTHING。达梦三种都不支持——它的 gorm dialector 只在
+// 主键全部出现在插入列里时才把 OnConflict 翻译成 MERGE INTO，而这里的主键是自增的 id，
+// 插入时为零值会被 gorm 省略，于是退化成裸 INSERT 撞上 (target_ident, group_id) 唯一索引。
+// 所以达梦走先查后插：查出已有的组合，只插差集。
+func insertTargetBusiGroupsIgnoreDup(db *gorm.DB, lst []TargetBusiGroup) error {
+	if len(lst) == 0 {
+		return nil
+	}
+
+	if db.Dialector.Name() == "dm" {
+		idents := make([]string, 0, len(lst))
+		seen := make(map[string]struct{}, len(lst))
+		for _, item := range lst {
+			if _, ok := seen[item.TargetIdent]; ok {
+				continue
+			}
+			seen[item.TargetIdent] = struct{}{}
+			idents = append(idents, item.TargetIdent)
+		}
+
+		var exists []TargetBusiGroup
+		if err := db.Select("target_ident", "group_id").
+			Where("target_ident in ?", idents).Find(&exists).Error; err != nil {
+			return err
+		}
+
+		key := func(ident string, gid int64) string {
+			return ident + "\x00" + strconv.FormatInt(gid, 10)
+		}
+		existing := make(map[string]struct{}, len(exists))
+		for _, e := range exists {
+			existing[key(e.TargetIdent, e.GroupId)] = struct{}{}
+		}
+
+		fresh := make([]TargetBusiGroup, 0, len(lst))
+		for _, item := range lst {
+			k := key(item.TargetIdent, item.GroupId)
+			if _, ok := existing[k]; ok {
+				continue
+			}
+			existing[k] = struct{}{} // 入参自身也可能有重复
+			fresh = append(fresh, item)
+		}
+		if len(fresh) == 0 {
+			return nil
+		}
+		return db.CreateInBatches(&fresh, 10).Error
+	}
+
+	var cl clause.Expression = clause.Insert{Modifier: "ignore"}
+	switch db.Dialector.Name() {
+	case "sqlite":
+		cl = clause.Insert{Modifier: "or ignore"}
+	case "postgres":
+		cl = clause.OnConflict{DoNothing: true}
+	}
+	return db.Clauses(cl).CreateInBatches(&lst, 10).Error
+}
+
 func TargetBindBgids(ctx *ctx.Context, idents []string, bgids []int64, tags []string) error {
 	lst := make([]TargetBusiGroup, 0, len(bgids)*len(idents))
 	updateAt := time.Now().Unix()
@@ -78,16 +141,8 @@ func TargetBindBgids(ctx *ctx.Context, idents []string, bgids []int64, tags []st
 			lst = append(lst, cur)
 		}
 	}
-	var cl clause.Expression = clause.Insert{Modifier: "ignore"}
-	switch DB(ctx).Dialector.Name() {
-	case "sqlite":
-		cl = clause.Insert{Modifier: "or ignore"}
-	case "postgres":
-		cl = clause.OnConflict{DoNothing: true}
-	}
-
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := DB(ctx).Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
+		if err := insertTargetBusiGroupsIgnoreDup(DB(ctx), lst); err != nil {
 			return err
 		}
 		if targets, err := TargetsGetByIdents(ctx, idents); err != nil {
@@ -139,14 +194,7 @@ func TargetOverrideBgids(ctx *ctx.Context, idents []string, bgids []int64, tags 
 		}
 
 		// 添加新的关联
-		var cl clause.Expression = clause.Insert{Modifier: "ignore"}
-		switch tx.Dialector.Name() {
-		case "sqlite":
-			cl = clause.Insert{Modifier: "or ignore"}
-		case "postgres":
-			cl = clause.OnConflict{DoNothing: true}
-		}
-		if err := tx.Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
+		if err := insertTargetBusiGroupsIgnoreDup(tx, lst); err != nil {
 			return err
 		}
 		if len(tags) == 0 {

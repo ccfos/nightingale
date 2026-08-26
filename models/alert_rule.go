@@ -17,6 +17,7 @@ import (
 	"github.com/tidwall/match"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
+	"gorm.io/gorm/clause"
 )
 
 const (
@@ -1126,7 +1127,12 @@ func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluste
 	}
 
 	if cluster != "" {
-		session = session.Where("cluster like ?", "%"+cluster+"%")
+		// cluster 是达梦的保留字，裸写会解析失败。交给 gorm 按方言加引号，
+		// 而不是自己拼引号——MySQL 默认没开 ANSI_QUOTES，双引号会被当成字符串。
+		session = session.Where(clause.Like{
+			Column: clause.Column{Name: "cluster"},
+			Value:  "%" + cluster + "%",
+		})
 	}
 
 	if len(cates) != 0 {
