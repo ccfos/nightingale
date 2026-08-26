@@ -199,6 +199,7 @@ const (
 	MsgTplLangPt = "pt_BR"
 	MsgTplLangEs = "es_ES"
 	MsgTplLangId = "id_ID"
+	MsgTplLangKo = "ko_KR"
 )
 
 // NormalizeMsgTplLang 归一化 X-Language 请求头或模板 lang 字段：
@@ -1796,6 +1797,351 @@ var NewTplMapRu = map[string]string{
 	EmailSubject: `{{if $event.IsRecovered}}Восстановлено{{else}}Сработало{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
 }
 
+// NewTplMapKo 内置模板的ko_KR文案，仅收录与 NewTplMap 中文内容不同的模板；
+// 本身即为英文或语言无关的模板（Jira、Slack、Discord、Mattermost、语音/短信等）直接复用 NewTplMap
+var NewTplMapKo = map[string]string{
+	"tx-sms": `등급과 상태: S{{$event.Severity}} {{if $event.IsRecovered}}복구됨{{else}}발생함{{end}} 규칙 이름: {{$event.RuleName}}`,
+	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
+---
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
+- **심각도**: S{{$event.Severity}}
+{{- if $event.RuleNote}}
+	- **규칙 메모**: {{$event.RuleNote}}
+{{- end}}
+{{- if not $event.IsRecovered}}
+- **발생 당시 값**: {{$event.TriggerValue}}
+- **발생 시각**: {{timeformat $event.TriggerTime}}
+- **지속 시간**: {{humanizeDurationInterface $time_duration}}
+{{- else}}
+{{- if $event.AnnotationsJSON.recovery_value}}
+- **복구 당시 값**: {{formatDecimal $event.AnnotationsJSON.recovery_value 4}}
+{{- end}}
+- **복구 시각**: {{timeformat $event.LastEvalTime}}
+- **지속 시간**: {{humanizeDurationInterface $time_duration}}
+{{- end}}
+- **이벤트 레이블**:
+{{- range $key, $val := $event.TagsMap}}
+{{- if ne $key "rulename" }}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{- end}}
+{{if $event.AnnotationsJSON}}
+- **주석**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{end}}
+[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [1시간 음소거]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Email: `<!DOCTYPE html>
+	<html lang="ko">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>Nightingale 알림</title>
+		<style type="text/css">
+			.wrapper {
+				background-color: #f8f8f8;
+				padding: 15px;
+				height: 100%;
+			}
+			.main {
+				width: 600px;
+				padding: 30px;
+				margin: 0 auto;
+				background-color: #fff;
+				font-size: 12px;
+				font-family: verdana,'Microsoft YaHei',Consolas,'Deja Vu Sans Mono','Bitstream Vera Sans Mono';
+			}
+			header {
+				border-radius: 2px 2px 0 0;
+			}
+			header .title {
+				font-size: 14px;
+				color: #333333;
+				margin: 0;
+			}
+			header .sub-desc {
+				color: #333;
+				font-size: 14px;
+				margin-top: 6px;
+				margin-bottom: 0;
+			}
+			hr {
+				margin: 20px 0;
+				height: 0;
+				border: none;
+				border-top: 1px solid #e5e5e5;
+			}
+			em {
+				font-weight: 600;
+			}
+			table {
+				margin: 20px 0;
+				width: 100%;
+			}
+	
+			table tbody tr{
+				font-weight: 200;
+				font-size: 12px;
+				color: #666;
+				height: 32px;
+			}
+	
+			.succ {
+				background-color: green;
+				color: #fff;
+			}
+	
+			.fail {
+				background-color: red;
+				color: #fff;
+			}
+	
+			.succ th, .succ td, .fail th, .fail td {
+				color: #fff;
+			}
+	
+			table tbody tr th {
+				width: 80px;
+				text-align: right;
+			}
+			.text-right {
+				text-align: right;
+			}
+			.body {
+				margin-top: 24px;
+			}
+			.body-text {
+				color: #666666;
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra {
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra.text-right a {
+				text-decoration: none;
+				color: #333;
+			}
+			.body-extra.text-right a:hover {
+				color: #666;
+			}
+			.button {
+				width: 200px;
+				height: 50px;
+				margin-top: 20px;
+				text-align: center;
+				border-radius: 2px;
+				background: #2D77EE;
+				line-height: 50px;
+				font-size: 20px;
+				color: #FFFFFF;
+				cursor: pointer;
+			}
+			.button:hover {
+				background: rgb(25, 115, 255);
+				border-color: rgb(25, 115, 255);
+				color: #fff;
+			}
+			footer {
+				margin-top: 10px;
+				text-align: right;
+			}
+			.footer-logo {
+				text-align: right;
+			}
+			.footer-logo-image {
+				width: 108px;
+				height: 27px;
+				margin-right: 10px;
+			}
+			.copyright {
+				margin-top: 10px;
+				font-size: 12px;
+				text-align: right;
+				color: #999;
+				-webkit-font-smoothing: antialiased;
+			}
+		</style>
+	</head>
+	<body>
+	<div class="wrapper">
+		<div class="main">
+			<header>
+				<h3 class="title">{{$event.RuleName}}</h3>
+				<p class="sub-desc"></p>
+			</header>
+	
+			<hr>
+	
+			<div class="body">
+				<table cellspacing="0" cellpadding="0" border="0">
+					<tbody>
+					{{if $event.IsRecovered}}
+					<tr class="succ">
+						<th>등급과 상태:</th>
+						<td>S{{$event.Severity}} 복구됨</td>
+					</tr>
+					{{else}}
+					<tr class="fail">
+						<th>등급과 상태:</th>
+						<td>S{{$event.Severity}} 발생함</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>규칙 메모:</th>
+						<td>{{$event.RuleNote}}</td>
+					</tr>
+					<tr>
+						<th>대상 메모:</th>
+						<td>{{$event.TargetNote}}</td>
+					</tr>
+					{{if not $event.IsRecovered}}
+					<tr>
+						<th>발생 당시 값:</th>
+						<td>{{$event.TriggerValue}}</td>
+					</tr>
+					{{end}}
+	
+					{{if $event.TargetIdent}}
+					<tr>
+						<th>모니터링 대상:</th>
+						<td>{{$event.TargetIdent}}</td>
+					</tr>
+					{{end}}
+					<tr>
+						<th>지표:</th>
+						<td>{{$event.TagsJSON}}</td>
+					</tr>
+	
+					{{if $event.IsRecovered}}
+					<tr>
+						<th>복구 시각:</th>
+						<td>{{timeformat $event.LastEvalTime}}</td>
+					</tr>
+					{{else}}
+					<tr>
+						<th>발생 시각:</th>
+						<td>
+							{{timeformat $event.TriggerTime}}
+						</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>전송 시각:</th>
+						<td>
+							{{timestamp}}
+						</td>
+					</tr>
+					</tbody>
+				</table>
+	
+				<hr>
+	
+				<footer>
+					<div class="copyright" style="font-style: italic">
+						알림이 너무 많나요? <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a>로 알림을 묶고 잡음을 줄이고 당직 일정을 관리해 보세요.
+					</div>
+				</footer>
+			</div>
+		</div>
+	</div>
+	</body>
+	</html>`,
+	Feishu: `등급과 상태: S{{$event.Severity}} {{if $event.IsRecovered}}복구됨{{else}}발생함{{end}}
+규칙 이름: {{$event.RuleName}}{{if $event.RuleNote}}
+규칙 메모: {{$event.RuleNote}}{{end}}
+지표: {{$event.TagsJSON}}
+주석:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}
+{{if $event.IsRecovered}}복구 시각: {{timeformat $event.LastEvalTime}}{{else}}발생 시각: {{timeformat $event.TriggerTime}}
+발생 당시 값: {{$event.TriggerValue}}{{end}}
+전송 시각: {{timestamp}}
+이벤트 상세: {{.domain}}/share/alert-his-events/{{$event.Id}}
+1시간 음소거: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+	FeishuCard: `{{- if $event.IsRecovered -}}
+{{- if ne $event.Cate "host" -}}
+**클러스터:** {{$event.Cluster}}{{end}}
+**등급과 상태:** S{{$event.Severity}} 복구됨
+**규칙 이름:** {{$event.RuleName}}
+**이벤트 레이블:** {{$event.TagsJSON}}
+**복구 시각:** {{timeformat $event.LastEvalTime}}
+**설명:** **서비스 복구됨**
+{{- else }}
+{{- if ne $event.Cate "host"}}
+**클러스터:** {{$event.Cluster}}{{end}}
+**등급과 상태:** S{{$event.Severity}} 발생함
+**규칙 이름:** {{$event.RuleName}}
+**이벤트 레이블:** {{$event.TagsJSON}}
+**발생 시각:** {{timeformat $event.TriggerTime}}
+**전송 시각:** {{timestamp}}
+**발생 당시 값:** {{$event.TriggerValue}}
+{{if $event.RuleNote }}**설명:** **{{$event.RuleNote}}**{{end}}
+{{- end -}}
+{{if $event.AnnotationsJSON}}
+**주석**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}
+{{- end}}
+[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}})|[1시간 음소거]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Telegram: `<b>등급과 상태: {{if $event.IsRecovered}}💚 S{{$event.Severity}} 복구됨{{else}}⚠️ S{{$event.Severity}} 발생함{{end}}</b>
+<b>규칙 이름</b>: {{$event.RuleName}}{{if $event.RuleNote}}
+<b>규칙 메모</b>: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
+<b>모니터링 대상</b>: {{$event.TargetIdent}}{{end}}
+<b>지표</b>: {{$event.TagsJSON}}{{if not $event.IsRecovered}}
+<b>발생 당시 값</b>: {{$event.TriggerValue}}{{end}}
+{{if $event.IsRecovered}}<b>복구 시각</b>: {{timeformat $event.LastEvalTime}}{{else}}<b>최초 발생 시각</b>: {{timeformat $event.FirstTriggerTime}}{{end}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}<b>최초 알림 이후 경과 시간</b>: {{humanizeDurationInterface $time_duration}}
+<b>전송 시각</b>: {{timestamp}}`,
+	Wecom: `**등급과 상태**: {{if $event.IsRecovered}}<font color="info">💚S{{$event.Severity}} 복구됨</font>{{else}}<font color="warning">💔S{{$event.Severity}} 발생함</font>{{end}}
+**규칙 이름**: {{$event.RuleName}}{{if $event.RuleNote}}
+**규칙 메모**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
+**모니터링 대상**: {{$event.TargetIdent}}{{end}}
+**지표**: {{$event.TagsJSON}}
+{{if $event.AnnotationsJSON}}**주석**:{{range $key, $val := $event.AnnotationsJSON}}{{$key}}:{{$val}}  {{end}}   {{end}}{{if not $event.IsRecovered}}
+**발생 당시 값**: {{$event.TriggerValue}}{{end}}
+{{if $event.IsRecovered}}**복구 시각**: {{timeformat $event.LastEvalTime}}{{else}}**최초 발생 시각**: {{timeformat $event.FirstTriggerTime}}{{end}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**최초 알림 이후 경과 시간**: {{humanizeDurationInterface $time_duration}}
+**전송 시각**: {{timestamp}}
+[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}})|[1시간 음소거]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Lark: `등급과 상태: S{{$event.Severity}} {{if $event.IsRecovered}}복구됨{{else}}발생함{{end}}
+규칙 이름: {{$event.RuleName}}{{if $event.RuleNote}}
+규칙 메모: {{$event.RuleNote}}{{end}}
+지표: {{$event.TagsJSON}}
+{{if $event.IsRecovered}}복구 시각: {{timeformat $event.LastEvalTime}}{{else}}발생 시각: {{timeformat $event.TriggerTime}}
+발생 당시 값: {{$event.TriggerValue}}{{end}}
+전송 시각: {{timestamp}}
+이벤트 상세: {{.domain}}/share/alert-his-events/{{$event.Id}}
+1시간 음소거: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+	LarkCard: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+**클러스터:** {{$event.Cluster}}{{end}}
+**등급과 상태:** S{{$event.Severity}} 복구됨
+**규칙 이름:** {{$event.RuleName}}
+**이벤트 레이블:** {{$event.TagsJSON}}
+**복구 시각:** {{timeformat $event.LastEvalTime}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**지속 시간**: {{humanizeDurationInterface $time_duration}}
+**설명:** **서비스 복구됨**
+{{- else }}
+{{- if ne $event.Cate "host"}}
+**클러스터:** {{$event.Cluster}}{{end}}
+**등급과 상태:** S{{$event.Severity}} 발생함
+**규칙 이름:** {{$event.RuleName}}
+**이벤트 레이블:** {{$event.TagsJSON}}
+**발생 시각:** {{timeformat $event.TriggerTime}}
+**전송 시각:** {{timestamp}}
+**발생 당시 값:** {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**지속 시간**: {{humanizeDurationInterface $time_duration}}
+{{if $event.RuleNote }}**설명:** **{{$event.RuleNote}}**{{end}}
+{{- end -}}
+[이벤트 상세]({{.domain}}/share/alert-his-events/{{$event.Id}})|[1시간 음소거]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[그래프 보기]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	EmailSubject: `{{if $event.IsRecovered}}복구됨{{else}}발생함{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
+}
+
 // NewTplMapId 内置模板的id_ID文案，仅收录与 NewTplMap 中文内容不同的模板；
 // 本身即为英文或语言无关的模板（Jira、Slack、Discord、Mattermost、语音/短信等）直接复用 NewTplMap
 var NewTplMapId = map[string]string{
@@ -2906,6 +3252,31 @@ var MsgTplMapRu = []MessageTemplate{
 	{Name: "Email", Ident: Email + "-ru", NotifyChannelIdent: Email, Lang: MsgTplLangRu, Weight: 1, Content: map[string]string{"subject": NewTplMapRu[EmailSubject], "content": NewTplMapRu[Email]}},
 }
 
+// MsgTplMapKo 内置模板的ko_KR版本，与 MsgTplMap 一一对应；
+// ident 追加 -ko 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
+var MsgTplMapKo = []MessageTemplate{
+	{Name: "Jira", Ident: Jira + "-ko", NotifyChannelIdent: Jira, Lang: MsgTplLangKo, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-ko", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangKo, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Callback", Ident: "callback-ko", NotifyChannelIdent: "callback", Lang: MsgTplLangKo, Weight: 16, Content: map[string]string{"content": ""}},
+	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-ko", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangKo, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "MattermostBot", Ident: MattermostBot + "-ko", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangKo, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "SlackWebhook", Ident: SlackWebhook + "-ko", NotifyChannelIdent: SlackWebhook, Lang: MsgTplLangKo, Weight: 13, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "SlackBot", Ident: SlackBot + "-ko", NotifyChannelIdent: SlackBot, Lang: MsgTplLangKo, Weight: 12, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "Discord", Ident: Discord + "-ko", NotifyChannelIdent: Discord, Lang: MsgTplLangKo, Weight: 11, Content: map[string]string{"content": NewTplMap[Discord]}},
+	{Name: "Aliyun Voice", Ident: "ali-voice-ko", NotifyChannelIdent: "ali-voice", Lang: MsgTplLangKo, Weight: 10, Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
+	{Name: "Aliyun SMS", Ident: "ali-sms-ko", NotifyChannelIdent: "ali-sms", Lang: MsgTplLangKo, Weight: 9, Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
+	{Name: "Tencent Voice", Ident: "tx-voice-ko", NotifyChannelIdent: "tx-voice", Lang: MsgTplLangKo, Weight: 8, Content: map[string]string{"content": NewTplMap["tx-voice"]}},
+	{Name: "Tencent SMS", Ident: "tx-sms-ko", NotifyChannelIdent: "tx-sms", Lang: MsgTplLangKo, Weight: 7, Content: map[string]string{"content": NewTplMapKo["tx-sms"]}},
+	{Name: "Telegram", Ident: Telegram + "-ko", NotifyChannelIdent: Telegram, Lang: MsgTplLangKo, Weight: 6, Content: map[string]string{"content": NewTplMapKo[Telegram]}},
+	{Name: "LarkCard", Ident: LarkCard + "-ko", NotifyChannelIdent: LarkCard, Lang: MsgTplLangKo, Weight: 5, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMapKo[LarkCard]}},
+	{Name: "Lark", Ident: Lark + "-ko", NotifyChannelIdent: Lark, Lang: MsgTplLangKo, Weight: 5, Content: map[string]string{"content": NewTplMapKo[Lark]}},
+	{Name: "Feishu", Ident: Feishu + "-ko", NotifyChannelIdent: Feishu, Lang: MsgTplLangKo, Weight: 4, Content: map[string]string{"content": NewTplMapKo[Feishu]}},
+	{Name: "FeishuCard", Ident: FeishuCard + "-ko", NotifyChannelIdent: FeishuCard, Lang: MsgTplLangKo, Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMapKo[FeishuCard]}},
+	{Name: "Wecom", Ident: Wecom + "-ko", NotifyChannelIdent: Wecom, Lang: MsgTplLangKo, Weight: 3, Content: map[string]string{"content": NewTplMapKo[Wecom]}},
+	{Name: "Dingtalk", Ident: Dingtalk + "-ko", NotifyChannelIdent: Dingtalk, Lang: MsgTplLangKo, Weight: 2, Content: map[string]string{"title": NewTplMapKo[EmailSubject], "content": NewTplMapKo[Dingtalk]}},
+	{Name: "Email", Ident: Email + "-ko", NotifyChannelIdent: Email, Lang: MsgTplLangKo, Weight: 1, Content: map[string]string{"subject": NewTplMapKo[EmailSubject], "content": NewTplMapKo[Email]}},
+}
+
 // MsgTplMapId 内置模板的id_ID版本，与 MsgTplMap 一一对应；
 // ident 追加 -id 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapId = []MessageTemplate{
@@ -2996,6 +3367,7 @@ var BuiltinMsgTplLangVariants = []struct {
 	{MsgTplLangPt, "-pt", NewTplMapPt, MsgTplMapPt},
 	{MsgTplLangEs, "-es", NewTplMapEs, MsgTplMapEs},
 	{MsgTplLangId, "-id", NewTplMapId, MsgTplMapId},
+	{MsgTplLangKo, "-ko", NewTplMapKo, MsgTplMapKo},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
