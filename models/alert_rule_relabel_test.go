@@ -25,7 +25,7 @@ func TestAlertRuleVerify_EventRelabelConfig(t *testing.T) {
 		wantErr    bool
 	}{
 		{"no rule config", "", false},
-		{"no relabel config", `{"queries":[{"query":"up","ref":"A"}]}`, false},
+		{"no relabel config", `{"queries":[{"query":"up","ref":"A","severity":2}]}`, false},
 		{"null relabel config", `{"event_relabel_config":null}`, false},
 		{"empty relabel config", `{"event_relabel_config":[]}`, false},
 		{"valid relabel config", `{"event_relabel_config":[{"source_labels":["ident","service"],"target_label":"host","action":"replace"}]}`, false},

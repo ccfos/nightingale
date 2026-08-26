@@ -569,6 +569,10 @@ func (ar *AlertRule) Verify() error {
 		return errors.New("rule_config is blank")
 	}
 
+	if err := ar.ValidateSeverities(); err != nil {
+		return err
+	}
+
 	if ar.PromEvalInterval <= 0 {
 		ar.PromEvalInterval = 15
 	}
@@ -651,6 +655,92 @@ func (ar *AlertRule) Verify() error {
 		ar.NotifyGroups = ""
 		ar.Callbacks = ""
 		ar.CallbacksJSON = []string{}
+	}
+
+	return nil
+}
+
+type alertRuleSeverityConfig struct {
+	Version  string `json:"version"`
+	Severity *int   `json:"severity"`
+	Queries  []struct {
+		Severity int `json:"severity"`
+	} `json:"queries"`
+	Triggers []struct {
+		Severity int `json:"severity"`
+	} `json:"triggers"`
+	NodataTrigger struct {
+		Enable   bool `json:"enable"`
+		Severity int  `json:"severity"`
+	} `json:"nodata_trigger"`
+	AnomalyTrigger struct {
+		Enable   bool `json:"enable"`
+		Severity int  `json:"severity"`
+	} `json:"anomaly_trigger"`
+}
+
+func validateAlertRuleSeverity(field string, severity int) error {
+	if severity < SeverityEmergency || severity > SeverityNotice {
+		return fmt.Errorf("%s(%d) invalid: severity must be 1, 2 or 3", field, severity)
+	}
+	return nil
+}
+
+// ValidateSeverities checks every severity that can produce an alert event.
+// The top-level AlertRule.Severity and rule_config.severity are legacy shadow
+// fields and may legitimately be zero when a rule uses queries or triggers.
+// Non-zero values in those fields must still be valid severities.
+func (ar *AlertRule) ValidateSeverities() error {
+	if ar.Severity != 0 {
+		if err := validateAlertRuleSeverity("severity", ar.Severity); err != nil {
+			return err
+		}
+	}
+
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(ar.RuleConfig), &object); err != nil {
+		// RuleConfig is intentionally polymorphic. Other validators own its
+		// overall shape; severity validation only applies to JSON objects.
+		return nil
+	}
+
+	var config alertRuleSeverityConfig
+	if err := json.Unmarshal([]byte(ar.RuleConfig), &config); err != nil {
+		return fmt.Errorf("invalid rule_config: %v", err)
+	}
+
+	isPromV1 := (ar.Cate == PROMETHEUS || ar.Cate == LOKI) && config.Version != "v2"
+	legacyConfigSeverityActive := isPromV1 && len(config.Queries) == 0
+	if config.Severity != nil && (legacyConfigSeverityActive || *config.Severity != 0) {
+		if err := validateAlertRuleSeverity("rule_config.severity", *config.Severity); err != nil {
+			return err
+		}
+	}
+
+	if isPromV1 && len(config.Queries) > 0 {
+		for i := range config.Queries {
+			if err := validateAlertRuleSeverity(fmt.Sprintf("rule_config.queries[%d].severity", i), config.Queries[i].Severity); err != nil {
+				return err
+			}
+		}
+	} else if !isPromV1 {
+		for i := range config.Triggers {
+			if err := validateAlertRuleSeverity(fmt.Sprintf("rule_config.triggers[%d].severity", i), config.Triggers[i].Severity); err != nil {
+				return err
+			}
+		}
+	}
+
+	if config.NodataTrigger.Enable {
+		if err := validateAlertRuleSeverity("rule_config.nodata_trigger.severity", config.NodataTrigger.Severity); err != nil {
+			return err
+		}
+	}
+
+	if config.AnomalyTrigger.Enable {
+		if err := validateAlertRuleSeverity("rule_config.anomaly_trigger.severity", config.AnomalyTrigger.Severity); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -853,7 +943,14 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 	}
 
 	if column == "severity" {
-		severity := int(value.(float64))
+		severityValue, ok := value.(float64)
+		if !ok || severityValue != float64(int(severityValue)) {
+			return fmt.Errorf("severity(%v) invalid: severity must be 1, 2 or 3", value)
+		}
+		severity := int(severityValue)
+		if err := validateAlertRuleSeverity("severity", severity); err != nil {
+			return err
+		}
 		if ar.Cate == PROMETHEUS {
 			var ruleConfig PromRuleConfig
 			err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
