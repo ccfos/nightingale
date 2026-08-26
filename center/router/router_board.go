@@ -275,7 +275,15 @@ func (rt *Router) publicBoardGets(c *gin.Context) {
 	boardIds, err := models.BoardIdsByBusiGroupIds(rt.Ctx, bgids)
 	ginx.Dangerous(err)
 
-	boards, err := models.BoardGets(rt.Ctx, "", "public=1 and (public_cate in (?) or id in (?))", []int64{0, 1}, boardIds)
+	// public 在达梦与 PostgreSQL 上都是保留字，裸写会解析失败（达梦报 -2007 语法分析出错）；
+	// MySQL 默认没开 ANSI_QUOTES，双引号会被当成字符串，所以只能按方言分别处理。
+	fieldPublic := "public"
+	switch models.DB(rt.Ctx).Dialector.Name() {
+	case "postgres", "dm":
+		fieldPublic = `"public"`
+	}
+
+	boards, err := models.BoardGets(rt.Ctx, "", fieldPublic+"=1 and (public_cate in (?) or id in (?))", []int64{0, 1}, boardIds)
 	if err == nil {
 		models.FillUpdateByNicknames(rt.Ctx, boards)
 	}
