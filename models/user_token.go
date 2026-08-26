@@ -8,9 +8,9 @@ import (
 
 type UserToken struct {
 	Id        int64  `json:"id" gorm:"primaryKey"`
-	Username  string `json:"username" gorm:"type:varchar(255); not null; default ''"`
-	TokenName string `json:"token_name" gorm:"type:varchar(255); not null; default ''"`
-	Token     string `json:"token" gorm:"type:varchar(255); not null; default ''"`
+	Username  string `json:"username" gorm:"size:255; not null; default ''"`
+	TokenName string `json:"token_name" gorm:"size:255; not null; default ''"`
+	Token     string `json:"token" gorm:"size:255; not null; default ''"`
 	CreateAt  int64  `json:"create_at" gorm:"type:bigint; not null; default 0"`
 	LastUsed  int64  `json:"last_used" gorm:"type:bigint; not null; default 0"`
 }

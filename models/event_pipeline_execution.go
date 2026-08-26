@@ -20,23 +20,23 @@ const (
 
 // EventPipelineExecution 工作流执行记录
 type EventPipelineExecution struct {
-	ID           string `json:"id" gorm:"primaryKey;type:varchar(36)"`
+	ID           string `json:"id" gorm:"primaryKey;size:36"`
 	PipelineID   int64  `json:"pipeline_id" gorm:"index"`
-	PipelineName string `json:"pipeline_name" gorm:"type:varchar(128)"`
+	PipelineName string `json:"pipeline_name" gorm:"size:128"`
 	EventID      int64  `json:"event_id" gorm:"index"`
 
 	// 触发模式：event（告警触发）、api（API触发）、cron（定时触发）
-	Mode string `json:"mode" gorm:"type:varchar(16);index"`
+	Mode string `json:"mode" gorm:"size:16;index"`
 
 	// 状态：running、success、failed
-	Status string `json:"status" gorm:"type:varchar(16);index"`
+	Status string `json:"status" gorm:"size:16;index"`
 
 	// 各节点执行结果（JSON）
 	NodeResults string `json:"node_results" gorm:"type:mediumtext"`
 
 	// 错误信息
-	ErrorMessage string `json:"error_message" gorm:"type:varchar(1024)"`
-	ErrorNode    string `json:"error_node" gorm:"type:varchar(36)"`
+	ErrorMessage string `json:"error_message" gorm:"size:1024"`
+	ErrorNode    string `json:"error_node" gorm:"size:36"`
 
 	// 时间
 	CreatedAt  int64 `json:"created_at" gorm:"index"`
@@ -44,7 +44,7 @@ type EventPipelineExecution struct {
 	DurationMs int64 `json:"duration_ms"`
 
 	// 触发者信息
-	TriggerBy string `json:"trigger_by" gorm:"type:varchar(64)"`
+	TriggerBy string `json:"trigger_by" gorm:"size:64"`
 
 	// 输入参数快照（脱敏后存储）
 	InputsSnapshot string `json:"inputs_snapshot,omitempty" gorm:"type:text"`

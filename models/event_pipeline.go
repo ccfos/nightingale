@@ -12,14 +12,14 @@ import (
 // EventPipeline 事件Pipeline模型
 type EventPipeline struct {
 	ID               int64             `json:"id" gorm:"primaryKey"`
-	Name             string            `json:"name" gorm:"type:varchar(128)"`
-	Typ              string            `json:"typ" gorm:"type:varchar(128)"`          // builtin, user-defined    // event_pipeline, event_summary, metric_explorer
-	UseCase          string            `json:"use_case" gorm:"type:varchar(128)"`     // metric_explorer, event_summary, event_pipeline
-	TriggerMode      string            `json:"trigger_mode" gorm:"type:varchar(128)"` // event, api, cron
+	Name             string            `json:"name" gorm:"size:128"`
+	Typ              string            `json:"typ" gorm:"size:128"`          // builtin, user-defined    // event_pipeline, event_summary, metric_explorer
+	UseCase          string            `json:"use_case" gorm:"size:128"`     // metric_explorer, event_summary, event_pipeline
+	TriggerMode      string            `json:"trigger_mode" gorm:"size:128"` // event, api, cron
 	Disabled         bool              `json:"disabled" gorm:"type:boolean"`
 	TeamIds          []int64           `json:"team_ids" gorm:"type:text;serializer:json"`
 	TeamNames        []string          `json:"team_names" gorm:"-"`
-	Description      string            `json:"description" gorm:"type:varchar(255)"`
+	Description      string            `json:"description" gorm:"size:255"`
 	FilterEnable     bool              `json:"filter_enable" gorm:"type:boolean"`
 	LabelFilters     []TagFilter       `json:"label_filters" gorm:"type:text;serializer:json"`
 	AttrFilters      []TagFilter       `json:"attribute_filters" gorm:"type:text;serializer:json"`
@@ -33,9 +33,9 @@ type EventPipeline struct {
 	Inputs []InputVariable `json:"inputs,omitempty" gorm:"type:text;serializer:json"`
 
 	CreateAt         int64  `json:"create_at" gorm:"type:bigint"`
-	CreateBy         string `json:"create_by" gorm:"type:varchar(64)"`
+	CreateBy         string `json:"create_by" gorm:"size:64"`
 	UpdateAt         int64  `json:"update_at" gorm:"type:bigint"`
-	UpdateBy         string `json:"update_by" gorm:"type:varchar(64)"`
+	UpdateBy         string `json:"update_by" gorm:"size:64"`
 	UpdateByNickname string `json:"update_by_nickname" gorm:"-"`
 }
 

@@ -12,7 +12,7 @@ import (
 
 type TargetBusiGroup struct {
 	Id          int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement"`
-	TargetIdent string `json:"target_ident" gorm:"type:varchar(191);not null;index:idx_target_group,unique,priority:1"`
+	TargetIdent string `json:"target_ident" gorm:"size:191;not null;index:idx_target_group,unique,priority:1"`
 	GroupId     int64  `json:"group_id" gorm:"type:bigint;not null;index:idx_target_group,unique,priority:2"`
 	UpdateAt    int64  `json:"update_at" gorm:"type:bigint;not null"`
 }

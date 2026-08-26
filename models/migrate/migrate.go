@@ -173,7 +173,7 @@ func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
 
 type AlertRule struct {
 	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`
-	CronPattern       string                   `gorm:"type:varchar(64);column:cron_pattern"`
+	CronPattern       string                   `gorm:"size:64;column:cron_pattern"`
 	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 	NotifyRuleIds     []int64                  `gorm:"column:notify_rule_ids;type:varchar(1024)"`
 	NotifyVersion     int                      `gorm:"column:notify_version;type:int;default:0"`
@@ -182,28 +182,28 @@ type AlertRule struct {
 
 type AlertSubscribe struct {
 	ExtraConfig   string       `gorm:"type:text;column:extra_config"` // extra config
-	Severities    string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
+	Severities    string       `gorm:"column:severities;size:32;not null;default:''"`
 	BusiGroups    ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096)"`
-	Note          string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
+	Note          string       `gorm:"column:note;size:1024;default:'';comment:note"`
 	RuleIds       []int64      `gorm:"column:rule_ids;type:varchar(1024)"`
 	NotifyRuleIds []int64      `gorm:"column:notify_rule_ids;type:varchar(1024)"`
 	NotifyVersion int          `gorm:"column:notify_version;type:int;default:0"`
 }
 
 type AlertMute struct {
-	Severities string `gorm:"column:severities;type:varchar(32);not null;default:''"`
-	Tags       string `gorm:"column:tags;type:varchar(4096);default:'[]';comment:json,map,tagkey->regexp|value"`
+	Severities string `gorm:"column:severities;size:32;not null;default:''"`
+	Tags       string `gorm:"column:tags;size:4096;default:'[]';comment:json,map,tagkey->regexp|value"`
 }
 
 type RecordingRule struct {
 	QueryConfigs      string                   `gorm:"type:text;not null;column:query_configs"` // query_configs
-	DatasourceIds     string                   `gorm:"column:datasource_ids;type:varchar(255);default:'';comment:datasource ids"`
-	CronPattern       string                   `gorm:"column:cron_pattern;type:varchar(255);default:'';comment:cron pattern"`
+	DatasourceIds     string                   `gorm:"column:datasource_ids;size:255;default:'';comment:datasource ids"`
+	CronPattern       string                   `gorm:"column:cron_pattern;size:255;default:'';comment:cron pattern"`
 	DatasourceQueries []models.DatasourceQuery `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 }
 
 type AlertingEngines struct {
-	EngineCluster string `gorm:"column:engine_cluster;type:varchar(128);default:'';comment:n9e engine cluster"`
+	EngineCluster string `gorm:"column:engine_cluster;size:128;default:'';comment:n9e engine cluster"`
 }
 
 type ChartShare struct {
@@ -224,40 +224,40 @@ type AlertCurEvent struct {
 }
 
 type Target struct {
-	HostIp       string   `gorm:"column:host_ip;type:varchar(15);default:'';comment:IPv4 string;index:idx_host_ip"`
-	AgentVersion string   `gorm:"column:agent_version;type:varchar(255);default:'';comment:agent version;index:idx_agent_version"`
-	EngineName   string   `gorm:"column:engine_name;type:varchar(255);default:'';comment:engine name;index:idx_engine_name"`
-	OS           string   `gorm:"column:os;type:varchar(31);default:'';comment:os type;index:idx_os"`
+	HostIp       string   `gorm:"column:host_ip;size:15;default:'';comment:IPv4 string;index:idx_host_ip"`
+	AgentVersion string   `gorm:"column:agent_version;size:255;default:'';comment:agent version;index:idx_agent_version"`
+	EngineName   string   `gorm:"column:engine_name;size:255;default:'';comment:engine name;index:idx_engine_name"`
+	OS           string   `gorm:"column:os;size:31;default:'';comment:os type;index:idx_os"`
 	HostTags     []string `gorm:"column:host_tags;type:text;comment:global labels set in conf file;serializer:json"`
 }
 
 type Datasource struct {
 	IsDefault  bool   `gorm:"column:is_default;type:boolean;comment:is default datasource"`
-	Identifier string `gorm:"column:identifier;type:varchar(255);default:'';comment:identifier"`
+	Identifier string `gorm:"column:identifier;size:255;default:'';comment:identifier"`
 }
 
 type Configs struct {
-	Note string `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
+	Note string `gorm:"column:note;size:1024;default:'';comment:note"`
 	Cval string `gorm:"column:cval;type:text;comment:config value"`
 	//mysql tinyint//postgresql smallint
 	External  int    `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
 	Encrypted int    `gorm:"column:encrypted;type:int;default:0;comment:0\\:plaintext 1\\:ciphertext"`
 	CreateAt  int64  `gorm:"column:create_at;type:int;default:0;comment:create_at"`
-	CreateBy  string `gorm:"column:create_by;type:varchar(64);default:'';comment:create_by"`
+	CreateBy  string `gorm:"column:create_by;size:64;default:'';comment:create_by"`
 	UpdateAt  int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
-	UpdateBy  string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
+	UpdateBy  string `gorm:"column:update_by;size:64;default:'';comment:update_by"`
 }
 
 type NotifyTpl struct {
 	CreateAt int64  `gorm:"column:create_at;type:int;default:0;comment:create_at"`
-	CreateBy string `gorm:"column:create_by;type:varchar(64);default:'';comment:create_by"`
+	CreateBy string `gorm:"column:create_by;size:64;default:'';comment:create_by"`
 	UpdateAt int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
-	UpdateBy string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
+	UpdateBy string `gorm:"column:update_by;size:64;default:'';comment:update_by"`
 }
 
 type Board struct {
 	PublicCate int    `gorm:"column:public_cate;int;not null;default:0;comment:0 anonymous 1 login 2 busi"`
-	Note       string `gorm:"column:note;type:varchar(1024);not null;default:'';comment:note"`
+	Note       string `gorm:"column:note;size:1024;not null;default:'';comment:note"`
 }
 
 type BoardBusigroup struct {
@@ -266,9 +266,9 @@ type BoardBusigroup struct {
 }
 
 type Users struct {
-	Belong         string `gorm:"column:belong;type:varchar(16);default:'';comment:belong"`
+	Belong         string `gorm:"column:belong;size:16;default:'';comment:belong"`
 	LastActiveTime int64  `gorm:"column:last_active_time;type:int;default:0;comment:last_active_time"`
-	Phone          string `gorm:"column:phone;type:varchar(1024);not null;default:''"`
+	Phone          string `gorm:"column:phone;size:1024;not null;default:''"`
 }
 
 type SsoConfig struct {
@@ -278,7 +278,7 @@ type SsoConfig struct {
 type BuiltinPayloads struct {
 	UUID        int64  `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
 	ComponentID int64  `json:"component_id" gorm:"type:bigint;index:idx_component,sort:asc;not null;default:0;comment:'component_id of payload'"`
-	Note        string `json:"note" gorm:"type:varchar(1024);not null;default:'';comment:'note of payload'"`
+	Note        string `json:"note" gorm:"size:1024;not null;default:'';comment:'note of payload'"`
 }
 
 type TaskHostDoing struct {
@@ -295,7 +295,7 @@ func (TaskHostDoing) TableName() string {
 
 type EsIndexPatternMigrate struct {
 	CrossClusterEnabled int    `gorm:"column:cross_cluster_enabled;type:int;default:0"`
-	Note                string `gorm:"column:note;type:varchar(1024);default:''"`
+	Note                string `gorm:"column:note;size:1024;default:''"`
 }
 
 func (EsIndexPatternMigrate) TableName() string {
@@ -305,16 +305,16 @@ func (EsIndexPatternMigrate) TableName() string {
 type DashAnnotation struct {
 	Id          int64  `gorm:"column:id;primaryKey;autoIncrement"`
 	DashboardId int64  `gorm:"column:dashboard_id;not null"`
-	PanelId     string `gorm:"column:panel_id;type:varchar(191);not null"`
+	PanelId     string `gorm:"column:panel_id;size:191;not null"`
 	Tags        string `gorm:"column:tags;type:text"`
 	Description string `gorm:"column:description;type:text"`
 	Config      string `gorm:"column:config;type:text"`
 	TimeStart   int64  `gorm:"column:time_start;not null;default:0"`
 	TimeEnd     int64  `gorm:"column:time_end;not null;default:0"`
 	CreateAt    int64  `gorm:"column:create_at;not null;default:0"`
-	CreateBy    string `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	CreateBy    string `gorm:"column:create_by;size:64;not null;default:''"`
 	UpdateAt    int64  `gorm:"column:update_at;not null;default:0"`
-	UpdateBy    string `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+	UpdateBy    string `gorm:"column:update_by;size:64;not null;default:''"`
 }
 
 func (DashAnnotation) TableName() string {
@@ -323,17 +323,17 @@ func (DashAnnotation) TableName() string {
 
 type MessageTemplate struct {
 	ID                 int64             `gorm:"column:id;primaryKey;autoIncrement"`
-	Name               string            `gorm:"column:name;type:varchar(64);not null"`
-	Ident              string            `gorm:"column:ident;type:varchar(64);not null"`
+	Name               string            `gorm:"column:name;size:64;not null"`
+	Ident              string            `gorm:"column:ident;size:64;not null"`
 	Content            map[string]string `gorm:"column:content;type:text"`
 	UserGroupIds       []int64           `gorm:"column:user_group_ids;type:varchar(64)"`
-	NotifyChannelIdent string            `gorm:"column:notify_channel_ident;type:varchar(64);not null;default:''"`
+	NotifyChannelIdent string            `gorm:"column:notify_channel_ident;size:64;not null;default:''"`
 	Private            int               `gorm:"column:private;type:int;not null;default:0"`
 	Weight             int               `gorm:"column:weight;type:int;not null;default:0"`
 	CreateAt           int64             `gorm:"column:create_at;not null;default:0"`
-	CreateBy           string            `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	CreateBy           string            `gorm:"column:create_by;size:64;not null;default:''"`
 	UpdateAt           int64             `gorm:"column:update_at;not null;default:0"`
-	UpdateBy           string            `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+	UpdateBy           string            `gorm:"column:update_by;size:64;not null;default:''"`
 }
 
 func (t *MessageTemplate) TableName() string {
@@ -342,7 +342,7 @@ func (t *MessageTemplate) TableName() string {
 
 type NotifyRule struct {
 	ID              int64                   `gorm:"column:id;primaryKey;autoIncrement"`
-	Name            string                  `gorm:"column:name;type:varchar(255);not null"`
+	Name            string                  `gorm:"column:name;size:255;not null"`
 	Description     string                  `gorm:"column:description;type:text"`
 	Enable          bool                    `gorm:"column:enable;not null;default:false"`
 	UserGroupIds    []int64                 `gorm:"column:user_group_ids;type:varchar(255)"`
@@ -350,9 +350,9 @@ type NotifyRule struct {
 	PipelineConfigs []models.PipelineConfig `gorm:"column:pipeline_configs;type:text"`
 	ExtraConfig     interface{}             `gorm:"column:extra_config;type:text"`
 	CreateAt        int64                   `gorm:"column:create_at;not null;default:0"`
-	CreateBy        string                  `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	CreateBy        string                  `gorm:"column:create_by;size:64;not null;default:''"`
 	UpdateAt        int64                   `gorm:"column:update_at;not null;default:0"`
-	UpdateBy        string                  `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+	UpdateBy        string                  `gorm:"column:update_by;size:64;not null;default:''"`
 }
 
 func (r *NotifyRule) TableName() string {
@@ -361,18 +361,18 @@ func (r *NotifyRule) TableName() string {
 
 type NotifyChannelConfig struct {
 	ID            int64                    `gorm:"column:id;primaryKey;autoIncrement"`
-	Name          string                   `gorm:"column:name;type:varchar(255);not null"`
-	Ident         string                   `gorm:"column:ident;type:varchar(255);not null"`
+	Name          string                   `gorm:"column:name;size:255;not null"`
+	Ident         string                   `gorm:"column:ident;size:255;not null"`
 	Description   string                   `gorm:"column:description;type:text"`
 	Enable        bool                     `gorm:"column:enable;not null;default:false"`
 	ParamConfig   models.NotifyParamConfig `gorm:"column:param_config;type:text"`
-	RequestType   string                   `gorm:"column:request_type;type:varchar(50);not null"`
+	RequestType   string                   `gorm:"column:request_type;size:50;not null"`
 	RequestConfig *models.RequestConfig    `gorm:"column:request_config;type:text"`
 	Weight        int                      `gorm:"column:weight;type:int;not null;default:0"`
 	CreateAt      int64                    `gorm:"column:create_at;not null;default:0"`
-	CreateBy      string                   `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	CreateBy      string                   `gorm:"column:create_by;size:64;not null;default:''"`
 	UpdateAt      int64                    `gorm:"column:update_at;not null;default:0"`
-	UpdateBy      string                   `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+	UpdateBy      string                   `gorm:"column:update_by;size:64;not null;default:''"`
 }
 
 func (c *NotifyChannelConfig) TableName() string {

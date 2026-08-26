@@ -8,12 +8,12 @@ import (
 
 type SourceToken struct {
 	Id         int64  `json:"id" gorm:"primaryKey"`
-	SourceType string `json:"source_type" gorm:"column:source_type;type:varchar(64);not null;default:''"`
-	SourceId   string `json:"source_id" gorm:"column:source_id;type:varchar(255);not null;default:''"`
-	Token      string `json:"token" gorm:"column:token;type:varchar(255);not null;default:''"`
+	SourceType string `json:"source_type" gorm:"column:source_type;size:64;not null;default:''"`
+	SourceId   string `json:"source_id" gorm:"column:source_id;size:255;not null;default:''"`
+	Token      string `json:"token" gorm:"column:token;size:255;not null;default:''"`
 	ExpireAt   int64  `json:"expire_at" gorm:"type:bigint;not null;default:0"`
 	CreateAt   int64  `json:"create_at" gorm:"type:bigint;not null;default:0"`
-	CreateBy   string `json:"create_by" gorm:"type:varchar(64);not null;default:''"`
+	CreateBy   string `json:"create_by" gorm:"size:64;not null;default:''"`
 }
 
 func (SourceToken) TableName() string {
