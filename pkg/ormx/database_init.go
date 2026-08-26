@@ -809,7 +809,7 @@ type InitAlertHisEvent struct {
 	TriggerTime      int64  `gorm:"not null;index"`
 	TriggerValue     string `gorm:"type:text;not null"`
 	RecoverTime      int64  `gorm:"not null;default:0"`
-	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index"`
+	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 	Tags             string `gorm:"size:1024;not null;default:'';comment:merge data_tags rule_tags, split by ,,"`
 	OriginalTags     string `gorm:"type:text;comment:labels key=val,,k2=v2"`
 	Annotations      string `gorm:"type:text;not null;comment:annotations"`
@@ -854,7 +854,7 @@ type InitPostgresAlertHisEvent struct {
 	TriggerTime      int64  `gorm:"not null;index"`
 	TriggerValue     string `gorm:"type:text;not null"`
 	RecoverTime      int64  `gorm:"not null;default:0"`
-	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index"`
+	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 	Tags             string `gorm:"size:1024;not null;default:'';comment:merge data_tags rule_tags, split by ,,"`
 	OriginalTags     string `gorm:"type:text;comment:labels key=val,,k2=v2"`
 	Annotations      string `gorm:"type:text;not null;comment:annotations"`
@@ -880,7 +880,7 @@ func (InitBoardBusiGroup) TableOptions() string {
 
 type InitBuiltinComponent struct {
 	ID        int64  `gorm:"primaryKey;not null;autoIncrement;comment:unique identifier"`
-	Ident     string `gorm:"size:191;not null;comment:identifier of component;index"`
+	Ident     string `gorm:"size:191;not null;comment:identifier of component;index:idx_ident"`
 	Logo      string `gorm:"size:191;not null;comment:logo of component"`
 	Readme    string `gorm:"type:text;not null;comment:readme of component"`
 	CreatedAt int64  `gorm:"not null;default:0;comment:create time"`
@@ -900,7 +900,7 @@ func (InitBuiltinComponent) TableOptions() string {
 type InitpostgresBuiltinPayload struct {
 	ID          uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
 	ComponentID uint64 `gorm:"not null;default:0;comment:component_id"`
-	UUID        uint64 `gorm:"not null;comment:uuid of payload;index"`
+	UUID        uint64 `gorm:"not null;comment:uuid of payload;index:idx_uuid"`
 	Type        string `gorm:"size:191;not null;comment:type of payload;index"`
 	Component   string `gorm:"size:191;not null;comment:component of payload;index"`
 	Cate        string `gorm:"size:191;not null;comment:category of payload;index"`
@@ -920,7 +920,7 @@ func (InitpostgresBuiltinPayload) TableName() string {
 type InitBuiltinPayload struct {
 	ID          uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
 	ComponentID uint64 `gorm:"not null;default:0;comment:component_id"`
-	UUID        uint64 `gorm:"not null;comment:uuid of payload;index"`
+	UUID        uint64 `gorm:"not null;comment:uuid of payload;index:idx_uuid"`
 	Type        string `gorm:"size:191;not null;comment:type of payload;index"`
 	Component   string `gorm:"size:191;not null;comment:component of payload;index"`
 	Cate        string `gorm:"size:191;not null;comment:category of payload;index"`
@@ -1002,7 +1002,7 @@ func (InitTaskTplHost) TableOptions() string {
 
 type InitTaskRecord struct {
 	ID           uint64 `gorm:"primaryKey"`
-	EventID      uint64 `gorm:"not null;default:0;comment:event id;index"`
+	EventID      uint64 `gorm:"not null;default:0;comment:event id;index:idx_event_id"`
 	GroupID      uint64 `gorm:"not null;comment:busi group id;index:idx_group_id_create_at"`
 	IbexAddress  string `gorm:"size:128;not null"`
 	IbexAuthUser string `gorm:"size:128;not null;default:''"`
@@ -1244,7 +1244,7 @@ func (InitSqliteBuiltinMetric) TableName() string {
 
 type InitMetricFilter struct {
 	ID         uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
-	Name       string `gorm:"size:191;not null;comment:name of metric filter;index:idx_name"`
+	Name       string `gorm:"size:191;not null;comment:name of metric filter;index:idx_metricfilter_name"`
 	Configs    string `gorm:"size:4096;not null;comment:configuration of metric filter"`
 	GroupsPerm string `gorm:"type:text"`
 	CreateAt   int64  `gorm:"not null;default:0;comment:create time"`

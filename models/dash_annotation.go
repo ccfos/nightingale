@@ -7,19 +7,21 @@ import (
 )
 
 type DashAnnotation struct {
-	Id               int64    `json:"id" gorm:"primaryKey"`
-	DashboardId      int64    `json:"dashboard_id"`
-	PanelId          string   `json:"panel_id"`
-	Tags             string   `json:"-"`
+	Id          int64 `json:"id" gorm:"primaryKey"`
+	DashboardId int64 `json:"dashboard_id"`
+	// 无长度的 string 在 MySQL 上落成 longtext，但在按 varchar 兜底的方言上会被截到几千
+	// 字符。这里显式声明，保持各方言容量一致。
+	PanelId          string   `json:"panel_id" gorm:"type:longtext"`
+	Tags             string   `json:"-" gorm:"type:longtext"`
 	TagsJSON         []string `json:"tags" gorm:"-"`
-	Description      string   `json:"description"`
-	Config           string   `json:"config"`
+	Description      string   `json:"description" gorm:"type:longtext"`
+	Config           string   `json:"config" gorm:"type:longtext"`
 	TimeStart        int64    `json:"time_start"`
 	TimeEnd          int64    `json:"time_end"`
 	CreateAt         int64    `json:"create_at"`
-	CreateBy         string   `json:"create_by"`
+	CreateBy         string   `json:"create_by" gorm:"type:longtext"`
 	UpdateAt         int64    `json:"update_at"`
-	UpdateBy         string   `json:"update_by"`
+	UpdateBy         string   `json:"update_by" gorm:"type:longtext"`
 	UpdateByNickname string   `json:"update_by_nickname" gorm:"-"`
 }
 

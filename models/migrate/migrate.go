@@ -344,7 +344,7 @@ type NotifyRule struct {
 	ID              int64                   `gorm:"column:id;primaryKey;autoIncrement"`
 	Name            string                  `gorm:"column:name;size:255;not null"`
 	Description     string                  `gorm:"column:description;type:text"`
-	Enable          bool                    `gorm:"column:enable;not null;default:false"`
+	Enable          bool                    `gorm:"column:enable;not null"`
 	UserGroupIds    []int64                 `gorm:"column:user_group_ids;type:varchar(255)"`
 	NotifyConfigs   []models.NotifyConfig   `gorm:"column:notify_configs;type:text"`
 	PipelineConfigs []models.PipelineConfig `gorm:"column:pipeline_configs;type:text"`
@@ -364,7 +364,7 @@ type NotifyChannelConfig struct {
 	Name          string                   `gorm:"column:name;size:255;not null"`
 	Ident         string                   `gorm:"column:ident;size:255;not null"`
 	Description   string                   `gorm:"column:description;type:text"`
-	Enable        bool                     `gorm:"column:enable;not null;default:false"`
+	Enable        bool                     `gorm:"column:enable;not null"`
 	ParamConfig   models.NotifyParamConfig `gorm:"column:param_config;type:text"`
 	RequestType   string                   `gorm:"column:request_type;size:50;not null"`
 	RequestConfig *models.RequestConfig    `gorm:"column:request_config;type:text"`

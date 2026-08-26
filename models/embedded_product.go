@@ -18,7 +18,7 @@ type EmbeddedProduct struct {
 	Name             string  `json:"name" gorm:"column:name;size:255"`
 	URL              string  `json:"url" gorm:"column:url;size:255"`
 	IsPrivate        bool    `json:"is_private" gorm:"column:is_private;type:boolean"`
-	TeamIDs          []int64 `json:"team_ids" gorm:"serializer:json"`
+	TeamIDs          []int64 `json:"team_ids" gorm:"serializer:json;type:longtext"`
 	CreateAt         int64   `json:"create_at" gorm:"column:create_at;not null;default:0"`
 	CreateBy         string  `json:"create_by" gorm:"column:create_by;size:64;not null;default:''"`
 	UpdateAt         int64   `json:"update_at" gorm:"column:update_at;not null;default:0"`
