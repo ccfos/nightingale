@@ -14,11 +14,13 @@ import (
 )
 
 type EmbeddedProduct struct {
-	ID               int64   `json:"id" gorm:"primaryKey"` // 主键
-	Name             string  `json:"name" gorm:"column:name;size:255"`
-	URL              string  `json:"url" gorm:"column:url;size:255"`
-	IsPrivate        bool    `json:"is_private" gorm:"column:is_private;type:boolean"`
-	TeamIDs          []int64 `json:"team_ids" gorm:"serializer:json;type:longtext"`
+	ID        int64  `json:"id" gorm:"primaryKey"` // 主键
+	Name      string `json:"name" gorm:"column:name;size:255"`
+	URL       string `json:"url" gorm:"column:url;size:255"`
+	IsPrivate bool   `json:"is_private" gorm:"column:is_private;type:boolean"`
+	// 用 text 而不是 longtext：longtext 是 MySQL 专有拼写，PostgreSQL 上会让本表的
+	// AutoMigrate 直接失败。
+	TeamIDs          []int64 `json:"team_ids" gorm:"serializer:json;type:text"`
 	CreateAt         int64   `json:"create_at" gorm:"column:create_at;not null;default:0"`
 	CreateBy         string  `json:"create_by" gorm:"column:create_by;size:64;not null;default:''"`
 	UpdateAt         int64   `json:"update_at" gorm:"column:update_at;not null;default:0"`
