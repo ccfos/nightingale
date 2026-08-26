@@ -47,14 +47,12 @@ func (rt *Router) builtinComponentsGets(c *gin.Context) {
 	// 与消息模板"自建不过滤"同一原则；副本缺失时回退源语言
 	lang := integration.NormalizeLang(c.GetHeader("X-Language"))
 	if lang != integration.LangSource && integration.BuiltinPayloadInFile != nil {
-		if readmes := integration.BuiltinPayloadInFile.Readmes[lang]; readmes != nil {
-			for i := range bc {
-				if bc[i].UpdatedBy != SYSTEM {
-					continue
-				}
-				if readme, ok := readmes[bc[i].Ident]; ok {
-					bc[i].Readme = readme
-				}
+		for i := range bc {
+			if bc[i].UpdatedBy != SYSTEM {
+				continue
+			}
+			if readme := integration.BuiltinPayloadInFile.Readme(lang, bc[i].Ident); readme != "" {
+				bc[i].Readme = readme
 			}
 		}
 	}

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/i18n"
@@ -76,7 +75,7 @@ func Translate(lang, key string) string {
 		return msg
 	}
 
-	normalized := normalizeLang(lang)
+	normalized := NormalizeLang(lang)
 	if normalized != lang {
 		if msg, ok := lookup(normalized, key); ok {
 			return msg
@@ -97,19 +96,4 @@ func lookup(lang, key string) (string, bool) {
 		}
 	}
 	return "", false
-}
-
-func normalizeLang(lang string) string {
-	switch strings.ToLower(strings.ReplaceAll(lang, "-", "_")) {
-	case "zh", "cn", "zh_cn":
-		return "zh_CN"
-	case "zh_hk", "zh_tw":
-		return "zh_HK"
-	case "ja", "jp", "ja_jp":
-		return "ja_JP"
-	case "ru", "ru_ru":
-		return "ru_RU"
-	default:
-		return lang
-	}
 }

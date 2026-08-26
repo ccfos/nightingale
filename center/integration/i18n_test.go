@@ -13,21 +13,50 @@ func TestNormalizeLang(t *testing.T) {
 		"":      LangSource,
 		"zh":    LangSource,
 		"zh_CN": LangSource,
-		"zh_HK": LangSource,
-		"en":    LangEnUS,
+		"zh_HK": LangZhHK,
+		"zh_TW": LangZhHK,
+		"en":    LangEnUS, // 中间件发的是 en，必须落到 en_US 桶
 		"en_US": LangEnUS,
 		"en_GB": LangEnUS,
-		"ja_JP": LangEnUS, // 未支持语言归入 en_US
-		"ru_RU": LangEnUS,
+		"ja_JP": "ja_JP", // 不再归并进 en_US：有 ja 词条时要能命中 ja 桶
+		"ja":    "ja_JP",
+		"ru_RU": "ru_RU",
+		// 未知语言原样保留，由回退链兜底
+		"fr_FR": "fr_FR",
 		// 大小写不敏感：第三方直连 API 可能传大写
 		"ZH_CN": LangSource,
 		"Zh-CN": LangSource,
 		"ZH":    LangSource,
 		"EN_US": LangEnUS,
+		"ja-jp": "ja_JP",
 	}
 	for in, want := range cases {
 		if got := NormalizeLang(in); got != want {
 			t.Errorf("NormalizeLang(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestLangFallbackChain(t *testing.T) {
+	cases := map[string][]string{
+		LangSource: {LangSource},
+		// 繁体缺词条时回简体，不经英文
+		LangZhHK: {LangZhHK, LangSource},
+		LangEnUS: {LangEnUS, LangSource},
+		"ja_JP":  {"ja_JP", LangEnUS, LangSource},
+		"fr_FR":  {"fr_FR", LangEnUS, LangSource},
+	}
+	for lang, want := range cases {
+		got := LangFallbackChain(lang)
+		if len(got) != len(want) {
+			t.Errorf("LangFallbackChain(%q) = %v, want %v", lang, got, want)
+			continue
+		}
+		for i := range want {
+			if got[i] != want[i] {
+				t.Errorf("LangFallbackChain(%q) = %v, want %v", lang, got, want)
+				break
+			}
 		}
 	}
 }

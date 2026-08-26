@@ -22,8 +22,9 @@ const SYSTEM = "system"
 var BuiltinPayloadInFile *BuiltinPayloadInFileType
 
 type BuiltinPayloadInFileType struct {
-	// 首层 key 是语言（LangSource/LangEnUS）：同一 uuid 的模板按语言渲染出多个变体，
-	// zh_CN 桶存文件原始内容，en_US 桶对全部内置内容完整存在（无词条组件为 pass-through 同指针）
+	// 首层 key 是语言：同一 uuid 的模板按语言渲染出多个变体，语言集合取决于各组件
+	// i18n 目录下有哪些 <lang>.json。zh_CN 桶存文件原始内容并对全部内容完整存在；
+	// 其余语言桶按组件稀疏——只有提供了词条的组件才在桶内，未提供的靠读取时回退。
 	Data      map[string]map[uint64]map[string]map[string][]*models.BuiltinPayload // map[lang]map[component_id]map[type]map[cate][]*models.BuiltinPayload
 	IndexData map[string]map[int64]*models.BuiltinPayload                          // map[lang]map[uuid]payload
 
@@ -85,13 +86,15 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 			if readmeFile != "" {
 				component.Readme, _ = file.ReadString(componentDir + "/markdown/" + readmeFile)
 			}
-			// 语言副本（README.<lang>.md）只进内存按 X-Language 返回，不落 DB
+			// 语言副本（README.<lang>.md）只进内存按 X-Language 返回，不落 DB。
+			// 与词条桶同理，文件名里的语言码要归一化后再作 key
 			for lang, fn := range readmeVariants {
 				content, err := file.ReadString(componentDir + "/markdown/" + fn)
 				if err != nil {
 					logger.Warningf("read builtin component readme variant fail %s/%s %v", component.Ident, fn, err)
 					continue
 				}
+				lang = NormalizeLang(lang)
 				if BuiltinPayloadInFile.Readmes[lang] == nil {
 					BuiltinPayloadInFile.Readmes[lang] = make(map[string]string)
 				}
@@ -342,11 +345,57 @@ func (b *BuiltinPayloadInFileType) AddBuiltinPayload(bp *models.BuiltinPayload) 
 		b.addBuiltinPayloadForLang(lang, renderVariant(bp, dict))
 	}
 
-	// 无 en_US 词条的组件也进 en_US 桶（同指针 pass-through），
-	// 保证 en_US 桶完整、按语言查询不需要列表级回退
+	// 无 en_US 词条的组件也进 en_US 桶（同指针 pass-through）。这是英文作为
+	// 主要回退目标的一个优化，不是正确性依赖：读取侧的 LangFallbackChain 已能
+	// 处理稀疏桶，新增语言不必照此补齐
 	if _, ok := b.dicts[bp.ComponentID][LangEnUS]; !ok {
 		b.addBuiltinPayloadForLang(LangEnUS, bp)
 	}
+}
+
+// resolveComponentData 按回退链取某组件在目标语言下的模板集合。
+//
+// 回退必须按「组件」而不是按「语言桶」：新增语言的词条通常只覆盖部分组件，
+// 此时该语言桶非空但缺大多数组件，只判空桶会让未翻译的组件返回空列表，
+// 而不是回退到英文
+func (b *BuiltinPayloadInFileType) resolveComponentData(lang string, componentId uint64) map[string]map[string][]*models.BuiltinPayload {
+	for _, l := range LangFallbackChain(lang) {
+		if byLang := b.Data[l]; byLang != nil {
+			if source := byLang[componentId]; source != nil {
+				return source
+			}
+		}
+	}
+	return nil
+}
+
+// ResolveBucketLang 把请求语言收敛到真实存在的语言桶，没有词条的语言统一落到
+// 回退链末端。按语言做缓存的调用方必须先过这里：语言码现在直接来自请求头，
+// 不收敛的话每个没见过的 X-Language 值都会新起一份缓存
+func (b *BuiltinPayloadInFileType) ResolveBucketLang(lang string) string {
+	chain := LangFallbackChain(lang)
+	for _, l := range chain {
+		if len(b.Data[l]) > 0 {
+			return l
+		}
+	}
+	return chain[len(chain)-1]
+}
+
+// Readme 按回退链取组件 README 的语言副本；返回空串表示该用 DB 里的源语言内容。
+// 源语言即 DB 中存的内容，链走到它就没有可覆盖的副本了
+func (b *BuiltinPayloadInFileType) Readme(lang, ident string) string {
+	for _, l := range LangFallbackChain(lang) {
+		if l == LangSource {
+			break
+		}
+		if m := b.Readmes[l]; m != nil {
+			if content, ok := m[ident]; ok {
+				return content
+			}
+		}
+	}
+	return ""
 }
 
 func (b *BuiltinPayloadInFileType) addBuiltinPayloadForLang(lang string, bp *models.BuiltinPayload) {
@@ -372,15 +421,14 @@ func (b *BuiltinPayloadInFileType) addBuiltinPayloadForLang(lang string, bp *mod
 	b.IndexData[lang][bp.UUID] = bp
 }
 
-// GetByUUID 按语言取单条内置模板，语言桶缺失时回退源语言
+// GetByUUID 按语言取单条内置模板，该语言没有此模板时按回退链逐级降级
 func (b *BuiltinPayloadInFileType) GetByUUID(uuid int64, lang string) *models.BuiltinPayload {
-	if m := b.IndexData[lang]; m != nil {
-		if bp, ok := m[uuid]; ok {
-			return bp
+	for _, l := range LangFallbackChain(lang) {
+		if m := b.IndexData[l]; m != nil {
+			if bp, ok := m[uuid]; ok {
+				return bp
+			}
 		}
-	}
-	if bp, ok := b.IndexData[LangSource][uuid]; ok {
-		return bp
 	}
 	return nil
 }
@@ -411,16 +459,12 @@ func (b *BuiltinPayloadInFileType) GetComponentIdentByCate(typ, cate string) str
 	return ""
 }
 
-// GetBuiltinPayload 按语言取内置模板列表。en_US 桶完整存在（见 AddBuiltinPayload），
-// 未知语言已被 NormalizeLang 归一化；query 在渲染后的 name/tags 上匹配
+// GetBuiltinPayload 按语言取内置模板列表，组件在该语言下没有内容时按回退链降级；
+// query 在渲染后的 name/tags 上匹配
 func (b *BuiltinPayloadInFileType) GetBuiltinPayload(typ, cate, query string, componentId uint64, lang string) ([]*models.BuiltinPayload, error) {
 
 	var result []*models.BuiltinPayload
-	byLang := b.Data[lang]
-	if byLang == nil {
-		byLang = b.Data[LangSource]
-	}
-	source := byLang[componentId]
+	source := b.resolveComponentData(lang, componentId)
 
 	if source == nil {
 		return nil, nil
@@ -457,11 +501,7 @@ func (b *BuiltinPayloadInFileType) GetBuiltinPayload(typ, cate, query string, co
 // DB 查询与任意语言桶
 func (b *BuiltinPayloadInFileType) GetBuiltinPayloadCates(typ string, componentId uint64, lang string) ([]string, error) {
 	var result []string
-	byLang := b.Data[lang]
-	if byLang == nil {
-		byLang = b.Data[LangSource]
-	}
-	source := byLang[componentId]
+	source := b.resolveComponentData(lang, componentId)
 	if source == nil {
 		return result, nil
 	}
