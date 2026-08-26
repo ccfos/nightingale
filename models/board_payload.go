@@ -7,7 +7,11 @@ import (
 )
 
 type BoardPayload struct {
-	Id      int64  `json:"id" gorm:"primaryKey"`
+	// id 就是 board.id，由调用方赋值，不是自增列（见 docker/initsql/a-n9e.sql）。
+	// 不写 autoIncrement:false 的话 gorm 会按自增处理，达梦驱动插入前会先发
+	// SET IDENTITY_INSERT，而从 MySQL 迁移过来的表上没有自增列，直接报
+	// -2717 表[board_payload]不存在IDENTITY列。
+	Id      int64  `json:"id" gorm:"primaryKey;autoIncrement:false"`
 	Payload string `json:"payload"`
 }
 

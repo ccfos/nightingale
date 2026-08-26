@@ -251,7 +251,7 @@ func (InitPostgresBoard) TableName() string {
 }
 
 type InitBoardPayload struct {
-	ID      uint64 `gorm:"not null;comment:dashboard id"`
+	ID      uint64 `gorm:"autoIncrement:false;not null;comment:dashboard id"`
 	Payload string `gorm:"type:mediumtext;not null"`
 }
 
@@ -264,7 +264,7 @@ func (InitBoardPayload) TableOptions() string {
 }
 
 type InitPostgresBoardPayload struct {
-	ID      uint64 `gorm:"primaryKey;comment:dashboard id"`
+	ID      uint64 `gorm:"primaryKey;autoIncrement:false;comment:dashboard id"`
 	Payload string `gorm:"type:TEXT;not null"`
 }
 
@@ -698,7 +698,7 @@ func (InitPostgresAlertAggrView) TableName() string {
 }
 
 type InitAlertCurEvent struct {
-	ID               uint64 `gorm:"primaryKey;NOT NULL;COMMENT:use alert_his_event.id"`
+	ID               uint64 `gorm:"primaryKey;autoIncrement:false;NOT NULL;COMMENT:use alert_his_event.id"`
 	Cate             string `gorm:"size:128;not null"`
 	DatasourceID     int64  `gorm:"not null;default:0;comment:datasource id"`
 	Cluster          string `gorm:"size:128;not null"`
@@ -741,7 +741,7 @@ func (InitAlertCurEvent) TableOptions() string {
 }
 
 type InitPostgresAlertCurEvent struct {
-	ID               uint64 `gorm:"primaryKey;NOT NULL;COMMENT:use alert_his_event.id"`
+	ID               uint64 `gorm:"primaryKey;autoIncrement:false;NOT NULL;COMMENT:use alert_his_event.id"`
 	Cate             string `gorm:"size:128;not null"`
 	DatasourceID     int64  `gorm:"not null;default:0;comment:datasource id"`
 	Cluster          string `gorm:"size:128;not null"`
@@ -988,7 +988,7 @@ func (InitTaskTpl) TableOptions() string {
 
 type InitTaskTplHost struct {
 	II   uint64 `gorm:"primaryKey;autoIncrement"`
-	ID   uint64 `gorm:"not null;comment:task tpl id;index:idx_id_host"`
+	ID   uint64 `gorm:"autoIncrement:false;not null;comment:task tpl id;index:idx_id_host"`
 	Host string `gorm:"size:128;not null;comment:ip or hostname;index:idx_id_host"`
 }
 
@@ -1001,7 +1001,7 @@ func (InitTaskTplHost) TableOptions() string {
 }
 
 type InitTaskRecord struct {
-	ID           uint64 `gorm:"primaryKey"`
+	ID           uint64 `gorm:"primaryKey;autoIncrement:false"`
 	EventID      uint64 `gorm:"not null;default:0;comment:event id;index:idx_event_id"`
 	GroupID      uint64 `gorm:"not null;comment:busi group id;index:idx_group_id_create_at"`
 	IbexAddress  string `gorm:"size:128;not null"`
@@ -1315,7 +1315,7 @@ func (InitTaskMeta) TableOptions() string {
 }
 
 type InitTaskAction struct {
-	ID     uint64 `gorm:"primaryKey"`
+	ID     uint64 `gorm:"primaryKey;autoIncrement:false"`
 	Action string `gorm:"size:32;not null"`
 	Clock  int64  `gorm:"not null;default:0"`
 }
@@ -1329,7 +1329,7 @@ func (InitTaskAction) TableOptions() string {
 }
 
 type InitTaskScheduler struct {
-	ID        uint64 `gorm:"primaryKey;index"`
+	ID        uint64 `gorm:"primaryKey;autoIncrement:false;index"`
 	Scheduler string `gorm:"size:128;not null;default:'';index"`
 }
 
@@ -1355,7 +1355,7 @@ func (InitTaskSchedulerHealth) TableOptions() string {
 }
 
 type InitTaskHostDoing struct {
-	ID     uint64 `gorm:"primaryKey;index"`
+	ID     uint64 `gorm:"primaryKey;autoIncrement:false;index"`
 	Host   string `gorm:"size:128;not null;index"`
 	Clock  int64  `gorm:"not null;default:0"`
 	Action string `gorm:"size:16;not null"`

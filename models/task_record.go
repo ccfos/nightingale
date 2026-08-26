@@ -6,7 +6,8 @@ import (
 )
 
 type TaskRecord struct {
-	Id           int64  `json:"id" gorm:"primaryKey"`
+	// id 就是 ibex 的 task id，由调用方赋值，不是自增列。详见 BoardPayload.Id 上的说明。
+	Id           int64  `json:"id" gorm:"primaryKey;autoIncrement:false"`
 	EventId      int64  `json:"event_id"`
 	GroupId      int64  `json:"group_id"`
 	IbexAddress  string `json:"ibex_address"`
