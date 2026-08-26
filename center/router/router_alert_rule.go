@@ -535,7 +535,7 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				ginx.Dangerous(err)
 				candidate := *ar
 				candidate.RuleConfig = string(b)
-				ginx.Dangerous(candidate.ValidateSeverities(), http.StatusBadRequest)
+				ginx.Dangerous(candidate.ValidateRuleConfig(), http.StatusBadRequest)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"rule_config": string(b)}))
 			}
 

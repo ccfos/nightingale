@@ -569,7 +569,7 @@ func (ar *AlertRule) Verify() error {
 		return errors.New("rule_config is blank")
 	}
 
-	if err := ar.ValidateSeverities(); err != nil {
+	if err := ar.ValidateRuleConfig(); err != nil {
 		return err
 	}
 
@@ -660,14 +660,17 @@ func (ar *AlertRule) Verify() error {
 	return nil
 }
 
-type alertRuleSeverityConfig struct {
+type alertRuleConfigForVerify struct {
 	Version  string `json:"version"`
 	Severity *int   `json:"severity"`
 	Queries  []struct {
-		Severity int `json:"severity"`
+		PromQl   string `json:"prom_ql"`
+		Severity int    `json:"severity"`
 	} `json:"queries"`
-	Triggers []struct {
-		Severity int `json:"severity"`
+	ExpTriggerDisable bool `json:"exp_trigger_disable"`
+	Triggers          []struct {
+		Exp      string `json:"exp"`
+		Severity int    `json:"severity"`
 	} `json:"triggers"`
 	NodataTrigger struct {
 		Enable   bool `json:"enable"`
@@ -686,11 +689,12 @@ func validateAlertRuleSeverity(field string, severity int) error {
 	return nil
 }
 
-// ValidateSeverities checks every severity that can produce an alert event.
-// The top-level AlertRule.Severity and rule_config.severity are legacy shadow
-// fields and may legitimately be zero when a rule uses queries or triggers.
-// Non-zero values in those fields must still be valid severities.
-func (ar *AlertRule) ValidateSeverities() error {
+// ValidateRuleConfig checks the rule_config fields every alert event depends
+// on: severities must be 1, 2 or 3 and the query/trigger expressions must not
+// be blank. The top-level AlertRule.Severity and rule_config.severity are
+// legacy shadow fields and may legitimately be zero when a rule uses queries
+// or triggers. Non-zero values in those fields must still be valid severities.
+func (ar *AlertRule) ValidateRuleConfig() error {
 	if ar.Severity != 0 {
 		if err := validateAlertRuleSeverity("severity", ar.Severity); err != nil {
 			return err
@@ -700,11 +704,11 @@ func (ar *AlertRule) ValidateSeverities() error {
 	var object map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(ar.RuleConfig), &object); err != nil {
 		// RuleConfig is intentionally polymorphic. Other validators own its
-		// overall shape; severity validation only applies to JSON objects.
+		// overall shape; this validation only applies to JSON objects.
 		return nil
 	}
 
-	var config alertRuleSeverityConfig
+	var config alertRuleConfigForVerify
 	if err := json.Unmarshal([]byte(ar.RuleConfig), &config); err != nil {
 		return fmt.Errorf("invalid rule_config: %v", err)
 	}
@@ -717,14 +721,28 @@ func (ar *AlertRule) ValidateSeverities() error {
 		}
 	}
 
-	if isPromV1 && len(config.Queries) > 0 {
+	// Skip the per-query checks when the anomaly trigger is enabled: legacy
+	// anomaly rules (n9e-plus, prod=anomaly) are migrated into queries that
+	// are algorithm inputs without prom_ql/severity — their event severity
+	// lives in anomaly_trigger and is validated below.
+	if isPromV1 && len(config.Queries) > 0 && !config.AnomalyTrigger.Enable {
 		for i := range config.Queries {
+			if strings.TrimSpace(config.Queries[i].PromQl) == "" {
+				return fmt.Errorf("rule_config.queries[%d].prom_ql is blank", i)
+			}
 			if err := validateAlertRuleSeverity(fmt.Sprintf("rule_config.queries[%d].severity", i), config.Queries[i].Severity); err != nil {
 				return err
 			}
 		}
 	} else if !isPromV1 {
+		// Host rules describe triggers with type/duration/percent instead of
+		// an expression, so the exp requirement only applies to other cates
+		// with threshold conditions enabled.
+		expRequired := ar.Cate != HOST && !config.ExpTriggerDisable
 		for i := range config.Triggers {
+			if expRequired && strings.TrimSpace(config.Triggers[i].Exp) == "" {
+				return fmt.Errorf("rule_config.triggers[%d].exp is blank", i)
+			}
 			if err := validateAlertRuleSeverity(fmt.Sprintf("rule_config.triggers[%d].severity", i), config.Triggers[i].Severity); err != nil {
 				return err
 			}
