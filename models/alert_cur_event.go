@@ -21,7 +21,9 @@ import (
 )
 
 type AlertCurEvent struct {
-	Id                 int64               `json:"id" gorm:"primaryKey"`
+	// id 复用 alert_his_event.id，由 EventPersist 赋值，不是自增列。
+	// 详见 BoardPayload.Id 上的说明。
+	Id                 int64               `json:"id" gorm:"primaryKey;autoIncrement:false"`
 	Cate               string              `json:"cate"`
 	Cluster            string              `json:"cluster"`
 	DatasourceId       int64               `json:"datasource_id"`

@@ -31,11 +31,19 @@ func (j *JSONObj) Scan(value interface{}) error {
 }
 
 // 实现 driver.Valuer 接口，Value 返回 json value
+//
+// 这里必须返回 string 而不是 []byte：达梦驱动把 []byte 参数当二进制处理，
+// 绑到 VARCHAR/CLOB 列上会写成十六进制串（{} 变成 "7B7D"），且写入不报错，
+// 读回来 json.Unmarshal 才失败。MySQL/PostgreSQL/SQLite 上两者生成的值一致。
 func (j JSONObj) Value() (driver.Value, error) {
 	if len(j) == 0 {
 		return nil, nil
 	}
-	return json.RawMessage(j).MarshalJSON()
+	bs, err := json.RawMessage(j).MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return string(bs), nil
 }
 
 func (j *JSONObj) MarshalJSON() ([]byte, error) {
@@ -75,11 +83,16 @@ func (j *JSONArr) Scan(value interface{}) error {
 }
 
 // 实现 driver.Valuer 接口，Value 返回 json value
+// 返回 string 的原因见 JSONObj.Value。
 func (j JSONArr) Value() (driver.Value, error) {
 	if len(j) == 0 {
 		return nil, nil
 	}
-	return json.RawMessage(j).MarshalJSON()
+	bs, err := json.RawMessage(j).MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return string(bs), nil
 }
 
 func (j *JSONArr) MarshalJSON() ([]byte, error) {

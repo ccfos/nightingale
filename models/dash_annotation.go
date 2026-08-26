@@ -7,19 +7,22 @@ import (
 )
 
 type DashAnnotation struct {
-	Id               int64    `json:"id" gorm:"primaryKey"`
-	DashboardId      int64    `json:"dashboard_id"`
-	PanelId          string   `json:"panel_id"`
-	Tags             string   `json:"-"`
+	Id          int64 `json:"id" gorm:"primaryKey"`
+	DashboardId int64 `json:"dashboard_id"`
+	// 无长度的 string 在达梦上只落成 VARCHAR(8188 CHAR)，所以要显式声明类型。用 text 而不是
+	// longtext：longtext 是 MySQL 专有拼写，PostgreSQL 没有这个类型，写进来会让本表的
+	// AutoMigrate 直接失败（新库建不出表、老库每次启动 ALTER 报错）。
+	PanelId          string   `json:"panel_id" gorm:"type:text"`
+	Tags             string   `json:"-" gorm:"type:text"`
 	TagsJSON         []string `json:"tags" gorm:"-"`
-	Description      string   `json:"description"`
-	Config           string   `json:"config"`
+	Description      string   `json:"description" gorm:"type:text"`
+	Config           string   `json:"config" gorm:"type:text"`
 	TimeStart        int64    `json:"time_start"`
 	TimeEnd          int64    `json:"time_end"`
 	CreateAt         int64    `json:"create_at"`
-	CreateBy         string   `json:"create_by"`
+	CreateBy         string   `json:"create_by" gorm:"type:text"`
 	UpdateAt         int64    `json:"update_at"`
-	UpdateBy         string   `json:"update_by"`
+	UpdateBy         string   `json:"update_by" gorm:"type:text"`
 	UpdateByNickname string   `json:"update_by_nickname" gorm:"-"`
 }
 

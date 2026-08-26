@@ -79,6 +79,8 @@ func createDatabase(c DBConfig, gconfig *gorm.Config) error {
 		return createPostgresDatabase(c.DSN, gconfig)
 	case "sqlite":
 		return createSqliteDatabase(c.DSN, gconfig)
+	case "dm":
+		return createDMDatabase(c, gconfig)
 	default:
 		return fmt.Errorf("dialector(%s) not supported", c.DBType)
 	}
@@ -170,6 +172,8 @@ func checkDatabaseExist(c DBConfig) (bool, error) {
 		return checkPostgresDatabaseExist(c)
 	case "sqlite":
 		return checkSqliteDatabaseExist(c)
+	case "dm":
+		return checkDMDatabaseExist(c, &gorm.Config{Logger: gormLogger})
 	default:
 		return false, fmt.Errorf("dialector(%s) not supported", c.DBType)
 	}
@@ -310,6 +314,8 @@ func New(c DBConfig) (*gorm.DB, error) {
 	case "sqlite":
 		dialector = sqlite.Open(c.DSN)
 		sqliteUsed = true
+	case "dm":
+		dialector = dmDialector(c.DSN)
 	default:
 		return nil, fmt.Errorf("dialector(%s) not supported", c.DBType)
 	}

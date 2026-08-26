@@ -21,7 +21,7 @@ type InitUser struct {
 	Portrait       string         `gorm:"size:255;not null;default:'';comment:portrait image url"`
 	Roles          string         `gorm:"size:255;not null;comment:Admin | Standard | Guest, split by space"`
 	Contacts       sql.NullString `gorm:"size:1024;default null;comment:json e.g. {wecom:xx, dingtalk_robot_token:yy}"`
-	Maintainer     bool           `gorm:"type:tinyint(1);not null;default:0"`
+	Maintainer     bool           `gorm:"type:tinyint;not null;default:0"`
 	Belong         string         `gorm:"size:16;not null;default:'';comment:belong"`
 	LastActiveTime int64          `gorm:"not null;default:0"`
 	CreateAt       int64          `gorm:"not null;default:0"`
@@ -98,8 +98,8 @@ type InitConfig struct {
 	CKey      string `gorm:"column:ckey;size:191;not null"`
 	CVal      string `gorm:"column:cval;type:text;not null"`
 	Note      string `gorm:"size:1024;not null;default:''"`
-	External  bool   `gorm:"type:tinyint(1);not null;default:0"`
-	Encrypted bool   `gorm:"type:tinyint(1);not null;default:0"`
+	External  bool   `gorm:"type:tinyint;not null;default:0"`
+	Encrypted bool   `gorm:"type:tinyint;not null;default:0"`
 	CreateAt  int64  `gorm:"not null;default:0"`
 	CreateBy  string `gorm:"size:64;not null;default:''"`
 	UpdateAt  int64  `gorm:"not null;default:0"`
@@ -162,7 +162,7 @@ func (InitRoleOperation) TableOptions() string {
 type InitBusiGroup struct {
 	ID          uint64 `gorm:"primaryKey;autoIncrement"`
 	Name        string `gorm:"size:191;not null;uniqueIndex"`
-	LabelEnable bool   `gorm:"type:tinyint(1);not null;default:0"`
+	LabelEnable bool   `gorm:"type:tinyint;not null;default:0"`
 	LabelValue  string `gorm:"size:191;not null;default:'';comment:if label_enable: label_value can not be blank"`
 	CreateAt    int64  `gorm:"not null;default:0"`
 	CreateBy    string `gorm:"size:64;not null;default:''"`
@@ -214,9 +214,9 @@ type InitBoard struct {
 	Name     string `gorm:"size:191;not null;uniqueIndex:idx_groupid_name"`
 	Ident    string `gorm:"size:200;not null;default:'';index"`
 	Tags     string `gorm:"size:255;not null;comment:split by space"`
-	Public   bool   `gorm:"type:tinyint(1);not null;default:0;comment:0:false 1:true"`
-	BuiltIn  bool   `gorm:"type:tinyint(1);not null;default:0;comment:0:false 1:true"`
-	Hide     bool   `gorm:"type:tinyint(1);not null;default:0;comment:0:false 1:true"`
+	Public   bool   `gorm:"type:tinyint;not null;default:0;comment:0:false 1:true"`
+	BuiltIn  bool   `gorm:"type:tinyint;not null;default:0;comment:0:false 1:true"`
+	Hide     bool   `gorm:"type:tinyint;not null;default:0;comment:0:false 1:true"`
 	CreateAt int64  `gorm:"not null;default:0"`
 	CreateBy string `gorm:"size:64;not null;default:''"`
 	UpdateAt int64  `gorm:"not null;default:0"`
@@ -251,7 +251,7 @@ func (InitPostgresBoard) TableName() string {
 }
 
 type InitBoardPayload struct {
-	ID      uint64 `gorm:"not null;comment:dashboard id"`
+	ID      uint64 `gorm:"autoIncrement:false;not null;comment:dashboard id"`
 	Payload string `gorm:"type:mediumtext;not null"`
 }
 
@@ -264,7 +264,7 @@ func (InitBoardPayload) TableOptions() string {
 }
 
 type InitPostgresBoardPayload struct {
-	ID      uint64 `gorm:"primaryKey;comment:dashboard id"`
+	ID      uint64 `gorm:"primaryKey;autoIncrement:false;comment:dashboard id"`
 	Payload string `gorm:"type:TEXT;not null"`
 }
 
@@ -351,8 +351,8 @@ type InitAlertRule struct {
 	Algorithm         string `gorm:"size:255;not null;default:''"`
 	AlgoParams        string `gorm:"size:255"`
 	Delay             int32  `gorm:"not null;default:0"`
-	Severity          int16  `gorm:"type:tinyint(1);not null;comment:1:Emergency 2:Warning 3:Notice"`
-	Disabled          bool   `gorm:"type:tinyint(1);not null;comment:0:enabled 1:disabled"`
+	Severity          int16  `gorm:"type:tinyint;not null;comment:1:Emergency 2:Warning 3:Notice"`
+	Disabled          bool   `gorm:"type:tinyint;not null;comment:0:enabled 1:disabled"`
 	PromForDuration   int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	RuleConfig        string `gorm:"type:text;not null;comment:rule_config"`
 	PromQL            string `gorm:"type:text;not null;comment:promql"`
@@ -360,8 +360,8 @@ type InitAlertRule struct {
 	EnableStime       string `gorm:"size:255;not null;default:'00:00'"`
 	EnableEtime       string `gorm:"size:255;not null;default:'23:59'"`
 	EnableDaysOfWeek  string `gorm:"size:255;not null;default:'';comment:split by space: 0 1 2 3 4 5 6"`
-	EnableInBg        bool   `gorm:"type:tinyint(1);not null;default:0;comment:1: only this bg 0: global"`
-	NotifyRecovered   bool   `gorm:"type:tinyint(1);not null;comment:whether notify when recovery"`
+	EnableInBg        bool   `gorm:"type:tinyint;not null;default:0;comment:1: only this bg 0: global"`
+	NotifyRecovered   bool   `gorm:"type:tinyint;not null;comment:whether notify when recovery"`
 	NotifyChannels    string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
 	NotifyGroups      string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
 	NotifyRepeatStep  int32  `gorm:"not null;default:0;comment:unit: min"`
@@ -443,8 +443,8 @@ type InitAlertMute struct {
 	Cause         string `gorm:"size:255;not null;default:''"`
 	BTime         int64  `gorm:"column:btime;not null;default:0;comment:begin time"`
 	ETime         int64  `gorm:"column:etime;not null;default:0;comment:end time"`
-	Disabled      bool   `gorm:"type:tinyint(1);not null;default:0;comment:0:enabled 1:disabled"`
-	MuteTimeType  bool   `gorm:"type:tinyint(1);not null;default:0"`
+	Disabled      bool   `gorm:"type:tinyint;not null;default:0;comment:0:enabled 1:disabled"`
+	MuteTimeType  bool   `gorm:"type:tinyint;not null;default:0"`
 	PeriodicMutes string `gorm:"size:4096;not null;default:''"`
 	Severities    string `gorm:"size:32;not null;default:''"`
 	CreateAt      int64  `gorm:"not null;default:0;index"`
@@ -490,7 +490,7 @@ func (InitPostgresAlertMute) TableName() string {
 type InitAlertSubscribe struct {
 	ID               uint64 `gorm:"primaryKey;autoIncrement"`
 	Name             string `gorm:"size:255;not null;default:''"`
-	Disabled         bool   `gorm:"type:tinyint(1);not null;default:0;comment:0:enabled 1:disabled"`
+	Disabled         bool   `gorm:"type:tinyint;not null;default:0;comment:0:enabled 1:disabled"`
 	GroupID          uint64 `gorm:"not null;default:0;comment:busi group id;index"`
 	Prod             string `gorm:"size:255;not null;default:''"`
 	Cate             string `gorm:"size:128;not null"`
@@ -499,9 +499,9 @@ type InitAlertSubscribe struct {
 	RuleID           int64  `gorm:"not null;default:0"`
 	Severities       string `gorm:"size:32;not null;default:''"`
 	Tags             string `gorm:"size:4096;not null;default:'';comment:json,map,tagkey->regexp|value"`
-	RedefineSeverity int16  `gorm:"type:tinyint(1);default:0;comment:is redefine severity?"`
-	NewSeverity      int16  `gorm:"type:tinyint(1);not null;comment:0:Emergency 1:Warning 2:Notice"`
-	RedefineChannels int16  `gorm:"type:tinyint(1);default:0;comment:is redefine channels?"`
+	RedefineSeverity int16  `gorm:"type:tinyint;default:0;comment:is redefine severity?"`
+	NewSeverity      int16  `gorm:"type:tinyint;not null;comment:0:Emergency 1:Warning 2:Notice"`
+	RedefineChannels int16  `gorm:"type:tinyint;default:0;comment:is redefine channels?"`
 	NewChannels      string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
 	UserGroupIDs     string `gorm:"size:250;not null;comment:split by space 1 34 5, notify cc to user_group_ids"`
 	BusiGroups       string `gorm:"size:4096;not null;default:'[]'"`
@@ -509,7 +509,7 @@ type InitAlertSubscribe struct {
 	RuleIDs          string `gorm:"size:1024;default:'';comment:rule_ids"`
 	Webhooks         string `gorm:"type:text;not null"`
 	ExtraConfig      string `gorm:"type:text;not null;comment:extra_config"`
-	RedefineWebhooks bool   `gorm:"type:tinyint(1);default:0"`
+	RedefineWebhooks bool   `gorm:"type:tinyint;default:0"`
 	ForDuration      int64  `gorm:"not null;default:0"`
 	CreateAt         int64  `gorm:"not null;default:0"`
 	CreateBy         string `gorm:"size:64;not null;default:''"`
@@ -584,7 +584,7 @@ func (InitTarget) TableOptions() string {
 type InitMetricView struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
 	Name     string `gorm:"size:191;not null;default:''"`
-	Cate     bool   `gorm:"type:tinyint(1);not null;comment:0: preset 1: custom"`
+	Cate     bool   `gorm:"type:tinyint;not null;comment:0: preset 1: custom"`
 	Configs  string `gorm:"size:8192;not null;default:''"`
 	CreateAt int64  `gorm:"not null;default:0"`
 	CreateBy uint64 `gorm:"not null;default:0;comment:user id;index"`
@@ -620,7 +620,7 @@ type InitRecordingRule struct {
 	Cluster           string `gorm:"size:128;not null"`
 	Name              string `gorm:"size:255;not null;comment:new metric name"`
 	Note              string `gorm:"size:255;not null;comment:rule note"`
-	Disabled          bool   `gorm:"type:tinyint(1);not null;default:0;comment:0:enabled 1:disabled"`
+	Disabled          bool   `gorm:"type:tinyint;not null;default:0;comment:0:enabled 1:disabled"`
 	PromQL            string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval  int32  `gorm:"not null;comment:evaluate interval"`
 	CronPattern       string `gorm:"size:255;default:'';comment:cron pattern"`
@@ -669,7 +669,7 @@ type InitAlertAggrView struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
 	Name     string `gorm:"size:191;not null;default:''"`
 	Rule     string `gorm:"size:2048;not null;default:''"`
-	Cate     bool   `gorm:"type:tinyint(1);not null;comment:0: preset 1: custom"`
+	Cate     bool   `gorm:"type:tinyint;not null;comment:0: preset 1: custom"`
 	CreateAt int64  `gorm:"not null;default:0"`
 	CreateBy int64  `gorm:"not null;default:0;comment:user id;index:create_by"`
 	UpdateAt int64  `gorm:"not null;default:0"`
@@ -698,7 +698,7 @@ func (InitPostgresAlertAggrView) TableName() string {
 }
 
 type InitAlertCurEvent struct {
-	ID               uint64 `gorm:"primaryKey;NOT NULL;COMMENT:use alert_his_event.id"`
+	ID               uint64 `gorm:"primaryKey;autoIncrement:false;NOT NULL;COMMENT:use alert_his_event.id"`
 	Cate             string `gorm:"size:128;not null"`
 	DatasourceID     int64  `gorm:"not null;default:0;comment:datasource id"`
 	Cluster          string `gorm:"size:128;not null"`
@@ -710,13 +710,13 @@ type InitAlertCurEvent struct {
 	RuleNote         string `gorm:"size:2048;not null;default:'alert rule note'"`
 	RuleProd         string `gorm:"size:255;not null;default:''"`
 	RuleAlgo         string `gorm:"size:255;not null;default:''"`
-	Severity         int16  `gorm:"type:tinyint(1);not null;comment:0:Emergency 1:Warning 2:Notice"`
+	Severity         int16  `gorm:"type:tinyint;not null;comment:0:Emergency 1:Warning 2:Notice"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	PromQL           string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
 	Callbacks        string `gorm:"size:2048;not null;default:'';comment:split by space: http://a.com/api/x http://a.com/api/y"`
 	RunbookURL       string `gorm:"size:255"`
-	NotifyRecovered  bool   `gorm:"type:tinyint(1);not null;comment:whether notify when recovery"`
+	NotifyRecovered  bool   `gorm:"type:tinyint;not null;comment:whether notify when recovery"`
 	NotifyChannels   string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
 	NotifyGroups     string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
 	NotifyRepeatNext int64  `gorm:"not null;default:0;comment:next timestamp to notify, get repeat settings from rule;index"`
@@ -741,7 +741,7 @@ func (InitAlertCurEvent) TableOptions() string {
 }
 
 type InitPostgresAlertCurEvent struct {
-	ID               uint64 `gorm:"primaryKey;NOT NULL;COMMENT:use alert_his_event.id"`
+	ID               uint64 `gorm:"primaryKey;autoIncrement:false;NOT NULL;COMMENT:use alert_his_event.id"`
 	Cate             string `gorm:"size:128;not null"`
 	DatasourceID     int64  `gorm:"not null;default:0;comment:datasource id"`
 	Cluster          string `gorm:"size:128;not null"`
@@ -781,7 +781,7 @@ func (InitPostgresAlertCurEvent) TableName() string {
 
 type InitAlertHisEvent struct {
 	ID               uint64 `gorm:"primaryKey;autoIncrement"`
-	IsRecovered      bool   `gorm:"type:tinyint(1);not null"`
+	IsRecovered      bool   `gorm:"type:tinyint;not null"`
 	Cate             string `gorm:"size:128;not null"`
 	DatasourceID     int64  `gorm:"not null;default:0;comment:datasource id"`
 	Cluster          string `gorm:"size:128;not null"`
@@ -793,13 +793,13 @@ type InitAlertHisEvent struct {
 	RuleNote         string `gorm:"size:2048;not null;default:'alert rule note'"`
 	RuleProd         string `gorm:"size:255;not null;default:''"`
 	RuleAlgo         string `gorm:"size:255;not null;default:''"`
-	Severity         int16  `gorm:"type:tinyint(1);not null;comment:0:Emergency 1:Warning 2:Notice"`
+	Severity         int16  `gorm:"type:tinyint;not null;comment:0:Emergency 1:Warning 2:Notice"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	PromQL           string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
 	Callbacks        string `gorm:"size:2048;not null;default:'';comment:split by space: http://a.com/api/x http://a.com/api/y"`
 	RunbookURL       string `gorm:"size:255"`
-	NotifyRecovered  bool   `gorm:"type:tinyint(1);not null;comment:whether notify when recovery"`
+	NotifyRecovered  bool   `gorm:"type:tinyint;not null;comment:whether notify when recovery"`
 	NotifyChannels   string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
 	NotifyGroups     string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
 	NotifyCurNumber  int32  `gorm:"not null;default:0"`
@@ -809,7 +809,7 @@ type InitAlertHisEvent struct {
 	TriggerTime      int64  `gorm:"not null;index"`
 	TriggerValue     string `gorm:"type:text;not null"`
 	RecoverTime      int64  `gorm:"not null;default:0"`
-	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index"`
+	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 	Tags             string `gorm:"size:1024;not null;default:'';comment:merge data_tags rule_tags, split by ,,"`
 	OriginalTags     string `gorm:"type:text;comment:labels key=val,,k2=v2"`
 	Annotations      string `gorm:"type:text;not null;comment:annotations"`
@@ -854,7 +854,7 @@ type InitPostgresAlertHisEvent struct {
 	TriggerTime      int64  `gorm:"not null;index"`
 	TriggerValue     string `gorm:"type:text;not null"`
 	RecoverTime      int64  `gorm:"not null;default:0"`
-	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index"`
+	LastEvalTime     int64  `gorm:"not null;default:0;comment:for time filter;index:idx_last_eval_time"`
 	Tags             string `gorm:"size:1024;not null;default:'';comment:merge data_tags rule_tags, split by ,,"`
 	OriginalTags     string `gorm:"type:text;comment:labels key=val,,k2=v2"`
 	Annotations      string `gorm:"type:text;not null;comment:annotations"`
@@ -880,7 +880,7 @@ func (InitBoardBusiGroup) TableOptions() string {
 
 type InitBuiltinComponent struct {
 	ID        int64  `gorm:"primaryKey;not null;autoIncrement;comment:unique identifier"`
-	Ident     string `gorm:"size:191;not null;comment:identifier of component;index"`
+	Ident     string `gorm:"size:191;not null;comment:identifier of component;index:idx_ident"`
 	Logo      string `gorm:"size:191;not null;comment:logo of component"`
 	Readme    string `gorm:"type:text;not null;comment:readme of component"`
 	CreatedAt int64  `gorm:"not null;default:0;comment:create time"`
@@ -900,7 +900,7 @@ func (InitBuiltinComponent) TableOptions() string {
 type InitpostgresBuiltinPayload struct {
 	ID          uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
 	ComponentID uint64 `gorm:"not null;default:0;comment:component_id"`
-	UUID        uint64 `gorm:"not null;comment:uuid of payload;index"`
+	UUID        uint64 `gorm:"not null;comment:uuid of payload;index:idx_uuid"`
 	Type        string `gorm:"size:191;not null;comment:type of payload;index"`
 	Component   string `gorm:"size:191;not null;comment:component of payload;index"`
 	Cate        string `gorm:"size:191;not null;comment:category of payload;index"`
@@ -920,7 +920,7 @@ func (InitpostgresBuiltinPayload) TableName() string {
 type InitBuiltinPayload struct {
 	ID          uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
 	ComponentID uint64 `gorm:"not null;default:0;comment:component_id"`
-	UUID        uint64 `gorm:"not null;comment:uuid of payload;index"`
+	UUID        uint64 `gorm:"not null;comment:uuid of payload;index:idx_uuid"`
 	Type        string `gorm:"size:191;not null;comment:type of payload;index"`
 	Component   string `gorm:"size:191;not null;comment:component of payload;index"`
 	Cate        string `gorm:"size:191;not null;comment:category of payload;index"`
@@ -988,7 +988,7 @@ func (InitTaskTpl) TableOptions() string {
 
 type InitTaskTplHost struct {
 	II   uint64 `gorm:"primaryKey;autoIncrement"`
-	ID   uint64 `gorm:"not null;comment:task tpl id;index:idx_id_host"`
+	ID   uint64 `gorm:"autoIncrement:false;not null;comment:task tpl id;index:idx_id_host"`
 	Host string `gorm:"size:128;not null;comment:ip or hostname;index:idx_id_host"`
 }
 
@@ -1001,8 +1001,8 @@ func (InitTaskTplHost) TableOptions() string {
 }
 
 type InitTaskRecord struct {
-	ID           uint64 `gorm:"primaryKey"`
-	EventID      uint64 `gorm:"not null;default:0;comment:event id;index"`
+	ID           uint64 `gorm:"primaryKey;autoIncrement:false"`
+	EventID      uint64 `gorm:"not null;default:0;comment:event id;index:idx_event_id"`
 	GroupID      uint64 `gorm:"not null;comment:busi group id;index:idx_group_id_create_at"`
 	IbexAddress  string `gorm:"size:128;not null"`
 	IbexAuthUser string `gorm:"size:128;not null;default:''"`
@@ -1056,7 +1056,7 @@ type InitDatasource struct {
 	Status         string `gorm:"size:255;not null;default:''"`
 	HTTP           string `gorm:"size:4096;not null;default:''"`
 	Auth           string `gorm:"size:8192;not null;default:''"`
-	IsDefault      bool   `gorm:"type:tinyint(1);not null;default:0"`
+	IsDefault      bool   `gorm:"type:tinyint;not null;default:0"`
 	CreatedAt      int64  `gorm:"not null;default:0"`
 	CreatedBy      string `gorm:"size:64;not null;default:''"`
 	UpdatedAt      int64  `gorm:"not null;default:0"`
@@ -1145,10 +1145,10 @@ func (InitSSOConfig) TableOptions() string {
 
 type InitESIndexPattern struct {
 	ID                     uint64 `gorm:"primaryKey;autoIncrement"`
-	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource_name"`
-	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_datasource_name"`
+	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_ds_name"`
+	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_ds_name"`
 	TimeField              string `gorm:"size:128;not null;default:'@timestamp'"`
-	AllowHideSystemIndices bool   `gorm:"type:tinyint(1);not null;default:0"`
+	AllowHideSystemIndices bool   `gorm:"type:tinyint;not null;default:0"`
 	FieldsFormat           string `gorm:"size:4096;not null;default:''"`
 	CreateAt               int64  `gorm:"default:0"`
 	CreateBy               string `gorm:"size:64;default:''"`
@@ -1169,7 +1169,7 @@ type InitSqliteESIndexPattern struct {
 	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource"`
 	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_name"`
 	TimeField              string `gorm:"size:128;not null;default:'@timestamp'"`
-	AllowHideSystemIndices bool   `gorm:"type:tinyint(1);not null;default:0"`
+	AllowHideSystemIndices bool   `gorm:"type:tinyint;not null;default:0"`
 	FieldsFormat           string `gorm:"size:4096;not null;default:''"`
 	CreateAt               int64  `gorm:"default:0"`
 	CreateBy               string `gorm:"size:64;default:''"`
@@ -1183,8 +1183,8 @@ func (InitSqliteESIndexPattern) TableName() string {
 
 type InitPostgresESIndexPattern struct {
 	ID                     uint64 `gorm:"primaryKey;autoIncrement"`
-	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource_name"`
-	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_datasource_name"`
+	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_ds_name"`
+	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_ds_name"`
 	TimeField              string `gorm:"size:128;not null;default:'@timestamp'"`
 	AllowHideSystemIndices int16  `gorm:"type:smallint;not null;default:0"`
 	FieldsFormat           string `gorm:"size:4096;not null;default:''"`
@@ -1244,7 +1244,7 @@ func (InitSqliteBuiltinMetric) TableName() string {
 
 type InitMetricFilter struct {
 	ID         uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
-	Name       string `gorm:"size:191;not null;comment:name of metric filter;index:idx_name"`
+	Name       string `gorm:"size:191;not null;comment:name of metric filter;index:idx_metricfilter_name"`
 	Configs    string `gorm:"size:4096;not null;comment:configuration of metric filter"`
 	GroupsPerm string `gorm:"type:text"`
 	CreateAt   int64  `gorm:"not null;default:0;comment:create time"`
@@ -1315,7 +1315,7 @@ func (InitTaskMeta) TableOptions() string {
 }
 
 type InitTaskAction struct {
-	ID     uint64 `gorm:"primaryKey"`
+	ID     uint64 `gorm:"primaryKey;autoIncrement:false"`
 	Action string `gorm:"size:32;not null"`
 	Clock  int64  `gorm:"not null;default:0"`
 }
@@ -1329,7 +1329,7 @@ func (InitTaskAction) TableOptions() string {
 }
 
 type InitTaskScheduler struct {
-	ID        uint64 `gorm:"primaryKey;index"`
+	ID        uint64 `gorm:"primaryKey;autoIncrement:false;index"`
 	Scheduler string `gorm:"size:128;not null;default:'';index"`
 }
 
@@ -1355,7 +1355,7 @@ func (InitTaskSchedulerHealth) TableOptions() string {
 }
 
 type InitTaskHostDoing struct {
-	ID     uint64 `gorm:"primaryKey;index"`
+	ID     uint64 `gorm:"primaryKey;autoIncrement:false;index"`
 	Host   string `gorm:"size:128;not null;index"`
 	Clock  int64  `gorm:"not null;default:0"`
 	Action string `gorm:"size:16;not null"`
@@ -1407,9 +1407,62 @@ func DataBaseInit(c DBConfig, db *gorm.DB) error {
 		return postgresDataBaseInit(db)
 	case "sqlite":
 		return sqliteDataBaseInit(db)
+	case "dm":
+		return dmDataBaseInit(db)
 	default:
 		return fmt.Errorf("unsupported database type: %s", c.DBType)
 	}
+}
+
+// dmDataBaseInit 复用 mysql 那套 Init 结构建表，只有两点不同：
+//
+//   - task_host_0..99 共用一个模型，而达梦的索引名在 schema 内全局唯一，所以不能用带
+//     具名 uniqueIndex 的 InitTaskHost。这里改用无具名索引的变体建表，再按分表名各建
+//     一个 (id, host) 复合唯一索引，既避开撞名又保住唯一性约束。
+//   - 建表失败直接返回错误。mysql 分支只记日志，代价是表没建成进程照样起来，问题要到
+//     很久以后才暴露；新接的方言不沿用这个行为。
+func dmDataBaseInit(db *gorm.DB) error {
+	for _, dt := range initTables(&InitSqliteTaskHost{}) {
+		if err := db.AutoMigrate(dt); err != nil {
+			return fmt.Errorf("dmDataBaseInit AutoMigrate %T: %v", dt, err)
+		}
+	}
+
+	for i := 0; i <= 99; i++ {
+		tableName := "task_host_" + strconv.Itoa(i)
+		if i > 0 {
+			if err := db.Table(tableName).AutoMigrate(&InitSqliteTaskHost{}); err != nil {
+				return fmt.Errorf("dmDataBaseInit AutoMigrate %s: %v", tableName, err)
+			}
+		}
+		if err := createDMTaskHostIndex(db, tableName); err != nil {
+			return err
+		}
+	}
+
+	return seedInitialData(db, "dm")
+}
+
+// createDMTaskHostIndex 为单张 task_host 分表建 (id, host) 复合唯一索引。
+// 索引名带表名前缀，避免 100 张分表在 schema 全局的索引名空间里互相撞名。
+func createDMTaskHostIndex(db *gorm.DB, tableName string) error {
+	indexName := "idx_" + tableName + "_id_host"
+
+	var count int64
+	if err := db.Raw(
+		"SELECT COUNT(*) FROM ALL_INDEXES WHERE INDEX_NAME = ?", indexName,
+	).Scan(&count).Error; err != nil {
+		return fmt.Errorf("dmDataBaseInit check index %s: %v", indexName, err)
+	}
+	if count > 0 {
+		return nil
+	}
+
+	sql := fmt.Sprintf(`CREATE UNIQUE INDEX "%s" ON "%s"("id", "host")`, indexName, tableName)
+	if err := db.Exec(sql).Error; err != nil {
+		return fmt.Errorf("dmDataBaseInit create index %s: %v", indexName, err)
+	}
+	return nil
 }
 
 func sqliteDataBaseInit(db *gorm.DB) error {
@@ -1604,14 +1657,16 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 	return nil
 }
 
-func mysqlDataBaseInit(db *gorm.DB) error {
-	dts := []interface{}{
+// initTables 返回首次建库需要 AutoMigrate 的全部表，mysql 与 dm 共用。
+// taskHostModel 用于 task_host_0 —— 达梦需要换成不带具名唯一索引的变体，见 dmDataBaseInit。
+func initTables(taskHostModel interface{}) []interface{} {
+	return []interface{}{
 		&InitTaskMeta{},
 		&InitTaskAction{},
 		&InitTaskScheduler{},
 		&InitTaskSchedulerHealth{},
 		&InitTaskHostDoing{},
-		&InitTaskHost{},
+		taskHostModel,
 		&InitBoardBusiGroup{},
 		&InitBuiltinComponent{},
 		&InitBuiltinPayload{},
@@ -1650,23 +1705,13 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
-		&InitAlertRule{}}
-
-	for _, dt := range dts {
-		err := db.AutoMigrate(dt)
-		if err != nil {
-			logger.Errorf("mysqlDataBaseInit AutoMigrate error: %v\n", err)
-		}
+		&InitAlertRule{},
 	}
+}
 
-	for i := 1; i <= 99; i++ {
-		tableName := "task_host_" + strconv.Itoa(i)
-		err := db.Table(tableName).AutoMigrate(&InitTaskHost{})
-		if err != nil {
-			logger.Errorf("mysqlDataBaseInit AutoMigrate task_host_%d error: %v\n", i, err)
-		}
-	}
-
+// seedInitialData 写入首次建库的种子数据（角色权限、root 用户、默认业务组等）。
+// 失败只记录日志：种子数据可能因重复执行而冲突，不应阻断启动。
+func seedInitialData(db *gorm.DB, dbType string) error {
 	roleOperations := []InitRoleOperation{
 		{RoleName: "Guest", Operation: "/metric/explorer"},
 		{RoleName: "Guest", Operation: "/object/explorer"},
@@ -1780,19 +1825,35 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 	}
 
 	for _, roleOperation := range roleOperations {
-		err := db.Create(&roleOperation).Error
-		if err != nil {
-			logger.Errorf("[mysql database init]create role operation error: %v", err)
+		if err := db.Create(&roleOperation).Error; err != nil {
+			logger.Errorf("[%s database init]create role operation error: %v", dbType, err)
 		}
 	}
 
 	for _, entry := range entries {
 		if err := db.Create(entry.entry).Error; err != nil {
-			logger.Errorf("[mysql database init]create %s error: %v", entry.name, err)
+			logger.Errorf("[%s database init]create %s error: %v", dbType, entry.name, err)
 		}
 	}
 
 	return nil
+}
+
+func mysqlDataBaseInit(db *gorm.DB) error {
+	for _, dt := range initTables(&InitTaskHost{}) {
+		if err := db.AutoMigrate(dt); err != nil {
+			logger.Errorf("mysqlDataBaseInit AutoMigrate error: %v\n", err)
+		}
+	}
+
+	for i := 1; i <= 99; i++ {
+		tableName := "task_host_" + strconv.Itoa(i)
+		if err := db.Table(tableName).AutoMigrate(&InitTaskHost{}); err != nil {
+			logger.Errorf("mysqlDataBaseInit AutoMigrate task_host_%d error: %v\n", i, err)
+		}
+	}
+
+	return seedInitialData(db, "mysql")
 }
 
 func postgresDataBaseInit(db *gorm.DB) error {
