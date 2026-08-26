@@ -1,33 +1,33 @@
 # Pushgw Proxy Remote Write API
 
-Nightingale pushgw 提供一个**纯转发**的 remote_write 接口：客户端把 Prometheus remote_write 数据推给 pushgw，pushgw 不解析 body、不进队列，直接将原始字节按配置文件中的 `Writers` 列表逐个转发给后端（Prometheus / VictoriaMetrics / Mimir / 其他兼容 remote_write 协议的存储）。
+Nightingale pushgw provides a **pure forwarding** remote_write endpoint: the client pushes Prometheus remote_write data to pushgw, and pushgw forwards the raw bytes to each backend in the `Writers` list from the configuration file (Prometheus / VictoriaMetrics / Mimir / any other storage that speaks the remote_write protocol) without parsing the body or going through a queue.
 
-相比 `/prometheus/v1/write` 走内存队列 + relabel + sharding 的完整链路，`/proxy/v1/write` 更接近一个"带认证和并发保护的 L7 反向代理"，适用于：
+Compared with `/prometheus/v1/write`, which goes through the full in-memory queue + relabel + sharding pipeline, `/proxy/v1/write` behaves much more like "an L7 reverse proxy with authentication and concurrency protection". It suits cases where:
 
-- pushgw 本身只想做一层接入网关，写入聚合交给后端集群；
-- 多机房 / 多副本 fan-out，需要把同一份数据复制到多个后端；
-- 想要原样保留客户端 header（`Content-Encoding`、`X-Prometheus-Remote-Write-Version` 等），不希望被 pushgw 重新打包。
+- pushgw is only meant to be an ingest gateway and write aggregation is left to the backend cluster;
+- you need multi-datacenter / multi-replica fan-out, replicating the same data to several backends;
+- you want the client's headers (`Content-Encoding`, `X-Prometheus-Remote-Write-Version`, and so on) preserved verbatim instead of being repackaged by pushgw.
 
 ---
 
-## 接口定义
+## Endpoint
 
 ```
 POST /proxy/v1/write
 ```
 
-- 请求 body：标准 Prometheus remote_write，即 protobuf + snappy 压缩。
-- pushgw 不会解析 body，原样转发；query string 也会原样附加到每个 writer 的 URL 上。
-- 是否需要认证由 pushgw 配置决定（见下文 `BasicAuth`）。
+- Request body: standard Prometheus remote_write, i.e. protobuf with snappy compression.
+- pushgw never parses the body and forwards it verbatim; the query string is appended verbatim to each writer's URL as well.
+- Whether authentication is required is decided by the pushgw configuration (see `BasicAuth` below).
 
-### 认证方式
+### Authentication
 
-是否启用认证由 `pushgw.yaml` 中的 `HTTP.APIForAgent.BasicAuth` / `HTTP.APIForService.BasicAuth` 决定：
+Whether authentication is enabled is controlled by `HTTP.APIForAgent.BasicAuth` / `HTTP.APIForService.BasicAuth` in `pushgw.yaml`:
 
-- 任一 map 非空 → 启用 HTTP Basic Auth，需在请求头携带 `Authorization: Basic <base64(user:pass)>`；
-- 两者均为空 → 不需要认证。
+- If either map is non-empty → HTTP Basic Auth is enabled, and the request must carry `Authorization: Basic <base64(user:pass)>`;
+- If both are empty → no authentication is required.
 
-示例：
+Example:
 
 ```bash
 curl -u myuser:mypass \
@@ -38,63 +38,63 @@ curl -u myuser:mypass \
   "http://pushgw:17000/proxy/v1/write"
 ```
 
-### 请求头透传规则
+### Header pass-through rules
 
-下列请求头会被 pushgw 透传到后端 writer；缺省时使用默认值：
+The following request headers are passed through by pushgw to the backend writer; when absent, the default is used:
 
-| 请求头 | 默认值 | 说明 |
+| Header | Default | Description |
 |--------|--------|------|
-| `Content-Type` | `application/x-protobuf` | remote_write 标准 |
-| `Content-Encoding` | `snappy` | remote_write 标准 |
-| `User-Agent` | `n9e` | 如果客户端带了，会被追加 `-n9e` 后缀（例如 `prometheus/2.45.0-n9e`） |
-| `X-Prometheus-Remote-Write-Version` | `0.1.0` | remote_write 协议版本 |
+| `Content-Type` | `application/x-protobuf` | remote_write standard |
+| `Content-Encoding` | `snappy` | remote_write standard |
+| `User-Agent` | `n9e` | If the client sends one, a `-n9e` suffix is appended (for example `prometheus/2.45.0-n9e`) |
+| `X-Prometheus-Remote-Write-Version` | `0.1.0` | remote_write protocol version |
 
-其他请求头不会主动透传。后端 writer 自身的 `BasicAuthUser` / `BasicAuthPass` / `Headers` 在转发时单独设置（在配置文件里配，详见下文）。
+No other request headers are passed through. A writer's own `BasicAuthUser` / `BasicAuthPass` / `Headers` are set separately when forwarding (configured in the configuration file, see below).
 
-### Query String 透传
+### Query string pass-through
 
-请求 URL 的 query string 会原样拼接到每个 writer 的 URL 后面。例如：
+The query string of the request URL is appended verbatim to each writer's URL. For example:
 
-- writer 配置：`http://vminsert:8480/insert/0/prometheus/api/v1/write`
-- 客户端请求：`POST /proxy/v1/write?extra_label=cluster%3Dcn-bj`
-- 实际转发：`POST http://vminsert:8480/insert/0/prometheus/api/v1/write?extra_label=cluster%3Dcn-bj`
+- Writer configuration: `http://vminsert:8480/insert/0/prometheus/api/v1/write`
+- Client request: `POST /proxy/v1/write?extra_label=cluster%3Dcn-bj`
+- Actually forwarded: `POST http://vminsert:8480/insert/0/prometheus/api/v1/write?extra_label=cluster%3Dcn-bj`
 
-若 writer URL 本身已带 `?`，则用 `&` 续接。
+If the writer URL already contains a `?`, an `&` is used instead.
 
 ---
 
-## 响应
+## Response
 
-### 成功
+### Success
 
 ```
 HTTP/1.1 200 OK
 ```
 
-注意：**只要 pushgw 收到并准备好转发，就立即返回 200**。后端 writer 是否成功（含 4xx/5xx、超时、连接失败）只会反映在日志和 metrics 中，**不会回写到客户端响应**。这是 fan-out + 多 writer 设计的必然结果——任意一个 writer 慢/挂都不应该影响整个请求。
+Note: **as soon as pushgw has received the data and is ready to forward it, it returns 200**. Whether a backend writer succeeded (including 4xx/5xx, timeouts, and connection failures) is reflected only in logs and metrics and is **never propagated back to the client response**. This follows inevitably from the fan-out / multi-writer design — one slow or dead writer must not affect the whole request.
 
-### 失败
+### Failure
 
-| 状态码 | 响应 | 触发条件 |
+| Status | Response | Trigger |
 |--------|------|----------|
-| 400 | `{"error": "..."}` | 读取 body 失败（连接中断、客户端关闭等） |
-| 413 | `proxy remote write body too large: > <N> bytes` | 单个请求 body 超过 `ProxyMaxBodyBytes` |
-| 429 | `proxy remote write inflight over limit: <N>` | 并发 in-flight 数超过 `ProxyInflightMax` |
+| 400 | `{"error": "..."}` | Reading the body failed (connection reset, client closed, etc.) |
+| 413 | `proxy remote write body too large: > <N> bytes` | A single request body exceeds `ProxyMaxBodyBytes` |
+| 429 | `proxy remote write inflight over limit: <N>` | The number of concurrent in-flight requests exceeds `ProxyInflightMax` |
 
-429 是**背压**信号，配合 remote_write 客户端原生的 WAL + 退避重试机制，客户端会自动重试，无需上层处理。
+429 is a **backpressure** signal. Combined with the remote_write client's native WAL and backoff-retry mechanism, the client retries automatically and no handling is needed at a higher layer.
 
 ---
 
-## 背压与限流
+## Backpressure and rate limiting
 
-`/proxy/v1/write` 通过两个全局参数控制内存上限：
+`/proxy/v1/write` bounds memory usage with two global parameters:
 
-| 配置项 | 默认值 | 说明 |
+| Setting | Default | Description |
 |--------|--------|------|
-| `Pushgw.ProxyInflightMax` | `1000` | 单个 pushgw 进程的并发上限。超过直接 429，请求**不计入** writer 转发 |
-| `Pushgw.ProxyMaxBodyBytes` | `32 * 1024 * 1024`（32 MiB） | 单个请求 body 最大字节数，超过返回 413 |
+| `Pushgw.ProxyInflightMax` | `1000` | Concurrency limit for a single pushgw process. Exceeding it returns 429 immediately, and the request is **not** counted toward writer forwarding |
+| `Pushgw.ProxyMaxBodyBytes` | `32 * 1024 * 1024` (32 MiB) | Maximum body size of a single request; exceeding it returns 413 |
 
-`pushgw.yaml` 示例：
+Example `pushgw.yaml`:
 
 ```yaml
 Pushgw:
@@ -117,47 +117,47 @@ Pushgw:
       Timeout: 10000
 ```
 
-> 内存占用上限约为 `ProxyInflightMax × ProxyMaxBodyBytes`，按 1000 × 32 MiB ≈ 32 GiB 估算，实际峰值远小于此（多数 remote_write 批次在 64–256 KiB）。
+> The memory ceiling is roughly `ProxyInflightMax × ProxyMaxBodyBytes`, i.e. about 1000 × 32 MiB ≈ 32 GiB, but the real peak is far lower (most remote_write batches are 64–256 KiB).
 
-### Writers 配置说明
+### Writers configuration
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |------|------|------|
-| `Url` | string | 后端 remote_write 地址（必填） |
-| `BasicAuthUser` / `BasicAuthPass` | string | 后端基本认证账号 |
-| `Timeout` | int (ms) | 整个请求超时 |
-| `DialTimeout` | int (ms) | TCP 建连超时 |
-| `MaxConnsPerHost` / `MaxIdleConns` / `MaxIdleConnsPerHost` | int | HTTP 连接池参数 |
-| `IdleConnTimeout` / `KeepAlive` / `TLSHandshakeTimeout` / `ExpectContinueTimeout` | int (ms) | HTTP 传输层各类超时 |
-| `Headers` | []string | 自定义请求头，按 `[key1, val1, key2, val2, ...]` 成对写入。若 key 为 `Host`，会同时设置 `req.Host` |
+| `Url` | string | Backend remote_write address (required) |
+| `BasicAuthUser` / `BasicAuthPass` | string | Basic-auth credentials for the backend |
+| `Timeout` | int (ms) | Timeout for the whole request |
+| `DialTimeout` | int (ms) | TCP connection timeout |
+| `MaxConnsPerHost` / `MaxIdleConns` / `MaxIdleConnsPerHost` | int | HTTP connection-pool parameters |
+| `IdleConnTimeout` / `KeepAlive` / `TLSHandshakeTimeout` / `ExpectContinueTimeout` | int (ms) | Various HTTP transport-layer timeouts |
+| `Headers` | []string | Custom request headers, written in pairs as `[key1, val1, key2, val2, ...]`. If a key is `Host`, `req.Host` is set as well |
 
-> 注意：`/proxy/v1/write` 不使用 `WriteRelabels`（不解析 body 自然没法 relabel）。relabel 只在 `/prometheus/v1/write` 路径上生效。
+> Note: `/proxy/v1/write` does not use `WriteRelabels` — it cannot relabel what it does not parse. Relabeling only takes effect on the `/prometheus/v1/write` path.
 
 ---
 
-## 监控指标
+## Metrics
 
-pushgw 在 `/metrics` 接口暴露以下指标（namespace `n9e_pushgw`）：
+pushgw exposes the following metrics on `/metrics` (namespace `n9e_pushgw`):
 
-| 指标 | 类型 | 标签 | 说明 |
+| Metric | Type | Labels | Description |
 |------|------|------|------|
-| `n9e_pushgw_proxy_remote_write_total` | Counter | - | 收到的 `/proxy/v1/write` 请求总数 |
-| `n9e_pushgw_proxy_remote_write_inflight` | Gauge | - | 当前 in-flight 请求数（背压观测的核心指标） |
-| `n9e_pushgw_proxy_remote_write_over_limit_total` | Counter | - | 因 in-flight 超限被 429 拒绝的请求数 |
-| `n9e_pushgw_proxy_remote_write_body_too_large_total` | Counter | - | 因 body 超限被 413 拒绝的请求数 |
-| `n9e_pushgw_proxy_forward_total` | Counter | `url` | 向各 writer 发起的转发次数 |
-| `n9e_pushgw_proxy_forward_error_total` | Counter | `url`, `reason` | 转发失败次数。`reason` 取值：`build_request` / `do_request` / `status_4xx_5xx` |
-| `n9e_pushgw_proxy_forward_duration_seconds` | Histogram | `url` | 单次转发耗时分布 |
+| `n9e_pushgw_proxy_remote_write_total` | Counter | - | Total number of `/proxy/v1/write` requests received |
+| `n9e_pushgw_proxy_remote_write_inflight` | Gauge | - | Current number of in-flight requests (the key metric for observing backpressure) |
+| `n9e_pushgw_proxy_remote_write_over_limit_total` | Counter | - | Number of requests rejected with 429 because the in-flight limit was exceeded |
+| `n9e_pushgw_proxy_remote_write_body_too_large_total` | Counter | - | Number of requests rejected with 413 because the body limit was exceeded |
+| `n9e_pushgw_proxy_forward_total` | Counter | `url` | Number of forwards issued to each writer |
+| `n9e_pushgw_proxy_forward_error_total` | Counter | `url`, `reason` | Number of failed forwards. `reason` is one of `build_request` / `do_request` / `status_4xx_5xx` |
+| `n9e_pushgw_proxy_forward_duration_seconds` | Histogram | `url` | Distribution of per-forward latency |
 
-推荐告警：
+Recommended alerts:
 
-- `n9e_pushgw_proxy_remote_write_inflight` 长期接近 `ProxyInflightMax` → 扩容或调高阈值；
-- `rate(n9e_pushgw_proxy_remote_write_over_limit_total[5m]) > 0` 持续触发 → 后端写入慢，客户端可能丢数据；
-- `rate(n9e_pushgw_proxy_forward_error_total[5m]) > 0` 按 `url` / `reason` 切片排障。
+- `n9e_pushgw_proxy_remote_write_inflight` staying close to `ProxyInflightMax` → scale out or raise the threshold;
+- `rate(n9e_pushgw_proxy_remote_write_over_limit_total[5m]) > 0` firing continuously → backend writes are slow and clients may be losing data;
+- `rate(n9e_pushgw_proxy_forward_error_total[5m]) > 0` → slice by `url` / `reason` to troubleshoot.
 
 ---
 
-## 客户端配置示例
+## Client configuration examples
 
 ### Prometheus
 
@@ -184,21 +184,21 @@ vmagent \
 
 ### Grafana Alloy / OpenTelemetry Collector
 
-任何兼容 Prometheus remote_write 协议的客户端都可直接对接。
+Any client that speaks the Prometheus remote_write protocol can connect directly.
 
 ---
 
-## 与 `/prometheus/v1/write` 的对比
+## Comparison with `/prometheus/v1/write`
 
-| 维度 | `/prometheus/v1/write` | `/proxy/v1/write` |
+| Aspect | `/prometheus/v1/write` | `/proxy/v1/write` |
 |------|------------------------|--------------------|
-| 是否解析 body | 是（protobuf 解码、relabel、sharding） | 否（纯字节转发） |
-| 内存队列 | 多分片大内存队列 | 仅 in-flight 计数 |
-| Relabel / Drop / 标签改写 | 支持 | **不支持** |
-| 心跳元数据更新 | 支持 | **不支持** |
-| Kafka writer | 支持 | **不支持** |
-| 背压机制 | 队列水位 + 丢弃 | in-flight 阈值 + 429 |
-| 延迟 / CPU 开销 | 较高 | 极低 |
-| 适用场景 | 需要在 pushgw 做加工 / 路由 | pushgw 只做认证 + fan-out |
+| Parses the body | Yes (protobuf decoding, relabel, sharding) | No (raw byte forwarding) |
+| In-memory queue | Large multi-shard in-memory queue | In-flight counter only |
+| Relabel / drop / label rewriting | Supported | **Not supported** |
+| Heartbeat metadata updates | Supported | **Not supported** |
+| Kafka writer | Supported | **Not supported** |
+| Backpressure mechanism | Queue watermark + dropping | In-flight threshold + 429 |
+| Latency / CPU overhead | Higher | Very low |
+| Best for | Processing or routing inside pushgw | pushgw doing only authentication + fan-out |
 
-简单原则：**需要 relabel、target 心跳、kafka 旁路** → 用 `/prometheus/v1/write`；**单纯透明转发到 remote_write 后端** → 用 `/proxy/v1/write`。
+A simple rule of thumb: **if you need relabeling, target heartbeats, or the Kafka side channel** → use `/prometheus/v1/write`; **if you just want transparent forwarding to remote_write backends** → use `/proxy/v1/write`.

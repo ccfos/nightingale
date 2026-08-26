@@ -1,8 +1,8 @@
-# AI 助手会话接口
+# AI Assistant Chat API
 
-本文说明 Nightingale AI 助手会话相关接口。
+This document describes the chat-related APIs of the Nightingale AI assistant.
 
-所有成功响应均使用 Nightingale 标准 JSON 信封：
+Every successful response uses the standard Nightingale JSON envelope:
 
 ```json
 {
@@ -12,37 +12,37 @@
 }
 ```
 
-## 重命名会话
+## Rename a chat
 
 ```text
 POST /api/n9e/assistant/chat/rename
 ```
 
-需要登录。调用者只能重命名自己创建的会话。
+Requires login. A caller may only rename chats they created themselves.
 
-### 请求体
+### Request body
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `chat_id` | string | 是 | 要重命名的会话 ID |
-| `title` | string | 是 | 新标题；不能是空字符串或仅由空白字符组成 |
+| `chat_id` | string | Yes | ID of the chat to rename |
+| `title` | string | Yes | The new title; it must not be empty or consist only of whitespace |
 
 ```json
 {
   "chat_id": "ad4075b8-ea4e-43d5-954c-71bb951874ca",
-  "title": "生产环境告警排查"
+  "title": "Production alert troubleshooting"
 }
 ```
 
-### 响应
+### Response
 
-成功时，`dat` 是更新后的会话对象：
+On success, `dat` holds the updated chat object:
 
 ```json
 {
   "dat": {
     "chat_id": "ad4075b8-ea4e-43d5-954c-71bb951874ca",
-    "title": "生产环境告警排查",
+    "title": "Production alert troubleshooting",
     "last_update": 1730000000,
     "page_from": {
       "page": "dashboards"
@@ -56,11 +56,11 @@ POST /api/n9e/assistant/chat/rename
 }
 ```
 
-`is_renamed` 表示标题已被用户手动设置。若在发送首条消息前改名，服务端不会再使用首条消息内容自动覆盖该标题。改名本身不会修改 `last_update`，因此不会影响历史会话列表的排序。
+`is_renamed` indicates that the title was set manually by the user. If the chat is renamed before the first message is sent, the server will no longer overwrite that title automatically with the content of the first message. Renaming itself does not change `last_update`, so it does not affect the ordering of the chat history list.
 
-### 错误
+### Errors
 
-| HTTP 状态码 | 场景 |
+| HTTP status | Scenario |
 | --- | --- |
-| 400 | `chat_id` 缺失，或 `title` 为空/仅空白字符 |
-| 200 | 会话不存在或不属于当前用户；按 n9e 通用错误格式在 `err` 中返回错误信息 |
+| 400 | `chat_id` is missing, or `title` is empty / whitespace only |
+| 200 | The chat does not exist or does not belong to the current user; the error message is returned in `err` using the standard n9e error format |

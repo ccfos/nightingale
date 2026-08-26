@@ -1,36 +1,36 @@
 # AI Agent API
 
-所有接口需要管理员权限（`auth` + `admin`）。
+All endpoints require administrator privileges (`auth` + `admin`).
 
-## 数据结构
+## Data structures
 
 ### AIAgent
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |------|------|------|------|
-| id | int64 | - | 主键，自增 |
-| name | string | 是 | Agent 名称 |
-| description | string | 否 | 描述 |
-| use_case | string | 否 | 用途场景，如 `chat` |
-| llm_config_id | int64 | 是 | 关联的 LLM 配置 ID |
-| skill_ids | int64[] | 否 | 关联的 Skill ID 列表 |
-| mcp_server_ids | int64[] | 否 | 关联的 MCP Server ID 列表 |
-| enabled | bool | 否 | 是否启用，请显式传入 `true` 或 `false` |
-| created_at | int64 | - | 创建时间（Unix 时间戳） |
-| created_by | string | - | 创建人 |
-| updated_at | int64 | - | 更新时间（Unix 时间戳） |
-| updated_by | string | - | 更新人 |
-| llm_config_name | string | - | 运行时字段，关联的 LLM 配置名称（不存储） |
+| id | int64 | - | Primary key, auto-increment |
+| name | string | Yes | Agent name |
+| description | string | No | Description |
+| use_case | string | No | Use case, e.g. `chat` |
+| llm_config_id | int64 | Yes | ID of the associated LLM configuration |
+| skill_ids | int64[] | No | IDs of the associated skills |
+| mcp_server_ids | int64[] | No | IDs of the associated MCP servers |
+| enabled | bool | No | Whether the agent is enabled; pass `true` or `false` explicitly |
+| created_at | int64 | - | Creation time (Unix timestamp) |
+| created_by | string | - | Creator |
+| updated_at | int64 | - | Last update time (Unix timestamp) |
+| updated_by | string | - | Last updated by |
+| llm_config_name | string | - | Runtime field: the name of the associated LLM configuration (not stored) |
 
 ---
 
-## 获取 Agent 列表
+## List agents
 
 ```
 GET /api/n9e/ai-agents
 ```
 
-### 响应
+### Response
 
 ```json
 {
@@ -38,7 +38,7 @@ GET /api/n9e/ai-agents
     {
       "id": 1,
       "name": "chat-agent",
-      "description": "AI 对话 Agent",
+      "description": "AI chat agent",
       "use_case": "chat",
       "llm_config_id": 1,
       "skill_ids": [1, 2],
@@ -56,26 +56,26 @@ GET /api/n9e/ai-agents
 
 ---
 
-## 获取 Agent 详情
+## Get agent details
 
 ```
 GET /api/n9e/ai-agent/:id
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Agent ID |
 
-### 响应
+### Response
 
 ```json
 {
   "dat": {
     "id": 1,
     "name": "chat-agent",
-    "description": "AI 对话 Agent",
+    "description": "AI chat agent",
     "use_case": "chat",
     "llm_config_id": 1,
     "skill_ids": [1, 2],
@@ -90,24 +90,24 @@ GET /api/n9e/ai-agent/:id
 }
 ```
 
-### 错误
+### Errors
 
-- `404` Agent 不存在
+- `404` the agent does not exist
 
 ---
 
-## 创建 Agent
+## Create an agent
 
 ```
 POST /api/n9e/ai-agents
 ```
 
-### 请求体
+### Request body
 
 ```json
 {
   "name": "chat-agent",
-  "description": "AI 对话 Agent",
+  "description": "AI chat agent",
   "use_case": "chat",
   "llm_config_id": 1,
   "skill_ids": [1, 2],
@@ -116,12 +116,12 @@ POST /api/n9e/ai-agents
 }
 ```
 
-### 校验规则
+### Validation rules
 
-- `name` 必填
-- `llm_config_id` 必填，且大于 0
+- `name` is required
+- `llm_config_id` is required and must be greater than 0
 
-### 响应
+### Response
 
 ```json
 {
@@ -130,28 +130,28 @@ POST /api/n9e/ai-agents
 }
 ```
 
-返回新创建的 Agent ID。
+Returns the ID of the newly created agent.
 
 ---
 
-## 更新 Agent
+## Update an agent
 
 ```
 PUT /api/n9e/ai-agent/:id
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Agent ID |
 
-### 请求体
+### Request body
 
 ```json
 {
   "name": "chat-agent-v2",
-  "description": "更新后的描述",
+  "description": "Updated description",
   "use_case": "chat",
   "llm_config_id": 2,
   "skill_ids": [1, 3],
@@ -160,11 +160,11 @@ PUT /api/n9e/ai-agent/:id
 }
 ```
 
-### 校验规则
+### Validation rules
 
-同创建接口。
+Same as the create endpoint.
 
-### 响应
+### Response
 
 ```json
 {
@@ -173,25 +173,25 @@ PUT /api/n9e/ai-agent/:id
 }
 ```
 
-### 错误
+### Errors
 
-- `404` Agent 不存在
+- `404` the agent does not exist
 
 ---
 
-## 删除 Agent
+## Delete an agent
 
 ```
 DELETE /api/n9e/ai-agent/:id
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Agent ID |
 
-### 响应
+### Response
 
 ```json
 {
@@ -200,7 +200,7 @@ DELETE /api/n9e/ai-agent/:id
 }
 ```
 
-### 错误
+### Errors
 
-- `404` Agent 不存在
+- `404` the agent does not exist
 

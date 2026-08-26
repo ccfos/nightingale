@@ -1,49 +1,49 @@
 # AI LLM Config API
 
-所有接口需要管理员权限（`auth` + `admin`）。
+All endpoints require administrator privileges (`auth` + `admin`).
 
-## 数据结构
+## Data structures
 
 ### AILLMConfig
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |------|------|------|------|
-| id | int64 | - | 主键，自增 |
-| name | string | 是 | 配置名称 |
-| description | string | 否 | 描述 |
-| api_type | string | 是 | 提供商类型：`openai`、`claude`、`gemini` |
-| api_url | string | 是 | API 地址 |
-| api_key | string | 是 | API 密钥 |
-| model | string | 是 | 模型名称 |
-| extra_config | object | 否 | 高级配置，见 LLMExtraConfig |
-| enabled | bool | 否 | 是否启用，请显式传入 `true` 或 `false` |
-| created_at | int64 | - | 创建时间（Unix 时间戳） |
-| created_by | string | - | 创建人 |
-| updated_at | int64 | - | 更新时间（Unix 时间戳） |
-| updated_by | string | - | 更新人 |
+| id | int64 | - | Primary key, auto-increment |
+| name | string | Yes | Configuration name |
+| description | string | No | Description |
+| api_type | string | Yes | Provider type: `openai`, `claude`, `gemini` |
+| api_url | string | Yes | API address |
+| api_key | string | Yes | API key |
+| model | string | Yes | Model name |
+| extra_config | object | No | Advanced settings, see LLMExtraConfig |
+| enabled | bool | No | Whether the configuration is enabled; pass `true` or `false` explicitly |
+| created_at | int64 | - | Creation time (Unix timestamp) |
+| created_by | string | - | Creator |
+| updated_at | int64 | - | Last update time (Unix timestamp) |
+| updated_by | string | - | Last updated by |
 
 ### LLMExtraConfig
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |------|------|------|
-| timeout_seconds | int | 请求超时时间（秒），默认 30 |
-| skip_tls_verify | bool | 跳过 TLS 证书校验 |
-| proxy | string | HTTP 代理地址 |
-| custom_headers | map[string]string | 自定义请求头 |
-| custom_params | map[string]any | 自定义请求参数 |
-| temperature | float64 | 生成温度（可选） |
-| max_tokens | int | 最大输出 Token 数（可选） |
-| context_length | int | 上下文窗口大小（可选） |
+| timeout_seconds | int | Request timeout in seconds, default 30 |
+| skip_tls_verify | bool | Skip TLS certificate verification |
+| proxy | string | HTTP proxy address |
+| custom_headers | map[string]string | Custom request headers |
+| custom_params | map[string]any | Custom request parameters |
+| temperature | float64 | Sampling temperature (optional) |
+| max_tokens | int | Maximum output tokens (optional) |
+| context_length | int | Context window size (optional) |
 
 ---
 
-## 获取 LLM 配置列表
+## List LLM configurations
 
 ```
 GET /api/n9e/ai-llm-configs
 ```
 
-### 响应
+### Response
 
 ```json
 {
@@ -73,19 +73,19 @@ GET /api/n9e/ai-llm-configs
 
 ---
 
-## 获取 LLM 配置详情
+## Get LLM configuration details
 
 ```
 GET /api/n9e/ai-llm-config/:id
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
-| id | int64 | LLM 配置 ID |
+| id | int64 | LLM configuration ID |
 
-### 响应
+### Response
 
 ```json
 {
@@ -111,19 +111,19 @@ GET /api/n9e/ai-llm-config/:id
 }
 ```
 
-### 错误
+### Errors
 
-- `404` LLM 配置不存在
+- `404` the LLM configuration does not exist
 
 ---
 
-## 创建 LLM 配置
+## Create an LLM configuration
 
 ```
 POST /api/n9e/ai-llm-configs
 ```
 
-### 请求体
+### Request body
 
 ```json
 {
@@ -145,11 +145,11 @@ POST /api/n9e/ai-llm-configs
 }
 ```
 
-### 校验规则
+### Validation rules
 
-- `name`、`api_type`、`api_url`、`api_key`、`model` 均为必填
+- `name`, `api_type`, `api_url`, `api_key`, and `model` are all required
 
-### 响应
+### Response
 
 ```json
 {
@@ -158,31 +158,31 @@ POST /api/n9e/ai-llm-configs
 }
 ```
 
-返回新创建的配置 ID。
+Returns the ID of the newly created configuration.
 
 ---
 
-## 更新 LLM 配置
+## Update an LLM configuration
 
 ```
 PUT /api/n9e/ai-llm-config/:id
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
-| id | int64 | LLM 配置 ID |
+| id | int64 | LLM configuration ID |
 
-### 请求体
+### Request body
 
-同创建接口。**注意：如果 `api_key` 为空，则保留原值不更新。**
+Same as the create endpoint. **Note: if `api_key` is empty, the existing value is kept instead of being overwritten.**
 
-### 校验规则
+### Validation rules
 
-同创建接口。
+Same as the create endpoint.
 
-### 响应
+### Response
 
 ```json
 {
@@ -191,25 +191,25 @@ PUT /api/n9e/ai-llm-config/:id
 }
 ```
 
-### 错误
+### Errors
 
-- `404` LLM 配置不存在
+- `404` the LLM configuration does not exist
 
 ---
 
-## 删除 LLM 配置
+## Delete an LLM configuration
 
 ```
 DELETE /api/n9e/ai-llm-config/:id
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
-| id | int64 | LLM 配置 ID |
+| id | int64 | LLM configuration ID |
 
-### 响应
+### Response
 
 ```json
 {
@@ -218,21 +218,21 @@ DELETE /api/n9e/ai-llm-config/:id
 }
 ```
 
-### 错误
+### Errors
 
-- `404` LLM 配置不存在
+- `404` the LLM configuration does not exist
 
 ---
 
-## 测试 LLM 连接
+## Test an LLM connection
 
-无需先创建配置，直接传入连接参数进行连通性测试。
+Tests connectivity directly from the supplied connection parameters; the configuration does not have to be created first.
 
 ```
 POST /api/n9e/ai-llm-config/test
 ```
 
-### 请求体
+### Request body
 
 ```json
 {
@@ -249,29 +249,29 @@ POST /api/n9e/ai-llm-config/test
 }
 ```
 
-### 校验规则
+### Validation rules
 
-- `api_type`、`api_url`、`api_key`、`model` 均为必填
+- `api_type`, `api_url`, `api_key`, and `model` are all required
 
-### 测试行为
+### Test behavior
 
-根据 `api_type` 向对应的 API 发送一个最小请求（"Hi"，最大输出 Token 数为 512）。
+Based on `api_type`, a minimal request is sent to the corresponding API ("Hi", with a maximum output of 512 tokens).
 
-Token 上限字段名按模型家族路由：OpenAI 兼容请求中，`gpt-5*`（含 gpt-5.1）、`o1`/`o3`/`o4` 系列使用 `max_completion_tokens`，其他模型使用 `max_tokens`。若模型名未命中（例如 Azure 自定义部署名），服务端返回 `Use 'max_completion_tokens' instead` 的 400 时会自动改名重试一次；此时 `custom_params` 里手填的 `max_tokens` 也会被一并迁移到 `max_completion_tokens`，用户配置的上限不会丢。
+The name of the token-limit field is routed by model family: in OpenAI-compatible requests, the `gpt-5*` family (including gpt-5.1) and the `o1`/`o3`/`o4` series use `max_completion_tokens`, while other models use `max_tokens`. If the model name does not match any known family (for example a custom Azure deployment name) and the server returns a 400 saying `Use 'max_completion_tokens' instead`, the request is automatically retried once with the renamed field. In that case a `max_tokens` value set by hand in `custom_params` is migrated to `max_completion_tokens` as well, so the limit configured by the user is not lost.
 
-之所以不用更小的值：推理模型会先把 token 花在思考上，预算过小会导致 `content` 为空而误报「无内容」；普通模型对 "Hi" 会提前结束，抬高上限并不增加实际消耗。
+Why not use a smaller value: reasoning models spend tokens on thinking first, so too small a budget leaves `content` empty and produces a spurious "no content" error. Ordinary models finish early on "Hi", so raising the limit does not increase actual consumption.
 
-若推理模型把 512 全部花在思考上（`finish_reason=length`、正文为空），仍判定为连接正常——端点、鉴权、模型都已经验证通过，探测目的已达成。只有正常收尾（`finish_reason=stop`）却没有任何内容时才报「无内容」。
+If a reasoning model spends all 512 tokens on thinking (`finish_reason=length` with an empty body), the connection is still considered healthy — the endpoint, the credentials, and the model have all been verified, which is what the probe is for. "No content" is only reported when the response finishes normally (`finish_reason=stop`) without any content at all.
 
-| api_type | 请求地址 | 认证方式 |
+| api_type | Request URL | Authentication |
 |----------|---------|---------|
 | openai | `{api_url}/chat/completions` | `Authorization: Bearer {api_key}` |
 | claude | `{api_url}/v1/messages` | `x-api-key: {api_key}` |
-| gemini | `{api_url}/v1beta/models/{model}:generateContent?key={api_key}` | URL 参数 |
+| gemini | `{api_url}/v1beta/models/{model}:generateContent?key={api_key}` | URL parameter |
 
-### 响应
+### Response
 
-成功：
+Success:
 
 ```json
 {
@@ -283,7 +283,7 @@ Token 上限字段名按模型家族路由：OpenAI 兼容请求中，`gpt-5*`�
 }
 ```
 
-失败：
+Failure:
 
 ```json
 {
