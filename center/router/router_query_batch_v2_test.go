@@ -975,3 +975,234 @@ func TestQueryBatchV2ExpressionFanOutStillReportsInvalidExpression(t *testing.T)
 		t.Fatal("expected an evaluation error for an unknown function")
 	}
 }
+
+func queryBatchV2TestSeriesOn(host, metricName string, samples ...QueryBatchV2Sample) QueryBatchV2Series {
+	return QueryBatchV2Series{
+		Labels:  map[string]string{"__name__": metricName, "host": host},
+		Samples: samples,
+	}
+}
+
+func TestQueryBatchV2ReferencesParsesQualifiers(t *testing.T) {
+	cases := []struct {
+		expression string
+		want       []queryBatchV2Ref
+	}{
+		{"$A.disk_used / $A.disk_total * 100", []queryBatchV2Ref{{"A", "disk_used"}, {"A", "disk_total"}}},
+		{"$A + $B", []queryBatchV2Ref{{"A", ""}, {"B", ""}}},
+		{"$A + $A.cpu", []queryBatchV2Ref{{"A", ""}, {"A", "cpu"}}},
+		{"$A.cpu + $A.cpu", []queryBatchV2Ref{{"A", "cpu"}}},
+		{"$A.1min_load > 5", []queryBatchV2Ref{{"A", "1min_load"}}},
+		{"'$A.cpu' + $B", []queryBatchV2Ref{{"B", ""}}},
+		{"$A. + 1", []queryBatchV2Ref{{"A", ""}}},
+		{"$A.cpu-usage", []queryBatchV2Ref{{"A", "cpu"}}},
+	}
+	for _, tc := range cases {
+		got := queryBatchV2References(tc.expression)
+		if len(got) != len(tc.want) {
+			t.Fatalf("%q -> %#v, want %#v", tc.expression, got, tc.want)
+		}
+		for i := range got {
+			if got[i] != tc.want[i] {
+				t.Fatalf("%q -> %#v, want %#v", tc.expression, got, tc.want)
+			}
+		}
+	}
+	// Dependencies stay deduplicated by ref id on top of the same scan.
+	deps := queryBatchV2Dependencies("$A.disk_used / $A.disk_total + $B")
+	if len(deps) != 2 || deps[0] != "A" || deps[1] != "B" {
+		t.Fatalf("dependencies = %#v", deps)
+	}
+}
+
+// The motivating case: one SQL query selects two value columns and the ratio
+// between them is computed inside a single ref, which fanning out cannot do.
+func TestQueryBatchV2ExpressionQualifiedRefComputesRatio(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("disk_used", QueryBatchV2Sample{Timestamp: 100, Value: 30}),
+			queryBatchV2TestSeries("disk_total", QueryBatchV2Sample{Timestamp: 100, Value: 100}),
+		),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A.disk_used / $A.disk_total * 100", values)
+	if len(value.Series) != 1 {
+		t.Fatalf("series count = %d, want 1: %#v", len(value.Series), value.Series)
+	}
+	series := value.Series[0]
+	if _, exists := series.Labels["__name__"]; exists {
+		t.Fatalf("labels = %#v, want no __name__ on a derived ratio", series.Labels)
+	}
+	if series.Labels["host"] != "web01" {
+		t.Fatalf("labels = %#v", series.Labels)
+	}
+	if len(series.Samples) != 1 || series.Samples[0].Value != 30 {
+		t.Fatalf("samples = %#v, want 30", series.Samples)
+	}
+}
+
+// Addressing a ref by metric takes it out of the fan-out dimension, otherwise
+// each row would hold only one of the two metrics the expression needs.
+func TestQueryBatchV2ExpressionQualifiedRefDoesNotFanOut(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 3}),
+			queryBatchV2TestSeries("mem", QueryBatchV2Sample{Timestamp: 100, Value: 5}),
+		),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A.cpu * 1", values)
+	if len(value.Series) != 1 {
+		t.Fatalf("series count = %d, want 1: %#v", len(value.Series), value.Series)
+	}
+	if value.Series[0].Samples[0].Value != 3 {
+		t.Fatalf("samples = %#v, want 3", value.Series[0].Samples)
+	}
+}
+
+// A qualified ref mixes with an ordinary one; the ordinary ref is still
+// resolved through the fan-out rules.
+func TestQueryBatchV2ExpressionQualifiedRefMixesWithPlainRef(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("disk_used", QueryBatchV2Sample{Timestamp: 100, Value: 30}),
+			queryBatchV2TestSeries("disk_total", QueryBatchV2Sample{Timestamp: 100, Value: 100}),
+		),
+		"B": queryBatchV2TestValue(
+			queryBatchV2TestSeries("quota", QueryBatchV2Sample{Timestamp: 100, Value: 3}),
+		),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A.disk_used / $B", values)
+	if len(value.Series) != 1 {
+		t.Fatalf("series count = %d, want 1: %#v", len(value.Series), value.Series)
+	}
+	if value.Series[0].Samples[0].Value != 10 {
+		t.Fatalf("samples = %#v, want 10", value.Series[0].Samples)
+	}
+}
+
+// Groups that do not carry every addressed metric are skipped, the groups that
+// do still produce their row.
+func TestQueryBatchV2ExpressionQualifiedRefSkipsGroupsMissingMetric(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeriesOn("web01", "disk_used", QueryBatchV2Sample{Timestamp: 100, Value: 30}),
+			queryBatchV2TestSeriesOn("web01", "disk_total", QueryBatchV2Sample{Timestamp: 100, Value: 100}),
+			queryBatchV2TestSeriesOn("web02", "disk_used", QueryBatchV2Sample{Timestamp: 100, Value: 40}),
+		),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A.disk_used / $A.disk_total", values)
+	if len(value.Series) != 1 {
+		t.Fatalf("series count = %d, want 1: %#v", len(value.Series), value.Series)
+	}
+	if value.Series[0].Labels["host"] != "web01" {
+		t.Fatalf("labels = %#v, want host=web01", value.Series[0].Labels)
+	}
+	if value.Series[0].Samples[0].Value != 0.3 {
+		t.Fatalf("samples = %#v, want 0.3", value.Series[0].Samples)
+	}
+}
+
+func TestQueryBatchV2ValidateReferences(t *testing.T) {
+	valid := []string{
+		"$A.disk_used / $A.disk_total",
+		"$A + $B",
+		"$A.cpu / $B",
+		"$AB + $CD",
+	}
+	for _, expression := range valid {
+		if err := queryBatchV2ValidateReferences(expression); err != nil {
+			t.Fatalf("%q rejected: %v", expression, err)
+		}
+	}
+	invalid := []string{
+		"$Q1.cpu + 1", // pkg/parser only rewrites a single uppercase ref id
+		"$a.cpu + 1",  // lowercase ref id is not rewritten either
+		"$AB.cpu + 1", // multi letter ref id is not rewritten either
+		"$A + $A.cpu", // a ref addressed by metric does not fan out
+	}
+	for _, expression := range invalid {
+		if err := queryBatchV2ValidateReferences(expression); err == nil {
+			t.Fatalf("%q accepted, want an error", expression)
+		}
+	}
+}
+
+// The validator must reach callers as EXPRESSION_INVALID rather than surfacing
+// later as an opaque evaluation failure.
+func TestQueryBatchV2ExpressionInvalidQualifiedReferenceIsReported(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 3}),
+		),
+	}
+	req := QueryBatchV2Request{
+		From: 1,
+		To:   100,
+		Queries: []QueryBatchV2Query{
+			{Kind: queryKindDatasource, RefID: "A"},
+			{Kind: queryKindExpression, RefID: "B", Expression: "$A + $A.cpu"},
+		},
+	}
+	results := []QueryBatchV2Result{queryBatchV2Success("A", values["A"]), {}}
+	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+
+	if results[1].Status != resultStatusError || results[1].Error == nil {
+		t.Fatalf("result = %#v", results[1])
+	}
+	if results[1].Error.Code != "EXPRESSION_INVALID" {
+		t.Fatalf("error = %#v, want EXPRESSION_INVALID", results[1].Error)
+	}
+}
+
+// A scalar ref holds no series, so addressing a metric on it is a mistake that
+// must be reported instead of quietly emptying the result.
+func TestQueryBatchV2ExpressionQualifiedScalarRefIsRejected(t *testing.T) {
+	scalar := float64(2)
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 3}),
+		),
+		"S": {ResultType: resultTypeTimeSeries, Scalar: &scalar},
+	}
+
+	expression := "$A + $S.cpu"
+	if _, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100); err == nil {
+		t.Fatal("expected an error for a metric addressed on a scalar ref")
+	}
+}
+
+// The guard probe binds qualified variables too, so an expression that joins
+// nothing returns an empty success instead of a spurious evaluation error.
+func TestQueryBatchV2ExpressionQualifiedRefWithoutMatchIsEmpty(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("disk_used", QueryBatchV2Sample{Timestamp: 100, Value: 30}),
+		),
+	}
+
+	expression := "$A.disk_used / $A.disk_total"
+	value, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100)
+	if err != nil {
+		t.Fatalf("expression failed: %v", err)
+	}
+	if len(value.Series) != 0 {
+		t.Fatalf("series = %#v, want none", value.Series)
+	}
+}
+
+// The probe must still catch a broken expression that uses qualified refs.
+func TestQueryBatchV2ExpressionQualifiedRefStillReportsInvalidExpression(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("disk_used", QueryBatchV2Sample{Timestamp: 100, Value: 30}),
+		),
+	}
+
+	expression := "no_such_function($A.disk_used) / $A.disk_total"
+	if _, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100); err == nil {
+		t.Fatal("expected an evaluation error for an unknown function")
+	}
+}

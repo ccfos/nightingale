@@ -672,9 +672,30 @@ func queryBatchV2LabelKey(labels map[string]string, ignoreMetricName bool) strin
 	return builder.String()
 }
 
-func queryBatchV2Dependencies(expression string) []string {
+// queryBatchV2Ref is one reference an expression makes to a query result. A
+// bare $A carries no qualifier and reads the whole ref; $A.disk_used addresses
+// one metric of that ref by its __name__, the same convention alert rule
+// trigger expressions use.
+type queryBatchV2Ref struct {
+	RefID     string
+	Qualifier string
+}
+
+// Variable is the name the reference is bound to when the expression runs.
+func (r queryBatchV2Ref) Variable() string {
+	if r.Qualifier == "" {
+		return "$" + r.RefID
+	}
+	return "$" + r.RefID + "." + r.Qualifier
+}
+
+// queryBatchV2References scans an expression for the references it makes,
+// skipping anything inside string literals, and keeps them in first-seen order
+// without duplicates. queryBatchV2Dependencies is derived from it so that the
+// literal handling only exists once.
+func queryBatchV2References(expression string) []queryBatchV2Ref {
 	seen := make(map[string]struct{})
-	dependencies := make([]string, 0)
+	references := make([]queryBatchV2Ref, 0)
 	var quote rune
 	escaped := false
 	runes := []rune(expression)
@@ -706,14 +727,71 @@ func queryBatchV2Dependencies(expression string) []string {
 		for i+1 < len(runes) && queryBatchV2IsRefPart(runes[i+1]) {
 			i++
 		}
-		refID := string(runes[start : i+1])
-		if _, ok := seen[refID]; ok {
+		reference := queryBatchV2Ref{RefID: string(runes[start : i+1])}
+		// A dot directly followed by qualifier characters addresses one metric
+		// of the ref. Anything else leaves the dot to the expression parser,
+		// which is what a bare $A followed by punctuation has always done.
+		if i+2 < len(runes) && runes[i+1] == '.' && queryBatchV2IsRefPart(runes[i+2]) {
+			qualifierStart := i + 2
+			i = qualifierStart
+			for i+1 < len(runes) && queryBatchV2IsRefPart(runes[i+1]) {
+				i++
+			}
+			reference.Qualifier = string(runes[qualifierStart : i+1])
+		}
+		if _, ok := seen[reference.Variable()]; ok {
 			continue
 		}
-		seen[refID] = struct{}{}
-		dependencies = append(dependencies, refID)
+		seen[reference.Variable()] = struct{}{}
+		references = append(references, reference)
+	}
+	return references
+}
+
+func queryBatchV2Dependencies(expression string) []string {
+	seen := make(map[string]struct{})
+	dependencies := make([]string, 0)
+	for _, reference := range queryBatchV2References(expression) {
+		if _, ok := seen[reference.RefID]; ok {
+			continue
+		}
+		seen[reference.RefID] = struct{}{}
+		dependencies = append(dependencies, reference.RefID)
 	}
 	return dependencies
+}
+
+// queryBatchV2ValidateReferences rejects qualified references the expression
+// engine cannot bind. pkg/parser rewrites $A.metric into A_metric and its
+// rewrite only recognises a single uppercase ref id, so any other ref id would
+// reach the engine as member access on a number. Addressing a ref by metric
+// also takes it out of the fan-out dimension, so a bare $A used alongside
+// $A.metric would have no defined value once that ref carries several metrics.
+func queryBatchV2ValidateReferences(expression string) error {
+	references := queryBatchV2References(expression)
+	bare := make(map[string]struct{}, len(references))
+	for _, reference := range references {
+		if reference.Qualifier == "" {
+			bare[reference.RefID] = struct{}{}
+			continue
+		}
+		if len(reference.RefID) != 1 || reference.RefID[0] < 'A' || reference.RefID[0] > 'Z' {
+			return fmt.Errorf(
+				"expression reference %s is not supported: addressing a metric requires a single uppercase ref id",
+				reference.Variable())
+		}
+	}
+	for _, reference := range references {
+		if reference.Qualifier == "" {
+			continue
+		}
+		if _, mixed := bare[reference.RefID]; mixed {
+			return fmt.Errorf(
+				"expression references $%s both directly and by metric, use $%s.<metric> consistently",
+				reference.RefID, reference.RefID)
+		}
+	}
+	return nil
 }
 
 func queryBatchV2IsRefStart(value rune) bool {
@@ -766,6 +844,12 @@ func (e queryBatchV2Executor) evaluateExpressions(
 
 		dependencies := queryBatchV2Dependencies(query.Expression)
 		if err := parser.ValidateExp(query.Expression); err != nil {
+			results[resultIndex] = queryBatchV2Failed(refID, resultStatusError, "EXPRESSION_INVALID",
+				err.Error(), false, nil)
+			state[refID] = 2
+			return
+		}
+		if err := queryBatchV2ValidateReferences(query.Expression); err != nil {
 			results[resultIndex] = queryBatchV2Failed(refID, resultStatusError, "EXPRESSION_INVALID",
 				err.Error(), false, nil)
 			state[refID] = 2
@@ -945,6 +1029,22 @@ func queryBatchV2EvaluateMath(
 		}
 	}
 
+	// Bare $A takes part in the fan-out dimension, $A.metric addresses one
+	// metric of the ref directly and therefore does not.
+	references := queryBatchV2References(expression)
+	qualifiedRefs := make(map[string]struct{}, len(references))
+	for _, reference := range references {
+		if reference.Qualifier == "" {
+			continue
+		}
+		if _, isScalar := scalars[reference.RefID]; isScalar {
+			return result, fmt.Errorf(
+				"expression evaluation failed: ref %s is a scalar and carries no metric to address as %s",
+				reference.RefID, reference.Variable())
+		}
+		qualifiedRefs[reference.RefID] = struct{}{}
+	}
+
 	if !hasSeries {
 		input := make(map[string]interface{}, len(scalars))
 		for refID, value := range scalars {
@@ -986,6 +1086,9 @@ func queryBatchV2EvaluateMath(
 		// $A / $B working when B carries one metric and A carries several.
 		fanNames := make(map[string]struct{})
 		for _, dependency := range dependencies {
+			if _, isQualified := qualifiedRefs[dependency]; isQualified {
+				continue
+			}
 			if len(group[dependency]) < 2 {
 				continue
 			}
@@ -1011,11 +1114,17 @@ func queryBatchV2EvaluateMath(
 			timestamps := make(map[int64]struct{})
 			sampleValues := make(map[string]map[int64]float64)
 			complete := true
-			for _, dependency := range dependencies {
-				if _, scalar := scalars[dependency]; scalar {
+			for _, reference := range references {
+				if _, scalar := scalars[reference.RefID]; scalar {
 					continue
 				}
-				series, exists := queryBatchV2PickSeries(group[dependency], fanNames, rowName)
+				var series QueryBatchV2Series
+				var exists bool
+				if reference.Qualifier != "" {
+					series, exists = group[reference.RefID][reference.Qualifier]
+				} else {
+					series, exists = queryBatchV2PickSeries(group[reference.RefID], fanNames, rowName)
+				}
 				if !exists {
 					complete = false
 					break
@@ -1025,7 +1134,7 @@ func queryBatchV2EvaluateMath(
 					byTimestamp[sample.Timestamp] = sample.Value
 					timestamps[sample.Timestamp] = struct{}{}
 				}
-				sampleValues[dependency] = byTimestamp
+				sampleValues[reference.Variable()] = byTimestamp
 			}
 			if !complete {
 				if fanOut {
@@ -1055,19 +1164,19 @@ func queryBatchV2EvaluateMath(
 			}
 			output := QueryBatchV2Series{Labels: labels, Samples: make([]QueryBatchV2Sample, 0, len(sortedTimestamps))}
 			for _, timestamp := range sortedTimestamps {
-				input := make(map[string]interface{}, len(dependencies))
+				input := make(map[string]interface{}, len(references))
 				matched := true
-				for _, dependency := range dependencies {
-					if scalar, ok := scalars[dependency]; ok {
-						input["$"+dependency] = scalar
+				for _, reference := range references {
+					if scalar, ok := scalars[reference.RefID]; ok {
+						input[reference.Variable()] = scalar
 						continue
 					}
-					number, ok := sampleValues[dependency][timestamp]
+					number, ok := sampleValues[reference.Variable()][timestamp]
 					if !ok {
 						matched = false
 						break
 					}
-					input["$"+dependency] = number
+					input[reference.Variable()] = number
 				}
 				if !matched {
 					continue
@@ -1099,12 +1208,12 @@ func queryBatchV2EvaluateMath(
 	// a successful empty result. Probe once with the same float-shaped inputs
 	// used for series points; this is validation only and never creates a sample.
 	if evaluationAttempts == 0 {
-		input := make(map[string]interface{}, len(dependencies))
-		for _, dependency := range dependencies {
-			if scalar, ok := scalars[dependency]; ok {
-				input["$"+dependency] = scalar
+		input := make(map[string]interface{}, len(references))
+		for _, reference := range references {
+			if scalar, ok := scalars[reference.RefID]; ok {
+				input[reference.Variable()] = scalar
 			} else {
-				input["$"+dependency] = float64(0)
+				input[reference.Variable()] = float64(0)
 			}
 		}
 		if _, err := parser.MathCalc(expression, input); err != nil {
