@@ -358,6 +358,47 @@ func TestQueryBatchV2LoggingCateUsesNormalizedCacheKey(t *testing.T) {
 	}
 }
 
+// 权限校验和插件查找必须落在同一个 cate 上：plus 的 CheckDsPerm 对 cls / tls / lts
+// 会拿这个 cate 自己回查 dscache 取 topic 元数据，带 .logging 后缀查必然落空，
+// 合法用户会被判成无权限。
+func TestQueryBatchV2LoggingCatePermissionUsesNormalizedCate(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	c, _ := gin.CreateTestContext(nil)
+	c.Request, _ = httpNewRequestWithContext(t.Context())
+
+	fake := &queryBatchV2FakeDatasource{}
+	var permCates []string
+	executor := queryBatchV2Executor{
+		getDatasource: func(cate string, id int64) (datasource.Datasource, bool) {
+			if cate == "tencent-cls" && id == 11 {
+				return fake, true
+			}
+			return nil, false
+		},
+		checkDsPerm: func(_ *gin.Context, _ int64, cate string, _ interface{}) bool {
+			permCates = append(permCates, cate)
+			// 模拟 plus：拿到的 cate 要能在 dscache 里查到插件才判有权限，而缓存
+			// 里只有剥掉后缀的那个 key。
+			return cate == "tencent-cls"
+		},
+	}
+	req := QueryBatchV2Request{From: 1, To: 10, Queries: []QueryBatchV2Query{{
+		Kind:       queryKindDatasource,
+		RefID:      "CLS",
+		Datasource: &QueryBatchV2DatasourceRef{Cate: "tencent-cls.logging", ID: 11},
+		ResultType: resultTypeLogs,
+		Query:      queryBatchV2Raw(`{"topic_id":"t"}`),
+	}}}
+
+	resp := executor.execute(c, req)
+	if len(permCates) != 1 || permCates[0] != "tencent-cls" {
+		t.Fatalf("CheckDsPerm saw cates %v, want [tencent-cls]", permCates)
+	}
+	if resp.Results[0].Status != resultStatusSuccess {
+		t.Fatalf("logging cate result = %#v", resp.Results[0])
+	}
+}
+
 func TestQueryBatchV2CancellationStopsRemainingDispatch(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(nil)

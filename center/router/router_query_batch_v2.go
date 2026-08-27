@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"regexp"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -258,6 +259,7 @@ func (e queryBatchV2Executor) execute(c *gin.Context, req QueryBatchV2Request) Q
 	values := make(map[string]queryBatchV2Value, len(req.Queries))
 	queryValues := make([]queryBatchV2Value, len(req.Queries))
 	payloads := make([]map[string]interface{}, len(req.Queries))
+	cates := make([]string, len(req.Queries))
 	runnable := make([]int, 0, len(req.Queries))
 	operator := ginUser(c)
 
@@ -273,7 +275,8 @@ func (e queryBatchV2Executor) execute(c *gin.Context, req QueryBatchV2Request) Q
 			continue
 		}
 		payloads[i] = payload
-		if !e.anonymousAccess && !e.hasDatasourcePermission(c, query.Datasource.ID, query.Datasource.Cate, payload) {
+		cates[i] = e.resolveDatasourceCate(query.Datasource.Cate, query.Datasource.ID)
+		if !e.anonymousAccess && !e.hasDatasourcePermission(c, query.Datasource.ID, cates[i], payload) {
 			results[i] = queryBatchV2Failed(query.RefID, resultStatusError, "FORBIDDEN",
 				"no permission for datasource", false, nil)
 			continue
@@ -294,6 +297,10 @@ func (e queryBatchV2Executor) execute(c *gin.Context, req QueryBatchV2Request) Q
 				func() {
 					defer func() {
 						if recovered := recover(); recovered != nil {
+							// 只把 panic 塞进响应体的话，服务端日志里一点痕迹都没有，
+							// 线上偶发的插件 panic 就再也定位不回来了。
+							logger.Errorf("query-batch-v2 query panic ref=%s cate=%s ds=%d: %v\n%s",
+								query.RefID, query.Datasource.Cate, query.Datasource.ID, recovered, debug.Stack())
 							results[i] = queryBatchV2Failed(query.RefID, resultStatusError, "DATASOURCE_ERROR",
 								fmt.Sprintf("query panic: %v", recovered), false, nil)
 						}
@@ -302,7 +309,7 @@ func (e queryBatchV2Executor) execute(c *gin.Context, req QueryBatchV2Request) Q
 						results[i] = queryBatchV2FailureFromError(query.RefID, "DATASOURCE_TIMEOUT", err)
 						return
 					}
-					value, result := e.executeDatasourceQuery(c.Request.Context(), operator, req, query, payloads[i])
+					value, result := e.executeDatasourceQuery(c.Request.Context(), operator, req, query, cates[i], payloads[i])
 					results[i] = result
 					if result.Status == resultStatusSuccess {
 						queryValues[i] = value
@@ -352,15 +359,42 @@ func (e queryBatchV2Executor) hasDatasourcePermission(c *gin.Context, id int64, 
 	return checkDsPerm(c, id, cate, query)
 }
 
+// resolveDatasourceCate 返回插件在数据源缓存里真正注册的 cate。dscache 入库时
+// 就剥掉了 .logging 后缀（dscache/sync.go PutDatasources），因此请求里带后缀的
+// cate 要归一化之后才能命中。
+//
+// 归一化结果必须同时用于权限校验和插件查找：plus 的 CheckDsPerm 对 cls / tls /
+// lts 会拿这个 cate 自己回查一次 dscache 去取 topic / stream 元数据，喂带后缀的
+// cate 进去必然取不到，于是合法用户被直接判成无权限。
+func (e queryBatchV2Executor) resolveDatasourceCate(cate string, id int64) string {
+	if e.getDatasource == nil {
+		return cate
+	}
+	if _, exists := e.getDatasource(cate, id); exists {
+		return cate
+	}
+	normalized := strings.TrimSuffix(cate, ".logging")
+	if normalized == cate {
+		return cate
+	}
+	if _, exists := e.getDatasource(normalized, id); exists {
+		return normalized
+	}
+	return cate
+}
+
+// executeDatasourceQuery 执行一条数据源查询。cate 由 resolveDatasourceCate 归一化
+// 而来，与权限校验用的是同一个值。
 func (e queryBatchV2Executor) executeDatasourceQuery(
 	ctx context.Context,
 	operator string,
 	req QueryBatchV2Request,
 	query QueryBatchV2Query,
+	cate string,
 	payload map[string]interface{},
 ) (queryBatchV2Value, QueryBatchV2Result) {
 	queryCtx := withCallContext(ctx, query.Datasource.ID, operator)
-	if query.Datasource.Cate == "prometheus" {
+	if cate == "prometheus" {
 		if query.ResultType != resultTypeTimeSeries {
 			err := fmt.Errorf("prometheus does not support logs result_type")
 			return queryBatchV2Value{}, queryBatchV2FailureFromError(query.RefID, "INVALID_QUERY", err)
@@ -372,13 +406,7 @@ func (e queryBatchV2Executor) executeDatasourceQuery(
 		return value, queryBatchV2Success(query.RefID, value)
 	}
 
-	plug, exists := e.getDatasource(query.Datasource.Cate, query.Datasource.ID)
-	if !exists {
-		normalizedCate := strings.TrimSuffix(query.Datasource.Cate, ".logging")
-		if normalizedCate != query.Datasource.Cate {
-			plug, exists = e.getDatasource(normalizedCate, query.Datasource.ID)
-		}
-	}
+	plug, exists := e.getDatasource(cate, query.Datasource.ID)
 	if !exists {
 		err := fmt.Errorf("datasource %d not found", query.Datasource.ID)
 		return queryBatchV2Value{}, queryBatchV2Failed(query.RefID, resultStatusError,
@@ -390,7 +418,7 @@ func (e queryBatchV2Executor) executeDatasourceQuery(
 		if err != nil {
 			return queryBatchV2Value{}, queryBatchV2FailureFromError(query.RefID, queryBatchV2DatasourceErrorCode(err), err)
 		}
-		records := queryBatchV2Records(query.Datasource.Cate, items)
+		records := queryBatchV2Records(cate, items)
 		value := queryBatchV2Value{ResultType: resultTypeLogs, Records: records}
 		return value, queryBatchV2Success(query.RefID, value)
 	}
