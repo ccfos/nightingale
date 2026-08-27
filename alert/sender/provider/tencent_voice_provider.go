@@ -78,7 +78,7 @@ func (p *TencentVoiceProvider) sendHTTPRequest(httpConfig *models.HTTPRequestCon
 
 	// 替换 URL Header Parameters 中的变量
 	url, headers, parameters := replaceVariables(httpConfig, fullTpl)
-	safeURL, safeHeaders, safeParams := redactForLog(httpConfig, url, headers, parameters)
+	safeURL, safeHeaders, safeParams := redactForLog(httpConfig, fullTpl, url, headers, parameters)
 	logger.Infof("url: %v, headers: %v, parameters: %v", safeURL, safeHeaders, safeParams)
 
 	// 重试机制
@@ -88,13 +88,13 @@ func (p *TencentVoiceProvider) sendHTTPRequest(httpConfig *models.HTTPRequestCon
 		req, err := p.makeHTTPRequest(httpConfig, url, headers, parameters, body)
 		if err != nil {
 			logger.Errorf("send_http: failed to create request. url=%s error=%v", safeURL, err)
-			return fmt.Sprintf("failed to create request. error: %s", redactErrMsg(err, url, httpConfig.URL)), err
+			return fmt.Sprintf("failed to create request. error: %s", redactErrMsg(err, url, safeURL)), err
 		}
 
 		resp, err = client.Do(req)
 		if err != nil {
 			logger.Errorf("send_http: failed to send http notify. url=%s error=%v", safeURL, err)
-			lastErrorMessage = redactErrMsg(err, url, httpConfig.URL)
+			lastErrorMessage = redactErrMsg(err, url, safeURL)
 			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Millisecond)
 			continue
 		}

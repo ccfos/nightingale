@@ -265,16 +265,17 @@ func TestUserVariableRenderedVerbatimEverywhere(t *testing.T) {
 
 func TestRedactErrMsg(t *testing.T) {
 	raw := "https://x.com/a?access_token=s3cr3t"
+	safe := redactURL(raw)
 	err := fmt.Errorf(`Post %q: dial tcp: i/o timeout`, raw)
 
-	got := redactErrMsg(err, raw, "")
+	got := redactErrMsg(err, raw, safe)
 	if strings.Contains(got, "s3cr3t") {
 		t.Errorf("redactErrMsg = %q, still leaks the token", got)
 	}
 	if !strings.Contains(got, "dial tcp: i/o timeout") {
 		t.Errorf("redactErrMsg = %q, lost the underlying error", got)
 	}
-	if redactErrMsg(nil, raw, "") != "" {
+	if redactErrMsg(nil, raw, safe) != "" {
 		t.Error("redactErrMsg(nil) should be empty")
 	}
 }
@@ -291,7 +292,7 @@ func TestRedactForLogHidesVariableValues(t *testing.T) {
 	tplData := buildNotifyTplData([]*models.AlertCurEvent{{}}, nil, nil, nil)
 	url, headers, parameters := replaceVariables(cfg, tplData)
 
-	safeURL, safeHeaders, safeParams := redactForLog(cfg, url, headers, parameters)
+	safeURL, safeHeaders, safeParams := redactForLog(cfg, tplData, url, headers, parameters)
 	for name, got := range map[string]string{"url": safeURL, "header": safeHeaders["X-Custom"], "param": safeParams["cb"]} {
 		if strings.Contains(got, "s3cr3t-token") {
 			t.Errorf("%s = %q, still leaks the token", name, got)
@@ -342,5 +343,143 @@ func TestExistingEscapingUntouchedByVariables(t *testing.T) {
 	}
 	if !strings.Contains(url, `&#34;q&#34;`) || !strings.Contains(url, `t=a+b&c`) {
 		t.Errorf("url = %q, want escaped event + raw variable", url)
+	}
+}
+
+// 短变量值不能牵连无关字符：脱敏靠掩码重渲染定位，而不是拿变量值做全文替换。
+// irp_env=1 曾把 10.0.0.1 打成 ***0.0.0.***，失败原因就没法看了。
+func TestRedactForLogKeepsNonVariableTextIntact(t *testing.T) {
+	withUserVariables(t, map[string]string{"irp_host": "10.0.0.1", "irp_env": "1"})
+
+	cfg := &models.HTTPRequestConfig{
+		URL:     "http://{{.irp_host}}:8080/notify?env={{.irp_env}}",
+		Headers: map[string]string{"X-Trace": "req-11111"},
+	}
+	tplData := buildNotifyTplData([]*models.AlertCurEvent{{}}, nil, nil, nil)
+	url, headers, parameters := replaceVariables(cfg, tplData)
+
+	safeURL, safeHeaders, _ := redactForLog(cfg, tplData, url, headers, parameters)
+	if want := "http://***:8080/notify?env=***"; safeURL != want {
+		t.Errorf("safeURL = %q, want %q", safeURL, want)
+	}
+	// 不含模板的字段一个字都不该动，哪怕它正好包含某个变量的值
+	if safeHeaders["X-Trace"] != "req-11111" {
+		t.Errorf("static header = %q, want req-11111", safeHeaders["X-Trace"])
+	}
+
+	err := fmt.Errorf("Post %q: dial tcp 10.0.0.1:8080: connect: connection refused", url)
+	msg := redactErrMsg(err, url, safeURL)
+	if !strings.Contains(msg, "dial tcp 10.0.0.1:8080: connect: connection refused") {
+		t.Errorf("errmsg = %q, want the underlying reason readable", msg)
+	}
+}
+
+// 引用了内置 key 的字段不该被当成变量掩掉，也不该被当成「未定义变量」告警。
+func TestRedactAndWarnSkipBuiltinKeys(t *testing.T) {
+	resetUndefinedVarWarnings(t)
+	withUserVariables(t, map[string]string{"tk": "s3cr3t-token"})
+
+	cfg := &models.HTTPRequestConfig{
+		Headers: map[string]string{"X-To": "{{.sendto}}", "X-Token": "{{.tk}}"},
+	}
+	// sendtos 为空 -> tplData 里没有 sendto 键，渲染成空串，但它是内置 key 不是用户变量
+	tplData := buildNotifyTplData([]*models.AlertCurEvent{{}}, nil, nil, nil)
+	_, headers, _ := replaceVariables(cfg, tplData)
+
+	if _, warned := warnedUndefinedVars.Load("{{.sendto}}|sendto"); warned {
+		t.Error("builtin key sendto should not be reported as an undefined variable")
+	}
+
+	_, safeHeaders, _ := redactForLog(cfg, tplData, "", headers, nil)
+	if safeHeaders["X-To"] != "" {
+		t.Errorf("builtin-key header = %q, want empty render kept as is", safeHeaders["X-To"])
+	}
+	if safeHeaders["X-Token"] != "***" {
+		t.Errorf("variable header = %q, want ***", safeHeaders["X-Token"])
+	}
+}
+
+// 未定义变量只告警一次：告警挂在发送路径上，高频规则下不去重就是刷屏。
+func TestWarnUndefinedVarsOnlyOnce(t *testing.T) {
+	resetUndefinedVarWarnings(t)
+	withUserVariables(t, map[string]string{"defined_token": "ok"})
+
+	cfg := &models.HTTPRequestConfig{
+		Headers: map[string]string{"X-B": "[{{ .typo_token }}]"},
+	}
+	tplData := buildNotifyTplData([]*models.AlertCurEvent{{}}, nil, nil, nil)
+
+	for i := 0; i < 3; i++ {
+		replaceVariables(cfg, tplData)
+	}
+
+	var n int
+	warnedUndefinedVars.Range(func(k, _ interface{}) bool {
+		n++
+		return true
+	})
+	if n != 1 {
+		t.Errorf("warned entries = %d, want exactly 1 (deduped)", n)
+	}
+	if _, ok := warnedUndefinedVars.Load("[{{ .typo_token }}]|typo_token"); !ok {
+		t.Error("dedup key should be (template text, variable name)")
+	}
+}
+
+// resetUndefinedVarWarnings 清空告警去重表，避免用例之间互相影响。
+func resetUndefinedVarWarnings(t *testing.T) {
+	t.Helper()
+	clear := func() {
+		warnedUndefinedVars.Range(func(k, _ interface{}) bool {
+			warnedUndefinedVars.Delete(k)
+			return true
+		})
+	}
+	clear()
+	t.Cleanup(clear)
+}
+
+// 非 {{.tk}} 直接引用的写法（管道 / 函数参数）同样要掩掉，
+// 否则用顶层引用的正则去定位就会漏掉这一类凭证。
+func TestRedactForLogCoversNonTopLevelRefs(t *testing.T) {
+	withUserVariables(t, map[string]string{"tk": "s3cr3t-token"})
+
+	cfg := &models.HTTPRequestConfig{
+		Headers: map[string]string{"X-Piped": `v={{ with .tk }}{{ . }}{{ end }}`},
+	}
+	tplData := buildNotifyTplData([]*models.AlertCurEvent{{}}, nil, nil, nil)
+	_, headers, _ := replaceVariables(cfg, tplData)
+
+	if !strings.Contains(headers["X-Piped"], "s3cr3t-token") {
+		t.Fatalf("precondition failed: header = %q, want the token actually rendered", headers["X-Piped"])
+	}
+
+	_, safeHeaders, _ := redactForLog(cfg, tplData, "", headers, nil)
+	if strings.Contains(safeHeaders["X-Piped"], "s3cr3t-token") {
+		t.Errorf("safe header = %q, still leaks the token", safeHeaders["X-Piped"])
+	}
+}
+
+// 空值变量不掩：掩了会把日志里的空串显示成 ***，看不出变量其实没配上。
+// 同时不引用任何变量的字段不该因为「变量名恰好是模板文本的子串」被多渲染一遍。
+func TestRedactForLogSkipsEmptyVariables(t *testing.T) {
+	withUserVariables(t, map[string]string{"t": "x", "empty_var": ""})
+
+	cfg := &models.HTTPRequestConfig{
+		Headers: map[string]string{
+			"X-Rule":  "{{$event.RuleName}}",
+			"X-Empty": "[{{.empty_var}}]",
+		},
+	}
+	event := &models.AlertCurEvent{RuleName: "cpu high"}
+	tplData := buildNotifyTplData([]*models.AlertCurEvent{event}, nil, nil, nil)
+	_, headers, _ := replaceVariables(cfg, tplData)
+
+	_, safeHeaders, _ := redactForLog(cfg, tplData, "", headers, nil)
+	if safeHeaders["X-Rule"] != "cpu high" {
+		t.Errorf("non-variable field = %q, want cpu high", safeHeaders["X-Rule"])
+	}
+	if safeHeaders["X-Empty"] != "[]" {
+		t.Errorf("empty variable = %q, want [] (masking it hides that it is unset)", safeHeaders["X-Empty"])
 	}
 }

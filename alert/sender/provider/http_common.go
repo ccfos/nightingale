@@ -42,7 +42,7 @@ func SendHTTPRequest(httpConfig *models.HTTPRequestConfig, events []*models.Aler
 
 	// 替换 URL Header Parameters 中的变量
 	url, headers, parameters := replaceVariables(httpConfig, fullTpl)
-	safeURL, safeHeaders, safeParams := redactForLog(httpConfig, url, headers, parameters)
+	safeURL, safeHeaders, safeParams := redactForLog(httpConfig, fullTpl, url, headers, parameters)
 	logger.Infof("url: %v, headers: %v, parameters: %v", safeURL, safeHeaders, safeParams)
 
 	// 重试机制
@@ -52,13 +52,13 @@ func SendHTTPRequest(httpConfig *models.HTTPRequestConfig, events []*models.Aler
 		req, err := makeHTTPRequest(httpConfig, url, headers, parameters, body)
 		if err != nil {
 			logger.Errorf("send_http: failed to create request. url=%s error=%v", safeURL, err)
-			return fmt.Sprintf("failed to create request. error: %s", redactErrMsg(err, url, httpConfig.URL)), err
+			return fmt.Sprintf("failed to create request. error: %s", redactErrMsg(err, url, safeURL)), err
 		}
 
 		resp, err = client.Do(req)
 		if err != nil {
 			logger.Errorf("send_http: failed to send http notify. url=%s error=%v", safeURL, err)
-			lastErrorMessage = redactErrMsg(err, url, httpConfig.URL)
+			lastErrorMessage = redactErrMsg(err, url, safeURL)
 			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Millisecond)
 			continue
 		}
@@ -109,6 +109,7 @@ func replaceVariables(httpConfig *models.HTTPRequestConfig, tpl map[string]inter
 	if needsTemplateRendering(httpConfig.URL) {
 		// 只打模板原文，不打渲染上下文：tpl 里含「变量配置」解密后的全部变量值
 		logger.Infof("replace variables url template: %s", httpConfig.URL)
+		warnUndefinedVars("url", httpConfig.URL, tpl)
 		url = getParsedHTTPString("url", httpConfig.URL, tpl)
 	} else {
 		url = httpConfig.URL
@@ -116,6 +117,7 @@ func replaceVariables(httpConfig *models.HTTPRequestConfig, tpl map[string]inter
 
 	for key, value := range httpConfig.Headers {
 		if needsTemplateRendering(value) {
+			warnUndefinedVars(key, value, tpl)
 			headers[key] = getParsedHTTPString(key, value, tpl)
 		} else {
 			headers[key] = value
@@ -124,6 +126,7 @@ func replaceVariables(httpConfig *models.HTTPRequestConfig, tpl map[string]inter
 
 	for key, value := range httpConfig.Request.Parameters {
 		if needsTemplateRendering(value) {
+			warnUndefinedVars(key, value, tpl)
 			parameters[key] = getParsedHTTPString(key, value, tpl)
 		} else {
 			parameters[key] = value
@@ -166,6 +169,9 @@ func getParsedString(name, tplStr string, tplData map[string]interface{}) string
 
 // getParsedHTTPString 渲染 URL / 请求头 / 查询参数里的模板。
 //
+// 纯函数、无副作用：脱敏路径要拿掩码上下文把同一个模板再渲染一遍（见 redactField），
+// 未定义变量告警因此挂在 replaceVariables 那一趟真实渲染上，不放在这里，否则告警翻倍。
+//
 // 这里维持 html/template 不变：events / params / tpl 的转义行为是既有约定
 // （由 TestHTTPVariableRenderingKeepsLegacyHTMLEscaping 锁定），改引擎会影响所有存量配置。
 // 用户变量不受这层转义影响——buildNotifyTplData 把变量按 template.HTML 注入，
@@ -179,8 +185,6 @@ func getParsedHTTPString(name, tplStr string, tplData map[string]interface{}) st
 		"{{$events := .events}}",
 		"{{$event := .event}}",
 	}
-
-	warnUndefinedVars(name, tplStr, tplData)
 
 	text := strings.Join(append(defs, tplStr), "")
 	tpl, err := htmltemplate.New(name).Funcs(tplx.TemplateFuncMap).Parse(text)
