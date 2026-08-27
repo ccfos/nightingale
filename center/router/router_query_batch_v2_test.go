@@ -433,7 +433,7 @@ func TestQueryBatchV2Expressions(t *testing.T) {
 		{},
 		{},
 	}
-	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	queryBatchV2Executor{}.evaluateExpressions(t.Context(), req, results, values)
 
 	if results[2].Status != resultStatusSuccess || results[3].Status != resultStatusSuccess {
 		t.Fatalf("expression results: %#v", results)
@@ -521,7 +521,7 @@ func TestQueryBatchV2ExpressionScalarAndFailures(t *testing.T) {
 		queryBatchV2Success("L", values["L"]),
 		{}, {}, {}, {}, {},
 	}
-	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	queryBatchV2Executor{}.evaluateExpressions(t.Context(), req, results, values)
 
 	if got := values["B"].Series[0].Samples[0].Value; got != 8 {
 		t.Fatalf("scalar broadcast value = %v", got)
@@ -554,7 +554,7 @@ func TestQueryBatchV2ExpressionValidationDoesNotExecute(t *testing.T) {
 	}}
 	results := []QueryBatchV2Result{queryBatchV2Success("A", values["A"]), {}, {}}
 
-	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	queryBatchV2Executor{}.evaluateExpressions(t.Context(), req, results, values)
 	if results[1].Status != resultStatusSuccess {
 		t.Fatalf("runtime-dependent expression was rejected during validation: %#v", results[1])
 	}
@@ -587,7 +587,7 @@ func TestQueryBatchV2ExpressionRuntimeError(t *testing.T) {
 		{}, {},
 	}
 
-	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	queryBatchV2Executor{}.evaluateExpressions(t.Context(), req, results, values)
 	for _, index := range []int{2, 3} {
 		if results[index].Error == nil || results[index].Error.Code != "EXPRESSION_EVALUATION_ERROR" {
 			t.Fatalf("runtime error result[%d] = %#v", index, results[index])
@@ -605,7 +605,7 @@ func TestQueryBatchV2ExpressionRuntimeErrorWithEmptySeries(t *testing.T) {
 	}}
 	results := []QueryBatchV2Result{queryBatchV2Success("A", values["A"]), {}}
 
-	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	queryBatchV2Executor{}.evaluateExpressions(t.Context(), req, results, values)
 	if results[1].Error == nil || results[1].Error.Code != "EXPRESSION_EVALUATION_ERROR" {
 		t.Fatalf("empty-series runtime error result = %#v", results[1])
 	}
@@ -628,7 +628,7 @@ func TestQueryBatchV2ExpressionEvaluationLimit(t *testing.T) {
 	}}
 	results := []QueryBatchV2Result{queryBatchV2Success("A", values["A"]), {}}
 
-	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	queryBatchV2Executor{}.evaluateExpressions(t.Context(), req, results, values)
 	if results[1].Error == nil || results[1].Error.Code != "EXPRESSION_LIMIT_EXCEEDED" {
 		t.Fatalf("expression limit result = %#v", results[1])
 	}
@@ -660,7 +660,7 @@ func TestQueryBatchV2ExpressionDepthLimit(t *testing.T) {
 	results := make([]QueryBatchV2Result, len(req.Queries))
 	results[len(results)-1] = queryBatchV2Success("A", values["A"])
 
-	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	queryBatchV2Executor{}.evaluateExpressions(t.Context(), req, results, values)
 	deepestIndex := queryBatchV2MaxExpressionDepth
 	if results[deepestIndex].Error == nil || results[deepestIndex].Error.Code != "EXPRESSION_DEPTH_EXCEEDED" {
 		t.Fatalf("expression depth result = %#v", results[deepestIndex])
@@ -726,7 +726,7 @@ func queryBatchV2SeriesByName(series []QueryBatchV2Series) map[string]QueryBatch
 
 func queryBatchV2EvalForTest(t *testing.T, expression string, values map[string]queryBatchV2Value) queryBatchV2Value {
 	t.Helper()
-	value, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100)
+	value, err := queryBatchV2EvaluateMath(t.Context(), expression, queryBatchV2Dependencies(expression), values, 100)
 	if err != nil {
 		t.Fatalf("expression %q failed: %v", expression, err)
 	}
@@ -948,7 +948,7 @@ func TestQueryBatchV2ExpressionFanOutWithoutCommonMetricIsEmpty(t *testing.T) {
 		),
 	}
 
-	value, err := queryBatchV2EvaluateMath("$A + $B + $C", queryBatchV2Dependencies("$A + $B + $C"), values, 100)
+	value, err := queryBatchV2EvaluateMath(t.Context(), "$A + $B + $C", queryBatchV2Dependencies("$A + $B + $C"), values, 100)
 	if err != nil {
 		t.Fatalf("expression failed: %v", err)
 	}
@@ -971,7 +971,7 @@ func TestQueryBatchV2ExpressionFanOutStillReportsInvalidExpression(t *testing.T)
 	}
 
 	expression := "no_such_function($A) + $B"
-	if _, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100); err == nil {
+	if _, err := queryBatchV2EvaluateMath(t.Context(), expression, queryBatchV2Dependencies(expression), values, 100); err == nil {
 		t.Fatal("expected an evaluation error for an unknown function")
 	}
 }
@@ -1147,7 +1147,7 @@ func TestQueryBatchV2ExpressionInvalidQualifiedReferenceIsReported(t *testing.T)
 		},
 	}
 	results := []QueryBatchV2Result{queryBatchV2Success("A", values["A"]), {}}
-	queryBatchV2Executor{}.evaluateExpressions(req, results, values)
+	queryBatchV2Executor{}.evaluateExpressions(t.Context(), req, results, values)
 
 	if results[1].Status != resultStatusError || results[1].Error == nil {
 		t.Fatalf("result = %#v", results[1])
@@ -1169,7 +1169,7 @@ func TestQueryBatchV2ExpressionQualifiedScalarRefIsRejected(t *testing.T) {
 	}
 
 	expression := "$A + $S.cpu"
-	if _, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100); err == nil {
+	if _, err := queryBatchV2EvaluateMath(t.Context(), expression, queryBatchV2Dependencies(expression), values, 100); err == nil {
 		t.Fatal("expected an error for a metric addressed on a scalar ref")
 	}
 }
@@ -1184,7 +1184,7 @@ func TestQueryBatchV2ExpressionQualifiedRefWithoutMatchIsEmpty(t *testing.T) {
 	}
 
 	expression := "$A.disk_used / $A.disk_total"
-	value, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100)
+	value, err := queryBatchV2EvaluateMath(t.Context(), expression, queryBatchV2Dependencies(expression), values, 100)
 	if err != nil {
 		t.Fatalf("expression failed: %v", err)
 	}
@@ -1202,7 +1202,117 @@ func TestQueryBatchV2ExpressionQualifiedRefStillReportsInvalidExpression(t *test
 	}
 
 	expression := "no_such_function($A.disk_used) / $A.disk_total"
-	if _, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100); err == nil {
+	if _, err := queryBatchV2EvaluateMath(t.Context(), expression, queryBatchV2Dependencies(expression), values, 100); err == nil {
 		t.Fatal("expected an evaluation error for an unknown function")
+	}
+}
+
+// ES/OpenSearch 有两条查询分支：DSL 分支读 start/end，SQL 时序分支
+// （extractTSRequest）读 from/to。只注入一套会让 SQL 模式拿到零时间窗，
+// 宏展开成 1970 年区间后静默返回空结果。
+func TestQueryBatchV2ElasticsearchTimeRangeCoversBothBranches(t *testing.T) {
+	req := QueryBatchV2Request{From: 1710000000, To: 1710003600}
+	for _, cate := range []string{"elasticsearch", "elasticsearch.logging", "opensearch"} {
+		t.Run(cate, func(t *testing.T) {
+			payload, err := queryBatchV2Payload(req, QueryBatchV2Query{
+				RefID:      "A",
+				Datasource: &QueryBatchV2DatasourceRef{Cate: cate, ID: 1},
+				Query:      queryBatchV2Raw(`{"sql":"select $__timeFilter(ts)","keys":{"valueKey":"v"}}`),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, key := range []string{"start", "from"} {
+				if payload[key] != req.From {
+					t.Fatalf("payload[%q] = %#v, want %d", key, payload[key], req.From)
+				}
+			}
+			for _, key := range []string{"end", "to"} {
+				if payload[key] != req.To {
+					t.Fatalf("payload[%q] = %#v, want %d", key, payload[key], req.To)
+				}
+			}
+		})
+	}
+}
+
+// 表达式求值是纯 CPU 的串行段，取消后必须停下来，否则客户端早已断开而服务端
+// 还在把上限内的点算完。
+func TestQueryBatchV2ExpressionStopsOnCanceledContext(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 3}),
+		),
+	}
+	req := QueryBatchV2Request{
+		From: 1,
+		To:   100,
+		Queries: []QueryBatchV2Query{
+			{Kind: queryKindDatasource, RefID: "A"},
+			{Kind: queryKindExpression, RefID: "B", Expression: "$A * 2"},
+		},
+	}
+	results := []QueryBatchV2Result{queryBatchV2Success("A", values["A"]), {}}
+
+	canceled, cancel := context.WithCancel(t.Context())
+	cancel()
+	queryBatchV2Executor{}.evaluateExpressions(canceled, req, results, values)
+
+	if results[1].Error == nil || results[1].Error.Code != "EXPRESSION_CANCELED" {
+		t.Fatalf("result = %#v", results[1])
+	}
+	if !results[1].Error.Retryable {
+		t.Fatalf("a canceled expression must be retryable: %#v", results[1].Error)
+	}
+}
+
+// 仪表盘限时分享：命中 board token 时按板内集合校验数据源，并跳过基于登录
+// 用户的 CheckDsPerm——分享请求本来就没有登录用户。
+func TestQueryBatchV2BoardTokenSkipsDatasourcePermission(t *testing.T) {
+	const datasourceID = int64(987654333)
+	dscache.DsCache.Put("iotdb", datasourceID, &queryBatchV2FakeDatasource{})
+	t.Cleanup(func() { dscache.DsCache.Delete("iotdb", datasourceID) })
+
+	var seenDsIDs []int64
+	var permChecked bool
+	options := &QueryBatchV2Options{
+		CheckDsPerm: func(*gin.Context, int64, string, interface{}) bool {
+			permChecked = true
+			return false
+		},
+		BoardTokenQueryContext: func(_ *gin.Context, dsIDs ...int64) bool {
+			seenDsIDs = append(seenDsIDs, dsIDs...)
+			return true
+		},
+	}
+
+	gin.SetMode(gin.TestMode)
+	engine := gin.New()
+	engine.POST("/api/n9e/v2/query-batch", func(c *gin.Context) {
+		QueryBatchV2(c, false, nil, options)
+	})
+	body := []byte(`{"from":100,"to":200,"queries":[` +
+		`{"kind":"query","ref_id":"A","datasource":{"cate":"iotdb","id":987654333},"result_type":"logs","query":{"sql":"select 1"}},` +
+		`{"kind":"expression","ref_id":"E","expression":"1 + 1"}]}`)
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/api/n9e/v2/query-batch", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	engine.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", recorder.Code, recorder.Body.String())
+	}
+	// 表达式不带数据源，不应混进板内集合校验。
+	if len(seenDsIDs) != 1 || seenDsIDs[0] != datasourceID {
+		t.Fatalf("board token saw datasource ids %v, want [%d]", seenDsIDs, datasourceID)
+	}
+	if permChecked {
+		t.Fatal("CheckDsPerm must be skipped for a board share token request")
+	}
+
+	// QueryBatchV2Sample 只实现了 MarshalJSON，响应无法整体回读，这里按报文断言。
+	responseBody := recorder.Body.String()
+	if strings.Contains(responseBody, "FORBIDDEN") || !strings.Contains(responseBody, `"ref_id":"A","status":"success"`) {
+		t.Fatalf("response = %s", responseBody)
 	}
 }

@@ -221,11 +221,33 @@ func TestGetFilterQueryLuceneCompatibility(t *testing.T) {
 	}
 }
 
-func TestGetFilterQueryKQLRejectsEmptyFilter(t *testing.T) {
+// 空过滤条件在 KQL 下与 Lucene 同义：只按时间范围查全部，而不是报错。
+func TestGetFilterQueryKQLEmptyFilterFallsBackToTimeRangeOnly(t *testing.T) {
+	want, err := GetQueryString("", elastic.NewRangeQuery("@timestamp")).Source()
+	if err != nil {
+		t.Fatal(err)
+	}
+	encodedWant, err := json.Marshal(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, filter := range []string{"", "  "} {
-		if _, err := GetFilterQuery(&Query{FilterLanguage: "kql", Filter: filter},
-			elastic.NewRangeQuery("@timestamp")); err == nil {
-			t.Errorf("expected empty KQL filter %q to fail", filter)
+		query, err := GetFilterQuery(&Query{FilterLanguage: "kql", Filter: filter},
+			elastic.NewRangeQuery("@timestamp"))
+		if err != nil {
+			t.Fatalf("empty KQL filter %q must not fail: %v", filter, err)
+		}
+		source, err := query.Source()
+		if err != nil {
+			t.Fatal(err)
+		}
+		encoded, err := json.Marshal(source)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(encoded) != string(encodedWant) {
+			t.Fatalf("empty KQL filter %q: got %s, want %s", filter, encoded, encodedWant)
 		}
 	}
 }

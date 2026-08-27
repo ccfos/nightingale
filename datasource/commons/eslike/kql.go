@@ -33,7 +33,9 @@ type KQLOptions struct {
 func GetFilterQuery(param *Query, timeRange *elastic.RangeQuery) (elastic.Query, error) {
 	if strings.EqualFold(param.FilterLanguage, "kql") {
 		if strings.TrimSpace(param.Filter) == "" {
-			return nil, fmt.Errorf("filter is required when filter_language is kql")
+			// 空过滤条件在 Lucene 下就是「只按时间范围查全部」。KQL 是同一个输入框的
+			// 另一种语法，报错会让「切到 KQL 但还没填条件」的面板直接失败。
+			return GetQueryString("", timeRange), nil
 		}
 		options := param.KQLOptions
 		options.dateField = param.DateField

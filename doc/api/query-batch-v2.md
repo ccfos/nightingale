@@ -25,6 +25,11 @@ POST /api/n9e-plus/v2/query-batch
 执行 `CheckDsPerm`；开启该匿名查询开关时，请求不执行数据源权限检查。该开关是全局查询
 访问策略，不只影响 Prometheus 数据源。
 
+本接口同样接入仪表盘限时分享通道（`__token`），与 `/ds-query`、`/log-query-batch`
+一致：带有效 board 分享 token 的匿名请求可以调用，请求里出现的每个 `datasource.id`
+都必须属于该仪表盘引用的数据源集合，否则整个请求返回 HTTP 403；命中 token 后不再做
+基于登录用户的 `CheckDsPerm`，并对 SQL 类数据源置位强只读校验。
+
 ## 请求
 
 ```json
@@ -84,11 +89,15 @@ POST /api/n9e-plus/v2/query-batch
   序列，结果标签上会带回 `__name__` 标识是哪个指标。
 - 单次表达式最多处理 10000 个标签分组和 50000 个时间点，超出时返回
   `EXPRESSION_LIMIT_EXCEEDED`，避免单个批量请求长期占用 CPU。
-- 当前时序表达式会在每个匹配时间点调用一次表达式解析与计算；较大的时间范围、较小的
-  step 或接近 50000 点上限的请求会增加 CPU 开销。调用方应优先缩小时间范围或增大
-  step。
+- 时序表达式按最终输入形状编译一次，所有分组和时间点复用同一个编译结果；求值本身
+  仍与时间点数成正比，较大的时间范围或较小的 step 依然会增加 CPU 开销。
+- 表达式求值过程中会检查请求是否已被取消（客户端断开、超时），已取消时对应表达式
+  返回 `EXPRESSION_CANCELED` 并停止计算。
 - 表达式依赖链最多 64 层，超出时返回 `EXPRESSION_DEPTH_EXCEEDED`。
-- 请求级 `from/to` 是权威时间范围，会覆盖 adapter query 中已有的时间字段。
+- 请求级 `from/to` 是权威时间范围，会覆盖 adapter query 中已有的时间字段。写入哪些
+  字段按 cate 决定：Loki / VictoriaLogs / Zabbix 写 `start`/`end`，TDengine 写
+  RFC3339 的 `from`/`to`，Elasticsearch / OpenSearch 两套都写（DSL 分支读
+  `start`/`end`，SQL 分支读 `from`/`to`），其余写 `from`/`to`。
 
 ## 响应
 
@@ -209,6 +218,7 @@ POST /api/n9e-plus/v2/query-batch
 | `EXPRESSION_LIMIT_EXCEEDED` | 表达式分组或点数超限  |
 | `EXPRESSION_DEPTH_EXCEEDED` | 表达式依赖层数超限    |
 | `EXPRESSION_EVALUATION_ERROR` | 表达式运行时求值失败 |
+| `EXPRESSION_CANCELED`      | 请求已取消或超时，表达式停止求值 |
 | `DEPENDENCY_NOT_FOUND`     | 表达式引用未知 RefID   |
 | `DEPENDENCY_TYPE_MISMATCH` | 表达式引用日志结果     |
 | `DEPENDENCY_CYCLE`         | 表达式形成循环依赖     |

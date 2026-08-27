@@ -31,6 +31,9 @@ import (
 // backend and each batch request can already contain many queries.
 const queryBatchV2Workers = 3
 
+// 取消检查的步长：ctx.Err() 对 cancelCtx 是一次加锁读，逐点查在热路径上不划算。
+const queryBatchV2CancelCheckPoints = 512
+
 const (
 	queryBatchV2MaxQueries          = 100
 	queryBatchV2MaxExpressionDepth  = 64
@@ -66,6 +69,10 @@ var (
 // permission implementation while reusing the common protocol.
 type QueryBatchV2Options struct {
 	CheckDsPerm func(*gin.Context, int64, string, interface{}) bool
+	// BoardTokenQueryContext 处理仪表盘限时分享 token：命中时校验请求里的数据源
+	// 都属于板内集合、给请求 context 置位 EnforceReadOnly，并返回 true 表示这是
+	// 匿名 token 请求，后续不再做基于登录用户的数据源权限校验。
+	BoardTokenQueryContext func(*gin.Context, ...int64) bool
 }
 
 type QueryBatchV2Request struct {
@@ -154,7 +161,9 @@ func (e *queryBatchV2CodedError) Unwrap() error {
 }
 
 func (rt *Router) queryBatchV2(c *gin.Context) {
-	QueryBatchV2(c, rt.Center.AnonymousAccess.PromQuerier, rt.PromClients, nil)
+	QueryBatchV2(c, rt.Center.AnonymousAccess.PromQuerier, rt.PromClients, &QueryBatchV2Options{
+		BoardTokenQueryContext: rt.boardTokenQueryContext,
+	})
 }
 
 // QueryBatchV2 serves the common V2 batch-query protocol. It is exported so
@@ -164,6 +173,22 @@ func QueryBatchV2(c *gin.Context, anonymousAccess bool, promClients *n9eprom.Pro
 	ginx.BindJSON(c, &req)
 	if err := validateQueryBatchV2Request(req); err != nil {
 		ginx.Bomb(http.StatusBadRequest, "%v", err)
+	}
+
+	// 仪表盘限时分享：本接口每条 query 自带数据源 id，需逐条校验板内归属。命中
+	// token 后跳过基于登录用户的权限校验，与 /ds-query、/log-query-batch 一致。
+	// 必须在起查询 goroutine 之前调用——它会替换 c.Request 的 context 以置位
+	// EnforceReadOnly。
+	if options != nil && options.BoardTokenQueryContext != nil {
+		dsIDs := make([]int64, 0, len(req.Queries))
+		for _, query := range req.Queries {
+			if query.Kind == queryKindDatasource && query.Datasource != nil {
+				dsIDs = append(dsIDs, query.Datasource.ID)
+			}
+		}
+		if options.BoardTokenQueryContext(c, dsIDs...) {
+			anonymousAccess = true
+		}
 	}
 
 	executor := queryBatchV2Executor{
@@ -315,7 +340,7 @@ dispatch:
 		values[req.Queries[i].RefID] = queryValues[i]
 	}
 
-	e.evaluateExpressions(req, results, values)
+	e.evaluateExpressions(c.Request.Context(), req, results, values)
 	return QueryBatchV2Response{Results: results}
 }
 
@@ -508,7 +533,17 @@ func queryBatchV2Payload(req QueryBatchV2Request, query QueryBatchV2Query) (map[
 
 func queryBatchV2SetTimeRange(payload map[string]interface{}, cate string, from, to int64) {
 	switch strings.TrimSuffix(cate, ".logging") {
-	case "elasticsearch", "opensearch", "loki", "victorialogs", "zabbix":
+	case "elasticsearch", "opensearch":
+		// eslike 的 DSL 分支读 start/end，但 ES/OpenSearch 还有一条 SQL 分支
+		// （datasource/es/sql_querydata.go 的 extractTSRequest：payload 同时带
+		// sql 和 keys.valueKey 时走它），那条读的是 from/to，宏展开也依赖它。
+		// 两套都写，否则 SQL 模式的时序查询会拿到零时间窗，把 $__timeFilter
+		// 展成 1970 年的区间，静默返回空结果。
+		payload["start"] = from
+		payload["end"] = to
+		payload["from"] = from
+		payload["to"] = to
+	case "loki", "victorialogs", "zabbix":
 		payload["start"] = from
 		payload["end"] = to
 	case "tdengine":
@@ -803,6 +838,7 @@ func queryBatchV2IsRefPart(value rune) bool {
 }
 
 func (e queryBatchV2Executor) evaluateExpressions(
+	ctx context.Context,
 	req QueryBatchV2Request,
 	results []QueryBatchV2Result,
 	values map[string]queryBatchV2Value,
@@ -828,6 +864,13 @@ func (e queryBatchV2Executor) evaluateExpressions(
 		}
 		query := expressions[refID]
 		resultIndex := indexByRef[refID]
+		// 表达式求值是纯 CPU 的串行段，客户端断开或超时后没有理由继续算下去。
+		if err := ctx.Err(); err != nil {
+			results[resultIndex] = queryBatchV2Failed(refID, resultStatusError, "EXPRESSION_CANCELED",
+				err.Error(), true, nil)
+			state[refID] = 2
+			return
+		}
 		if depth > queryBatchV2MaxExpressionDepth {
 			results[resultIndex] = queryBatchV2Failed(refID, resultStatusError, "EXPRESSION_DEPTH_EXCEEDED",
 				fmt.Sprintf("expression dependency depth exceeds maximum %d", queryBatchV2MaxExpressionDepth), false, nil)
@@ -892,14 +935,18 @@ func (e queryBatchV2Executor) evaluateExpressions(
 			return
 		}
 
-		value, err := queryBatchV2EvaluateMath(query.Expression, dependencies, values, req.To)
+		value, err := queryBatchV2EvaluateMath(ctx, query.Expression, dependencies, values, req.To)
 		if err != nil {
 			code := "EXPRESSION_EVALUATION_ERROR"
 			var limitErr *queryBatchV2ExpressionLimitError
+			var codedErr *queryBatchV2CodedError
 			if errors.As(err, &limitErr) {
 				code = "EXPRESSION_LIMIT_EXCEEDED"
+			} else if errors.As(err, &codedErr) {
+				code = codedErr.code
 			}
-			results[resultIndex] = queryBatchV2Failed(refID, resultStatusError, code, err.Error(), false, dependencies)
+			results[resultIndex] = queryBatchV2Failed(refID, resultStatusError, code, err.Error(),
+				queryBatchV2Retryable(err), dependencies)
 			state[refID] = 2
 			return
 		}
@@ -977,6 +1024,7 @@ func queryBatchV2PickSeries(
 }
 
 func queryBatchV2EvaluateMath(
+	ctx context.Context,
 	expression string,
 	dependencies []string,
 	values map[string]queryBatchV2Value,
@@ -1064,6 +1112,22 @@ func queryBatchV2EvaluateMath(
 		return result, nil
 	}
 
+	// 表达式对每个时间点求值一次，逐点走 parser.MathCalc 会把 expr.Compile 也重复
+	// 上万次，而编译是求值成本的绝大部分。这里按最终喂给引擎的输入形状编译一次，
+	// 所有分组和时间点复用同一个 program。
+	envShape := make(map[string]interface{}, len(references))
+	for _, reference := range references {
+		if scalar, ok := scalars[reference.RefID]; ok {
+			envShape[reference.Variable()] = scalar
+		} else {
+			envShape[reference.Variable()] = float64(0)
+		}
+	}
+	program, err := parser.CompileMath(expression, envShape)
+	if err != nil {
+		return result, fmt.Errorf("expression evaluation failed: %s", err.Error())
+	}
+
 	groupKeys := make([]string, 0, len(groups))
 	for key := range groups {
 		groupKeys = append(groupKeys, key)
@@ -1078,6 +1142,9 @@ func queryBatchV2EvaluateMath(
 	// produces.
 	var evaluationError error
 	for _, groupKey := range groupKeys {
+		if err := ctx.Err(); err != nil {
+			return result, &queryBatchV2CodedError{code: "EXPRESSION_CANCELED", err: err}
+		}
 		group := groups[groupKey]
 
 		// Only refs holding more than one metric in this join group open a
@@ -1163,7 +1230,13 @@ func queryBatchV2EvaluateMath(
 				labels[string(model.MetricNameLabel)] = rowName
 			}
 			output := QueryBatchV2Series{Labels: labels, Samples: make([]QueryBatchV2Sample, 0, len(sortedTimestamps))}
-			for _, timestamp := range sortedTimestamps {
+			for offset, timestamp := range sortedTimestamps {
+				// 单条序列就可能有上万个点，取消信号不能只在分组之间看。
+				if offset%queryBatchV2CancelCheckPoints == 0 {
+					if err := ctx.Err(); err != nil {
+						return result, &queryBatchV2CodedError{code: "EXPRESSION_CANCELED", err: err}
+					}
+				}
 				input := make(map[string]interface{}, len(references))
 				matched := true
 				for _, reference := range references {
@@ -1182,7 +1255,7 @@ func queryBatchV2EvaluateMath(
 					continue
 				}
 				evaluationAttempts++
-				number, err := parser.MathCalc(expression, input)
+				number, err := program.Run(input)
 				if err != nil {
 					if evaluationError == nil {
 						evaluationError = err
@@ -1203,20 +1276,12 @@ func queryBatchV2EvaluateMath(
 		logger.Warningf("query-batch-v2 expression %q skipped %d metric rows whose refs held no series for that metric",
 			expression, skippedRows)
 	}
-	// Empty or unjoinable series otherwise never reach MathCalc, allowing an
-	// invalid runtime expression (for example an unknown function) to look like
-	// a successful empty result. Probe once with the same float-shaped inputs
-	// used for series points; this is validation only and never creates a sample.
+	// Empty or unjoinable series otherwise never reach the engine, allowing an
+	// expression that only fails at run time to look like a successful empty
+	// result. Probe once with the same float-shaped inputs used for series
+	// points; this is validation only and never creates a sample.
 	if evaluationAttempts == 0 {
-		input := make(map[string]interface{}, len(references))
-		for _, reference := range references {
-			if scalar, ok := scalars[reference.RefID]; ok {
-				input[reference.Variable()] = scalar
-			} else {
-				input[reference.Variable()] = float64(0)
-			}
-		}
-		if _, err := parser.MathCalc(expression, input); err != nil {
+		if _, err := program.Run(envShape); err != nil {
 			return result, fmt.Errorf("expression evaluation failed: %s", err.Error())
 		}
 	}

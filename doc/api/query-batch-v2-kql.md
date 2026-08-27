@@ -25,7 +25,7 @@
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `filter_language` | string | 否 | 传 `kql` 启用 KQL；未传或 `lucene` 保持旧的 Lucene 行为 |
-| `filter` | string | `filter_language=kql` 时是 | KQL 表达式 |
+| `filter` | string | 否 | KQL 表达式；留空与 Lucene 一致，表示只按时间范围查全部 |
 | `kql_options.default_field` | string | 否 | **已忽略**，仅为请求兼容保留；裸词按前端行为查询全字段 |
 | `kql_options.case_insensitive` | boolean | 否 | **已忽略**，仅为请求兼容保留；值通配生成 `query_string`，大小写行为由字段的分析器决定 |
 | `kql_options.time_zone` | string | 否 | 仅对本请求 `date_field` 的范围条件生效；用于日期文字解释时区，如 `Asia/Shanghai` 或 `+08:00` |
