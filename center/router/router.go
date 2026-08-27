@@ -284,6 +284,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/datasource/series", rt.auth(), rt.admin(), rt.deleteDatasourceSeries)
 		if rt.Center.AnonymousAccess.PromQuerier {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
+			pages.POST("/v2/query-batch", rt.queryBatchV2)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.datasourceBriefs)
@@ -326,6 +327,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.Any("/proxy/:id/*url", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.dsProxy)
 			// 仪表盘限时分享：带有效 board 分享 token 的匿名请求可走以下查询接口，
 			// 数据源被收敛到板内引用集合（见 router_board_share.go），其余照常登录鉴权
+			pages.POST("/v2/query-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.queryBatchV2)
 			pages.POST("/query-range-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.datasourceBriefs)
