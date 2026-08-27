@@ -699,3 +699,279 @@ func TestQueryBatchV2PromScalarInstantTimestamp(t *testing.T) {
 func httpNewRequestWithContext(ctx context.Context) (*http.Request, error) {
 	return http.NewRequestWithContext(ctx, http.MethodPost, "/api/n9e/v2/query-batch", nil)
 }
+
+// queryBatchV2TestSeries builds one series carrying a metric name plus a fixed
+// host label, which is the shape SQL datasources produce when a single query
+// selects several value columns.
+func queryBatchV2TestSeries(metricName string, samples ...QueryBatchV2Sample) QueryBatchV2Series {
+	return QueryBatchV2Series{
+		Labels:  map[string]string{"__name__": metricName, "host": "web01"},
+		Samples: samples,
+	}
+}
+
+func queryBatchV2TestValue(series ...QueryBatchV2Series) queryBatchV2Value {
+	return queryBatchV2Value{ResultType: resultTypeTimeSeries, Series: series}
+}
+
+// queryBatchV2SeriesByName indexes an expression result by its __name__ label,
+// reporting series that carry no metric name under the empty key.
+func queryBatchV2SeriesByName(series []QueryBatchV2Series) map[string]QueryBatchV2Series {
+	byName := make(map[string]QueryBatchV2Series, len(series))
+	for _, item := range series {
+		byName[item.Labels["__name__"]] = item
+	}
+	return byName
+}
+
+func queryBatchV2EvalForTest(t *testing.T, expression string, values map[string]queryBatchV2Value) queryBatchV2Value {
+	t.Helper()
+	value, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100)
+	if err != nil {
+		t.Fatalf("expression %q failed: %v", expression, err)
+	}
+	return value
+}
+
+// A single ref that returns several metrics sharing every other label used to
+// collapse into one series, keeping only the lexicographically largest metric
+// name. Each metric must now survive as its own row.
+func TestQueryBatchV2ExpressionFansOutMetricsOfOneRef(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu_usage",
+				QueryBatchV2Sample{Timestamp: 100, Value: 10},
+				QueryBatchV2Sample{Timestamp: 200, Value: 20}),
+			queryBatchV2TestSeries("mem_usage",
+				QueryBatchV2Sample{Timestamp: 100, Value: 70},
+				QueryBatchV2Sample{Timestamp: 200, Value: 80}),
+		),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A * 1", values)
+	if len(value.Series) != 2 {
+		t.Fatalf("series count = %d, want 2: %#v", len(value.Series), value.Series)
+	}
+	byName := queryBatchV2SeriesByName(value.Series)
+	cpu, ok := byName["cpu_usage"]
+	if !ok {
+		t.Fatalf("cpu_usage series missing: %#v", value.Series)
+	}
+	if cpu.Labels["host"] != "web01" {
+		t.Fatalf("cpu_usage labels = %#v", cpu.Labels)
+	}
+	if len(cpu.Samples) != 2 || cpu.Samples[0].Value != 10 || cpu.Samples[1].Value != 20 {
+		t.Fatalf("cpu_usage samples = %#v", cpu.Samples)
+	}
+	mem, ok := byName["mem_usage"]
+	if !ok {
+		t.Fatalf("mem_usage series missing: %#v", value.Series)
+	}
+	if len(mem.Samples) != 2 || mem.Samples[0].Value != 70 || mem.Samples[1].Value != 80 {
+		t.Fatalf("mem_usage samples = %#v", mem.Samples)
+	}
+}
+
+// Two refs each carrying the same metric set pair up metric by metric instead
+// of both collapsing onto the same lexicographically largest name.
+func TestQueryBatchV2ExpressionPairsMetricsAcrossRefs(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("disk_used", QueryBatchV2Sample{Timestamp: 100, Value: 30}),
+			queryBatchV2TestSeries("disk_total", QueryBatchV2Sample{Timestamp: 100, Value: 100}),
+		),
+		"B": queryBatchV2TestValue(
+			queryBatchV2TestSeries("disk_used", QueryBatchV2Sample{Timestamp: 100, Value: 10}),
+			queryBatchV2TestSeries("disk_total", QueryBatchV2Sample{Timestamp: 100, Value: 100}),
+		),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A - $B", values)
+	if len(value.Series) != 2 {
+		t.Fatalf("series count = %d, want 2: %#v", len(value.Series), value.Series)
+	}
+	byName := queryBatchV2SeriesByName(value.Series)
+	used, ok := byName["disk_used"]
+	if !ok || len(used.Samples) != 1 || used.Samples[0].Value != 20 {
+		t.Fatalf("disk_used series = %#v", value.Series)
+	}
+	total, ok := byName["disk_total"]
+	if !ok || len(total.Samples) != 1 || total.Samples[0].Value != 0 {
+		t.Fatalf("disk_total series = %#v", value.Series)
+	}
+}
+
+// A ref holding one series whose metric name is outside the fan-out dimension
+// is a shared denominator and must reach every row.
+func TestQueryBatchV2ExpressionBroadcastsUnrelatedSingleSeries(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("requests_success", QueryBatchV2Sample{Timestamp: 100, Value: 90}),
+			queryBatchV2TestSeries("requests_failed", QueryBatchV2Sample{Timestamp: 100, Value: 10}),
+		),
+		"B": queryBatchV2TestValue(
+			queryBatchV2TestSeries("requests_total", QueryBatchV2Sample{Timestamp: 100, Value: 100}),
+		),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A / $B", values)
+	if len(value.Series) != 2 {
+		t.Fatalf("series count = %d, want 2: %#v", len(value.Series), value.Series)
+	}
+	byName := queryBatchV2SeriesByName(value.Series)
+	success, ok := byName["requests_success"]
+	if !ok || len(success.Samples) != 1 || success.Samples[0].Value != 0.9 {
+		t.Fatalf("requests_success series = %#v", value.Series)
+	}
+	failed, ok := byName["requests_failed"]
+	if !ok || len(failed.Samples) != 1 || failed.Samples[0].Value != 0.1 {
+		t.Fatalf("requests_failed series = %#v", value.Series)
+	}
+}
+
+// When the lone series of a ref carries a metric name that is part of the
+// fan-out dimension, it lines up by name rather than broadcasting: pairing
+// mem with cpu would invent a value. This is also the row that separates the
+// pre-decided __name__ rule from a post-hoc one, so the label is asserted.
+func TestQueryBatchV2ExpressionMatchesOverlappingSingleSeriesByName(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 8}),
+			queryBatchV2TestSeries("mem", QueryBatchV2Sample{Timestamp: 100, Value: 40}),
+		),
+		"B": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 4}),
+		),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A / $B", values)
+	if len(value.Series) != 1 {
+		t.Fatalf("series count = %d, want 1: %#v", len(value.Series), value.Series)
+	}
+	series := value.Series[0]
+	if series.Labels["__name__"] != "cpu" {
+		t.Fatalf("labels = %#v, want __name__=cpu", series.Labels)
+	}
+	if len(series.Samples) != 1 || series.Samples[0].Value != 2 {
+		t.Fatalf("samples = %#v, want cpu/cpu = 2", series.Samples)
+	}
+}
+
+// Metrics present on only one side of a many-to-many group are skipped, the
+// same inner-join behaviour the function already had for whole refs.
+func TestQueryBatchV2ExpressionSkipsPartiallyOverlappingMetrics(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 3}),
+			queryBatchV2TestSeries("mem", QueryBatchV2Sample{Timestamp: 100, Value: 5}),
+		),
+		"B": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 4}),
+			queryBatchV2TestSeries("disk", QueryBatchV2Sample{Timestamp: 100, Value: 9}),
+		),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A + $B", values)
+	if len(value.Series) != 1 {
+		t.Fatalf("series count = %d, want 1: %#v", len(value.Series), value.Series)
+	}
+	series := value.Series[0]
+	if series.Labels["__name__"] != "cpu" {
+		t.Fatalf("labels = %#v, want __name__=cpu", series.Labels)
+	}
+	if len(series.Samples) != 1 || series.Samples[0].Value != 7 {
+		t.Fatalf("samples = %#v, want 7", series.Samples)
+	}
+}
+
+// Scalar refs hold no series in any group, so they must be excluded from both
+// the fan-out scan and the completeness check instead of emptying every row.
+func TestQueryBatchV2ExpressionFanOutKeepsScalarRefs(t *testing.T) {
+	scalar := float64(2)
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 3}),
+			queryBatchV2TestSeries("mem", QueryBatchV2Sample{Timestamp: 100, Value: 5}),
+		),
+		"S": {ResultType: resultTypeTimeSeries, Scalar: &scalar},
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A * $S", values)
+	if len(value.Series) != 2 {
+		t.Fatalf("series count = %d, want 2: %#v", len(value.Series), value.Series)
+	}
+	byName := queryBatchV2SeriesByName(value.Series)
+	if cpu, ok := byName["cpu"]; !ok || len(cpu.Samples) != 1 || cpu.Samples[0].Value != 6 {
+		t.Fatalf("cpu series = %#v", value.Series)
+	}
+	if mem, ok := byName["mem"]; !ok || len(mem.Samples) != 1 || mem.Samples[0].Value != 10 {
+		t.Fatalf("mem series = %#v", value.Series)
+	}
+}
+
+// Series without a metric name, as log-derived datasources produce, keep the
+// single-row behaviour and must not gain an empty __name__ label.
+func TestQueryBatchV2ExpressionWithoutMetricNameKeepsSingleRow(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(QueryBatchV2Series{
+			Labels:  map[string]string{"host": "web01"},
+			Samples: []QueryBatchV2Sample{{Timestamp: 100, Value: 6}},
+		}),
+	}
+
+	value := queryBatchV2EvalForTest(t, "$A * 2", values)
+	if len(value.Series) != 1 {
+		t.Fatalf("series count = %d, want 1: %#v", len(value.Series), value.Series)
+	}
+	if _, exists := value.Series[0].Labels["__name__"]; exists {
+		t.Fatalf("labels = %#v, want no __name__", value.Series[0].Labels)
+	}
+	if value.Series[0].Samples[0].Value != 12 {
+		t.Fatalf("samples = %#v", value.Series[0].Samples)
+	}
+}
+
+// Refs whose metric sets do not intersect on any row leave the group empty.
+// The result must stay an empty success rather than being turned into a
+// spurious evaluation error by the probe that guards invalid expressions.
+func TestQueryBatchV2ExpressionFanOutWithoutCommonMetricIsEmpty(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 3}),
+			queryBatchV2TestSeries("mem", QueryBatchV2Sample{Timestamp: 100, Value: 5}),
+		),
+		"B": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 4}),
+		),
+		"C": queryBatchV2TestValue(
+			queryBatchV2TestSeries("mem", QueryBatchV2Sample{Timestamp: 100, Value: 6}),
+		),
+	}
+
+	value, err := queryBatchV2EvaluateMath("$A + $B + $C", queryBatchV2Dependencies("$A + $B + $C"), values, 100)
+	if err != nil {
+		t.Fatalf("expression failed: %v", err)
+	}
+	if len(value.Series) != 0 {
+		t.Fatalf("series = %#v, want none", value.Series)
+	}
+}
+
+// An invalid expression must still be reported even when the fan-out produces
+// no evaluable row, which is what the probe exists for.
+func TestQueryBatchV2ExpressionFanOutStillReportsInvalidExpression(t *testing.T) {
+	values := map[string]queryBatchV2Value{
+		"A": queryBatchV2TestValue(
+			queryBatchV2TestSeries("cpu", QueryBatchV2Sample{Timestamp: 100, Value: 3}),
+			queryBatchV2TestSeries("mem", QueryBatchV2Sample{Timestamp: 100, Value: 5}),
+		),
+		"B": queryBatchV2TestValue(
+			queryBatchV2TestSeries("disk", QueryBatchV2Sample{Timestamp: 100, Value: 4}),
+		),
+	}
+
+	expression := "no_such_function($A) + $B"
+	if _, err := queryBatchV2EvaluateMath(expression, queryBatchV2Dependencies(expression), values, 100); err == nil {
+		t.Fatal("expected an evaluation error for an unknown function")
+	}
+}

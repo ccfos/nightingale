@@ -865,6 +865,33 @@ func queryBatchV2ExpressionCycles(expressions map[string]QueryBatchV2Query) map[
 	return cycles
 }
 
+// queryBatchV2PickSeries resolves which series of a ref takes part in one
+// fan-out row. The row's own metric wins whenever the ref carries it. Failing
+// that, a ref holding a single series is broadcast into the row, which is what
+// lets a shared denominator pair with every metric of the ref that fans out.
+// The exception is a lone series whose own metric name belongs to the fan-out
+// dimension: it already matched its own row above, and broadcasting it into
+// the remaining rows would pair two unrelated metrics and invent a value.
+func queryBatchV2PickSeries(
+	byName map[string]QueryBatchV2Series,
+	fanNames map[string]struct{},
+	rowName string,
+) (QueryBatchV2Series, bool) {
+	if series, exists := byName[rowName]; exists {
+		return series, true
+	}
+	if len(byName) != 1 {
+		return QueryBatchV2Series{}, false
+	}
+	for metricName, series := range byName {
+		if _, overlaps := fanNames[metricName]; overlaps {
+			break
+		}
+		return series, true
+	}
+	return QueryBatchV2Series{}, false
+}
+
 func queryBatchV2EvaluateMath(
 	expression string,
 	dependencies []string,
@@ -873,7 +900,10 @@ func queryBatchV2EvaluateMath(
 ) (queryBatchV2Value, error) {
 	result := queryBatchV2Value{ResultType: resultTypeTimeSeries, Series: make([]QueryBatchV2Series, 0)}
 	hasSeries := false
-	groups := make(map[string]map[string]QueryBatchV2Series)
+	// Series join on the labels without __name__ so that $A / $B keeps pairing
+	// across metrics, and fan out on __name__ inside a join group so that
+	// series differing only by metric name are no longer collapsed into one.
+	groups := make(map[string]map[string]map[string]QueryBatchV2Series)
 	groupLabels := make(map[string]map[string]string)
 	scalars := make(map[string]float64)
 
@@ -891,7 +921,7 @@ func queryBatchV2EvaluateMath(
 					return result, &queryBatchV2ExpressionLimitError{message: fmt.Sprintf(
 						"expression exceeds maximum group count %d", queryBatchV2MaxExpressionGroups)}
 				}
-				groups[key] = make(map[string]QueryBatchV2Series)
+				groups[key] = make(map[string]map[string]QueryBatchV2Series)
 				labels := make(map[string]string, len(series.Labels))
 				for label, labelValue := range series.Labels {
 					if label != string(model.MetricNameLabel) {
@@ -900,7 +930,18 @@ func queryBatchV2EvaluateMath(
 				}
 				groupLabels[key] = labels
 			}
-			groups[key][dependency] = series
+			if groups[key][dependency] == nil {
+				groups[key][dependency] = make(map[string]QueryBatchV2Series)
+			}
+			metricName := series.Labels[string(model.MetricNameLabel)]
+			if _, duplicate := groups[key][dependency][metricName]; duplicate {
+				// Fully identical label sets are indistinguishable on the output
+				// as well, so keep the first instead of silently replacing it.
+				logger.Warningf("query-batch-v2 expression %q kept the first of duplicate series on ref %s labels %v",
+					expression, dependency, series.Labels)
+				continue
+			}
+			groups[key][dependency][metricName] = series
 		}
 	}
 
@@ -930,6 +971,7 @@ func queryBatchV2EvaluateMath(
 	sort.Strings(groupKeys)
 	evaluationPoints := 0
 	evaluationAttempts := 0
+	skippedRows := 0
 	// A failure that depends on the sample values must not discard the points
 	// that did evaluate, so the error is only reported when nothing evaluated
 	// at all, which is what a broken expression such as an unknown function
@@ -937,74 +979,120 @@ func queryBatchV2EvaluateMath(
 	var evaluationError error
 	for _, groupKey := range groupKeys {
 		group := groups[groupKey]
-		timestamps := make(map[int64]struct{})
-		sampleValues := make(map[string]map[int64]float64)
-		complete := true
+
+		// Only refs holding more than one metric in this join group open a
+		// fan-out dimension. A ref holding a single series is broadcast into
+		// every row, which is what keeps a shared denominator such as
+		// $A / $B working when B carries one metric and A carries several.
+		fanNames := make(map[string]struct{})
 		for _, dependency := range dependencies {
-			if _, scalar := scalars[dependency]; scalar {
+			if len(group[dependency]) < 2 {
 				continue
 			}
-			series, exists := group[dependency]
-			if !exists {
-				complete = false
-				break
+			for metricName := range group[dependency] {
+				fanNames[metricName] = struct{}{}
 			}
-			byTimestamp := make(map[int64]float64, len(series.Samples))
-			for _, sample := range series.Samples {
-				byTimestamp[sample.Timestamp] = sample.Value
-				timestamps[sample.Timestamp] = struct{}{}
-			}
-			sampleValues[dependency] = byTimestamp
 		}
-		if !complete {
-			continue
+		rowNames := make([]string, 0, len(fanNames))
+		for metricName := range fanNames {
+			rowNames = append(rowNames, metricName)
 		}
-		if len(timestamps) > queryBatchV2MaxExpressionPoints-evaluationPoints {
-			return result, &queryBatchV2ExpressionLimitError{message: fmt.Sprintf(
-				"expression exceeds maximum evaluation point count %d", queryBatchV2MaxExpressionPoints)}
+		sort.Strings(rowNames)
+		// Decided before the rows are walked: whether __name__ is restored on
+		// the output must not depend on how many rows survive the join, or a
+		// group that fans out into two rows and keeps one would lose the label
+		// that says which metric it is.
+		fanOut := len(rowNames) > 0
+		if !fanOut {
+			rowNames = append(rowNames, "")
 		}
-		evaluationPoints += len(timestamps)
 
-		sortedTimestamps := make([]int64, 0, len(timestamps))
-		for timestamp := range timestamps {
-			sortedTimestamps = append(sortedTimestamps, timestamp)
-		}
-		sort.Slice(sortedTimestamps, func(i, j int) bool { return sortedTimestamps[i] < sortedTimestamps[j] })
-		output := QueryBatchV2Series{Labels: groupLabels[groupKey], Samples: make([]QueryBatchV2Sample, 0, len(sortedTimestamps))}
-		for _, timestamp := range sortedTimestamps {
-			input := make(map[string]interface{}, len(dependencies))
-			matched := true
+		for _, rowName := range rowNames {
+			timestamps := make(map[int64]struct{})
+			sampleValues := make(map[string]map[int64]float64)
+			complete := true
 			for _, dependency := range dependencies {
-				if scalar, ok := scalars[dependency]; ok {
-					input["$"+dependency] = scalar
+				if _, scalar := scalars[dependency]; scalar {
 					continue
 				}
-				number, ok := sampleValues[dependency][timestamp]
-				if !ok {
-					matched = false
+				series, exists := queryBatchV2PickSeries(group[dependency], fanNames, rowName)
+				if !exists {
+					complete = false
 					break
 				}
-				input["$"+dependency] = number
+				byTimestamp := make(map[int64]float64, len(series.Samples))
+				for _, sample := range series.Samples {
+					byTimestamp[sample.Timestamp] = sample.Value
+					timestamps[sample.Timestamp] = struct{}{}
+				}
+				sampleValues[dependency] = byTimestamp
 			}
-			if !matched {
-				continue
-			}
-			evaluationAttempts++
-			number, err := parser.MathCalc(expression, input)
-			if err != nil {
-				if evaluationError == nil {
-					evaluationError = err
+			if !complete {
+				if fanOut {
+					skippedRows++
 				}
 				continue
 			}
-			if !queryBatchV2Finite(number) {
-				continue
+			if len(timestamps) > queryBatchV2MaxExpressionPoints-evaluationPoints {
+				return result, &queryBatchV2ExpressionLimitError{message: fmt.Sprintf(
+					"expression exceeds maximum evaluation point count %d", queryBatchV2MaxExpressionPoints)}
 			}
-			output.Samples = append(output.Samples, QueryBatchV2Sample{Timestamp: timestamp, Value: number})
+			evaluationPoints += len(timestamps)
+
+			sortedTimestamps := make([]int64, 0, len(timestamps))
+			for timestamp := range timestamps {
+				sortedTimestamps = append(sortedTimestamps, timestamp)
+			}
+			sort.Slice(sortedTimestamps, func(i, j int) bool { return sortedTimestamps[i] < sortedTimestamps[j] })
+			// Copied per row: the group labels are shared by every row of the
+			// group, so restoring __name__ in place would leak across rows.
+			labels := make(map[string]string, len(groupLabels[groupKey])+1)
+			for label, labelValue := range groupLabels[groupKey] {
+				labels[label] = labelValue
+			}
+			if fanOut && rowName != "" {
+				labels[string(model.MetricNameLabel)] = rowName
+			}
+			output := QueryBatchV2Series{Labels: labels, Samples: make([]QueryBatchV2Sample, 0, len(sortedTimestamps))}
+			for _, timestamp := range sortedTimestamps {
+				input := make(map[string]interface{}, len(dependencies))
+				matched := true
+				for _, dependency := range dependencies {
+					if scalar, ok := scalars[dependency]; ok {
+						input["$"+dependency] = scalar
+						continue
+					}
+					number, ok := sampleValues[dependency][timestamp]
+					if !ok {
+						matched = false
+						break
+					}
+					input["$"+dependency] = number
+				}
+				if !matched {
+					continue
+				}
+				evaluationAttempts++
+				number, err := parser.MathCalc(expression, input)
+				if err != nil {
+					if evaluationError == nil {
+						evaluationError = err
+					}
+					continue
+				}
+				if !queryBatchV2Finite(number) {
+					continue
+				}
+				output.Samples = append(output.Samples, QueryBatchV2Sample{Timestamp: timestamp, Value: number})
+			}
+			if len(output.Samples) > 0 {
+				result.Series = append(result.Series, output)
+			}
 		}
-		if len(output.Samples) > 0 {
-			result.Series = append(result.Series, output)
-		}
+	}
+	if skippedRows > 0 {
+		logger.Warningf("query-batch-v2 expression %q skipped %d metric rows whose refs held no series for that metric",
+			expression, skippedRows)
 	}
 	// Empty or unjoinable series otherwise never reach MathCalc, allowing an
 	// invalid runtime expression (for example an unknown function) to look like
