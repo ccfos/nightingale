@@ -68,7 +68,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认连接数曲线与实例规格上限；\n2) 排查客户端是否每次收发都新建连接——正确做法是长连接复用、每线程一个 channel；\n3) 确认没有客户端在异常重连；\n4) 确需更多连接的升级实例规格。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -156,7 +158,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认是哪个 vhost/queue 没有消费者；\n2) 到消费端确认应用进程是否存活、是否报连接或鉴权错误；\n3) 消费端正常但未连上的，核对 vhost、queue 名与凭据配置；\n4) 恢复消费后观察堆积是否开始下降。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -244,7 +248,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认堆积最多的 queue 与堆积增长速度；\n2) 确认消费者数量是否为 0 或明显不足——先把消费者拉起或扩容；\n3) 消费者在但处理慢的，看消费端日志是否有异常重试或下游依赖超时；\n4) 堆积量巨大时评估是否需要临时增加消费并发。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,

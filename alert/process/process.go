@@ -19,6 +19,7 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/evallog"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/robfig/cron/v3"
@@ -77,6 +78,11 @@ type Processor struct {
 
 	ScheduleEntry    cron.Entry
 	PromEvalInterval int
+
+	// EvalRec 当前评估周期的执行记录，由 eval 侧每轮注入，Handle 各环节累加漏斗计数；
+	// nil 时（evallog 未启用/外部事件路径）所有计数方法为 no-op。
+	// 评估与事件处理在同一 goroutine 串行执行，无并发写。
+	EvalRec *evallog.EvalRecord
 }
 
 func (p *Processor) Key() string {
@@ -157,6 +163,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		event = dispatch.HandleEventPipeline(cachedRule.PipelineConfigs, eventCopy, event, dispatch.EventProcessorCache, p.ctx, cachedRule.Id, "alert_rule")
 		if event == nil {
 			logger.Infof("alert_eval_%d datasource_%d is muted drop by pipeline event:%s", p.rule.Id, p.datasourceId, eventCopy.Hash)
+			p.recEvent(eventCopy, evallog.StageDropByPipeline, "")
 			continue
 		}
 
@@ -168,8 +175,10 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 				logger.Infof("alert_eval_%d datasource_%d notify muted only, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
 				event.NotifyMuted = 1
 				event.MuteId = muteId
+				p.recEvent(event, evallog.StageMutedNotifyOnly, fmt.Sprintf("mute_id:%d %s", muteId, detail))
 			} else {
 				logger.Infof("alert_eval_%d datasource_%d is muted, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
+				p.recEvent(event, evallog.StageMuted, fmt.Sprintf("mute_id:%d %s", muteId, detail))
 				p.Stats.CounterMuteTotal.WithLabelValues(
 					fmt.Sprintf("%v", event.GroupName),
 					fmt.Sprintf("%v", p.rule.Id),
@@ -182,6 +191,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 
 		if dispatch.EventMuteHook(event) {
 			logger.Infof("alert_eval_%d datasource_%d is muted by hook event:%s", p.rule.Id, p.datasourceId, event.Hash)
+			p.recEvent(event, evallog.StageMutedByHook, "")
 			p.Stats.CounterMuteTotal.WithLabelValues(
 				fmt.Sprintf("%v", event.GroupName),
 				fmt.Sprintf("%v", p.rule.Id),
@@ -202,6 +212,34 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 	if from == "inner" {
 		p.HandleRecover(alertingKeys, now, inhibit)
 	}
+}
+
+// fireStage 从 fireEvent 的裁决 message 推导轨迹阶段。
+// 三类前缀与 fireEvent 内的 message 赋值一一对应，默认按 fired 计（firing 路径）。
+func fireStage(message string) string {
+	switch {
+	case strings.HasPrefix(message, "notify muted"):
+		return evallog.StageNotifyMuted
+	case strings.HasPrefix(message, "stalled"):
+		return evallog.StageStalled
+	default:
+		return evallog.StageFired
+	}
+}
+
+// recEvent 记录一个事件在当前评估周期的裁决轨迹，并累加对应的漏斗计数。
+// EvalRec 为 nil（evallog 未启用或外部事件路径）时为 no-op。
+func (p *Processor) recEvent(event *models.AlertCurEvent, stage, detail string) {
+	if p.EvalRec == nil || event == nil {
+		return
+	}
+	p.EvalRec.AddEvent(evallog.EventTrail{
+		Hash:     event.Hash,
+		Tags:     event.Tags,
+		Severity: event.Severity,
+		Stage:    stage,
+		Detail:   detail,
+	})
 }
 
 func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, now int64, ruleHash string) *models.AlertCurEvent {
@@ -397,6 +435,7 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 	}
 
 	p.HandleRecoverEventHook(event)
+	p.recEvent(event, evallog.StageRecovered, fmt.Sprintf("recovered, trigger_value:%s", event.TriggerValue))
 	p.pushEventToQueue(event)
 }
 
@@ -442,6 +481,10 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			}
 			continue
 		}
+
+		// for 持续时长未满足，本轮不触发
+		p.recEvent(event, evallog.StagePending, fmt.Sprintf("for=%ds elapsed=%ds",
+			p.rule.PromForDuration, event.LastEvalTime-preEvalTime+int64(event.PromEvalInterval)))
 	}
 
 	p.inhibitEvent(fireEvents, severity)
@@ -451,6 +494,7 @@ func (p *Processor) inhibitEvent(events []*models.AlertCurEvent, highSeverity in
 	for _, event := range events {
 		if p.inhibit && event.Severity > highSeverity {
 			logger.Debugf("alert_eval_%d datasource_%d event:%s inhibit highSeverity:%d", p.rule.Id, p.datasourceId, event.Hash, highSeverity)
+			p.recEvent(event, evallog.StageInhibited, fmt.Sprintf("severity=%d inhibited by severity=%d", event.Severity, highSeverity))
 			continue
 		}
 		p.fireEvent(event)
@@ -467,6 +511,9 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 	message := "unknown"
 	defer func() {
 		logger.Infof("alert_eval_%d datasource_%d event-hash-%s %s", p.rule.Id, p.datasourceId, event.Hash, message)
+		// message 已完整描述本轮裁决原因（首次触发/重复间隔未到/达最大次数/屏蔽期快照），
+		// 直接作为轨迹的裁决说明，stage 由其前缀推导
+		p.recEvent(event, fireStage(message), message)
 	}()
 
 	// 只屏蔽通知：事件要照常产生并落库，落库节奏与 notify_max_number 截断都与不屏蔽时完全一致，
@@ -595,8 +642,16 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 	}
 
 	dispatch.LogEvent(e, "push_queue")
-	if !queue.EventQueue.PushFront(e) {
+
+	// 入队的必须是快照，不能是 e 本身：p.fires 里存的就是同一个指针，
+	// RecoverSingle 会把它取出来原地改成恢复事件（IsRecovered=true）再二次入队，
+	// UpdateLastEvalTime / ResetMutedShadow 也每个评估周期原地写它。
+	// 队列一旦有积压，还没被消费的那条触发事件就会被就地改写成恢复事件，
+	// 结果是 alert_his_event 落两条恢复、零条触发，alert_cur_event 什么也不留；
+	// 同时消费者 goroutine 正在读这个对象，构成 data race。
+	if !queue.EventQueue.PushFront(e.DeepCopy()) {
 		logger.Warningf("alert_eval_%d datasource_%d event_push_queue: queue is full, event:%s", p.rule.Id, p.datasourceId, e.Hash)
+		p.recEvent(e, evallog.StagePushQueueFailed, "event queue is full")
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "push_event_queue", p.BusiGroupCache.GetNameByBusiGroupId(p.rule.GroupId), fmt.Sprintf("%v", p.rule.Id)).Inc()
 	}
 }

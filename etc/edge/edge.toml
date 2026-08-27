@@ -69,6 +69,18 @@ EngineName = "edge"
 # [Alert.Alerting]
 # NotifyConcurrency = 10
 
+# eval execution records: what each rule evaluation queried and judged,
+# stored on local disk of the alert engine, queryable on the rule page
+# [Alert.EvalLog]
+# Disable = false
+# records dir, defaults to <[Log] Dir>/evallog
+# Dir = "logs/evallog"
+# RetentionHours = 192
+# MaxDiskGB = 20
+# read-side caps: bytes budget per query, and concurrent queries allowed on this engine
+# MaxQueryBytes = 33554432
+# MaxConcurrentQueries = 2
+
 [Pushgw]
 # use target labels in database instead of in series
 LabelRewrite = true

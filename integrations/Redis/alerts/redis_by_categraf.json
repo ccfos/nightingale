@@ -26,7 +26,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "(sum(rate(redis_evicted_keys[5m])) / sum(redis_keyspace_keys)) \u003e 0.1",
+                    "prom_ql": "rate(redis_evicted_keys[5m]) / sum without (db) (redis_keyspace_keys) \u003e 0.1",
                     "severity": 2
                 }
             ],
@@ -74,7 +74,9 @@
         "append_tags": [
             "alertname=RedisHighKeysEvictionRatio"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 INFO memory 看 used_memory 与 maxmemory 的差距，确认是否已顶到上限；\n2) 用 redis-cli --bigkeys 找异常占用的大 key 并清理或拆分；\n3) 确认 maxmemory-policy 是否符合业务预期（纯缓存用 allkeys-lru，有持久化数据的不能让它随意驱逐）；\n4) 容量确实不够则扩容内存或做分片。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -157,7 +159,9 @@
         "append_tags": [
             "alertname=RedisHighMemoryUsage"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) INFO memory 确认 used_memory_rss 与碎片率 mem_fragmentation_ratio，碎片高可开启 activedefrag；\n2) 用 redis-cli --bigkeys / --memkeys 定位大 key 并拆分或补 TTL；\n3) 检查是否有未设过期时间的 key 在持续堆积；\n4) 确认 maxmemory-policy 后按需扩容内存或分片。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -240,7 +244,9 @@
         "append_tags": [
             "alertname=HighPingLatency"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 redis-cli --latency 和 SLOWLOG GET 10 确认是否有慢命令（KEYS、HGETALL、大 key 操作）阻塞主线程；\n2) INFO persistence 看是否正在 RDB/AOF rewrite 导致 fork 卡顿；\n3) 排查宿主机 CPU 是否打满、是否发生内存 swap；\n4) 定位到慢命令后改用 SCAN 或分批操作替代。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -323,7 +329,9 @@
         "append_tags": [
             "alertname=RedisLowHitRatio"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 先排除刚重启或刚扩容导致的冷启动（对照 redis_uptime_in_seconds）；\n2) INFO stats 对比 keyspace_hits 与 keyspace_misses 的增长，判断是新业务 key 未预热还是缓存被大量驱逐；\n3) 若同时有驱逐告警，按内存不足处理（扩容或清理大 key）；\n4) 检查业务侧缓存 key 设计与 TTL 是否过短。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -406,7 +414,9 @@
         "append_tags": [
             "alertname=RedisRejectedConnHigh"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) INFO clients 对比 connected_clients 与 CONFIG GET maxclients；\n2) 用 CLIENT LIST 按来源地址统计，定位连接泄漏的应用；\n3) 应急执行 CONFIG SET maxclients \u003c更大值\u003e，同时确认系统 ulimit -n 足够；\n4) 根因侧收敛应用连接池大小、开启连接复用。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -489,7 +499,9 @@
         "append_tags": [
             "alertname=RedisLowUptime"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 查看 Redis 日志确认是被 OOM killer 干掉、崩溃还是人工重启；\n2) 若是系统 OOM，核对 maxmemory 与宿主机内存余量并调低 maxmemory；\n3) 确认 RDB/AOF 是否正常加载、数据是否完整（INFO persistence 看 rdb_last_load_keys_loaded）；\n4) 重启后关注命中率与后端数据库负载，必要时做缓存预热。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

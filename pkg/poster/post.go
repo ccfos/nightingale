@@ -59,6 +59,12 @@ const (
 	// misbehaving server.
 	errBodyReadLimit  = 64 * 1024
 	errBodyDrainLimit = 1 << 20 // 1 MiB
+
+	// Backoff bounds for PostByUrlsWithRespRetry. The default matches the
+	// 200ms PostJSON has used for its retry sleep; the cap keeps the total
+	// wait bounded when a caller asks for many rounds.
+	postRetryDefaultInterval = 200 * time.Millisecond
+	postRetryMaxInterval     = 3 * time.Second
 )
 
 var sharedTransport = &http.Transport{
@@ -317,6 +323,86 @@ func PostByUrlsWithResp[T any](ctx *ctx.Context, path string, v interface{}) (t 
 	}
 
 	return t, fmt.Errorf("failed to post data to center, path= %s, addrs= %v err: %v", path, addrs, err)
+}
+
+// PostByUrlsWithRespRetry retries whole rounds of PostByUrlsWithResp when every
+// center address failed. PostByUrlsWithResp already walks every address once, so
+// the useful retry unit is another full round; re-entering it also re-runs its
+// rand.Intn start pick, so a down node is not probed in the same position every
+// round. Two things it does not do: errors are not classified (PostByUrl
+// flattens status codes and business errors into plain strings, so a 4xx is
+// retried just like a dial failure), and a POST whose response was lost may
+// already have been committed on the center side, so a retry can duplicate the
+// write.
+//
+// retries is the total number of rounds, not extra tries after the first; values
+// < 1 mean a single round. interval is the wait before the second round and then
+// doubles per round, capped at postRetryMaxInterval; interval <= 0 uses
+// postRetryDefaultInterval. Canceling ctx.Ctx only cuts the backoff short, since
+// PostByUrl roots its per-request timeout at context.Background(): a round
+// already in flight always runs to completion. Worst-case blocking is therefore
+// retries × len(addrs) × cfg.Timeout plus the backoff waits — callers on a
+// latency-sensitive path should size that with ctx.Context.WithCenterApiTimeout
+// instead of inheriting the shared config value.
+func PostByUrlsWithRespRetry[T any](ctx *ctx.Context, path string, v interface{}, retries int, interval time.Duration) (t T, err error) {
+	if len(ctx.CenterApi.Addrs) < 1 {
+		// 一个地址都没配置，重试没有意义，直接复用原方法返回一致的错误
+		return PostByUrlsWithResp[T](ctx, path, v)
+	}
+
+	if retries < 1 {
+		retries = 1
+	}
+
+	if interval <= 0 {
+		interval = postRetryDefaultInterval
+	}
+
+	for i := 0; i < retries; i++ {
+		t, err = PostByUrlsWithResp[T](ctx, path, v)
+		if err == nil {
+			return t, nil
+		}
+
+		if i+1 >= retries {
+			break
+		}
+
+		logger.Warningf("failed to post data to center, path: %s, round: %d/%d, retry after %s, err: %v",
+			path, i+1, retries, interval, err)
+
+		if !sleepWithContext(ctx.GetContext(), interval) {
+			return t, fmt.Errorf("gave up retrying to post data to center, path= %s, "+
+				"context done after %d/%d rounds, last err: %v", path, i+1, retries, err)
+		}
+
+		if interval *= 2; interval > postRetryMaxInterval {
+			interval = postRetryMaxInterval
+		}
+	}
+
+	// 内层错误里已经带了 path 和 addrs，这里只补充轮数
+	return t, fmt.Errorf("failed to post data to center after %d rounds, last err: %v", retries, err)
+}
+
+// sleepWithContext waits for d, returning true when the wait completed and
+// false when c was canceled first. A nil c degrades to time.Sleep — Context.Ctx
+// is optional and is left unset by callers that build ctx.Context as a literal.
+func sleepWithContext(c context.Context, d time.Duration) bool {
+	if c == nil {
+		time.Sleep(d)
+		return true
+	}
+
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		return true
+	case <-c.Done():
+		return false
+	}
 }
 
 func PostByUrl[T any](rawURL string, cfg conf.CenterApi, v interface{}) (t T, err error) {

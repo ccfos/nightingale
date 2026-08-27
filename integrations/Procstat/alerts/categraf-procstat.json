@@ -76,7 +76,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 cat /proc/\u003cpid\u003e/limits 确认 Max open files 的软硬上限；\n2) systemd 服务在 unit 里加 LimitNOFILE=65535 后 daemon-reload 并重启；\n3) 非 systemd 的在启动脚本加 ulimit -n 65535，或改 /etc/security/limits.conf；\n4) 注意软上限改完必须重启进程才生效。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -161,7 +163,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ps -ef | grep \u003c进程关键字\u003e 确认确实不在，排除采集侧匹配规则写错；\n2) 查该进程日志与 dmesg -T | grep -i 'killed process'，区分崩溃、被 OOM 杀死、人工停止；\n3) 按服务自身流程拉起，确认 systemd Restart 策略生效；\n4) 反复退出的先定位根因再拉起，避免重启循环。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

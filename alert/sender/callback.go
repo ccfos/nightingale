@@ -203,22 +203,18 @@ type TaskCreateReply struct {
 }
 
 func PushCallbackEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
-	CallbackEventQueueLock.RLock()
+	CallbackEventQueueLock.Lock()
 	queue := CallbackEventQueue[webhook.Url]
-	CallbackEventQueueLock.RUnlock()
-
 	if queue == nil {
 		queue = &WebhookQueue{
 			eventQueue: NewSafeEventQueue(QueueMaxSize),
 			closeCh:    make(chan struct{}),
 		}
-
-		CallbackEventQueueLock.Lock()
 		CallbackEventQueue[webhook.Url] = queue
-		CallbackEventQueueLock.Unlock()
 
-		StartConsumer(ctx, queue, webhook.Batch, webhook, stats)
+		go StartConsumer(ctx, queue, webhook.Batch, webhook, stats)
 	}
+	CallbackEventQueueLock.Unlock()
 
 	succ := queue.eventQueue.Push(event)
 	if !succ {

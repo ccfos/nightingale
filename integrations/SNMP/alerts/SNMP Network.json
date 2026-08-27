@@ -73,7 +73,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 从告警标签取设备与接口，用 display interface \u003c接口\u003e 确认实际速率与峰值；\n2) 用 NetFlow/sFlow 或在上层设备抓流量，定位是哪些源/目的占用了主要带宽；\n3) 确认是正常业务增长、备份任务还是异常流量（攻击、环路）；\n4) 正常增长的扩容链路或做链路聚合，异常的先限流或隔离。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -165,7 +167,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 从告警标签取设备与接口，用 display interface \u003c接口\u003e 看 CRC/errors 计数的增长速度；\n2) 检查网线/光模块，光口用 display transceiver 看收发光功率是否在规格范围内；\n3) 确认两端协商的速率与双工模式一致——不一致是经典错包源；\n4) 换线或换模块后清零计数（reset counters interface）复测确认。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -252,7 +256,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 从告警标签取设备与 ifname，登录设备用 display interface \u003c接口\u003e 看 down 的原因与错包计数；\n2) 到现场确认网线/光模块是否松动，光模块可用 display transceiver 看收发光功率；\n3) 对端设备侧同步确认接口状态，双方都 down 才能定位是链路还是单侧问题；\n4) 确认是否有冗余链路已接管，无冗余的优先恢复。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,

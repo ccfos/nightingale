@@ -1,0 +1,4 @@
+{
+    "_comment": "每个组件当前仍缺 action annotation 的内置告警规则数（棘轮基线，只允许变小）。补完 action 后运行 `go run ./cmd/integrations-alert-action update` 重写本文件。不在 pending 里的组件要求缺口为 0——新增组件必须一开始就给每条规则写 action。",
+    "pending": {}
+}

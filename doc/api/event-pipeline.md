@@ -1,110 +1,110 @@
 # Event Pipeline API
 
-事件 Pipeline（工作流）用于对告警事件进行自动化处理。支持线性处理器模式和工作流节点模式，可通过告警事件、API 调用或定时任务触发。
+Event pipelines (workflows) automate the processing of alert events. They support both a linear processor mode and a workflow node mode, and can be triggered by alert events, API calls, or scheduled jobs.
 
-所有 `/api/n9e` 前缀的接口需要登录认证（`auth` + `user`），写操作额外需要对应权限点。`/v1/n9e` 前缀的接口为内部 Service 调用，无需用户认证。
+Every endpoint under the `/api/n9e` prefix requires login authentication (`auth` + `user`), and write operations additionally require the corresponding permission point. Endpoints under the `/v1/n9e` prefix are for internal service calls and require no user authentication.
 
 ---
 
-## 数据结构
+## Data structures
 
 ### EventPipeline
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |------|------|------|------|
-| id | int64 | - | 主键，自增 |
-| name | string | 是 | Pipeline 名称，最长 128 字符 |
-| typ | string | 否 | 类型：`builtin` / `user-defined` |
-| use_case | string | 否 | 用途：`event_pipeline` / `alert_rule` 等 |
-| trigger_mode | string | 否 | 触发模式：`event` / `api` / `cron` |
-| disabled | bool | 否 | 是否禁用 |
-| team_ids | int64[] | 条件必填 | 授权团队 ID 列表，`group_id=0` 时不能为空 |
-| group_id | int64 | 否 | 业务组 ID。`>0` 使用业务组鉴权，`=0` 使用 team_ids 鉴权 |
-| team_names | string[] | - | 团队名称（仅查询时返回） |
-| description | string | 否 | 描述，最长 255 字符 |
-| filter_enable | bool | 否 | 是否启用过滤 |
-| label_filters | TagFilter[] | 否 | 标签过滤条件 |
-| attribute_filters | TagFilter[] | 否 | 属性过滤条件 |
-| processors | ProcessorConfig[] | 否 | 处理器列表（线性模式） |
-| nodes | WorkflowNode[] | 否 | 工作流节点列表（工作流模式） |
-| connections | Connections | 否 | 节点连接关系（工作流模式） |
-| inputs | InputVariable[] | 否 | 输入参数 |
-| create_at | int64 | - | 创建时间（Unix 时间戳） |
-| create_by | string | - | 创建人 username |
-| update_at | int64 | - | 更新时间（Unix 时间戳） |
-| update_by | string | - | 更新人 username |
-| update_by_nickname | string | - | 更新人昵称（仅查询时返回） |
+| id | int64 | - | Primary key, auto-increment |
+| name | string | Yes | Pipeline name, at most 128 characters |
+| typ | string | No | Type: `builtin` / `user-defined` |
+| use_case | string | No | Use case: `event_pipeline` / `alert_rule`, etc. |
+| trigger_mode | string | No | Trigger mode: `event` / `api` / `cron` |
+| disabled | bool | No | Whether the pipeline is disabled |
+| team_ids | int64[] | Conditional | IDs of the authorized teams; must not be empty when `group_id=0` |
+| group_id | int64 | No | Business group ID. `>0` uses business group authorization, `=0` uses team_ids authorization |
+| team_names | string[] | - | Team names (returned on read only) |
+| description | string | No | Description, at most 255 characters |
+| filter_enable | bool | No | Whether filtering is enabled |
+| label_filters | TagFilter[] | No | Label filter conditions |
+| attribute_filters | TagFilter[] | No | Attribute filter conditions |
+| processors | ProcessorConfig[] | No | Processor list (linear mode) |
+| nodes | WorkflowNode[] | No | Workflow node list (workflow mode) |
+| connections | Connections | No | Node connections (workflow mode) |
+| inputs | InputVariable[] | No | Input parameters |
+| create_at | int64 | - | Creation time (Unix timestamp) |
+| create_by | string | - | Username of the creator |
+| update_at | int64 | - | Last update time (Unix timestamp) |
+| update_by | string | - | Username of the last updater |
+| update_by_nickname | string | - | Nickname of the last updater (returned on read only) |
 
 ### EventPipelineExecution
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |------|------|------|
-| id | string | 执行 ID（UUID） |
+| id | string | Execution ID (UUID) |
 | pipeline_id | int64 | Pipeline ID |
-| pipeline_name | string | Pipeline 名称 |
-| event_id | int64 | 关联事件 ID |
-| mode | string | 触发模式：`event` / `api` / `cron` |
-| status | string | 状态：`running` / `success` / `failed` |
-| node_results | string | 各节点执行结果（JSON 字符串） |
-| error_message | string | 错误信息 |
-| error_node | string | 出错节点 ID |
-| created_at | int64 | 创建时间（Unix 时间戳） |
-| finished_at | int64 | 完成时间（Unix 时间戳） |
-| duration_ms | int64 | 执行耗时（毫秒） |
-| trigger_by | string | 触发者 username |
-| inputs_snapshot | string | 输入参数快照（JSON 字符串） |
+| pipeline_name | string | Pipeline name |
+| event_id | int64 | ID of the associated event |
+| mode | string | Trigger mode: `event` / `api` / `cron` |
+| status | string | Status: `running` / `success` / `failed` |
+| node_results | string | Per-node execution results (JSON string) |
+| error_message | string | Error message |
+| error_node | string | ID of the node that failed |
+| created_at | int64 | Creation time (Unix timestamp) |
+| finished_at | int64 | Completion time (Unix timestamp) |
+| duration_ms | int64 | Execution time (milliseconds) |
+| trigger_by | string | Username of the trigger |
+| inputs_snapshot | string | Snapshot of the input parameters (JSON string) |
 
 ### EventPipelineExecutionStatistics
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |------|------|------|
-| total | int64 | 总执行次数 |
-| success | int64 | 成功次数 |
-| failed | int64 | 失败次数 |
-| running | int64 | 运行中数量 |
-| avg_duration_ms | int64 | 平均耗时（毫秒，仅统计成功的） |
-| last_run_at | int64 | 最后执行时间（Unix 时间戳） |
+| total | int64 | Total number of executions |
+| success | int64 | Number of successes |
+| failed | int64 | Number of failures |
+| running | int64 | Number currently running |
+| avg_duration_ms | int64 | Average duration in milliseconds (successful executions only) |
+| last_run_at | int64 | Time of the most recent execution (Unix timestamp) |
 
 ---
 
 ## Pipeline CRUD
 
-### 获取 Pipeline 列表
+### List pipelines
 
 ```
 GET /api/n9e/event-pipelines
 ```
 
-权限点：`/event-pipelines`
+Permission point: `/event-pipelines`
 
-#### 查询参数
+#### Query parameters
 
-| 参数 | 类型 | 默认值 | 说明 |
+| Parameter | Type | Default | Description |
 |------|------|--------|------|
-| group_id | int64 | 0 | 业务组 ID。`-1` 或不传：查 `group_id=0`；`0`：team_ids 鉴权模式；`>0`：指定业务组 |
-| use_case | string | "" | 按用途过滤，如 `event_pipeline`、`alert_rule`。空字符串不过滤 |
+| group_id | int64 | 0 | Business group ID. `-1` or omitted: query `group_id=0`; `0`: team_ids authorization mode; `>0`: the specified business group |
+| use_case | string | "" | Filter by use case, e.g. `event_pipeline` or `alert_rule`. An empty string means no filtering |
 
-#### 鉴权逻辑
+#### Authorization logic
 
-- `group_id > 0`（业务组场景）：管理员返回全部；非管理员需要有该业务组权限，无权限则返回空数组
-- `group_id = 0`（工作流页面场景）：管理员返回全部；非管理员只返回 `team_ids` 命中当前用户团队的条目
+- `group_id > 0` (business group scenario): administrators get everything; non-administrators need permission on that business group, and without it an empty array is returned
+- `group_id = 0` (workflow page scenario): administrators get everything; non-administrators only get entries whose `team_ids` match one of the current user's teams
 
-#### 响应
+#### Response
 
 ```json
 {
   "dat": [
     {
       "id": 1,
-      "name": "告警enrichment",
+      "name": "alert-enrichment",
       "typ": "user-defined",
       "use_case": "event_pipeline",
       "trigger_mode": "event",
       "disabled": false,
       "team_ids": [1, 2],
       "group_id": 0,
-      "team_names": ["运维组", "开发组"],
-      "description": "告警事件补充标签",
+      "team_names": ["Ops Team", "Dev Team"],
+      "description": "Enrich alert events with extra labels",
       "filter_enable": true,
       "label_filters": [],
       "attribute_filters": [],
@@ -116,7 +116,7 @@ GET /api/n9e/event-pipelines
       "create_by": "admin",
       "update_at": 1710000000,
       "update_by": "admin",
-      "update_by_nickname": "管理员"
+      "update_by_nickname": "Administrator"
     }
   ],
   "err": ""
@@ -125,48 +125,48 @@ GET /api/n9e/event-pipelines
 
 ---
 
-### 获取 Pipeline 详情
+### Get pipeline details
 
 ```
 GET /api/n9e/event-pipeline/:id
 ```
 
-权限点：`/event-pipelines`。根据 `group_id` 走业务组鉴权或 team_ids 鉴权。
+Permission point: `/event-pipelines`. Depending on `group_id`, either business group authorization or team_ids authorization applies.
 
-#### 路径参数
+#### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Pipeline ID |
 
-#### 响应
+#### Response
 
-返回单个 EventPipeline 对象，结构同列表中的元素。
+Returns a single EventPipeline object with the same structure as an element of the list.
 
 ---
 
-### 创建 Pipeline
+### Create a pipeline
 
 ```
 POST /api/n9e/event-pipeline
 ```
 
-权限点：`/event-pipelines/add`。根据请求体中的 `group_id` 走业务组鉴权（rw）或 team_ids 鉴权。
+Permission point: `/event-pipelines/add`. Depending on the `group_id` in the request body, either business group authorization (rw) or team_ids authorization applies.
 
-服务端自动填充 `create_by` / `update_by` 为当前用户，`create_at` / `update_at` 为当前时间。
+The server fills in `create_by` / `update_by` with the current user and `create_at` / `update_at` with the current time.
 
-#### 请求体
+#### Request body
 
 ```json
 {
-  "name": "告警enrichment",
+  "name": "alert-enrichment",
   "typ": "user-defined",
   "use_case": "event_pipeline",
   "trigger_mode": "event",
   "disabled": false,
   "team_ids": [1, 2],
   "group_id": 0,
-  "description": "告警事件补充标签",
+  "description": "Enrich alert events with extra labels",
   "filter_enable": true,
   "label_filters": [],
   "attribute_filters": [],
@@ -177,44 +177,44 @@ POST /api/n9e/event-pipeline
 }
 ```
 
-#### 校验规则
+#### Validation rules
 
-- `name` 不能为空
-- `group_id <= 0` 且 `use_case != "alert_rule"` 时 `team_ids` 不能为空
+- `name` must not be empty
+- `team_ids` must not be empty when `group_id <= 0` and `use_case != "alert_rule"`
 
-#### 响应
+#### Response
 
 ```json
 { "dat": 123, "err": "" }
 ```
 
-`dat` 为创建成功后的 Pipeline ID。
+`dat` is the ID of the newly created pipeline.
 
 ---
 
-### 更新 Pipeline
+### Update a pipeline
 
 ```
 PUT /api/n9e/event-pipeline
 ```
 
-权限点：`/event-pipelines/put`。根据原 Pipeline 的 `group_id` 做业务组鉴权（rw）或 team_ids 鉴权。
+Permission point: `/event-pipelines/put`. Depending on the original pipeline's `group_id`, either business group authorization (rw) or team_ids authorization applies.
 
-请求体中的 `id` 字段标识要更新的记录，服务端会保留原始的 `create_by` / `create_at`，并刷新 `update_by` / `update_at`。
+The `id` field in the request body identifies the record to update. The server preserves the original `create_by` / `create_at` and refreshes `update_by` / `update_at`.
 
-#### 请求体
+#### Request body
 
 ```json
 {
   "id": 1,
-  "name": "告警enrichment-v2",
+  "name": "alert-enrichment-v2",
   "typ": "user-defined",
   "use_case": "event_pipeline",
   "trigger_mode": "event",
   "disabled": false,
   "team_ids": [1, 2],
   "group_id": 0,
-  "description": "更新后的描述",
+  "description": "Updated description",
   "filter_enable": true,
   "label_filters": [],
   "attribute_filters": [],
@@ -225,21 +225,21 @@ PUT /api/n9e/event-pipeline
 }
 ```
 
-#### 错误
+#### Errors
 
-- `404` Pipeline 不存在
+- `404` the pipeline does not exist
 
 ---
 
-### 批量删除 Pipeline
+### Batch delete pipelines
 
 ```
 DELETE /api/n9e/event-pipelines
 ```
 
-权限点：`/event-pipelines/del`。对每个待删除的 Pipeline 逐一做权限校验。
+Permission point: `/event-pipelines/del`. Permissions are checked for each pipeline to be deleted.
 
-#### 请求体
+#### Request body
 
 ```json
 {
@@ -247,11 +247,11 @@ DELETE /api/n9e/event-pipelines
 }
 ```
 
-#### 校验规则
+#### Validation rules
 
-- `ids` 不能为空
+- `ids` must not be empty
 
-#### 响应
+#### Response
 
 ```json
 { "dat": null, "err": "" }
@@ -259,17 +259,17 @@ DELETE /api/n9e/event-pipelines
 
 ---
 
-## Pipeline 测试执行
+## Pipeline test execution
 
-### 试运行 Pipeline
+### Dry-run a pipeline
 
 ```
 POST /api/n9e/event-pipeline-tryrun
 ```
 
-权限点：`/event-pipelines`。使用工作流引擎同步执行传入的 Pipeline 配置，不持久化。
+Permission point: `/event-pipelines`. Runs the supplied pipeline configuration synchronously through the workflow engine without persisting anything.
 
-#### 请求体
+#### Request body
 
 ```json
 {
@@ -286,19 +286,19 @@ POST /api/n9e/event-pipeline-tryrun
 }
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |------|------|------|------|
-| event_id | int64 | 是 | 历史告警事件 ID，用于构造测试事件 |
-| pipeline_config | EventPipeline | 是 | 完整的 Pipeline 配置 |
-| input_variables | map[string]string | 否 | 输入参数覆盖 |
+| event_id | int64 | Yes | ID of a historical alert event, used to build the test event |
+| pipeline_config | EventPipeline | Yes | The complete pipeline configuration |
+| input_variables | map[string]string | No | Overrides for the input parameters |
 
-#### 响应
+#### Response
 
 ```json
 {
   "dat": {
-    "event": { "...": "处理后的事件对象" },
-    "result": "处理结果消息",
+    "event": { "...": "the processed event object" },
+    "result": "processing result message",
     "status": "success",
     "node_results": []
   },
@@ -306,19 +306,19 @@ POST /api/n9e/event-pipeline-tryrun
 }
 ```
 
-当事件被丢弃时，`event` 为 `null`，`result` 为 `"event is dropped"`。
+When the event is dropped, `event` is `null` and `result` is `"event is dropped"`.
 
 ---
 
-### 试运行单个处理器
+### Dry-run a single processor
 
 ```
 POST /api/n9e/event-processor-tryrun
 ```
 
-权限点：`/event-pipelines`。
+Permission point: `/event-pipelines`.
 
-#### 请求体
+#### Request body
 
 ```json
 {
@@ -330,13 +330,13 @@ POST /api/n9e/event-processor-tryrun
 }
 ```
 
-#### 响应
+#### Response
 
 ```json
 {
   "dat": {
-    "event": { "...": "处理后的事件对象" },
-    "result": "处理结果消息"
+    "event": { "...": "the processed event object" },
+    "result": "processing result message"
   },
   "err": ""
 }
@@ -344,15 +344,15 @@ POST /api/n9e/event-processor-tryrun
 
 ---
 
-### 按通知规则试运行处理器
+### Dry-run processors for a notification rule
 
 ```
 POST /api/n9e/notify-rule/event-pipelines-tryrun
 ```
 
-权限点：`/notification-rules/add`。按通知规则引用的 Pipeline 列表顺序执行处理器。
+Permission point: `/notification-rules/add`. Runs the processors in the order of the pipeline list referenced by the notification rule.
 
-#### 请求体
+#### Request body
 
 ```json
 {
@@ -364,36 +364,36 @@ POST /api/n9e/notify-rule/event-pipelines-tryrun
 }
 ```
 
-仅 `enable=true` 的 Pipeline 会被执行。
+Only pipelines with `enable=true` are executed.
 
-#### 响应
+#### Response
 
 ```json
 {
-  "dat": { "...": "处理后的事件对象，或 event is dropped" },
+  "dat": { "...": "the processed event object, or event is dropped" },
   "err": ""
 }
 ```
 
 ---
 
-## API 触发执行
+## API-triggered execution
 
-### 触发 Pipeline（需登录）
+### Trigger a pipeline (requires login)
 
 ```
 POST /api/n9e/event-pipeline/:id/trigger
 ```
 
-权限点：`/event-pipelines`。异步执行，立即返回 `execution_id`。
+Permission point: `/event-pipelines`. Runs asynchronously and returns an `execution_id` immediately.
 
-#### 路径参数
+#### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Pipeline ID |
 
-#### 请求体
+#### Request body
 
 ```json
 {
@@ -406,12 +406,12 @@ POST /api/n9e/event-pipeline/:id/trigger
 }
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |------|------|------|------|
-| event | AlertCurEvent | 否 | 事件数据，不传则创建空事件 |
-| inputs_overrides | map[string]string | 否 | 输入参数覆盖 |
+| event | AlertCurEvent | No | Event data; when omitted an empty event is created |
+| inputs_overrides | map[string]string | No | Overrides for the input parameters |
 
-#### 响应
+#### Response
 
 ```json
 {
@@ -425,27 +425,27 @@ POST /api/n9e/event-pipeline/:id/trigger
 
 ---
 
-### 流式执行 Pipeline（SSE，需登录）
+### Stream pipeline execution (SSE, requires login)
 
 ```
 POST /api/n9e/event-pipeline/:id/stream
 ```
 
-权限点：`/event-pipelines`。同步执行并以 SSE（Server-Sent Events）返回流式结果。
+Permission point: `/event-pipelines`. Runs synchronously and returns the result as an SSE (Server-Sent Events) stream.
 
-#### 路径参数
+#### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Pipeline ID |
 
-#### 请求体
+#### Request body
 
-同 [触发 Pipeline](#触发-pipeline需登录)。
+Same as [Trigger a pipeline](#trigger-a-pipeline-requires-login).
 
-#### SSE 响应
+#### SSE response
 
-响应头：
+Response headers:
 
 ```
 Content-Type: text/event-stream
@@ -454,7 +454,7 @@ Connection: keep-alive
 X-Request-ID: <request-id>
 ```
 
-事件流格式：
+Event stream format:
 
 ```
 data: {"type":"connected","request_id":"...","timestamp":1710000000000}
@@ -466,34 +466,34 @@ data: {"type":"tool_call","content":"...","node_id":"node_1","done":false,"times
 data: {"type":"done","content":"...","done":true,"timestamp":1710000000003}
 ```
 
-StreamChunk `type` 取值：`thinking` / `tool_call` / `tool_result` / `text` / `done` / `error`
+Possible values of the StreamChunk `type`: `thinking` / `tool_call` / `tool_result` / `text` / `done` / `error`
 
-若工作流非流式输出，则返回标准 JSON 响应。
+If the workflow does not produce streaming output, a standard JSON response is returned instead.
 
 ---
 
-## 执行记录
+## Execution records
 
-### 获取所有执行记录（分页）
+### List all execution records (paginated)
 
 ```
 GET /api/n9e/event-pipeline-executions
 ```
 
-权限点：`/event-pipelines`
+Permission point: `/event-pipelines`
 
-#### 查询参数
+#### Query parameters
 
-| 参数 | 类型 | 默认值 | 说明 |
+| Parameter | Type | Default | Description |
 |------|------|--------|------|
-| pipeline_id | int64 | 0 | 按 Pipeline ID 过滤，`0` 不过滤 |
-| pipeline_name | string | "" | 按名称模糊搜索 |
-| mode | string | "" | 按触发模式过滤：`event` / `api` / `cron` |
-| status | string | "" | 按状态过滤：`running` / `success` / `failed` |
-| limit | int | 20 | 每页条数（1-1000） |
-| p | int | 1 | 页码 |
+| pipeline_id | int64 | 0 | Filter by pipeline ID; `0` means no filtering |
+| pipeline_name | string | "" | Fuzzy search by name |
+| mode | string | "" | Filter by trigger mode: `event` / `api` / `cron` |
+| status | string | "" | Filter by status: `running` / `success` / `failed` |
+| limit | int | 20 | Page size (1-1000) |
+| p | int | 1 | Page number |
 
-#### 响应
+#### Response
 
 ```json
 {
@@ -502,7 +502,7 @@ GET /api/n9e/event-pipeline-executions
       {
         "id": "550e8400-e29b-41d4-a716-446655440000",
         "pipeline_id": 1,
-        "pipeline_name": "告警enrichment",
+        "pipeline_name": "alert-enrichment",
         "event_id": 12345,
         "mode": "event",
         "status": "success",
@@ -523,60 +523,60 @@ GET /api/n9e/event-pipeline-executions
 
 ---
 
-### 获取指定 Pipeline 的执行记录（分页）
+### List execution records for a pipeline (paginated)
 
 ```
 GET /api/n9e/event-pipeline/:id/executions
 ```
 
-权限点：`/event-pipelines`
+Permission point: `/event-pipelines`
 
-#### 路径参数
+#### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Pipeline ID |
 
-#### 查询参数
+#### Query parameters
 
-| 参数 | 类型 | 默认值 | 说明 |
+| Parameter | Type | Default | Description |
 |------|------|--------|------|
-| mode | string | "" | 按触发模式过滤 |
-| status | string | "" | 按状态过滤 |
-| limit | int | 20 | 每页条数（1-1000） |
-| p | int | 1 | 页码 |
+| mode | string | "" | Filter by trigger mode |
+| status | string | "" | Filter by status |
+| limit | int | 20 | Page size (1-1000) |
+| p | int | 1 | Page number |
 
-#### 响应
+#### Response
 
-结构同 [获取所有执行记录](#获取所有执行记录分页)。
+Same structure as [List all execution records](#list-all-execution-records-paginated).
 
 ---
 
-### 获取执行详情
+### Get execution details
 
 ```
 GET /api/n9e/event-pipeline/:id/execution/:exec_id
 GET /api/n9e/event-pipeline-execution/:exec_id
 ```
 
-权限点：`/event-pipelines`。两个路径等价，均通过 `exec_id` 查询。
+Permission point: `/event-pipelines`. The two paths are equivalent; both look the record up by `exec_id`.
 
-#### 路径参数
+#### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
-| exec_id | string | 执行 ID（UUID） |
+| exec_id | string | Execution ID (UUID) |
 
-#### 响应
+#### Response
 
-返回 `EventPipelineExecution` 的全部字段，额外包含解析后的结构化数据：
+Returns every field of `EventPipelineExecution`, plus the parsed structured data:
 
 ```json
 {
   "dat": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "pipeline_id": 1,
-    "pipeline_name": "告警enrichment",
+    "pipeline_name": "alert-enrichment",
     "status": "success",
     "node_results": "[...]",
     "node_results_parsed": [
@@ -605,21 +605,21 @@ GET /api/n9e/event-pipeline-execution/:exec_id
 
 ---
 
-### 获取执行统计
+### Get execution statistics
 
 ```
 GET /api/n9e/event-pipeline/:id/execution-stats
 ```
 
-权限点：`/event-pipelines`
+Permission point: `/event-pipelines`
 
-#### 路径参数
+#### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Pipeline ID |
 
-#### 响应
+#### Response
 
 ```json
 {
@@ -637,15 +637,15 @@ GET /api/n9e/event-pipeline/:id/execution-stats
 
 ---
 
-### 清理执行记录
+### Clean up execution records
 
 ```
 POST /api/n9e/event-pipeline-executions/clean
 ```
 
-权限点：`/event-pipelines`，需要管理员权限。
+Permission point: `/event-pipelines`; administrator privileges are required.
 
-#### 请求体
+#### Request body
 
 ```json
 {
@@ -653,11 +653,11 @@ POST /api/n9e/event-pipeline-executions/clean
 }
 ```
 
-| 字段 | 类型 | 默认值 | 说明 |
+| Field | Type | Default | Description |
 |------|------|--------|------|
-| before_days | int | 30 | 删除多少天前的记录，`<= 0` 时使用默认值 30 |
+| before_days | int | 30 | Delete records older than this many days; values `<= 0` fall back to the default of 30 |
 
-#### 响应
+#### Response
 
 ```json
 {
@@ -670,38 +670,38 @@ POST /api/n9e/event-pipeline-executions/clean
 
 ---
 
-## 内部 Service 接口
+## Internal service endpoints
 
-以下接口供内部服务（如 edge 节点）调用，路径前缀为 `/v1/n9e`，无需用户认证。
+The following endpoints are for internal services (such as edge nodes). They are prefixed with `/v1/n9e` and require no user authentication.
 
-### 获取全量 Pipeline 列表
+### List all pipelines
 
 ```
 GET /v1/n9e/event-pipelines
 ```
 
-返回所有 Pipeline（不做 group_id / use_case 过滤、不做权限过滤）。
+Returns every pipeline (no group_id / use_case filtering and no permission filtering).
 
-#### 响应
+#### Response
 
 ```json
 {
-  "dat": [ { "...": "EventPipeline 对象" } ],
+  "dat": [ { "...": "EventPipeline object" } ],
   "err": ""
 }
 ```
 
 ---
 
-### Service 触发 Pipeline
+### Service-triggered pipeline execution
 
 ```
 POST /v1/n9e/event-pipeline/:id/trigger
 ```
 
-异步执行，立即返回 `execution_id`。
+Runs asynchronously and returns an `execution_id` immediately.
 
-#### 请求体
+#### Request body
 
 ```json
 {
@@ -711,9 +711,9 @@ POST /v1/n9e/event-pipeline/:id/trigger
 }
 ```
 
-`username` 用于标识触发者。
+`username` identifies the trigger.
 
-#### 响应
+#### Response
 
 ```json
 {
@@ -727,34 +727,34 @@ POST /v1/n9e/event-pipeline/:id/trigger
 
 ---
 
-### Service 流式执行 Pipeline
+### Service-triggered streaming pipeline execution
 
 ```
 POST /v1/n9e/event-pipeline/:id/stream
 ```
 
-同步执行并以 SSE 返回流式结果。请求体和 SSE 格式同 [流式执行 Pipeline](#流式执行-pipelinesse需登录)，区别是触发者从 `username` 字段取值而非从登录态获取。
+Runs synchronously and returns the result as an SSE stream. The request body and SSE format are the same as for [Stream pipeline execution](#stream-pipeline-execution-sse-requires-login); the difference is that the trigger is taken from the `username` field instead of from the login session.
 
 ---
 
-### 同步执行记录（Edge → Center）
+### Sync an execution record (Edge → Center)
 
 ```
 POST /v1/n9e/event-pipeline-execution
 ```
 
-Edge 节点将本地执行记录同步到 Center。
+An edge node syncs a locally produced execution record to center.
 
-#### 请求体
+#### Request body
 
-完整的 `EventPipelineExecution` 对象。
+The complete `EventPipelineExecution` object.
 
-#### 校验规则
+#### Validation rules
 
-- `id` 不能为空
-- `pipeline_id` 必须 > 0
+- `id` must not be empty
+- `pipeline_id` must be > 0
 
-#### 响应
+#### Response
 
 ```json
 { "dat": null, "err": "" }

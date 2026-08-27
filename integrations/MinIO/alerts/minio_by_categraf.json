@@ -72,7 +72,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 mc admin info \u003calias\u003e 确认离线的是哪个节点的哪块盘，以及集群还剩多少冗余；\n2) 到该节点用 dmesg -T | grep -iE 'i/o error|ata|scsi' 与 smartctl -a 判断是掉盘、坏盘还是挂载丢失；\n3) 挂载丢失的重新挂载后 MinIO 会自动纳管；坏盘的换盘后用 mc admin heal -r \u003calias\u003e 触发修复；\n4) 修复期间避免大量写入，并确认剩余冗余仍高于 EC 校验块数。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -153,7 +155,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 mc admin info \u003calias\u003e 确认离线节点，并 ping / ssh 确认机器是否存活；\n2) 机器存活则用 systemctl status minio 看进程与日志，常见是 OOM、磁盘挂载失败、证书过期；\n3) 集群内网不通的排查网络与安全组，MinIO 节点间需要互通；\n4) 节点恢复后用 mc admin heal -r \u003calias\u003e 触发数据修复并观察进度。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

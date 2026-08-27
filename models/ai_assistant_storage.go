@@ -31,7 +31,8 @@ type AssistantMessageRow struct {
 	SeqID  int64  `gorm:"column:seq_id;not null;default:0;uniqueIndex:uk_chat_seq,priority:2"`
 	Data   string `gorm:"column:data;type:text"`
 	Extra  string `gorm:"column:extra;type:text"`
-	Status int    `gorm:"column:status;type:int;not null;default:0;index:idx_am_status"`
+	// size:32 不能省：gorm 把 type:int 当成通用 Int 类型，落到 MySQL 仍是 bigint
+	Status int `gorm:"column:status;type:int;size:32;not null;default:0;index:idx_am_status"`
 }
 
 func (AssistantMessageRow) TableName() string { return "ai_assistant_message" }
@@ -46,7 +47,8 @@ type MysqlAssistantMessageRow struct {
 	SeqID  int64  `gorm:"column:seq_id;not null;default:0;uniqueIndex:uk_chat_seq,priority:2"`
 	Data   string `gorm:"column:data;type:mediumtext"`
 	Extra  string `gorm:"column:extra;type:mediumtext"`
-	Status int    `gorm:"column:status;type:int;not null;default:0;index:idx_am_status"`
+	// size:32 不能省：gorm 把 type:int 当成通用 Int 类型，落到 MySQL 仍是 bigint
+	Status int `gorm:"column:status;type:int;size:32;not null;default:0;index:idx_am_status"`
 }
 
 func (MysqlAssistantMessageRow) TableName() string { return "ai_assistant_message" }

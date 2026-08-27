@@ -23,7 +23,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "postgresql_blk_read_time\u003e3000",
+                    "prom_ql": "rate(postgresql_blk_read_time[5m]) \u003e 100",
                     "severity": 2
                 }
             ]
@@ -68,7 +68,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 先确认 SHOW track_io_timing 为 on，否则该指标恒为 0，需先开启才有意义；\n2) 用 pg_stat_statements 按 shared_blks_read 排序找出读盘最多的 SQL，补索引或改写；\n3) 对比 shared_buffers 与实例内存，通常设为物理内存的 25% 左右；\n4) 用 iostat -x 1 确认数据目录所在磁盘是否已经打满。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -145,7 +147,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 登录主机用 systemctl status postgresql 或 docker ps 确认进程是否存活；\n2) 进程存活则用 psql -h \u003chost\u003e -p \u003cport\u003e -U \u003cuser\u003e 手工连一次，区分实例夯住与网络/pg_hba 认证问题；\n3) 进程不在则看 $PGDATA/log 下的日志尾部定位原因（OOM、磁盘满、WAL 目录写满）再拉起；\n4) 有流复制备库的立即评估是否需要提升备库（pg_ctl promote）。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -177,7 +181,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "postgresql_blk_write_time \u003e 1000",
+                    "prom_ql": "rate(postgresql_blk_write_time[5m]) \u003e 100",
                     "severity": 2
                 }
             ]
@@ -222,7 +226,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 先确认 SHOW track_io_timing 为 on，否则该指标恒为 0；\n2) 看 pg_stat_bgwriter 的 buffers_backend 是否远大于 buffers_checkpoint——若是说明 shared_buffers 偏小或 bgwriter 太保守；\n3) 适当调大 checkpoint_timeout 与 checkpoint_completion_target，把刷盘摊平避免 IO 尖峰；\n4) 用 iostat -x 1 确认磁盘是否已打满，必要时换更快的存储。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -254,7 +260,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "postgresql_deadlocks \u003e 0",
+                    "prom_ql": "increase(postgresql_deadlocks[10m]) \u003e 0",
                     "severity": 2
                 }
             ]
@@ -299,7 +305,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在 postgresql.conf 里确认 log_lock_waits=on、deadlock_timeout 合理，然后从日志里取死锁双方的完整 SQL；\n2) 查 pg_locks 与 pg_stat_activity 关联，确认是哪两张表、哪种锁互相等待；\n3) 根因通常是不同事务以相反顺序更新同几行——统一业务侧的加锁顺序即可消除；\n4) 长事务会放大死锁概率，检查是否有事务开启后长时间不提交。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -331,7 +339,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "postgresql_blks_hit*100/(postgresql_blks_hit+postgresql_blks_read) \u003c 50",
+                    "prom_ql": "rate(postgresql_blks_hit[5m])*100/(rate(postgresql_blks_hit[5m])+rate(postgresql_blks_read[5m])) \u003c 50",
                     "severity": 2
                 }
             ]
@@ -376,7 +384,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 先排除刚重启导致的缓存冷启动（对照实例 uptime）；\n2) 用 pg_stat_statements 按 shared_blks_read 排序找出读盘最多的 SQL，优先补索引消除全表扫描；\n3) 对比 shared_buffers 与实例内存，通常调到物理内存的 25%；\n4) 确认是否有大表全量扫描或批处理任务把缓存冲掉，可错峰执行。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

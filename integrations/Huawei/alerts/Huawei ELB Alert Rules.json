@@ -18,7 +18,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_l4_in_bps_usage > 80",
+                    "prom_ql": "huaweicloud_sys_elb_l4_in_bps_usage \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -44,7 +44,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -76,7 +78,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_l4_out_bps_usage > 80",
+                    "prom_ql": "huaweicloud_sys_elb_l4_out_bps_usage \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -102,7 +104,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -134,7 +138,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_l4_con_usage > 80",
+                    "prom_ql": "huaweicloud_sys_elb_l4_con_usage \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -160,7 +164,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；\n2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；\n3) 后端正常的按业务增长在控制台升级 ELB 规格；\n4) 检查客户端是否未复用连接。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -192,7 +198,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_l4_ncps_usage > 80",
+                    "prom_ql": "huaweicloud_sys_elb_l4_ncps_usage \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -218,7 +224,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；\n2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；\n3) 后端正常的按业务增长在控制台升级 ELB 规格；\n4) 检查客户端是否未复用连接。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -250,7 +258,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_l7_in_bps_usage > 80",
+                    "prom_ql": "huaweicloud_sys_elb_l7_in_bps_usage \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -276,7 +284,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -308,7 +318,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_l7_out_bps_usage > 80",
+                    "prom_ql": "huaweicloud_sys_elb_l7_out_bps_usage \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -334,7 +344,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -366,7 +378,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_l7_con_usage > 80",
+                    "prom_ql": "huaweicloud_sys_elb_l7_con_usage \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -392,7 +404,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；\n2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；\n3) 后端正常的按业务增长在控制台升级 ELB 规格；\n4) 检查客户端是否未复用连接。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -424,7 +438,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_l7_ncps_usage > 80",
+                    "prom_ql": "huaweicloud_sys_elb_l7_ncps_usage \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -450,7 +464,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台看该 ELB 的连接数监控，确认增长趋势；\n2) 确认后端服务是否响应变慢导致连接堆积——连接数高常常是后端慢的表征而非原因；\n3) 后端正常的按业务增长在控制台升级 ELB 规格；\n4) 检查客户端是否未复用连接。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -482,7 +498,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_m9_abnormal_servers > 0",
+                    "prom_ql": "huaweicloud_sys_elb_m9_abnormal_servers \u003e 0",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -508,7 +524,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台的后端服务器组里定位健康检查失败的实例；\n2) 登录该实例确认应用进程与端口存活；\n3) 应用正常则核对健康检查配置（路径、端口、超时、间隔）是否与实际相符；\n4) 确认后端组剩余健康实例数是否足够承载流量，不足时立即扩容。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -540,7 +558,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "huaweicloud_sys_elb_l7_qps_usage > 80",
+                    "prom_ql": "huaweicloud_sys_elb_l7_qps_usage \u003e 80",
                     "severity": 2,
                     "unit": "none"
                 }
@@ -566,7 +584,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在华为云控制台看该 ELB 的带宽监控曲线，确认是持续增长还是突发；\n2) 确认是正常业务增长还是异常流量（爬虫、攻击）；\n3) 正常增长的在控制台调整 ELB 规格或带宽上限；\n4) 异常流量的配合 WAF/DDoS 防护做限流或封禁。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

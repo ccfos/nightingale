@@ -870,8 +870,8 @@ func (InitPostgresAlertHisEvent) TableName() string {
 }
 
 type InitBoardBusiGroup struct {
-	BusiGroupID int64 `primaryKey;gorm:"not null;default:0;comment:busi group id"`
-	BoardID     int64 `primaryKey;gorm:"not null;default:0;comment:board id"`
+	BusiGroupID int64 `gorm:"primaryKey;not null;default:0;comment:busi group id"`
+	BoardID     int64 `gorm:"primaryKey;not null;default:0;comment:board id"`
 }
 
 func (InitBoardBusiGroup) TableName() string {
@@ -946,14 +946,15 @@ func (InitBuiltinPayload) TableOptions() string {
 }
 
 type InitNotificationRecord struct {
-	ID        uint64 `gorm:"primaryKey;autoIncrement"`
-	EventID   uint64 `gorm:"not null;index:idx_evt"`
-	SubID     uint64 `gorm:"not null"`
-	Channel   string `gorm:"size:255;not null"`
-	Status    int32  `gorm:"not null;default:0"`
-	Target    string `gorm:"size:1024;not null"`
-	Details   string `gorm:"size:2048"`
-	CreatedAt int64  `gorm:"not null"`
+	ID           uint64 `gorm:"primaryKey;autoIncrement"`
+	NotifyRuleID int64  `gorm:"not null;default:0;index:idx_nr_rule_created_evt,priority:1"`
+	EventID      uint64 `gorm:"not null;index:idx_evt;index:idx_nr_rule_created_evt,priority:3"`
+	SubID        uint64 `gorm:"not null"`
+	Channel      string `gorm:"size:255;not null"`
+	Status       int32  `gorm:"not null;default:0"`
+	Target       string `gorm:"size:1024;not null"`
+	Details      string `gorm:"size:2048"`
+	CreatedAt    int64  `gorm:"not null;index:idx_nr_rule_created_evt,priority:2;index:idx_nr_created_at"`
 }
 
 func (InitNotificationRecord) TableName() string {

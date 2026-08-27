@@ -72,7 +72,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 dmesg -T | grep -iE 'i/o error|ata|scsi' 看内核报的具体错误与设备名；\n2) 用 smartctl -a /dev/sdX 看 SMART 属性，重点关注 Reallocated_Sector_Ct 与 Current_Pending_Sector；\n3) 确认该盘上的数据是否有副本或备份，优先保证数据安全再处理硬件；\n4) 确认为硬件故障的，安排停机换盘，RAID 环境下先确认阵列降级状态再操作。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -155,7 +157,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 \u003c挂载点\u003e | sort -h 找出占用最大的目录；\n2) 系统盘常见是 /var/log 与容器镜像层（docker system df 看占用，docker system prune 清理）；\n3) 用 lsof +L1 检查已删除但句柄未释放的文件；\n4) 长期需扩容或把大数据目录迁到独立磁盘。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -236,7 +240,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 uptime 看 1/5/15 分钟负载趋势，判断是突发还是持续；\n2) 用 top 看 %wa（IO 等待）——高说明瓶颈在磁盘而非 CPU，按磁盘 IO 处理；\n3) 用 vmstat 1 看 r（运行队列）与 b（阻塞）列区分 CPU 密集与 IO 阻塞；\n4) 定位到具体进程后按 CPU 或 IO 的路径继续排查，必要时扩容。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -317,7 +323,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 cat /proc/sys/fs/file-nr 确认已分配与上限；\n2) 用 lsof | awk '{print $2}' | sort | uniq -c | sort -rn | head 找出占用句柄最多的进程；\n3) 应急调大：sysctl -w fs.file-max=\u003c更大值\u003e，并检查该进程的 ulimit -n 与 systemd LimitNOFILE；\n4) 根因通常是连接或文件未关闭，需在应用侧修复泄漏。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -398,7 +406,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -i 确认是哪个挂载点的 inode 吃紧；\n2) 用 for d in /path/*; do echo \"$(find $d | wc -l) $d\"; done | sort -rn | head 逐层找出小文件最多的目录；\n3) 常见来源是 session 文件、邮件队列、缓存碎片、未清理的容器层——按业务确认后批量删除；\n4) 长期可在格式化时调大 inode 密度，或把小文件业务迁到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -481,7 +491,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 free -h 确认 available 与 swap 使用情况；\n2) 用 ps aux --sort=-%mem | head 找出占用最高的进程，对比它们的历史内存曲线判断是否泄漏；\n3) 内核回收不及时可用 sync; echo 1 \u003e /proc/sys/vm/drop_caches 释放 page cache（生产慎用）；\n4) 确认是业务增长还是进程泄漏——泄漏要在应用侧抓堆定位，不能只靠重启。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -564,7 +576,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 free -h 确认 available 与 swap 使用情况；\n2) 用 ps aux --sort=-%mem | head 找出占用最高的进程，对比它们的历史内存曲线判断是否泄漏；\n3) 内核回收不及时可用 sync; echo 1 \u003e /proc/sys/vm/drop_caches 释放 page cache（生产慎用）；\n4) 确认是业务增长还是进程泄漏——泄漏要在应用侧抓堆定位，不能只靠重启。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -645,7 +659,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 RX dropped/errors 的增长；\n2) 用 ethtool -S \u003c网卡\u003e 看具体丢包原因（rx_no_buffer、rx_missed_errors 等）；\n3) 环形缓冲区不足可用 ethtool -G \u003c网卡\u003e rx \u003c更大值\u003e 调大，并检查 net.core.netdev_max_backlog；\n4) 若伴随 CPU 软中断偏高（top 里 %si），开启 RPS/RSS 把中断分散到多核。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -726,7 +742,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 TX dropped/errors 的增长；\n2) 用 ethtool -S \u003c网卡\u003e 看具体计数，并用 tc -s qdisc show dev \u003c网卡\u003e 看队列是否溢出；\n3) 发送队列不足可调大 txqueuelen 与 ethtool -G \u003c网卡\u003e tx；\n4) 确认是否已跑满带宽——是则限流或扩带宽，不是则排查网卡驱动与对端设备。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -807,7 +825,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 sysctl net.netfilter.nf_conntrack_count 与 nf_conntrack_max 确认当前水位；\n2) 用 conntrack -L | awk '{print $4}' | sort | uniq -c | sort -rn 看连接集中在哪类协议或来源；\n3) 应急调大：sysctl -w net.netfilter.nf_conntrack_max=\u003c更大值\u003e，并同步调大 nf_conntrack_buckets；\n4) 同时缩短 nf_conntrack_tcp_timeout_time_wait 等超时，或对不需要跟踪的流量用 iptables raw 表 NOTRACK。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -888,7 +908,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 dmesg -T | grep -i 'killed process' 确认被杀的是哪个进程、当时占用多少内存；\n2) 用 free -h 与该进程的内存曲线判断是内存泄漏还是配置的上限过高；\n3) 给关键进程调整 oom_score_adj 降低被杀优先级，同时给次要进程设 cgroup 内存上限；\n4) 根因是泄漏的要在应用侧抓堆定位，只扩内存会反复复发。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -969,7 +991,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ps -eo ppid | sort | uniq -c | sort -rn | head 找出 fork 子进程最多的父进程；\n2) 确认是正常的多进程模型（如 php-fpm、nginx worker）还是失控 fork；\n3) 失控的先停掉该父进程止血，再修复代码里的 fork 逻辑；\n4) 正常业务增长则调整 worker 数配置并评估是否需要扩容。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

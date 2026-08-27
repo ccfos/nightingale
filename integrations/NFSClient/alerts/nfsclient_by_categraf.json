@@ -1,0 +1,257 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "NFS 请求重传率过高",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "rate(nfsclient_nfsstat_retrans[5m]) / (rate(nfsclient_nfsstat_ops[5m]) \u003e 0) * 100 \u003e 5",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=NfsHighRetransRate"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 mountpoint 与 server，执行 nfsstat -c 确认重传计数，并用 mtr \u003cserver\u003e 检查到服务端的丢包；\n2) 网络正常则到 NFS 服务端执行 nfsstat -s 与 iostat -x 1，确认是否服务端磁盘或线程数（RPCNFSDCOUNT）打满；\n3) UDP 挂载在丢包环境下重传会放大，确认挂载参数改用 proto=tcp；\n4) 调整挂载的 timeo/retrans 参数只是缓解，必须先修网络或服务端瓶颈。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785210000000030000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "NFS 请求平均往返时延过高",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "rate(nfsclient_nfsstat_rtt[5m]) / (rate(nfsclient_nfsstat_ops[5m]) \u003e 0) \u003e 50",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=NfsHighRtt"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 mountpoint、server 与 nfsstat_operation，先看是 READ 慢还是 WRITE 慢；\n2) 执行 mountstats \u003cmountpoint\u003e 查看各操作的 RTT 分布，并用 ping \u003cserver\u003e 对比基础网络时延；\n3) 网络时延正常则到服务端用 iostat -x 1 看后端存储是否已打满，以及是否有其他客户端在跑大 IO；\n4) 读慢可考虑调大 rsize/wsize 并启用 actimeo 缓存，写慢确认是否用了 sync 导出选项（性能代价极大）。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785210000000031000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "NFS 请求平均执行耗时过高",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "rate(nfsclient_nfsstat_exe[5m]) / (rate(nfsclient_nfsstat_ops[5m]) \u003e 0) \u003e 100",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=NfsHighExecuteTime"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 mountpoint，执行 mountstats \u003cmountpoint\u003e 对比 RTT 与 execute 的差值，差值大即排队严重；\n2) 排队严重通常是并发 IO 超过了 RPC 槽位，调大挂载的 nconnect（NFSv4.1+）或内核 sunrpc.tcp_slot_table_entries；\n3) 同时确认客户端是否有进程在做大量小文件操作，改为批量或本地缓存可大幅降低 IOPS；\n4) 若 RTT 本身也高，先按 RTT 告警处理服务端与网络。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785210000000032000
+    }
+]

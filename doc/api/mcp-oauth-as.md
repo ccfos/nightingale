@@ -1,110 +1,114 @@
-# A2A / MCP 内建 OAuth 2.1 授权服务器（Authorization Server）
+# Built-in OAuth 2.1 Authorization Server for A2A / MCP
 
-让 n9e **自身成为 OAuth 2.1 授权服务器**（与 Resource Server co-located），使通用 MCP 客户端
-（Claude / ChatGPT connector）经 RFC 7591 动态客户端注册(DCR) **零配置**接入 `/a2a` `/mcp`。
-这是 [a2a-oauth-rs.md](./a2a-oauth-rs.md)（对接外部企业 IdP 的 Resource Server）的**互补**能力，
-面向「**没有外部 IdP** 的自托管」场景。默认关闭，与 `X-User-Token`（PAT）、自签 session JWT、
-外部 IdP RS 三条鉴权路径**并列**，开启后互不影响。
+This makes n9e **an OAuth 2.1 authorization server in its own right** (co-located with the resource server), so that generic MCP clients
+(Claude, ChatGPT connectors) can reach `/a2a` and `/mcp` with **zero configuration** via RFC 7591 Dynamic Client Registration (DCR).
+It **complements** [a2a-oauth-rs.md](./a2a-oauth-rs.md) (n9e as a resource server in front of an external enterprise IdP) and targets
+the "**self-hosted, no external IdP**" scenario. It is disabled by default and sits **alongside** the other three authentication paths —
+`X-User-Token` (PAT), self-signed session JWT, and external-IdP RS — without interfering with any of them when enabled.
 
-## 一、它解决什么、与 RSAuth 的关系
+## 1. What it solves, and how it relates to RSAuth
 
-- **RSAuth（已有）**：n9e 当 Resource Server，接受**外部企业 IdP** 签发的 token —— 适合「已有 Keycloak/Entra」。
-- **MCPAuth（本档）**：n9e 自己当 Authorization Server，自己签发 token、自己做 DCR —— 适合「没有 IdP，想让 Claude/ChatGPT 直接连」。
-- 两者**可同时开启**：`/.well-known/oauth-protected-resource` 的 `authorization_servers` 会**同时列出** n9e 自身与外部 IdP，客户端各取所需（通用客户端走 n9e 的 DCR，企业客户端走 IdP）。
+- **RSAuth (existing)**: n9e acts as a resource server and accepts tokens issued by an **external enterprise IdP** — a good fit when you already run Keycloak or Entra.
+- **MCPAuth (this document)**: n9e acts as its own authorization server, issuing its own tokens and handling DCR itself — a good fit when you have no IdP and want Claude or ChatGPT to connect directly.
+- The two **can be enabled at the same time**: the `authorization_servers` field of `/.well-known/oauth-protected-resource` will **list both** n9e itself and the external IdP, and each client picks what it needs (generic clients go through n9e's DCR, enterprise clients go through the IdP).
 
-## 二、设计要点（精简版 v2）
+## 2. Design highlights (streamlined v2)
 
-- **无状态优先**：client_id、授权请求票据、授权码、access、refresh **全是 HS256 签名 JWT**，靠 `token_use` claim 区分；签名密钥从 `JWTAuth.SigningKey` 经 **HKDF-SHA256 派生**（与 session 密钥密码学隔离 —— MCP token 不能当 session 用，反之亦然）。
-- **唯一共享状态**：授权码一次性 —— 兑换时对码的 `jti` 做一次 Redis `SetNX`，重放即拒。**原子、跨实例安全**（n9e center 多实例共享同一 Redis）。
-- **refresh 不轮换**：本版 refresh 无状态、不做重用检测；撤销靠短 TTL 或轮换签名密钥。如需公网多租户级安全，后续可加 refresh 轮换。
-- **consent 在前端**：n9e 会话是 header/Bearer 无 Cookie，`/oauth/authorize` 校验后 **302 跳转前端 SPA 的 `/oauth-consent` 路由**；SPA（持 token、含 SSO 登录）展示同意页，再调受保护的决策 API 签发授权码。
+- **Stateless first**: client_id, authorization-request tickets, authorization codes, access tokens, and refresh tokens are **all HS256-signed JWTs**, distinguished by a `token_use` claim. The signing key is **derived via HKDF-SHA256** from `JWTAuth.SigningKey` (cryptographically isolated from the session key — an MCP token cannot be used as a session token, and vice versa).
+- **The only shared state**: authorization codes are single-use — redeeming one performs a single Redis `SetNX` on the code's `jti`, and a replay is rejected. This is **atomic and safe across instances** (multiple n9e center instances share the same Redis).
+- **No refresh rotation**: refresh tokens in this version are stateless with no reuse detection; revocation relies on a short TTL or on rotating the signing key. If you need public-internet, multi-tenant grade security, refresh rotation can be added later.
+- **Consent lives in the frontend**: n9e sessions are header/Bearer based with no cookies, so after validation `/oauth/authorize` **302-redirects to the frontend SPA route `/oauth-consent`**. The SPA (which holds the token and supports SSO login) shows the consent page and then calls the protected decision API to issue the authorization code.
 
-## 三、协议合规
+## 3. Protocol compliance
 
-实现 OAuth 2.1 + RFC 8414(AS 元数据) + RFC 9728(受保护资源元数据) + RFC 7591(DCR) + RFC 7636(PKCE，**强制 S256**) + RFC 8707(resource 绑定 aud) + RFC 7009(revoke)。授权码强制一次性；redirect_uri 精确匹配防开放重定向；access token 的 `aud` 绑定资源、校验时拒绝错配（防 passthrough）。
+Implements OAuth 2.1 + RFC 8414 (AS metadata) + RFC 9728 (protected resource metadata) + RFC 7591 (DCR) + RFC 7636 (PKCE, **S256 enforced**) + RFC 8707 (resource-bound `aud`) + RFC 7009 (revocation). Authorization codes are strictly single-use; `redirect_uri` is matched exactly to prevent open redirects; the access token's `aud` is bound to the resource and a mismatch is rejected at validation time (preventing token passthrough).
 
-## 四、配置 `etc/config.toml`
+## 4. Configuration in `etc/config.toml`
 
 ```toml
 [HTTP.MCPAuth]
 Enable = true
-# 本 AS 的 canonical URL（签发 token 的 iss、RFC 8414 元数据的 issuer）。
-# 多实例务必显式配置，使各实例广告一致；留空则按请求 Host + X-Forwarded-Proto 推导（仅单机）
+# The canonical URL of this AS (the `iss` of issued tokens and the `issuer` in RFC 8414 metadata).
+# With multiple instances you must set it explicitly so every instance advertises the same value;
+# if left empty it is derived from the request Host plus X-Forwarded-Proto (single-node only)
 Issuer = "https://n9e.example.com"
-# MCP 资源标识，绑定进 access token 的 aud（RFC 8707）。留空回退 RSAuth.Audience，
-# 再回退 "<base>/mcp"。与 RSAuth 同开时建议设成与 RSAuth.Audience 相同
+# The MCP resource identifier, bound into the access token's aud (RFC 8707). If empty it falls back
+# to RSAuth.Audience, then to "<base>/mcp". When RSAuth is also enabled, setting it to the same value
+# as RSAuth.Audience is recommended
 Resource = "https://n9e.example.com/mcp"
-# 留空则从 JWTAuth.SigningKey 经 HKDF 派生（推荐）。多实例必须各实例一致，切勿每进程随机
+# If empty, derived from JWTAuth.SigningKey via HKDF (recommended). With multiple instances it must be
+# identical on every instance — never generate it randomly per process
 # SigningKey = ""
-# 生命周期（秒），留 0 用默认：access 3600 / refresh 604800 / code 60
+# Lifetimes in seconds; leave at 0 for the defaults: access 3600 / refresh 604800 / code 60
 # AccessTTL = 3600
 # RefreshTTL = 604800
 # CodeTTL = 60
 ```
 
-| 字段 | 默认 | 说明 |
+| Field | Default | Description |
 |---|---|---|
-| Enable | false | 内建 AS 总开关。关闭时所有 `/oauth/*` 端点 404，行为同现状 |
-| Issuer | "" | AS 的 canonical URL。**多实例必填**，否则各实例按请求派生可能发散 |
-| Resource | "" | access token 的 aud；空→RSAuth.Audience→`<base>/mcp` |
-| SigningKey | "" | 空则 HKDF 自 `JWTAuth.SigningKey`（与 session 隔离、全实例一致） |
-| AccessTTL/RefreshTTL/CodeTTL | 3600/604800/60 | 秒 |
+| Enable | false | Master switch for the built-in AS. When off, every `/oauth/*` endpoint returns 404 and behavior is unchanged |
+| Issuer | "" | Canonical URL of the AS. **Required with multiple instances**, otherwise each instance derives its own value from the request and they may diverge |
+| Resource | "" | The access token's `aud`; empty → RSAuth.Audience → `<base>/mcp` |
+| SigningKey | "" | If empty, derived from `JWTAuth.SigningKey` via HKDF (isolated from sessions, identical across instances) |
+| AccessTTL/RefreshTTL/CodeTTL | 3600/604800/60 | Seconds |
 
-> ⚠️ **多实例约束**：① `SigningKey`（或其派生源 `JWTAuth.SigningKey`）必须**全实例逐字节一致**，切勿每进程随机生成，否则 token 只在签发实例上验得过。② 多实例请**显式配置 `Issuer`/`Resource`**，不要依赖请求派生。③ 除授权码一次性（共享 Redis）外全部无状态，**禁止用进程内缓存**存码/票据。
+> ⚠️ **Multi-instance constraints**: (1) `SigningKey` (or the `JWTAuth.SigningKey` it is derived from) must be **byte-for-byte identical on every instance** — never generate it randomly per process, or tokens will only validate on the instance that issued them. (2) With multiple instances, **set `Issuer`/`Resource` explicitly** instead of relying on request-based derivation. (3) Apart from the single-use authorization code (shared Redis), everything is stateless, so **never use an in-process cache** to store codes or tickets.
 
-## 五、端点
+## 5. Endpoints
 
-| 方法 | 路径 | 鉴权 | 说明 |
+| Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/.well-known/oauth-authorization-server`(+`/a2a` `/mcp` 别名) | 公开 | RFC 8414 AS 元数据 |
-| GET | `/.well-known/oauth-protected-resource`(+别名) | 公开 | RFC 9728，`authorization_servers` 含 n9e 自身 |
-| POST | `/oauth/register` | 公开 | RFC 7591 DCR，返回签名 client_id |
-| GET | `/oauth/authorize` | 公开 | 校验参数 → 302 跳前端 `/oauth-consent?req=<票据>` |
-| POST | `/api/n9e/mcp/oauth/authorize` | **session** | 决策 API：前端同意后 POST `{req, decision}` → 签发授权码 → 返回 `{redirect}` |
-| POST | `/oauth/token` | public client + PKCE | `authorization_code`（一次性+PKCE+resource 校验）/ `refresh_token` |
-| POST | `/oauth/revoke` | public client | RFC 7009，无状态 token 故 best-effort 200 |
+| GET | `/.well-known/oauth-authorization-server` (plus `/a2a` and `/mcp` aliases) | Public | RFC 8414 AS metadata |
+| GET | `/.well-known/oauth-protected-resource` (plus aliases) | Public | RFC 9728; `authorization_servers` includes n9e itself |
+| POST | `/oauth/register` | Public | RFC 7591 DCR, returns a signed client_id |
+| GET | `/oauth/authorize` | Public | Validates parameters → 302 to the frontend at `/oauth-consent?req=<ticket>` |
+| POST | `/api/n9e/mcp/oauth/authorize` | **session** | Decision API: after the user consents, the frontend POSTs `{req, decision}` → an authorization code is issued → returns `{redirect}` |
+| POST | `/oauth/token` | public client + PKCE | `authorization_code` (single-use + PKCE + resource check) / `refresh_token` |
+| POST | `/oauth/revoke` | public client | RFC 7009; tokens are stateless, so this is best-effort and always returns 200 |
 
-## 六、授权流程
+## 6. Authorization flow
 
-1. MCP 客户端无 token 调 `/mcp` → `401` + `WWW-Authenticate: Bearer resource_metadata=…`。
-2. 客户端拉 `/.well-known/oauth-protected-resource` → 找到 AS=n9e → 拉 `/.well-known/oauth-authorization-server` → `POST /oauth/register`（DCR）→ 跳 `/oauth/authorize?...&code_challenge=...&resource=<base>/mcp`。
-3. n9e 校验 client_id(验签)/redirect_uri(精确匹配)/`response_type=code`/PKCE S256/resource → 签授权请求票据 → **302 到 `/oauth-consent?req=<票据>`**（前端 SPA 路由）。
-4. 前端 SPA：未登录→跳 `/login?redirect=...`（含 SSO）；已登录→展示同意页 → 点「允许」→ `POST /api/n9e/mcp/oauth/authorize {req, decision:"allow"}`（带 session）→ 后端验 session+票据 → 签**授权码**（绑定该用户）→ 返回 `{redirect}` → SPA `window.location` 跳回 `redirect_uri?code=...&state=...`。
-5. 客户端 `POST /oauth/token`（code + code_verifier + resource）→ PKCE 校验 + **一次性 SetNX** + resource 一致 → 签发 access(+refresh)。
-6. 客户端带 `Authorization: Bearer <access>` 调 `/mcp` → n9e 用 MCP 密钥验签放行（映射到对应用户，agent 面内权限同该用户）。注意：该 access token **仅在 `/a2a` `/mcp` 端点受理**，不能用于其它 `/api/n9e/*` 接口（见 router_mw.go 的 `agentOAuthScope`）。
+1. An MCP client calls `/mcp` without a token → `401` + `WWW-Authenticate: Bearer resource_metadata=…`.
+2. The client fetches `/.well-known/oauth-protected-resource` → finds AS = n9e → fetches `/.well-known/oauth-authorization-server` → `POST /oauth/register` (DCR) → jumps to `/oauth/authorize?...&code_challenge=...&resource=<base>/mcp`.
+3. n9e validates client_id (signature), redirect_uri (exact match), `response_type=code`, PKCE S256, and resource → signs an authorization-request ticket → **302 to `/oauth-consent?req=<ticket>`** (a frontend SPA route).
+4. Frontend SPA: if not logged in, it redirects to `/login?redirect=...` (SSO included); if logged in, it shows the consent page → the user clicks "Allow" → `POST /api/n9e/mcp/oauth/authorize {req, decision:"allow"}` (with the session) → the backend validates the session and the ticket → signs an **authorization code** (bound to that user) → returns `{redirect}` → the SPA does `window.location` back to `redirect_uri?code=...&state=...`.
+5. The client calls `POST /oauth/token` (code + code_verifier + resource) → PKCE check + **single-use SetNX** + matching resource → issues an access token (and a refresh token).
+6. The client calls `/mcp` with `Authorization: Bearer <access>` → n9e validates the signature with the MCP key and lets it through (mapped to the corresponding user, with the same permissions as that user inside the agent). Note that this access token is **only accepted on the `/a2a` and `/mcp` endpoints** and cannot be used against other `/api/n9e/*` APIs (see `agentOAuthScope` in router_mw.go).
 
-## 七、自测（curl）
+## 7. Self-test with curl
 
 ```bash
 BASE=http://127.0.0.1:17000
 
-# 1) DCR 拿 client_id
+# 1) DCR to obtain a client_id
 CID=$(curl -s -XPOST $BASE/oauth/register -H 'Content-Type: application/json' \
   -d '{"client_name":"cli","redirect_uris":["http://127.0.0.1:9999/cb"]}' | jq -r .client_id)
 
-# 2) 构造 PKCE
+# 2) Build the PKCE pair
 VERIFIER=$(openssl rand -hex 32)
 CHALLENGE=$(printf %s "$VERIFIER" | openssl dgst -sha256 -binary | openssl base64 | tr '+/' '-_' | tr -d '=')
 
-# 3) 浏览器打开 authorize（会跳到前端 /oauth-consent 登录+同意，回调拿 code）
+# 3) Open the authorize URL in a browser (it redirects to the frontend /oauth-consent for login
+#    and consent, then returns the code on the callback)
 echo "$BASE/oauth/authorize?response_type=code&client_id=$CID&redirect_uri=http://127.0.0.1:9999/cb&code_challenge=$CHALLENGE&code_challenge_method=S256&state=xyz"
 
-# 4) 用 code 换 token（CODE 从回调 URL 取）
+# 4) Exchange the code for a token (take CODE from the callback URL)
 curl -s -XPOST $BASE/oauth/token -d grant_type=authorization_code -d code=$CODE \
   -d code_verifier=$VERIFIER -d redirect_uri=http://127.0.0.1:9999/cb -d client_id=$CID | jq
 
-# 5) 带 access_token 调 MCP
+# 5) Call MCP with the access_token
 curl -s -XPOST $BASE/mcp -H "Authorization: Bearer $ACCESS" -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
-# 反例：重放第 4 步同一个 code → {"error":"invalid_grant", ...}（一次性守卫）
+# Counter-example: replay the same code from step 4 → {"error":"invalid_grant", ...} (single-use guard)
 ```
 
-## 八、涉及代码
+## 8. Code involved
 
-- `pkg/httpx/httpx.go` — `MCPAuth` 配置
-- `center/router/router_mcp_oauth.go` — AS 全部端点 + 决策 API + JWT/PKCE/HKDF/一次性码助手
-- `center/router/router_rsauth.go` — 发现链开关推广到 `rsAuthEnabled() || mcpAuthEnabled()`；`oauthProtectedResource` 的 `authorization_servers` 含 n9e 自身
-- `center/router/router_mw.go` — `tokenAuth()` 的 builtin 分支（MCP 密钥验签，排在外部 IdP RS 之前）；`agentOAuthScope`（把 OAuth 受理限定在 `/a2a` `/mcp`）
-- `center/router/router_a2a.go` / `router.go` — 端点注册（公开 `/oauth/*` 于根，决策 API 于 `/api/n9e`）
-- 前端 `n9e/fe`：`src/pages/oauthConsent` + `src/routers/index.tsx` 路由 `/oauth-consent`
+- `pkg/httpx/httpx.go` — the `MCPAuth` configuration
+- `center/router/router_mcp_oauth.go` — all AS endpoints, the decision API, and the JWT/PKCE/HKDF/single-use-code helpers
+- `center/router/router_rsauth.go` — the discovery-chain switch broadened to `rsAuthEnabled() || mcpAuthEnabled()`; the `authorization_servers` of `oauthProtectedResource` now includes n9e itself
+- `center/router/router_mw.go` — the builtin branch of `tokenAuth()` (MCP key signature validation, ordered ahead of the external-IdP RS); `agentOAuthScope` (restricts OAuth acceptance to `/a2a` and `/mcp`)
+- `center/router/router_a2a.go` / `router.go` — endpoint registration (public `/oauth/*` at the root, decision API under `/api/n9e`)
+- Frontend `n9e/fe`: `src/pages/oauthConsent` plus the `/oauth-consent` route in `src/routers/index.tsx`

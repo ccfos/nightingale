@@ -42,6 +42,15 @@ var (
 
 // Query executes a given SQL query and returns the results
 func Query(ctx context.Context, db *gorm.DB, query *QueryParam) ([]map[string]interface{}, error) {
+	// Untrusted callers (anonymous dashboard share tokens) additionally go
+	// through the strict read-only check: the blacklist below splits on
+	// spaces and is not a security boundary.
+	if types.ReadOnlyEnforced(ctx) {
+		if err := ValidateReadOnly(query.Sql); err != nil {
+			return nil, err
+		}
+	}
+
 	// Validate SQL to prevent write operations if needed
 	sqlItem := strings.Split(strings.ToUpper(query.Sql), " ")
 	for _, item := range sqlItem {

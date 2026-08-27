@@ -26,6 +26,8 @@ import (
 type Consumer struct {
 	alerting aconf.Alerting
 	ctx      *ctx.Context
+	// ctx 的副本，只把发往 center 的超时收窄到 persistTimeoutMs
+	persistCtx *ctx.Context
 
 	dispatch       *Dispatch
 	promClients    *prom.PromClientMap
@@ -58,6 +60,7 @@ func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch, 
 	return &Consumer{
 		alerting:    alerting,
 		ctx:         ctx,
+		persistCtx:  ctx.WithCenterApiTimeout(persistTimeoutMs),
 		dispatch:    dispatch,
 		promClients: promClients,
 
@@ -182,6 +185,22 @@ func (e *Consumer) muteRuleName(groupId, muteId int64) string {
 	return fmt.Sprintf("id=%d", muteId)
 }
 
+const (
+	// edge 侧 event-persist 的重试参数。persist 失败不会否决通知，但事件不落历史库、
+	// 通知记录与通知模板里的 event_id 都是 0、recordNotifyMuted 也会被跳过，
+	// 所以重试买到的是历史/详情页的完整性。
+	//
+	// 超时单独收窄：persist 在通知之前同步执行、且占着 NotifyConcurrency 的并发槽，
+	// 不能用 CenterApi.Timeout（自带 edge.toml 是 9s，那是给 targets 全量查询留的）。
+	// 服务端只有两三次 DB 往返，2s 是百倍余量，三轮最坏 6.3s（单地址），仍短于收窄前的单轮。
+	//
+	// 代价：center 已提交但响应丢了的窄窗口里，重试会在 alert_his_event 多插一条
+	// —— EventPersist 里的 his.Add 是无条件 insert。比起丢事件，这个代价可以接受。
+	persistRetryRounds   = 3
+	persistRetryInterval = 100 * time.Millisecond
+	persistTimeoutMs     = 2000
+)
+
 func (e *Consumer) persist(event *models.AlertCurEvent) {
 	if event.Status != 0 {
 		return
@@ -190,7 +209,8 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 	if !e.ctx.IsCenter {
 		event.DB2FE()
 		var err error
-		event.Id, err = poster.PostByUrlsWithResp[int64](e.ctx, "/v1/n9e/event-persist", event)
+		event.Id, err = poster.PostByUrlsWithRespRetry[int64](e.persistCtx, "/v1/n9e/event-persist", event,
+			persistRetryRounds, persistRetryInterval)
 		if err != nil {
 			logger.Errorf("event:%s persist err:%v", event.Hash, err)
 			e.dispatch.Astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event", event.GroupName, fmt.Sprintf("%v", event.RuleId)).Inc()

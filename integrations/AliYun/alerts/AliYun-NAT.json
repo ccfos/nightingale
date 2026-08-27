@@ -68,7 +68,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认是并发连接还是新建连接触顶；\n2) 用流量日志定位是哪些 ECS 占用了大量连接；\n3) 常见根因是应用未复用连接或有扫描类任务——在应用侧改用连接池；\n4) 确需更高能力的升级 NAT 网关规格。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -156,7 +158,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认是并发连接还是新建连接触顶；\n2) 用流量日志定位是哪些 ECS 占用了大量连接；\n3) 常见根因是应用未复用连接或有扫描类任务——在应用侧改用连接池；\n4) 确需更高能力的升级 NAT 网关规格。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,

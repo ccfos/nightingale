@@ -488,3 +488,30 @@ ALTER TABLE `alert_mute` ADD COLUMN `mute_type` int not null default 0 comment '
 
 /* v9 2026-07-20 alert_his_event composite index for history query (large table: consider gh-ost/pt-osc) */
 ALTER TABLE `alert_his_event` ADD KEY `idx_group_last_eval_time` (`group_id`, `last_eval_time`);
+
+/* v9 2026-08-01 widen ai_llm_config/ai_agent description to text. Databases created by
+   AutoMigrate instead of this file hold these columns as longtext, and narrowing them to
+   varchar breaks on over-long descriptions (MySQL 1406, or silent truncation on
+   PostgreSQL). TEXT cannot carry a literal default value, hence no NOT NULL DEFAULT. */
+ALTER TABLE `ai_llm_config` MODIFY `description` text COMMENT 'description';
+ALTER TABLE `ai_agent` MODIFY `description` text COMMENT 'description';
+
+/* v9 2026-08-05 notification_record indexes for notify-rule event query and daily cleanup.
+   idx_nr_rule_created_evt 覆盖「按通知规则 + 时间窗取通知过的事件 id」，event_id 在末位使其不回表；
+   idx_nr_created_at 服务按保留期清理的范围删除。
+   通常不需要手工执行：程序启动时会按数据库方言在线创建这两个索引（MySQL 用 LOCK=NONE，
+   PostgreSQL 用 CREATE INDEX CONCURRENTLY），并带存在性判断，重复启动不会报错。
+   仅在需要提前手工建好、或自动创建因不支持在线 DDL 而失败时才执行下面两条；
+   通知记录是持续写入的大表，若下面的 LOCK=NONE 报错，请改用 gh-ost / pt-online-schema-change，
+   不要去掉 LOCK=NONE 直接执行——那会在整个建索引期间阻塞该表写入 */
+ALTER TABLE `notification_record` ADD KEY `idx_nr_rule_created_evt` (`notify_rule_id`, `created_at`, `event_id`), ALGORITHM=INPLACE, LOCK=NONE;
+ALTER TABLE `notification_record` ADD KEY `idx_nr_created_at` (`created_at`), ALGORITHM=INPLACE, LOCK=NONE;
+
+/* v9 2026-08-18 source_token note: 仪表盘匿名分享链接的备注，便于在管理列表里
+   分辨每条链接的用途与去向 */
+ALTER TABLE `source_token` ADD COLUMN `note` varchar(255) NOT NULL DEFAULT '' COMMENT 'note';
+
+/* v9 2026-08-19 source_token token 索引：分享通道按 token 反查（source_type + token），
+   已有的 idx_source_type_id_token 跳过了中间列 source_id 用不上，会退化成扫全部
+   source_type='board' 的行。该查询在鉴权之前、每个带 __token 的请求都要打一次 */
+ALTER TABLE `source_token` ADD KEY `idx_source_token_token` (`token`);

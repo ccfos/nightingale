@@ -1,39 +1,39 @@
-# 批量清理过期屏蔽规则 API
+# Batch Cleanup of Expired Mute Rules API
 
-用于一次性清理历史遗留的、已经过期的告警屏蔽规则（AlertMute）。常见场景：长期运行后系统中累积了大量临时屏蔽，需要按业务组或全局做一次性清理。
+Cleans up leftover, already-expired alert mute rules (AlertMute) in one shot. A typical use case: after running for a long time the system has accumulated a large number of temporary mutes and you want to clear them out, either per business group or globally.
 
-接口为异步执行：服务端会立即返回成功响应，然后在后台分批删除符合条件的数据，直到没有更多匹配为止。
+The API runs asynchronously: the server returns a success response immediately and then deletes the matching rows in batches in the background until nothing matches any more.
 
-## 接口定义
+## Endpoint
 
 ```
 DELETE /api/n9e/alert-mutes
 ```
 
-- 权限：`auth` + `admin`，仅管理员可调用。
-- Content-Type：`application/json`。
+- Permissions: `auth` + `admin`; administrators only.
+- Content-Type: `application/json`.
 
-## 请求参数
+## Request parameters
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |------|------|------|------|
-| timestamp | int64 | 是 | Unix 秒级时间戳。只删除 `create_at < timestamp` 的屏蔽规则。可以理解为"删除这个时间点之前创建的过期屏蔽"。 |
-| group_ids | int64[] | 否 | 业务组 ID 列表。传入后只清理这些业务组下的屏蔽规则；不传或空数组表示全部业务组。 |
+| timestamp | int64 | Yes | Unix timestamp in seconds. Only mute rules with `create_at < timestamp` are deleted. Read it as "delete expired mutes created before this point in time". |
+| group_ids | int64[] | No | List of business group IDs. When provided, only mute rules under these business groups are cleaned up; omitting it or passing an empty array means all business groups. |
 
-## 删除条件
+## Deletion criteria
 
-后台批处理逻辑只会删除**同时满足**以下条件的记录：
+The background batch job only deletes rows that satisfy **all** of the following:
 
-1. `etime > 0`：屏蔽有结束时间（永久屏蔽 `etime = 0` 不会被清理）。
-2. `etime < now`：当前时间已经超过结束时间，即已经过期。
-3. `create_at < timestamp`：创建时间早于请求中的 `timestamp`。
-4. 如果传了 `group_ids`，再追加 `group_id IN (group_ids)`。
+1. `etime > 0`: the mute has an end time (permanent mutes, where `etime = 0`, are never cleaned up).
+2. `etime < now`: the end time has already passed, i.e. the mute has expired.
+3. `create_at < timestamp`: it was created before the `timestamp` in the request.
+4. If `group_ids` was provided, `group_id IN (group_ids)` is appended as well.
 
-换言之：本接口**只清理过期屏蔽**，对永久屏蔽和仍在生效期内的屏蔽都不会触碰。
+In other words: this API **only cleans up expired mutes**. It never touches permanent mutes or mutes that are still in effect.
 
-## 响应
+## Response
 
-请求被接收并启动后台任务后立即返回：
+It returns as soon as the request has been accepted and the background job has been started:
 
 ```json
 {
@@ -42,9 +42,9 @@ DELETE /api/n9e/alert-mutes
 }
 ```
 
-后台按 1000 条/批的步长循环删除，每批之间 sleep 100ms，直到某一批返回的行数小于 1000 为止；遇到 DB 错误会中断并写入 server 日志。
+The background job deletes in batches of 1000 rows, sleeping 100 ms between batches, until a batch returns fewer than 1000 rows. On a DB error it aborts and writes to the server log.
 
-参数缺失时同步返回 400：
+If a required parameter is missing, it returns 400 synchronously:
 
 ```json
 {
@@ -52,9 +52,9 @@ DELETE /api/n9e/alert-mutes
 }
 ```
 
-## 请求示例
+## Examples
 
-清理某两个业务组下、30 天前创建且已过期的屏蔽：
+Clean up expired mutes under two business groups that were created more than 30 days ago:
 
 ```bash
 NOW=$(date +%s)
@@ -66,7 +66,7 @@ curl -X DELETE 'http://<n9e-host>/api/n9e/alert-mutes' \
   -d "{\"timestamp\": ${THRESHOLD}, \"group_ids\": [1, 2]}"
 ```
 
-全局清理所有业务组下 30 天前的过期屏蔽：
+Globally clean up expired mutes older than 30 days across all business groups:
 
 ```bash
 curl -X DELETE 'http://<n9e-host>/api/n9e/alert-mutes' \
@@ -75,8 +75,8 @@ curl -X DELETE 'http://<n9e-host>/api/n9e/alert-mutes' \
   -d "{\"timestamp\": ${THRESHOLD}}"
 ```
 
-## 注意事项
+## Notes
 
-- 接口是**异步**的，返回 `Alert mutes deletion started` 并不代表清理已经完成。如需确认结果，可在 server 日志中搜索 `Successfully deleted alert mutes` / `Failed to delete alert mutes`，或再次调用列表接口核对剩余数量。
-- 清理动作不可逆，删除前请确认 `timestamp` 与 `group_ids` 是预期范围。
-- 永久屏蔽（`etime = 0`）和未来才到期的屏蔽都不会被删除，调用方无需额外做兜底过滤。
+- The API is **asynchronous**; getting back `Alert mutes deletion started` does not mean the cleanup has finished. To confirm the outcome, search the server log for `Successfully deleted alert mutes` / `Failed to delete alert mutes`, or call the list API again and check the remaining count.
+- The cleanup is irreversible. Make sure `timestamp` and `group_ids` cover the intended range before calling it.
+- Permanent mutes (`etime = 0`) and mutes that expire in the future are never deleted, so the caller does not need any extra safety filtering.

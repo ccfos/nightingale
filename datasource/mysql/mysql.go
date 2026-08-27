@@ -116,6 +116,10 @@ func (m *MySQL) Equal(p datasource.Datasource) bool {
 		return false
 	}
 
+	if oldShard.DsnExtraParams != newShard.DsnExtraParams {
+		return false
+	}
+
 	return true
 }
 

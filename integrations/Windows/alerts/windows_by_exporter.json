@@ -74,7 +74,9 @@
         "append_tags": [
             "alertname=HighCPUUsage"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 打开任务管理器或运行 Get-Process | Sort-Object CPU -Descending | Select-Object -First 10 找出占用最高的进程；\n2) 用资源监视器（resmon）看是用户态还是内核态占用高，内核态高要排查驱动与杀毒软件；\n3) 区分业务量增长与程序异常（死循环、频繁 GC）；\n4) 业务增长则扩容或限流，异常则重启对应服务并修复。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -157,7 +159,9 @@
         "append_tags": [
             "alertname=HighPhysicalMemoryUsage"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 运行 Get-Process | Sort-Object WS -Descending | Select-Object -First 10 找出占用最高的进程；\n2) 用 perfmon 看 Available MBytes 与 Pages/sec，Pages/sec 持续高说明已在频繁换页；\n3) 判断是业务增长还是进程泄漏——泄漏需在应用侧定位，重启只是临时缓解；\n4) 确认页面文件大小配置合理，必要时扩内存。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -240,7 +244,9 @@
         "append_tags": [
             "alertname=UpTimeLessThan15Min"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 Get-EventLog -LogName System -Newest 50 或事件查看器查 Event ID 6008（意外关机）、1074（计划关机及发起者）确认原因；\n2) 是自动更新触发的，评估是否调整更新窗口与重启策略；\n3) 是蓝屏或掉电，检查 minidump 与硬件日志；\n4) 确认重启后关键服务已自动启动（Get-Service 检查启动类型）。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -323,7 +329,9 @@
         "append_tags": [
             "alertname=HighInboundErrorRate"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 运行 Get-NetAdapterStatistics 确认收包错误计数的增长；\n2) 用 Get-NetAdapter 确认协商速率与双工模式和对端一致；\n3) 检查网线/光模块，必要时换线或换口交叉验证；\n4) 更新网卡驱动，并联系网络侧确认交换机端口的错包计数。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -406,7 +414,9 @@
         "append_tags": [
             "alertname=HighOutboundErrorRate"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 运行 Get-NetAdapterStatistics 确认发包错误计数的增长；\n2) 用 Get-NetAdapter 确认速率与双工模式和对端一致；\n3) 检查网线/光模块并做交叉验证；\n4) 更新网卡驱动，确认是否已跑满带宽需要扩容。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -489,7 +499,9 @@
         "append_tags": [
             "alertname=LogicalDiskFull"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 Get-PSDrive 或资源管理器确认是哪个盘符；\n2) 用 TreeSize 之类工具或 Get-ChildItem -Recurse | Sort-Object Length -Descending | Select-Object -First 20 找出大文件；\n3) 优先清理日志、临时文件（cleanmgr）、Windows 更新缓存（C:\\Windows\\SoftwareDistribution\\Download）；\n4) 长期需扩容磁盘或把数据目录迁到其他卷。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

@@ -573,7 +573,9 @@ CREATE TABLE notification_record (
     `target` varchar(1024) NOT NULL COMMENT 'notification target',
     `details` varchar(2048) DEFAULT '' COMMENT 'notification other info',
     `created_at` bigint NOT NULL COMMENT 'create time',
-    INDEX idx_evt (event_id)
+    INDEX idx_evt (event_id),
+    INDEX idx_nr_rule_created_evt (notify_rule_id, created_at, event_id),
+    INDEX idx_nr_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `task_tpl`
@@ -2234,9 +2236,11 @@ CREATE TABLE `source_token` (
     `source_type` varchar(64) NOT NULL DEFAULT '' COMMENT 'source type',
     `source_id` varchar(255) NOT NULL DEFAULT '' COMMENT 'source identifier',
     `token` varchar(255) NOT NULL DEFAULT '' COMMENT 'access token',
+    `note` varchar(255) NOT NULL DEFAULT '' COMMENT 'note',
     `expire_at` bigint NOT NULL DEFAULT 0 COMMENT 'expire timestamp',
     `create_at` bigint NOT NULL DEFAULT 0 COMMENT 'create timestamp',
     `create_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
     PRIMARY KEY (`id`),
-    KEY `idx_source_type_id_token` (`source_type`, `source_id`, `token`)
+    KEY `idx_source_type_id_token` (`source_type`, `source_id`, `token`),
+    KEY `idx_source_token_token` (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

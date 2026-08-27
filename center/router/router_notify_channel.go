@@ -18,6 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/i18n"
 )
 
 func (rt *Router) feishuVisibleChatsGet(c *gin.Context) {
@@ -544,4 +545,128 @@ func getPagerDutyIntegrationKey(integrationUrl, apiKey string, timeout time.Dura
 	}
 
 	return integRes.Integration.IntegrationKey, nil
+}
+
+// NotifyChannelTestForm 测试一份「可能尚未保存」的媒介配置。
+//
+// Config 来自请求体而不是库，因此本接口不查 notify_channel 表、也不做 Enable 闸门校验
+// （草稿态的 enable 常为 false）。TplContent 是模板**源码**，由本接口负责渲染成正文。
+type NotifyChannelTestForm struct {
+	Config       models.NotifyChannelConfig `json:"config"`
+	NotifyConfig models.NotifyConfig        `json:"notify_config"` // 只用其中的 params/severities，channel_id 与 template_id 被忽略
+	TplContent   map[string]string          `json:"tpl_content"`
+	EventIDs     []int64                    `json:"event_ids"`
+	MockEventForm
+}
+
+// notifyChannelTestResult 刻意只回「成不成 + 为什么不成」。
+//
+// 不回显任何配置字段，是因为 Grafana 的同类接口（CVE-2025-12141）正是靠回显脱敏配置
+// 被用来提取第三方凭据。同理不回 sendtos/target：那是 user_ids/user_group_ids 经
+// GetNotifyConfigParams 解析出的真实邮箱与手机号，回传等于提供「传 ID 换联系方式」的读放大。
+type notifyChannelTestResult struct {
+	Success      bool   `json:"success"`
+	ErrorMessage string `json:"error_message"`
+}
+
+// buildChannelTestMockEvent 构造用于媒介连通性测试的内置模拟事件，不落库。
+// 与通知规则测试、工作流试跑共用 newMockEvent 骨架，只在标签上做来源区分。
+func buildChannelTestMockEvent(lang string, f MockEventForm) *models.AlertCurEvent {
+	return newMockEvent(mockEventSpec{
+		RuleName:     i18n.Sprintf(lang, "Media type test mock event"),
+		RuleNote:     i18n.Sprintf(lang, "This is a mock event sent by media type test, just to verify that the media type config works"),
+		Hash:         "notify-channel-test-mock-event",
+		Severity:     f.MockSeverity,
+		IsRecovered:  f.MockIsRecovered,
+		PromQL:       "cpu_usage_active > 80",
+		TriggerValue: "81.5",
+		ExtraTags:    []string{"ident=mock-host-01", "source=notify-channel-test"},
+	})
+}
+
+// buildTestTplContent 把请求体里的模板**源码**渲染成 sendToNotifyChannel 期望的正文
+// （直接塞源码进去会把 {{$event.RuleName}} 原样发出去）。
+//
+// 两处细节决定了这个功能有没有意义，都不能省：
+//
+//  1. NotifyChannelIdent 必须带上。RenderEvent 按它选渲染分支——email 走 text/template
+//     且不转义，slack 有专门的 &lt; 还原，其余走 html/template + JSON 转义。留空会一律落到
+//     默认分支：测试一个 smtp 媒介时正文里的换行变成字面量 \n、引号变成 \"，而保存之后走
+//     生产链路（模板行带 notify_channel_ident）却是正常的——同一份模板两种结果，正好违背
+//     「保存前看到真实投递效果」这个目的。
+//
+//  2. 走 RenderEventStrict 而不是 RenderEvent。后者把 Parse/Execute 错误当正文返回，
+//     只要第三方端点回 2xx 接口就报 success=true——用户看到「测试成功」，群里收到的却是
+//     一段 "failed to parse template: ..."。测试接口的全部价值就是如实回答通不通。
+//
+// 空模板是合法形态、不是参数错误：body 直接透传 $events 的媒介（内置 callback 的默认 body
+// 是 {{ jsonMarshal $events }}）根本不引用 $tpl，前端也就推导不出字段名。生产链路上它走的是
+// 种子模板 {"content": ""}（models/message_tpl.go 的 MsgTplMap），渲染结果同样是空——这里
+// 返回空 map 与之等价，{{$tpl.x}} 会渲染成空串且不报错。
+func buildTestTplContent(nc *models.NotifyChannelConfig, tplSrc map[string]string,
+	events []*models.AlertCurEvent, siteUrl string) (map[string]interface{}, error) {
+	if !NeedMessageTemplate(nc.RequestType) || len(tplSrc) == 0 {
+		return make(map[string]interface{}), nil
+	}
+	tpl := &models.MessageTemplate{Content: tplSrc, NotifyChannelIdent: nc.Ident}
+	return tpl.RenderEventStrict(events, siteUrl)
+}
+
+func (rt *Router) notifyChannelConfigTest(c *gin.Context) {
+	var f NotifyChannelTestForm
+	ginx.BindJSON(c, &f)
+
+	nc := &f.Config
+
+	// 内联 script 配置 = 从请求体直取任意代码执行：SendScript 会把 script 写盘、chmod 0777
+	// 再 exec，且 path 非空时直接执行服务端任意路径。未保存的配置没有任何审计留痕，
+	// 因此这条路径一律拒绝，引导用户先保存（保存动作有 create_by，且同样受权限约束）。
+	if nc.RequestType == "script" {
+		ginx.Bomb(http.StatusBadRequest, "script media type must be saved before testing")
+	}
+
+	// 不走 ncc.Verify() 里的 VerifyByProvider 钩子：那个函数指针只在初始化了告警引擎的
+	// 进程里被赋值（alert/alert.go），center 单独部署时为 nil，按类型的必填校验会被静默跳过。
+	// 这里直接调 provider 侧的校验，保证任何部署形态下口径一致。
+	bombErr(http.StatusBadRequest, nc.Verify())
+	bombErr(http.StatusBadRequest, provider.VerifyChannelConfig(nc))
+
+	events := []*models.AlertCurEvent{}
+	if f.UseMockEvent {
+		events = append(events, buildChannelTestMockEvent(c.GetHeader("X-Language"), f.MockEventForm))
+	} else {
+		if len(f.EventIDs) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "event_ids or use_mock_event required")
+		}
+		hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, f.EventIDs)
+		ginx.Dangerous(err)
+		if len(hisEvents) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "event not found")
+		}
+		for _, he := range hisEvents {
+			event := he.ToCur()
+			event.SetTagsMap()
+			events = append(events, event)
+		}
+	}
+
+	siteUrl := resolveSiteUrl(rt.Ctx)
+
+	tplContent, rerr := buildTestTplContent(nc, f.TplContent, events, siteUrl)
+	if rerr != nil {
+		// 模板写错是业务结果，与投递失败同一个出口：200 + success=false，
+		// 前端在结果页展示报错原文
+		ginx.NewRender(c).Data(notifyChannelTestResult{Success: false, ErrorMessage: rerr.Error()}, nil)
+		return
+	}
+
+	_, err := sendToNotifyChannel(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, nc, events, tplContent, siteUrl)
+
+	res := notifyChannelTestResult{Success: err == nil}
+	if err != nil {
+		res.ErrorMessage = err.Error()
+	}
+	// 第二个参数恒为 nil：测试失败是业务结果而非接口错误，让前端拿 200 + success=false，
+	// 避免 ginx 的错误通道把第三方报错原文当成系统异常渲染。
+	ginx.NewRender(c).Data(res, nil)
 }

@@ -7,7 +7,7 @@
             0
         ],
         "cluster": "",
-        "name": "springboot HEAP内存使用率大于20%",
+        "name": "springboot HEAP内存使用率大于85%",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -23,7 +23,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "sum(jvm_memory_used_bytes{instance=~\".+\", area=\"heap\"})*100/sum(jvm_memory_max_bytes{instance=~\".+\", area=\"heap\"}) \u003e20",
+                    "prom_ql": "sum by (instance) (jvm_memory_used_bytes{area=\"heap\"}) * 100 / sum by (instance) (jvm_memory_max_bytes{area=\"heap\"}) \u003e 85",
                     "severity": 2
                 }
             ]
@@ -68,7 +68,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 看 jvm_gc_pause_seconds 确认 Full GC 是否变频繁、停顿多长；\n2) 用 jmap -histo:live \u003cpid\u003e 或 arthas 的 heapdump 抓堆，按对象数排序找出异常增长的类；\n3) 区分是业务量增长（调大 -Xmx）还是内存泄漏（必须在代码里修复，扩堆只是拖延）；\n4) 应急可重启实例释放，但要先抓好堆快照，否则现场就丢了。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -100,7 +102,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "max(http_server_requests_seconds_max{instance=~\".+\", status!~\"5..\"}) \u003e 10",
+                    "prom_ql": "max by (instance, uri) (http_server_requests_seconds_max{status!~\"5..\"}) \u003e 10",
                     "severity": 2
                 }
             ]
@@ -145,7 +147,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 从告警标签取 uri 定位是哪个接口；\n2) 用 arthas 的 trace 命令或 APM 链路追踪，看耗时集中在哪一段（数据库、下游 RPC、还是本地计算）；\n3) 数据库慢的按慢查询路径排查补索引；下游慢的确认对方状态并加熔断降级；\n4) 确认线程池是否已被慢请求占满导致排队放大，必要时隔离线程池。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -177,7 +181,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "sum(rate(http_server_requests_seconds_count{instance=~\".+\", status=~\"5.+\"}[1m])) != 0",
+                    "prom_ql": "sum by (instance, uri) (rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) \u003e 0",
                     "severity": 2
                 }
             ]
@@ -222,7 +226,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 从告警标签取 uri 定位接口，再到应用日志里按该路径搜异常栈；\n2) 区分是全量失败还是部分失败——部分失败常见于某个下游实例异常或数据边界条件；\n3) 若与近期发布时间吻合，优先回滚而不是继续排查；\n4) 确认下游依赖（数据库、缓存、第三方接口）是否同时异常。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -238,7 +244,7 @@
             0
         ],
         "cluster": "",
-        "name": "springboot NOHEAP内存使用率大于30%",
+        "name": "springboot 非堆内存使用率大于85%",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -254,7 +260,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "sum(jvm_memory_used_bytes{instance=~\".+\", area=\"nonheap\"})*100/sum(jvm_memory_max_bytes{instance=~\".+\", area=\"nonheap\"}) \u003e 30",
+                    "prom_ql": "sum by (instance) (jvm_memory_max_bytes{area=\"nonheap\"}) \u003e 0 and sum by (instance) (jvm_memory_used_bytes{area=\"nonheap\"}) * 100 / sum by (instance) (jvm_memory_max_bytes{area=\"nonheap\"}) \u003e 85",
                     "severity": 2
                 }
             ]
@@ -299,7 +305,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 jcmd \u003cpid\u003e VM.native_memory summary（需开 NativeMemoryTracking）或 arthas 的 memory 命令看各区占用；\n2) Metaspace 持续增长通常是类加载器泄漏——常见于反复热部署、动态代理、脚本引擎；\n3) 应急调大 -XX:MaxMetaspaceSize 并重启；\n4) 根因侧排查是否有自定义 ClassLoader 未释放，用 jmap -clstats 看类加载器数量是否异常。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -331,7 +339,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "increase(logback_events_total{instance=\"$instance\"}[1m]) \u003e 0",
+                    "prom_ql": "sum by (instance) (increase(logback_events_total{level=\"error\"}[5m])) \u003e 0",
                     "severity": 2
                 }
             ]
@@ -376,7 +384,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 从告警标签取 instance 定位实例，到日志系统里按 level=ERROR 检索该时间窗的异常栈；\n2) 按异常类型归类，区分是偶发（下游抖动、超时重试）还是稳定复现（代码 bug、配置错误）；\n3) 稳定复现的定位代码修复；偶发的确认重试与降级逻辑是否生效；\n4) 若 ERROR 量突增且与发布时间吻合，优先回滚。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

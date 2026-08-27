@@ -1,8 +1,10 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -38,6 +40,7 @@ type BatchQueryForm struct {
 func (rt *Router) promBatchQueryRange(c *gin.Context) {
 	var f BatchQueryForm
 	ginx.Dangerous(c.BindJSON(&f))
+	rt.checkBoardTokenDsPerm(c, f.DatasourceId)
 
 	lst, err := PromBatchQueryRange(c.Request.Context(), rt.PromClients, f)
 	ginx.NewRender(c).Data(lst, err)
@@ -83,6 +86,7 @@ type InstantFormItem struct {
 func (rt *Router) promBatchQueryInstant(c *gin.Context) {
 	var f BatchInstantForm
 	ginx.Dangerous(c.BindJSON(&f))
+	rt.checkBoardTokenDsPerm(c, f.DatasourceId)
 
 	lst, err := PromBatchQueryInstant(c.Request.Context(), rt.PromClients, f)
 	ginx.NewRender(c).Data(lst, err)
@@ -111,12 +115,29 @@ func PromBatchQueryInstant(ctx context.Context, pc *prom.PromClientMap, f BatchI
 
 func (rt *Router) dsProxy(c *gin.Context) {
 	dsId := ginx.UrlParamInt64(c, "id")
+
+	if _, ok := boardTokenBid(c); ok {
+		// 分享 token 态：数据源须属于板内集合，且仅放行只读查询路径，
+		// 避免匿名请求经全反代的 proxy 触达写/管理类端点
+		rt.checkBoardTokenDsPerm(c, dsId)
+		if !IsReadOnlyProxyPath(c.Request.Method, c.Param("url")) {
+			ginx.Bomb(http.StatusForbidden, "proxy path is not allowed for anonymous dashboard sharing")
+		}
+		// __token 只用于本服务鉴权，不应随反代透传给上游数据源（会进其访问日志）
+		if q := c.Request.URL.Query(); q.Get("__token") != "" {
+			q.Del("__token")
+			c.Request.URL.RawQuery = q.Encode()
+		}
+	}
+
 	ds := rt.DatasourceCache.GetById(dsId)
 
 	if ds == nil {
 		c.String(http.StatusBadRequest, "no such datasource")
 		return
 	}
+
+	logProxyAccess(c, ds.Id, ds.PluginType, ds.Category)
 
 	target, err := ds.HTTPJson.ParseUrl()
 	if err != nil {
@@ -209,6 +230,37 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 	proxy.ServeHTTP(c.Writer, c.Request)
 
+}
+
+// logProxyAccess audits datasource reverse-proxy requests (VictoriaLogs / ES /
+// Loki log queries and the like) with the caller's username and query payload,
+// so operators can see who queried what before tightening permissions. See
+// logQueryAccess.
+//
+// dsProxy sits on several Any("/proxy/...") / Any("/prometheus/...") routes, so
+// this must not defeat httputil.ReverseProxy's streaming: it peeks at most
+// maxLogBody bytes for the log line, then splices that prefix back in front of
+// the untouched remainder via io.MultiReader so the proxy keeps streaming the
+// rest of the body instead of buffering it whole. A mid-read error is not
+// swallowed — the prefix is still spliced back (so the proxy forwards the same,
+// still-failing body rather than a silently truncated one) and the body is
+// reported as an error in the log rather than logged as if complete.
+func logProxyAccess(c *gin.Context, dsID int64, cate, category string) {
+	const maxLogBody = 2048
+	var body string
+	if c.Request.Body != nil {
+		orig := c.Request.Body
+		// Read one extra byte so an over-limit body still renders as truncated.
+		prefix, err := io.ReadAll(io.LimitReader(orig, maxLogBody+1))
+		c.Request.Body = io.NopCloser(io.MultiReader(bytes.NewReader(prefix), orig))
+		if err != nil {
+			body = fmt.Sprintf("<body read error: %v>", err)
+		} else {
+			body = marshalForLog(string(prefix))
+		}
+	}
+	logx.Infof(c.Request.Context(), "[log_query_access] user=%s client=%s ds_id=%d cate=%s category=%s path=%s rawquery=%s body=%s",
+		queryAccessUser(c), c.ClientIP(), dsID, cate, category, c.Request.URL.Path, c.Request.URL.RawQuery, body)
 }
 
 var (

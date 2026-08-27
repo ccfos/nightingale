@@ -43,7 +43,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe node \u003cnode\u003e 看 Conditions 与 Events，确认是 MemoryPressure、DiskPressure 还是 kubelet 失联；\n2) 登录节点确认 kubelet 与容器运行时进程状态（systemctl status kubelet containerd）；\n3) kubelet 日志用 journalctl -u kubelet -n 200 定位；\n4) 节点短期无法恢复的执行 kubectl drain 让 Pod 尽快迁走，避免等待驱逐超时。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -95,7 +97,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 先 ping / ssh 确认机器本身是否存活，机器宕机按宕机处理；\n2) 机器存活则排查节点到 apiserver 的网络与证书（kubelet 日志里会有明确报错）；\n3) 确认该节点上是否有单副本的关键服务，有的话优先在其他节点拉起；\n4) 恢复后确认节点重新 Ready 且 Pod 状态正常。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -147,7 +151,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get pod -A -o wide --field-selector spec.nodeName=\u003cnode\u003e | wc -l 确认实际数量；\n2) 对照 kubelet 的 maxPods 配置（默认 110）；\n3) 用 kubectl drain 或调整调度策略把部分 Pod 迁到其他节点；\n4) 确需更高密度的调大 maxPods，但要同步评估节点的 CPU/内存/PLEG 压力。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -199,7 +205,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe node \u003cnode\u003e 看 Conditions 的变更时间线；\n2) 登录节点看 kubelet 日志，常见根因是资源压力、容器运行时卡顿、或到 apiserver 的网络不稳；\n3) 抖动期间建议先 kubectl cordon 该节点，阻止新 Pod 调度上去；\n4) 根因定位并修复后再 uncordon，不要在抖动中反复重启 kubelet。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -251,7 +259,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 登录节点用 crictl ps 与 crictl info 确认容器运行时响应速度；\n2) 检查节点上容器数量是否过多、磁盘 IO 是否打满——这两者是 PLEG 变慢的主因；\n3) 容器运行时卡顿的可尝试重启 containerd（会短暂影响该节点）；\n4) 持续存在的考虑降低该节点的 Pod 密度。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -303,7 +313,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe pod \u003cpod\u003e -n \u003cns\u003e 看 Events 的时间戳，定位卡在拉镜像、挂载卷还是初始化容器；\n2) 拉镜像慢的检查镜像大小与仓库带宽，考虑预热镜像或用本地仓库；\n3) 挂载卷慢的排查 PV/CSI 驱动状态；\n4) 应用自身启动慢的优化启动逻辑，并把就绪探针的 initialDelaySeconds 调到合理值。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -355,7 +367,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；\n2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；\n3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；\n4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -407,7 +421,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；\n2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；\n3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；\n4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -459,7 +475,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；\n2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；\n3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；\n4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -511,7 +529,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；\n2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；\n3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；\n4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -563,7 +583,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 看 kubelet 日志中 certificate rotation 相关报错；\n2) 检查 CSR 是否处于 Pending 未审批：kubectl get csr，必要时手工 kubectl certificate approve；\n3) 确认集群是否开启了 CSR 自动审批控制器（kube-controller-manager 的 --cluster-signing-cert-file 配置）；\n4) 修复后确认新 CSR 能被自动审批并签发。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -615,7 +637,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 看 kubelet 日志中 certificate rotation 相关报错；\n2) 检查 CSR 是否处于 Pending 未审批：kubectl get csr，必要时手工 kubectl certificate approve；\n3) 确认集群是否开启了 CSR 自动审批控制器（kube-controller-manager 的 --cluster-signing-cert-file 配置）；\n4) 修复后确认新 CSR 能被自动审批并签发。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -667,7 +691,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 登录节点执行 systemctl status kubelet 确认进程状态；\n2) journalctl -u kubelet -n 200 --no-pager 定位退出或报错原因；\n3) 常见为证书过期、配置错误、容器运行时不可用；\n4) 恢复后确认节点回到 Ready，并检查期间是否有 Pod 被误驱逐。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

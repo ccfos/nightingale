@@ -7,7 +7,7 @@
             52
         ],
         "cluster": "",
-        "name": "Insufficient consumption ability - delay exceeds 5 minutes - exporter",
+        "name": "Kafka consumer group lag exceeds 10000 messages - exporter",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -26,7 +26,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "kafka_consumer_lag_millis / 1000 \u003e 300",
+                    "prom_ql": "max by (topic, consumergroup) (kafka_consumergroup_lag) \u003e 10000",
                     "severity": 2
                 }
             ],
@@ -74,7 +74,9 @@
         "append_tags": [
             "service=kafka"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取 consumergroup 与 topic，执行 kafka-consumer-groups.sh --describe --group \u003cgroup\u003e --bootstrap-server \u003cbroker\u003e 看各分区 LAG 分布；\n2) 积压集中在个别分区说明数据倾斜，检查生产端分区键；\n3) 均匀积压则是消费者处理慢——先看消费端日志有无异常重试，再考虑扩consumer 实例（不超过分区数）或提高单条处理效率；\n4) 确认消费者没有全部掉线（MEMBERS 为 0 要先把消费者拉起来）。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -90,7 +92,7 @@
             52
         ],
         "cluster": "",
-        "name": "Risk of data loss - number of replicas less than 3 - exporter",
+        "name": "Kafka under-replicated partitions - exporter",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -109,7 +111,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "sum(kafka_topic_partition_in_sync_replica) by (topic) \u003c 3 - exporter",
+                    "prom_ql": "max by (topic) (kafka_topic_partition_under_replicated_partition) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -157,7 +159,9 @@
         "append_tags": [
             "service=kafka"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取 topic，执行 kafka-topics.sh --describe --topic \u003ctopic\u003e --bootstrap-server \u003cbroker\u003e，对比 Isr 与 Replicas 找出缺失的副本所在 broker；\n2) 到该 broker 看 server.log 是否有磁盘满、GC 卡顿或网络超时；\n3) broker 已下线则先恢复它，副本会自动追平；\n4) 长时间追不平可用 kafka-reassign-partitions.sh 把副本迁到健康 broker。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

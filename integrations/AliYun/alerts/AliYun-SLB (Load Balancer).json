@@ -68,7 +68,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认是 Upstream 5xx（后端返回）还是实例 5xx（SLB 自身）；\n2) Upstream 5xx 到后端 ECS 上查应用日志定位根因；\n3) 实例 5xx 多为后端全部不健康导致，检查健康检查配置与后端状态；\n4) 若与近期发布时间吻合，优先回滚。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -156,7 +158,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认是 Upstream 5xx（后端返回）还是实例 5xx（SLB 自身）；\n2) Upstream 5xx 到后端 ECS 上查应用日志定位根因；\n3) 实例 5xx 多为后端全部不健康导致，检查健康检查配置与后端状态；\n4) 若与近期发布时间吻合，优先回滚。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -244,7 +248,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认 QPS 曲线与实例规格的性能上限；\n2) 确认是正常业务增长还是异常流量；\n3) 正常增长的升级 SLB 规格（性能保障型可指定上限）；\n4) 异常流量的接入 WAF/DDoS 防护限流。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -332,7 +338,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台对照丢弃曲线与该实例规格的连接数/带宽上限，确认是哪一项触顶；\n2) 触顶的立即升级实例规格——性能共享型实例尤其容易在高峰触顶；\n3) 确认是否存在异常流量把配额吃满；\n4) 升配后持续观察丢弃是否归零。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -420,7 +428,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台对照丢弃曲线与该实例规格的连接数/带宽上限，确认是哪一项触顶；\n2) 触顶的立即升级实例规格——性能共享型实例尤其容易在高峰触顶；\n3) 确认是否存在异常流量把配额吃满；\n4) 升配后持续观察丢弃是否归零。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -508,7 +518,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台对照丢弃曲线与该实例规格的连接数/带宽上限，确认是哪一项触顶；\n2) 触顶的立即升级实例规格——性能共享型实例尤其容易在高峰触顶；\n3) 确认是否存在异常流量把配额吃满；\n4) 升配后持续观察丢弃是否归零。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -596,7 +608,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认最大连接数与新建连接数曲线；\n2) 确认后端是否响应变慢导致连接堆积——连接数高常是后端慢的表征；\n3) 后端正常的升级 SLB 规格；\n4) 检查客户端是否未复用连接。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -684,7 +698,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在控制台确认最大连接数与新建连接数曲线；\n2) 确认后端是否响应变慢导致连接堆积——连接数高常是后端慢的表征；\n3) 后端正常的升级 SLB 规格；\n4) 检查客户端是否未复用连接。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,

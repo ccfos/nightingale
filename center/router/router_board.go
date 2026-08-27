@@ -64,6 +64,15 @@ func (rt *Router) boardGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "No such dashboard")
 	}
 
+	// 限时分享令牌：有效则直接匿名返回（含 Configs）；无效不报错，
+	// 继续走 public/登录判定，保证登录用户带失效 token 也能正常访问
+	if token := ginx.QueryStr(c, "__token", ""); token != "" {
+		if ValidateSourceToken(rt.Ctx, models.SourceTypeBoard, fmt.Sprintf("%d", board.Id), token) {
+			ginx.NewRender(c).Data(board, nil)
+			return
+		}
+	}
+
 	if board.Public == 0 {
 		rt.auth()(c)
 		rt.user()(c)

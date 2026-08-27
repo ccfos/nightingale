@@ -74,7 +74,9 @@
         "append_tags": [
             "alertname=ElasticsearchClusterRed"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 GET _cluster/health?level=indices 定位处于 red 的索引；\n2) 用 GET _cluster/allocation/explain 看主分片无法分配的具体原因；\n3) 常见原因是节点掉线，先把节点拉回集群让分片自动恢复；\n4) 节点数据确实损坏时，用 POST _snapshot/\u003crepo\u003e/\u003csnap\u003e/_restore 从快照恢复该索引。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -157,7 +159,9 @@
         "append_tags": [
             "alertname=ElasticsearchClusterYellow"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 GET _cluster/allocation/explain 看副本分片无法分配的原因；\n2) 单节点集群把索引副本数设为 0：PUT \u003cindex\u003e/_settings {\"index.number_of_replicas\":0}；\n3) 多节点集群检查是否有节点掉线、或磁盘触发了 watermark 导致不再分配；\n4) 处理完确认 health 回到 green。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -240,7 +244,9 @@
         "append_tags": [
             "alertname=ElasticsearchDiskOutOfSpace"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 GET _cat/allocation?v 定位磁盘吃紧的节点；\n2) 删除或归档过期索引（DELETE \u003cindex\u003e），或用 ILM 把冷数据迁到冷节点；\n3) 磁盘释放后手工解除只读：PUT _all/_settings {\"index.blocks.read_only_allow_delete\":null}；\n4) 长期需扩容磁盘或增加数据节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -323,7 +329,9 @@
         "append_tags": [
             "alertname=ElasticsearchDiskSpaceLow"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 GET _cat/allocation?v 看各节点磁盘水位；\n2) 清理过期索引或调整 ILM 策略，提前把数据滚动到冷节点；\n3) 评估 cluster.routing.allocation.disk.watermark.* 阈值是否与实际容量匹配；\n4) 提前安排扩容，避免跌到 flood-stage 后索引被置为只读。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -406,7 +414,9 @@
         "append_tags": [
             "alertname=ElasticsearchHeapUsageTooHigh"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 GET _nodes/stats/jvm 确认是哪个节点堆压力大；\n2) 用 GET _cat/indices?v\u0026s=store.size:desc 找占用大的索引，关闭或归档不用的；\n3) 用 GET _tasks?actions=*search*\u0026detailed 定位大聚合或深分页查询并 cancel；\n4) 长期把堆调整为物理内存的一半（不超过 31G），或增加节点分摊。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -489,7 +499,9 @@
         "append_tags": [
             "alertname=ElasticsearchHeapUsageWarning"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 对照 elasticsearch_jvm_gc_collection_seconds_count 看 old GC 是否变频繁；\n2) 用 GET _cat/indices?v\u0026s=store.size:desc 排查近期是否有索引数据量暴涨；\n3) 用 GET _nodes/stats/indices/fielddata 检查 fielddata 与查询缓存占用；\n4) 提前规划扩容或清理，避免涨到 90% 触发 Full GC。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -572,7 +584,9 @@
         "append_tags": [
             "alertname=ElasticsearchInitializingShards"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 GET _cat/recovery?v\u0026active_only=true 看恢复进度是否还在推进；\n2) 卡住不动时用 GET _cluster/allocation/explain 看原因（磁盘不足、节点带宽打满）；\n3) 恢复限速可临时调高 indices.recovery.max_bytes_per_sec；\n4) 确认没有节点在反复掉线导致分片反复重建。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -655,7 +669,9 @@
         "append_tags": [
             "alertname=ElasticsearchNoNewDocuments"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 先确认该集群本来就应持续写入，否则关闭此规则；\n2) 检查上游写入端（Filebeat/Logstash/应用 bulk 客户端）是否存活、日志中是否有 bulk 被拒；\n3) 用 GET _cat/thread_pool/write?v 看 write 线程池的 rejected 是否在增长；\n4) 确认索引未被置为只读（磁盘 watermark 会触发 read_only_allow_delete）。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -690,7 +706,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "elasticsearch_cluster_health_number_of_pending_tasks \u003e 0",
+                    "prom_ql": "elasticsearch_cluster_health_number_of_pending_tasks \u003e 10",
                     "severity": 2
                 }
             ],
@@ -738,7 +754,9 @@
         "append_tags": [
             "alertname=ElasticsearchPendingTasks"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 GET _cluster/pending_tasks 看积压的具体任务和优先级；\n2) 用 GET _cat/master?v 确认 master 是否在频繁切换；\n3) 用 GET _cat/shards 统计分片总数，排查是否因大量小索引导致集群状态过大；\n4) 收敛分片数量（合并小索引、调整 ILM），必要时给 master 节点单独扩容。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -760,9 +778,9 @@
         "algorithm": "",
         "algo_params": null,
         "delay": 0,
-        "severity": 1,
+        "severity": 2,
         "severities": [
-            1
+            2
         ],
         "disabled": 1,
         "prom_for_duration": 900,
@@ -774,7 +792,7 @@
             "queries": [
                 {
                     "prom_ql": "elasticsearch_cluster_health_relocating_shards \u003e 0",
-                    "severity": 1
+                    "severity": 2
                 }
             ],
             "severity": 0
@@ -821,7 +839,9 @@
         "append_tags": [
             "alertname=ElasticsearchRelocationShards"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 GET _cat/recovery?v\u0026active_only=true 看迁移是否还在推进；\n2) 停滞则用 GET _cluster/allocation/explain 看是否被磁盘 watermark 或 allocation filter 挡住；\n3) 确认是否有人手工触发了大规模 reroute，或有节点在上下线；\n4) 必要时临时调高 cluster.routing.allocation.node_concurrent_recoveries 与恢复限速。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -904,178 +924,14 @@
         "append_tags": [
             "alertname=ElasticsearchUnassignedShards"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 GET _cluster/allocation/explain 直接拿到未分配的原因；\n2) 节点掉线则先把节点恢复回集群；\n3) 副本数超过可用节点数则调小 index.number_of_replicas；\n4) 磁盘触发 watermark 则先清理磁盘，再执行 POST _cluster/reroute?retry_failed=true。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
         "update_at": 0,
         "update_by": "",
         "uuid": 1717556327366970000
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            52
-        ],
-        "cluster": "",
-        "name": "Elasticsearch Unhealthy Data Nodes",
-        "note": "",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 1,
-        "severities": [
-            1
-        ],
-        "disabled": 1,
-        "prom_for_duration": 0,
-        "prom_ql": "",
-        "rule_config": {
-            "algo_params": null,
-            "inhibit": false,
-            "prom_ql": "",
-            "queries": [
-                {
-                    "prom_ql": "elasticsearch_cluster_health_number_of_data_nodes \u003c number_of_data_nodes",
-                    "severity": 1
-                }
-            ],
-            "severity": 0
-        },
-        "prom_eval_interval": 15,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "23:59",
-        "enable_etimes": [
-            "23:59"
-        ],
-        "enable_days_of_week": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "0"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "0"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [
-            "alertname=ElasticsearchHealthyDataNodes"
-        ],
-        "annotations": null,
-        "extra_config": null,
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1717556327367398000
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            52
-        ],
-        "cluster": "",
-        "name": "Elasticsearch Unhealthy Nodes",
-        "note": "",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 1,
-        "severities": [
-            1
-        ],
-        "disabled": 1,
-        "prom_for_duration": 0,
-        "prom_ql": "",
-        "rule_config": {
-            "algo_params": null,
-            "inhibit": false,
-            "prom_ql": "",
-            "queries": [
-                {
-                    "prom_ql": " elasticsearch_cluster_health_number_of_nodes \u003c number_of_nodes",
-                    "severity": 1
-                }
-            ],
-            "severity": 0
-        },
-        "prom_eval_interval": 15,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "23:59",
-        "enable_etimes": [
-            "23:59"
-        ],
-        "enable_days_of_week": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "0"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "0"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [
-            "alertname=ElasticsearchHealthyNodes"
-        ],
-        "annotations": null,
-        "extra_config": null,
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1717556327367874000
     }
 ]

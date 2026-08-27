@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -365,20 +366,41 @@ func getAlertEvalLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string
 		return "", err
 	}
 
-	logs, instance, err := deps.GetAlertEvalLogs(strconv.FormatInt(ruleId, 10))
+	logs, instance, truncatedReason, err := deps.GetAlertEvalLogs(strconv.FormatInt(ruleId, 10))
 	if err != nil {
 		return "", fmt.Errorf("failed to get alert eval logs: %v", err)
 	}
 
-	logger.Debugf("get_alert_eval_logs: rule_id=%d, instance=%s, lines=%d", ruleId, instance, len(logs))
+	logger.Debugf("get_alert_eval_logs: rule_id=%d, instance=%s, lines=%d, truncated=%q", ruleId, instance, len(logs), truncatedReason)
 
-	bytes, _ := json.Marshal(map[string]interface{}{
+	out := map[string]interface{}{
 		"rule_id":  ruleId,
 		"instance": instance,
 		"count":    len(logs),
 		"logs":     logs,
-	})
+	}
+	addTruncationNotice(out, truncatedReason)
+
+	bytes, _ := json.Marshal(out)
 	return string(bytes), nil
+}
+
+// addTruncationNotice tells the model in plain words that it is looking at a
+// partial log set. Without it a search that ran out of budget is indistinguishable
+// from a clean "nothing was logged", and the model concludes there were no errors.
+func addTruncationNotice(out map[string]interface{}, reason string) {
+	if reason == "" {
+		return
+	}
+
+	out["truncated"] = true
+	out["truncated_reason"] = reason
+
+	if reason == loggrep.ReasonLimit {
+		out["note"] = "PARTIAL RESULT: more lines matched than can be returned, only the newest ones are here. Do not conclude that anything is absent from these logs."
+		return
+	}
+	out["note"] = "PARTIAL RESULT: the search hit its time budget before reading every log file, older lines are missing. Do not conclude that anything is absent from these logs."
 }
 
 func getEventProcessingLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
@@ -407,19 +429,22 @@ func getEventProcessingLogs(_ context.Context, deps *aiagent.ToolDeps, args map[
 		return "", err
 	}
 
-	logs, instance, err := deps.GetEventProcessingLogs(hash)
+	logs, instance, truncatedReason, err := deps.GetEventProcessingLogs(hash)
 	if err != nil {
 		return "", fmt.Errorf("failed to get event processing logs: %v", err)
 	}
 
-	logger.Debugf("get_event_processing_logs: hash=%s, instance=%s, lines=%d", hash, instance, len(logs))
+	logger.Debugf("get_event_processing_logs: hash=%s, instance=%s, lines=%d, truncated=%q", hash, instance, len(logs), truncatedReason)
 
-	bytes, _ := json.Marshal(map[string]interface{}{
+	out := map[string]interface{}{
 		"event_hash": hash,
 		"instance":   instance,
 		"count":      len(logs),
 		"logs":       logs,
-	})
+	}
+	addTruncationNotice(out, truncatedReason)
+
+	bytes, _ := json.Marshal(out)
 	return string(bytes), nil
 }
 

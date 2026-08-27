@@ -31,9 +31,11 @@ var FromAPIHook func()
 
 var DatasourceProcessHook func(items []datasource.DatasourceInfo) []datasource.DatasourceInfo
 
-// engineName 保存当前进程所属告警引擎集群名；edge 模式下用于过滤掉不属于本集群的数据源，
-// 避免对无关数据源做 InitClient 而产生连接报错（issue #3159）。center 不参与过滤。
-var engineName string
+var (
+	// engineName 保存当前进程所属告警引擎集群名；edge 模式下用于过滤掉不属于本集群的数据源，
+	// 避免对无关数据源做 InitClient 而产生连接报错（issue #3159）。center 不参与过滤。
+	engineName string
+)
 
 func Init(ctx *ctx.Context, fromAPI bool, engineNameArg string) {
 	engineName = engineNameArg
@@ -83,13 +85,32 @@ var PromDefaultDatasourceId int64
 func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 	for {
 		if !fromAPI {
-			foundDefaultDatasource := false
 			items, err := models.GetDatasources(ctx)
 			if err != nil {
 				logger.Errorf("get datasource from database fail: %v", err)
 				//stat.CounterExternalErrorTotal.WithLabelValues("db", "get_cluster").Inc()
 				time.Sleep(time.Second * 2)
 				continue
+			}
+
+			// PromDefaultDatasourceId 是全局写入目标（pingmesh 转发等），与本引擎集群归属无关，
+			// 必须在按引擎过滤之前用全量列表探测，否则默认数据源挂在其他集群时会被清零。
+			// disabled 源不参与探测：这里选出来的是数据写入目标，停用的数据源不该继续被写入。
+			// 注意这条只约束写入，读取（即时查询）不受 status 影响，见下方注释。
+			foundDefaultDatasource := false
+			for _, item := range items {
+				if item.Status == "disabled" {
+					continue
+				}
+				if item.PluginType == "prometheus" && item.IsDefault {
+					atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
+					foundDefaultDatasource = true
+					break
+				}
+			}
+			if !foundDefaultDatasource && atomic.LoadInt64(&PromDefaultDatasourceId) != 0 {
+				logger.Debugf("no default datasource found")
+				atomic.StoreInt64(&PromDefaultDatasourceId, 0)
 			}
 
 			// edge 模式下跳过不属于本引擎集群的数据源，避免无意义的 InitClient（issue #3159）。
@@ -107,11 +128,6 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 
 			var dss []datasource.DatasourceInfo
 			for _, item := range items {
-
-				if item.PluginType == "prometheus" && item.IsDefault {
-					atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
-					foundDefaultDatasource = true
-				}
 
 				// logger.Debugf("get datasource: %+v", item)
 				ds := datasource.DatasourceInfo{
@@ -147,16 +163,11 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 				dss = append(dss, ds)
 			}
 
-			if !foundDefaultDatasource && atomic.LoadInt64(&PromDefaultDatasourceId) != 0 {
-				logger.Debugf("no default datasource found")
-				atomic.StoreInt64(&PromDefaultDatasourceId, 0)
-			}
-
 			if DatasourceProcessHook != nil {
 				dss = DatasourceProcessHook(dss)
 			}
 
-			PutDatasources(dss)
+			PutDatasources(dss, ctx.IsCenter)
 		} else {
 			FromAPIHook()
 		}
@@ -237,7 +248,7 @@ func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["es.enable_write"] = item.SettingsJson["enable_write"]
 }
 
-func PutDatasources(items []datasource.DatasourceInfo) {
+func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 	// 记录当前有效的数据源 ID，按类型分组
 	validIds := make(map[string]map[int64]struct{})
 	ids := make([]int64, 0)
@@ -258,6 +269,8 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 			logger.Debugf("get plugin:%+v fail: %v", item, err)
 			continue
 		}
+
+		applyReadAddr(ds, item.Id, isCenter)
 
 		err = ds.Validate(context.Background())
 		if err != nil {
@@ -298,4 +311,20 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 	}
 
 	// logger.Debugf("get plugin by type success Ids:%v", ids)
+}
+
+// applyReadAddr asks each ReadAddrApplier to pick its effective read address for this process.
+// Logs at Debug: PutDatasources runs every ~2s; Info would flood the edge process log.
+func applyReadAddr(ds datasource.Datasource, dsId int64, isCenter bool) {
+	a, ok := ds.(datasource.ReadAddrApplier)
+	if !ok {
+		return
+	}
+	if a.ApplyReadAddr(isCenter) {
+		logger.Debugf("datasource use local read addr, datasource_id=%d", dsId)
+		return
+	}
+	if !isCenter {
+		logger.Debugf("datasource local read addr empty, fallback to addr, datasource_id=%d", dsId)
+	}
 }

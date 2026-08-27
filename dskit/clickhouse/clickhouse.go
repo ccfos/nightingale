@@ -390,6 +390,14 @@ func (c *Clickhouse) Query(ctx context.Context, query interface{}) ([]map[string
 		return nil, err
 	}
 
+	// 不可信调用方（仪表盘匿名分享 token）额外走严格只读校验：
+	// 下面的黑名单按空格切词，不构成安全边界
+	if types.ReadOnlyEnforced(ctx) {
+		if err := sqlbase.ValidateReadOnly(ckQuery.Sql); err != nil {
+			return nil, err
+		}
+	}
+
 	// 校验SQL的合法性, 过滤掉 write请求
 	sqlItem := strings.Split(strings.ToUpper(ckQuery.Sql), " ")
 	for _, item := range sqlItem {

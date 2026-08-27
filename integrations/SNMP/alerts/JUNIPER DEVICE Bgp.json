@@ -68,7 +68,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 登录设备用 show bgp neighbor \u003cpeer\u003e 看会话状态与最后一次断开原因；\n2) 检查到邻居的三层连通性（ping/traceroute）与 TCP 179 端口是否可达；\n3) 网络正常则核对双方的 AS 号、认证密码、前缀数量限制（超限会主动断开）；\n4) 确认流量是否已由其他邻居承载，未承载的优先恢复。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -155,7 +157,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 show bgp neighbor \u003cpeer\u003e 看历次断开原因；\n2) 链路层不稳定的检查接口错包与光功率；\n3) 前缀数超限导致的反复断开，需调整 maximum-prefix 或在对端做路由聚合；\n4) 确认是否已配置 BGP damping 抑制震荡，未配置的评估是否启用。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,

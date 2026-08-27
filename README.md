@@ -19,7 +19,7 @@
 <img alt="GitHub Repo issues closed" src="https://img.shields.io/github/issues-closed/ccfos/nightingale">
 <img alt="GitHub latest release" src="https://img.shields.io/github/v/release/ccfos/nightingale"/>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
-<a href="https://n9e-talk.slack.com/">
+<a href="https://join.slack.com/t/n9e/shared_invite/zt-480klxytf-P9qm3C1M87kDmRPp_H30Kw">
   <img alt="GitHub contributors" src="https://img.shields.io/badge/join%20slack-%23n9e-brightgreen.svg"/></a>
 </p>
 
@@ -149,7 +149,7 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 
 ## 🌟 Stargazers over time
 
-[![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)
+[![Stargazers over time](https://star-history.dera.page/svg?repos=ccfos/nightingale&type=Date)](https://star-history.dera.page/#ccfos/nightingale&Date)
 
 ## 🔥 Users
 
@@ -165,3 +165,5 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 
 ## 📜 License
 - [Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE)
+
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=3f539666-22f5-468d-914d-1e344945d3d8" />

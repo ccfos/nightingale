@@ -72,7 +72,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl top pod \u003cpod\u003e -n \u003cns\u003e --containers 对照 resources.limits.cpu；\n2) 注意 Java 等运行时若未感知 cgroup limit 会开过多线程加剧限流，确认 JVM 版本与参数；\n3) 调大 limits.cpu，或改用 HPA 水平扩容分摊；\n4) limit 设置远高于 request 时容易被超卖挤占，评估是否把两者设置得更接近。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -153,7 +155,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get apiservice 确认是哪个 APIService；\n2) kubectl -n \u003cns\u003e get pod 检查其后端 Pod 是否健康；\n3) 查看该 Pod 日志定位启动或运行错误；\n4) 恢复后用 kubectl top node 之类命令验证功能已回来。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -234,7 +238,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get apiservice 看哪个处于 False 状态；\n2) kubectl describe apiservice \u003cname\u003e 看具体报错；\n3) 后端服务不可用的检查对应 Deployment/Service；\n4) 证书问题的核对 CA bundle 配置。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -315,7 +321,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在控制面节点确认 kube-apiserver 进程/静态 Pod 状态与日志；\n2) 多副本部署确认是否只挂了部分实例，负载均衡是否已把故障实例摘除；\n3) 常见根因是 etcd 不可用、证书过期、资源耗尽；\n4) 优先恢复 etcd 与证书，apiserver 本身通常会自动恢复。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -399,7 +407,9 @@
             "long=1h",
             "short=5m"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 看 apiserver 的错误码与延迟分布，确认是读还是写请求在劣化；\n2) 写请求劣化优先排查 etcd 的磁盘延迟——这是最常见根因；\n3) 读请求劣化排查是否有客户端在做大范围 LIST（无 resourceVersion 的全量列举）；\n4) 定位到异常客户端的对其限流，并考虑开启 APF（API Priority and Fairness）。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -480,7 +490,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 查看 apiserver 的 apiserver_flowcontrol 相关指标，确认是哪个 flow schema 在被限流；\n2) 定位发起大量请求的客户端（通常是某个 Operator 或脚本在做全量 LIST）；\n3) 对该客户端限流或优化其请求模式；\n4) 确需更高配额的调整 FlowSchema 与 PriorityLevelConfiguration。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -561,7 +573,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；\n2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；\n3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；\n4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -642,7 +656,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签定位是哪个组件/实例在报错；\n2) 看该组件日志中的具体错误码：401/403 是 RBAC 权限问题，429 是被限流，5xx 是 apiserver 侧问题；\n3) 权限问题核对 ServiceAccount 的 Role/ClusterRoleBinding；\n4) 限流问题确认该组件是否在做高频 LIST，优化为 Watch 或加 resourceVersion。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -723,7 +739,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe pod \u003cpod\u003e -n \u003cns\u003e 看 Waiting 的 Reason；\n2) ImagePullBackOff 检查镜像名、tag 与拉取凭据（imagePullSecrets）；\n3) CreateContainerConfigError 检查引用的 ConfigMap/Secret 是否存在；\n4) CrashLoopBackOff 按崩溃循环路径处理，看 --previous 日志。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -804,7 +822,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在控制面节点确认 kube-controller-manager 静态 Pod 或进程状态与日志；\n2) 多副本部署确认 leader 选举是否正常切换；\n3) 常见根因是 apiserver 不可用或证书过期；\n4) 恢复后确认副本数异常的工作负载开始自动修复。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -885,7 +905,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe node | grep -A5 'Allocated resources' 汇总各节点的分配率；\n2) 这是容量规划信号而非即时故障——评估节点故障时是否还有冗余承接；\n3) 检查是否有 Pod 的 requests 设置得过高（远超实际用量），下调可释放大量可调度容量；\n4) 冗余确实不足的扩容节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -966,7 +988,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe node | grep -A5 'Allocated resources' 汇总各节点的分配率；\n2) 这是容量规划信号而非即时故障——评估节点故障时是否还有冗余承接；\n3) 检查是否有 Pod 的 requests 设置得过高（远超实际用量），下调可释放大量可调度容量；\n4) 冗余确实不足的扩容节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1047,7 +1071,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e -o wide 看被误调度到哪些节点；\n2) 检查 DaemonSet 的 nodeSelector/affinity 与节点标签是否匹配；\n3) 通常是节点标签被改动或 DaemonSet 配置更新导致，修正后多余 Pod 会被自动清理；\n4) 未自动清理的手工删除对应 Pod。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1128,7 +1154,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe ds \u003cname\u003e -n \u003cns\u003e 看 Events 与期望/实际数量；\n2) 对比节点的污点与 DaemonSet 的容忍配置——污点不匹配是最常见原因；\n3) 检查 nodeSelector/affinity 是否把节点排除在外；\n4) 资源不足导致的调低 DaemonSet 的 requests 或释放节点资源。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1209,7 +1237,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl rollout status ds/\u003cname\u003e -n \u003cns\u003e 看卡在哪些节点；\n2) kubectl describe pod 排查新版本 Pod 为何未就绪；\n3) 短期无法修复的用 kubectl rollout undo ds/\u003cname\u003e 回滚；\n4) 检查 updateStrategy 的 maxUnavailable 配置是否过于保守。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1290,7 +1320,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe \u003ckind\u003e \u003cname\u003e -n \u003cns\u003e 对比 generation 与 observedGeneration；\n2) 检查 kube-controller-manager 是否健康——控制器不工作是最常见原因；\n3) 看 controller-manager 日志中与该对象相关的报错；\n4) 确认 apiserver 与 etcd 正常，控制器恢复后 generation 会自动追平。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1371,7 +1403,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe deploy \u003cname\u003e -n \u003cns\u003e 看 Conditions 与 Events；\n2) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 看未就绪 Pod 的状态与原因；\n3) 常见为资源不足无法调度、镜像拉取失败、就绪探针不通过；\n4) 按 Pod 的具体状态排查，资源不足的扩容节点或调低 requests。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1452,7 +1486,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl rollout status deploy/\u003cname\u003e -n \u003cns\u003e 确认卡在第几个副本；\n2) kubectl describe pod 看新版本 Pod 为何未就绪（镜像、探针、资源）；\n3) 短期无法修复的用 kubectl rollout undo deploy/\u003cname\u003e 回滚到上一版本；\n4) 修复后重新发布，并检查 maxSurge/maxUnavailable 配置是否合理。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1533,7 +1569,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe hpa \u003cname\u003e -n \u003cns\u003e 看当前指标值与目标值的差距；\n2) 确认集群是否还有资源支撑更多副本（节点余量）；\n3) 有余量的调大 maxReplicas；没余量的先扩容节点；\n4) 同时评估单副本的处理能力是否偏低，优化应用比无限扩副本更有效。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1614,7 +1652,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe hpa \u003cname\u003e -n \u003cns\u003e 看 Conditions 里的具体原因；\n2) ScalingLimited 说明触及了 min/max 边界；FailedGetScale 说明目标工作负载有问题；\n3) 指标获取失败的检查 metrics-server 或自定义指标适配器是否健康；\n4) 资源不足导致新副本 Pending 的，扩容节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1695,7 +1735,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get job \u003cjob\u003e -n \u003cns\u003e 看失败次数，再 kubectl logs job/\u003cjob\u003e 看失败原因；\n2) kubectl describe job 看 Events，确认是否因 backoffLimit 耗尽而放弃；\n3) 修复根因后 kubectl delete job 再重新提交，或让 CronJob 下次调度重跑；\n4) 确认该任务失败是否有下游影响（数据未产出、清理未执行），需要时手工补做。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1776,7 +1818,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get job \u003cjob\u003e -n \u003cns\u003e 看已运行时长与完成数；\n2) kubectl logs job/\u003cjob\u003e 看是否卡在某一步；\n3) 确认是任务本身耗时长还是卡死——卡死的 kubectl delete job 后修复再重跑；\n4) 给 Job 设置合理的 activeDeadlineSeconds，避免无限期挂起。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1857,7 +1901,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；\n2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；\n3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；\n4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1938,7 +1984,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 看 kubelet 日志中 certificate rotation 相关报错；\n2) 检查 CSR 是否处于 Pending 未审批：kubectl get csr，必要时手工 kubectl certificate approve；\n3) 确认集群是否开启了 CSR 自动审批控制器（kube-controller-manager 的 --cluster-signing-cert-file 配置）；\n4) 修复后确认新 CSR 能被自动审批并签发。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2019,7 +2067,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 登录节点执行 systemctl status kubelet 确认进程状态；\n2) journalctl -u kubelet -n 200 --no-pager 定位退出或报错原因；\n3) 常见为证书过期、配置错误、容器运行时不可用；\n4) 恢复后确认节点回到 Ready，并检查期间是否有 Pod 被误驱逐。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2100,7 +2150,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 登录节点用 crictl ps 与 crictl info 确认容器运行时响应速度；\n2) 检查节点上容器数量是否过多、磁盘 IO 是否打满——这两者是 PLEG 变慢的主因；\n3) 容器运行时卡顿的可尝试重启 containerd（会短暂影响该节点）；\n4) 持续存在的考虑降低该节点的 Pod 密度。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2181,7 +2233,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe pod \u003cpod\u003e -n \u003cns\u003e 看 Events 的时间戳，定位卡在拉镜像、挂载卷还是初始化容器；\n2) 拉镜像慢的检查镜像大小与仓库带宽，考虑预热镜像或用本地仓库；\n3) 挂载卷慢的排查 PV/CSI 驱动状态；\n4) 应用自身启动慢的优化启动逻辑，并把就绪探针的 initialDelaySeconds 调到合理值。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2262,7 +2316,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 kubeadm certs check-expiration（kubeadm 集群）或 openssl x509 -noout -dates 确认到期时间；\n2) kubeadm 集群用 kubeadm certs renew all 续期后重启控制面组件；\n3) kubelet 客户端证书通常自动轮换，未轮换的检查 rotateCertificates 配置与 CSR 审批是否正常；\n4) 续期后务必验证组件已加载新证书（重启对应进程），并复查所有节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2343,7 +2399,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 看 kubelet 日志中 certificate rotation 相关报错；\n2) 检查 CSR 是否处于 Pending 未审批：kubectl get csr，必要时手工 kubectl certificate approve；\n3) 确认集群是否开启了 CSR 自动审批控制器（kube-controller-manager 的 --cluster-signing-cert-file 配置）；\n4) 修复后确认新 CSR 能被自动审批并签发。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2424,7 +2482,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get pod -A -o wide --field-selector spec.nodeName=\u003cnode\u003e | wc -l 确认实际数量；\n2) 对照 kubelet 的 maxPods 配置（默认 110）；\n3) 用 kubectl drain 或调整调度策略把部分 Pod 迁到其他节点；\n4) 确需更高密度的调大 maxPods，但要同步评估节点的 CPU/内存/PLEG 压力。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2505,7 +2565,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe node | grep -A5 'Allocated resources' 汇总各节点的分配率；\n2) 这是容量规划信号而非即时故障——评估节点故障时是否还有冗余承接；\n3) 检查是否有 Pod 的 requests 设置得过高（远超实际用量），下调可释放大量可调度容量；\n4) 冗余确实不足的扩容节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2586,7 +2648,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe node | grep -A5 'Allocated resources' 汇总各节点的分配率；\n2) 这是容量规划信号而非即时故障——评估节点故障时是否还有冗余承接；\n3) 检查是否有 Pod 的 requests 设置得过高（远超实际用量），下调可释放大量可调度容量；\n4) 冗余确实不足的扩容节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2667,7 +2731,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe node \u003cnode\u003e 看 Conditions 与 Events，确认是 MemoryPressure、DiskPressure 还是 kubelet 失联；\n2) 登录节点确认 kubelet 与容器运行时进程状态（systemctl status kubelet containerd）；\n3) kubelet 日志用 journalctl -u kubelet -n 200 定位；\n4) 节点短期无法恢复的执行 kubectl drain 让 Pod 尽快迁走，避免等待驱逐超时。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2748,7 +2814,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe node \u003cnode\u003e 看 Conditions 的变更时间线；\n2) 登录节点看 kubelet 日志，常见根因是资源压力、容器运行时卡顿、或到 apiserver 的网络不稳；\n3) 抖动期间建议先 kubectl cordon 该节点，阻止新 Pod 调度上去；\n4) 根因定位并修复后再 uncordon，不要在抖动中反复重启 kubelet。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2829,7 +2897,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 先 ping / ssh 确认机器本身是否存活，机器宕机按宕机处理；\n2) 机器存活则排查节点到 apiserver 的网络与证书（kubelet 日志里会有明确报错）；\n3) 确认该节点上是否有单副本的关键服务，有的话优先在其他节点拉起；\n4) 恢复后确认节点重新 Ready 且 Pod 状态正常。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2910,7 +2980,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe pv \u003cpv\u003e 与 kubectl describe pvc \u003cpvc\u003e -n \u003cns\u003e 看 Events 里的具体报错；\n2) 常见为存储后端不可用、容量不足、或 StorageClass 参数错误；\n3) 检查 CSI 驱动 Pod 是否健康（通常在 kube-system 下）；\n4) 后端存储故障的按存储系统自身流程处理，期间 Pod 会一直 Pending。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -2991,7 +3063,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get pvc -n \u003cns\u003e 定位对应的 PVC 与 PV；\n2) 进到使用该卷的 Pod 里用 du 找出占用最大的目录（kubectl exec）；\n3) 清理日志与临时数据；\n4) StorageClass 支持在线扩容的直接 kubectl edit pvc 调大 spec.resources.requests.storage，不支持的需要迁移数据。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3072,7 +3146,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl exec 进入使用该卷的 Pod，用 df -i 确认；\n2) 逐层统计文件数找出小文件最多的目录；\n3) 清理无用的小文件（缓存碎片、临时文件）；\n4) 无法收敛的需要扩容或更换存储类型。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3153,7 +3229,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl logs \u003cpod\u003e -n \u003cns\u003e --previous 看上一次退出前的日志，这是最关键的一步；\n2) kubectl describe pod 看退出码与 Events：137 通常是 OOM 或被 kill，1/2 多为应用自身启动失败；\n3) 配置或依赖问题（连不上数据库、ConfigMap/Secret 缺失）先修依赖再拉起；\n4) OOM 的对照 resources.limits.memory 与实际用量调整，或修复应用内存泄漏。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3234,7 +3312,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get pod \u003cpod\u003e -n \u003cns\u003e -o wide 看 STATUS 与 READY，再 kubectl describe pod 看 Events；\n2) Pending 多为资源不足或调度约束（节点亲和、污点、PVC 未绑定）；ImagePullBackOff 查镜像地址与拉取凭据；\n3) Running 但未 Ready 的看就绪探针配置与 kubectl logs \u003cpod\u003e 里的启动报错；\n4) 确认副本数是否已不足以承载流量，不足的先扩容其他健康副本。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3315,7 +3395,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe quota -n \u003cns\u003e 看是哪一项（cpu/memory/pods/storage）触顶；\n2) kubectl get pod -n \u003cns\u003e -o custom-columns 统计各工作负载的 requests 占用，找出大户；\n3) 确认是否有已停止但未清理的资源仍占着配额；\n4) 确需更多配额的联系集群管理员调整 ResourceQuota。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3396,7 +3478,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe quota -n \u003cns\u003e 看是哪一项（cpu/memory/pods/storage）触顶；\n2) kubectl get pod -n \u003cns\u003e -o custom-columns 统计各工作负载的 requests 占用，找出大户；\n3) 确认是否有已停止但未清理的资源仍占着配额；\n4) 确需更多配额的联系集群管理员调整 ResourceQuota。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3477,7 +3561,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe quota -n \u003cns\u003e 看是哪一项（cpu/memory/pods/storage）触顶；\n2) kubectl get pod -n \u003cns\u003e -o custom-columns 统计各工作负载的 requests 占用，找出大户；\n3) 确认是否有已停止但未清理的资源仍占着配额；\n4) 确需更多配额的联系集群管理员调整 ResourceQuota。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3558,7 +3644,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在控制面节点确认 kube-scheduler 静态 Pod 或进程状态与日志；\n2) 多副本部署的确认是否只是失去 leader，其他副本能否接管；\n3) 常见根因是 apiserver 不可用或证书问题；\n4) 恢复后确认 Pending 的 Pod 开始被调度。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3639,7 +3727,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl describe \u003ckind\u003e \u003cname\u003e -n \u003cns\u003e 对比 generation 与 observedGeneration；\n2) 检查 kube-controller-manager 是否健康——控制器不工作是最常见原因；\n3) 看 controller-manager 日志中与该对象相关的报错；\n4) 确认 apiserver 与 etcd 正常，控制器恢复后 generation 会自动追平。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3720,7 +3810,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 按序号看是哪个副本卡住；\n2) kubectl describe pod 排查该副本的 PVC 是否绑定成功——这是有状态服务最常见的卡点；\n3) 存储问题排查 PV/StorageClass 与 CSI 驱动；\n4) 应用自身问题看 kubectl logs，修复后 StatefulSet 会自动继续。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3801,7 +3893,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl rollout status sts/\u003cname\u003e -n \u003cns\u003e 看卡在第几个副本；\n2) StatefulSet 按序更新，一个副本卡住会阻塞后续全部——重点看当前正在更新的那个；\n3) kubectl describe pod 排查其未就绪原因（PVC、探针、镜像）；\n4) 无法快速修复的用 kubectl rollout undo 回滚。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -3882,7 +3976,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) kubectl get node -o wide 看各节点 kubelet 版本，kubectl version 看控制面版本；\n2) 确认偏差是否在官方支持的版本偏斜范围内（kubelet 不得高于 apiserver，且落后不超过两个小版本）；\n3) 通常是升级过程未完成，把落后的节点升级到位；\n4) 升级前先确认工作负载对新版本 API 的兼容性。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

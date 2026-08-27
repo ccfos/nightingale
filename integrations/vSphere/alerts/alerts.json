@@ -70,7 +70,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在 vCenter 上定位该 ESXi 主机，看是哪些虚拟机贡献了主要负载；\n2) 用 vSphere DRS 或手工 vMotion 把部分虚拟机迁到负载较低的主机；\n3) 确认没有虚拟机因配置过高（vCPU 超配）而挤占资源；\n4) 若整个集群水位都高，则需要扩容物理主机。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -147,7 +149,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在 vCenter 上定位该 ESXi 主机，看是哪些虚拟机贡献了主要负载；\n2) 用 vSphere DRS 或手工 vMotion 把部分虚拟机迁到负载较低的主机；\n3) 确认没有虚拟机因配置过高（vCPU 超配）而挤占资源；\n4) 若整个集群水位都高，则需要扩容物理主机。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -224,7 +228,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 登录该虚拟机内部，用 top/任务管理器定位占用最高的进程；\n2) 区分业务量增长与程序异常（死循环、频繁 GC）；\n3) 在 vCenter 看该虚机的 CPU Ready 值——高说明是宿主机争抢而非虚机自身不够；\n4) 确认后按需给虚机加 vCPU，或把它迁到负载更低的宿主机。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -301,7 +307,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 登录该虚拟机内部，定位占用最高的进程并判断是否内存泄漏；\n2) 在 vCenter 看该虚机的 Balloon 与 Swapped 指标——不为 0 说明宿主机在回收它的内存；\n3) 宿主机紧张的先迁虚机或扩宿主机；\n4) 虚机自身不够的按需加内存，泄漏的在应用侧定位。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -378,7 +386,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在 vCenter 定位该 Datastore，按容量排序找出占用最大的虚拟机与快照；\n2) 优先清理遗留快照——快照是 Datastore 被吃满最常见的原因；\n3) 清理无用的 ISO、模板与已下线虚机的残留文件；\n4) 用 Storage vMotion 把部分虚机迁到余量充足的存储，长期需扩容。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

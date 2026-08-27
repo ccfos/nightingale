@@ -1,16 +1,18 @@
-# 开放 A2A 接口给第三方接入（配置说明）
+# Opening the A2A Endpoint to Third Parties (Configuration Guide)
 
-n9e 内置的 AI 助手可以作为一个标准 [A2A（Agent-to-Agent Protocol）](https://a2a-protocol.org/)
-智能体被外部系统调用——第三方用一句自然语言就能驱动 n9e 查告警、查数据、建规则、跑诊断。
+The AI assistant built into n9e can be called by external systems as a standard
+[A2A (Agent-to-Agent Protocol)](https://a2a-protocol.org/) agent — a third party can drive n9e with a single
+sentence of natural language to look up alerts, query data, create rules, or run diagnostics.
 
-本文只讲**管理员要做哪些配置**，以及要把什么信息交给第三方。协议细节由对方的 A2A
-客户端负责，不需要你关心。
+This document only covers **what an administrator has to configure** and what information to hand over to the
+third party. Protocol details are the responsibility of their A2A client and are not your concern.
 
-## 一、前置条件
+## 1. Prerequisites
 
-1. **配置好大模型**：页面 `集成中心 → AI 配置`，确保 AI 助手在页面上能正常对话。
-   A2A 走的是同一个助手，页面上不通，A2A 也不会通。
-2. **确认 TokenAuth 已开启**（`etc/config.toml`，默认就是开的）：
+1. **Configure a large language model**: go to `Integrations → AI configuration` and make sure the AI assistant
+   can hold a normal conversation in the UI. A2A uses that same assistant — if it does not work in the UI, it
+   will not work over A2A either.
+2. **Confirm TokenAuth is enabled** (in `etc/config.toml`; it is on by default):
 
    ```toml
    [HTTP.TokenAuth]
@@ -18,163 +20,169 @@ n9e 内置的 AI 助手可以作为一个标准 [A2A（Agent-to-Agent Protocol�
    HeaderUserTokenKey = "X-User-Token"
    ```
 
-   这一项关掉的话，A2A 端点会拒绝所有请求。
+   If this is turned off, the A2A endpoint rejects every request.
 
-## 二、A2A 配置项
+## 2. A2A configuration options
 
-A2A 端点**默认开启，不需要任何配置**。要调整时改 `etc/config.toml`：
+The A2A endpoint is **enabled by default and needs no configuration**. To adjust it, edit `etc/config.toml`:
 
 ```toml
 [HTTP.A2A]
-# Disable = false     # 改成 true 可关闭 A2A + MCP 全部对外端点
-# DisableMCP = false  # 改成 true 只关 MCP，保留 A2A
-# BaseURL = ""        # 对外公布的绝对地址，如 https://n9e.example.com
+# Disable = false     # set to true to close every public A2A and MCP endpoint
+# DisableMCP = false  # set to true to close only MCP and keep A2A
+# BaseURL = ""        # the absolute address advertised publicly, e.g. https://n9e.example.com
 ```
 
-| 配置项 | 默认 | 说明 |
+| Option | Default | Description |
 |---|---|---|
-| `Disable` | `false` | 关闭 A2A 与 MCP 的全部对外端点 |
-| `DisableMCP` | `false` | 只关闭 MCP 端点，A2A 不受影响 |
-| `BaseURL` | 空 | 第三方发现 n9e 时拿到的地址。留空时由请求的 `Host` 头推断；**部署在反向代理/负载均衡后面时建议显式配置**，否则第三方可能拿到内网地址 |
+| `Disable` | `false` | Closes every public A2A and MCP endpoint |
+| `DisableMCP` | `false` | Closes only the MCP endpoints; A2A is unaffected |
+| `BaseURL` | empty | The address a third party gets when discovering n9e. When empty it is inferred from the request's `Host` header; **setting it explicitly is recommended when running behind a reverse proxy or load balancer**, otherwise the third party may end up with an internal address |
 
-改完重启 center 生效。
+Restart center for changes to take effect.
 
-## 三、反向代理放行
+## 3. Reverse proxy rules
 
-A2A 的端点挂在**根路径**下，不在 `/api/n9e` 前缀里。如果你的 nginx 只转发了
-`/api/n9e/*`，需要额外放行两个路径：
+The A2A endpoints live at the **root path**, not under the `/api/n9e` prefix. If your nginx only forwards
+`/api/n9e/*`, you need to allow two more paths:
 
 ```nginx
-# 发现地址，第三方用它找到 n9e
+# Discovery address; third parties use it to find n9e
 location /.well-known/ {
     proxy_pass http://n9e_center;
 }
 
-# A2A 端点
+# A2A endpoint
 location /a2a/ {
     proxy_pass http://n9e_center;
     proxy_http_version 1.1;
 
-    proxy_buffering off;        # 必须：流式回答依赖它，不关会一直没输出
-    proxy_read_timeout 3600s;   # 必须：一次提问可能跑几分钟
+    proxy_buffering off;        # required: streaming answers depend on it, without it nothing is ever emitted
+    proxy_read_timeout 3600s;   # required: a single question may run for several minutes
     proxy_send_timeout 3600s;
 }
 ```
 
-这两项超时和缓冲设置是最容易踩的坑：默认的 60s 超时会让稍复杂的提问在回答途中断开。
+These timeout and buffering settings are the easiest thing to get wrong: the default 60 s timeout cuts off
+slightly complex questions in the middle of the answer.
 
-## 四、创建接入用的 API Token
+## 4. Creating an API token for the integration
 
-A2A 请求以 Token 对应的用户身份执行，**n9e 的业务组权限和角色权限原样生效**。
+An A2A request runs as the user the token belongs to, so **n9e's business group and role permissions apply
+exactly as usual**.
 
-1. 登录 n9e，右上角进入个人中心 → **API Token** → 新建，复制生成的字符串；
-2. 建议为每个接入方**单独建一个账号**并按最小权限授权，不要直接用管理员账号的 Token；
-3. Token 泄露等同于账号泄露，可随时在同一页面删除以吊销。
+1. Log into n9e, open Profile from the top right → **API Token** → create one, and copy the generated string;
+2. We recommend creating **a dedicated account per integration** with least-privilege authorization instead of
+   using an administrator's token;
+3. Leaking a token is equivalent to leaking the account; you can delete it on the same page at any time to revoke it.
 
-## 五、交给第三方的信息
+## 5. What to hand over to the third party
 
-对接时把这三样给对方即可：
+Three things are enough:
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| 发现地址（Agent Card） | `https://n9e.example.com/.well-known/agent-card.json` |
-| 鉴权方式 | 请求头 `X-User-Token: <token>` |
-| Token | 上一步生成的字符串 |
+| Discovery address (Agent Card) | `https://n9e.example.com/.well-known/agent-card.json` |
+| Authentication | The `X-User-Token: <token>` request header |
+| Token | The string generated in the previous step |
 
-标准 A2A 客户端只要拿到发现地址，就能自动读出端点、能力清单和鉴权方式。
+Given only the discovery address, a standard A2A client can read out the endpoint, the capability list, and the
+authentication method automatically.
 
-## 六、验证是否通了
+## 6. Verifying that it works
 
 ```bash
-# 1) 发现地址应返回一段 JSON，含 name、skills 等字段（这一步不需要 Token）
+# 1) The discovery address should return JSON with fields such as name and skills (no token needed for this step)
 curl -s https://n9e.example.com/.well-known/agent-card.json
 
-# 2) 带 Token 问一句，能返回一段回答即接入成功
+# 2) Ask a question with the token; getting an answer back means the integration works
 curl -s -X POST https://n9e.example.com/a2a/message:send \
   -H 'Content-Type: application/json' \
-  -H 'X-User-Token: <你的token>' \
+  -H 'X-User-Token: <your-token>' \
   -d '{"message":{"messageId":"test-1","role":"ROLE_USER",
-       "parts":[{"text":"现在有哪些正在告警的事件？"}]},
-       "metadata":{"lang":"zh_CN"}}'
+       "parts":[{"text":"Which alert events are currently firing?"}]},
+       "metadata":{"lang":"en_US"}}'
 ```
 
-第 2 步可能要等几十秒（模型在思考和调工具），属正常现象。
+Step 2 may take tens of seconds (the model is thinking and calling tools), which is normal.
 
-| 现象 | 处理 |
+| Symptom | What to do |
 |---|---|
-| 返回 `unauthorized` | Token 无效/已删除，或 `HTTP.TokenAuth.Enable = false` |
-| 发现地址 404 | `[HTTP.A2A] Disable = true`，或反向代理没放行 `/.well-known/` |
-| 一直没有输出、60 秒左右断开 | nginx 没配 `proxy_buffering off` 和 `proxy_read_timeout` |
-| 回答里说模型不可用 | 大模型没配好，先去页面上和 AI 助手对话验证 |
+| It returns `unauthorized` | The token is invalid or has been deleted, or `HTTP.TokenAuth.Enable = false` |
+| The discovery address returns 404 | `[HTTP.A2A] Disable = true`, or the reverse proxy does not allow `/.well-known/` |
+| No output at all, connection drops after about 60 seconds | nginx is missing `proxy_buffering off` and `proxy_read_timeout` |
+| The answer says the model is unavailable | The LLM is not configured properly; verify by chatting with the AI assistant in the UI first |
 
-## 七、企业鉴权（可选）
+## 7. Enterprise authentication (optional)
 
-第四节的 API Token 已经够用。如果你还有下面两类需求，可以改用 OAuth 方式接入——
-接入方不再需要你分发 Token，而是用自己的账号登录后授权：
+The API token from section 4 is already enough. If you also have either of the following needs, you can switch to
+OAuth instead — the integrating party no longer needs a token from you and instead authorizes with their own account:
 
-| 你的情况 | 用哪个方案 |
+| Your situation | Which option to use |
 |---|---|
-| 公司已有统一登录（Keycloak / Okta / Entra ID / Auth0 等） | **方案 A**：让 n9e 认可公司登录系统签发的凭证 |
-| 没有统一登录，但想让 Claude、ChatGPT 这类通用客户端直接连 n9e | **方案 B**：让 n9e 自己充当授权方 |
+| The company already has single sign-on (Keycloak / Okta / Entra ID / Auth0, etc.) | **Option A**: have n9e trust credentials issued by the company's login system |
+| No single sign-on, but you want generic clients such as Claude or ChatGPT to connect to n9e directly | **Option B**: have n9e act as the authorization server itself |
 
-两个方案可以同时开启，互不影响，API Token 也继续可用。
+Both options can be enabled at the same time without interfering with each other, and API tokens keep working.
 
-### 7.1 方案 A：对接公司已有的登录系统
+### 7.1 Option A: connect to the company's existing login system
 
-接入方以**员工本人的账号**调用 n9e，权限和操作记录都落到这个人头上；员工离职时在公司
-登录系统里停用即可，不用管 n9e 这边。
+The integrating party calls n9e as **the employee themselves**, so permissions and the audit trail belong to that
+person. When someone leaves, disabling them in the company's login system is enough; nothing has to change in n9e.
 
-**第一步：在公司登录系统里给 n9e 加一个标识。**
-需要让它签发的凭证上写明"这是给 n9e 用的"，起个名字比如 `n9e-a2a-rs`。
-以 Keycloak 为例：`Client scopes → 对应 scope → Mappers → Add → Audience`，
-`Included Custom Audience` 填 `n9e-a2a-rs`，勾选 *Add to access token*。
-Auth0 / Entra ID 等在各自的"API / 受众"设置里配同样的东西，具体名称各家不同。
+**Step 1: register an identifier for n9e in the company's login system.**
+The credentials it issues have to state "this is for n9e" — give it a name such as `n9e-a2a-rs`.
+With Keycloak: `Client scopes → the relevant scope → Mappers → Add → Audience`,
+set `Included Custom Audience` to `n9e-a2a-rs`, and tick *Add to access token*.
+Auth0, Entra ID, and others configure the same thing under their own "API / audience" settings, though the
+naming differs from vendor to vendor.
 
-**第二步：改 n9e 配置文件 `etc/config.toml`，然后重启 center。**
+**Step 2: edit the n9e configuration file `etc/config.toml`, then restart center.**
 
 ```toml
 [HTTP.RSAuth]
 Enable = true
-Audience = "n9e-a2a-rs"   # 必须和第一步在登录系统里填的完全一致
-Provider = "oidc"         # 公司登录系统是 OIDC 协议时用这个（大多数情况）
+Audience = "n9e-a2a-rs"   # must match exactly what you entered in the login system in step 1
+Provider = "oidc"         # use this when the company login system speaks OIDC (most cases)
 ```
 
-**第三步：在 n9e 页面配置单点登录。**
-`系统设置 → 单点登录 → OIDC`：
+**Step 3: configure single sign-on in the n9e UI.**
+Go to `System settings → Single sign-on → OIDC`:
 
-- 打开开关；
-- 填公司登录系统的地址、ClientId、ClientSecret；
-- 用户名字段（Attributes → Username）一般填 `preferred_username`；
-- 设置默认角色和默认团队——某个员工第一次通过这种方式调用时，n9e 会自动为他创建账号，
-  用的就是这里的默认值。
+- turn the switch on;
+- fill in the company login system's address, ClientId, and ClientSecret;
+- the username field (Attributes → Username) is usually `preferred_username`;
+- set the default roles and default teams — the first time an employee calls in this way, n9e creates an account
+  for them automatically using exactly these defaults.
 
-保存后约 10 秒生效，这一步不用重启。
+The change takes effect about 10 seconds after saving; no restart is needed for this step.
 
-> 补充说明：
-> - n9e 所在服务器必须能访问公司登录系统的地址；如果环境配了 HTTP 代理，
->   记得把该地址加进 `no_proxy`。
-> - 如果公司用的不是 OIDC 而是普通 OAuth2，把 `Provider` 改成 `"oauth2"`，
->   并去 `系统设置 → 单点登录 → OAuth2` 配置。这种模式默认不校验第一步的标识，
->   安全要求较高时需要额外设置，详见 [a2a-oauth-rs.md](./a2a-oauth-rs.md)。
+> Additional notes:
+> - The server running n9e must be able to reach the company login system's address; if the environment uses an
+>   HTTP proxy, remember to add that address to `no_proxy`.
+> - If the company uses plain OAuth2 rather than OIDC, set `Provider` to `"oauth2"` and configure it under
+>   `System settings → Single sign-on → OAuth2`. That mode does not validate the identifier from step 1 by default,
+>   so higher security requirements call for extra settings — see [a2a-oauth-rs.md](./a2a-oauth-rs.md).
 
-配好以后，交给第三方的仍然只有第五节那个发现地址——对方的客户端会自动发现该走哪个
-登录系统，不需要你再告诉他什么。
+Once this is configured, the only thing you still hand to the third party is the discovery address from section 5 —
+their client discovers which login system to use on its own, and you do not have to tell them anything else.
 
-### 7.2 方案 B：让 n9e 自己充当授权方
+### 7.2 Option B: have n9e act as the authorization server
 
-适合没有统一登录、又希望 Claude / ChatGPT 这类通用客户端"填个地址就能连"的场景。
-不用事先给对方发 Token，使用者自己在客户端里点一下就完成授权。
+This suits environments without single sign-on where you want generic clients such as Claude or ChatGPT to
+"connect by just entering an address". You do not issue tokens up front; the user completes the authorization with
+a single click in their client.
 
-**第一步：改 `etc/config.toml`，然后重启 center。**
+**Step 1: edit `etc/config.toml`, then restart center.**
 
 ```toml
 [HTTP.MCPAuth]
 Enable = true
-# 填用户浏览器实际访问 n9e 的地址（下面第三步要填的也是它）
+# The address at which users' browsers actually reach n9e (the same one you enter in step 3 below)
 Issuer = "https://n9e.example.com"
 ```
 
-**第二步：反向代理再放行一个路径**（在第三节两条 location 之外补上）：
+**Step 2: allow one more path in the reverse proxy** (in addition to the two locations in section 3):
 
 ```nginx
 location /oauth/ {
@@ -182,8 +190,8 @@ location /oauth/ {
 }
 ```
 
-如果对接的是 Claude / ChatGPT 这类 MCP 客户端，还要放行 `/mcp`，配置与第三节的
-`/a2a/` 完全一样（同样要关缓冲、调大超时）：
+If you are integrating an MCP client such as Claude or ChatGPT, you also need to allow `/mcp`, configured exactly
+like `/a2a/` in section 3 (buffering off, generous timeouts):
 
 ```nginx
 location /mcp {
@@ -196,29 +204,31 @@ location /mcp {
 }
 ```
 
-**第三步：告诉使用者在客户端里填什么地址。**
+**Step 3: tell users which address to enter in their client.**
 
-按客户端类型二选一，`n9e.example.com` 换成你自己的域名：
+Pick one according to the client type, replacing `n9e.example.com` with your own domain:
 
-| 客户端类型 | 填这个地址 |
+| Client type | Address to enter |
 |---|---|
-| Claude、ChatGPT 等 MCP 客户端（界面上通常叫"添加自定义连接器 / Add custom connector"，要求填一个 MCP 服务器地址） | `https://n9e.example.com/mcp` |
-| 标准 A2A 客户端 | `https://n9e.example.com/.well-known/agent-card.json`；部分客户端只要根地址 `https://n9e.example.com`，会自己补后面的路径 |
+| MCP clients such as Claude and ChatGPT (the UI usually calls it "Add custom connector" and asks for an MCP server address) | `https://n9e.example.com/mcp` |
+| Standard A2A clients | `https://n9e.example.com/.well-known/agent-card.json`; some clients only want the root address `https://n9e.example.com` and append the rest themselves |
 
-这个地址要满足三个条件，否则授权走不通：
+This address has to satisfy three conditions, otherwise authorization cannot complete:
 
-1. **是使用者的浏览器能直接打开的地址**——授权过程要在浏览器里登录 n9e 并点确认，
-   所以不能填只有服务器内网能访问的 IP、容器名或 `127.0.0.1`；
-2. **域名、协议、端口与第一步的 `Issuer` 完全一致**——`Issuer` 填 `https://n9e.example.com`，
-   这里就不能填 `http://` 或带端口的写法；
-3. **用 HTTPS**——多数客户端出于安全限制不接受 `http://` 的远程服务器地址
-   （仅本机调试的 `localhost` 例外）。
+1. **It must be reachable from the user's browser** — the authorization flow involves logging into n9e in the
+   browser and clicking to confirm, so it cannot be an IP, container name, or `127.0.0.1` that only the server can reach;
+2. **The domain, scheme, and port must match the `Issuer` from step 1 exactly** — if `Issuer` is
+   `https://n9e.example.com`, you cannot enter `http://` or a form with a port here;
+3. **Use HTTPS** — for security reasons most clients do not accept an `http://` remote server address
+   (`localhost` for local debugging is the exception).
 
-填完之后使用者会经历：客户端自动发现 n9e 是授权方 → 浏览器弹出 n9e 登录页
-（已登录则跳过）→ 显示授权确认页，点"允许" → 回到客户端，连接完成。
-此后该客户端就以这个人的账号身份调用 n9e，权限与他登录页面时一致。
+After entering it, the user goes through: the client discovers automatically that n9e is the authorization server →
+the browser opens the n9e login page (skipped if already logged in) → the authorization confirmation page appears
+and they click "Allow" → they return to the client and the connection is complete.
+From then on that client calls n9e as that person, with the same permissions they have when logged into the UI.
 
-> 多实例部署（多个 center 前面挂负载均衡）时，`Issuer` 一定要**显式填写且各实例保持一致**，
-> 不能留空——留空时每个实例按收到的请求各自推断，可能不一致，导致在 A 实例上完成的
-> 授权到 B 实例就不认。签名密钥由各实例共享的数据库统一管理，不用额外配置。
+> In a multi-instance deployment (several center instances behind a load balancer), `Issuer` must be **set explicitly
+> and identically on every instance** — it cannot be left empty. When empty, each instance infers it from the request
+> it received, which may diverge, so an authorization completed on instance A is not recognized by instance B. The
+> signing key is managed centrally through the database shared by all instances and needs no extra configuration.
 

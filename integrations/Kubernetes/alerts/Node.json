@@ -68,7 +68,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) kubectl top node 确认整体分布，kubectl top pod -A --sort-by=cpu 找出占用最高的 Pod；\n2) 确认该节点是否被调度了过多高负载 Pod，必要时用 kubectl drain 迁走部分；\n3) 检查 Pod 的 requests 是否设置过低导致超卖；\n4) 集群整体水位高的扩容节点。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -156,7 +158,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) kubectl top node 与 kubectl top pod -A --sort-by=memory 定位占用最高的 Pod；\n2) 检查是否有 Pod 未设 memory limit 在无限增长；\n3) 用 kubectl drain 迁走部分 Pod 缓解，注意先确认目标节点有余量；\n4) 检查 kubelet 的驱逐阈值配置是否合理，集群整体紧张的扩容节点。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -244,7 +248,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) kubectl describe node \u003cnode\u003e 看 Conditions 与 Events，确认是 MemoryPressure、DiskPressure 还是 kubelet 失联；\n2) 登录节点确认 kubelet 与容器运行时进程状态（systemctl status kubelet containerd）；\n3) kubelet 日志用 journalctl -u kubelet -n 200 定位；\n4) 节点短期无法恢复的执行 kubectl drain 让 Pod 尽快迁走，避免等待驱逐超时。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -332,7 +338,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 登录节点用 df -h 定位挂载点，通常是 /var/lib/docker 或 /var/lib/containerd；\n2) 执行 crictl rmi --prune 或 docker system prune 清理无用镜像层，这是最快见效的；\n3) 检查是否有 Pod 在往 emptyDir 或宿主机路径写大量数据；\n4) 清理后确认 kubelet 的 DiskPressure 污点已自动移除。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,

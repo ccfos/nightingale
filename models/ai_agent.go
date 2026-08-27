@@ -11,19 +11,20 @@ import (
 	"gorm.io/gorm"
 )
 
+// 所有列都显式声明类型，与 docker/migratesql/migrate.sql 保持一致，理由同 AILLMConfig。
 type AIAgent struct {
 	Id           int64   `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name         string  `json:"name"`
-	Description  string  `json:"description"`
-	UseCase      string  `json:"use_case"`
-	LLMConfigId  int64   `json:"llm_config_id"`
-	SkillIds     []int64 `json:"skill_ids,omitempty" gorm:"serializer:json"`
-	MCPServerIds []int64 `json:"mcp_server_ids,omitempty" gorm:"serializer:json"`
-	Enabled      bool    `json:"enabled"`
-	CreatedAt    int64   `json:"created_at"`
-	CreatedBy    string  `json:"created_by"`
-	UpdatedAt    int64   `json:"updated_at"`
-	UpdatedBy    string  `json:"updated_by"`
+	Name         string  `json:"name" gorm:"type:varchar(255);not null;default:''"`
+	Description  string  `json:"description" gorm:"type:text"`
+	UseCase      string  `json:"use_case" gorm:"type:varchar(64);not null;default:''"`
+	LLMConfigId  int64   `json:"llm_config_id" gorm:"type:bigint;not null;default:0"`
+	SkillIds     []int64 `json:"skill_ids,omitempty" gorm:"serializer:json;type:text"`
+	MCPServerIds []int64 `json:"mcp_server_ids,omitempty" gorm:"serializer:json;type:text"`
+	Enabled      bool    `json:"enabled" gorm:"type:boolean;not null;default:false"`
+	CreatedAt    int64   `json:"created_at" gorm:"type:bigint;not null;default:0"`
+	CreatedBy    string  `json:"created_by" gorm:"type:varchar(64);not null;default:''"`
+	UpdatedAt    int64   `json:"updated_at" gorm:"type:bigint;not null;default:0"`
+	UpdatedBy    string  `json:"updated_by" gorm:"type:varchar(64);not null;default:''"`
 
 	LLMConfigName string `json:"llm_config_name" gorm:"-"`
 }

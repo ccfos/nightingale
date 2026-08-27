@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/toolkits/pkg/logger"
@@ -36,24 +38,33 @@ func NewOpenAI(cfg *Config, client *http.Client) (*OpenAI, error) {
 	}, nil
 }
 
+// versionSuffixRe 匹配版本号结尾的 base URL path，如 /v1、/api/v3、/api/paas/v4。
+var versionSuffixRe = regexp.MustCompile(`(?i)/v\d+$`)
+
 // NormalizeOpenAIURL 归一化 OpenAI 兼容端点：
-// 用户常见填法包括 `https://host/v1` 或 `https://host/compatible-mode/v1`，
-// 这里自动补 `/chat/completions`，避免漏路径时返回 404。
+// 用户常见填法是版本号结尾的 base URL（如 `https://host/v1`、智谱的 `/api/paas/v4`、
+// 方舟的 `/api/v3`），对这类 URL 自动补 `/chat/completions`，避免漏路径时返回 404。
+// 其余形态视为完整端点原样透传——存量配置里可能是不带标准路径的自定义网关地址，
+// 不能改写；后缀判断基于 parse 后的 path，避免带 query 的完整端点被重复拼路径。
 // 对于已知需要 /v1/chat/completions 路径的提供商（如 DeepSeek），
 // 当用户只填写了根域名时自动补全完整路径。
 func NormalizeOpenAIURL(rawURL string) string {
 	u := strings.TrimRight(rawURL, "/")
-	if strings.HasSuffix(u, "/chat/completions") {
-		return u
-	}
-	if strings.HasSuffix(u, "/v1") {
-		return u + "/chat/completions"
-	}
 	// DeepSeek 使用标准 OpenAI 兼容路径，用户填写根域名时自动补全
 	if u == "https://api.deepseek.com" || u == "http://api.deepseek.com" {
 		return u + "/v1/chat/completions"
 	}
-	return u
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return u
+	}
+	path := strings.TrimRight(parsed.Path, "/")
+	if strings.HasSuffix(path, "/chat/completions") || !versionSuffixRe.MatchString(path) {
+		return u
+	}
+	parsed.Path = path + "/chat/completions"
+	return parsed.String()
 }
 
 func (o *OpenAI) Name() string {
@@ -62,13 +73,14 @@ func (o *OpenAI) Name() string {
 
 // OpenAI API request/response structures
 type openAIRequest struct {
-	Model       string          `json:"model"`
-	Messages    []openAIMessage `json:"messages"`
-	Tools       []openAITool    `json:"tools,omitempty"`
-	MaxTokens   int             `json:"max_tokens,omitempty"`
-	Temperature float64         `json:"temperature,omitempty"`
-	TopP        float64         `json:"top_p,omitempty"`
-	Stream      bool            `json:"stream,omitempty"`
+	Model               string          `json:"model"`
+	Messages            []openAIMessage `json:"messages"`
+	Tools               []openAITool    `json:"tools,omitempty"`
+	MaxTokens           int             `json:"max_tokens,omitempty"`
+	MaxCompletionTokens int             `json:"max_completion_tokens,omitempty"`
+	Temperature         float64         `json:"temperature,omitempty"`
+	TopP                float64         `json:"top_p,omitempty"`
+	Stream              bool            `json:"stream,omitempty"`
 
 	// extraBody 不出现在 JSON tag 里——由 MarshalJSON 平铺到顶层。
 	// 用于把 LLMConfig.ExtraBody 透传给厂商特定字段（如 dashscope 的 enable_thinking）。
@@ -93,12 +105,123 @@ func (r openAIRequest) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	for k, v := range r.extraBody {
+		// 两个 token 上限字段互斥：只要显式字段已经选定了一个，就不让 extraBody
+		// 把另一个也带上（同时出现会被 OpenAI 判 400）。这里按"实际填了哪个字段"
+		// 判断而不是重算模型名，否则 swapToMaxCompletionTokens 兜底改名之后
+		// （模型名命不中前缀）这层剔除就会站错队。
+		if (r.MaxCompletionTokens > 0 && k == "max_tokens") ||
+			(r.MaxTokens > 0 && k == "max_completion_tokens") {
+			continue
+		}
 		if _, occupied := m[k]; occupied {
 			continue
 		}
 		m[k] = v
 	}
 	return json.Marshal(m)
+}
+
+// usesMaxCompletionTokens 判断模型是否属于 OpenAI 新一代推理模型家族
+// （gpt-5 / o1 / o3 / o4）。这些模型废弃了 max_tokens，只认 max_completion_tokens。
+//
+// gpt-5 用宽前缀而不是 "gpt-5-"：官方型号里既有 gpt-5-mini 也有 gpt-5.1，
+// 卡横杠会漏掉后者。o 系列反过来要卡精确值或带横杠的前缀，否则 o1x 之类会误伤。
+//
+// 与 thinking.go 的模型判断相互独立：那边管"是否注入关思考字段"，这里管"token
+// 字段名"，成员集合不同（如 isPureThinkingModel 含 qwq/deepseek-r1/gemini 却不含
+// gpt-5），故单列一个判断而非复用。
+func usesMaxCompletionTokens(model string) bool {
+	m := strings.ToLower(strings.TrimSpace(model))
+	switch {
+	case strings.HasPrefix(m, "gpt-5"),
+		m == "o1", strings.HasPrefix(m, "o1-"),
+		m == "o3", strings.HasPrefix(m, "o3-"),
+		m == "o4", strings.HasPrefix(m, "o4-"):
+		return true
+	}
+	return false
+}
+
+// cloneExtraBody 浅拷贝 extra body，让单次请求可以安全地增删自己的字段。
+func cloneExtraBody(src map[string]any) map[string]any {
+	if len(src) == 0 {
+		return nil
+	}
+	out := make(map[string]any, len(src))
+	for k, v := range src {
+		out[k] = v
+	}
+	return out
+}
+
+// isMaxCompletionTokensError 命中"服务端因 max_tokens 不被支持而 400，并提示改用
+// max_completion_tokens"的错误。错误串形如 `OpenAI API error (status 400): ...
+// Use 'max_completion_tokens' instead.`，故以是否提到 max_completion_tokens 为判据。
+func isMaxCompletionTokensError(err error) bool {
+	return err != nil && strings.Contains(strings.ToLower(err.Error()), "max_completion_tokens")
+}
+
+// swapToMaxCompletionTokens 是模型名识别的运行时兜底：当请求发了 max_tokens 却被
+// 服务端要求改用 max_completion_tokens 时，就地把值迁到新字段并返回 true（供调用方
+// 重试一次）；不满足条件则不动请求、返回 false。
+//
+// 只覆盖模型名漏判的场景——主要是 Azure 自定义部署名，那里 model 填的是部署名
+// （如 my-gpt5），任何基于模型名的前缀匹配都会漏判。模型名能认出来的走
+// convertRequest 里的提前迁移，不必先吃一个 400。
+//
+// 改完之后 MaxTokens == 0 且 extraBody 里不再有 max_tokens，第二次调用必然返回
+// false，因此不会出现反复重试。
+func swapToMaxCompletionTokens(req *openAIRequest, err error) bool {
+	if !isMaxCompletionTokensError(err) {
+		return false
+	}
+	changed := false
+	if req.MaxTokens > 0 {
+		req.MaxCompletionTokens = req.MaxTokens
+		req.MaxTokens = 0
+		changed = true
+	}
+	if takeExtraBodyMaxTokens(req) {
+		changed = true
+	}
+	return changed
+}
+
+// takeExtraBodyMaxTokens 把 extraBody 里用户手填的 max_tokens 摘掉，值迁到
+// MaxCompletionTokens，返回是否动过请求。
+//
+// 只删不迁的话请求会彻底没有输出上限，推理模型能跑出远超用户预期的长度和费用。
+// 显式字段已有值时只删不迁，与 MarshalJSON 里"extraBody 不覆盖显式字段"的规则保持一致。
+func takeExtraBodyMaxTokens(req *openAIRequest) bool {
+	v, ok := req.extraBody["max_tokens"]
+	if !ok {
+		return false
+	}
+	delete(req.extraBody, "max_tokens")
+	if n, ok := positiveInt(v); ok && req.MaxCompletionTokens == 0 {
+		req.MaxCompletionTokens = n
+	}
+	return true
+}
+
+// positiveInt 从 extra body 取正整数。CustomParams 由 JSON 反序列化而来，数值落地是
+// float64；程序内构造的则可能是 int/int64。取不到就返回 false，由调用方决定兜底。
+func positiveInt(v any) (int, bool) {
+	var n int
+	switch x := v.(type) {
+	case float64:
+		n = int(x)
+	case int:
+		n = x
+	case int64:
+		n = int(x)
+	default:
+		return 0, false
+	}
+	if n <= 0 {
+		return 0, false
+	}
+	return n, true
 }
 
 type openAIMessage struct {
@@ -163,7 +286,13 @@ func (o *OpenAI) Generate(ctx context.Context, req *GenerateRequest) (*GenerateR
 	// Make request
 	respBody, err := o.doRequest(ctx, openAIReq)
 	if err != nil {
-		return nil, err
+		// 模型名没命中家族前缀（如 Azure 自定义部署名）时，按服务端 400 的提示改名重试一次
+		if !swapToMaxCompletionTokens(openAIReq, err) {
+			return nil, err
+		}
+		if respBody, err = o.doRequest(ctx, openAIReq); err != nil {
+			return nil, err
+		}
 	}
 
 	// Parse response
@@ -188,7 +317,26 @@ func (o *OpenAI) GenerateStream(ctx context.Context, req *GenerateRequest) (<-ch
 	openAIReq := o.convertRequest(req)
 	openAIReq.Stream = true
 
-	jsonData, err := json.Marshal(openAIReq)
+	resp, err := o.doStreamRequest(ctx, openAIReq)
+	if err != nil {
+		// 与 Generate 一致的兜底：名字识别漏判时按 400 提示改名重试一次
+		if !swapToMaxCompletionTokens(openAIReq, err) {
+			return nil, err
+		}
+		if resp, err = o.doStreamRequest(ctx, openAIReq); err != nil {
+			return nil, err
+		}
+	}
+
+	ch := make(chan StreamChunk, 100)
+	go o.streamResponse(ctx, resp, ch)
+	return ch, nil
+}
+
+// doStreamRequest 序列化请求并发起流式调用，成功时返回打开的响应交由调用方读取 Body。
+// 序列化必须放在函数内部：兜底改名后要重新 marshal，复用旧 body 会把改名前的请求再发一遍。
+func (o *OpenAI) doStreamRequest(ctx context.Context, req *openAIRequest) (*http.Response, error) {
+	jsonData, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
@@ -202,19 +350,12 @@ func (o *OpenAI) GenerateStream(ctx context.Context, req *GenerateRequest) (<-ch
 		logger.Debugf("[OpenAI] stream request body (with extra): %s", preview)
 	}
 
-	resp, err := doHTTPStreamWithRetry(ctx, o.client, "OpenAI",
+	return doHTTPStreamWithRetry(ctx, o.client, "OpenAI",
 		func() (*http.Request, error) {
 			return http.NewRequestWithContext(ctx, "POST", o.config.BaseURL, bytes.NewBuffer(jsonData))
 		},
 		o.setHeaders,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	ch := make(chan StreamChunk, 100)
-	go o.streamResponse(ctx, resp, ch)
-	return ch, nil
 }
 
 // openAIToolCallAggregator 按 index 聚合流式下发的 tool_call 分片。
@@ -377,9 +518,11 @@ func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 	openAIReq := &openAIRequest{
-		Model:     o.config.Model,
-		TopP:      req.TopP,
-		extraBody: o.config.ExtraBody,
+		Model: o.config.Model,
+		TopP:  req.TopP,
+		// 复制一份：config 被 client_cache 复用并发共享，而 swapToMaxCompletionTokens
+		// 兜底时需要就地摘掉 extraBody 里的 max_tokens，直接引用会写坏共享 map。
+		extraBody: cloneExtraBody(o.config.ExtraBody),
 	}
 
 	// Temperature: request 优先，fallback 到 config 默认值
@@ -391,11 +534,22 @@ func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 	}
 
 	// MaxTokens: 同上
+	var maxTokens int
 	switch {
 	case req.MaxTokens != nil:
-		openAIReq.MaxTokens = *req.MaxTokens
+		maxTokens = *req.MaxTokens
 	case o.config.MaxTokens != nil:
-		openAIReq.MaxTokens = *o.config.MaxTokens
+		maxTokens = *o.config.MaxTokens
+	}
+	if usesMaxCompletionTokens(openAIReq.Model) {
+		openAIReq.MaxCompletionTokens = maxTokens
+		// 模型名已经确定该用新字段：CustomParams 里手填的 max_tokens 现在就迁走。
+		// 留着的话（没配 MaxTokens 时 MarshalJSON 的互斥剔除不生效）会被平铺进请求体，
+		// 每次调用都要先吃一个 400 再靠 swapToMaxCompletionTokens 兜底重试——agent
+		// 工具循环里一轮十几次调用就是十几个白跑的往返。
+		takeExtraBodyMaxTokens(openAIReq)
+	} else {
+		openAIReq.MaxTokens = maxTokens
 	}
 
 	// Convert messages. 结构化工具轮：assistant 的 ToolCalls 与 RoleTool 结果轮

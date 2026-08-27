@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/toolkits/pkg/i18n"
 )
 
 func (rt *Router) messageTemplatesAdd(c *gin.Context) {
@@ -185,45 +186,83 @@ type evtMsgReq struct {
 	Tpl      struct {
 		Content map[string]string `json:"content"`
 	} `json:"tpl"`
+	// 内嵌而非裸 bool：模板会按 {{if $event.IsRecovered}} 和 severity 分支，
+	// 固定样例只能覆盖其中一条路径，用户需要能切级别/恢复态分别预览。
+	MockEventForm
+}
+
+// previewFieldResult 让「渲染成功的正文」与「模板报错」在类型上可区分。
+//
+// 改之前两者同为 string，前端把报错当正文渲染：Go 模板错误里的 <.Foo> 片段会被
+// dompurify 当非法标签剥掉，用户看到的是一段被截断且看不出是错误的文本。
+type previewFieldResult struct {
+	Content string `json:"content"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+// buildTemplatePreviewMockEvent 构造用于模板预览的内置模拟事件，不落库。
+// 与通知规则测试、工作流试跑共用 newMockEvent 骨架。
+func buildTemplatePreviewMockEvent(lang string, f MockEventForm) *models.AlertCurEvent {
+	return newMockEvent(mockEventSpec{
+		RuleName:     i18n.Sprintf(lang, "Message template preview mock event"),
+		RuleNote:     i18n.Sprintf(lang, "This is a mock event used by message template preview, it is not persisted"),
+		Hash:         "message-template-preview-mock-event",
+		Severity:     f.MockSeverity,
+		IsRecovered:  f.MockIsRecovered,
+		PromQL:       "cpu_usage_active > 80",
+		TriggerValue: "81.5",
+		ExtraTags:    []string{"ident=mock-host-01", "source=message-template-preview"},
+	})
 }
 
 func (rt *Router) eventsMessage(c *gin.Context) {
 	var req evtMsgReq
 	ginx.BindJSON(c, &req)
 
-	hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, req.EventIds)
-	ginx.Dangerous(err)
+	var events []*models.AlertCurEvent
+	if req.UseMockEvent {
+		// 全新环境没有任何历史事件，此前预览必然报 event not found，
+		// 导致「建完模板想看看效果」这条路直接断掉。
+		events = []*models.AlertCurEvent{buildTemplatePreviewMockEvent(c.GetHeader("X-Language"), req.MockEventForm)}
+	} else {
+		hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, req.EventIds)
+		ginx.Dangerous(err)
 
-	if len(hisEvents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "event not found")
-	}
+		if len(hisEvents) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "event_ids or use_mock_event required")
+		}
 
-	ginx.Dangerous(err)
-	events := make([]*models.AlertCurEvent, len(hisEvents))
-	for i, he := range hisEvents {
-		events[i] = he.ToCur()
+		events = make([]*models.AlertCurEvent, len(hisEvents))
+		for i, he := range hisEvents {
+			events[i] = he.ToCur()
+			events[i].SetTagsMap()
+		}
 	}
 
 	renderData := make(map[string]interface{})
 	renderData["events"] = events
+	// 与 MessageTemplate.RenderEvent 对齐：缺了这个键会让模板里的 {{$.domain}} 预览恒为空
+	// （内置模板全都用它拼事件详情链接），而真正发出去的消息里是有值的，预览与实际不一致。
+	renderData["domain"] = resolveSiteUrl(rt.Ctx)
+
 	defs := models.GetDefs(renderData)
-	ret := make(map[string]string, len(req.Tpl.Content))
+	ret := make(map[string]previewFieldResult, len(req.Tpl.Content))
 	for k, v := range req.Tpl.Content {
 		text := strings.Join(append(defs, v), "")
 		tpl, err := template.New(k).Funcs(tplx.TemplateFuncMap).Parse(text)
 		if err != nil {
-			ret[k] = err.Error()
+			ret[k] = previewFieldResult{Success: false, Message: err.Error()}
 			continue
 		}
 
 		var buf bytes.Buffer
-		err = tpl.Execute(&buf, renderData)
-		if err != nil {
-			ret[k] = err.Error()
+		if err = tpl.Execute(&buf, renderData); err != nil {
+			ret[k] = previewFieldResult{Success: false, Message: err.Error()}
 			continue
 		}
 
-		ret[k] = buf.String()
+		ret[k] = previewFieldResult{Success: true, Content: buf.String()}
 	}
 	ginx.NewRender(c).Data(ret, nil)
 }

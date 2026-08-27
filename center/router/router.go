@@ -32,6 +32,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
 	"gorm.io/gorm"
 
@@ -60,6 +61,13 @@ type Router struct {
 	UserTokenCache    *memsto.UserTokenCacheType
 	Ctx               *ctx.Context
 	LogDir            string
+
+	// Pushgw is this deployment's forwarding config. It is only read to answer
+	// "which datasource do host metrics end up in" (categrafMeta), so it is set
+	// after New() rather than taken as a parameter — an embedder that never
+	// sets it just gets an empty writer list and the UI falls back to letting
+	// the user pick the datasource.
+	Pushgw pconf.Pushgw
 
 	// Sandbox is the Skill script-execution isolation controller (pkg/sandbox).
 	// Built once at New() from the configured capabilities; nil-safe (a disabled
@@ -222,7 +230,9 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 		suffix := arr[len(arr)-1]
 
 		switch suffix {
-		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "md":
+		// 前端发布包里出现的静态资源后缀都要列在这里，否则会被当成前端路由返回 index.html。
+		// 新增前端资源类型（如 n9e-collect-templates/*.toml、字体 woff2）时记得同步补充
+		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "woff2", "md", "toml":
 			if !rt.Center.UseFileAssets {
 				c.FileFromFS(c.Request.URL.Path, *fs)
 			} else {
@@ -311,15 +321,20 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/log-query", rt.QueryLog)
 			pages.POST("/es-cluster-info", rt.ESClusterInfo)
 		} else {
-			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
-			pages.POST("/v2/query-batch", rt.auth(), rt.user(), rt.queryBatchV2)
-			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
-			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
-			pages.GET("/datasource/brief", rt.auth(), rt.user(), rt.datasourceBriefs)
+			// proxy 也纳入分享 token 通道：dsProxy 内部按板内集合校验数据源，并只放行
+			// 只读查询路径（见 router_board_share.go isReadOnlyProxyPath），供 ES 面板与
+			// query 类型变量在匿名分享下取数；非 token 请求照常登录鉴权
+			pages.Any("/proxy/:id/*url", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.dsProxy)
+			// 仪表盘限时分享：带有效 board 分享 token 的匿名请求可走以下查询接口，
+			// 数据源被收敛到板内引用集合（见 router_board_share.go），其余照常登录鉴权
+			pages.POST("/v2/query-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.queryBatchV2)
+			pages.POST("/query-range-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.promBatchQueryRange)
+			pages.POST("/query-instant-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.promBatchQueryInstant)
+			pages.GET("/datasource/brief", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.datasourceBriefs)
 			pages.POST("/datasource/query", rt.auth(), rt.user(), rt.datasourceQuery)
 
-			pages.POST("/ds-query", rt.auth(), rt.user(), rt.QueryData)
-			pages.POST("/logs-query", rt.auth(), rt.user(), rt.QueryLogV2)
+			pages.POST("/ds-query", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.QueryData)
+			pages.POST("/logs-query", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.QueryLogV2)
 
 			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
@@ -335,7 +350,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/loki-parsed-fields", rt.auth(), rt.user(), rt.QueryLokiParsedFields)
 			pages.POST("/loki-histogram", rt.auth(), rt.user(), rt.QueryLokiHistogram)
 
-			pages.POST("/log-query-batch", rt.auth(), rt.user(), rt.QueryLogBatch)
+			pages.POST("/log-query-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.QueryLogBatch)
 
 			// 数据库元数据接口
 			pages.POST("/db-databases", rt.auth(), rt.user(), rt.ShowDatabases)
@@ -467,6 +482,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		// public software. Same posture as /pub and /site-info.
 		pages.GET("/agents/categraf/meta", rt.categrafMeta)
 		pages.GET("/agents/categraf/install.sh", rt.categrafInstallScript)
+		pages.GET("/agents/categraf/collect.sh", rt.categrafCollectScript)
 		pages.GET("/agents/categraf/download", rt.categrafDownload)
 
 		// pages.GET("/builtin-boards", rt.builtinBoardGets)
@@ -553,9 +569,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 		pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
+		pages.GET("/notification-records/used", rt.auth(), rt.user(), rt.notificationRecordUsed)
 		pages.GET("/event-detail/:hash", rt.eventDetailPage)
+		pages.GET("/event-detail/:hash/logs", rt.auth(), rt.user(), rt.eventDetailJSON)
 		pages.GET("/alert-eval-detail/:id", rt.alertEvalDetailPage)
+		pages.GET("/alert-eval-detail/:id/logs", rt.auth(), rt.user(), rt.alertEvalDetailJSON)
+		pages.GET("/alert-rule/:arid/eval-records", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleEvalRecords)
 		pages.GET("/trace-logs/:traceid", rt.traceLogsPage)
+		pages.GET("/trace-logs/:traceid/logs", rt.auth(), rt.user(), rt.traceLogsJSON)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
@@ -591,9 +612,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
 		pages.POST("/datasource/plugin/list", rt.auth(), rt.pluginList)
 		pages.POST("/datasource/upsert", rt.auth(), rt.admin(), rt.datasourceUpsert)
+		pages.POST("/datasource/grafana/fetch", rt.auth(), rt.admin(), rt.datasourceGrafanaFetch)
+		pages.POST("/datasource/grafana/import", rt.auth(), rt.admin(), rt.datasourceGrafanaImport)
 		pages.POST("/datasource/desc", rt.auth(), rt.admin(), rt.datasourceGet)
 		pages.POST("/datasource/status/update", rt.auth(), rt.admin(), rt.datasourceUpdataStatus)
 		pages.DELETE("/datasource/", rt.auth(), rt.admin(), rt.datasourceDel)
+		// 模板匹配是只读探测，普通用户可用；导入动作的权限由业务组/payload 接口各自把关
+		pages.POST("/datasource/template-match", rt.auth(), rt.user(), rt.datasourceTemplateMatch)
 
 		pages.GET("/roles", rt.auth(), rt.user(), rt.roleGets)
 		pages.POST("/roles", rt.auth(), rt.user(), rt.perm("/roles/add"), rt.roleAdd)
@@ -688,6 +713,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		// AI Assistant Chat
 		pages.POST("/assistant/chat/new", rt.auth(), rt.user(), rt.assistantChatNew)
 		pages.GET("/assistant/chat/history", rt.auth(), rt.user(), rt.assistantChatHistory)
+		pages.POST("/assistant/chat/rename", rt.auth(), rt.user(), rt.assistantChatRename)
 		pages.DELETE("/assistant/chat/:chatId", rt.auth(), rt.user(), rt.assistantChatDel)
 
 		// AI Assistant Message
@@ -701,6 +727,8 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		// source token 相关路由
 		pages.POST("/source-token", rt.auth(), rt.user(), rt.sourceTokenAdd)
+		pages.GET("/source-tokens", rt.auth(), rt.user(), rt.sourceTokenGets)
+		pages.DELETE("/source-token/:id", rt.auth(), rt.user(), rt.sourceTokenDel)
 
 		// for admin api
 		pages.GET("/user/busi-groups", rt.auth(), rt.admin(), rt.userBusiGroupsGets)
@@ -740,6 +768,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/event-pipelines", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.eventPipelinesList)
 		pages.POST("/event-pipeline", rt.auth(), rt.user(), rt.perm("/event-pipelines/add"), rt.addEventPipeline)
 		pages.PUT("/event-pipeline", rt.auth(), rt.user(), rt.perm("/event-pipelines/put"), rt.updateEventPipeline)
+		pages.PUT("/event-pipelines/disabled", rt.auth(), rt.user(), rt.perm("/event-pipelines/put"), rt.updateEventPipelinesDisabled)
 		pages.GET("/event-pipeline/:id", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipeline)
 		pages.DELETE("/event-pipelines", rt.auth(), rt.user(), rt.perm("/event-pipelines/del"), rt.deleteEventPipelines)
 		pages.POST("/event-pipeline-tryrun", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.tryRunEventPipeline)
@@ -770,6 +799,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		// pages.POST("/dingtalk-group-list/:id", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.dingtalkGroupsGetByNotifyChannel)
 		pages.GET("/pagerduty-integration-key/:id/:service_id/:integration_id", rt.auth(), rt.user(), rt.pagerDutyIntegrationKeyGet)
 		pages.GET("/pagerduty-service-list/:id", rt.auth(), rt.user(), rt.pagerDutyNotifyServicesGet)
+		// 复用 /notification-channels/add 权限而不新增权限串：权限只定义在 cconf.builtInOps，
+		// 未进任何 SQL seed，新增串会导致所有存量部署必须手工授权后功能才可用。
+		pages.POST("/notify-channel-config/test", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelConfigTest)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)
 		pages.GET("/notify-channel-config/idents", rt.auth(), rt.user(), rt.notifyChannelIdentsGet)
 
@@ -921,6 +953,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			// AI Assistant (for external service, reuses frontend handlers via serviceUser middleware)
 			service.POST("/assistant/chat/new", rt.serviceUser(), rt.assistantChatNew)
 			service.GET("/assistant/chat/history", rt.serviceUser(), rt.assistantChatHistory)
+			service.POST("/assistant/chat/rename", rt.serviceUser(), rt.assistantChatRename)
 			service.DELETE("/assistant/chat/:chatId", rt.serviceUser(), rt.assistantChatDel)
 			service.POST("/assistant/message/new", rt.serviceUser(), rt.assistantMessageNew)
 			service.POST("/assistant/message/detail", rt.serviceUser(), rt.assistantMessageDetail)

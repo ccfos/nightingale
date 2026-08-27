@@ -1,0 +1,257 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "过滤条件下 CLOSE_WAIT 连接堆积",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "netstat_filter_tcp_close_wait \u003e 100",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=NetstatFilterCloseWaitHigh"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 laddr_port/raddr_ip 等过滤条件，执行 ss -tanp state close-wait '( sport = :\u003c端口\u003e )' 定位持有连接的进程；\n2) 执行 ls -l /proc/\u003cpid\u003e/fd | wc -l 与 cat /proc/\u003cpid\u003e/limits 对比，确认距离 fd 上限还有多少余量；\n3) CLOSE_WAIT 永远是应用侧 bug：检查代码里是否在异常分支漏掉了连接关闭，HTTP 客户端是否忘记读完并关闭 response body；\n4) 应急重启该进程可以释放，但必须同步修代码，否则一定会复发。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785210000000024000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "过滤条件下 SYN_RECV 连接堆积",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "netstat_filter_tcp_syn_recv \u003e 100",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=NetstatFilterSynRecvHigh"
+        ],
+        "annotations": {
+            "action": "1) 执行 ss -s 与 netstat -s | grep -i 'SYNs to LISTEN' 确认是否有 SYN 丢弃计数在增长；\n2) 是正常流量打满队列的，调大 net.ipv4.tcp_max_syn_backlog 与应用的 listen backlog，并确认 somaxconn 同步调大；\n3) 怀疑 SYN 洪水的开启 net.ipv4.tcp_syncookies=1，并从 ss -tan state syn-recv 里统计来源 IP 分布，在防火墙侧限流；\n4) 后端 accept 慢也会表现为 SYN_RECV 堆积，检查应用是否阻塞在 accept 循环里。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785210000000025000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "过滤条件下 TIME_WAIT 连接过多",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 3,
+        "severities": [
+            3
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "netstat_filter_tcp_time_wait \u003e 20000",
+                    "severity": 3
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=NetstatFilterTimeWaitHigh"
+        ],
+        "annotations": {
+            "action": "1) 执行 ss -tan state time-wait | wc -l 确认规模，并用 cat /proc/sys/net/ipv4/ip_local_port_range 看可用端口范围；\n2) 根因通常是短连接过多，优先在应用侧启用连接池与 HTTP Keep-Alive，这是唯一的治本手段；\n3) 内核侧可开启 net.ipv4.tcp_tw_reuse=1（仅对主动发起方有效），不要开启已废弃且在 NAT 环境下会丢包的 tcp_tw_recycle；\n4) 必要时调大 ip_local_port_range 与 net.ipv4.tcp_max_tw_buckets 缓解。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785210000000026000
+    }
+]
