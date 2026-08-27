@@ -1,6 +1,7 @@
 package ormx
 
 import (
+	"database/sql"
 	"fmt"
 	"net/url"
 	"strings"
@@ -21,10 +22,18 @@ import (
 // LENGTH_IN_CHAR 是建库期参数、事后不可改，开启该选项后无论客户建库时怎么选，列宽语义
 // 都与 MySQL 一致（N 个字符），也就不会因为列比现状窄而触发缩窄 ALTER。
 func dmDialector(dsn string) gorm.Dialector {
-	return dameng.New(dameng.Config{
+	cfg := dameng.Config{
 		DSN:                     dsn,
 		VarcharSizeIsCharLength: true,
-	})
+	}
+
+	// 自己开 *sql.DB 并包一层，用来容忍迁移库上多余的 SET IDENTITY_INSERT，
+	// 原因见 dm_identity.go。开不出来就退回让驱动自己用 DSN 连，错误由它报。
+	if sqlDB, err := sql.Open(dameng.DriverName, dsn); err == nil {
+		cfg.Conn = &dmIdentityInsertPool{sqlDB}
+	}
+
+	return dameng.New(cfg)
 }
 
 // splitDMSchema 从 DSN 中分离出 schema 名与去掉 schema 参数后的 DSN。
