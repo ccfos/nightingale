@@ -165,3 +165,5 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 
 ## 📜 License
 - [Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE)
+
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=3f539666-22f5-468d-914d-1e344945d3d8" />
