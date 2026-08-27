@@ -427,7 +427,7 @@ func ConfigsGetUserVariable(context *ctx.Context) ([]Configs, error) {
 func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
 	conf.External = ConfigExternal
 	conf.Id = 0
-	err := userVariableCheck(context, conf.Ckey, conf.Id)
+	err := userVariableCheck(context, conf.Ckey, conf.Id, "")
 	if err != nil {
 		return err
 	}
@@ -436,14 +436,16 @@ func ConfigsUserVariableInsert(context *ctx.Context, conf Configs) error {
 }
 
 func ConfigsUserVariableUpdate(context *ctx.Context, conf Configs) error {
-	err := userVariableCheck(context, conf.Ckey, conf.Id)
-	if err != nil {
-		return err
-	}
 	configOld, _ := ConfigGet(context, conf.Id)
 	if configOld == nil || configOld.External != ConfigExternal { //not valid id
 		return fmt.Errorf("not valid configs(id)")
 	}
+
+	err := userVariableCheck(context, conf.Ckey, conf.Id, configOld.Ckey)
+	if err != nil {
+		return err
+	}
+
 	return DB(context).Model(&Configs{Id: conf.Id}).Select(
 		"ckey", "cval", "note", "encrypted", "update_by", "update_at").Updates(conf).Error
 }
@@ -458,7 +460,9 @@ func isCStyleIdentifier(str string) bool {
 	return regex.MatchString(str)
 }
 
-func userVariableCheck(context *ctx.Context, ckey string, id int64) error {
+// oldCkey 是这条变量在库里的现有名字，新建时传空串。保留字只在名字真的发生变化时才校验，
+// 存量库里早于该校验写入的同名变量因此仍然能正常编辑其它字段。
+func userVariableCheck(context *ctx.Context, ckey string, id int64, oldCkey string) error {
 	var objs []*Configs
 	var err error
 	if !isCStyleIdentifier(ckey) {
@@ -474,9 +478,8 @@ func userVariableCheck(context *ctx.Context, ckey string, id int64) error {
 	}
 
 	// 通知媒介的模板上下文里这些是内置顶层 key，同名变量在渲染时会被内置值盖掉、
-	// 静默失效，所以新建时就拦下来。只在新建（id == 0）时校验：存量库里可能已经
-	// 有叫 event / params 的变量，升级后不该让它们连编辑都保存不了。
-	if id == 0 {
+	// 静默失效，所以取名时就拦下来。
+	if ckey != oldCkey {
 		for _, word := range TplReservedKeys {
 			if ckey == word {
 				return fmt.Errorf("invalid key(%q), reserved words, please use other key", ckey)
