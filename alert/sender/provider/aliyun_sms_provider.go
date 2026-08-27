@@ -73,18 +73,8 @@ func (p *AliyunSmsProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfig
 		return "", fmt.Errorf("events is empty")
 	}
 
-	// MessageTemplate
-	fullTpl := make(map[string]interface{})
-
-	fullTpl["sendtos"] = sendtos // 发送对象
-	fullTpl["params"] = params   // 自定义参数
-	fullTpl["tpl"] = tpl
-	fullTpl["events"] = events
-	fullTpl["event"] = events[0]
-
-	if len(sendtos) > 0 {
-		fullTpl["sendto"] = sendtos[0]
-	}
+	// MessageTemplate + 变量配置
+	fullTpl := buildNotifyTplData(events, tpl, params, sendtos)
 
 	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
 	body, err := parseRequestBody(httpConfig, fullTpl)
@@ -95,7 +85,8 @@ func (p *AliyunSmsProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfig
 
 	// 替换 URL Header Parameters 中的变量
 	url, headers, parameters := replaceVariables(httpConfig, fullTpl)
-	logger.Infof("url: %v, headers: %v, parameters: %v", url, headers, parameters)
+	safeURL, safeHeaders, safeParams := redactForLog(httpConfig, fullTpl, url, headers, parameters)
+	logger.Infof("url: %v, headers: %v, parameters: %v", safeURL, safeHeaders, safeParams)
 
 	// 重试机制
 	var lastErrorMessage string
@@ -103,14 +94,14 @@ func (p *AliyunSmsProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfig
 		var resp *http.Response
 		req, err := p.makeHTTPRequest(httpConfig, url, headers, parameters, body)
 		if err != nil {
-			logger.Errorf("send_http: failed to create request. url=%s request_body=%s error=%v", url, string(body), err)
-			return fmt.Sprintf("failed to create request. error: %v", err), err
+			logger.Errorf("send_http: failed to create request. url=%s error=%v", safeURL, err)
+			return fmt.Sprintf("failed to create request. error: %s", redactErrMsg(err, url, safeURL)), err
 		}
 
 		resp, err = client.Do(req)
 		if err != nil {
-			logger.Errorf("send_http: failed to send http notify. url=%s request_body=%s error=%v", url, string(body), err)
-			lastErrorMessage = err.Error()
+			logger.Errorf("send_http: failed to send http notify. url=%s error=%v", safeURL, err)
+			lastErrorMessage = redactErrMsg(err, url, safeURL)
 			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Millisecond)
 			continue
 		}
@@ -120,7 +111,7 @@ func (p *AliyunSmsProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfig
 		body, err := io.ReadAll(resp.Body)
 		logger.Debugf("send http request: %+v, response: %+v, body: %+v", req, resp, string(body))
 		if err != nil {
-			logger.Errorf("send_http: failed to read response. url=%s request_body=%s error=%v", url, string(body), err)
+			logger.Errorf("send_http: failed to read response. url=%s error=%v", safeURL, err)
 		}
 		if resp.StatusCode == http.StatusOK {
 			return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), nil
