@@ -19,7 +19,17 @@ func (rt *Router) AppendLabels(pt *prompb.TimeSeries, target *models.Target, bgC
 		labelKeys[pt.Labels[j].Name] = j
 	}
 
-	for key, value := range target.TagsMap {
+	var targetLabels map[string]string
+	switch {
+	case rt.Pushgw.EnableTargetTagAppend && rt.Pushgw.EnableTargetHostTagAppend:
+		targetLabels = target.TagsMap
+	case rt.Pushgw.EnableTargetTagAppend:
+		targetLabels = target.UserTagsMap
+	case rt.Pushgw.EnableTargetHostTagAppend:
+		targetLabels = target.HostTagsMap
+	}
+
+	for key, value := range targetLabels {
 		if index, has := labelKeys[key]; has {
 			// e.g. busigroup=cloud
 			if _, has := labelKeys[rt.Pushgw.BusiGroupLabelKey]; has {
