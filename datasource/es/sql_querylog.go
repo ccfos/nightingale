@@ -18,11 +18,8 @@ type sqlQueryParam struct {
 // extractSQLRequest checks if queryParam contains a non-empty "sql" field.
 // If so, it returns the constructed XPackSQLRequest and true.
 func extractSQLRequest(queryParam interface{}) (*XPackSQLRequest, bool) {
-	var p sqlQueryParam
-	if err := mapstructure.Decode(queryParam, &p); err != nil {
-		return nil, false
-	}
-	if p.SQL == "" {
+	p, ok := decodeSQLQueryParam(queryParam)
+	if !ok {
 		return nil, false
 	}
 
@@ -32,6 +29,32 @@ func extractSQLRequest(queryParam interface{}) (*XPackSQLRequest, bool) {
 		To:                      p.End,
 		FieldMultiValueLeniency: true,
 	}, true
+}
+
+// IsSQLQueryLog reports whether QueryLog routes queryParam through the SQL
+// branch (and thus returns plain column→value row maps instead of SearchHit
+// objects). It shares decodeSQLQueryParam with extractSQLRequest, so callers
+// outside the plugin — e.g. the batch query v2 router, which must know the
+// shape of QueryLog's return value — cannot drift from the plugin's own
+// routing decision by re-parsing the payload themselves.
+func IsSQLQueryLog(queryParam interface{}) bool {
+	_, ok := decodeSQLQueryParam(queryParam)
+	return ok
+}
+
+// decodeSQLQueryParam is the single source of truth for the SQL branch
+// routing decision: mapstructure must decode the payload and "sql" must be
+// non-empty. A decode failure (e.g. a wrong-typed sql/index/start/end field)
+// means QueryLog falls back to the DSL path and returns SearchHits.
+func decodeSQLQueryParam(queryParam interface{}) (sqlQueryParam, bool) {
+	var p sqlQueryParam
+	if err := mapstructure.Decode(queryParam, &p); err != nil {
+		return p, false
+	}
+	if p.SQL == "" {
+		return p, false
+	}
+	return p, true
 }
 
 // queryLogViaSQL executes a SQL query and flattens the result into the
