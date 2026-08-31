@@ -1,7 +1,11 @@
 package router
 
 import (
+	"strconv"
 	"testing"
+	"time"
+
+	"github.com/ccfos/nightingale/v6/models"
 )
 
 // proxy 只读白名单：分享页所需的只读查询路径放行，写/管理端点与非只读方法拒绝
@@ -145,5 +149,97 @@ func TestCollectBoardDatasourceIds(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// 分享令牌的作用域判定：只有绑定本板的有效令牌才放行；绑别的板的有效令牌必须
+// Deny 而不是 Pass——否则 fall-through 到 boardGet 的 public 判定后，配了「匿名访问」
+// 的板会被任意一条有效分享链接顺带打开
+func TestJudgeBoardToken(t *testing.T) {
+	future := time.Now().Unix() + 3600
+	past := time.Now().Unix() - 3600
+
+	cases := []struct {
+		name    string
+		st      *models.SourceToken
+		boardId int64
+		want    boardTokenVerdict
+	}{
+		{
+			name:    "令牌查不到（不存在/已注销）→ 按无令牌处理",
+			st:      nil,
+			boardId: 89,
+			want:    boardTokenPass,
+		},
+		{
+			name:    "令牌已过期（即便绑的就是本板）→ 按无令牌处理，保持跳登录页的既有行为",
+			st:      &models.SourceToken{SourceId: "89", ExpireAt: past},
+			boardId: 89,
+			want:    boardTokenPass,
+		},
+		{
+			name:    "令牌已过期且绑别的板 → 仍按无令牌处理，不升级成拒绝",
+			st:      &models.SourceToken{SourceId: "89", ExpireAt: past},
+			boardId: 16,
+			want:    boardTokenPass,
+		},
+		{
+			name:    "有效令牌绑本板 → 放行",
+			st:      &models.SourceToken{SourceId: "89", ExpireAt: future},
+			boardId: 89,
+			want:    boardTokenAllow,
+		},
+		{
+			name:    "永不过期的令牌绑本板 → 放行（expire_at=0 表示不过期）",
+			st:      &models.SourceToken{SourceId: "89", ExpireAt: 0},
+			boardId: 89,
+			want:    boardTokenAllow,
+		},
+		{
+			name:    "有效令牌绑别的板 → 拒绝（本次修复的核心用例）",
+			st:      &models.SourceToken{SourceId: "89", ExpireAt: future},
+			boardId: 16,
+			want:    boardTokenDeny,
+		},
+		{
+			name:    "永不过期的令牌绑别的板 → 同样拒绝",
+			st:      &models.SourceToken{SourceId: "89", ExpireAt: 0},
+			boardId: 16,
+			want:    boardTokenDeny,
+		},
+		{
+			name:    "source_id 不是数字 → 按不匹配拒绝，不放行",
+			st:      &models.SourceToken{SourceId: "abc", ExpireAt: future},
+			boardId: 16,
+			want:    boardTokenDeny,
+		},
+		{
+			name:    "source_id 为空 → 按不匹配拒绝",
+			st:      &models.SourceToken{SourceId: "", ExpireAt: future},
+			boardId: 16,
+			want:    boardTokenDeny,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := judgeBoardToken(c.st, c.boardId); got != c.want {
+				t.Errorf("judgeBoardToken(%+v, %d) = %d, want %d", c.st, c.boardId, got, c.want)
+			}
+		})
+	}
+}
+
+// source_id 的存储形态由 sourceTokenAdd 用 strconv.FormatInt 规范化，判定侧按数值
+// 比对，两端对齐；这里钉住「规范化后的形态一定能被判定侧还原成同一个 id」
+func TestJudgeBoardTokenSourceIdRoundTrip(t *testing.T) {
+	for _, id := range []int64{1, 16, 89, 1 << 40} {
+		st := &models.SourceToken{SourceId: strconv.FormatInt(id, 10), ExpireAt: time.Now().Unix() + 3600}
+		if got := judgeBoardToken(st, id); got != boardTokenAllow {
+			t.Errorf("board id %d: got %d, want allow", id, got)
+		}
+		if got := judgeBoardToken(st, id+1); got != boardTokenDeny {
+			t.Errorf("board id %d vs %d: got %d, want deny", id, id+1, got)
+		}
 	}
 }

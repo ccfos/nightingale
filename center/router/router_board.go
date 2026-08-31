@@ -64,10 +64,26 @@ func (rt *Router) boardGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "No such dashboard")
 	}
 
-	// 限时分享令牌：有效则直接匿名返回（含 Configs）；无效不报错，
-	// 继续走 public/登录判定，保证登录用户带失效 token 也能正常访问
+	// 限时分享令牌：绑定本板的有效令牌直接匿名返回（含 Configs）。
+	//
+	// 令牌有效、但绑的是**别的板**属于横向越权，必须就地拒绝，不能 fall-through 到
+	// 下面的 public/登录判定——否则配了「匿名访问」(PublicCate=PublicAnonymous) 的板
+	// 会被任意一条有效分享链接顺带打开，令牌作用域从「一个板」放大成「全部匿名板」。
+	//
+	// 这里刻意返回 403 而不是 401：401 在前端的语义是「去重新认证」，拦截器会先刷新
+	// access_token 再重载同一个 URL，而本判定与登录态无关，重载后仍被拒，登录用户会
+	// 陷入无限刷新。
+	//
+	// 令牌不存在/已注销/已过期则不报错，继续走原有判定（行为与不带令牌完全一致），
+	// 保证过期链接仍跳登录页、登录用户带失效链接也能正常访问。
 	if token := ginx.QueryStr(c, "__token", ""); token != "" {
-		if ValidateSourceToken(rt.Ctx, models.SourceTypeBoard, fmt.Sprintf("%d", board.Id), token) {
+		st, err := models.GetSourceTokenByToken(rt.Ctx, models.SourceTypeBoard, token)
+		ginx.Dangerous(err)
+
+		switch judgeBoardToken(st, board.Id) {
+		case boardTokenDeny:
+			ginx.Bomb(http.StatusForbidden, "share link does not match this dashboard")
+		case boardTokenAllow:
 			ginx.NewRender(c).Data(board, nil)
 			return
 		}
