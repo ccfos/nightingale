@@ -13,6 +13,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// maxBoardTokenTTL 仪表盘分享令牌的有效期上限：99 年。
+//
+// 上限的意义不在于「99 年够不够用」，而在于堵住「事实上永不过期」——前端有效期
+// 输入框原先没有上限，填 999999999 年会算出 3e16 量级的 ExpireAt，IsExpired 永远
+// 为假，等于绕开了下面那条「不允许永不过期」的约束（顺带还会让前端 moment 把过期
+// 时间渲染成 Invalid date）。
+//
+// 与前端同口径按 365 天/年折算，另留一天容差：ExpireAt 由前端用自己的时钟算出，
+// 客户端时钟偏快时差值会略微超过上限，不该因此误拒。
+const maxBoardTokenTTL int64 = 99*365*24*3600 + 24*3600
+
 // sourceTokenAdd 生成新的源令牌
 func (rt *Router) sourceTokenAdd(c *gin.Context) {
 	var f models.SourceToken
@@ -38,6 +49,10 @@ func (rt *Router) sourceTokenAdd(c *gin.Context) {
 
 		if f.ExpireAt <= 0 {
 			ginx.Bomb(http.StatusBadRequest, "expire time is required")
+		}
+
+		if f.ExpireAt-time.Now().Unix() > maxBoardTokenTTL {
+			ginx.Bomb(http.StatusBadRequest, "expire time is too far in the future")
 		}
 
 		// 备注必填：一个板可能同时存在多条长期有效的分享链接，没有备注就无从
