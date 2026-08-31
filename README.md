@@ -23,7 +23,9 @@
   <img alt="GitHub contributors" src="https://img.shields.io/badge/join%20slack-%23n9e-brightgreen.svg"/></a>
 </p>
 
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=3f539666-22f5-468d-914d-1e344945d3d8" />
 
+![](https://gettrack.link/p/h7tXLNpu)
 
 [English](./README.md) | [中文](./README_zh.md)
 
@@ -165,7 +167,3 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 
 ## 📜 License
 - [Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE)
-
-<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=3f539666-22f5-468d-914d-1e344945d3d8" />
-
-![](https://gettrack.link/p/h7tXLNpu)
