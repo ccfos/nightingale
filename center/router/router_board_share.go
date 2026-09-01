@@ -49,6 +49,42 @@ func BoardTokenDetect(bctx *ctx.Context) gin.HandlerFunc {
 	}
 }
 
+// boardTokenVerdict 一条分享令牌对目标仪表盘的效力判定
+type boardTokenVerdict int
+
+const (
+	// boardTokenPass 令牌不存在/已注销/已过期：按「没带令牌」处理，继续走原有的
+	// public/登录判定，行为与不带令牌完全一致（过期链接仍跳登录页，登录用户带失效
+	// 链接也能正常访问）
+	boardTokenPass boardTokenVerdict = iota
+	// boardTokenAllow 令牌绑定的正是目标板：匿名放行
+	boardTokenAllow
+	// boardTokenDeny 令牌有效、但绑的是别的板：横向越权，就地拒绝
+	boardTokenDeny
+)
+
+// judgeBoardToken 判定分享令牌 st 对 boardId 的效力。
+//
+// 关键在于 Deny 与 Pass 必须分开：令牌有效但绑别的板时若也当 Pass 处理、fall-through
+// 到 public/登录判定，配了「匿名访问」(PublicCate=PublicAnonymous) 的板就会被任意一条
+// 有效分享链接顺带打开，令牌作用域从「一个板」放大成「全部匿名板」。
+//
+// 抽成纯函数是为了让这条安全边界可单测——boardGet 本身要打库，覆盖不到。
+func judgeBoardToken(st *models.SourceToken, boardId int64) boardTokenVerdict {
+	if st == nil || st.IsExpired() {
+		return boardTokenPass
+	}
+
+	// source_id 在签发时已规范化为十进制 board id（见 sourceTokenAdd），这里按数值
+	// 比对而非字符串，避免存量形态差异造成误判；解析不出来一律按不匹配处理
+	sid, err := strconv.ParseInt(st.SourceId, 10, 64)
+	if err != nil || sid != boardId {
+		return boardTokenDeny
+	}
+
+	return boardTokenAllow
+}
+
 func (rt *Router) boardTokenDetect() gin.HandlerFunc {
 	return BoardTokenDetect(rt.Ctx)
 }
