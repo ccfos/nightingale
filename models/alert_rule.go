@@ -160,6 +160,46 @@ func (v VarConfig) MarshalJSON() ([]byte, error) {
 	return json.Marshal(Alias(v))
 }
 
+// ruleConfigArrayKeys 是 rule_config 里语义上是数组的 key。
+// v8.x 的类型化 marshal（老式 prom_ql 入参、Prom YAML 导入、v5 升 v6）会把这些 key 写成 null 落库，
+// 前端编辑页拿到后原样回传，null 就一直留在库里；API 消费方对 null 和 [] 的处理往往不同。
+// 对象类型的 key（如 child_var_configs）不在名单里：null 表示"没有下一层"，改成 {} 只会再套一层空。
+var ruleConfigArrayKeys = map[string]struct{}{
+	"queries":              {},
+	"triggers":             {},
+	"param_val":            {},
+	"joins":                {},
+	"on":                   {},
+	"task_tpls":            {},
+	"event_relabel_config": {},
+}
+
+// normalizeRuleConfigNulls 递归遍历 json.Unmarshal 到 interface{} 的 rule_config，
+// 把白名单 key 下的 null 改成空数组。只处理 map / slice，类型化结构体原样返回（它们自己的 MarshalJSON 已兜底）。
+// 就地修改并返回同一个值，方便链式赋值。
+func normalizeRuleConfigNulls(v interface{}) interface{} {
+	switch x := v.(type) {
+	case map[string]interface{}:
+		for k, val := range x {
+			if val == nil {
+				if _, ok := ruleConfigArrayKeys[k]; ok {
+					x[k] = []interface{}{}
+				}
+				continue
+			}
+			x[k] = normalizeRuleConfigNulls(val)
+		}
+		return x
+	case []interface{}:
+		for i := range x {
+			x[i] = normalizeRuleConfigNulls(x[i])
+		}
+		return x
+	default:
+		return v
+	}
+}
+
 // ParamQueryForFirst 同 ParamQuery，仅在第一层出现
 type ParamQueryForFirst struct {
 	Name      string      `json:"name"`
@@ -1142,6 +1182,8 @@ func (ar *AlertRule) FE2DB() error {
 
 	// json.Marshal  RuleConfigJson
 	if ar.RuleConfigJson != nil {
+		// 写侧顺手洗掉前端回传的 null，新落库的数据不再带 null（读侧 DB2FE 仍会兜底存量）
+		ar.RuleConfigJson = normalizeRuleConfigNulls(ar.RuleConfigJson)
 		b, err := json.Marshal(ar.RuleConfigJson)
 		if err != nil {
 			return fmt.Errorf("marshal rule_config err:%v", err)
@@ -1197,6 +1239,8 @@ func (ar *AlertRule) DB2FE() error {
 	json.Unmarshal([]byte(ar.RuleConfig), &ar.RuleConfigJson)
 	json.Unmarshal([]byte(ar.Annotations), &ar.AnnotationsJSON)
 	json.Unmarshal([]byte(ar.ExtraConfig), &ar.ExtraConfigJSON)
+	// 存量 rule_config 里的 null 数组（如 var_config.param_val）统一归成 []
+	ar.RuleConfigJson = normalizeRuleConfigNulls(ar.RuleConfigJson)
 
 	// 解析 RuleConfig 字段
 	// 空 rule_config 在老库里是存量数据（该列 text not null 无默认值），不是异常，直接跳过，
@@ -1229,6 +1273,28 @@ func (ar *AlertRule) DB2FE() error {
 	}
 
 	ar.FillSeverities()
+
+	// 数组 / map 字段对外统一返回 [] / {}，不返回 null：
+	// serializer:json 列为空、gorm:"-" 的派生字段没填、annotations 列为空串时这些字段都是 nil。
+	// Go 侧消费者（edge 同步、引擎）对 nil 和空切片的处理完全一致，只影响 JSON 形状。
+	if ar.DatasourceQueries == nil {
+		ar.DatasourceQueries = []DatasourceQuery{}
+	}
+	if ar.Severities == nil {
+		ar.Severities = []int{}
+	}
+	if ar.EventRelabelConfig == nil {
+		ar.EventRelabelConfig = []*pconf.RelabelConfig{}
+	}
+	if ar.NotifyGroupsObj == nil {
+		ar.NotifyGroupsObj = []UserGroup{}
+	}
+	if ar.PipelineConfigs == nil {
+		ar.PipelineConfigs = []PipelineConfig{}
+	}
+	if ar.AnnotationsJSON == nil {
+		ar.AnnotationsJSON = map[string]string{}
+	}
 
 	return nil
 }

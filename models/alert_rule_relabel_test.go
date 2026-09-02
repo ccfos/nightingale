@@ -75,7 +75,7 @@ func TestAlertRuleDB2FE_DropsUndecodableEventRelabelConfig(t *testing.T) {
 		t.Fatalf("DB2FE err: %v", err)
 	}
 
-	if ar.EventRelabelConfig != nil {
+	if len(ar.EventRelabelConfig) != 0 {
 		b, _ := json.Marshal(ar.EventRelabelConfig)
 		t.Fatalf("expected event_relabel_config to be dropped, got: %s", b)
 	}
@@ -180,7 +180,7 @@ func TestAlertRuleDB2FE_EmptyRuleConfig(t *testing.T) {
 		t.Fatalf("DB2FE err: %v", err)
 	}
 
-	if ar.EventRelabelConfig != nil {
-		t.Fatalf("expected nil event_relabel_config, got %v", ar.EventRelabelConfig)
+	if len(ar.EventRelabelConfig) != 0 {
+		t.Fatalf("expected empty event_relabel_config, got %v", ar.EventRelabelConfig)
 	}
 }
