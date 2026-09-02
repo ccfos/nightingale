@@ -1289,9 +1289,7 @@ func (ar *AlertRule) DB2FE() error {
 	if ar.NotifyGroupsObj == nil {
 		ar.NotifyGroupsObj = []UserGroup{}
 	}
-	if ar.PipelineConfigs == nil {
-		ar.PipelineConfigs = []PipelineConfig{}
-	}
+	// pipeline_configs 故意不归一：前端编辑页靠 null 触发默认工作流行，返回 [] 会让工作流区渲染成空且无法添加。
 	if ar.AnnotationsJSON == nil {
 		ar.AnnotationsJSON = map[string]string{}
 	}

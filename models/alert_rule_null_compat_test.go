@@ -30,7 +30,6 @@ func TestAlertRuleNullCompat_DB2FEEmptyFields(t *testing.T) {
 
 	m := alertRuleJSONFields(t, ar)
 	for _, key := range []string{
-		"pipeline_configs",
 		"datasource_queries",
 		"severities",
 		"event_relabel_config",
@@ -43,6 +42,10 @@ func TestAlertRuleNullCompat_DB2FEEmptyFields(t *testing.T) {
 	}
 	if got := string(m["annotations"]); got != "{}" {
 		t.Errorf("annotations = %s, want {}", got)
+	}
+	// pipeline_configs 故意保持 null，原因见 DB2FE 注释
+	if got := string(m["pipeline_configs"]); got != "null" {
+		t.Errorf("pipeline_configs = %s, want null", got)
 	}
 }
 
