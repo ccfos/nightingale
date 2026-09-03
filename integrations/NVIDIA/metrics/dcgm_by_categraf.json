@@ -1,0 +1,1104 @@
+[
+    {
+        "id": 1,
+        "uuid": 1719305153888541023,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "GPU利用率",
+        "unit": "%",
+        "note": "表示GPU利用率，即在一个周期时间内（1s或1/6s，根据GPU产品而定），一个或多个核函数处于Active的时间。该指标仅能够展示有核函数在用的GPU资源，但无法展示具体的使用情况。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_GPU_UTIL",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "GPU利用率",
+                "note": "表示GPU利用率，即在一个周期时间内（1s或1/6s，根据GPU产品而定），一个或多个核函数处于Active的时间。该指标仅能够展示有核函数在用的GPU资源，但无法展示具体的使用情况。"
+            },
+            {
+                "lang": "en_US",
+                "name": "GPU Utilization",
+                "note": "Indicates GPU utilization, which refers to the time that one or more kernel functions are in the Active state within a cycle (1s or 1/6s, depending on the GPU product). This metric can only show the GPU resources used by kernel functions, but cannot display the specific usage details."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 2,
+        "uuid": 1719305153888541024,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "内存带宽利用率",
+        "unit": "%",
+        "note": "表示内存带宽利用率。以英伟达GPU V100为例，其最大内存带宽为900 GB/sec，如果当前的内存带宽为450 GB/sec，则内存带宽利用率为50%。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_MEM_COPY_UTIL",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存带宽利用率",
+                "note": "表示内存带宽利用率。以英伟达GPU V100为例，其最大内存带宽为900 GB/sec，如果当前的内存带宽为450 GB/sec，则内存带宽利用率为50%。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Bandwidth Utilization",
+                "note": "Indicates memory bandwidth utilization. For example, the maximum memory bandwidth of NVIDIA GPU V100 is 900 GB/sec; if the current memory bandwidth is 450 GB/sec, the memory bandwidth utilization is 50%."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 3,
+        "uuid": 1719305153888541025,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "编码器利用率",
+        "unit": "%",
+        "note": "表示编码器利用率。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_ENC_UTIL",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "编码器利用率",
+                "note": "表示编码器利用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Encoder Utilization",
+                "note": "Indicates encoder utilization."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 4,
+        "uuid": 1719305153888541026,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "解码器利用率",
+        "unit": "%",
+        "note": "表示解码器利用率。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_DEC_UTIL",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "解码器利用率",
+                "note": "表示解码器利用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Decoder Utilization",
+                "note": "Indicates decoder utilization."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 5,
+        "uuid": 1719305153888541027,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "帧缓存剩余数",
+        "unit": "MiB",
+        "note": "表示帧缓存（Framebuffer Memory）剩余数。说明：帧缓存一般也被称为显存。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_FB_FREE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "帧缓存剩余数",
+                "note": "表示帧缓存（Framebuffer Memory）剩余数。说明：帧缓存一般也被称为显存。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Free Framebuffer Memory",
+                "note": "Indicates the free amount of Framebuffer Memory. Note: Framebuffer Memory is generally also referred to as video memory."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 6,
+        "uuid": 1719305153888541028,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "帧缓存已使用数",
+        "unit": "MiB",
+        "note": "表示帧缓存已使用数。该值与nvidia-smi命令中Memory-Usage的已使用值对应。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_FB_USED",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "帧缓存已使用数",
+                "note": "表示帧缓存已使用数。该值与nvidia-smi命令中Memory-Usage的已使用值对应。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Used Framebuffer Memory",
+                "note": "Indicates the used amount of Framebuffer Memory. This value corresponds to the used value of Memory-Usage in the nvidia-smi command."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 7,
+        "uuid": 1719305153888541029,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "图形/计算引擎活跃时间占比",
+        "unit": "%",
+        "note": "表示在一个时间间隔内，Graphics或Compute引擎处于Active的时间占比。该值表示所有Graphics和Compute引擎的平均值。Graphics或Compute引擎处于Active是指Graphics或Compute Context绑定到线程，并且Graphics或Compute Context处于Busy状态。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_GR_ENGINE_ACTIVE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "图形/计算引擎活跃时间占比",
+                "note": "表示在一个时间间隔内，Graphics或Compute引擎处于Active的时间占比。该值表示所有Graphics和Compute引擎的平均值。Graphics或Compute引擎处于Active是指Graphics或Compute Context绑定到线程，并且Graphics或Compute Context处于Busy状态。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Graphics/Compute Engine Active Time Ratio",
+                "note": "Indicates the proportion of time that the Graphics or Compute engine is in the Active state within a time interval. This value represents the average of all Graphics and Compute engines. A Graphics or Compute engine is in the Active state when the Graphics or Compute Context is bound to a thread and the Graphics or Compute Context is in the Busy state."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 8,
+        "uuid": 1719305153888541030,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "SM活跃时间占比",
+        "unit": "%",
+        "note": "表示在一个时间间隔内，至少一个线程束在一个SM（Streaming Multiprocessor）上处于Active的时间占比。该值表示所有SM的平均值，且该值对每个块的线程数不敏感。线程束处于Active是指一个线程束被调度且分配资源后的状态，可能是在Computing、也可能是非Computing状态（例如等待内存请求）。该值小于0.5表示未高效利用GPU，大于0.8是必要的。假设一个GPU有N个SM：一个核函数在整个时间间隔内使用N个线程块运行在所有的SM上，此时该值为1（100%）。一个核函数在一个时间间隔内运行N/5个线程块，此时该值为0.2。一个核函数使用N个线程块，在一个时间间隔内，仅运行了1/5个周期的时间，此时该值为0.2。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_SM_ACTIVE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "SM活跃时间占比",
+                "note": "表示在一个时间间隔内，至少一个线程束在一个SM（Streaming Multiprocessor）上处于Active的时间占比。该值表示所有SM的平均值，且该值对每个块的线程数不敏感。线程束处于Active是指一个线程束被调度且分配资源后的状态，可能是在Computing、也可能是非Computing状态（例如等待内存请求）。该值小于0.5表示未高效利用GPU，大于0.8是必要的。假设一个GPU有N个SM：一个核函数在整个时间间隔内使用N个线程块运行在所有的SM上，此时该值为1（100%）。一个核函数在一个时间间隔内运行N/5个线程块，此时该值为0.2。一个核函数使用N个线程块，在一个时间间隔内，仅运行了1/5个周期的时间，此时该值为0.2。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SM Active Time Ratio",
+                "note": "Indicates the proportion of time that at least one warp is in the Active state on a Streaming Multiprocessor (SM) within a time interval. This value represents the average of all SMs and is not sensitive to the number of threads per block. A warp is in the Active state when it is scheduled and allocated resources, which may be in the Computing state or non-Computing state (e.g., waiting for a memory request). A value less than 0.5 indicates inefficient GPU utilization, and a value greater than 0.8 is necessary. Assume a GPU has N SMs: if a kernel function runs N thread blocks on all SMs for the entire time interval, the value is 1 (100%). If a kernel function runs N/5 thread blocks within a time interval, the value is 0.2. If a kernel function uses N thread blocks but only runs for 1/5 of the cycle within a time interval, the value is 0.2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 9,
+        "uuid": 1719305153888541031,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "SM线程束占用率",
+        "unit": "%",
+        "note": "表示在一个时间间隔内，驻留在SM上的线程束与该SM最大可驻留线程束的比例。该值表示一个时间间隔内的所有SM的平均值。占用率越高不代表GPU使用率越高。只有在GPU内存带宽受限的工作负载（DCGM_FI_PROF_DRAM_ACTIVE）情况下，更高的占用率表示更有效的GPU使用率。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_SM_OCCUPANCY",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "SM线程束占用率",
+                "note": "表示在一个时间间隔内，驻留在SM上的线程束与该SM最大可驻留线程束的比例。该值表示一个时间间隔内的所有SM的平均值。占用率越高不代表GPU使用率越高。只有在GPU内存带宽受限的工作负载（DCGM_FI_PROF_DRAM_ACTIVE）情况下，更高的占用率表示更有效的GPU使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SM Warp Occupancy",
+                "note": "Indicates the ratio of warps resident on an SM to the maximum number of warps that can reside on the SM within a time interval. This value represents the average of all SMs over a time interval. A higher occupancy does not mean a higher GPU utilization rate. Only in the case of workloads limited by GPU memory bandwidth (DCGM_FI_PROF_DRAM_ACTIVE), a higher occupancy indicates a more effective GPU utilization rate."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 10,
+        "uuid": 1719305153888541032,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "Tensor管道活跃周期占比",
+        "unit": "%",
+        "note": "表示Tensor（HMMA/IMMA） Pipe处于Active状态的周期分数。该值表示一个时间间隔内的平均值，而不是瞬时值。较高的值表示Tensor Cores的利用率较高。该值为1（100%）表示在整个时间间隔内每隔一个指令周期发出一个Tensor指令（两个周期完成一条指令）。假设该值为0.2（20%），可能有如下情况：在整个时间间隔内，有20%的SM的Tensor Core以100%的利用率运行。在整个时间间隔内，有100%的SM的Tensor Core以20%的利用率运行。在整个时间间隔的1/5时间内，有100%的SM上的Tensor Core以100%利用率运行。其他组合模式。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_PIPE_TENSOR_ACTIVE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Tensor管道活跃周期占比",
+                "note": "表示Tensor（HMMA/IMMA） Pipe处于Active状态的周期分数。该值表示一个时间间隔内的平均值，而不是瞬时值。较高的值表示Tensor Cores的利用率较高。该值为1（100%）表示在整个时间间隔内每隔一个指令周期发出一个Tensor指令（两个周期完成一条指令）。假设该值为0.2（20%），可能有如下情况：在整个时间间隔内，有20%的SM的Tensor Core以100%的利用率运行。在整个时间间隔内，有100%的SM的Tensor Core以20%的利用率运行。在整个时间间隔的1/5时间内，有100%的SM上的Tensor Core以100%利用率运行。其他组合模式。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Tensor Pipe Active Cycle Ratio",
+                "note": "Indicates the fraction of cycles that the Tensor (HMMA/IMMA) Pipe is in the Active state. This value represents the average over a time interval, not an instantaneous value. A higher value indicates higher utilization of Tensor Cores. A value of 1 (100%) means a Tensor instruction is issued every other instruction cycle throughout the time interval (one instruction is completed in two cycles). Assuming the value is 0.2 (20%), possible scenarios include: 20% of the SMs' Tensor Cores run at 100% utilization throughout the time interval; 100% of the SMs' Tensor Cores run at 20% utilization throughout the time interval; 100% of the SMs' Tensor Cores run at 100% utilization for 1/5 of the time interval; other combination modes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 11,
+        "uuid": 1719305153888541033,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "FP64管道活跃周期占比",
+        "unit": "%",
+        "note": "表示FP64（双精度）Pipe处于Active状态的周期分数。该值表示一个时间间隔内的平均值，而不是瞬时值。较高的值代表FP64 Cores有较高的利用率。该值为 1（100%）表示在整个时间间隔内上每四个周期（以Volta类型卡为例）执行一次FP64指令。假设该值为0.2（20%），可能有如下情况：在整个时间间隔内，有20%的SM的FP64 Core以100%的利用率运行。在整个时间间隔内，有100%的SM的FP64 Core以20%的利用率运行。在整个时间间隔的1/5时间内，有100%的SM上的FP64 Core以100%利用率运行。其他组合模式。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_PIPE_FP64_ACTIVE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "FP64管道活跃周期占比",
+                "note": "表示FP64（双精度）Pipe处于Active状态的周期分数。该值表示一个时间间隔内的平均值，而不是瞬时值。较高的值代表FP64 Cores有较高的利用率。该值为 1（100%）表示在整个时间间隔内上每四个周期（以Volta类型卡为例）执行一次FP64指令。假设该值为0.2（20%），可能有如下情况：在整个时间间隔内，有20%的SM的FP64 Core以100%的利用率运行。在整个时间间隔内，有100%的SM的FP64 Core以20%的利用率运行。在整个时间间隔的1/5时间内，有100%的SM上的FP64 Core以100%利用率运行。其他组合模式。"
+            },
+            {
+                "lang": "en_US",
+                "name": "FP64 Pipe Active Cycle Ratio",
+                "note": "Indicates the fraction of cycles that the FP64 (Double Precision) Pipe is in the Active state. This value represents the average over a time interval, not an instantaneous value. A higher value indicates higher utilization of FP64 Cores. A value of 1 (100%) means an FP64 instruction is executed every four cycles (taking Volta-type cards as an example) throughout the time interval. Assuming the value is 0.2 (20%), possible scenarios include: 20% of the SMs' FP64 Cores run at 100% utilization throughout the time interval; 100% of the SMs' FP64 Cores run at 20% utilization throughout the time interval; 100% of the SMs' FP64 Cores run at 100% utilization for 1/5 of the time interval; other combination modes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 12,
+        "uuid": 1719305153888541034,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "FP32管道活跃周期占比",
+        "unit": "%",
+        "note": "表示乘加操作FMA（Fused Multiply-Add）管道处于Active的周期分数，乘加操作包括FP32（单精度）和整数。该值表示一个时间间隔内的平均值，而不是瞬时值。较高的值代表FP32 Cores有较高的利用率。该值为1（100%）表示在整个时间间隔内上每两个周期（Volta类型卡为例）执行一次FP32指令。假设该值为0.2（20%），可能有如下情况：在整个时间间隔内，有20%的SM的FP32 Core以100%的利用率运行。在整个时间间隔内，有100%的SM的FP32 Core以20%的利用率运行。在整个时间间隔的1/5时间内，有100%的SM上的FP32 Core以100%利用率运行。其他组合模式。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_PIPE_FP32_ACTIVE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "FP32管道活跃周期占比",
+                "note": "表示乘加操作FMA（Fused Multiply-Add）管道处于Active的周期分数，乘加操作包括FP32（单精度）和整数。该值表示一个时间间隔内的平均值，而不是瞬时值。较高的值代表FP32 Cores有较高的利用率。该值为1（100%）表示在整个时间间隔内上每两个周期（Volta类型卡为例）执行一次FP32指令。假设该值为0.2（20%），可能有如下情况：在整个时间间隔内，有20%的SM的FP32 Core以100%的利用率运行。在整个时间间隔内，有100%的SM的FP32 Core以20%的利用率运行。在整个时间间隔的1/5时间内，有100%的SM上的FP32 Core以100%利用率运行。其他组合模式。"
+            },
+            {
+                "lang": "en_US",
+                "name": "FP32 Pipe Active Cycle Ratio",
+                "note": "Indicates the fraction of cycles that the Fused Multiply-Add (FMA) pipe is in the Active state, where FMA operations include FP32 (Single Precision) and integers. This value represents the average over a time interval, not an instantaneous value. A higher value indicates higher utilization of FP32 Cores. A value of 1 (100%) means an FP32 instruction is executed every two cycles (taking Volta-type cards as an example) throughout the time interval. Assuming the value is 0.2 (20%), possible scenarios include: 20% of the SMs' FP32 Cores run at 100% utilization throughout the time interval; 100% of the SMs' FP32 Cores run at 20% utilization throughout the time interval; 100% of the SMs' FP32 Cores run at 100% utilization for 1/5 of the time interval; other combination modes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 13,
+        "uuid": 1719305153888541035,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "FP16管道活跃周期占比",
+        "unit": "%",
+        "note": "表示FP16（半精度）管道处于Active的周期分数。该值表示一个时间间隔内的平均值，而不是瞬时值。较高的值代表FP16 Cores有较高的利用率。该值为 1 (100%) 表示在整个时间间隔内上每两个周期（Volta类型卡为例）执行一次FP16指令。假设该值为0.2（20%），可能有如下情况：在整个时间间隔内，有20%的SM的FP16 Core以100%的利用率运行。在整个时间间隔内，有100%的SM的FP16 Core以20%的利用率运行。在整个时间间隔的1/5时间内，有100%的SM上的FP16 Core以100%利用率运行。其他组合模式。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_PIPE_FP16_ACTIVE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "FP16管道活跃周期占比",
+                "note": "表示FP16（半精度）管道处于Active的周期分数。该值表示一个时间间隔内的平均值，而不是瞬时值。较高的值代表FP16 Cores有较高的利用率。该值为 1 (100%) 表示在整个时间间隔内上每两个周期（Volta类型卡为例）执行一次FP16指令。假设该值为0.2（20%），可能有如下情况：在整个时间间隔内，有20%的SM的FP16 Core以100%的利用率运行。在整个时间间隔内，有100%的SM的FP16 Core以20%的利用率运行。在整个时间间隔的1/5时间内，有100%的SM上的FP16 Core以100%利用率运行。其他组合模式。"
+            },
+            {
+                "lang": "en_US",
+                "name": "FP16 Pipe Active Cycle Ratio",
+                "note": "Indicates the fraction of cycles that the FP16 (Half Precision) pipe is in the Active state. This value represents the average over a time interval, not an instantaneous value. A higher value indicates higher utilization of FP16 Cores. A value of 1 (100%) means an FP16 instruction is executed every two cycles (taking Volta-type cards as an example) throughout the time interval. Assuming the value is 0.2 (20%), possible scenarios include: 20% of the SMs' FP16 Cores run at 100% utilization throughout the time interval; 100% of the SMs' FP16 Cores run at 20% utilization throughout the time interval; 100% of the SMs' FP16 Cores run at 100% utilization for 1/5 of the time interval; other combination modes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 14,
+        "uuid": 1719305153888541036,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "DRAM活跃周期占比",
+        "unit": "%",
+        "note": "表示内存带宽利用率（Memory BW Utilization）将数据发送到设备内存或从设备内存接收数据的周期分数。该值表示时间间隔内的平均值，而不是瞬时值。较高的值表示设备内存的利用率较高。该值为1（100%）表示在整个时间间隔内的每个周期执行一条 DRAM 指令（实际上，峰值约为 0.8 (80%) 是可实现的最大值）。假设该值为0.2（20%），表示20%的周期在时间间隔内读取或写入设备内存。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_DRAM_ACTIVE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "DRAM活跃周期占比",
+                "note": "表示内存带宽利用率（Memory BW Utilization）将数据发送到设备内存或从设备内存接收数据的周期分数。该值表示时间间隔内的平均值，而不是瞬时值。较高的值表示设备内存的利用率较高。该值为1（100%）表示在整个时间间隔内的每个周期执行一条 DRAM 指令（实际上，峰值约为 0.8 (80%) 是可实现的最大值）。假设该值为0.2（20%），表示20%的周期在时间间隔内读取或写入设备内存。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DRAM Active Cycle Ratio",
+                "note": "Indicates the fraction of cycles for memory bandwidth utilization (Memory BW Utilization) to send data to or receive data from device memory. This value represents the average over a time interval, not an instantaneous value. A higher value indicates higher utilization of device memory. A value of 1 (100%) means a DRAM instruction is executed in each cycle throughout the time interval (in practice, a peak of about 0.8 (80%) is the maximum achievable value). Assuming the value is 0.2 (20%), it means 20% of the cycles are used to read or write device memory within the time interval."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 15,
+        "uuid": 1719305153888541037,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "PCIe发送数据速率",
+        "unit": "B/s",
+        "note": "表示通过PCIe总线传输的数据速率，包括协议标头和数据有效负载。该值表示一个时间间隔内的平均值，而不是瞬时值。该速率在时间间隔内平均。例如，在1秒内传输1 GB数据，则无论以恒定速率还是突发传输数据，速率都是1 GB/s。理论上的最大PCIe Gen3带宽为每通道985 MB/s。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_PCIE_TX_BYTES",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "PCIe发送数据速率",
+                "note": "表示通过PCIe总线传输的数据速率，包括协议标头和数据有效负载。该值表示一个时间间隔内的平均值，而不是瞬时值。该速率在时间间隔内平均。例如，在1秒内传输1 GB数据，则无论以恒定速率还是突发传输数据，速率都是1 GB/s。理论上的最大PCIe Gen3带宽为每通道985 MB/s。"
+            },
+            {
+                "lang": "en_US",
+                "name": "PCIe Transmit Data Rate",
+                "note": "Indicates the data rate transmitted over the PCIe bus, including protocol headers and data payloads. This value represents the average over a time interval, not an instantaneous value. The rate is averaged over the time interval. For example, if 1 GB of data is transmitted in 1 second, the rate is 1 GB/s regardless of whether the data is transmitted at a constant rate or in bursts. The theoretical maximum PCIe Gen3 bandwidth is 985 MB/s per lane."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 16,
+        "uuid": 1719305153888541038,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "PCIe接收数据速率",
+        "unit": "B/s",
+        "note": "表示通过PCIe总线接收的数据速率，包括协议标头和数据有效负载。该值表示一个时间间隔内的平均值，而不是瞬时值。该速率在时间间隔内平均。例如，在1秒内传输1 GB数据，则无论以恒定速率还是突发传输数据，速率都是1 GB/s。理论上的最大PCIe Gen3带宽为每通道985 MB/s。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_PCIE_RX_BYTES",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "PCIe接收数据速率",
+                "note": "表示通过PCIe总线接收的数据速率，包括协议标头和数据有效负载。该值表示一个时间间隔内的平均值，而不是瞬时值。该速率在时间间隔内平均。例如，在1秒内传输1 GB数据，则无论以恒定速率还是突发传输数据，速率都是1 GB/s。理论上的最大PCIe Gen3带宽为每通道985 MB/s。"
+            },
+            {
+                "lang": "en_US",
+                "name": "PCIe Receive Data Rate",
+                "note": "Indicates the data rate received over the PCIe bus, including protocol headers and data payloads. This value represents the average over a time interval, not an instantaneous value. The rate is averaged over the time interval. For example, if 1 GB of data is transmitted in 1 second, the rate is 1 GB/s regardless of whether the data is transmitted at a constant rate or in bursts. The theoretical maximum PCIe Gen3 bandwidth is 985 MB/s per lane."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 17,
+        "uuid": 1719305153888541039,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "NVLink接收数据速率",
+        "unit": "B/s",
+        "note": "表示通过NVLink传输的数据速率，不包括协议标头。该值表示一个时间间隔内的平均值，而不是瞬时值。该速率在时间间隔内平均。例如，在1秒内传输1 GB数据，则无论以恒定速率还是突发传输数据，速率都是1 GB/s。理论上，最大NVLink Gen2带宽为每个方向每个链路25 GB/s。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_NVLINK_RX_BYTES",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "NVLink接收数据速率",
+                "note": "表示通过NVLink传输的数据速率，不包括协议标头。该值表示一个时间间隔内的平均值，而不是瞬时值。该速率在时间间隔内平均。例如，在1秒内传输1 GB数据，则无论以恒定速率还是突发传输数据，速率都是1 GB/s。理论上，最大NVLink Gen2带宽为每个方向每个链路25 GB/s。"
+            },
+            {
+                "lang": "en_US",
+                "name": "NVLink Receive Data Rate",
+                "note": "Indicates the data rate received over NVLink, excluding protocol headers. This value represents the average over a time interval, not an instantaneous value. The rate is averaged over the time interval. For example, if 1 GB of data is transmitted in 1 second, the rate is 1 GB/s regardless of whether the data is transmitted at a constant rate or in bursts. Theoretically, the maximum NVLink Gen2 bandwidth is 25 GB/s per link in each direction."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 18,
+        "uuid": 1719305153888541040,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "NVLink发送数据速率",
+        "unit": "B/s",
+        "note": "表示通过NVLink接收的数据速率，不包括协议标头。该值表示一个时间间隔内的平均值，而不是瞬时值。该速率在时间间隔内平均。例如，在1秒内传输1 GB数据，则无论以恒定速率还是突发传输数据，速率都是1 GB/s。理论上，最大NVLink Gen2带宽为每个方向每个链路25 GB/s。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_PROF_NVLINK_TX_BYTES",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "NVLink发送数据速率",
+                "note": "表示通过NVLink接收的数据速率，不包括协议标头。该值表示一个时间间隔内的平均值，而不是瞬时值。该速率在时间间隔内平均。例如，在1秒内传输1 GB数据，则无论以恒定速率还是突发传输数据，速率都是1 GB/s。理论上，最大NVLink Gen2带宽为每个方向每个链路25 GB/s。"
+            },
+            {
+                "lang": "en_US",
+                "name": "NVLink Transmit Data Rate",
+                "note": "Indicates the data rate transmitted over NVLink, excluding protocol headers. This value represents the average over a time interval, not an instantaneous value. The rate is averaged over the time interval. For example, if 1 GB of data is transmitted in 1 second, the rate is 1 GB/s regardless of whether the data is transmitted at a constant rate or in bursts. Theoretically, the maximum NVLink Gen2 bandwidth is 25 GB/s per link in each direction."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 19,
+        "uuid": 1719305153888541041,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "SM时钟频率",
+        "unit": "MHz",
+        "note": "表示SM时钟频率。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_SM_CLOCK",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "SM时钟频率",
+                "note": "表示SM时钟频率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SM Clock Frequency",
+                "note": "Indicates the SM clock frequency."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 20,
+        "uuid": 1719305153888541042,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "内存时钟频率",
+        "unit": "MHz",
+        "note": "表示内存时钟频率。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_MEM_CLOCK",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存时钟频率",
+                "note": "表示内存时钟频率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Clock Frequency",
+                "note": "Indicates the memory clock frequency."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 21,
+        "uuid": 1719305153888541043,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "SM应用时钟频率",
+        "unit": "MHz",
+        "note": "表示SM应用时钟频率。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_APP_SM_CLOCK",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "SM应用时钟频率",
+                "note": "表示SM应用时钟频率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "SM Application Clock Frequency",
+                "note": "Indicates the SM application clock frequency."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 22,
+        "uuid": 1719305153888541044,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "内存应用时钟频率",
+        "unit": "MHz",
+        "note": "表示内存应用时钟频率。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_APP_MEM_CLOCK",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存应用时钟频率",
+                "note": "表示内存应用时钟频率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Application Clock Frequency",
+                "note": "Indicates the memory application clock frequency."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 23,
+        "uuid": 1719305153888541045,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "时钟降频原因",
+        "unit": "MHz",
+        "note": "表示时钟慢下来的原因。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_CLOCK_THROTTLE_REASONS",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "时钟降频原因",
+                "note": "表示时钟慢下来的原因。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Clock Throttle Reasons",
+                "note": "Indicates the reasons for the clock slowing down."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 24,
+        "uuid": 1719305153888541046,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "XID错误号",
+        "unit": "-",
+        "note": "表示一段时间内，最后发生的XID错误号。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_XID_ERRORS",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "XID错误号",
+                "note": "表示一段时间内，最后发生的XID错误号。"
+            },
+            {
+                "lang": "en_US",
+                "name": "XID Error Number",
+                "note": "Indicates the last XID error number that occurred over a period of time."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 25,
+        "uuid": 1719305153888541047,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "功率上限违规时长",
+        "unit": "μs",
+        "note": "表示因功率上限而导致的违规，该值为违规的时间。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_POWER_VIOLATION",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "功率上限违规时长",
+                "note": "表示因功率上限而导致的违规，该值为违规的时间。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Power Violation Duration",
+                "note": "Indicates violations caused by power caps, and this value is the duration of the violation."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 26,
+        "uuid": 1719305153888541048,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "热限制违规时长",
+        "unit": "μs",
+        "note": "表示由于热限制导致的违规，该值为违规的时间。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_THERMAL_VIOLATION",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "热限制违规时长",
+                "note": "表示由于热限制导致的违规，该值为违规的时间。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Thermal Violation Duration",
+                "note": "Indicates violations caused by thermal limits, and this value is the duration of the violation."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 27,
+        "uuid": 1719305153888541049,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "同步提升限制违规时长",
+        "unit": "μs",
+        "note": "表示由于同步提升限制而导致的违规，该值为违规的时间。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_SYNC_BOOST_VIOLATION",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "同步提升限制违规时长",
+                "note": "表示由于同步提升限制而导致的违规，该值为违规的时间。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Sync Boost Violation Duration",
+                "note": "Indicates violations caused by sync boost limits, and this value is the duration of the violation."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 28,
+        "uuid": 1719305153888541050,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "电路板限制违规时长",
+        "unit": "μs",
+        "note": "表示由于电路板限制而导致的违规，该值为违规的时间。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_BOARD_LIMIT_VIOLATION",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "电路板限制违规时长",
+                "note": "表示由于电路板限制而导致的违规，该值为违规的时间。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Board Limit Violation Duration",
+                "note": "Indicates violations caused by board limits, and this value is the duration of the violation."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 29,
+        "uuid": 1719305153888541051,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "低利用率限制违规时长",
+        "unit": "μs",
+        "note": "表示低利用率限制导致的违规，该值为违规的时间。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_LOW_UTIL_VIOLATION",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "低利用率限制违规时长",
+                "note": "表示低利用率限制导致的违规，该值为违规的时间。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Low Utilization Violation Duration",
+                "note": "Indicates violations caused by low utilization limits, and this value is the duration of the violation."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 30,
+        "uuid": 1719305153888541052,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "电路板可靠性限制违规时长",
+        "unit": "μs",
+        "note": "表示电路板可靠性限制导致违规，该值为违规的时间。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_RELIABILITY_VIOLATION",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "电路板可靠性限制违规时长",
+                "note": "表示电路板可靠性限制导致违规，该值为违规的时间。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Board Reliability Violation Duration",
+                "note": "Indicates violations caused by board reliability limits, and this value is the duration of the violation."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 31,
+        "uuid": 1719305153888541053,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "已使用的BAR1",
+        "unit": "MB",
+        "note": "表示已使用的BAR1。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_BAR1_USED",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已使用的BAR1",
+                "note": "表示已使用的BAR1。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Used BAR1 Memory",
+                "note": "Indicates the used amount of BAR1."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 32,
+        "uuid": 1719305153888541054,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "剩余的BAR1",
+        "unit": "MB",
+        "note": "表示剩余的BAR1。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_BAR1_FREE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "剩余的BAR1",
+                "note": "表示剩余的BAR1。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Free BAR1 Memory",
+                "note": "Indicates the free amount of BAR1."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 33,
+        "uuid": 1719305153888541055,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "内存温度",
+        "unit": "°C",
+        "note": "表示内存温度。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_MEMORY_TEMP",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存温度",
+                "note": "表示内存温度。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Memory Temperature",
+                "note": "Indicates the memory temperature."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 34,
+        "uuid": 1719305153888541056,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "GPU温度",
+        "unit": "°C",
+        "note": "表示GPU温度。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_GPU_TEMP",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "GPU温度",
+                "note": "表示GPU温度。"
+            },
+            {
+                "lang": "en_US",
+                "name": "GPU Temperature",
+                "note": "Indicates the GPU temperature."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 35,
+        "uuid": 1719305153888541057,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "GPU功率",
+        "unit": "W",
+        "note": "表示功率。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_POWER_USAGE",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "GPU功率",
+                "note": "表示功率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "GPU Power Usage",
+                "note": "Indicates the power consumption."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 36,
+        "uuid": 1719305153888541058,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "总能耗",
+        "unit": "J",
+        "note": "表示从驱动加载开始，已消耗的能量。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_TOTAL_ENERGY_CONSUMPTION",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "总能耗",
+                "note": "表示从驱动加载开始，已消耗的能量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Energy Consumption",
+                "note": "Indicates the total energy consumed since the driver was loaded."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 37,
+        "uuid": 1719305153888541059,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "单bit错误停用页面数",
+        "unit": "-",
+        "note": "表示由单bit错误而停用的页面。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_RETIRED_SBE",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "单bit错误停用页面数",
+                "note": "表示由单bit错误而停用的页面。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Retired Pages due to Single-bit Errors",
+                "note": "Indicates the pages retired due to single-bit errors."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 38,
+        "uuid": 1719305153888541060,
+        "collector": "dcgm_exporter",
+        "typ": "DCGM",
+        "name": "双bit错误停用页面数",
+        "unit": "-",
+        "note": "表示用双bit错误而停用的页面。",
+        "lang": "zh_CN",
+        "expression": "DCGM_FI_DEV_RETIRED_DBE",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "双bit错误停用页面数",
+                "note": "表示用双bit错误而停用的页面。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Retired Pages due to Double-bit Errors",
+                "note": "Indicates the pages retired due to double-bit errors."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

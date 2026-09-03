@@ -1,0 +1,16 @@
+{
+    "1) 先排除刚重启导致的缓存冷启动；\n2) 查 V$BUFFERPOOL 确认各缓冲池的命中率与大小；\n3) 调大 dm.ini 里的 BUFFER 参数（通常设为物理内存的一定比例）后重启生效；\n4) 同时排查是否有全表扫描的 SQL 把缓存冲掉，补索引消除。": "1) First rule out a cold cache after a restart;\n2) Query V$BUFFERPOOL for each buffer pool's hit ratio and size;\n3) Raise the BUFFER parameter in dm.ini (typically a set fraction of physical memory) and restart to apply;\n4) Also look for full-table-scan SQL flushing the cache and add indexes to eliminate it.",
+    "1) 查 V$LOCK 与 V$SESSIONS 关联，找出持锁最久的会话及其执行的 SQL；\n2) 确认是长事务未提交还是热点行更新冲突；\n3) 应急可对阻塞源头会话执行 SP_CLOSE_SESSION 释放锁；\n4) 根因侧缩短事务长度、统一加锁顺序，热点行考虑改为队列串行处理。": "1) Join V$LOCK with V$SESSIONS to find the session holding locks longest and the SQL it is running;\n2) Determine whether it is a long uncommitted transaction or hot-row update contention;\n3) As an emergency measure run SP_CLOSE_SESSION on the blocking session to release the locks;\n4) For the root cause, shorten transactions and enforce a consistent locking order; consider serialising hot-row updates through a queue.",
+    "1) 用达梦客户端手工执行一条简单查询确认响应速度；\n2) 查 V$SESSIONS 与 V$LOCK 看是否有大量会话堆积或锁等待；\n3) 确认采集账号的连接数配额与网络到数据库的延迟；\n4) 数据库确实繁忙则按慢查询路径排查，采集侧可适当拉长 interval 避免加重负担。": "1) Run a simple query by hand with the Dameng client to gauge the response time;\n2) Query V$SESSIONS and V$LOCK for a pile-up of sessions or lock waits;\n3) Check the collector account's connection quota and the network latency to the database;\n4) If the database really is busy, follow the slow-query path; on the collector side you can lengthen the interval so it does not add load.",
+    "1) 登录主机确认 dmserver 进程是否存活；\n2) 进程存活则用 disql 手工连一次，区分实例夯住与网络/账号问题；\n3) 进程不在则先看 dm_\u003c实例\u003e.log 日志尾部定位原因（磁盘满、内存不足、数据文件损坏）再拉起；\n4) 有主备的立即评估是否需要切换。": "1) Log in to the host and confirm the dmserver process is alive;\n2) If it is alive, connect by hand with disql to tell a hung instance from a network or account problem;\n3) If it is not running, read the tail of dm_\u003cinstance\u003e.log to identify the cause (full disk, insufficient memory, corrupted data files) before starting it;\n4) If a standby exists, immediately assess whether to fail over.",
+    "Dameng 指标采集耗时过长": "Dameng metric collection taking too long",
+    "Dameng 数据库down": "Dameng database down",
+    "Dameng 缓存命中率过低": "Dameng cache hit ratio too low",
+    "Dameng 锁等待线程数异常": "Dameng lock-waiting thread count abnormal",
+    "存在轻量级锁竞争，会导致SQL执行延迟": "Lightweight lock contention detected, which delays SQL execution",
+    "数据源": "Data Source",
+    "状态": "Status",
+    "缓存命中率低于95%会导致大量磁盘IO，性能下降": "Cache hit ratio below 95% causes heavy disk IO and degrades performance",
+    "达梦DB": "Dameng DB",
+    "采集耗时过长反映数据库响应慢，可能导致监控数据延迟": "Long collection time indicates a slow database response and may delay monitoring data"
+}

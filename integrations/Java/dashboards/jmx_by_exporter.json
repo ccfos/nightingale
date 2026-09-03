@@ -1,1513 +1,1495 @@
 {
-        "name": "JMX",
-        "tags": "Prometheus JMX",
-        "ident": "",
-        "uuid": 1755422214148000,
-        "configs": {
-            "panels": [
-                {
-                    "collapsed": true,
-                    "id": "a26c5c3d-7b60-4746-bd1f-ca95581cf2fd",
-                    "layout": {
-                        "h": 1,
-                        "i": "a26c5c3d-7b60-4746-bd1f-ca95581cf2fd",
-                        "w": 24,
-                        "x": 0,
-                        "y": 0
-                    },
-                    "name": "Basic Info",
-                    "type": "row"
+    "name": "JMX",
+    "tags": "Prometheus JMX",
+    "ident": "",
+    "uuid": 1760503245274000,
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "a26c5c3d-7b60-4746-bd1f-ca95581cf2fd",
+                "layout": {
+                    "h": 1,
+                    "i": "a26c5c3d-7b60-4746-bd1f-ca95581cf2fd",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
                 },
-                {
-                    "custom": {
-                        "calc": "lastNotNull",
-                        "colSpan": 1,
-                        "colorMode": "value",
-                        "textMode": "value",
-                        "textSize": {}
-                    },
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "id": "0721ee76-816b-469f-9c49-2bef94a9299e",
-                    "layout": {
-                        "h": 3,
-                        "i": "0721ee76-816b-469f-9c49-2bef94a9299e",
-                        "w": 6,
-                        "x": 0,
-                        "y": 1
-                    },
-                    "name": "Status",
-                    "options": {
-                        "standardOptions": {},
-                        "valueMappings": [
-                            {
-                                "match": {
-                                    "special": 1
-                                },
-                                "result": {
-                                    "color": "#1eac02",
-                                    "text": "UP"
-                                },
-                                "type": "special"
+                "name": "Basic Info",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "0721ee76-816b-469f-9c49-2bef94a9299e",
+                "layout": {
+                    "h": 3,
+                    "i": "0721ee76-816b-469f-9c49-2bef94a9299e",
+                    "w": 6,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "Status",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 1
                             },
+                            "result": {
+                                "color": "#1eac02",
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "#f00a0a",
+                                "text": "DOWN"
+                            },
+                            "type": "special"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "up{job=\"$job\", instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "a55c40fc-dc25-4d2a-8e99-928e02c5ff5d",
+                "layout": {
+                    "h": 3,
+                    "i": "a55c40fc-dc25-4d2a-8e99-928e02c5ff5d",
+                    "w": 6,
+                    "x": 6,
+                    "y": 1
+                },
+                "name": "Uptime",
+                "options": {
+                    "standardOptions": {
+                        "util": "humantimeSeconds"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "time() - process_start_time_seconds{job=\"$job\",instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "60c3389c-808d-4412-b74b-cb762e89a8ad",
+                "layout": {
+                    "h": 3,
+                    "i": "60c3389c-808d-4412-b74b-cb762e89a8ad",
+                    "w": 6,
+                    "x": 12,
+                    "y": 1
+                },
+                "name": "Available CPUs",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "os_available_processors{job=\"$job\",instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "1c9a8cca-3578-485e-837d-21618d383065",
+                "layout": {
+                    "h": 3,
+                    "i": "1c9a8cca-3578-485e-837d-21618d383065",
+                    "w": 6,
+                    "x": 18,
+                    "y": 1
+                },
+                "name": "Open file descriptors",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "os_open_file_descriptor_count{job=\"$job\",instance=\"$instance\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "705c90e0-e8b6-4f1c-b35c-c8a785009a20",
+                "layout": {
+                    "h": 1,
+                    "i": "705c90e0-e8b6-4f1c-b35c-c8a785009a20",
+                    "w": 24,
+                    "x": 0,
+                    "y": 4
+                },
+                "name": "JVM Memory",
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "5455e2f2-f6bb-4888-9d88-240d7e12cce2",
+                "layout": {
+                    "h": 7,
+                    "i": "5455e2f2-f6bb-4888-9d88-240d7e12cce2",
+                    "w": 12,
+                    "x": 0,
+                    "y": 5
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_used_bytes{area=\"heap\",job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "expr": "jvm_memory_bytes_max{area=\"heap\",job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max",
+                        "refId": "B",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "JVM Memory(heap)",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
                             {
-                                "match": {
-                                    "special": 0
-                                },
-                                "result": {
-                                    "color": "#f00a0a",
-                                    "text": "DOWN"
-                                },
-                                "type": "special"
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
                         ]
                     },
-                    "targets": [
-                        {
-                            "expr": "up{job=\"$job\", instance=\"$instance\"}",
-                            "refId": "A"
-                        }
-                    ],
-                    "type": "stat",
-                    "version": "2.0.0"
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "custom": {
-                        "calc": "lastNotNull",
-                        "colSpan": 1,
-                        "colorMode": "value",
-                        "textMode": "value",
-                        "textSize": {}
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "id": "a55c40fc-dc25-4d2a-8e99-928e02c5ff5d",
-                    "layout": {
-                        "h": 3,
-                        "i": "a55c40fc-dc25-4d2a-8e99-928e02c5ff5d",
-                        "w": 6,
-                        "x": 6,
-                        "y": 1
-                    },
-                    "name": "Uptime",
-                    "options": {
-                        "standardOptions": {
-                            "util": "humantimeSeconds"
-                        }
-                    },
-                    "targets": [
-                        {
-                            "expr": "time() - process_start_time_seconds{job=\"$job\",instance=\"$instance\"}",
-                            "refId": "A"
-                        }
-                    ],
-                    "type": "stat",
-                    "version": "2.0.0"
+                    "showPoints": "none",
+                    "pointSize": 5
                 },
-                {
-                    "custom": {
-                        "calc": "lastNotNull",
-                        "colSpan": 1,
-                        "colorMode": "value",
-                        "textMode": "value",
-                        "textSize": {}
-                    },
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "id": "60c3389c-808d-4412-b74b-cb762e89a8ad",
-                    "layout": {
-                        "h": 3,
-                        "i": "60c3389c-808d-4412-b74b-cb762e89a8ad",
-                        "w": 6,
-                        "x": 12,
-                        "y": 1
-                    },
-                    "name": "Available CPUs",
-                    "options": {
-                        "standardOptions": {}
-                    },
-                    "targets": [
-                        {
-                            "expr": "os_available_processors{job=\"$job\",instance=\"$instance\"}",
-                            "refId": "A"
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "type": "stat",
-                    "version": "2.0.0"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "765b22a9-1ddc-4c08-8758-684e3c13252b",
+                "layout": {
+                    "h": 7,
+                    "i": "765b22a9-1ddc-4c08-8758-684e3c13252b",
+                    "w": 12,
+                    "x": 12,
+                    "y": 5
                 },
-                {
-                    "custom": {
-                        "calc": "lastNotNull",
-                        "colSpan": 1,
-                        "colorMode": "value",
-                        "textMode": "value",
-                        "textSize": {}
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_used_bytes{area=\"nonheap\",job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used",
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "id": "1c9a8cca-3578-485e-837d-21618d383065",
-                    "layout": {
-                        "h": 3,
-                        "i": "1c9a8cca-3578-485e-837d-21618d383065",
-                        "w": 6,
-                        "x": 18,
-                        "y": 1
+                    {
+                        "expr": "jvm_memory_bytes_max{area=\"nonheap\",job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max",
+                        "refId": "B",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "JVM Memory(nonheap)",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
                     },
-                    "name": "Open file descriptors",
-                    "options": {
-                        "standardOptions": {}
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
                     },
-                    "targets": [
-                        {
-                            "expr": "os_open_file_descriptor_count{job=\"$job\",instance=\"$instance\"}",
-                            "refId": "A"
-                        }
-                    ],
-                    "type": "stat",
-                    "version": "2.0.0"
-                },
-                {
-                    "collapsed": true,
-                    "id": "705c90e0-e8b6-4f1c-b35c-c8a785009a20",
-                    "layout": {
-                        "h": 1,
-                        "i": "705c90e0-e8b6-4f1c-b35c-c8a785009a20",
-                        "w": 24,
-                        "x": 0,
-                        "y": 4
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
                     },
-                    "name": "JVM Memory",
-                    "type": "row"
-                },
-                {
-                    "type": "timeseries",
-                    "id": "5455e2f2-f6bb-4888-9d88-240d7e12cce2",
-                    "layout": {
-                        "h": 7,
-                        "i": "5455e2f2-f6bb-4888-9d88-240d7e12cce2",
-                        "w": 12,
-                        "x": 0,
-                        "y": 5
-                    },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_used_bytes{area=\"heap\",job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "A",
-                            "maxDataPoints": 240
-                        },
-                        {
-                            "expr": "jvm_memory_bytes_max{area=\"heap\",job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "B",
-                            "maxDataPoints": 240
-                        }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "JVM Memory(heap)",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
-                    },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
-                    },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "type": "timeseries",
-                    "id": "765b22a9-1ddc-4c08-8758-684e3c13252b",
-                    "layout": {
-                        "h": 7,
-                        "i": "765b22a9-1ddc-4c08-8758-684e3c13252b",
-                        "w": 12,
-                        "x": 12,
-                        "y": 5
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_used_bytes{area=\"nonheap\",job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "A",
-                            "maxDataPoints": 240
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        {
-                            "expr": "jvm_memory_bytes_max{area=\"nonheap\",job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "B",
-                            "maxDataPoints": 240
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "JVM Memory(nonheap)",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "c43aa6f5-7252-400f-bb9f-8c96e436151c",
+                "layout": {
+                    "h": 1,
+                    "i": "c43aa6f5-7252-400f-bb9f-8c96e436151c",
+                    "w": 24,
+                    "x": 0,
+                    "y": 12
+                },
+                "name": "Memory Pool",
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "5ab2434c-a905-43c1-a563-4cee2dc9dce9",
+                "layout": {
+                    "h": 7,
+                    "i": "5ab2434c-a905-43c1-a563-4cee2dc9dce9",
+                    "w": 6,
+                    "x": 0,
+                    "y": 13
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_pool_max_bytes{pool=\"CodeHeap 'non-nmethods'\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max",
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
+                    {
+                        "expr": "jvm_memory_pool_bytes_used{pool=\"CodeHeap 'non-nmethods'\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used",
+                        "refId": "B",
+                        "maxDataPoints": 240
                     },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    {
+                        "expr": "jvm_memory_pool_bytes_committed{pool=\"CodeHeap 'non-nmethods'\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Committed",
+                        "refId": "C",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CodeHeap 'non-nmethods'",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "collapsed": true,
-                    "id": "c43aa6f5-7252-400f-bb9f-8c96e436151c",
-                    "layout": {
-                        "h": 1,
-                        "i": "c43aa6f5-7252-400f-bb9f-8c96e436151c",
-                        "w": 24,
-                        "x": 0,
-                        "y": 12
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "name": "Memory Pool",
-                    "type": "row"
+                    "showPoints": "none",
+                    "pointSize": 5
                 },
-                {
-                    "type": "timeseries",
-                    "id": "5ab2434c-a905-43c1-a563-4cee2dc9dce9",
-                    "layout": {
-                        "h": 7,
-                        "i": "5ab2434c-a905-43c1-a563-4cee2dc9dce9",
-                        "w": 6,
-                        "x": 0,
-                        "y": 13
-                    },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_pool_max_bytes{pool=\"CodeHeap 'non-nmethods'\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "A",
-                            "maxDataPoints": 240
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        {
-                            "expr": "jvm_memory_pool_bytes_used{pool=\"CodeHeap 'non-nmethods'\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "B",
-                            "maxDataPoints": 240
-                        },
-                        {
-                            "expr": "jvm_memory_pool_bytes_committed{pool=\"CodeHeap 'non-nmethods'\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Committed",
-                            "refId": "C",
-                            "maxDataPoints": 240
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "CodeHeap 'non-nmethods'",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "bfe16d07-91ff-44e6-87bc-9d5d93d2ebd6",
+                "layout": {
+                    "h": 7,
+                    "i": "bfe16d07-91ff-44e6-87bc-9d5d93d2ebd6",
+                    "w": 6,
+                    "x": 6,
+                    "y": 13
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_pool_max_bytes{pool=\"CodeHeap 'profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max",
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
+                    {
+                        "expr": "jvm_memory_pool_bytes_used{pool=\"CodeHeap 'profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used",
+                        "refId": "B",
+                        "maxDataPoints": 240
                     },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    {
+                        "expr": "jvm_memory_pool_bytes_committed{pool=\"CodeHeap 'profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Committed",
+                        "refId": "C",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CodeHeap 'profiled nmethods'",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "type": "timeseries",
-                    "id": "bfe16d07-91ff-44e6-87bc-9d5d93d2ebd6",
-                    "layout": {
-                        "h": 7,
-                        "i": "bfe16d07-91ff-44e6-87bc-9d5d93d2ebd6",
-                        "w": 6,
-                        "x": 6,
-                        "y": 13
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_pool_max_bytes{pool=\"CodeHeap 'profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "A",
-                            "maxDataPoints": 240
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        {
-                            "expr": "jvm_memory_pool_bytes_used{pool=\"CodeHeap 'profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "B",
-                            "maxDataPoints": 240
-                        },
-                        {
-                            "expr": "jvm_memory_pool_bytes_committed{pool=\"CodeHeap 'profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Committed",
-                            "refId": "C",
-                            "maxDataPoints": 240
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "CodeHeap 'profiled nmethods'",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "18d10f97-5ab2-41c4-a3ad-09f2c7a03e1a",
+                "layout": {
+                    "h": 7,
+                    "i": "18d10f97-5ab2-41c4-a3ad-09f2c7a03e1a",
+                    "w": 6,
+                    "x": 12,
+                    "y": 13
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_pool_max_bytes{pool=\"CodeHeap 'non-profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max",
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
+                    {
+                        "expr": "jvm_memory_pool_bytes_used{pool=\"CodeHeap 'non-profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used",
+                        "refId": "B",
+                        "maxDataPoints": 240
                     },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    {
+                        "expr": "jvm_memory_pool_bytes_committed{pool=\"CodeHeap 'non-profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Committed",
+                        "refId": "C",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CodeHeap 'non-profiled nmethods'",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "type": "timeseries",
-                    "id": "18d10f97-5ab2-41c4-a3ad-09f2c7a03e1a",
-                    "layout": {
-                        "h": 7,
-                        "i": "18d10f97-5ab2-41c4-a3ad-09f2c7a03e1a",
-                        "w": 6,
-                        "x": 12,
-                        "y": 13
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_pool_max_bytes{pool=\"CodeHeap 'non-profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "A",
-                            "maxDataPoints": 240
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        {
-                            "expr": "jvm_memory_pool_bytes_used{pool=\"CodeHeap 'non-profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "B",
-                            "maxDataPoints": 240
-                        },
-                        {
-                            "expr": "jvm_memory_pool_bytes_committed{pool=\"CodeHeap 'non-profiled nmethods'\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Committed",
-                            "refId": "C",
-                            "maxDataPoints": 240
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "CodeHeap 'non-profiled nmethods'",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "314a3893-c1d4-4f85-bce0-33ecfda2f521",
+                "layout": {
+                    "h": 7,
+                    "i": "314a3893-c1d4-4f85-bce0-33ecfda2f521",
+                    "w": 6,
+                    "x": 18,
+                    "y": 13
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_pool_max_bytes{pool=~\"G1 Eden Space|Eden Space|PS Eden Space\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max {{pool}}",
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
+                    {
+                        "expr": "jvm_memory_pool_bytes_used{pool=~\"G1 Eden Space|Eden Space|PS Eden Space\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used {{pool}}",
+                        "refId": "B",
+                        "maxDataPoints": 240
                     },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    {
+                        "expr": "jvm_memory_pool_bytes_committed{pool=~\"G1 Eden Space|Eden Space|PS Eden Space\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Committed {{pool}}",
+                        "refId": "C",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "name": "Eden Space",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "type": "timeseries",
-                    "id": "314a3893-c1d4-4f85-bce0-33ecfda2f521",
-                    "layout": {
-                        "h": 7,
-                        "i": "314a3893-c1d4-4f85-bce0-33ecfda2f521",
-                        "w": 6,
-                        "x": 18,
-                        "y": 13
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_pool_max_bytes{pool=\"G1 Eden Space\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "A",
-                            "maxDataPoints": 240
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        {
-                            "expr": "jvm_memory_pool_bytes_used{pool=\"G1 Eden Space\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "B",
-                            "maxDataPoints": 240
-                        },
-                        {
-                            "expr": "jvm_memory_pool_bytes_committed{pool=\"G1 Eden Space\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Committed",
-                            "refId": "C",
-                            "maxDataPoints": 240
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "G1 Eden Space",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "1e5f03e7-af5d-447b-9c1b-23d81915e8df",
+                "layout": {
+                    "h": 7,
+                    "i": "1e5f03e7-af5d-447b-9c1b-23d81915e8df",
+                    "w": 6,
+                    "x": 0,
+                    "y": 15
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_pool_max_bytes{pool=\"Compressed Class Space\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max",
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
+                    {
+                        "expr": "jvm_memory_pool_bytes_used{pool=\"Compressed Class Space\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used",
+                        "refId": "B",
+                        "maxDataPoints": 240
                     },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    {
+                        "expr": "jvm_memory_pool_bytes_committed{pool=\"Compressed Class Space\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Committed",
+                        "refId": "C",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Compressed Class Space",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "type": "timeseries",
-                    "id": "1e5f03e7-af5d-447b-9c1b-23d81915e8df",
-                    "layout": {
-                        "h": 7,
-                        "i": "1e5f03e7-af5d-447b-9c1b-23d81915e8df",
-                        "w": 6,
-                        "x": 0,
-                        "y": 15
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_pool_max_bytes{pool=\"Compressed Class Space\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "A",
-                            "maxDataPoints": 240
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        {
-                            "expr": "jvm_memory_pool_bytes_used{pool=\"Compressed Class Space\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "B",
-                            "maxDataPoints": 240
-                        },
-                        {
-                            "expr": "jvm_memory_pool_bytes_committed{pool=\"Compressed Class Space\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Committed",
-                            "refId": "C",
-                            "maxDataPoints": 240
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "Compressed Class Space",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "86a68ff6-238c-4fc9-b77e-3b964e564500",
+                "layout": {
+                    "h": 7,
+                    "i": "86a68ff6-238c-4fc9-b77e-3b964e564500",
+                    "w": 6,
+                    "x": 6,
+                    "y": 15
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_pool_max_bytes{pool=~\"Survivor Space|PS Survivor Space|G1 Survivor Space\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max {{pool}}",
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
+                    {
+                        "expr": "jvm_memory_pool_bytes_used{pool=~\"Survivor Space|PS Survivor Space|G1 Survivor Space\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used {{pool}}",
+                        "refId": "B",
+                        "maxDataPoints": 240
                     },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    {
+                        "expr": "jvm_memory_pool_bytes_committed{pool=~\"Survivor Space|PS Survivor Space|G1 Survivor Space\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Committed {{pool}}",
+                        "refId": "C",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "name": "Survivor Space",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "type": "timeseries",
-                    "id": "86a68ff6-238c-4fc9-b77e-3b964e564500",
-                    "layout": {
-                        "h": 7,
-                        "i": "86a68ff6-238c-4fc9-b77e-3b964e564500",
-                        "w": 6,
-                        "x": 6,
-                        "y": 15
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_pool_max_bytes{pool=\"G1 Survivor Space\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "A",
-                            "maxDataPoints": 240
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        {
-                            "expr": "jvm_memory_pool_bytes_used{pool=\"G1 Survivor Space\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "B",
-                            "maxDataPoints": 240
-                        },
-                        {
-                            "expr": "jvm_memory_pool_bytes_committed{pool=\"G1 Survivor Space\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Committed",
-                            "refId": "C",
-                            "maxDataPoints": 240
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "G1 Survivor Space",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "595af7d1-e53c-43b5-8f62-ddb9b3a4ffcb",
+                "layout": {
+                    "h": 7,
+                    "i": "595af7d1-e53c-43b5-8f62-ddb9b3a4ffcb",
+                    "w": 6,
+                    "x": 12,
+                    "y": 15
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_pool_max_bytes{pool=~\"PS Old Gen|G1 Old Gen|Tenured Gen\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max {{pool}}",
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
+                    {
+                        "expr": "jvm_memory_pool_bytes_used{pool=~\"PS Old Gen|G1 Old Gen|Tenured Gen\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used {{pool}}",
+                        "refId": "B",
+                        "maxDataPoints": 240
                     },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    {
+                        "expr": "jvm_memory_pool_bytes_committed{pool=~\"PS Old Gen|G1 Old Gen|Tenured Gen\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Committed {{pool}}",
+                        "refId": "C",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "name": "Old Gen",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "type": "timeseries",
-                    "id": "595af7d1-e53c-43b5-8f62-ddb9b3a4ffcb",
-                    "layout": {
-                        "h": 7,
-                        "i": "595af7d1-e53c-43b5-8f62-ddb9b3a4ffcb",
-                        "w": 6,
-                        "x": 12,
-                        "y": 15
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_pool_max_bytes{pool=\"G1 Old Gen\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "A",
-                            "maxDataPoints": 240
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        {
-                            "expr": "jvm_memory_pool_bytes_used{pool=\"G1 Old Gen\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "B",
-                            "maxDataPoints": 240
-                        },
-                        {
-                            "expr": "jvm_memory_pool_bytes_committed{pool=\"G1 Old Gen\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Committed",
-                            "refId": "C",
-                            "maxDataPoints": 240
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "G1 Old Gen",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "380fdfcb-16a6-4131-abaa-a3911b7de6fa",
+                "layout": {
+                    "h": 7,
+                    "i": "380fdfcb-16a6-4131-abaa-a3911b7de6fa",
+                    "w": 6,
+                    "x": 18,
+                    "y": 15
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_pool_max_bytes{pool=\"Metaspace\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Max",
+                        "refId": "A",
+                        "maxDataPoints": 240
                     },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
+                    {
+                        "expr": "jvm_memory_pool_bytes_used{pool=\"Metaspace\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Used",
+                        "refId": "B",
+                        "maxDataPoints": 240
                     },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    {
+                        "expr": "jvm_memory_pool_bytes_committed{pool=\"Metaspace\", job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Committed",
+                        "refId": "C",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Metaspace",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "type": "timeseries",
-                    "id": "380fdfcb-16a6-4131-abaa-a3911b7de6fa",
-                    "layout": {
-                        "h": 7,
-                        "i": "380fdfcb-16a6-4131-abaa-a3911b7de6fa",
-                        "w": 6,
-                        "x": 18,
-                        "y": 15
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_memory_pool_max_bytes{pool=\"Metaspace\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Max",
-                            "refId": "A",
-                            "maxDataPoints": 240
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        {
-                            "expr": "jvm_memory_pool_bytes_used{pool=\"Metaspace\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Used",
-                            "refId": "B",
-                            "maxDataPoints": 240
-                        },
-                        {
-                            "expr": "jvm_memory_pool_bytes_committed{pool=\"Metaspace\", job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Committed",
-                            "refId": "C",
-                            "maxDataPoints": 240
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "Metaspace",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {
-                            "util": "bytesIEC",
-                            "decimals": 1
-                        },
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "0aaf3516-4938-41e3-b7cb-323de6de75d9",
+                "layout": {
+                    "h": 1,
+                    "i": "0aaf3516-4938-41e3-b7cb-323de6de75d9",
+                    "w": 24,
+                    "x": 0,
+                    "y": 22
+                },
+                "name": "GC",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "5303bda0-47c2-4aca-bb12-1da512500f4a",
+                "layout": {
+                    "h": 7,
+                    "i": "5303bda0-47c2-4aca-bb12-1da512500f4a",
+                    "w": 8,
+                    "x": 0,
+                    "y": 23
+                },
+                "name": "过去一分钟GC耗时（秒）",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
                     },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
+                    "standardOptions": {
+                        "util": "none"
                     },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "increase(jvm_gc_collection_seconds_sum{job=\"$job\",instance=~\"$instance\"}[1m])",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "cf410459-b5df-4aca-a410-ecda091d6097",
+                "layout": {
+                    "h": 7,
+                    "i": "cf410459-b5df-4aca-a410-ecda091d6097",
+                    "w": 8,
+                    "x": 8,
+                    "y": 23
+                },
+                "name": "过去一分钟GC次数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "increase(jvm_gc_collection_seconds_count{job=\"$job\",instance=\"$instance\"}[1m])",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "bars",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "30feb928-b7c3-4e71-aeeb-cc10994b313c",
+                "layout": {
+                    "h": 7,
+                    "i": "30feb928-b7c3-4e71-aeeb-cc10994b313c",
+                    "w": 8,
+                    "x": 16,
+                    "y": 23
+                },
+                "name": "过去一分钟每次GC平均耗时（秒）",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "increase(jvm_gc_collection_seconds_sum{job=\"$job\",instance=\"$instance\"}[1m])/increase(jvm_gc_collection_seconds_count{job=\"$job\",instance=\"$instance\"}[1m])",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "fd6d0772-40d7-4211-b9bb-601e35fb6431",
+                "layout": {
+                    "h": 1,
+                    "i": "fd6d0772-40d7-4211-b9bb-601e35fb6431",
+                    "w": 24,
+                    "x": 0,
+                    "y": 30
+                },
+                "name": "Threads and Class loading",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "65c74a2b-5f01-4491-b45a-dffe4a9b678a",
+                "layout": {
+                    "h": 7,
+                    "i": "65c74a2b-5f01-4491-b45a-dffe4a9b678a",
+                    "w": 12,
+                    "x": 0,
+                    "y": 31
+                },
+                "name": "Threads",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "jvm_threads_current{job=\"$job\",instance=\"$instance\"}",
+                        "legend": "current",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "jvm_threads_daemon{job=\"$job\",instance=\"$instance\"}",
+                        "legend": "daemon",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "jvm_threads_deadlocked{job=\"$job\",instance=\"$instance\"}",
+                        "legend": "deadlocked",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "type": "timeseries",
+                "id": "2da16907-adf7-4561-9338-4254c89a311b",
+                "layout": {
+                    "h": 7,
+                    "i": "2da16907-adf7-4561-9338-4254c89a311b",
+                    "w": 12,
+                    "x": 12,
+                    "y": 31
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "jvm_classes_loaded_total{job=\"$job\", instance=\"$instance\"}",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Class loading",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
                             }
-                        }
-                    ]
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
                 },
-                {
-                    "collapsed": true,
-                    "id": "0aaf3516-4938-41e3-b7cb-323de6de75d9",
-                    "layout": {
-                        "h": 1,
-                        "i": "0aaf3516-4938-41e3-b7cb-323de6de75d9",
-                        "w": 24,
-                        "x": 0,
-                        "y": 22
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     },
-                    "name": "GC",
-                    "type": "row"
+                    "showPoints": "none",
+                    "pointSize": 5
                 },
-                {
-                    "custom": {
-                        "drawStyle": "lines",
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "lineInterpolation": "smooth",
-                        "lineWidth": 2,
-                        "stack": "off"
-                    },
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "id": "5303bda0-47c2-4aca-bb12-1da512500f4a",
-                    "layout": {
-                        "h": 7,
-                        "i": "5303bda0-47c2-4aca-bb12-1da512500f4a",
-                        "w": 8,
-                        "x": 0,
-                        "y": 23
-                    },
-                    "name": "过去一分钟GC耗时（秒）",
-                    "options": {
-                        "legend": {
-                            "displayMode": "hidden"
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
                         },
-                        "standardOptions": {
-                            "util": "none"
-                        },
-                        "thresholds": {},
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
+                        "properties": {
+                            "rightYAxisDisplay": "off"
                         }
-                    },
-                    "targets": [
-                        {
-                            "expr": "increase(jvm_gc_collection_seconds_sum{job=\"$job\",instance=~\"$instance\"}[1m])",
-                            "refId": "A"
-                        }
-                    ],
-                    "type": "timeseries",
-                    "version": "2.0.0"
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "12fe119e-54f0-4219-9846-ac982c1e9b4d",
+                "layout": {
+                    "h": 1,
+                    "i": "12fe119e-54f0-4219-9846-ac982c1e9b4d",
+                    "w": 24,
+                    "x": 0,
+                    "y": 38
                 },
-                {
-                    "custom": {
-                        "drawStyle": "lines",
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "lineInterpolation": "smooth",
-                        "lineWidth": 2,
-                        "stack": "off"
-                    },
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "id": "cf410459-b5df-4aca-a410-ecda091d6097",
-                    "layout": {
-                        "h": 7,
-                        "i": "cf410459-b5df-4aca-a410-ecda091d6097",
-                        "w": 8,
-                        "x": 8,
-                        "y": 23
-                    },
-                    "name": "过去一分钟GC次数",
-                    "options": {
-                        "legend": {
-                            "displayMode": "hidden"
-                        },
-                        "standardOptions": {
-                            "util": "none"
-                        },
-                        "thresholds": {},
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        }
-                    },
-                    "targets": [
-                        {
-                            "expr": "increase(jvm_gc_collection_seconds_count{job=\"$job\",instance=\"$instance\"}[1m])",
-                            "legend": "",
-                            "refId": "A"
-                        }
-                    ],
-                    "type": "timeseries",
-                    "version": "2.0.0"
+                "name": "Physical memory",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
                 },
-                {
-                    "custom": {
-                        "drawStyle": "bars",
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "lineWidth": 2,
-                        "stack": "off"
-                    },
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "id": "30feb928-b7c3-4e71-aeeb-cc10994b313c",
-                    "layout": {
-                        "h": 7,
-                        "i": "30feb928-b7c3-4e71-aeeb-cc10994b313c",
-                        "w": 8,
-                        "x": 16,
-                        "y": 23
-                    },
-                    "name": "过去一分钟每次GC平均耗时（秒）",
-                    "options": {
-                        "legend": {
-                            "displayMode": "hidden"
-                        },
-                        "standardOptions": {
-                            "util": "none"
-                        },
-                        "thresholds": {},
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        }
-                    },
-                    "targets": [
-                        {
-                            "expr": "increase(jvm_gc_collection_seconds_sum{job=\"$job\",instance=\"$instance\"}[1m])/increase(jvm_gc_collection_seconds_count{job=\"$job\",instance=\"$instance\"}[1m])",
-                            "legend": "",
-                            "refId": "A"
-                        }
-                    ],
-                    "type": "timeseries",
-                    "version": "2.0.0"
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "5a859147-edfc-4dac-9457-8a928213bc00",
+                "layout": {
+                    "h": 7,
+                    "i": "5a859147-edfc-4dac-9457-8a928213bc00",
+                    "w": 24,
+                    "x": 0,
+                    "y": 39
                 },
-                {
-                    "collapsed": true,
-                    "id": "fd6d0772-40d7-4211-b9bb-601e35fb6431",
-                    "layout": {
-                        "h": 1,
-                        "i": "fd6d0772-40d7-4211-b9bb-601e35fb6431",
-                        "w": 24,
-                        "x": 0,
-                        "y": 30
+                "name": "Physical memory",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
                     },
-                    "name": "Threads and Class loading",
-                    "type": "row"
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
                 },
-                {
-                    "custom": {
-                        "drawStyle": "lines",
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "lineInterpolation": "smooth",
-                        "lineWidth": 2,
-                        "stack": "off"
+                "targets": [
+                    {
+                        "expr": "os_total_physical_memory_bytes{job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Total physical memory",
+                        "refId": "A"
                     },
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "id": "65c74a2b-5f01-4491-b45a-dffe4a9b678a",
-                    "layout": {
-                        "h": 7,
-                        "i": "65c74a2b-5f01-4491-b45a-dffe4a9b678a",
-                        "w": 12,
-                        "x": 0,
-                        "y": 31
+                    {
+                        "expr": "os_committed_virtual_memory_bytes{job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Committed virtual memory",
+                        "refId": "B"
                     },
-                    "name": "Threads",
-                    "options": {
-                        "legend": {
-                            "displayMode": "hidden"
-                        },
-                        "standardOptions": {},
-                        "thresholds": {},
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        }
-                    },
-                    "targets": [
-                        {
-                            "expr": "jvm_threads_current{job=\"$job\",instance=\"$instance\"}",
-                            "legend": "current",
-                            "refId": "A"
-                        },
-                        {
-                            "expr": "jvm_threads_daemon{job=\"$job\",instance=\"$instance\"}",
-                            "legend": "daemon",
-                            "refId": "B"
-                        },
-                        {
-                            "expr": "jvm_threads_deadlocked{job=\"$job\",instance=\"$instance\"}",
-                            "legend": "deadlocked",
-                            "refId": "C"
-                        }
-                    ],
-                    "type": "timeseries",
-                    "version": "2.0.0"
+                    {
+                        "expr": "os_free_physical_memory_bytes{job=\"$job\",instance=\"$instance\"}",
+                        "legend": "Free physical memory",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "prom",
+                "type": "datasource"
+            },
+            {
+                "name": "job",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
                 },
-                {
-                    "type": "timeseries",
-                    "id": "2da16907-adf7-4561-9338-4254c89a311b",
-                    "layout": {
-                        "h": 7,
-                        "i": "2da16907-adf7-4561-9338-4254c89a311b",
-                        "w": 12,
-                        "x": 12,
-                        "y": 31
-                    },
-                    "version": "3.1.0",
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "targets": [
-                        {
-                            "expr": "jvm_classes_loaded_total{job=\"$job\", instance=\"$instance\"}",
-                            "refId": "A",
-                            "maxDataPoints": 240
-                        }
-                    ],
-                    "transformations": [
-                        {
-                            "id": "organize",
-                            "options": {}
-                        }
-                    ],
-                    "name": "Class loading",
-                    "maxPerRow": 4,
-                    "options": {
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "none"
-                        },
-                        "legend": {
-                            "displayMode": "hidden",
-                            "placement": "bottom",
-                            "behaviour": "showItem",
-                            "selectMode": "single"
-                        },
-                        "standardOptions": {},
-                        "thresholds": {
-                            "mode": "absolute",
-                            "steps": [
-                                {
-                                    "color": "rgb(44, 157, 61)",
-                                    "value": null,
-                                    "type": "base"
-                                }
-                            ]
-                        },
-                        "thresholdsStyle": {
-                            "mode": "dashed"
-                        }
-                    },
-                    "custom": {
-                        "drawStyle": "lines",
-                        "lineInterpolation": "smooth",
-                        "spanNulls": false,
-                        "lineWidth": 2,
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "stack": "off",
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "none",
-                        "pointSize": 5
-                    },
-                    "overrides": [
-                        {
-                            "matcher": {
-                                "id": "byFrameRefID"
-                            },
-                            "properties": {
-                                "rightYAxisDisplay": "off"
-                            }
-                        }
-                    ]
+                "definition": "label_values(jmx_exporter_build_info,job)"
+            },
+            {
+                "name": "instance",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
                 },
-                {
-                    "collapsed": true,
-                    "id": "12fe119e-54f0-4219-9846-ac982c1e9b4d",
-                    "layout": {
-                        "h": 1,
-                        "i": "12fe119e-54f0-4219-9846-ac982c1e9b4d",
-                        "w": 24,
-                        "x": 0,
-                        "y": 38
-                    },
-                    "name": "Physical memory",
-                    "type": "row"
-                },
-                {
-                    "custom": {
-                        "drawStyle": "lines",
-                        "fillOpacity": 0.3,
-                        "gradientMode": "opacity",
-                        "lineInterpolation": "smooth",
-                        "lineWidth": 2,
-                        "stack": "off"
-                    },
-                    "datasourceCate": "prometheus",
-                    "datasourceValue": "${prom}",
-                    "id": "5a859147-edfc-4dac-9457-8a928213bc00",
-                    "layout": {
-                        "h": 7,
-                        "i": "5a859147-edfc-4dac-9457-8a928213bc00",
-                        "w": 24,
-                        "x": 0,
-                        "y": 39
-                    },
-                    "name": "Physical memory",
-                    "options": {
-                        "legend": {
-                            "displayMode": "hidden"
-                        },
-                        "standardOptions": {
-                            "decimals": 1,
-                            "util": "bytesIEC"
-                        },
-                        "thresholds": {},
-                        "tooltip": {
-                            "mode": "all",
-                            "sort": "desc"
-                        }
-                    },
-                    "targets": [
-                        {
-                            "expr": "os_total_physical_memory_bytes{job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Total physical memory",
-                            "refId": "A"
-                        },
-                        {
-                            "expr": "os_committed_virtual_memory_bytes{job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Committed virtual memory",
-                            "refId": "B"
-                        },
-                        {
-                            "expr": "os_free_physical_memory_bytes{job=\"$job\",instance=\"$instance\"}",
-                            "legend": "Free physical memory",
-                            "refId": "C"
-                        }
-                    ],
-                    "type": "timeseries",
-                    "version": "2.0.0"
-                }
-            ],
-            "var": [
-                {
-                    "definition": "prometheus",
-                    "name": "prom",
-                    "type": "datasource"
-                },
-                {
-                    "name": "job",
-                    "type": "query",
-                    "hide": false,
-                    "datasource": {
-                        "cate": "prometheus",
-                        "value": "${prom}"
-                    },
-                    "definition": "label_values(jmx_exporter_build_info,job)"
-                },
-                {
-                    "name": "instance",
-                    "type": "query",
-                    "hide": false,
-                    "datasource": {
-                        "cate": "prometheus",
-                        "value": "${prom}"
-                    },
-                    "definition": "label_values(jmx_exporter_build_info{job=\"$job\"},instance)"
-                }
-            ],
-            "version": "3.0.0"
-        }
+                "definition": "label_values(jmx_exporter_build_info{job=\"$job\"},instance)"
+            }
+        ],
+        "version": "3.0.0"
     }
+}

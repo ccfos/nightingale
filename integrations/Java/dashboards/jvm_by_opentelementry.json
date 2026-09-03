@@ -902,8 +902,8 @@
         "datasourceValue": "${prom}",
         "targets": [
           {
-            "expr": "jvm_memory_used_after_last_gc_bytes{jvm_memory_type=\"non_heap\",job=\"$job\",instance=\"$instance\"}",
-            "legend": "{{jvm_memory_pool_name}}",
+            "expr": "100 * sum(jvm_memory_used_after_last_gc_bytes{jvm_memory_type=\"heap\",job=\"$job\",instance=\"$instance\"}) / sum(jvm_memory_limit_bytes{jvm_memory_type=\"heap\",job=\"$job\",instance=\"$instance\"})",
+            "legend": "heap after GC",
             "refId": "A",
             "maxDataPoints": 240
           }
@@ -914,8 +914,8 @@
             "options": {}
           }
         ],
-        "name": "上次GC后 JVM Memory Used(nonheap)",
-        "description": "最近一次GC后的内存使用量",
+        "name": "上次 GC 后 Heap 使用率",
+        "description": "最近一次 GC 后 Heap 使用量占最大可用 Heap 的比例",
         "maxPerRow": 4,
         "options": {
           "tooltip": {
@@ -929,7 +929,7 @@
             "selectMode": "single"
           },
           "standardOptions": {
-            "util": "bytesIEC",
+            "util": "percent",
             "decimals": 1
           },
           "thresholds": {
@@ -1168,7 +1168,7 @@
         "datasourceValue": "${prom}",
         "targets": [
           {
-            "expr": "histogram_quantile(\n  0.95,\n  sum by(le, jvm_gc_action, jvm_gc_name) (\n    rate(jvm_gc_duration_seconds_bucket{instance=\"$instance\", job=\"$job\"}[1m])\n  )\n)",
+            "expr": "histogram_quantile(\n  0.95,\n  sum by(le, jvm_gc_action, jvm_gc_name) (\n    rate(jvm_gc_duration_seconds_bucket{instance=\"$instance\", job=\"$job\"}[$__rate_interval])\n  )\n)",
             "legend": "{{jvm_gc_action}} - {{jvm_gc_name}}",
             "refId": "A",
             "maxDataPoints": 240
@@ -1180,7 +1180,7 @@
             "options": {}
           }
         ],
-        "name": "过去1分钟单次GC耗时95分位值（秒）",
+        "name": "单次 GC 耗时 P95（秒）",
         "maxPerRow": 4,
         "options": {
           "tooltip": {
@@ -1268,18 +1268,6 @@
             "expr": "jvm_thread_count{job=\"$job\",instance=\"$instance\"}",
             "legend": "{{jvm_thread_daemon}} - {{jvm_thread_state}}",
             "refId": "A",
-            "maxDataPoints": 240
-          },
-          {
-            "expr": "jvm_threads_daemon{job=\"$job\",instance=\"$instance\"}",
-            "legend": "daemon",
-            "refId": "B",
-            "maxDataPoints": 240
-          },
-          {
-            "expr": "jvm_threads_deadlocked{job=\"$job\",instance=\"$instance\"}",
-            "legend": "deadlocked",
-            "refId": "C",
             "maxDataPoints": 240
           }
         ],

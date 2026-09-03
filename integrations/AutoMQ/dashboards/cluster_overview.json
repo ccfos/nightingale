@@ -952,7 +952,7 @@
                     "cate": "prometheus",
                     "value": "${DS_PROMETHEUS}"
                 },
-                "definition": "label_values(process_runtime_jvm_cpu_utilization_ratio,job)",
+                "definition": "label_values(kafka_controller_active_count,job)",
                 "hide": false,
                 "multi": false,
                 "name": "cluster_id",
@@ -964,7 +964,7 @@
                     "cate": "prometheus",
                     "value": "${DS_PROMETHEUS}"
                 },
-                "definition": "label_values(kafka_controller_active_count{job=\"$cluster_id\"} \u003e 0, instance)",
+                "definition": "label_values(kafka_controller_active_count{job=\"$cluster_id\"}, instance)",
                 "hide": false,
                 "multi": false,
                 "name": "active_controller",

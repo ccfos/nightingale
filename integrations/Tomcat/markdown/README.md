@@ -53,7 +53,3 @@ password = "s3cret"
 ## Use TLS but skip chain & host verification
 # insecure_skip_verify = true
 ```
-
-## 监控大盘
-
-夜莺内置了 tomcat 仪表盘，克隆到自己的业务组下使用即可。

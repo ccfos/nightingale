@@ -115,7 +115,7 @@ func (n *Naming) heartbeat() error {
 		newDatasource[datasourceIds[i]] = struct{}{}
 		servers, err := n.ActiveServers(datasourceIds[i])
 		if err != nil {
-			logger.Warningf("hearbeat %d get active server err:%v", datasourceIds[i], err)
+			logger.Warningf("heartbeat %d get active server err:%v", datasourceIds[i], err)
 			n.astats.CounterHeartbeatErrorTotal.WithLabelValues().Inc()
 			continue
 		}
@@ -148,7 +148,7 @@ func (n *Naming) heartbeat() error {
 
 	servers, err := n.ActiveServersByEngineName()
 	if err != nil {
-		logger.Warningf("hearbeat %d get active server err:%v", HostDatasource, err)
+		logger.Warningf("heartbeat %d get active server err:%v", HostDatasource, err)
 		n.astats.CounterHeartbeatErrorTotal.WithLabelValues().Inc()
 		return nil
 	}

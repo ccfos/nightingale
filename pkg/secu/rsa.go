@@ -12,6 +12,11 @@ import (
 )
 
 func Decrypt(cipherText string, privateKeyByte []byte, password string) (decrypted string, err error) {
+	// 移除 "enc:" 前缀（如果存在）
+	if len(cipherText) > 4 && cipherText[:4] == "enc:" {
+		cipherText = cipherText[4:]
+	}
+
 	decodeCipher, _ := base64.StdEncoding.DecodeString(cipherText)
 	//pem解码
 	block, _ := pem.Decode(privateKeyByte)
@@ -53,7 +58,8 @@ func EncryptValue(value string, publicKeyData []byte) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt value: %v", err)
 	}
-	return BASE64StdEncode(ciphertext), nil
+	// 添加 "enc:" 前缀标记这是加密数据
+	return "enc:" + BASE64StdEncode(ciphertext), nil
 }
 
 func GenerateRsaKeyPair(password string) (privateByte, publicByte []byte, err error) {

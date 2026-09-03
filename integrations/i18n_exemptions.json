@@ -1,0 +1,9 @@
+{
+    "_comment": "允许在 en_US 渲染结果中保留中文的清单。paths 是字段路径后缀（数组下标不计入），用于天生功能性的字段：原始 SQL/promql，以及引用 SQL 列别名的 valueKey——这些位置的中文必须与查询语句里的别名逐字一致，翻译即失效。strings 是整条原文豁免，粒度粗（同一个词出现在展示字段时会被一并放行），除非确无路径可表达否则不要用。新增豁免须经 review。",
+    "paths": [
+        "targets.expr",
+        "targets.query.query",
+        "targets.query.keys.valueKey"
+    ],
+    "strings": []
+}

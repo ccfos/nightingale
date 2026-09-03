@@ -26,7 +26,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "sum(zk_server_leader) \u003e 1",
+                    "prom_ql": "sum(zk_server_leader) by (cluster) \u003e 1",
                     "severity": 2
                 }
             ],
@@ -72,7 +72,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 逐个节点执行 echo srvr | nc \u003chost\u003e 2181 确认各自上报的 Mode，定位有几个自称 leader；\n2) 检查各节点 zoo.cfg 的 server.N 列表是否完全一致，配置不一致是脑裂最常见的原因；\n3) 排查节点间 2888/3888 端口的网络连通性与分区情况；\n4) 确认后停掉少数派一侧的节点让集群重新选主，恢复后再逐个拉起。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -107,7 +109,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "sum(zk_server_leader) == 0",
+                    "prom_ql": "sum(zk_server_leader) by (cluster) == 0",
                     "severity": 2
                 }
             ],
@@ -153,7 +155,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 逐个节点执行 echo srvr | nc \u003chost\u003e 2181 看 Mode，确认存活节点数是否已不足半数（quorum）；\n2) 存活不足半数就先把宕掉的节点拉起来，恢复多数派后集群会自动选主；\n3) 节点都活着却选不出 leader，检查 2888/3888 端口连通性和 myid 是否重复；\n4) 看各节点日志中的选举报错，常见为事务日志损坏，必要时从其他节点同步 snapshot 后重启。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -234,7 +238,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 登录主机确认进程是否存活（jps 或 systemctl status zookeeper）；\n2) 进程在则执行 echo ruok | nc \u003chost\u003e 2181，看是否回 imok，区分进程夯住与网络问题；\n3) 进程不在则看 zookeeper.out 或 logs/ 下日志定位退出原因，磁盘写满和 JVM OOM 最常见；\n4) 拉起后用 echo srvr | nc \u003chost\u003e 2181 确认它已重新加入集群并同步完成。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -315,7 +321,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 执行 echo ruok | nc \u003chost\u003e 2181 手工复现，再用 echo srvr | nc \u003chost\u003e 2181 看 Mode 与 Connections；\n2) 检查是否有 4lw 白名单限制（zoo.cfg 的 4lw.commands.whitelist）导致探测被拒——这种是误报，放开白名单即可；\n3) 真异常时看日志是否有 JVM Full GC 或磁盘写满；\n4) 用 echo mntr | nc \u003chost\u003e 2181 看 zk_outstanding_requests 是否堆积，堆积说明已经处理不过来。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

@@ -1,19 +1,48 @@
 package router
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/pipeline/engine"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
+	"github.com/google/uuid"
+	"github.com/toolkits/pkg/i18n"
+	"github.com/toolkits/pkg/logger"
 )
+
+// checkEventPipelinePermission 根据 pipeline 的 group_id 决定鉴权方式
+// group_id > 0: 使用业务组鉴权; group_id = 0: 使用 teamids 鉴权
+func (rt *Router) checkEventPipelinePermission(c *gin.Context, pipeline *models.EventPipeline, permFlag ...string) {
+	me := c.MustGet("user").(*models.User)
+	if pipeline.GroupId > 0 {
+		if len(permFlag) > 0 && permFlag[0] == "rw" {
+			rt.bgrwCheck(c, pipeline.GroupId)
+		} else {
+			rt.bgroCheck(c, pipeline.GroupId)
+		}
+	} else {
+		ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+	}
+}
 
 // 获取事件Pipeline列表
 func (rt *Router) eventPipelinesList(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
-	pipelines, err := models.ListEventPipelines(rt.Ctx)
+	groupId := ginx.QueryInt64(c, "group_id", -1)
+	useCase := ginx.QueryStr(c, "use_case", "")
+
+	// 不传 group_id 默认查 group_id=0 的
+	if groupId < 0 {
+		groupId = 0
+	}
+
+	pipelines, err := models.ListEventPipelinesByUseCase(rt.Ctx, groupId, useCase)
 	ginx.Dangerous(err)
 
 	allTids := make([]int64, 0)
@@ -26,15 +55,44 @@ func (rt *Router) eventPipelinesList(c *gin.Context) {
 		for _, tid := range pipeline.TeamIds {
 			pipeline.TeamNames = append(pipeline.TeamNames, ugMap[tid])
 		}
+		// 兼容处理：自动填充工作流字段
+		pipeline.FillWorkflowFields()
+	}
+	models.FillUpdateByNicknames(rt.Ctx, pipelines)
+
+	// 统一填充默认值
+	for _, pipeline := range pipelines {
+		if pipeline.TriggerMode == "" {
+			pipeline.TriggerMode = models.TriggerModeEvent
+		}
+		if pipeline.UseCase == "" {
+			pipeline.UseCase = models.UseCaseEventPipeline
+		}
 	}
 
-	gids, err := models.MyGroupIdsMap(rt.Ctx, me.Id)
-	ginx.Dangerous(err)
+	// 业务组场景：使用业务组鉴权，admin 或有权限的用户可见
+	if groupId > 0 {
+		if !me.IsAdmin() {
+			bg := BusiGroup(rt.Ctx, groupId)
+			can, err := me.CanDoBusiGroup(rt.Ctx, bg)
+			ginx.Dangerous(err)
+			if !can {
+				ginx.NewRender(c).Data(make([]*models.EventPipeline, 0), nil)
+				return
+			}
+		}
+		ginx.NewRender(c).Data(pipelines, nil)
+		return
+	}
 
+	// 工作流页面场景 (group_id=0)：使用 teamids 鉴权
 	if me.IsAdmin() {
 		ginx.NewRender(c).Data(pipelines, nil)
 		return
 	}
+
+	gids, err := models.MyGroupIdsMap(rt.Ctx, me.Id)
+	ginx.Dangerous(err)
 
 	res := make([]*models.EventPipeline, 0)
 	for _, pipeline := range pipelines {
@@ -51,14 +109,22 @@ func (rt *Router) eventPipelinesList(c *gin.Context) {
 
 // 获取单个事件Pipeline详情
 func (rt *Router) getEventPipeline(c *gin.Context) {
-	me := c.MustGet("user").(*models.User)
 	id := ginx.UrlParamInt64(c, "id")
 	pipeline, err := models.GetEventPipeline(rt.Ctx, id)
 	ginx.Dangerous(err)
-	ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+	rt.checkEventPipelinePermission(c, pipeline)
 
 	err = pipeline.FillTeamNames(rt.Ctx)
 	ginx.Dangerous(err)
+
+	// 兼容处理：自动填充工作流字段
+	pipeline.FillWorkflowFields()
+	if pipeline.TriggerMode == "" {
+		pipeline.TriggerMode = models.TriggerModeEvent
+	}
+	if pipeline.UseCase == "" {
+		pipeline.UseCase = models.UseCaseEventPipeline
+	}
 
 	ginx.NewRender(c).Data(pipeline, nil)
 }
@@ -77,12 +143,12 @@ func (rt *Router) addEventPipeline(c *gin.Context) {
 
 	err := pipeline.Verify()
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
-	ginx.Dangerous(user.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+	rt.checkEventPipelinePermission(c, &pipeline, "rw")
 	err = models.CreateEventPipeline(rt.Ctx, &pipeline)
-	ginx.NewRender(c).Message(err)
+	ginx.NewRender(c).Data(pipeline.ID, err)
 }
 
 // 更新事件Pipeline
@@ -98,7 +164,11 @@ func (rt *Router) updateEventPipeline(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusNotFound, "No such event pipeline")
 	}
-	ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+	rt.checkEventPipelinePermission(c, pipeline, "rw")
+
+	if f.GroupId != pipeline.GroupId {
+		rt.checkEventPipelinePermission(c, &f, "rw")
+	}
 
 	ginx.NewRender(c).Message(pipeline.Update(rt.Ctx, &f))
 }
@@ -114,83 +184,157 @@ func (rt *Router) deleteEventPipelines(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "ids required")
 	}
 
-	me := c.MustGet("user").(*models.User)
 	for _, id := range f.Ids {
 		pipeline, err := models.GetEventPipeline(rt.Ctx, id)
 		ginx.Dangerous(err)
-		ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+		rt.checkEventPipelinePermission(c, pipeline, "rw")
 	}
 
 	err := models.DeleteEventPipelines(rt.Ctx, f.Ids)
 	ginx.NewRender(c).Message(err)
 }
 
-// 测试事件Pipeline
-func (rt *Router) tryRunEventPipeline(c *gin.Context) {
+// 批量启用/停用事件Pipeline
+// 相比 PUT /event-pipeline 的整条覆盖，这里只接受 ids + disabled，调用方无需回传整条记录，
+// 因此不会用陈旧快照覆盖掉别人并发修改的 processors / 过滤条件。
+func (rt *Router) updateEventPipelinesDisabled(c *gin.Context) {
 	var f struct {
-		EventId        int64                `json:"event_id"`
-		PipelineConfig models.EventPipeline `json:"pipeline_config"`
+		Ids      []int64 `json:"ids"`
+		Disabled bool    `json:"disabled"`
 	}
 	ginx.BindJSON(c, &f)
 
-	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
+	if len(f.Ids) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "ids required")
+	}
+
+	for _, id := range f.Ids {
+		pipeline, err := models.GetEventPipeline(rt.Ctx, id)
+		ginx.Dangerous(err)
+		rt.checkEventPipelinePermission(c, pipeline, "rw")
+	}
+
+	me := c.MustGet("user").(*models.User)
+	ginx.NewRender(c).Message(models.UpdateEventPipelinesDisabled(rt.Ctx, f.Ids, f.Disabled, me.Username))
+}
+
+// MockEventForm 是两个试跑接口共用的「模拟事件」入参。
+// 与通知规则测试（NotifyTestForm.UseMockEvent）保持同一套语义：新环境没有历史事件时
+// 也能验证配置。差别在于工作流的处理器会「读事件内容」来决策（event_drop 判断
+// Severity / IsRecovered / 标签，relabel 改标签），固定不变的样例只能覆盖一个分支，
+// 所以额外允许前端指定级别与恢复态。
+type MockEventForm struct {
+	UseMockEvent    bool `json:"use_mock_event"`
+	MockSeverity    int  `json:"mock_severity"`     // 1/2/3，缺省或非法时按 2 处理
+	MockIsRecovered bool `json:"mock_is_recovered"` // 缺省为告警事件
+}
+
+// buildPipelineTestMockEvent 构造用于工作流试跑的内置模拟事件，不落库。
+// 与通知规则测试共用 newMockEvent 的骨架，只在标签上做区分：工作流的处理器直接读标签
+// 做判断（relabel 改写、event_drop 用 $event.TagsMap 分支），所以这里刻意多带上
+// env / service / __name__，让用户抄文档里的示例片段就能直接跑出结果。
+func buildPipelineTestMockEvent(lang string, f MockEventForm) *models.AlertCurEvent {
+	return newMockEvent(mockEventSpec{
+		RuleName:     i18n.Sprintf(lang, "Event pipeline test mock event"),
+		RuleNote:     i18n.Sprintf(lang, "This is a mock event used by event pipeline tryrun, it is not persisted"),
+		Hash:         "event-pipeline-test-mock-event",
+		Severity:     f.MockSeverity,
+		IsRecovered:  f.MockIsRecovered,
+		PromQL:       "cpu_usage_idle < 10",
+		TriggerValue: "6.70",
+		ExtraTags:    []string{"__name__=cpu_usage_idle", "ident=mock-host-01", "env=prod", "service=web"},
+	})
+}
+
+// resolveTryRunEvent 统一「用模拟事件」与「用历史事件」两条取事件的路径
+func (rt *Router) resolveTryRunEvent(c *gin.Context, eventID int64, mock MockEventForm) *models.AlertCurEvent {
+	if mock.UseMockEvent {
+		return buildPipelineTestMockEvent(c.GetHeader("X-Language"), mock)
+	}
+
+	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, eventID)
 	if err != nil || hisEvent == nil {
 		ginx.Bomb(http.StatusBadRequest, "event not found")
 	}
-	event := hisEvent.ToCur()
+	return hisEvent.ToCur()
+}
 
-	for _, p := range f.PipelineConfig.ProcessorConfigs {
-		processor, err := models.GetProcessorByType(p.Typ, p.Config)
-		if err != nil {
-			ginx.Bomb(http.StatusBadRequest, "get processor: %+v err: %+v", p, err)
-		}
-		event, _, err = processor.Process(rt.Ctx, event)
-		if err != nil {
-			ginx.Bomb(http.StatusBadRequest, "processor: %+v err: %+v", p, err)
-		}
+// 测试事件Pipeline
+func (rt *Router) tryRunEventPipeline(c *gin.Context) {
+	var f struct {
+		MockEventForm
+		EventId        int64                `json:"event_id"`
+		PipelineConfig models.EventPipeline `json:"pipeline_config"`
+		InputVariables map[string]string    `json:"input_variables,omitempty"`
+	}
 
-		if event == nil {
-			ginx.NewRender(c).Data(map[string]interface{}{
-				"event":  event,
-				"result": "event is dropped",
-			}, nil)
-			return
-		}
+	ginx.BindJSON(c, &f)
+
+	event := rt.resolveTryRunEvent(c, f.EventId, f.MockEventForm)
+
+	lang := c.GetHeader("X-Language")
+	me := c.MustGet("user").(*models.User)
+
+	// 统一使用工作流引擎执行（兼容线性模式和工作流模式）
+	workflowEngine := engine.NewWorkflowEngine(rt.Ctx)
+
+	triggerCtx := &models.WorkflowTriggerContext{
+		Mode:            models.TriggerModeAPI,
+		TriggerBy:       me.Username,
+		InputsOverrides: f.InputVariables,
+	}
+
+	resultEvent, result, err := workflowEngine.Execute(&f.PipelineConfig, event, triggerCtx)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "pipeline execute error: %v", err)
 	}
 
 	m := map[string]interface{}{
-		"event":  event,
-		"result": "",
+		"event":        resultEvent,
+		"result":       translateText(lang, result.Message),
+		"status":       result.Status,
+		"node_results": result.NodeResults,
 	}
+
+	if resultEvent == nil {
+		m["result"] = i18n.Sprintf(lang, "event is dropped")
+	}
+
 	ginx.NewRender(c).Data(m, nil)
 }
 
 // 测试事件处理器
 func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	var f struct {
+		MockEventForm
 		EventId         int64                  `json:"event_id"`
 		ProcessorConfig models.ProcessorConfig `json:"processor_config"`
 	}
 	ginx.BindJSON(c, &f)
 
-	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
-	if err != nil || hisEvent == nil {
-		ginx.Bomb(http.StatusBadRequest, "event not found")
-	}
-	event := hisEvent.ToCur()
+	event := rt.resolveTryRunEvent(c, f.EventId, f.MockEventForm)
 
 	processor, err := models.GetProcessorByType(f.ProcessorConfig.Typ, f.ProcessorConfig.Config)
 	if err != nil {
 		ginx.Bomb(200, "get processor err: %+v", err)
 	}
-	event, res, err := processor.Process(rt.Ctx, event)
+	wfCtx := &models.WorkflowContext{
+		Event: event,
+		Vars:  make(map[string]interface{}),
+	}
+	wfCtx, res, err := processor.Process(rt.Ctx, wfCtx)
 	if err != nil {
 		ginx.Bomb(200, "processor err: %+v", err)
 	}
 
+	lang := c.GetHeader("X-Language")
+	var resultEvent *models.AlertCurEvent
+	if wfCtx != nil {
+		resultEvent = wfCtx.Event
+	}
 	ginx.NewRender(c).Data(map[string]interface{}{
-		"event":  event,
-		"result": res,
+		"event":  resultEvent,
+		"result": translateText(lang, res),
 	}, nil)
 }
 
@@ -219,6 +363,10 @@ func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "processors not found")
 	}
 
+	wfCtx := &models.WorkflowContext{
+		Event: event,
+		Vars:  make(map[string]interface{}),
+	}
 	for _, pl := range pipelines {
 		for _, p := range pl.ProcessorConfigs {
 			processor, err := models.GetProcessorByType(p.Typ, p.Config)
@@ -226,24 +374,366 @@ func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
 				ginx.Bomb(http.StatusBadRequest, "get processor: %+v err: %+v", p, err)
 			}
 
-			event, _, err := processor.Process(rt.Ctx, event)
+			wfCtx, _, err = processor.Process(rt.Ctx, wfCtx)
 			if err != nil {
 				ginx.Bomb(http.StatusBadRequest, "processor: %+v err: %+v", p, err)
 			}
-			if event == nil {
+			if wfCtx == nil || wfCtx.Event == nil {
+				lang := c.GetHeader("X-Language")
 				ginx.NewRender(c).Data(map[string]interface{}{
-					"event":  event,
-					"result": "event is dropped",
+					"event":  nil,
+					"result": i18n.Sprintf(lang, "event is dropped"),
 				}, nil)
 				return
 			}
 		}
 	}
 
-	ginx.NewRender(c).Data(event, nil)
+	ginx.NewRender(c).Data(wfCtx.Event, nil)
 }
 
 func (rt *Router) eventPipelinesListByService(c *gin.Context) {
 	pipelines, err := models.ListEventPipelines(rt.Ctx)
 	ginx.NewRender(c).Data(pipelines, err)
+}
+
+type EventPipelineRequest struct {
+	// 事件数据（可选，如果不传则使用空事件）
+	Event *models.AlertCurEvent `json:"event,omitempty"`
+	// 输入参数覆盖
+	InputsOverrides map[string]string `json:"inputs_overrides,omitempty"`
+
+	Username string `json:"username,omitempty"`
+}
+
+// executePipelineTrigger 执行 Pipeline 触发的公共逻辑
+func (rt *Router) executePipelineTrigger(pipeline *models.EventPipeline, req *EventPipelineRequest, triggerBy string) (string, error) {
+	// 准备事件数据
+	var event *models.AlertCurEvent
+	if req.Event != nil {
+		event = req.Event
+	} else {
+		// 创建空事件
+		event = &models.AlertCurEvent{
+			TriggerTime: time.Now().Unix(),
+		}
+	}
+
+	// 生成执行ID
+	executionID := uuid.New().String()
+
+	// 创建触发上下文
+	triggerCtx := &models.WorkflowTriggerContext{
+		Mode:            models.TriggerModeAPI,
+		TriggerBy:       triggerBy,
+		InputsOverrides: req.InputsOverrides,
+		RequestID:       executionID,
+	}
+
+	// 异步执行工作流
+	go func() {
+		workflowEngine := engine.NewWorkflowEngine(rt.Ctx)
+		_, _, err := workflowEngine.Execute(pipeline, event, triggerCtx)
+		if err != nil {
+			logger.Errorf("async workflow execute error: pipeline_id=%d execution_id=%s err=%v",
+				pipeline.ID, executionID, err)
+		}
+	}()
+
+	return executionID, nil
+}
+
+// triggerEventPipelineByService Service 调用触发工作流执行
+func (rt *Router) triggerEventPipelineByService(c *gin.Context) {
+	pipelineID := ginx.UrlParamInt64(c, "id")
+	var f EventPipelineRequest
+	ginx.BindJSON(c, &f)
+
+	// 获取 Pipeline
+	pipeline, err := models.GetEventPipeline(rt.Ctx, pipelineID)
+	if err != nil {
+		ginx.Bomb(http.StatusNotFound, "pipeline not found: %v", err)
+	}
+
+	executionID, err := rt.executePipelineTrigger(pipeline, &f, f.Username)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "%v", err)
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"execution_id": executionID,
+		"message":      "workflow execution started",
+	}, nil)
+}
+
+// triggerEventPipelineByAPI API 触发工作流执行
+func (rt *Router) triggerEventPipelineByAPI(c *gin.Context) {
+	pipelineID := ginx.UrlParamInt64(c, "id")
+	var f EventPipelineRequest
+	ginx.BindJSON(c, &f)
+
+	// 获取 Pipeline
+	pipeline, err := models.GetEventPipeline(rt.Ctx, pipelineID)
+	if err != nil {
+		ginx.Bomb(http.StatusNotFound, "pipeline not found: %v", err)
+	}
+
+	// 检查权限
+	rt.checkEventPipelinePermission(c, pipeline)
+	me := c.MustGet("user").(*models.User)
+
+	executionID, err := rt.executePipelineTrigger(pipeline, &f, me.Username)
+	if err != nil {
+		bombErr(http.StatusBadRequest, err)
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"execution_id": executionID,
+		"message":      "workflow execution started",
+	}, nil)
+}
+
+func (rt *Router) listAllEventPipelineExecutions(c *gin.Context) {
+	pipelineId := ginx.QueryInt64(c, "pipeline_id", 0)
+	pipelineName := ginx.QueryStr(c, "pipeline_name", "")
+	mode := ginx.QueryStr(c, "mode", "")
+	status := ginx.QueryStr(c, "status", "")
+	// 与其它列表页一致的时间区间参数（秒级 unix 时间戳），0 表示该侧不限
+	stime := ginx.QueryInt64(c, "stime", 0)
+	etime := ginx.QueryInt64(c, "etime", 0)
+	limit := ginx.QueryInt(c, "limit", 20)
+	offset := ginx.QueryInt(c, "p", 1)
+
+	if limit <= 0 || limit > 1000 {
+		limit = 20
+	}
+	if offset <= 0 {
+		offset = 1
+	}
+
+	executions, total, err := models.ListAllEventPipelineExecutions(rt.Ctx, pipelineId, pipelineName, mode, status, stime, etime, limit, (offset-1)*limit)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  executions,
+		"total": total,
+	}, nil)
+}
+
+func (rt *Router) listEventPipelineExecutions(c *gin.Context) {
+	pipelineID := ginx.UrlParamInt64(c, "id")
+	mode := ginx.QueryStr(c, "mode", "")
+	status := ginx.QueryStr(c, "status", "")
+	limit := ginx.QueryInt(c, "limit", 20)
+	offset := ginx.QueryInt(c, "p", 1)
+
+	if limit <= 0 || limit > 1000 {
+		limit = 20
+	}
+	if offset <= 0 {
+		offset = 1
+	}
+
+	executions, total, err := models.ListEventPipelineExecutions(rt.Ctx, pipelineID, mode, status, limit, (offset-1)*limit)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  executions,
+		"total": total,
+	}, nil)
+}
+
+func (rt *Router) getEventPipelineExecution(c *gin.Context) {
+	execID := ginx.UrlParamStr(c, "exec_id")
+
+	detail, err := models.GetEventPipelineExecutionDetail(rt.Ctx, execID)
+	if err != nil {
+		ginx.Bomb(http.StatusNotFound, "execution not found: %v", err)
+	}
+
+	ginx.NewRender(c).Data(detail, nil)
+}
+
+func (rt *Router) getEventPipelineExecutionStats(c *gin.Context) {
+	pipelineID := ginx.UrlParamInt64(c, "id")
+
+	stats, err := models.GetEventPipelineExecutionStatistics(rt.Ctx, pipelineID)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(stats, nil)
+}
+
+func (rt *Router) cleanEventPipelineExecutions(c *gin.Context) {
+	var f struct {
+		BeforeDays int `json:"before_days"`
+	}
+	ginx.BindJSON(c, &f)
+
+	if f.BeforeDays <= 0 {
+		f.BeforeDays = 30
+	}
+
+	beforeTime := time.Now().AddDate(0, 0, -f.BeforeDays).Unix()
+	affected, err := models.DeleteEventPipelineExecutions(rt.Ctx, beforeTime)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"deleted": affected,
+	}, nil)
+}
+
+func (rt *Router) streamEventPipeline(c *gin.Context) {
+	pipelineID := ginx.UrlParamInt64(c, "id")
+
+	var f EventPipelineRequest
+	ginx.BindJSON(c, &f)
+
+	pipeline, err := models.GetEventPipeline(rt.Ctx, pipelineID)
+	if err != nil {
+		ginx.Bomb(http.StatusNotFound, "pipeline not found: %v", err)
+	}
+
+	rt.checkEventPipelinePermission(c, pipeline)
+	me := c.MustGet("user").(*models.User)
+
+	var event *models.AlertCurEvent
+	if f.Event != nil {
+		event = f.Event
+	} else {
+		event = &models.AlertCurEvent{
+			TriggerTime: time.Now().Unix(),
+		}
+	}
+
+	triggerCtx := &models.WorkflowTriggerContext{
+		Mode:            models.TriggerModeAPI,
+		TriggerBy:       me.Username,
+		InputsOverrides: f.InputsOverrides,
+		RequestID:       uuid.New().String(),
+		Stream:          true, // 流式端点强制启用流式输出
+	}
+
+	workflowEngine := engine.NewWorkflowEngine(rt.Ctx)
+	_, result, err := workflowEngine.Execute(pipeline, event, triggerCtx)
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, "execute failed: %v", err)
+	}
+
+	if result.Stream && result.StreamChan != nil {
+		rt.handleStreamResponse(c, result, triggerCtx.RequestID)
+		return
+	}
+
+	ginx.NewRender(c).Data(result, nil)
+}
+
+func (rt *Router) handleStreamResponse(c *gin.Context, result *models.WorkflowResult, requestID string) {
+	// 设置 SSE 响应头
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no") // 禁用 nginx 缓冲
+	c.Header("X-Request-ID", requestID)
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		ginx.Bomb(http.StatusInternalServerError, "streaming not supported")
+		return
+	}
+
+	// 发送初始连接成功消息
+	initData := fmt.Sprintf(`{"type":"connected","request_id":"%s","timestamp":%d}`, requestID, time.Now().UnixMilli())
+	fmt.Fprintf(c.Writer, "data: %s\n\n", initData)
+	flusher.Flush()
+
+	// 从 channel 读取并发送 SSE
+	timeout := time.After(30 * time.Minute) // 最长流式输出时间
+	for {
+		select {
+		case chunk, ok := <-result.StreamChan:
+			if !ok {
+				// channel 关闭，发送结束标记
+				return
+			}
+
+			data, err := json.Marshal(chunk)
+			if err != nil {
+				logger.Errorf("stream: failed to marshal chunk: %v", err)
+				continue
+			}
+
+			fmt.Fprintf(c.Writer, "data: %s\n\n", data)
+			flusher.Flush()
+
+			if chunk.Done {
+				return
+			}
+
+		case <-c.Request.Context().Done():
+			// 客户端断开连接
+			logger.Infof("stream: client disconnected, request_id=%s", requestID)
+			return
+		case <-timeout:
+			logger.Errorf("stream: timeout, request_id=%s", requestID)
+			return
+		}
+	}
+}
+
+func (rt *Router) streamEventPipelineByService(c *gin.Context) {
+	pipelineID := ginx.UrlParamInt64(c, "id")
+
+	var f EventPipelineRequest
+	ginx.BindJSON(c, &f)
+
+	pipeline, err := models.GetEventPipeline(rt.Ctx, pipelineID)
+	if err != nil {
+		ginx.Bomb(http.StatusNotFound, "pipeline not found: %v", err)
+	}
+
+	var event *models.AlertCurEvent
+	if f.Event != nil {
+		event = f.Event
+	} else {
+		event = &models.AlertCurEvent{
+			TriggerTime: time.Now().Unix(),
+		}
+	}
+
+	triggerCtx := &models.WorkflowTriggerContext{
+		Mode:            models.TriggerModeAPI,
+		TriggerBy:       f.Username,
+		InputsOverrides: f.InputsOverrides,
+		RequestID:       uuid.New().String(),
+		Stream:          true, // 流式端点强制启用流式输出
+	}
+
+	workflowEngine := engine.NewWorkflowEngine(rt.Ctx)
+	_, result, err := workflowEngine.Execute(pipeline, event, triggerCtx)
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, "execute failed: %v", err)
+	}
+
+	// 检查是否是流式输出
+	if result.Stream && result.StreamChan != nil {
+		rt.handleStreamResponse(c, result, triggerCtx.RequestID)
+		return
+	}
+
+	ginx.NewRender(c).Data(result, nil)
+}
+
+// eventPipelineExecutionAdd 接收 edge 节点同步的 Pipeline 执行记录
+func (rt *Router) eventPipelineExecutionAdd(c *gin.Context) {
+	var execution models.EventPipelineExecution
+	ginx.BindJSON(c, &execution)
+
+	if execution.ID == "" {
+		ginx.Bomb(http.StatusBadRequest, "id is required")
+	}
+	if execution.PipelineID <= 0 {
+		ginx.Bomb(http.StatusBadRequest, "pipeline_id is required")
+	}
+
+	ginx.NewRender(c).Message(models.DB(rt.Ctx).Create(&execution).Error)
 }

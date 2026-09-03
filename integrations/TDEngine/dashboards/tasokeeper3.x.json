@@ -243,7 +243,7 @@
                 },
                 "links": [],
                 "maxPerRow": 4,
-                "name": "Used Meassuring Points",
+                "name": "Used Measuring Points",
                 "options": {
                     "legend": {
                         "displayMode": "list"
@@ -828,7 +828,7 @@
                 },
                 "links": [],
                 "maxPerRow": 4,
-                "name": "Messuring Points Used Percent Alert",
+                "name": "Measuring Points Used Percent Alert",
                 "options": {
                     "legend": {
                         "displayMode": "hidden"

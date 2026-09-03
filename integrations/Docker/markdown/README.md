@@ -1,6 +1,31 @@
 # docker
 
-forked from telegraf/inputs.docker
+Docker input 基于 telegraf/inputs.docker，通过 Docker API 采集 `docker_*` 指标。本目录的 `Docker Dashboard` 正是按这些指标编写并完成真实验证，因此使用该模板时必须启用 Docker input。
+
+cAdvisor 也是推荐的容器采集方式，但它输出 `container_*` 指标，应使用 `cAdvisor` 目录下的仪表盘，不能与本模板混用。
+
+## 采集配置
+
+配置文件为 `conf/input.docker/docker.toml`：
+
+```toml
+[[instances]]
+endpoint = "unix:///var/run/docker.sock"
+gather_services = false
+gather_extend_memstats = false
+container_id_label_enable = true
+container_id_label_short_style = false
+timeout = "5s"
+total_include = ["cpu", "blkio", "network"]
+```
+
+验证：
+
+```bash
+./categraf --test --inputs docker
+```
+
+至少应看到 `docker_up`、`docker_n_containers_running` 和 `docker_container_cpu_usage_percent`。
 
 ## change
 

@@ -74,8 +74,8 @@ services:
       - postgres:postgres
       - redis:redis
       - victoriametrics:victoriametrics
-    command: >
-      sh -c "/app/n9e"
+    command:
+      - /app/n9e
 
   categraf:
     image: "flashcatcloud/categraf:latest"

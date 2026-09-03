@@ -1,12 +1,62 @@
 # Kubernetes
 
-这个插件已经废弃。Kubernetes 监控系列可以参考这个 [文章](https://flashcat.cloud/categories/kubernetes%E7%9B%91%E6%8E%A7%E4%B8%93%E6%A0%8F/)。
+旧的 Categraf Kubernetes input 已废弃，但本目录的仪表盘和告警规则仍可使用。推荐通过 Categraf Prometheus input 抓取 Kubernetes 各组件的原生 `/metrics`，并部署 kube-state-metrics 和 node-exporter。
 
-不过 Kubernetes 这个类别下的内置告警规则和内置仪表盘都是可以使用的。
+## 模板所需数据源
+
+| 数据源 | 常用端点 | 覆盖模板 |
+| --- | --- | --- |
+| kube-apiserver | `https://<api-server>:6443/metrics` | API Server |
+| kubelet | `https://<node>:10250/metrics`、`/metrics/cadvisor`、`/metrics/resource` | Kubelet、Node、Pod、Container |
+| kube-controller-manager | `https://<control-plane>:10257/metrics` | Controller Manager |
+| kube-scheduler | `https://<control-plane>:10259/metrics` | Scheduler |
+| kube-proxy | `http://<node>:10249/metrics` | Proxy |
+| kube-state-metrics | `http://<service>:8080/metrics` | Deployment、StatefulSet、DaemonSet、Pod 等状态 |
+| CoreDNS | `http://<coredns>:9153/metrics` | CoreDNS |
+| node-exporter | `http://<node>:9100/metrics` | Node 主机资源 |
+
+本次使用单节点 K3s 实测。K3s 的 scheduler、controller-manager 和 proxy 指标可能只监听 loopback，需要在控制面节点本机采集，或使用受控代理暴露；不要为了方便把这些无鉴权端点开放到公网。
+
+## Categraf 示例
+
+```toml
+# conf/input.prometheus/kubernetes.toml
+interval = 15
+
+[[instances]]
+urls = ["https://kubernetes.default.svc:443/metrics"]
+bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+use_tls = true
+tls_ca = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+labels = { cluster = "prod-k8s", job = "apiserver" }
+
+[[instances]]
+urls = [
+  "https://<node>:10250/metrics",
+  "https://<node>:10250/metrics/cadvisor",
+  "https://<node>:10250/metrics/resource"
+]
+bearer_token_file = "/path/to/token"
+use_tls = true
+tls_ca = "/path/to/ca.crt"
+labels = { cluster = "prod-k8s", job = "kubelet" }
+
+[[instances]]
+urls = ["http://kube-state-metrics.monitoring.svc:8080/metrics"]
+labels = { cluster = "prod-k8s", job = "kube-state-metrics" }
+
+[[instances]]
+urls = ["http://node-exporter.monitoring.svc:9100/metrics"]
+labels = { cluster = "prod-k8s", job = "node-exporter" }
+```
+
+所有数据源应使用相同且稳定的 `cluster` 标签，并保留每个目标唯一的 `instance`。生产环境应校验证书，不建议使用 `insecure_skip_verify = true`。
+
+单节点或非高可用集群没有某些角色、runtime、设备或副本时，相关面板为空属于拓扑差异。
 
 ---
 
-下面是老插件文档：
+下面保留旧插件说明，仅供已有部署参考：
 
 forked from telegraf/kubernetes. 这个插件的作用是通过kubelet提供的API获取监控数据，包括系统容器的监控数据、node的、pod数据卷的、pod网络的、pod容器的。
 

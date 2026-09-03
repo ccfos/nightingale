@@ -1,0 +1,27 @@
+[[instances]]
+targets = [
+    # "https://www.baidu.com"
+]
+
+# # 自定义DNS
+# dns = ""
+# dns_Protocol = "udp"
+# dns_timeout_ms = 1000
+
+# # 连接相关配置
+#  connect_timeout_ms = 3000
+#  tls_handshake_timeout_ms = 1000
+
+# # http 相关配置
+#  method = "GET"
+# #  GBK GB2312 HZGB2312 GBK18030 BIG5 ,default: UTF8
+#  encode = "UTF-8"
+#  headers = { Authorization="", X-Forwarded-For="", Host=""}
+#  headers = { User-Agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"}
+# username = ""
+# password = ""
+
+# # 响应部分配置
+#  match_pattern = "" # complete or substring
+#  expect_response_string = "xxx"
+#  expect_response_status_code = 200

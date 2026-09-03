@@ -1,19 +1,20 @@
 # PostgreSQL
 
-categraf 作为一个 client 连上 pg，采集相关指标，首先要确保用户授权。举例：
+categraf 作为一个 client 连上 PostgreSQL 采集指标，建议创建专用监控账号：
 
+```sql
+CREATE USER categraf WITH PASSWORD '<password>';
+GRANT pg_monitor TO categraf;
+ALTER USER categraf SET default_transaction_read_only = on;
 ```
-create user categraf with password 'categraf';
-alter user categraf set default_transaction_read_only=on;
-grant usage on schema public to categraf;
-grant select on all tables in schema public to categraf ;
-```
+
+`pg_monitor` 用于读取 PostgreSQL 监控视图。只有配置自定义业务表查询时，才需要再授予对应 schema/table 的 `USAGE` 和 `SELECT`。
 
 ## 配置文件示例
 
 ```toml
 [[instances]]
-address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmode=disable"
+address = "host=192.168.11.181 port=5432 user=categraf password=<password> sslmode=disable"
 ## specify address via a url matching:
 ##   postgres://[pqgotest[:password]]@localhost[/dbname]?sslmode=[disable|verify-ca|verify-full]
 ## or a simple string:
@@ -52,23 +53,14 @@ address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmod
 # prepared_statements = true
 #
 # [[instances.metrics]]
-# mesurement = "sessions"
-# label_fields = [ "status", "type" ]
+# measurement = "sessions"
+# label_fields = [ "state" ]
 # metric_fields = [ "value" ]
 # timeout = "3s"
 # request = '''
-# SELECT status, type, COUNT(*) as value FROM v$session GROUP BY status, type
+# SELECT COALESCE(state, 'unknown') AS state,
+#        COUNT(*)::double precision AS value
+# FROM pg_stat_activity
+# GROUP BY COALESCE(state, 'unknown')
 # '''
 ```
-
-## 仪表盘
-
-夜莺内置了 Postgres 的仪表盘，克隆到自己的业务组下即可使用。
-
-![20230802073729](https://download.flashcat.cloud/ulric/20230802073729.png)
-
-## 告警规则
-
-夜莺内置了 Postgres 的告警规则，克隆到自己的业务组下即可使用。
-
-![20230802073753](https://download.flashcat.cloud/ulric/20230802073753.png)

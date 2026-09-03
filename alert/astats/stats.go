@@ -26,7 +26,13 @@ type Stats struct {
 	CounterSubEventTotal        *prometheus.CounterVec
 	GaugeQuerySeriesCount       *prometheus.GaugeVec
 	GaugeRuleEvalDuration       *prometheus.GaugeVec
+	GaugeRecordEvalDuration     *prometheus.GaugeVec
+	GaugeRecordSeriesCount      *prometheus.GaugeVec
 	GaugeNotifyRecordQueueSize  prometheus.Gauge
+	CounterEvalLogDropTotal     prometheus.Counter
+	// CounterEvalLogQueryRejectTotal 持续增长说明查询并发闸在起作用：
+	// 要么有人在反复刷记录页，要么 MaxConcurrentQueries 配得太紧
+	CounterEvalLogQueryRejectTotal prometheus.Counter
 }
 
 func NewSyncStats() *Stats {
@@ -63,14 +69,17 @@ func NewSyncStats() *Stats {
 		Subsystem: subsystem,
 		Name:      "record_eval_total",
 		Help:      "Number of record eval.",
-	}, []string{"datasource"})
+	}, []string{"datasource", "rule_id"})
 
+	// labels: datasource = rule's write-target ds;
+	// query_datasource = ds actually being queried/written when the error fires (empty if not yet known);
+	// stage = pipeline phase (check_query / get_client / query_data / get_rule_config / convert_data / write_data).
 	CounterRecordEvalErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "record_eval_error_total",
-		Help:      "Number of record eval error.",
-	}, []string{"datasource"})
+		Help:      "Number of record eval errors, labeled by stage.",
+	}, []string{"datasource", "query_datasource", "stage", "rule_id"})
 
 	AlertNotifyTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
@@ -144,12 +153,45 @@ func NewSyncStats() *Stats {
 		Help:      "Duration of rule eval in milliseconds.",
 	}, []string{"rule_id", "datasource_id"})
 
+	GaugeRecordEvalDuration := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "record_eval_duration_ms",
+		Help:      "Duration of record eval in milliseconds.",
+	}, []string{"rule_id", "datasource_id"})
+
+	// Negative values encode error states:
+	//   -1 = query error
+	//   -2 = client / config missing
+	GaugeRecordSeriesCount := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "record_eval_series_count",
+		Help:      "Series count produced by the latest record eval; negative values encode error states.",
+	}, []string{"rule_id", "datasource_id"})
+
 	CounterVarFillingQuery := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "var_filling_query_total",
 		Help:      "Number of var filling query.",
 	}, []string{"rule_id", "datasource_id", "ref", "typ"})
+
+	// 评估执行记录被丢弃的条数（写入队列满，或降级到骨架后仍超出单行硬上限）
+	CounterEvalLogDropTotal := prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "eval_log_drop_total",
+		Help:      "Number of eval log records dropped (full write queue, or still oversized after full degradation).",
+	})
+
+	// 查询被并发闸拒绝的次数（防止排障查询把告警引擎的内存/CPU 吃掉）
+	CounterEvalLogQueryRejectTotal := prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "eval_log_query_reject_total",
+		Help:      "Number of eval log queries rejected by the concurrency gate.",
+	})
 
 	prometheus.MustRegister(
 		CounterAlertsTotal,
@@ -167,8 +209,12 @@ func NewSyncStats() *Stats {
 		CounterSubEventTotal,
 		GaugeQuerySeriesCount,
 		GaugeRuleEvalDuration,
+		GaugeRecordEvalDuration,
+		GaugeRecordSeriesCount,
 		GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery,
+		CounterEvalLogDropTotal,
+		CounterEvalLogQueryRejectTotal,
 	)
 
 	return &Stats{
@@ -187,7 +233,12 @@ func NewSyncStats() *Stats {
 		CounterSubEventTotal:        CounterSubEventTotal,
 		GaugeQuerySeriesCount:       GaugeQuerySeriesCount,
 		GaugeRuleEvalDuration:       GaugeRuleEvalDuration,
+		GaugeRecordEvalDuration:     GaugeRecordEvalDuration,
+		GaugeRecordSeriesCount:      GaugeRecordSeriesCount,
 		GaugeNotifyRecordQueueSize:  GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery:      CounterVarFillingQuery,
+		CounterEvalLogDropTotal:     CounterEvalLogDropTotal,
+
+		CounterEvalLogQueryRejectTotal: CounterEvalLogQueryRejectTotal,
 	}
 }

@@ -130,28 +130,27 @@ func TestSafePriorityQueue_ConcurrentPushPopWithDifferentSeverities(t *testing.T
 func TestSafePriorityQueue_ExceedMaxSize(t *testing.T) {
 	spq := NewSafeEventQueue(5)
 
-	// 插入超过最大容量的事件
-	for i := 0; i < 10; i++ {
-		spq.Push(&models.AlertCurEvent{
-			Severity:    i % 3,
+	for i := 0; i < spq.maxSize; i++ {
+		ok := spq.Push(&models.AlertCurEvent{
+			Severity:    i%3 + 1,
 			TriggerTime: int64(i),
 		})
+		assert.True(t, ok)
 	}
 
-	// 验证队列的长度是否不超过 maxSize
-	assert.LessOrEqual(t, spq.Len(), spq.maxSize)
+	ok := spq.Push(&models.AlertCurEvent{
+		Severity:    High,
+		TriggerTime: int64(spq.maxSize),
+	})
+	assert.False(t, ok)
+	assert.Equal(t, spq.maxSize, spq.Len())
 
 	// 验证队列中剩余事件的内容
-	expectedEvents := 5
-	if spq.Len() < 5 {
-		expectedEvents = spq.Len()
-	}
-
-	// 检查最后存入的事件是否是按优先级排序
-	for i := 0; i < expectedEvents; i++ {
+	for i := 0; i < spq.maxSize; i++ {
 		event := spq.Pop()
-		if event != nil {
-			assert.LessOrEqual(t, event.Severity, 2)
-		}
+		assert.NotNil(t, event)
+		assert.GreaterOrEqual(t, event.Severity, High)
+		assert.LessOrEqual(t, event.Severity, Low)
 	}
+	assert.Equal(t, 0, spq.Len())
 }

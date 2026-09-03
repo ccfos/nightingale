@@ -17,6 +17,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 )
 
 type FixedField string
@@ -26,12 +27,18 @@ const (
 	FieldId    FixedField = "_id"
 )
 
+// LabelSeparator 用于分隔多个标签的分隔符
+// 使用 ASCII 控制字符 Record Separator (0x1E)，避免与用户数据中的 "--" 冲突
+const LabelSeparator = "\x1e"
+
 type Query struct {
 	Ref            string     `json:"ref" mapstructure:"ref"`
 	IndexType      string     `json:"index_type" mapstructure:"index_type"` // 普通索引:index 索引模式:index_pattern
 	Index          string     `json:"index" mapstructure:"index"`
 	IndexPatternId int64      `json:"index_pattern" mapstructure:"index_pattern"`
 	Filter         string     `json:"filter" mapstructure:"filter"`
+	FilterLanguage string     `json:"filter_language" mapstructure:"filter_language"`
+	KQLOptions     KQLOptions `json:"kql_options" mapstructure:"kql_options"`
 	Offset         int64      `json:"offset" mapstructure:"offset"`
 	MetricAggr     MetricAggr `json:"value" mapstructure:"value"`
 	GroupBy        []GroupBy  `json:"group_by" mapstructure:"group_by"`
@@ -84,9 +91,9 @@ type QueryFieldsFunc func(indices []string) ([]string, error)
 type GroupByCate string
 
 const (
-	Filters  GroupByCate = "filters"
-	Histgram GroupByCate = "histgram"
-	Terms    GroupByCate = "terms"
+	Filters   GroupByCate = "filters"
+	Histogram GroupByCate = "histogram"
+	Terms     GroupByCate = "terms"
 )
 
 // 参数
@@ -128,7 +135,7 @@ func TransferData(metric, ref string, m map[string][][]float64) []models.DataRes
 		}
 
 		data.Metric["__name__"] = model.LabelValue(metric)
-		labels := strings.Split(k, "--")
+		labels := strings.Split(k, LabelSeparator)
 		for _, label := range labels {
 			arr := strings.SplitN(label, "=", 2)
 			if len(arr) == 2 {
@@ -178,7 +185,7 @@ func getUnixTs(timeStr string) int64 {
 	return parsedTime.UnixMilli()
 }
 
-func GetBuckts(labelKey string, keys []string, arr []interface{}, metrics *MetricPtr, labels string, ts int64, f string) {
+func GetBuckets(labelKey string, keys []string, arr []interface{}, metrics *MetricPtr, labels string, ts int64, f string) {
 	var err error
 	bucketsKey := ""
 	if len(keys) > 0 {
@@ -197,7 +204,7 @@ func GetBuckts(labelKey string, keys []string, arr []interface{}, metrics *Metri
 		case json.Number, string:
 			if !getTs {
 				if labels != "" {
-					newlabels = fmt.Sprintf("%s--%s=%v", labels, labelKey, keyValue)
+					newlabels = fmt.Sprintf("%s%s%s=%v", labels, LabelSeparator, labelKey, keyValue)
 				} else {
 					newlabels = fmt.Sprintf("%s=%v", labelKey, keyValue)
 				}
@@ -226,9 +233,9 @@ func GetBuckts(labelKey string, keys []string, arr []interface{}, metrics *Metri
 		nextBucketsArr, exists := innerBuckets.(map[string]interface{})["buckets"]
 		if exists {
 			if len(keys[1:]) >= 1 {
-				GetBuckts(bucketsKey, keys[1:], nextBucketsArr.([]interface{}), metrics, newlabels, ts, f)
+				GetBuckets(bucketsKey, keys[1:], nextBucketsArr.([]interface{}), metrics, newlabels, ts, f)
 			} else {
-				GetBuckts(bucketsKey, []string{}, nextBucketsArr.([]interface{}), metrics, newlabels, ts, f)
+				GetBuckets(bucketsKey, []string{}, nextBucketsArr.([]interface{}), metrics, newlabels, ts, f)
 			}
 		} else {
 
@@ -386,8 +393,8 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	now := time.Now().Unix()
 	var start, end int64
 	if param.End != 0 && param.Start != 0 {
-		end = param.End - param.End%param.Interval
-		start = param.Start - param.Start%param.Interval
+		end = param.End
+		start = param.Start
 	} else {
 		end = now
 		start = end - param.Interval
@@ -405,13 +412,16 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	}
 
 	q.Gte(time.Unix(start, 0).UnixMilli())
-	q.Lte(time.Unix(end, 0).UnixMilli())
+	q.Lt(time.Unix(end, 0).UnixMilli())
 	q.Format("epoch_millis")
 
 	field := param.MetricAggr.Field
 	groupBys := param.GroupBy
 
-	queryString := GetQueryString(param.Filter, q)
+	queryString, err := GetFilterQuery(param, q)
+	if err != nil {
+		return nil, err
+	}
 
 	var aggr elastic.Aggregation
 	switch param.MetricAggr.Func {
@@ -441,10 +451,32 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 		Field(param.DateField).
 		MinDocCount(1)
 
-	if strings.HasPrefix(version, "7") {
+	versionParts := strings.Split(version, ".")
+	major := 0
+	if len(versionParts) > 0 {
+		if m, err := strconv.Atoi(strings.TrimRight(versionParts[0], "+-")); err == nil {
+			major = m
+		}
+	}
+	minor := 0
+	if len(versionParts) > 1 {
+		if m, err := strconv.Atoi(strings.TrimRight(versionParts[1], "+-")); err == nil {
+			minor = m
+		}
+	}
+
+	if major >= 7 {
 		// 添加偏移量，使第一个分桶bucket的左边界对齐为 start 时间
 		offset := (start % param.Interval) - param.Interval
-		tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval)).Offset(fmt.Sprintf("%ds", offset))
+
+		// 使用 fixed_interval 的条件：ES 7.2+ 或者任何 major > 7（例如 ES8）
+		if (major > 7) || (major == 7 && minor >= 2) {
+			// ES 7.2+ 以及 ES8+ 使用 fixed_interval
+			tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval)).Offset(fmt.Sprintf("%ds", offset))
+		} else {
+			// 7.0-7.1 使用 interval（带 offset）
+			tsAggr.Interval(fmt.Sprintf("%ds", param.Interval)).Offset(fmt.Sprintf("%ds", offset))
+		}
 	} else {
 		// 兼容 7.0 以下的版本
 		// OpenSearch 也使用这个字段
@@ -471,7 +503,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 			} else {
 				groupByAggregation = elastic.NewTermsAggregation().Field(groupBy.Field).OrderByKeyDesc().Size(groupBy.Size).MinDocCount(int(groupBy.MinDocCount))
 			}
-		case Histgram:
+		case Histogram:
 			if param.MetricAggr.Func != "count" {
 				groupByAggregation = elastic.NewHistogramAggregation().Field(groupBy.Field).Interval(float64(groupBy.Interval)).SubAggregation(field, aggr)
 			} else {
@@ -501,7 +533,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 			switch groupBy.Cate {
 			case Terms:
 				groupByAggregation = elastic.NewTermsAggregation().Field(groupBy.Field).SubAggregation(groupBys[i-1].Field, groupByAggregation).OrderByKeyDesc().Size(groupBy.Size).MinDocCount(int(groupBy.MinDocCount))
-			case Histgram:
+			case Histogram:
 				groupByAggregation = elastic.NewHistogramAggregation().Field(groupBy.Field).Interval(float64(groupBy.Interval)).SubAggregation(groupBys[i-1].Field, groupByAggregation)
 			case Filters:
 				for _, filterParam := range groupBy.Params {
@@ -517,7 +549,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	source, _ := queryString.Source()
 	b, _ := json.Marshal(source)
-	logger.Debugf("query_data q:%+v indexArr:%+v tsAggr:%+v query_string:%s", param, indexArr, tsAggr, string(b))
+	logx.Debugf(ctx, "query_data q:%+v indexArr:%+v tsAggr:%+v query_string:%s", param, indexArr, tsAggr, string(b))
 
 	searchSource := elastic.NewSearchSource().
 		Query(queryString).
@@ -525,21 +557,29 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	searchSourceString, err := searchSource.Source()
 	if err != nil {
-		logger.Warningf("query_data searchSource:%s to string error:%v", searchSourceString, err)
+		logx.Warningf(ctx, "query_data searchSource:%s to string error:%v", searchSourceString, err)
 	}
 
 	jsonSearchSource, err := json.Marshal(searchSourceString)
 	if err != nil {
-		logger.Warningf("query_data searchSource:%s to json error:%v", searchSourceString, err)
+		logx.Warningf(ctx, "query_data searchSource:%s to json error:%v", searchSourceString, err)
 	}
 
 	result, err := search(ctx, indexArr, searchSource, param.Timeout, param.MaxShard)
 	if err != nil {
-		logger.Warningf("query_data searchSource:%s query_data error:%v", searchSourceString, err)
+		logx.Warningf(ctx, "query_data searchSource:%s query_data error:%v", searchSourceString, err)
 		return nil, err
 	}
 
-	logger.Debugf("query_data searchSource:%s resp:%s", string(jsonSearchSource), string(result.Aggregations["ts"]))
+	// 检查是否有 shard failures，有部分数据时仅记录警告继续处理
+	if shardErr := checkShardFailures(ctx, result.Shards, "query_data", searchSourceString); shardErr != nil {
+		if len(result.Aggregations["ts"]) == 0 {
+			return nil, shardErr
+		}
+		// 有部分数据，checkShardFailures 已记录警告，继续处理
+	}
+
+	logx.Infof(ctx, "query_data searchSource:%s resp:%s", string(jsonSearchSource), string(result.Aggregations["ts"]))
 
 	js, err := simplejson.NewJson(result.Aggregations["ts"])
 	if err != nil {
@@ -562,7 +602,20 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	metrics := &MetricPtr{Data: make(map[string][][]float64)}
 
-	GetBuckts("", keys, bucketsData, metrics, "", 0, param.MetricAggr.Func)
+	GetBuckets("", keys, bucketsData, metrics, "", 0, param.MetricAggr.Func)
+
+	// Drop the last incomplete bucket to avoid inaccurate values at the boundary.
+	// When the last bucket's time range extends beyond or reaches the query end time,
+	// it may contain only partial data, making aggregated values (count, sum, etc.) artificially low.
+	for k, v := range metrics.Data {
+		if len(v) <= 1 {
+			continue
+		}
+		lastTs := v[len(v)-1][0]
+		if int64(lastTs)+param.Interval > end {
+			metrics.Data[k] = v[:len(v)-1]
+		}
+	}
 
 	items, err := TransferData(fmt.Sprintf("%s_%s", field, param.MetricAggr.Func), param.Ref, metrics.Data), nil
 
@@ -574,6 +627,40 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 		items[i].Query = fmt.Sprintf("%+v", m)
 	}
 	return items, nil
+}
+
+// checkShardFailures 检查 ES 查询结果中的 shard failures，返回格式化的错误信息
+func checkShardFailures(ctx context.Context, shards *elastic.ShardsInfo, logPrefix string, queryContext interface{}) error {
+	if shards == nil || shards.Failed == 0 || len(shards.Failures) == 0 {
+		return nil
+	}
+
+	var failureReasons []string
+	for _, failure := range shards.Failures {
+		reason := ""
+		if failure.Reason != nil {
+			if reasonType, ok := failure.Reason["type"].(string); ok {
+				reason = reasonType
+			}
+			if reasonMsg, ok := failure.Reason["reason"].(string); ok {
+				if reason != "" {
+					reason += ": " + reasonMsg
+				} else {
+					reason = reasonMsg
+				}
+			}
+		}
+		if reason != "" {
+			failureReasons = append(failureReasons, fmt.Sprintf("index=%s shard=%d: %s", failure.Index, failure.Shard, reason))
+		}
+	}
+
+	if len(failureReasons) > 0 {
+		errMsg := fmt.Sprintf("elasticsearch shard failures (%d/%d failed): %s", shards.Failed, shards.Total, strings.Join(failureReasons, "; "))
+		logx.Warningf(ctx, "%s query:%v %s", logPrefix, queryContext, errMsg)
+		return fmt.Errorf("%s", errMsg)
+	}
+	return nil
 }
 
 func HitFilter(typ string) bool {
@@ -610,8 +697,8 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	now := time.Now().Unix()
 	var start, end int64
 	if param.End != 0 && param.Start != 0 {
-		end = param.End - param.End%param.Interval
-		start = param.Start - param.Start%param.Interval
+		end = param.End
+		start = param.Start
 	} else {
 		end = now
 		start = end - param.Interval
@@ -619,10 +706,13 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 
 	q := elastic.NewRangeQuery(param.DateField)
 	q.Gte(time.Unix(start, 0).UnixMilli())
-	q.Lte(time.Unix(end, 0).UnixMilli())
+	q.Lt(time.Unix(end, 0).UnixMilli())
 	q.Format("epoch_millis")
 
-	queryString := GetQueryString(param.Filter, q)
+	queryString, err := GetFilterQuery(param, q)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	if param.Limit <= 0 {
 		param.Limit = 10
@@ -652,28 +742,34 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	} else {
 		source = source.From(param.P).Sort(param.DateField, param.Ascending)
 	}
+	sourceBytes, _ := json.Marshal(source)
 	result, err := search(ctx, indexArr, source, param.Timeout, param.MaxShard)
 	if err != nil {
-		logger.Warningf("query data error:%v", err)
+		logx.Warningf(ctx, "query_log source:%s error:%v", string(sourceBytes), err)
 		return nil, 0, err
 	}
 
+	// 检查是否有 shard failures，有部分数据时仅记录警告继续处理
+	if shardErr := checkShardFailures(ctx, result.Shards, "query_log", string(sourceBytes)); shardErr != nil {
+		if len(result.Hits.Hits) == 0 {
+			return nil, 0, shardErr
+		}
+		// 有部分数据，checkShardFailures 已记录警告，继续处理
+	}
+
 	total := result.TotalHits()
-
 	var ret []interface{}
-
-	b, _ := json.Marshal(source)
-	logger.Debugf("query data result query source:%s len:%d total:%d", string(b), len(result.Hits.Hits), total)
+	logx.Debugf(ctx, "query_log source:%s len:%d total:%d", string(sourceBytes), len(result.Hits.Hits), total)
 
 	resultBytes, _ := json.Marshal(result)
-	logger.Debugf("query data result query source:%s result:%s", string(b), string(resultBytes))
+	logx.Debugf(ctx, "query_log source:%s result:%s", string(sourceBytes), string(resultBytes))
 
 	if strings.HasPrefix(version, "6") {
 		for i := 0; i < len(result.Hits.Hits); i++ {
 			var x map[string]interface{}
 			err := json.Unmarshal(result.Hits.Hits[i].Source, &x)
 			if err != nil {
-				logger.Warningf("Unmarshal soruce error:%v", err)
+				logx.Warningf(ctx, "Unmarshal source error:%v", err)
 				continue
 			}
 

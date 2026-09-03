@@ -1,20 +1,107 @@
 package router
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"sync"
 
+	"github.com/ccfos/nightingale/v6/alert/eval"
 	"github.com/ccfos/nightingale/v6/dscache"
+	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
 )
 
-func CheckDsPerm(c *gin.Context, dsId int64, cate string, q interface{}) bool {
+func ginUser(c *gin.Context) string {
+	if v, ok := c.Get("user"); ok {
+		if u, ok := v.(*models.User); ok && u != nil {
+			return u.Username
+		}
+	}
+	return ""
+}
+
+// queryAccessUser returns the caller's username, empty only for anonymous
+// access. It works for both X-User-Token and session/JWT auth, since both
+// populate the request context via the auth()/user() middleware.
+func queryAccessUser(c *gin.Context) string {
+	if u := ginUser(c); u != "" {
+		return u
+	}
+	return c.GetString("username")
+}
+
+// marshalForLog renders v as a single-line, length-capped string for one audit
+// log line, so a pathological query payload can't blow up the log.
+func marshalForLog(v interface{}) string {
+	var s string
+	switch t := v.(type) {
+	case string:
+		s = t
+	default:
+		if b, err := json.Marshal(v); err == nil {
+			s = string(b)
+		} else {
+			s = fmt.Sprintf("%+v", v)
+		}
+	}
+	const maxLen = 2048
+	if len(s) > maxLen {
+		s = s[:maxLen] + "...(truncated)"
+	}
+	return s
+}
+
+// logQueryAccess emits an always-on, greppable audit line for datasource log/
+// query endpoints, recording who queried what. Operators grep
+// "[log_query_access]" to see who is using an endpoint before tightening its
+// permissions. It stays at Info level on purpose — this is the audit signal,
+// not debug output.
+func logQueryAccess(c *gin.Context, cate string, dsID int64, query interface{}) {
+	logx.Infof(c.Request.Context(), "[log_query_access] user=%s client=%s ds_id=%d cate=%s query=%s",
+		queryAccessUser(c), c.ClientIP(), dsID, cate, marshalForLog(query))
+}
+
+// withCallContext
+// Operator is best-effort: empty for anonymous endpoints.
+//
+// Inherit the CallContext already on the parent instead of rebuilding it, then
+// overwrite only what this call resolves. Rebuilding drops every other field —
+// notably EnforceReadOnly, which the board-share channel sets at the entry
+// handler; QueryLogBatchConcurrently derives a per-query context *after* that,
+// so a literal here silently cleared the strict read-only check on exactly the
+// path that needs it. Any field added to CallContext later inherits for free.
+func withCallContext(parent context.Context, dsID int64, operator string) context.Context {
+	cc, _ := dskittypes.CallContextFromCtx(parent)
+	cc.DatasourceID = dsID
+	cc.Operator = operator
+	return dskittypes.WithCallContext(parent, cc)
+}
+
+type CheckDsPermFunc func(c *gin.Context, dsId int64, cate string, q interface{}) bool
+
+var CheckDsPerm CheckDsPermFunc = func(c *gin.Context, dsId int64, cate string, q interface{}) bool {
 	// todo: 后续需要根据 cate 判断是否需要权限
 	return true
+}
+
+// RuleChangeHookFunc 在告警规则、记录规则的创建/保存（add/put/upsert）前调用，
+// 作为可拒绝的守卫（return non-nil error 会中断本次保存并把错误透传给前端）。
+// rule 为 *models.AlertRule 或 *models.RecordingRule。
+//
+// 命名上叫 Hook 而非 CheckXxx，是为了给实现方保留在同一个入口内并联
+// 多种校验维度（权限、配额、命名规范、rule 体积等）的空间，而不必给
+// 每种校验都开一个 upstream 变量。上游只保证"这个入口会在 rule 变更前
+// 被调用一次"，具体校什么由实现方决定。
+type RuleChangeHookFunc func(c *gin.Context, rule interface{}) error
+
+// RuleChangeHook 默认放行所有规则。增强实现由外层注入。
+var RuleChangeHook RuleChangeHookFunc = func(c *gin.Context, rule interface{}) error {
+	return nil
 }
 
 type QueryFrom struct {
@@ -44,6 +131,11 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var errs []error
+	rctx := ctx.Request.Context()
+
+	// Operator is a per-request property; resolve it once outside the
+	// goroutines to avoid concurrent reads on gin.Context.
+	operator := ginUser(ctx)
 
 	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, q.Did, q.DsCate, q) {
@@ -52,20 +144,31 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 
 		plug, exists := dscache.DsCache.Get(q.DsCate, q.Did)
 		if !exists {
-			logger.Warningf("cluster:%d not exists query:%+v", q.Did, q)
+			logx.Warningf(rctx, "cluster:%d not exists query:%+v", q.Did, q)
 			return LogResp{}, fmt.Errorf("cluster not exists")
 		}
 
+		// 根据数据源类型对 Query 进行模板渲染处理
+		err := eval.ExecuteQueryTemplate(q.DsCate, q.Query, nil)
+		if err != nil {
+			logx.Warningf(rctx, "query template execute error: %v", err)
+			return LogResp{}, fmt.Errorf("query template execute error: %v", err)
+		}
+
+		// Per-query context decoration: every cate carries CallContext;
+		// individual datasources consume it (audit/metrics/tracing) on demand.
+		qctx := withCallContext(rctx, q.Did, operator)
+
 		wg.Add(1)
-		go func(query Query) {
+		go func(query Query, qctx context.Context) {
 			defer wg.Done()
 
-			data, total, err := plug.QueryLog(ctx.Request.Context(), query.Query)
+			data, total, err := plug.QueryLog(qctx, query.Query)
 			mu.Lock()
 			defer mu.Unlock()
 			if err != nil {
 				errMsg := fmt.Sprintf("query data error: %v query:%v\n ", err, query)
-				logger.Warningf(errMsg)
+				logx.Warningf(rctx, "%s", errMsg)
 				errs = append(errs, err)
 				return
 			}
@@ -78,7 +181,7 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 
 			resp.List = append(resp.List, m)
 			resp.Total += total
-		}(q)
+		}(q, qctx)
 	}
 
 	wg.Wait()
@@ -97,8 +200,21 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 func (rt *Router) QueryLogBatch(c *gin.Context) {
 	var f QueryFrom
 	ginx.BindJSON(c, &f)
+	for i := range f.Queries {
+		logQueryAccess(c, f.Queries[i].DsCate, f.Queries[i].Did, f.Queries[i].Query)
+	}
 
-	resp, err := QueryLogBatchConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
+	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
+	// 分享 token 请求：本接口每条 query 自带数据源 id，需逐条校验板内归属
+	dsIds := make([]int64, 0, len(f.Queries))
+	for i := range f.Queries {
+		dsIds = append(dsIds, f.Queries[i].Did)
+	}
+	if rt.boardTokenQueryContext(c, dsIds...) {
+		anonymousAccess = true
+	}
+
+	resp, err := QueryLogBatchConcurrently(anonymousAccess, c, f)
 	if err != nil {
 		ginx.Bomb(200, "err:%v", err)
 	}
@@ -111,15 +227,16 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var errs []error
+	rctx := ctx.Request.Context()
 
-	for _, q := range f.Querys {
+	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, f.DatasourceId, f.Cate, q) {
 			return nil, fmt.Errorf("forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 		if !exists {
-			logger.Warningf("cluster:%d not exists", f.DatasourceId)
+			logx.Warningf(rctx, "cluster:%d not exists", f.DatasourceId)
 			return nil, fmt.Errorf("cluster not exists")
 		}
 
@@ -127,18 +244,18 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 		go func(query interface{}) {
 			defer wg.Done()
 
-			datas, err := plug.QueryData(ctx.Request.Context(), query)
+			data, err := plug.QueryData(rctx, query)
 			if err != nil {
-				logger.Warningf("query data error: req:%+v err:%v", query, err)
+				logx.Warningf(rctx, "query data error: req:%+v err:%v", query, err)
 				mu.Lock()
 				errs = append(errs, err)
 				mu.Unlock()
 				return
 			}
 
-			logger.Debugf("query data: req:%+v resp:%+v", query, datas)
+			logx.Debugf(rctx, "query data: req:%+v resp:%+v", query, data)
 			mu.Lock()
-			resp = append(resp, datas...)
+			resp = append(resp, data...)
 			mu.Unlock()
 		}(q)
 	}
@@ -167,8 +284,16 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 func (rt *Router) QueryData(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
+	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
-	resp, err := QueryDataConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
+	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
+	// 分享 token 请求：数据源按板内集合校验、SQL 家族置位强只读，
+	// 跳过基于登录用户的 CheckDsPerm
+	if rt.boardTokenQueryContext(c, f.DatasourceId) {
+		anonymousAccess = true
+	}
+
+	resp, err := QueryDataConcurrently(anonymousAccess, c, f)
 	if err != nil {
 		ginx.Bomb(200, "err:%v", err)
 	}
@@ -182,15 +307,16 @@ func QueryLogConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Query
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var errs []error
+	rctx := ctx.Request.Context()
 
-	for _, q := range f.Querys {
+	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, f.DatasourceId, f.Cate, q) {
 			return LogResp{}, fmt.Errorf("forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 		if !exists {
-			logger.Warningf("cluster:%d not exists query:%+v", f.DatasourceId, f)
+			logx.Warningf(rctx, "cluster:%d not exists query:%+v", f.DatasourceId, f)
 			return LogResp{}, fmt.Errorf("cluster not exists")
 		}
 
@@ -198,11 +324,11 @@ func QueryLogConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Query
 		go func(query interface{}) {
 			defer wg.Done()
 
-			data, total, err := plug.QueryLog(ctx.Request.Context(), query)
-			logger.Debugf("query log: req:%+v resp:%+v", query, data)
+			data, total, err := plug.QueryLog(rctx, query)
+			logx.Debugf(rctx, "query log: req:%+v resp:%+v", query, data)
 			if err != nil {
 				errMsg := fmt.Sprintf("query data error: %v query:%v\n ", err, query)
-				logger.Warningf(errMsg)
+				logx.Warningf(rctx, "%s", errMsg)
 				mu.Lock()
 				errs = append(errs, err)
 				mu.Unlock()
@@ -232,30 +358,41 @@ func QueryLogConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Query
 func (rt *Router) QueryLogV2(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
+	logQueryAccess(c, f.Cate, f.DatasourceId, f.Queries)
+	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
-	resp, err := QueryLogConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
+	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
+	// 分享 token 请求：数据源按板内集合校验、SQL 家族置位强只读，
+	// 跳过基于登录用户的 CheckDsPerm
+	if rt.boardTokenQueryContext(c, f.DatasourceId) {
+		anonymousAccess = true
+	}
+
+	resp, err := QueryLogConcurrently(anonymousAccess, c, f)
 	ginx.NewRender(c).Data(resp, err)
 }
 
 func (rt *Router) QueryLog(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
+	logQueryAccess(c, f.Cate, f.DatasourceId, f.Queries)
+	rctx := c.Request.Context()
 
 	var resp []interface{}
-	for _, q := range f.Querys {
+	for _, q := range f.Queries {
 		if !rt.Center.AnonymousAccess.PromQuerier && !CheckDsPerm(c, f.DatasourceId, f.Cate, q) {
 			ginx.Bomb(200, "forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get("elasticsearch", f.DatasourceId)
 		if !exists {
-			logger.Warningf("cluster:%d not exists", f.DatasourceId)
+			logx.Warningf(rctx, "cluster:%d not exists", f.DatasourceId)
 			ginx.Bomb(200, "cluster not exists")
 		}
 
-		data, _, err := plug.QueryLog(c.Request.Context(), q)
+		data, _, err := plug.QueryLog(rctx, q)
 		if err != nil {
-			logger.Warningf("query data error: %v", err)
+			logx.Warningf(rctx, "query data error: %v", err)
 			ginx.Bomb(200, "err:%v", err)
 			continue
 		}

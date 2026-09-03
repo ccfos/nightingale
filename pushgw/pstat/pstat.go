@@ -67,14 +67,14 @@ var (
 		}, []string{"queueid"},
 	)
 
-	CounterWirteTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	CounterWriteTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "write_total",
 		Help:      "Number of write.",
 	}, []string{"url"})
 
-	CounterWirteErrorTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	CounterWriteErrorTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "write_error_total",
@@ -106,15 +106,56 @@ var (
 		[]string{"operation", "status"},
 	)
 
-	DBOperationLatency = prometheus.NewHistogramVec(
+	GaugeProxyRemoteWriteInflight = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_remote_write_inflight",
+		Help:      "Current number of in-flight requests on /proxy/v1/write.",
+	})
+
+	CounterProxyRemoteWriteOverLimitTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_remote_write_over_limit_total",
+		Help:      "Number of /proxy/v1/write requests rejected with 429 due to in-flight over limit.",
+	})
+
+	CounterProxyRemoteWriteBodyTooLargeTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_remote_write_body_too_large_total",
+		Help:      "Number of /proxy/v1/write requests rejected with 413 due to body size over limit.",
+	})
+
+	CounterProxyRemoteWriteTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_remote_write_total",
+		Help:      "Number of /proxy/v1/write requests received.",
+	})
+
+	CounterProxyForwardTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_forward_total",
+		Help:      "Number of forwards performed by /proxy/v1/write.",
+	}, []string{"url"})
+
+	CounterProxyForwardErrorTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_forward_error_total",
+		Help:      "Number of forward errors on /proxy/v1/write.",
+	}, []string{"url", "reason"})
+
+	ProxyForwardDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "db_operation_latency_seconds",
-			Help:      "Histogram of latencies for DB operations",
-			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5},
-		},
-		[]string{"operation"},
+			Buckets:   []float64{.001, .01, .1, 1, 5, 10},
+			Name:      "proxy_forward_duration_seconds",
+			Help:      "Forward latencies on /proxy/v1/write in seconds.",
+		}, []string{"url"},
 	)
 )
 
@@ -126,12 +167,18 @@ func init() {
 		RequestDuration,
 		ForwardDuration,
 		ForwardKafkaDuration,
-		CounterWirteTotal,
-		CounterWirteErrorTotal,
+		CounterWriteTotal,
+		CounterWriteErrorTotal,
 		CounterPushQueueErrorTotal,
 		GaugeSampleQueueSize,
 		CounterPushQueueOverLimitTotal,
 		RedisOperationLatency,
-		DBOperationLatency,
+		GaugeProxyRemoteWriteInflight,
+		CounterProxyRemoteWriteOverLimitTotal,
+		CounterProxyRemoteWriteBodyTooLargeTotal,
+		CounterProxyRemoteWriteTotal,
+		CounterProxyForwardTotal,
+		CounterProxyForwardErrorTotal,
+		ProxyForwardDuration,
 	)
 }

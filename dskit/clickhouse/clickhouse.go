@@ -2,10 +2,10 @@ package clickhouse
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
@@ -14,7 +14,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/mitchellh/mapstructure"
-	"github.com/toolkits/pkg/net/httplib"
+	"github.com/toolkits/pkg/logger"
 	ckDriver "gorm.io/driver/clickhouse"
 	"gorm.io/gorm"
 )
@@ -26,64 +26,167 @@ const (
 )
 
 type Clickhouse struct {
-	Nodes        []string `json:"ck.nodes" mapstructure:"ck.nodes"`
-	User         string   `json:"ck.user" mapstructure:"ck.user"`
-	Password     string   `json:"ck.password" mapstructure:"ck.password"`
-	Timeout      int      `json:"ck.timeout" mapstructure:"ck.timeout"`
-	MaxQueryRows int      `json:"ck.max_query_rows" mapstructure:"ck.max_query_rows"`
+	Nodes            []string `json:"ck.nodes" mapstructure:"ck.nodes"`
+	User             string   `json:"ck.user" mapstructure:"ck.user"`
+	Password         string   `json:"ck.password" mapstructure:"ck.password"`
+	Timeout          int      `json:"ck.timeout" mapstructure:"ck.timeout"`
+	MaxQueryRows     int      `json:"ck.max_query_rows" mapstructure:"ck.max_query_rows"`
+	Protocol         string   `json:"ck.protocol" mapstructure:"ck.protocol"`
+	SkipSSLVerify    bool     `json:"ck.skip_ssl_verify" mapstructure:"ck.skip_ssl_verify"`
+	SecureConnection bool     `json:"ck.secure_connection" mapstructure:"ck.secure_connection"`
+
+	// 连接池配置（可选）
+	MaxIdleConns    int `json:"ck.max_idle_conns" mapstructure:"ck.max_idle_conns"`       // 最大空闲连接数
+	MaxOpenConns    int `json:"ck.max_open_conns" mapstructure:"ck.max_open_conns"`       // 最大打开连接数
+	ConnMaxLifetime int `json:"ck.conn_max_lifetime" mapstructure:"ck.conn_max_lifetime"` // 连接最大生命周期（秒）
 
 	Client       *gorm.DB `json:"-"`
 	ClientByHTTP *sql.DB  `json:"-"`
 }
 
-func (c *Clickhouse) InitCli() error {
+// FillDefaults 把零值字段补成默认值. 必须在 dscache.Put 比较 Equal 之前调用,
+// 否则缓存里的 ds(已被 InitCli 补过默认值)会与每次同步新建的 ds(未补默认值)
+// 字段不一致, Equal 永远返回 false 触发反复 InitClient. 因此由外层 Validate 调用.
+func (c *Clickhouse) FillDefaults() {
 	if c.MaxQueryRows == 0 {
 		c.MaxQueryRows = DefaultLimit
 	}
+	// Timeout 当前 InitCli 已不再读取(DialTimeout 硬编码 10s), 但 Equal 仍比对该字段;
+	// 这里给个默认值保持对称, 避免后续有人重新启用 c.Timeout 时漏改这里导致 dscache 反复重建.
+	if c.Timeout <= 0 {
+		c.Timeout = 10000
+	}
+}
+
+func (c *Clickhouse) InitCli() error {
+	c.FillDefaults()
 
 	if len(c.Nodes) == 0 {
 		return fmt.Errorf("not found ck shard, please check datasource config")
 	}
+	// 前端只允许 host:port，直接使用第一个节点
 	addr := c.Nodes[0]
-	url := addr
-	if !strings.HasPrefix(url, "http://") {
-		url = "http://" + url
-	}
-	resp, err := httplib.Get(url).SetTimeout(time.Second * 1).Response()
-	// 忽略HTTP Code错误, 因为可能不是HTTP协议
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	// HTTP 协议
-	if resp.StatusCode == 200 {
-		jsonBytes, _ := io.ReadAll(resp.Body)
-		if len(jsonBytes) > 0 && strings.Contains(strings.ToLower(string(jsonBytes)), "ok.") {
-			ckconn := clickhouse.OpenDB(&clickhouse.Options{
-				Addr: []string{addr},
-				Auth: clickhouse.Auth{
-					Username: c.User,
-					Password: c.Password,
-				},
-				Settings: clickhouse.Settings{
-					"max_execution_time": 60,
-				},
+
+	prot := strings.ToLower(strings.TrimSpace(c.Protocol))
+	// 如果用户显式指定 protocol，只允许 http 或 native
+	if prot != "" {
+		if prot != "http" && prot != "native" {
+			return fmt.Errorf("unsupported clickhouse protocol: %s, only `http`, `https` or `native` allowed", c.Protocol)
+		}
+
+		// HTTP(S) 路径（使用 clickhouse-go HTTP client）
+		if prot == "http" {
+			opts := &clickhouse.Options{
+				Addr:        []string{addr},
+				Auth:        clickhouse.Auth{Username: c.User, Password: c.Password},
+				Settings:    clickhouse.Settings{"max_execution_time": 60},
 				DialTimeout: 10 * time.Second,
 				Protocol:    clickhouse.HTTP,
-			})
+			}
+			// 仅当显式指定 https 时才启用 TLS 并使用 SkipSSL 控制 InsecureSkipVerify
+			if c.SecureConnection {
+				opts.TLS = &tls.Config{InsecureSkipVerify: c.SkipSSLVerify}
+			}
+			ckconn := clickhouse.OpenDB(opts)
 			if ckconn == nil {
 				return errors.New("db conn failed")
+			}
+			// 应用连接池配置到 HTTP sql.DB
+			if c.MaxIdleConns > 0 {
+				ckconn.SetMaxIdleConns(c.MaxIdleConns)
+			}
+			if c.MaxOpenConns > 0 {
+				ckconn.SetMaxOpenConns(c.MaxOpenConns)
+			}
+			if c.ConnMaxLifetime > 0 {
+				ckconn.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
 			}
 			c.ClientByHTTP = ckconn
 			return nil
 		}
+
+		// native 路径（使用 gorm + native driver）
+		dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, addr)
+		// 如果启用了 SecureConnection，为 DSN 添加 TLS 参数；SkipSSLVerify 控制是否跳过证书校验
+		if c.SecureConnection {
+			dsn = dsn + "&secure=true"
+			if c.SkipSSLVerify {
+				dsn = dsn + "&skip_verify=true"
+			}
+		}
+		db, err := gorm.Open(
+			ckDriver.New(
+				ckDriver.Config{
+					DSN:                       dsn,
+					DisableDatetimePrecision:  true,
+					DontSupportRenameColumn:   true,
+					SkipInitializeWithVersion: false,
+				}),
+		)
+		if err != nil {
+			return err
+		}
+		// 应用连接池配置到 gorm 底层 *sql.DB
+		if sqlDB, derr := db.DB(); derr == nil {
+			if c.MaxIdleConns > 0 {
+				sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+			}
+			if c.MaxOpenConns > 0 {
+				sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+			}
+			if c.ConnMaxLifetime > 0 {
+				sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+			}
+		} else {
+			logger.Debugf("clickhouse: get native sql DB failed: %v", derr)
+		}
+		c.Client = db
+		return nil
 	}
 
+	opts := &clickhouse.Options{
+		Addr:        []string{addr},
+		Auth:        clickhouse.Auth{Username: c.User, Password: c.Password},
+		Settings:    clickhouse.Settings{"max_execution_time": 60},
+		DialTimeout: 10 * time.Second,
+		Protocol:    clickhouse.HTTP,
+	}
+
+	ckconn := clickhouse.OpenDB(opts)
+	if ckconn != nil {
+		// 做一次 Ping 校验，避免把 native 端口误当作 HTTP 使用
+		if err := ckconn.Ping(); err == nil {
+			if c.MaxIdleConns > 0 {
+				ckconn.SetMaxIdleConns(c.MaxIdleConns)
+			}
+			if c.MaxOpenConns > 0 {
+				ckconn.SetMaxOpenConns(c.MaxOpenConns)
+			}
+			if c.ConnMaxLifetime > 0 {
+				ckconn.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+			}
+			c.ClientByHTTP = ckconn
+			return nil
+		} else {
+			logger.Debugf("clickhouse http ping failed for %s, fallback to native: %v", addr, err)
+			_ = ckconn.Close()
+		}
+	}
+
+	// 作为最后回退，尝试 native 连接
+	host := strings.TrimPrefix(strings.TrimPrefix(addr, "http://"), "https://")
+	dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, host)
+	// 如果启用了 SecureConnection，为 DSN 添加 TLS 参数；SkipSSLVerify 控制是否跳过证书校验
+	if c.SecureConnection {
+		dsn = dsn + "&secure=true"
+		if c.SkipSSLVerify {
+			dsn = dsn + "&skip_verify=true"
+		}
+	}
 	db, err := gorm.Open(
 		ckDriver.New(
 			ckDriver.Config{
-				DSN: fmt.Sprintf(ckDataSource,
-					c.User, c.Password, addr),
+				DSN:                       dsn,
 				DisableDatetimePrecision:  true,
 				DontSupportRenameColumn:   true,
 				SkipInitializeWithVersion: false,
@@ -92,31 +195,64 @@ func (c *Clickhouse) InitCli() error {
 	if err != nil {
 		return err
 	}
-
+	if sqlDB, derr := db.DB(); derr == nil {
+		if c.MaxIdleConns > 0 {
+			sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+		}
+		if c.MaxOpenConns > 0 {
+			sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+		}
+		if c.ConnMaxLifetime > 0 {
+			sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+		}
+	}
 	c.Client = db
-
 	return nil
+}
+
+// Close 释放底层 *sql.DB / *gorm.DB 持有的连接池与后台 goroutine.
+//
+// 注意:
+//   - 不把字段置为 nil. 否则与 QueryRows 等使用者中的 `if c.X != nil { c.X.Query(...) }`
+//     形成数据竞争(两次 load 之间字段被改 nil 会导致 nil 解引用 panic).
+//   - 调用 Close 后, 并发中的查询会自然得到 "sql: database is closed" 错误,
+//     业务层正常错误处理即可. *sql.DB.Close 自身会等待已开始的查询结束.
+//   - *sql.DB.Close 多次调用是安全的(后续调用返回 error 但不 panic),
+//     因此 Close 不需要 sync.Once 也可幂等.
+func (c *Clickhouse) Close() error {
+	var firstErr error
+	if c.ClientByHTTP != nil {
+		if err := c.ClientByHTTP.Close(); err != nil {
+			firstErr = err
+		}
+	}
+	if c.Client != nil {
+		if sqlDB, err := c.Client.DB(); err == nil && sqlDB != nil {
+			if cerr := sqlDB.Close(); cerr != nil && firstErr == nil {
+				firstErr = cerr
+			}
+		}
+	}
+	return firstErr
 }
 
 const (
 	ShowDatabases = "SHOW DATABASES"
-	ShowTables    = "SELECT name FROM system.tables WHERE database = '%s'"
-	DescTable     = "SELECT name,type FROM system.columns WHERE database='%s' AND table = '%s';"
 )
 
-func (c *Clickhouse) QueryRows(ctx context.Context, query string) (*sql.Rows, error) {
+func (c *Clickhouse) QueryRows(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	var (
 		rows *sql.Rows
 		err  error
 	)
 
 	if c.ClientByHTTP != nil {
-		rows, err = c.ClientByHTTP.Query(query)
+		rows, err = c.ClientByHTTP.Query(query, args...)
 		if err != nil {
 			return nil, err
 		}
 	} else if c.Client != nil {
-		rows, err = c.Client.Raw(query).Rows()
+		rows, err = c.Client.Raw(query, args...).Rows()
 		if err != nil {
 			return nil, err
 		}
@@ -129,9 +265,7 @@ func (c *Clickhouse) QueryRows(ctx context.Context, query string) (*sql.Rows, er
 
 // ShowDatabases lists all databases in Clickhouse
 func (c *Clickhouse) ShowDatabases(ctx context.Context) ([]string, error) {
-	var (
-		res []string
-	)
+	res := make([]string, 0)
 
 	rows, err := c.QueryRows(ctx, ShowDatabases)
 	if err != nil {
@@ -151,12 +285,13 @@ func (c *Clickhouse) ShowDatabases(ctx context.Context) ([]string, error) {
 
 // ShowTables lists all tables in a given database
 func (c *Clickhouse) ShowTables(ctx context.Context, database string) ([]string, error) {
-	var (
-		res []string
-	)
+	if err := sqlbase.ValidateIdentifier(database); err != nil {
+		return nil, fmt.Errorf("show tables: %w", err)
+	}
+	res := make([]string, 0)
 
-	showTables := fmt.Sprintf(ShowTables, database)
-	rows, err := c.QueryRows(ctx, showTables)
+	rows, err := c.QueryRows(ctx,
+		"SELECT name FROM system.tables WHERE database = ?", database)
 	if err != nil {
 		return nil, err
 	}
@@ -182,9 +317,16 @@ func (c *Clickhouse) DescribeTable(ctx context.Context, query interface{}) ([]*t
 	if err := mapstructure.Decode(query, ckQueryParam); err != nil {
 		return nil, err
 	}
-	descTable := fmt.Sprintf(DescTable, ckQueryParam.Database, ckQueryParam.Table)
+	if err := sqlbase.ValidateIdentifier(ckQueryParam.Database); err != nil {
+		return nil, fmt.Errorf("describe table: %w", err)
+	}
+	if err := sqlbase.ValidateIdentifier(ckQueryParam.Table); err != nil {
+		return nil, fmt.Errorf("describe table: %w", err)
+	}
 
-	rows, err := c.QueryRows(ctx, descTable)
+	rows, err := c.QueryRows(ctx,
+		"SELECT name, type FROM system.columns WHERE database = ? AND table = ?",
+		ckQueryParam.Database, ckQueryParam.Table)
 	if err != nil {
 		return nil, err
 	}
@@ -246,6 +388,14 @@ func (c *Clickhouse) Query(ctx context.Context, query interface{}) ([]map[string
 	ckQuery := new(QueryParam)
 	if err := mapstructure.Decode(query, ckQuery); err != nil {
 		return nil, err
+	}
+
+	// 不可信调用方（仪表盘匿名分享 token）额外走严格只读校验：
+	// 下面的黑名单按空格切词，不构成安全边界
+	if types.ReadOnlyEnforced(ctx) {
+		if err := sqlbase.ValidateReadOnly(ckQuery.Sql); err != nil {
+			return nil, err
+		}
 	}
 
 	// 校验SQL的合法性, 过滤掉 write请求

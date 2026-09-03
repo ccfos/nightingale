@@ -73,7 +73,3 @@ setting capabilities.
 ### Other OS Permissions
 
 When using `method = "native"`, you will need permissions similar to the executable ping program for your OS.
-
-## 监控大盘和告警规则
-
-夜莺内置了告警规则和监控大盘，克隆到自己的业务组下即可使用。

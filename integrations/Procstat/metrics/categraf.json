@@ -9,10 +9,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)\n\nCPU 利用率有两个模式，一个是 solaris，一个是 irix，默认是 irix，irix 模式下，CPU 利用率可能会超过 100%，solaris 会考虑 CPU 核数，solaris 模式的 CPU 利用率不会超过 100%。",
         "lang": "zh_CN",
         "expression": "procstat_cpu_usage",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -24,7 +22,11 @@
                 "name": "Process CPU utilization (single process)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md) \n \nThere are two modes of CPU utilization, one is solaris and the other is irix. The default is irix. In irix mode, the CPU utilization may exceed 100%. solaris will consider the number of CPU cores, and the CPU utilization in solaris mode will not exceed 100%."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -36,10 +38,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)\n\nCPU 利用率有两个模式，一个是 solaris，一个是 irix，默认是 irix，irix 模式下，CPU 利用率可能会超过 100%，solaris 会考虑 CPU 核数，solaris 模式的 CPU 利用率不会超过 100%。",
         "lang": "zh_CN",
         "expression": "procstat_cpu_usage_total",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -51,7 +51,11 @@
                 "name": "Total process CPU utilization (sum of all processes matched to)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md) \n \nThere are two modes of CPU utilization, one is solaris and the other is irix. The default is irix. In irix mode, the CPU utilization may exceed 100%. solaris will consider the number of CPU cores, and the CPU utilization in solaris mode will not exceed 100%."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -63,10 +67,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "irate(procstat_write_bytes_total[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -78,7 +80,11 @@
                 "name": "Total number of bytes written per second by process IO (sum of all processes matched to)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -90,10 +96,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "irate(procstat_write_bytes[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -105,7 +109,11 @@
                 "name": "Number of bytes written per second by process IO (single process)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -117,10 +125,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "irate(procstat_write_count_total[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -132,7 +138,11 @@
                 "name": "Total number of process IO writes per second (sum of all processes matched to)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -144,10 +154,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "irate(procstat_write_count[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -159,7 +167,11 @@
                 "name": "Process IO writes per second (single process)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -171,10 +183,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "irate(procstat_read_bytes_total[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -186,7 +196,11 @@
                 "name": "Total number of bytes read per second by process IO (sum of all processes matched to)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -198,10 +212,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "irate(procstat_read_bytes[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -213,7 +225,11 @@
                 "name": "Process IO reads bytes per second (single process)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -225,10 +241,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "irate(procstat_read_count_total[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -240,7 +254,11 @@
                 "name": "Total number of process IO reads per second (sum of all processes matched to)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -252,10 +270,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "irate(procstat_read_count[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -267,7 +283,11 @@
                 "name": "Process IO reads per second (single process)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -279,10 +299,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "procstat_mem_usage",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -294,7 +312,11 @@
                 "name": "Process Memory utilization (single process)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -306,10 +328,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "procstat_mem_usage_total",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -321,7 +341,11 @@
                 "name": "Process Memory Total utilization (sum of all processes matched to)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -333,10 +357,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "procstat_rlimit_num_fds_soft_minimum",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -348,7 +370,11 @@
                 "name": "Process rlimit fd Number of soft limits (minimum of all processes matched to)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -360,10 +386,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "procstat_rlimit_num_fds_soft",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -375,7 +399,11 @@
                 "name": "Process rlimit fd Number of soft limits (single process)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -387,10 +415,8 @@
         "note": "启动了多久",
         "lang": "zh_CN",
         "expression": "procstat_uptime_minimum",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -402,7 +428,11 @@
                 "name": "Process start time (minimum of all processes matched to)",
                 "note": "How long has it started"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -414,10 +444,8 @@
         "note": "启动了多久",
         "lang": "zh_CN",
         "expression": "procstat_uptime",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -429,7 +457,11 @@
                 "name": "Process startup time (single process)",
                 "note": "How long has it started"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -441,10 +473,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "procstat_lookup_count",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -456,7 +486,11 @@
                 "name": "Number of processes (the number of processes found according to matching conditions)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -468,10 +502,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "procstat_num_fds_total",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -483,7 +515,11 @@
                 "name": "Total number of process file handles open (sum of all processes matched to)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -495,10 +531,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "procstat_num_fds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -510,7 +544,11 @@
                 "name": "Number of process file handle openings (single process)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -522,10 +560,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "procstat_num_threads_total",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -537,7 +573,11 @@
                 "name": "Total number of process threads (sum of all processes matched to)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -549,10 +589,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)",
         "lang": "zh_CN",
         "expression": "procstat_num_threads",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -564,6 +602,10 @@
                 "name": "Number of process threads (single process)",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     }
 ]

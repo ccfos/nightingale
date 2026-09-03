@@ -72,7 +72,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在采集机上手工 ping -c 5 \u003c目标\u003e 复现，再用 mtr -n \u003c目标\u003e 定位丢包在哪一跳；\n2) 目标机存活则确认它是否禁 ICMP——很多安全策略会禁，此时该探测不适用，应改用端口探测；\n3) 中间跳丢包联系网络侧排查；\n4) 确认目标机是否宕机或网卡故障。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

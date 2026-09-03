@@ -7,168 +7,6 @@
             0
         ],
         "cluster": "",
-        "name": "[RabbitMQ] Cluster Operator Unavailable Replicas",
-        "note": "There are kube_pod_names that are either running but not yet available or kube_pod_names that still have not been created.",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 2,
-        "severities": [
-            2
-        ],
-        "disabled": 1,
-        "prom_for_duration": 300,
-        "prom_ql": "",
-        "rule_config": {
-            "algo_params": null,
-            "inhibit": false,
-            "prom_ql": "",
-            "queries": [
-                {
-                    "prom_ql": "kube_deployment_status_replicas_unavailable \u003e 0\n",
-                    "severity": 2
-                }
-            ],
-            "severity": 0
-        },
-        "prom_eval_interval": 15,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "23:59",
-        "enable_etimes": [
-            "23:59"
-        ],
-        "enable_days_of_week": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "0"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "0"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": null,
-        "extra_config": null,
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1717556328314217000
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
-        "name": "[RabbitMQ] Container Restarts",
-        "note": "Over the last 10 minutes a rabbitmq container was restarted",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 2,
-        "severities": [
-            2
-        ],
-        "disabled": 1,
-        "prom_for_duration": 300,
-        "prom_ql": "",
-        "rule_config": {
-            "algo_params": null,
-            "inhibit": false,
-            "prom_ql": "",
-            "queries": [
-                {
-                    "prom_ql": "increase(kube__container_status_restarts_total[10m]) \u003e= 1\n",
-                    "severity": 2
-                }
-            ],
-            "severity": 0
-        },
-        "prom_eval_interval": 15,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "23:59",
-        "enable_etimes": [
-            "23:59"
-        ],
-        "enable_days_of_week": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "0"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "0"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": null,
-        "extra_config": null,
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1717556328315028000
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
         "name": "[RabbitMQ] File Descriptors Near Limit",
         "note": "The file descriptors are near to the limit",
         "prod": "metric",
@@ -188,7 +26,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "sum (max_over_time(rabbitmq_process_open_fds[5m]))/sum (rabbitmq_process_max_tcp_sockets)\u003e 0.8\n",
+                    "prom_ql": "sum (max_over_time(rabbitmq_process_open_fds[5m])) / sum (rabbitmq_process_max_fds) \u003e 0.8",
                     "severity": 2
                 }
             ],
@@ -234,7 +72,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在节点上执行 rabbitmq-diagnostics status 看 file_descriptors 的 total_used 与 total_limit；\n2) 用 rabbitmqctl list_connections 确认连接数是否异常，排查客户端是否未复用连接；\n3) 提高上限：改 systemd 的 LimitNOFILE 或容器的 ulimit 后重启节点（RabbitMQ 启动时读取一次）；\n4) 同时收敛客户端连接池，避免只靠调高上限。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -315,7 +155,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 rabbitmqctl list_connections peer_host user connected_at 观察哪些客户端在反复重连；\n2) 检查客户端是否每次发消息都新建连接——正确做法是长连接复用、每线程一个 channel；\n3) 排查是否因心跳超时（heartbeat）或网络抖动导致服务端主动断连；\n4) 确认没有触发资源告警（内存/磁盘 watermark）导致连接被阻塞后重连。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -332,7 +174,7 @@
         ],
         "cluster": "",
         "name": "[RabbitMQ] Insufficient Established Erlang Distribution Links",
-        "note": "Insuffient establised erland distribution links",
+        "note": "Insufficient established erlang distribution links",
         "prod": "metric",
         "algorithm": "",
         "algo_params": null,
@@ -350,7 +192,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "count (erlang_vm_dist_node_state) == 3\u003c count (rabbitmq_build_info ) *(count (rabbitmq_build_info - 1 ))\n",
+                    "prom_ql": "count(erlang_vm_dist_node_state) \u003c count(rabbitmq_build_info) * (count(rabbitmq_build_info) - 1)",
                     "severity": 2
                 }
             ],
@@ -396,7 +238,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在各节点执行 rabbitmq-diagnostics cluster_status，对比 Running Nodes 找出失联的节点；\n2) 检查节点间 4369（epmd）与 25672（distribution）端口的连通性；\n3) 确认各节点 Erlang cookie 一致（/var/lib/rabbitmq/.erlang.cookie）；\n4) 若已发生分区，按配置的 cluster_partition_handling 策略处理，必要时重启少数派节点让其重新加入。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -477,175 +321,15 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 rabbitmq-diagnostics status 看 disk_free 与 disk_free_limit 的当前值；\n2) 用 rabbitmqctl list_queues name messages message_bytes 找出堆积最多的队列，确认是消费者掉线还是消费太慢；\n3) 先恢复消费把积压清掉，这是最直接的止血手段；\n4) 同时清理该分区上的其他大文件或扩容磁盘，避免真正触发 watermark 阻塞生产。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
         "update_at": 0,
         "update_by": "",
         "uuid": 1717556328317379000
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
-        "name": "[RabbitMQ] No MajorityOfNodesReady",
-        "note": "There are so many nodes not ready",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 2,
-        "severities": [
-            2
-        ],
-        "disabled": 1,
-        "prom_for_duration": 300,
-        "prom_ql": "",
-        "rule_config": {
-            "algo_params": null,
-            "inhibit": false,
-            "prom_ql": "",
-            "queries": [
-                {
-                    "prom_ql": "kube_statefulset_status_replicas_ready\u003c=kube_statefulset_replicas/ 2 unless kube_statefulset_replicas== 0\n",
-                    "severity": 2
-                }
-            ],
-            "severity": 0
-        },
-        "prom_eval_interval": 15,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "23:59",
-        "enable_etimes": [
-            "23:59"
-        ],
-        "enable_days_of_week": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "0"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "0"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": null,
-        "extra_config": null,
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1717556328317808000
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
-        "name": "[RabbitMQ] Persistent Volume Missing",
-        "note": "There is at least one pvc not bound",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 1,
-        "severities": [
-            1
-        ],
-        "disabled": 1,
-        "prom_for_duration": 600,
-        "prom_ql": "",
-        "rule_config": {
-            "algo_params": null,
-            "inhibit": false,
-            "prom_ql": "",
-            "queries": [
-                {
-                    "prom_ql": "kube_persistentvolumeclaim_status_phase{phase=\"Bound\"} == 0\n",
-                    "severity": 1
-                }
-            ],
-            "severity": 0
-        },
-        "prom_eval_interval": 15,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "23:59",
-        "enable_etimes": [
-            "23:59"
-        ],
-        "enable_days_of_week": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "0"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "0"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": null,
-        "extra_config": null,
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1717556328318244000
     },
     {
         "id": 0,
@@ -720,7 +404,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 rabbitmq-diagnostics status 看 sockets_used 与 sockets_total；\n2) 用 rabbitmqctl list_connections 按来源统计，定位连接数异常的客户端；\n3) 客户端每次操作都新建连接的，改为长连接 + 多 channel 复用；\n4) 确需更多连接时，调大节点的文件句柄上限（socket 上限由它推导）后重启节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -801,7 +487,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 rabbitmqctl list_exchanges 与 list_bindings 确认目标 exchange 的绑定关系是否缺失；\n2) 核对生产端使用的 routing key 与绑定规则是否匹配（topic 类型注意通配符）；\n3) 给 exchange 配置 alternate-exchange，把无法路由的消息兜到备用队列而不是丢弃；\n4) 生产端开启 mandatory 标志并处理 Basic.Return，及时发现路由失败。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

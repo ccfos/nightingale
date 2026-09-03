@@ -10,6 +10,7 @@
 *.a
 *.so
 *.db
+*.db*
 *.sw[po]
 *.tar.gz
 *.[568vq]
@@ -42,6 +43,8 @@ _test
 /vendor
 /tmp
 /pub
+# bundled categraf packages, staged at release time by scripts/download_categraf.sh
+/agents
 /n9e
 /docker/pub
 /docker/n9e
@@ -59,16 +62,31 @@ _test
 .index
 .vscode
 .issue
+.issue/*
 .cursor
 .claude
 .DS_Store
 .cache-loader
 .payload
 queries.active
+.playwright-mcp
 
 /n9e-*
+/n9e_test
 n9e.sql
+*.bak
+
+# Runtime skill directory: built-in skills are extracted from embed at startup,
+# DB-synced user skills land here too. Source of truth is aiagent/skill/embedded/builtin/.
+/skill
+
+# Runtime QA code corpus: extracted at startup from the qa_code_embed assets
+# (see aiagent/skill/embedded/codeassets/, built by scripts/build-qa-code-assets.sh).
+/code
 
 !/datasource
 
 .env.json
+/aichat-cli
+/a2a-cli
+evallog/

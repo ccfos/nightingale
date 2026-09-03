@@ -1,9 +1,10 @@
 package router
 
 import (
+	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -13,12 +14,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	pkgprom "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
 )
@@ -38,16 +40,18 @@ type BatchQueryForm struct {
 func (rt *Router) promBatchQueryRange(c *gin.Context) {
 	var f BatchQueryForm
 	ginx.Dangerous(c.BindJSON(&f))
+	rt.checkBoardTokenDsPerm(c, f.DatasourceId)
 
-	lst, err := PromBatchQueryRange(rt.PromClients, f)
+	lst, err := PromBatchQueryRange(c.Request.Context(), rt.PromClients, f)
 	ginx.NewRender(c).Data(lst, err)
 }
 
-func PromBatchQueryRange(pc *prom.PromClientMap, f BatchQueryForm) ([]model.Value, error) {
+func PromBatchQueryRange(ctx context.Context, pc *prom.PromClientMap, f BatchQueryForm) ([]model.Value, error) {
 	var lst []model.Value
 
 	cli := pc.GetCli(f.DatasourceId)
 	if cli == nil {
+		logx.Warningf(ctx, "no such datasource id: %d", f.DatasourceId)
 		return lst, fmt.Errorf("no such datasource id: %d", f.DatasourceId)
 	}
 
@@ -58,8 +62,9 @@ func PromBatchQueryRange(pc *prom.PromClientMap, f BatchQueryForm) ([]model.Valu
 			Step:  time.Duration(item.Step) * time.Second,
 		}
 
-		resp, _, err := cli.QueryRange(context.Background(), item.Query, r)
+		resp, _, err := cli.QueryRange(ctx, item.Query, r)
 		if err != nil {
+			logx.Warningf(ctx, "query range error: query:%s err:%v", item.Query, err)
 			return lst, err
 		}
 
@@ -81,23 +86,25 @@ type InstantFormItem struct {
 func (rt *Router) promBatchQueryInstant(c *gin.Context) {
 	var f BatchInstantForm
 	ginx.Dangerous(c.BindJSON(&f))
+	rt.checkBoardTokenDsPerm(c, f.DatasourceId)
 
-	lst, err := PromBatchQueryInstant(rt.PromClients, f)
+	lst, err := PromBatchQueryInstant(c.Request.Context(), rt.PromClients, f)
 	ginx.NewRender(c).Data(lst, err)
 }
 
-func PromBatchQueryInstant(pc *prom.PromClientMap, f BatchInstantForm) ([]model.Value, error) {
+func PromBatchQueryInstant(ctx context.Context, pc *prom.PromClientMap, f BatchInstantForm) ([]model.Value, error) {
 	var lst []model.Value
 
 	cli := pc.GetCli(f.DatasourceId)
 	if cli == nil {
-		logger.Warningf("no such datasource id: %d", f.DatasourceId)
+		logx.Warningf(ctx, "no such datasource id: %d", f.DatasourceId)
 		return lst, fmt.Errorf("no such datasource id: %d", f.DatasourceId)
 	}
 
 	for _, item := range f.Queries {
-		resp, _, err := cli.Query(context.Background(), item.Query, time.Unix(item.Time, 0))
+		resp, _, err := cli.Query(ctx, item.Query, time.Unix(item.Time, 0))
 		if err != nil {
+			logx.Warningf(ctx, "query instant error: query:%s err:%v", item.Query, err)
 			return lst, err
 		}
 
@@ -108,12 +115,29 @@ func PromBatchQueryInstant(pc *prom.PromClientMap, f BatchInstantForm) ([]model.
 
 func (rt *Router) dsProxy(c *gin.Context) {
 	dsId := ginx.UrlParamInt64(c, "id")
+
+	if _, ok := boardTokenBid(c); ok {
+		// 分享 token 态：数据源须属于板内集合，且仅放行只读查询路径，
+		// 避免匿名请求经全反代的 proxy 触达写/管理类端点
+		rt.checkBoardTokenDsPerm(c, dsId)
+		if !IsReadOnlyProxyPath(c.Request.Method, c.Param("url")) {
+			ginx.Bomb(http.StatusForbidden, "proxy path is not allowed for anonymous dashboard sharing")
+		}
+		// __token 只用于本服务鉴权，不应随反代透传给上游数据源（会进其访问日志）
+		if q := c.Request.URL.Query(); q.Get("__token") != "" {
+			q.Del("__token")
+			c.Request.URL.RawQuery = q.Encode()
+		}
+	}
+
 	ds := rt.DatasourceCache.GetById(dsId)
 
 	if ds == nil {
 		c.String(http.StatusBadRequest, "no such datasource")
 		return
 	}
+
+	logProxyAccess(c, ds.Id, ds.PluginType, ds.Category)
 
 	target, err := ds.HTTPJson.ParseUrl()
 	if err != nil {
@@ -148,6 +172,8 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 		if ds.AuthJson.BasicAuthUser != "" {
 			req.SetBasicAuth(ds.AuthJson.BasicAuthUser, ds.AuthJson.BasicAuthPassword)
+		} else {
+			req.Header.Del("Authorization")
 		}
 
 		headerCount := len(ds.HTTPJson.Headers)
@@ -167,8 +193,15 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 	transport, has := transportGet(dsId, ds.UpdatedAt)
 	if !has {
+		// 使用 TLS 配置（支持 mTLS）
+		tlsConfig, err := ds.HTTPJson.TLS.TLSConfig()
+		if err != nil {
+			c.String(http.StatusInternalServerError, "failed to create TLS config: %s", err.Error())
+			return
+		}
+
 		transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify},
+			TLSClientConfig: tlsConfig,
 			Proxy:           http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
 				Timeout: time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond,
@@ -181,7 +214,7 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 	modifyResponse := func(r *http.Response) error {
 		if r.StatusCode == http.StatusUnauthorized {
-			logger.Warningf("proxy path:%s unauthorized access ", c.Request.URL.Path)
+			logx.Warningf(c.Request.Context(), "proxy path:%s unauthorized access ", c.Request.URL.Path)
 			return fmt.Errorf("unauthorized access")
 		}
 
@@ -197,6 +230,37 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 	proxy.ServeHTTP(c.Writer, c.Request)
 
+}
+
+// logProxyAccess audits datasource reverse-proxy requests (VictoriaLogs / ES /
+// Loki log queries and the like) with the caller's username and query payload,
+// so operators can see who queried what before tightening permissions. See
+// logQueryAccess.
+//
+// dsProxy sits on several Any("/proxy/...") / Any("/prometheus/...") routes, so
+// this must not defeat httputil.ReverseProxy's streaming: it peeks at most
+// maxLogBody bytes for the log line, then splices that prefix back in front of
+// the untouched remainder via io.MultiReader so the proxy keeps streaming the
+// rest of the body instead of buffering it whole. A mid-read error is not
+// swallowed — the prefix is still spliced back (so the proxy forwards the same,
+// still-failing body rather than a silently truncated one) and the body is
+// reported as an error in the log rather than logged as if complete.
+func logProxyAccess(c *gin.Context, dsID int64, cate, category string) {
+	const maxLogBody = 2048
+	var body string
+	if c.Request.Body != nil {
+		orig := c.Request.Body
+		// Read one extra byte so an over-limit body still renders as truncated.
+		prefix, err := io.ReadAll(io.LimitReader(orig, maxLogBody+1))
+		c.Request.Body = io.NopCloser(io.MultiReader(bytes.NewReader(prefix), orig))
+		if err != nil {
+			body = fmt.Sprintf("<body read error: %v>", err)
+		} else {
+			body = marshalForLog(string(prefix))
+		}
+	}
+	logx.Infof(c.Request.Context(), "[log_query_access] user=%s client=%s ds_id=%d cate=%s category=%s path=%s rawquery=%s body=%s",
+		queryAccessUser(c), c.ClientIP(), dsID, cate, category, c.Request.URL.Path, c.Request.URL.RawQuery, body)
 }
 
 var (
@@ -276,11 +340,11 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 	}
 
 	timeout := time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond
-	matchQuerys := make([]string, 0)
+	matchQueries := make([]string, 0)
 	for _, match := range ddsf.Match {
-		matchQuerys = append(matchQuerys, fmt.Sprintf("match[]=%s", match))
+		matchQueries = append(matchQueries, fmt.Sprintf("match[]=%s", match))
 	}
-	matchQuery := strings.Join(matchQuerys, "&")
+	matchQuery := strings.Join(matchQueries, "&")
 
 	switch datasourceType {
 	case DatasourceTypePrometheus:

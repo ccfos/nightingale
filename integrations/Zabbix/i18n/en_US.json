@@ -1,0 +1,20 @@
+{
+    "CPU / Memory / 系统负载": "CPU / Memory / System Load",
+    "Disks / 磁盘与文件系统": "Disks / Disk and Filesystem",
+    "Hardware / 华为服务器与传感器": "Hardware / Huawei Server and Sensors",
+    "Hardware Raw Status / 硬件原始状态": "Hardware Raw Status",
+    "Info / 总览": "Info / Overview",
+    "Network / 网络": "Network",
+    "Problems / 异常与原始状态": "Problems / Abnormal and Raw Status",
+    "Problems / 异常状态指标": "Problems / Abnormal Status Metrics",
+    "Zabbix主机详情仪表盘-增强版": "Zabbix Host Detail Dashboard - Enhanced",
+    "业务组": "Business Group",
+    "主机": "Host",
+    "值": "Value",
+    "参数": "Parameter",
+    "增强版 Zabbix 主机详情，使用 host_name 作为主机变量；兼容 OS 与华为 iBMC 指标，覆盖 CPU、内存、磁盘、网络、硬件和异常状态。": "Enhanced Zabbix host detail using host_name as the host variable; compatible with OS and Huawei iBMC metrics, covering CPU, memory, disk, network, hardware and abnormal states.",
+    "应用": "Application",
+    "指标": "Metric",
+    "描述": "Description",
+    "问题": "Problem"
+}

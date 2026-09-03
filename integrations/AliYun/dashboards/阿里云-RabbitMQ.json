@@ -1,0 +1,1748 @@
+{
+    "name": "阿里云-RabbitMQ",
+    "tags": "",
+    "note": "",
+    "ident": "",
+    "uuid": 1775552629976000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "hide": true,
+                "definition": "prometheus",
+                "defaultValue": ""
+            },
+            {
+                "type": "query",
+                "name": "instanceId",
+                "label": "InstanceId",
+                "allValue": ".*",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunAmqp_instance_ExchangeTPSIn{}, id)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "value": [
+                    ""
+                ],
+                "initialized": true,
+                "options": [] 
+            },
+            {
+                "type": "query",
+                "name": "instanceName",
+                "label": "实例名称",
+                "allValue": ".*",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunAmqp_instance_ExchangeTPSIn{id=~\"$instanceId\"}, instanceName)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "value": [
+                ],
+                "initialized": true,
+                "options": [
+                ]
+            },
+            {
+                "name": "queue",
+                "label": "队列名称",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(AliyunAmqp_instance_InstanceVhostQueueConsumers{id=~\"$instanceId\",instanceName=~\"$instanceName\"}, queueName)",
+                "value": [
+                ],
+                "initialized": true,
+                "options": [],
+                "multi": true,
+                "allOption": true
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.4.0",
+                "id": "e3fe5470-2eb8-4f4b-917c-849c371340b5",
+                "type": "timeseries",
+                "name": "实例API TPS峰值(次/秒)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 0,
+                    "i": "e3fe5470-2eb8-4f4b-917c-849c371340b5",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceMaxTpsInMinute{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "67867ab0-606d-42f8-860b-6eb7d94cc216",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 0,
+                    "i": "67867ab0-606d-42f8-860b-6eb7d94cc216",
+                    "isResizable": true
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Queue 消息堆积量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceVhostQueueMessageAccum{id=~\"$instanceId\", instanceName=~\"$instanceName\",queueName=~\"$queue\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}/{{queueName}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "67d50e02-fd5d-4b65-8ed8-5ba378c69e0f",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 0,
+                    "i": "67d50e02-fd5d-4b65-8ed8-5ba378c69e0f",
+                    "isResizable": true
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Queue 每秒消息流入数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_QueueTPSIn{id=~\"$instanceId\", instanceName=~\"$instanceName\",queueName=~\"$queue\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}/{{queueName}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "0a8884f7-464e-4bad-b398-c36fb3000dfb",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 9,
+                    "i": "0a8884f7-464e-4bad-b398-c36fb3000dfb",
+                    "isResizable": true
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Queue 每秒消息流出数",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_QueueTPSOut{id=~\"$instanceId\", instanceName=~\"$instanceName\",queueName=~\"$queue\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}/{{queueName}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "ed7294f2-de1b-43ab-8026-080ead48193c",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 9,
+                    "i": "ed7294f2-de1b-43ab-8026-080ead48193c",
+                    "isResizable": true
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Queue 消费者数量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceVhostQueueConsumers{instanceName=~\"$instanceName\",queueName=~\"$queue\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{queueName}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.4.0",
+                "id": "6425d729-fe6e-4337-800a-e014c48d5e7f",
+                "type": "timeseries",
+                "name": "Instance 消息每秒流入数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 9,
+                    "i": "6425d729-fe6e-4337-800a-e014c48d5e7f",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceTPSIn{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "88e1b3e1-4b55-43a1-a52d-6bbf75188178",
+                "type": "timeseries",
+                "name": "Instance 消息每秒流出数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 18,
+                    "i": "88e1b3e1-4b55-43a1-a52d-6bbf75188178",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceTPSOut{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "cbd59736-997d-410e-a4a6-3617fb92f0e6",
+                "type": "timeseries",
+                "name": "消费者数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 18,
+                    "i": "cbd59736-997d-410e-a4a6-3617fb92f0e6",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceConsumers{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "e5f33d71-fcf2-40e5-a262-4cd260c9aa91",
+                "type": "timeseries",
+                "name": "连接数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 18,
+                    "i": "e5f33d71-fcf2-40e5-a262-4cd260c9aa91",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceConnections{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "0d877421-541e-476c-8d2d-a0d23edfb07c",
+                "type": "timeseries",
+                "name": "通道数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 27,
+                    "i": "0d877421-541e-476c-8d2d-a0d23edfb07c",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceChannelsNew{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "5a788af8-3402-4c0a-a32e-d5074dc4b57b",
+                "type": "timeseries",
+                "name": "Instance 的 Channel 数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 27,
+                    "i": "5a788af8-3402-4c0a-a32e-d5074dc4b57b",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceChannels{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "803bfec0-604f-4138-b482-3a5c80b8e5f3",
+                "type": "timeseries",
+                "name": "Exchange 每秒消息流入数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 27,
+                    "i": "803bfec0-604f-4138-b482-3a5c80b8e5f3",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_ExchangeTPSIn{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}/{{exchangeName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "17d56d6a-7320-466d-863b-a5fcff5fa03e",
+                "type": "timeseries",
+                "name": "Exchange 每秒消息流出数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 36,
+                    "i": "17d56d6a-7320-466d-863b-a5fcff5fa03e",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_ExchangeTPSOut{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}/{{exchangeName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "a35f8466-fd6c-4172-9a21-7affcc7ed3f2",
+                "type": "timeseries",
+                "name": "VHost 每秒消息流入数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 36,
+                    "i": "a35f8466-fd6c-4172-9a21-7affcc7ed3f2",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_VHostTPSIn{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "7730e216-bdfc-479c-ab62-723d47935d85",
+                "type": "timeseries",
+                "name": "VHost 每秒消息流出数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 36,
+                    "i": "7730e216-bdfc-479c-ab62-723d47935d85",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_VHostTPSOut{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "2a3df002-a735-4f46-9368-78a0784b91ad",
+                "type": "timeseries",
+                "name": "VHost 通道数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 45,
+                    "i": "2a3df002-a735-4f46-9368-78a0784b91ad",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_VhostChannels{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "c158813d-e066-42cf-8440-eaacdcacbc40",
+                "type": "timeseries",
+                "name": "VHost 连接数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 45,
+                    "i": "c158813d-e066-42cf-8440-eaacdcacbc40",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_VhostConnections{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "f877631b-df31-43dd-9712-e7e147a12637",
+                "type": "timeseries",
+                "name": "VHost 消费者数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 45,
+                    "i": "f877631b-df31-43dd-9712-e7e147a12637",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceVhostConsumers{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "543bc152-3777-4374-9784-d1a146306572",
+                "type": "timeseries",
+                "name": "VHost 的 Channel 数",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 54,
+                    "i": "543bc152-3777-4374-9784-d1a146306572",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceVhostChannels{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "type": "timeseries",
+                "id": "651f1649-8674-4461-8e44-dee35ca48a8d",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 54,
+                    "i": "651f1649-8674-4461-8e44-dee35ca48a8d",
+                    "isResizable": true
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Queue 消息生产数量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceVhostQueueMessageInput{id=~\"$instanceId\", instanceName=~\"$instanceName\",queueName=~\"$queue\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}/{{queueName}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "650c7159-0e27-4291-b69b-e6f18b38a1e3",
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 54,
+                    "i": "650c7159-0e27-4291-b69b-e6f18b38a1e3",
+                    "isResizable": true
+                },
+                "version": "3.4.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Queue 消息消费数量",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "none",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.05,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceVhostQueueMessageOutput{id=~\"$instanceId\", instanceName=~\"$instanceName\",queueName=~\"$queue\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}/{{queueName}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.4.0",
+                "id": "fd7d55c2-bcfa-41af-84a7-95d89b8d3545",
+                "type": "timeseries",
+                "name": "Instance 消息生产数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 63,
+                    "i": "fd7d55c2-bcfa-41af-84a7-95d89b8d3545",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceMessageInput{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "865ac016-cbcb-47ee-a1f0-93c843575bdd",
+                "type": "timeseries",
+                "name": "Instance 消息消费数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 63,
+                    "i": "865ac016-cbcb-47ee-a1f0-93c843575bdd",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceMessageOutput{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "574984a9-0eb1-4265-a618-e332964bf83e",
+                "type": "timeseries",
+                "name": "VHost 消息生产数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 63,
+                    "i": "574984a9-0eb1-4265-a618-e332964bf83e",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceVhostMessageInput{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            },
+            {
+                "version": "3.4.0",
+                "id": "e78897cb-64ea-4b41-83f2-adfc74737d14",
+                "type": "timeseries",
+                "name": "VHost 消息消费数量",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 72,
+                    "i": "e78897cb-64ea-4b41-83f2-adfc74737d14",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAmqp_instance_InstanceVhostMessageOutput{id=~\"$instanceId\", instanceName=~\"$instanceName\"}",
+                        "legend": "{{instanceName}}/{{instanceId}}/{{vhostName}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "off",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "unit": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "fillOpacity": 0.05,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "overrides": []
+            }
+        ]
+    }
+}

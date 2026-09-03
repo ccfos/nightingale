@@ -135,15 +135,13 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 
 func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, channel string,
 	stats *astats.Stats, events []*models.AlertCurEvent) {
-	start := time.Now()
 	res, err := doSend(url, body, channel, stats)
-	res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
 	NotifyRecord(ctx, events, 0, channel, token, res, err)
 }
 
 func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, notifyRuleID int64, channel, target, res string, err error) {
 	// 一个通知可能对应多个 event，都需要记录
-	notis := make([]*models.NotificaitonRecord, 0, len(evts))
+	notis := make([]*models.NotificationRecord, 0, len(evts))
 	for _, evt := range evts {
 		noti := models.NewNotificationRecord(evt, notifyRuleID, channel, target)
 		if err != nil {
@@ -166,16 +164,33 @@ func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, notifyRuleID i
 	PushNotifyRecords(notis)
 }
 
+// RecordNotifications 落库/上报已构造好的通知记录，复用 NotifyRecord 的中心/边缘分发逻辑，
+// 但允许调用方自定义 Status（如 NotiStatusMuted）与 Details，用于「只屏蔽通知」等非发送类记录。
+func RecordNotifications(ctx *ctx.Context, notis []*models.NotificationRecord) {
+	if len(notis) == 0 {
+		return
+	}
+
+	if !ctx.IsCenter {
+		if err := poster.PostByUrls(ctx, "/v1/n9e/notify-record", notis); err != nil {
+			logger.Errorf("add notis:%v failed, err: %v", notis, err)
+		}
+		return
+	}
+
+	PushNotifyRecords(notis)
+}
+
 func doSend(url string, body interface{}, channel string, stats *astats.Stats) (string, error) {
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 
 	start := time.Now()
 	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
-	res = []byte(fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res))
+	res = []byte(fmt.Sprintf("duration: %d ms status_code:%d, response:%s", time.Since(start).Milliseconds(), code, string(res)))
 	if err != nil {
 		logger.Errorf("%s_sender: result=fail url=%s code=%d error=%v req:%v response=%s", channel, url, code, err, body, string(res))
 		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
-		return "", err
+		return string(res), err
 	}
 
 	logger.Infof("%s_sender: result=succ url=%s code=%d req:%v response=%s", channel, url, code, body, string(res))
@@ -188,25 +203,21 @@ type TaskCreateReply struct {
 }
 
 func PushCallbackEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
-	CallbackEventQueueLock.RLock()
+	CallbackEventQueueLock.Lock()
 	queue := CallbackEventQueue[webhook.Url]
-	CallbackEventQueueLock.RUnlock()
-
 	if queue == nil {
 		queue = &WebhookQueue{
 			eventQueue: NewSafeEventQueue(QueueMaxSize),
 			closeCh:    make(chan struct{}),
 		}
-
-		CallbackEventQueueLock.Lock()
 		CallbackEventQueue[webhook.Url] = queue
-		CallbackEventQueueLock.Unlock()
 
-		StartConsumer(ctx, queue, webhook.Batch, webhook, stats)
+		go StartConsumer(ctx, queue, webhook.Batch, webhook, stats)
 	}
+	CallbackEventQueueLock.Unlock()
 
 	succ := queue.eventQueue.Push(event)
 	if !succ {
-		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.eventQueue.Len(), event)
+		logger.Warningf("Write channel(%s) full, current channel size: %d event:%s", webhook.Url, queue.eventQueue.Len(), event.Hash)
 	}
 }

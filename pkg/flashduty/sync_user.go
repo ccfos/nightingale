@@ -21,6 +21,8 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 		return err
 	}
 
+	syncFrom := GetFlashDutySyncUserFrom(ctx)
+
 	req := make(map[string]interface{})
 	req["limit"] = 100
 	userList, err := PostFlashDutyWithResp[Data]("/member/list", appKey, req)
@@ -58,10 +60,12 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 	dbUsersHas := sliceToMap(dbUsers)
 
 	delUsers := diffMap(dutyUsers, dbUsersHas)
-	fdDelUsers(appKey, delUsers)
+	if len(delUsers) > 0 {
+		fdDelUsers(appKey, delUsers, NeedForceDeleteUser(ctx))
+	}
 
 	addUsers := diffMap(dbUsersHas, dutyUsers)
-	if err := fdAddUsers(appKey, addUsers); err != nil {
+	if err := fdAddUsers(appKey, addUsers, syncFrom); err != nil {
 		return err
 	}
 	updateUser(appKey, dbUsersHas, dutyUsers)
@@ -139,6 +143,7 @@ type User struct {
 	Phone      string  `json:"phone,omitempty"`
 	MemberName string  `json:"member_name,omitempty"`
 	RefID      string  `json:"ref_id,omitempty"`
+	IsForce    bool    `json:"is_force,omitempty"`
 	Updates    Updates `json:"updates,omitempty"`
 }
 
@@ -150,11 +155,11 @@ type Updates struct {
 	CountryCode string `json:"country_code,omitempty"`
 }
 
-func (user *User) delMember(appKey string) error {
+func (user *User) delMember(appKey string, force bool) error {
 	if user.RefID == "" {
 		return errors.New("refID must not be empty")
 	}
-	userDel := &User{RefID: user.RefID}
+	userDel := &User{RefID: user.RefID, IsForce: force}
 	return PostFlashDuty("/member/delete", appKey, userDel)
 }
 
@@ -165,6 +170,7 @@ func (user *User) UpdateMember(appKey string) error {
 
 type Members struct {
 	Users []User `json:"members"`
+	From  string `json:"from,omitempty"`
 }
 
 func (m *Members) addMembers(appKey string) error {
@@ -186,18 +192,19 @@ func (m *Members) addMembers(appKey string) error {
 	return PostFlashDuty("/member/invite", appKey, m)
 }
 
-func fdAddUsers(appKey string, users []models.User) error {
+func fdAddUsers(appKey string, users []models.User, from string) error {
 	fdUsers := usersToFdUsers(users)
 	members := &Members{
 		Users: fdUsers,
+		From:  from,
 	}
 	return members.addMembers(appKey)
 }
 
-func fdDelUsers(appKey string, users []models.User) {
+func fdDelUsers(appKey string, users []models.User, force bool) {
 	fdUsers := usersToFdUsers(users)
 	for _, fdUser := range fdUsers {
-		if err := fdUser.delMember(appKey); err != nil {
+		if err := fdUser.delMember(appKey, force); err != nil {
 			logger.Errorf("failed to delete user: %v", err)
 		}
 	}
@@ -247,13 +254,16 @@ func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 	err = flashdutyUser.UpdateMember(appKey)
 	if err != nil && strings.Contains(err.Error(), "no member found") {
 		// 如果没有找到成员，说明需要新建成员
-		NewUser := &User{
-			Phone:      phone,
-			Email:      email,
-			MemberName: target.Username,
-			RefID:      refID,
+		members := &Members{
+			Users: []User{{
+				Phone:      phone,
+				Email:      email,
+				MemberName: target.Username,
+				RefID:      refID,
+			}},
+			From: GetFlashDutySyncUserFrom(ctx),
 		}
-		err = PostFlashDuty("/member/invite", appKey, NewUser)
+		err = PostFlashDuty("/member/invite", appKey, members)
 		if err != nil {
 			logger.Errorf("failed to update user: %v", err)
 		}

@@ -18,7 +18,7 @@ interval_times = 1
 timeout = "5s"
 version = 2
 community = "public"
-agent_host_tag = "switch_ip"
+agent_host_tag = "agent_host"
 retries = 1
 
 [[instances.field]]
@@ -40,7 +40,29 @@ oid = "IF-MIB::ifDescr"
 name = "ifDescr"
 is_tag = true
 
+[[instances.table.field]]
+oid = "IF-MIB::ifSpeed"
+name = "ifSpeed"
+
+[[instances.table.field]]
+oid = "IF-MIB::ifOperStatus"
+name = "ifOperStatus"
+
+[[instances.table.field]]
+oid = "IF-MIB::ifInOctets"
+name = "ifInOctets"
+
+[[instances.table.field]]
+oid = "IF-MIB::ifOutOctets"
+name = "ifOutOctets"
+
 ```
+
+`public` 只用于示例和测试环境，生产设备应使用独立且受控的 community，或优先使用 SNMPv3。
+
+本目录的通用流量和端口模板依赖 `agent_host`、`ifDescr`、`ifSpeed`、`ifOperStatus`、`ifInOctets` 和 `ifOutOctets`。如果把 `agent_host_tag` 改成其他名字，必须同步修改仪表盘变量。
+
+为了同时兼容历史模板，可以把同一个标准 OID 以不同字段名采集，例如将 `IF-MIB::ifDescr` 同时命名为 `ifDescr` 和 `ifname`，将流量计数同时命名为 `ifInOctets`/`incoming`、`ifOutOctets`/`outgoing`。
 
 上面的样例是 v2 版本的配置，如果是 v3 版本，校验方式举例：
 
@@ -48,7 +70,10 @@ is_tag = true
 version = 3
 sec_name = "managev3user"
 auth_protocol = "SHA"
-auth_password = "example.Demo.c0m"
+auth_password = "<auth-password>"
+sec_level = "authPriv"
+priv_protocol = "AES"
+priv_password = "<privacy-password>"
 ```
 
 另外，snmp 的采集，建议大家部署单独的 Categraf 来做，因为不同监控对象采集频率可能不同，比如边缘交换机，我们 5min 采集一次就够了，核心交换机可以配置的频繁一些，比如 60s 或者 120s。
@@ -70,3 +95,5 @@ snmpget -v2c -c public 172.30.15.189 RFC1213-MIB::sysUpTime.0
 ```
 
 如果 snmpget 都跑不通，就得先解决这个问题，比如是 snmpd 没有启动，或者防火墙限制了 snmp 的访问，还是 snmpget 命令没有安装，等等。这些问题，gpt 和 google 都可以解决，这里不再赘述。
+
+本次实测使用真实 net-snmp agent 验证了标准 CPU、内存、TCP 和接口 OID。Juniper、华为及交换机专属模板虽然可以显示标准 OID 数据，但厂商私有 CPU、内存、风扇、电源和板卡指标仍必须使用对应型号的 MIB 与实机验证。

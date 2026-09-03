@@ -10,8 +10,9 @@ import (
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -19,14 +20,14 @@ import (
 func (rt *Router) heartbeat(c *gin.Context) {
 	gid := ginx.QueryStr(c, "gid", "")
 	overwriteGids := ginx.QueryBool(c, "overwrite_gids", false)
-	req, err := HandleHeartbeat(c, rt.Aconf.Heartbeat.EngineName, rt.MetaSet)
+	req, err := HandleHeartbeat(c, rt.Aconf.Heartbeat.EngineName, rt.MetaSet, rt.IdentSet)
 	if err != nil {
 		logger.Warningf("req:%v heartbeat failed to handle heartbeat err:%v", req, err)
 		ginx.Dangerous(err)
 	}
 	api := "/v1/n9e/center/heartbeat"
-	if rt.HeartbeartApi != "" {
-		api = rt.HeartbeartApi
+	if rt.HeartbeatApi != "" {
+		api = rt.HeartbeatApi
 	}
 
 	ret, err := poster.PostByUrlsWithResp[map[string]interface{}](rt.Ctx, fmt.Sprintf("%s?gid=%s&overwrite_gids=%t", api, gid, overwriteGids), req)
@@ -37,7 +38,7 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	ginx.NewRender(c).Data(ret, err)
 }
 
-func HandleHeartbeat(c *gin.Context, engineName string, metaSet *metas.Set) (models.HostMeta, error) {
+func HandleHeartbeat(c *gin.Context, engineName string, metaSet *metas.Set, identSet *idents.Set) (models.HostMeta, error) {
 	var bs []byte
 	var err error
 	var r *gzip.Reader
@@ -74,6 +75,9 @@ func HandleHeartbeat(c *gin.Context, engineName string, metaSet *metas.Set) (mod
 	req.RemoteAddr = c.ClientIP()
 	req.EngineName = engineName
 	metaSet.Set(req.Hostname, req)
+
+	// 同步刷新 update_time，避免 metric 通道异常时 target_miss 误报
+	identSet.MSet(map[string]struct{}{req.Hostname: {}})
 
 	return req, nil
 }

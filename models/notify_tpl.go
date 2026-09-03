@@ -17,15 +17,16 @@ import (
 )
 
 type NotifyTpl struct {
-	Id       int64  `json:"id"`
-	Name     string `json:"name"`
-	Channel  string `json:"channel"`
-	Content  string `json:"content"`
-	BuiltIn  bool   `json:"built_in" gorm:"-"`
-	CreateAt int64  `json:"create_at"`
-	CreateBy string `json:"create_by"`
-	UpdateAt int64  `json:"update_at"`
-	UpdateBy string `json:"update_by"`
+	Id               int64  `json:"id"`
+	Name             string `json:"name"`
+	Channel          string `json:"channel"`
+	Content          string `json:"content"`
+	BuiltIn          bool   `json:"built_in" gorm:"-"`
+	CreateAt         int64  `json:"create_at"`
+	CreateBy         string `json:"create_by"`
+	UpdateAt         int64  `json:"update_at"`
+	UpdateBy         string `json:"update_by"`
+	UpdateByNickname string `json:"update_by_nickname" gorm:"-"`
 }
 
 func (n *NotifyTpl) TableName() string {

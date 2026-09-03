@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
+	"gorm.io/gorm"
 )
 
 type AlertHisEvent struct {
@@ -125,9 +126,14 @@ func (e *AlertHisEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 
 // }
 
-func AlertHisEventTotal(
-	ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int,
-	recovered int, dsIds []int64, cates []string, ruleId int64, query string) (int64, error) {
+// alertHisEventSession 构造历史告警列表/计数共用的过滤条件。
+// 过滤和排序统一使用 last_eval_time，与 idx_last_eval_time、
+// idx_group_last_eval_time 两个索引配合，避免过滤列与排序列不一致导致的 filesort。
+// scopes 供上层追加标准条件之外的过滤（如按通知记录子查询限定事件范围），
+// 立即求值而不用 gorm 的 Scopes：后者延迟到执行时才应用，与 Count 之类的复用不好配合
+func alertHisEventSession(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
+	severity int, recovered int, dsIds []int64, cates []string, ruleId int64, query string,
+	eventIds []int64, scopes ...func(*gorm.DB) *gorm.DB) *gorm.DB {
 	session := DB(ctx).Model(&AlertHisEvent{}).Where("last_eval_time between ? and ?", stime, etime)
 
 	if len(prods) > 0 {
@@ -158,6 +164,10 @@ func AlertHisEventTotal(
 		session = session.Where("rule_id = ?", ruleId)
 	}
 
+	if len(eventIds) > 0 {
+		session = session.Where("id in ?", eventIds)
+	}
+
 	if query != "" {
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
@@ -166,52 +176,51 @@ func AlertHisEventTotal(
 		}
 	}
 
-	return Count(session)
+	for _, scope := range scopes {
+		session = scope(session)
+	}
+
+	return session
+}
+
+func AlertHisEventTotal(
+	ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int,
+	recovered int, dsIds []int64, cates []string, ruleId int64, query string, eventIds []int64,
+	scopes ...func(*gorm.DB) *gorm.DB) (int64, error) {
+	return Count(alertHisEventSession(ctx, prods, bgids, stime, etime, severity, recovered, dsIds, cates, ruleId, query, eventIds, scopes...))
 }
 
 func AlertHisEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
 	severity int, recovered int, dsIds []int64, cates []string, ruleId int64, query string,
-	limit, offset int) ([]AlertHisEvent, error) {
-	session := DB(ctx).Where("last_eval_time between ? and ?", stime, etime)
+	limit, offset int, eventIds []int64, scopes ...func(*gorm.DB) *gorm.DB) ([]AlertHisEvent, error) {
+	session := alertHisEventSession(ctx, prods, bgids, stime, etime, severity, recovered, dsIds, cates, ruleId, query, eventIds, scopes...)
 
-	if len(prods) != 0 {
-		session = session.Where("rule_prod in ?", prods)
-	}
+	var lst []AlertHisEvent
+	err := session.Order("last_eval_time desc, id desc").Limit(limit).Offset(offset).Find(&lst).Error
 
-	if len(bgids) > 0 {
-		session = session.Where("group_id in ?", bgids)
-	}
-
-	if severity >= 0 {
-		session = session.Where("severity = ?", severity)
-	}
-
-	if recovered >= 0 {
-		session = session.Where("is_recovered = ?", recovered)
-	}
-
-	if len(dsIds) > 0 {
-		session = session.Where("datasource_id in ?", dsIds)
-	}
-
-	if len(cates) > 0 {
-		session = session.Where("cate in ?", cates)
-	}
-
-	if ruleId > 0 {
-		session = session.Where("rule_id = ?", ruleId)
-	}
-
-	if query != "" {
-		arr := strings.Fields(query)
-		for i := 0; i < len(arr); i++ {
-			qarg := "%" + arr[i] + "%"
-			session = session.Where("rule_name like ? or tags like ?", qarg, qarg)
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
 		}
 	}
 
+	return lst, err
+}
+
+// AlertHisEventGetsByCursor 游标分页：取 (last_eval_time, id) 严格小于游标的下一页，
+// 深翻页时不做 OFFSET 扫描。游标取上一页最后一行的 last_eval_time 和 id
+func AlertHisEventGetsByCursor(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
+	severity int, recovered int, dsIds []int64, cates []string, ruleId int64, query string,
+	cursorTime, cursorId int64, limit int, eventIds []int64,
+	scopes ...func(*gorm.DB) *gorm.DB) ([]AlertHisEvent, error) {
+	session := alertHisEventSession(ctx, prods, bgids, stime, etime, severity, recovered, dsIds, cates, ruleId, query, eventIds, scopes...)
+
+	if cursorTime > 0 && cursorId > 0 {
+		session = session.Where("last_eval_time < ? or (last_eval_time = ? and id < ?)", cursorTime, cursorTime, cursorId)
+	}
+
 	var lst []AlertHisEvent
-	err := session.Order("trigger_time desc, id desc").Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Order("last_eval_time desc, id desc").Limit(limit).Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
@@ -243,13 +252,51 @@ func AlertHisEventGetById(ctx *ctx.Context, id int64) (*AlertHisEvent, error) {
 	return AlertHisEventGet(ctx, "id=?", id)
 }
 
-func AlertHisEventBatchDelete(ctx *ctx.Context, timestamp int64, severities []int, limit int) (int64, error) {
-	db := DB(ctx).Where("last_eval_time < ?", timestamp)
-	if len(severities) > 0 {
-		db = db.Where("severity IN (?)", severities)
+func AlertHisEventGetByHash(ctx *ctx.Context, hash string) (*AlertHisEvent, error) {
+	var lst []*AlertHisEvent
+	err := DB(ctx).Where("hash = ?", hash).Order("trigger_time desc").Limit(1).Find(&lst).Error
+	if err != nil {
+		return nil, err
 	}
-	res := db.Limit(limit).Delete(&AlertHisEvent{})
-	return res.RowsAffected, res.Error
+	if len(lst) == 0 {
+		return nil, nil
+	}
+	return lst[0], nil
+}
+
+// AlertHisEventBatchDelete 按 id 游标批量删除 last_eval_time 早于 timestamp 的历史事件，
+// activeIds 是活跃告警 id 快照（cur.id 即对应的 his.id），命中的记录跳过不删。
+// 返回本批候选数 fetched（< limit 表示已扫完）、实际删除数 deleted、本批最大 id（下一批游标）。
+func AlertHisEventBatchDelete(ctx *ctx.Context, timestamp int64, severities []int,
+	minId int64, limit int, activeIds map[int64]struct{}) (fetched int, deleted int64, maxId int64, err error) {
+	session := DB(ctx).Model(&AlertHisEvent{}).Where("last_eval_time < ? and id > ?", timestamp, minId)
+	if len(severities) > 0 {
+		session = session.Where("severity IN (?)", severities)
+	}
+
+	var ids []int64
+	if err = session.Order("id asc").Limit(limit).Pluck("id", &ids).Error; err != nil {
+		return 0, 0, minId, err
+	}
+
+	if len(ids) == 0 {
+		return 0, 0, minId, nil
+	}
+	maxId = ids[len(ids)-1]
+
+	toDelete := make([]int64, 0, len(ids))
+	for _, id := range ids {
+		if _, ok := activeIds[id]; !ok {
+			toDelete = append(toDelete, id)
+		}
+	}
+
+	if len(toDelete) == 0 {
+		return len(ids), 0, maxId, nil
+	}
+
+	res := DB(ctx).Where("id in ?", toDelete).Delete(&AlertHisEvent{})
+	return len(ids), res.RowsAffected, maxId, res.Error
 }
 
 func (m *AlertHisEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
@@ -415,6 +462,10 @@ func (e *AlertHisEvent) ToCur() *AlertCurEvent {
 		NotifyChannelsJSON: e.NotifyChannelsJSON,
 		NotifyGroupsJSON:   e.NotifyGroupsJSON,
 		OriginalTagsJSON:   e.OriginalTagsJSON,
+		NotifyRuleIds:      e.NotifyRuleIds,
+		NotifyRules:        e.NotifyRules,
+		NotifyVersion:      e.NotifyVersion,
+		RecoverTime:        e.RecoverTime,
 	}
 
 	cur.SetTagsMap()

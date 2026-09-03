@@ -2,9 +2,13 @@ FROM --platform=$TARGETPLATFORM python:3-slim
 
 
 WORKDIR /app
-ADD n9e /app/
+# ~110MB and changes only when the categraf pin is bumped, so it goes before the
+# n9e binary to keep the frequently-rebuilt layer last. COPY, not ADD: ADD
+# auto-extracts recognised archives, and these .tar.gz must stay packed.
+COPY agents /app/agents/
 ADD etc /app/etc/
 ADD integrations /app/integrations/
+ADD n9e /app/
 
 EXPOSE 17000
 

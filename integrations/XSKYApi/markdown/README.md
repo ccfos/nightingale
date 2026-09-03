@@ -2,7 +2,7 @@
 
 XSKY api
 
-## Configations
+## Configurations
 
 ```toml
 # # collect interval

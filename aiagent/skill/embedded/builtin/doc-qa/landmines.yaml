@@ -1,0 +1,104 @@
+# landmine rule set for the doc-qa skill
+#
+# Purpose: the verify_answer tool reads this file when the LLM is invoked, runs regexes
+# against the LLM's draft answer, and intercepts the high-frequency deterministic errors in
+# the n9e domain (fabricated field names, misconfigured Severity naming, etc.).
+#
+# Rule fields:
+#   name      unique identifier, used for logging/debugging
+#   pattern   Go regexp (RE2 syntax), lookahead not supported
+#   severity  high / medium / low
+#               high   → must_revise=true, the LLM should re-search and rewrite, then call verify_answer again
+#               medium → Final Answer allowed but a fix is recommended
+#               low    → hint only, does not interrupt
+#   annotate  a brief note shown to the LLM on a hit (it uses this to decide how to fix)
+#   retry_hint  only needed for HIGH, tells the LLM what keywords to search to fix
+#
+# Adding a new rule: just append to this file; takes effect on process restart. No need to change Go code.
+# All rules come from the failure samples of the 80-question regression test + the failure-cases table in SKILL.md.
+
+- name: telegraf_inputs_syntax
+  pattern: '\[\[inputs\.[a-zA-Z_][a-zA-Z0-9_]*\]\]'
+  severity: high
+  annotate: 'Telegraf-style [[inputs.xxx]] syntax appeared; categraf actually uses [[instances]].'
+  retry_hint: 'Re-search "categraf <relevant plugin name> config", prioritize hits with source="integration-config" (those are the real toml samples from the integrations/ repo), and rewrite verbatim per the syntax there.'
+
+- name: n9e_addr_env_var
+  pattern: '\bN9E_ADDR\b'
+  severity: high
+  annotate: 'Fabricated the N9E_ADDR environment variable; this variable does not exist in either the categraf or n9e codebase.'
+  retry_hint: 'categraf''s reporting/heartbeat address is configured in config.toml via the [[writers]].url and [heartbeat].url fields, not via an environment variable. Re-search "categraf heartbeat writers config" and refer to the integration-config samples.'
+
+- name: severity_1_critical
+  pattern: '(?i)severity\s*[:：=]?\s*1\s*[:：=]?\s*Critical\b|1\s*[:：=]\s*Critical\b|Critical\s*\(.*severity.*1.*\)'
+  severity: high
+  annotate: 'n9e Severity 1 is Emergency, not Critical. The code definition is in models/alert_rule.go:77; the three levels in order are 1=Emergency / 2=Warning / 3=Notice.'
+  retry_hint: 'Re-search "alert level Severity" and rewrite the answer using the real naming (Emergency / Warning / Notice).'
+
+- name: ping_metric_misname
+  pattern: '\b(categraf_ping_rtt|ping_result_milliseconds|ping_packet_loss_percent)\b'
+  severity: medium
+  annotate: 'Verify the ping plugin metric names against integrations/Ping/ or the docs; the common correct name is ping_average_response_ms.'
+
+- name: categraf_http_section_misread
+  pattern: '(?i)(?:categraf|夜莺)[\s\S]{0,200}9100[\s\S]{0,200}/metrics[\s\S]{0,200}Prometheus[\s\S]{0,50}(?:抓取|pull|scrape)'
+  severity: medium
+  annotate: 'categraf''s [http] section is not used for Prometheus to PULL /metrics; it is actually a PUSH gateway that receives metrics actively pushed in from outside.'
+
+- name: fabricated_write_cache
+  pattern: '\b(enable_write_cache|write_cache_max_items|write_cache_drop_policy)\s*='
+  severity: medium
+  annotate: 'enable_write_cache / write_cache_max_items and the like are not among the categraf config items. For long-disconnection scenarios, use middleware that supports disk buffering, such as vmagent.'
+
+- name: n9e_bearer_auth
+  pattern: '(?i)(?:夜莺|n9e|nightingale|flashcat)[\s\S]{0,150}Authorization\s*:\s*Bearer'
+  severity: medium
+  annotate: 'The n9e Web API uses the X-User-Token: <token> Header for personal Tokens, not the standard Authorization: Bearer.'
+
+- name: categraf_disk_queue_fabricated
+  pattern: '\b(enable_queue\s*=\s*true|queue_max_size_bytes|queue_pop_timeout)\b|data/queue/'
+  severity: high
+  annotate: 'This set of disk-queue config fields does not exist in categraf. For the scenario of backfilling with original timestamps after recovering from a long disconnection, the industry practice is to put a vmagent layer (-remoteWrite.tmpDataPath) between categraf and n9e; it is not a built-in categraf capability.'
+  retry_hint: 'Rewrite as "categraf itself does not have a disk queue and cannot preserve original timestamps for backfill after network jitter recovers; the recommended approach is to use vmagent as a relay, see the vmagent -remoteWrite.tmpDataPath config".'
+
+- name: categraf_self_metrics_endpoint
+  pattern: '\b(enable_self_metrics\s*=\s*true|prometheus_exporter_port)\b'
+  severity: high
+  annotate: 'The categraf [http] section has no fields like enable_self_metrics / prometheus_exporter_port. The HTTP server (api/server.go) only exposes /ping and /api/push/*, there is no /metrics endpoint.'
+  retry_hint: 'Re-search "categraf [http] config" to see the real fields (enable / address / print_access / cert_file etc.), and rewrite the answer.'
+
+- name: n9e_target_binding_fabricated_api
+  pattern: '/api/n9e/target-bindings\b|/api/n9e/target/bindings\b'
+  severity: high
+  annotate: 'Fabricated API path; n9e has no /api/n9e/target-bindings endpoint.'
+  retry_hint: 'Re-search "n9e target label API" to find the real path; it is generally done via PUT /api/n9e/targets or categraf [global.labels].'
+
+- name: ping_duration_misname
+  # Note: ping_result_code is a real existing metric and is not on this blacklist.
+  # Only fabricated metric names that categraf does not export are listed here.
+  pattern: '\b(ping_duration_seconds|ping_packet_loss_ratio)\b'
+  severity: high
+  annotate: 'Fabricated ping metric names. The real categraf input.ping metrics are ping_average_response_ms / ping_percent_packet_loss / ping_result_code; ping_duration_seconds / ping_packet_loss_ratio do not exist.'
+  retry_hint: 'Re-search the integration-config Ping config and rewrite using the metric names actually exposed in the .toml sample.'
+
+- name: categraf_websocket_plugin
+  pattern: '\b(input\.websocket|\[\[inputs\.websocket\]\]|websocket_connect_duration_ms|websocket_status\{|websocket_error_count)\b'
+  severity: high
+  annotate: 'categraf has no input.websocket plugin. To monitor ws/wss interfaces, use input.http_response (HTTP probe) or input.exec running a Python websocket library to test.'
+  retry_hint: 'Rewrite the answer without mentioning input.websocket; recommend input.http_response probing + a custom exec script.'
+
+- name: categraf_batch_default_misquote
+  pattern: '\b(batch\s*=\s*2000|chan_size\s*=\s*10000)\b'
+  severity: medium
+  annotate: 'The real categraf defaults: batch=1000, chan_size=1000000 (not batch=2000, chan_size=10000).'
+
+- name: severity_3_info
+  pattern: '(?i)severity\s*[:：=]?\s*3\s*[:：=]?\s*Info\b|3\s*[:：=]\s*Info\b'
+  severity: high
+  annotate: 'n9e Severity 3 is Notice, not Info. models/alert_rule.go:58 defines SeverityNotice=3.'
+  retry_hint: 'Change "Info" to "Notice". The full mapping: 1=Emergency / 2=Warning / 3=Notice.'
+
+- name: fabricated_categraf_env_vars
+  pattern: '\bCATEGRAF_GLOBAL_LABELS_[A-Z_]+\b|\bCATEGRAF_HOSTNAME\b|\bCATEGRAF_WRITERS_[A-Z_]+\b'
+  severity: medium
+  annotate: 'categraf does not support overriding config.toml fields via CATEGRAF_*_* environment variables; toml config takes effect by mounting/copying. To inject dynamic values in K8s, use a ConfigMap + downward API + an entrypoint script to render the toml.'

@@ -1,0 +1,12 @@
+{
+    "LLM 服务请求量": "LLM Service Requests",
+    "LLM服务请求平均耗时": "LLM Service Average Request Latency",
+    "Token使用最多的模型": "Models with the Highest Token Usage",
+    "所选时间范围内输入Token使用量": "Input Token Usage in the Selected Time Range",
+    "所选时间范围内输出Token使用量": "Output Token Usage in the Selected Time Range",
+    "每个请求的平均Token数": "Average Tokens per Request",
+    "输入Token使用最多的模型 Top3": "Top 3 Models by Input Token Usage",
+    "输入Token使用量趋势图": "Input Token Usage Trend",
+    "输出Token使用最多的模型 Top3": "Top 3 Models by Output Token Usage",
+    "输出Token使用量趋势图": "Output Token Usage Trend"
+}

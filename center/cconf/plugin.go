@@ -55,4 +55,16 @@ var Plugins = []Plugin{
 		Type:     "opensearch",
 		TypeName: "OpenSearch",
 	},
+	{
+		Id:       10,
+		Category: "logging",
+		Type:     "victorialogs",
+		TypeName: "VictoriaLogs",
+	},
+	{
+		Id:       11,
+		Category: "timeseries",
+		Type:     "iotdb",
+		TypeName: "IoTDB",
+	},
 }

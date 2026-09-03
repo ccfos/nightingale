@@ -43,7 +43,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 登录节点用 free -h 确认 available 与 swap；\n2) ps aux --sort=-%mem | head 找出占用最高的进程；\n3) K8s 节点上优先用 kubectl top pod -A --sort-by=memory 定位是哪个 Pod；\n4) 泄漏的在应用侧定位，容量不足的迁走部分 Pod 或扩容节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -95,7 +97,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 vmstat 1 看 si/so 列确认是否已在 swap；\n2) 用 sar -B 或 /proc/vmstat 看 pgmajfault 的增长；\n3) 定位占用最高的进程或 Pod 并评估是否可迁走；\n4) 确认 swap 配置——K8s 节点通常应关闭 swap，开启会掩盖内存问题。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -147,7 +151,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 iftop 或 nethogs 定位占用带宽最高的进程/连接；\n2) K8s 节点上确认是否有 Pod 在做大量数据传输（备份、数据同步、镜像拉取）；\n3) 确认是否已跑满网卡带宽，是则限流或错峰；\n4) 异常流量的排查是否有配置错误导致的流量环路。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -199,7 +205,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 iftop 或 nethogs 定位占用带宽最高的进程/连接；\n2) K8s 节点上确认是否有 Pod 在做大量数据传输（备份、数据同步、镜像拉取）；\n3) 确认是否已跑满网卡带宽，是则限流或错峰；\n4) 异常流量的排查是否有配置错误导致的流量环路。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -251,7 +259,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 iostat -x 1 确认是哪块盘、await 与 %util；\n2) 用 iotop -oP 找出 IO 最高的进程；\n3) K8s 节点常见是容器日志写入、镜像拉取解压、或某个 Pod 的数据写入；\n4) 可延后的任务错峰执行，持续高负载的换 SSD 或分散数据。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -303,7 +313,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 iostat -x 1 确认是哪块盘、await 与 %util；\n2) 用 iotop -oP 找出 IO 最高的进程；\n3) K8s 节点常见是容器日志写入、镜像拉取解压、或某个 Pod 的数据写入；\n4) 可延后的任务错峰执行，持续高负载的换 SSD 或分散数据。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -355,7 +367,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 逐层找占用大的目录；\n2) 容器运行时目录（/var/lib/containerd 或 /var/lib/docker）用 crictl rmi --prune 清理无用镜像；\n3) 清理容器日志（/var/log/pods），并确认日志轮转配置生效；\n4) 用 lsof +L1 检查已删除但句柄未释放的文件。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -407,7 +421,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 du -x --max-depth=1 找出增长最快的目录；\n2) 确认增长来源是正常业务还是异常（应用死循环打日志、备份堆积）；\n3) 清理无用镜像与容器日志；\n4) 增长确实来自业务的，安排扩容磁盘或迁移数据，不要等到写满。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -459,7 +475,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -i 确认挂载点；\n2) 逐层统计文件数找出小文件最多的目录；\n3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；\n4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -511,7 +529,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -i 确认挂载点；\n2) 逐层统计文件数找出小文件最多的目录；\n3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；\n4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -563,7 +583,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 iostat -x 1 看 r_await/w_await 与队列深度；\n2) 延迟高但 IOPS 不高的怀疑磁盘硬件问题，用 smartctl -a 检查；\n3) IOPS 也高的按磁盘饱和处理，定位高 IO 进程；\n4) 云盘的确认是否触及规格的 IOPS/吞吐上限被限流。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -615,7 +637,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 iostat -x 1 看 r_await/w_await 与队列深度；\n2) 延迟高但 IOPS 不高的怀疑磁盘硬件问题，用 smartctl -a 检查；\n3) IOPS 也高的按磁盘饱和处理，定位高 IO 进程；\n4) 云盘的确认是否触及规格的 IOPS/吞吐上限被限流。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -667,7 +691,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 uptime 看 1/5/15 分钟趋势判断是突发还是持续；\n2) top 里看 %wa，高说明瓶颈在磁盘而非 CPU；\n3) vmstat 1 用 r/b 列区分 CPU 密集与 IO 阻塞；\n4) K8s 节点上用 kubectl top pod 定位高负载 Pod 并考虑迁走。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -719,7 +745,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 top 或 vmstat 确认 st 列的持续水位；\n2) 这是宿主机层面的资源争抢，虚拟机内部无法根治；\n3) 云环境下联系云厂商或更换实例规格（独享型规格无 steal）；\n4) 自建虚拟化的检查宿主机超卖比例并迁移虚机。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -771,7 +799,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 vmstat 1 确认 cs 列的水位；\n2) 用 pidstat -w 1 找出切换最频繁的进程；\n3) 常见根因是线程数过多、锁竞争激烈、或大量短生命周期进程；\n4) 应用侧收敛线程池大小、优化锁粒度是根本解法。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -823,7 +853,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 free -h 与 swapon -s 确认 swap 使用情况；\n2) 用 smem 或 /proc/\u003cpid\u003e/status 的 VmSwap 找出换出最多的进程；\n3) K8s 节点原则上应关闭 swap，开启会掩盖真实的内存压力并让 QoS 失效；\n4) 根因是内存不足，按内存告警路径处理。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -875,7 +907,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) systemctl --failed 列出失败单元；\n2) journalctl -u \u003cunit\u003e -n 100 --no-pager 定位原因；\n3) K8s 节点上重点关注 kubelet、containerd、kube-proxy 这几个关键单元；\n4) 修复后 systemctl reset-failed 清理状态并确认恢复。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -927,7 +961,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 kubectl get node -o wide 对比各节点内核版本；\n2) 确认差异是升级过程中的临时状态还是长期存在；\n3) 逐步把落后节点的内核升级对齐；\n4) 升级前确认容器运行时与 CNI 插件对目标内核版本的兼容性。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -979,7 +1015,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 dmesg -T | grep -i 'killed process' 确认被杀进程与当时内存；\n2) 对照 kubectl get pod -A 找出对应的 Pod，看是否是 limit 设置过低；\n3) 节点整体内存紧张的迁走部分 Pod 或扩容；\n4) 反复被杀的必须在应用侧定位内存泄漏，只调 limit 会反复复发。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1031,7 +1069,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 与 ethtool -S \u003c网卡\u003e 确认错包计数与类型；\n2) 确认协商速率与双工模式和对端一致；\n3) 检查网线/光模块，云环境下提工单给云厂商；\n4) 有冗余的先把流量切走。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1083,7 +1123,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 与 ethtool -S \u003c网卡\u003e 确认错包计数与类型；\n2) 确认协商速率与双工模式和对端一致；\n3) 检查网线/光模块，云环境下提工单给云厂商；\n4) 有冗余的先把流量切走。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1135,7 +1177,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 iftop/nethogs 定位占用带宽最高的连接；\n2) K8s 节点上确认是否有大流量 Pod 或正在拉取大镜像；\n3) 可错峰的任务调整执行时间；\n4) 确需更高带宽的升级网卡或迁移部分工作负载。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1187,7 +1231,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 sysctl net.netfilter.nf_conntrack_count 与 nf_conntrack_max 确认水位；\n2) K8s 节点上 kube-proxy 的 iptables 模式会产生大量 conntrack 条目，Pod 密度高时尤其明显；\n3) 调大 nf_conntrack_max 并同步调大 buckets；\n4) 长期可评估切换到 IPVS 模式减少 conntrack 压力。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1239,7 +1285,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 chronyc tracking 确认偏移量与上游源状态；\n2) 确认 chronyd/ntpd 服务在运行且开机自启；\n3) 检查到 NTP 服务器的网络是否放行 123/UDP；\n4) 偏移过大用 chronyc makestep 强制对时，之后确认所有节点时间一致。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1291,7 +1339,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 chronyc tracking 确认偏移量与上游源状态；\n2) 确认 chronyd/ntpd 服务在运行且开机自启；\n3) 检查到 NTP 服务器的网络是否放行 123/UDP；\n4) 偏移过大用 chronyc makestep 强制对时，之后确认所有节点时间一致。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1343,7 +1393,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 du -x --max-depth=1 找出增长最快的目录；\n2) 确认增长来源是正常业务还是异常（应用死循环打日志、备份堆积）；\n3) 清理无用镜像与容器日志；\n4) 增长确实来自业务的，安排扩容磁盘或迁移数据，不要等到写满。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1395,7 +1447,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 du -x --max-depth=1 找出增长最快的目录；\n2) 确认增长来源是正常业务还是异常（应用死循环打日志、备份堆积）；\n3) 清理无用镜像与容器日志；\n4) 增长确实来自业务的，安排扩容磁盘或迁移数据，不要等到写满。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1447,7 +1501,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 逐层找占用大的目录；\n2) 容器运行时目录（/var/lib/containerd 或 /var/lib/docker）用 crictl rmi --prune 清理无用镜像；\n3) 清理容器日志（/var/log/pods），并确认日志轮转配置生效；\n4) 用 lsof +L1 检查已删除但句柄未释放的文件。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1499,7 +1555,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 逐层找占用大的目录；\n2) 容器运行时目录（/var/lib/containerd 或 /var/lib/docker）用 crictl rmi --prune 清理无用镜像；\n3) 清理容器日志（/var/log/pods），并确认日志轮转配置生效；\n4) 用 lsof +L1 检查已删除但句柄未释放的文件。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1551,7 +1609,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -i 确认挂载点；\n2) 逐层统计文件数找出小文件最多的目录；\n3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；\n4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1603,7 +1663,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -i 确认挂载点；\n2) 逐层统计文件数找出小文件最多的目录；\n3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；\n4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1655,7 +1717,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -i 确认挂载点；\n2) 逐层统计文件数找出小文件最多的目录；\n3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；\n4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1707,7 +1771,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -i 确认挂载点；\n2) 逐层统计文件数找出小文件最多的目录；\n3) K8s 节点常见是容器层与日志碎片，清理无用镜像通常能释放大量 inode；\n4) 长期可提高 inode 密度或把小文件业务隔离到独立分区。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1759,7 +1825,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 sysctl net.netfilter.nf_conntrack_count 与 nf_conntrack_max 确认水位；\n2) K8s 节点上 kube-proxy 的 iptables 模式会产生大量 conntrack 条目，Pod 密度高时尤其明显；\n3) 调大 nf_conntrack_max 并同步调大 buckets；\n4) 长期可评估切换到 IPVS 模式减少 conntrack 压力。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1811,7 +1879,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 检查 textfile 目录下的 .prom 文件权限与格式；\n2) 写入方通常是 cron 脚本，确认脚本执行成功且用原子写（先写 .tmp 再 mv）；\n3) 格式错误的用 promtool check metrics 校验；\n4) 清理残留的临时文件，它们会导致解析失败。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1863,7 +1933,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 dmesg -T | grep -i 'link is' 看抖动时间线；\n2) 检查网线/光模块，抖动多为物理层接触不良；\n3) 确认协商速率与双工模式和对端一致；\n4) 联系网络侧确认交换机端口状态，云环境下提工单。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

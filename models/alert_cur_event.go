@@ -6,17 +6,19 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/pkg/unit"
 
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -67,6 +69,12 @@ type AlertCurEvent struct {
 	LastSentTime       int64               `json:"last_sent_time" gorm:"-"`             // 上次发送时间
 	FirstEvalTime      int64               `json:"first_eval_time" gorm:"-"`            // 首次异常检测时间
 	NotifyCurNumber    int                 `json:"notify_cur_number"`                   // notify: current number
+	NotifyMuted        int                 `json:"-" gorm:"-"`                          // 运行时标记：命中「只屏蔽通知」规则，事件照常产生并落库，仅不发通知
+	MuteId             int64               `json:"-" gorm:"-"`                          // 运行时：命中的「只屏蔽通知」规则 id，供跳过通知时写通知记录说明
+	// 只屏蔽通知的「影子通知状态」：屏蔽期内用于复刻正常重复/最大次数逻辑来驱动落库节奏，
+	// 与真实的 LastSentTime / NotifyCurNumber 解耦，使真实通知状态全程冻结、解除屏蔽后能正确恢复通知。
+	LastMutedPersistTime int64 `json:"-" gorm:"-"` // 运行时：上次「只屏蔽通知」落库快照的评估时间（影子 LastSentTime）
+	MutedPersistNumber   int   `json:"-" gorm:"-"` // 运行时：本次屏蔽期内已落库快照数（影子 NotifyCurNumber），用于对齐 notify_max_number
 	FirstTriggerTime   int64               `json:"first_trigger_time"`                  // 连续告警的首次告警时间
 	ExtraConfig        interface{}         `json:"extra_config" gorm:"-"`
 	Status             int                 `json:"status" gorm:"-"`
@@ -76,11 +84,15 @@ type AlertCurEvent struct {
 	Target             *Target             `json:"target" gorm:"-"`
 	RecoverConfig      RecoverConfig       `json:"recover_config" gorm:"-"`
 	RuleHash           string              `json:"rule_hash" gorm:"-"`
+	ShotImageBase64    map[string]string   `json:"shot_image_base64" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
 	NotifyRuleIds      []int64             `json:"notify_rule_ids" gorm:"serializer:json"`
+	NotifyRuleId       int64               `json:"notify_rule_id" gorm:"-"`
+	NotifyRuleName     string              `json:"notify_rule_name" gorm:"-"`
 
 	NotifyVersion int                `json:"notify_version"  gorm:"-"` // 0: old, 1: new
 	NotifyRules   []*EventNotifyRule `json:"notify_rules" gorm:"-"`
+	RecoverTime   int64              `json:"recover_time" gorm:"-"`
 }
 
 type EventNotifyRule struct {
@@ -495,6 +507,23 @@ func (e *AlertCurEvent) FE2DB() {
 
 }
 
+func (e *AlertCurEvent) FillTagsMap() {
+	e.TagsMap = make(map[string]string)
+	for i := 0; i < len(e.TagsJSON); i++ {
+		pair := strings.TrimSpace(e.TagsJSON[i])
+		if pair == "" {
+			continue
+		}
+
+		arr := strings.SplitN(pair, "=", 2)
+		if len(arr) != 2 {
+			continue
+		}
+
+		e.TagsMap[arr[0]] = arr[1]
+	}
+}
+
 func (e *AlertCurEvent) DB2Mem() {
 	e.IsRecovered = false
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
@@ -720,6 +749,12 @@ func AlertCurEventDel(ctx *ctx.Context, ids []int64) error {
 	}
 
 	return DB(ctx).Where("id in ?", ids).Delete(&AlertCurEvent{}).Error
+}
+
+func AlertCurEventIds(ctx *ctx.Context) ([]int64, error) {
+	var ids []int64
+	err := DB(ctx).Model(&AlertCurEvent{}).Pluck("id", &ids).Error
+	return ids, err
 }
 
 func AlertCurEventDelByHash(ctx *ctx.Context, hash string) error {
@@ -1022,6 +1057,13 @@ func (e *AlertCurEvent) DeepCopy() *AlertCurEvent {
 		copy(eventCopy.ExtraInfo, e.ExtraInfo)
 	}
 
+	if e.ShotImageBase64 != nil {
+		eventCopy.ShotImageBase64 = make(map[string]string, len(e.ShotImageBase64))
+		for k, v := range e.ShotImageBase64 {
+			eventCopy.ShotImageBase64[k] = v
+		}
+	}
+
 	if e.ExtraInfoMap != nil {
 		eventCopy.ExtraInfoMap = make([]map[string]string, len(e.ExtraInfoMap))
 		for i, m := range e.ExtraInfoMap {
@@ -1043,4 +1085,111 @@ func (e *AlertCurEvent) DeepCopy() *AlertCurEvent {
 	eventCopy.ExtraConfig = e.ExtraConfig
 
 	return &eventCopy
+}
+
+// eventSnapshotMarshalErr 是 LoggableSnapshot 序列化失败时返回的哨兵值。
+// 它是非空串，与「事件被 drop」明确区分，避免序列化失败被误判成事件丢弃。
+const eventSnapshotMarshalErr = "<snapshot-marshal-error>"
+
+const (
+	maxChangeFieldLen = 256  // 单个字段 before/after 的最大字节数
+	maxChangeStrLen   = 1024 // 整条改动字符串的最大字节数
+)
+
+// LoggableSnapshot 返回事件的 JSON 快照，用于流水线处理器执行前后的可观测记录。
+// 仅剔除 ShotImageBase64（base64 截图）——它既超大（MB 级，会撑爆日志、拖慢序列化），又只由
+// 告警引擎绘图生成、处理器不会改。其余字段一律保留：event_update 处理器会把 HTTP 响应整体
+// json.Unmarshal 覆盖事件（event_update.go），理论上任何字段都可能被改，多剔除一个就可能把
+// 真实改动漏记成 no-change。仅浅拷贝置空后序列化，不改动原事件。e 为 nil 时返回空串；序列化
+// 失败时返回非空哨兵并记一条 Warning，二者都不会与「事件被 drop」信号混淆（drop 由调用方的
+// dropped 标志位显式判定）。
+func (e *AlertCurEvent) LoggableSnapshot() string {
+	if e == nil {
+		return ""
+	}
+
+	cp := *e
+	cp.ShotImageBase64 = nil // 唯一必剔除的超大字段
+
+	b, err := json.Marshal(&cp)
+	if err != nil {
+		logger.Warningf("models: failed to marshal event snapshot for log: hash=%s err=%v", e.Hash, err)
+		return eventSnapshotMarshalErr
+	}
+	return string(b)
+}
+
+// EventFieldChange 描述处理器对事件单个字段的改动
+type EventFieldChange struct {
+	Field  string `json:"field"`
+	Before string `json:"before"`
+	After  string `json:"after"`
+}
+
+// DiffEventSnapshot 对比处理器执行前后的两份精简快照，返回发生变化的字段列表（按字段名排序，
+// 输出稳定，便于日志聚合/比对）。dropped 由引擎的准确标志位传入，为 true 时直接返回「事件已丢弃」，
+// 不再用空串推断；任一快照无法解析（如序列化失败的哨兵值）时返回「快照不可用」标记，而非误报丢弃。
+func DiffEventSnapshot(beforeSnap, afterSnap string, dropped bool) []EventFieldChange {
+	if dropped {
+		return []EventFieldChange{{Field: "_event", Before: "present", After: "dropped"}}
+	}
+
+	// 非告警工作流（如 ai.agent 把结果写进 wfCtx.Output）事件恒为 nil，无事件改动可记录。
+	// LoggableSnapshot 只在 e == nil 时返回空串（序列化失败返回非空哨兵），故两侧都为空串
+	// 即「本工作流没有事件」，返回 nil（no-change），不能与序列化失败混为「快照不可用」。
+	if beforeSnap == "" && afterSnap == "" {
+		return nil
+	}
+
+	var before, after map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(beforeSnap), &before); err != nil {
+		return []EventFieldChange{{Field: "_snapshot", After: "unavailable"}}
+	}
+	if err := json.Unmarshal([]byte(afterSnap), &after); err != nil {
+		return []EventFieldChange{{Field: "_snapshot", After: "unavailable"}}
+	}
+
+	changes := make([]EventFieldChange, 0)
+	for k, bv := range before {
+		av, ok := after[k]
+		if !ok || string(bv) != string(av) {
+			changes = append(changes, EventFieldChange{Field: k, Before: string(bv), After: string(av)})
+		}
+	}
+	for k, av := range after {
+		if _, ok := before[k]; !ok {
+			changes = append(changes, EventFieldChange{Field: k, Before: "", After: string(av)})
+		}
+	}
+
+	sort.Slice(changes, func(i, j int) bool { return changes[i].Field < changes[j].Field })
+	return changes
+}
+
+// FormatEventChanges 将字段改动列表格式化为紧凑字符串，供日志与执行记录 Message 使用。
+// 无改动返回 "no-change"（表示处理器执行了但未改动事件，可据此判断是否生效）。单字段值与
+// 整串均按字节上限截断，避免 ai_summary/event_update 这类大文本改动把执行记录撑大；
+// 完整前后内容只保留在 Debug 日志里。
+func FormatEventChanges(changes []EventFieldChange) string {
+	if len(changes) == 0 {
+		return "no-change"
+	}
+	parts := make([]string, 0, len(changes))
+	for _, c := range changes {
+		parts = append(parts, fmt.Sprintf("%s:%s→%s", c.Field,
+			truncateForLog(c.Before, maxChangeFieldLen), truncateForLog(c.After, maxChangeFieldLen)))
+	}
+	return truncateForLog(strings.Join(parts, "; "), maxChangeStrLen)
+}
+
+// truncateForLog 按字节上限截断字符串，并回退到合法 UTF-8 边界，避免切断多字节字符（如中文）。
+func truncateForLog(s string, maxBytes int) string {
+	if len(s) <= maxBytes {
+		return s
+	}
+	truncated := s[:maxBytes]
+	for len(truncated) > 0 && !utf8.ValidString(truncated) {
+		truncated = truncated[:len(truncated)-1]
+	}
+	return truncated + "..."
 }

@@ -1,0 +1,3442 @@
+{
+    "name": "CVM",
+    "tags": "腾讯云 云服务器 CVM",
+    "note": "",
+    "ident": "",
+    "uuid": 1764899586697000,
+    "configs": {
+        "var": [
+            {
+                "name": "datasource",
+                "label": "DataSource",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus"
+            },
+            {
+                "name": "region",
+                "label": "Region",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_cvm_cpuusage_avg,instance_region)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "instance_name",
+                "label": "实例名",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_cvm_cpuusage_avg{instance_region=~\"$region\"},instance_name)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "instance_id",
+                "label": "实例ID",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_cvm_cpuusage_avg{instance_region=~\"$region\",instance_name=~\"$instance_name\"},instance_id)",
+                "initialized": true,
+                "options": []
+            }
+        ],
+        "panels": [
+            {
+                "type": "row",
+                "id": "d77f6947-edc5-4983-8dd7-984750a1bc6e",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "c7e6ac57-8821-4467-a0c4-91a315d340e8",
+                    "isResizable": false
+                },
+                "name": "CPU监控",
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "5f5811df-f114-4031-a714-17c04b893410",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 1,
+                    "i": "d8c8185f-93f9-4a77-8b30-ff1be773c33f",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU 利用率",
+                "description": "机器运行期间实时占用的 CPU 百分比",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_cvm_cpuusage_avg{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "dda80c9d-480e-4fe5-9ff0-637b2770f7de",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1,
+                    "i": "42dce709-abca-4e13-b8ca-9020d1ecdfc3",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "基础 CPU 使用率",
+                "description": "基础 CPU 使用率通过宿主机采集上报，无须安装监控组件即可查看数据，子机高负载情况下仍可持续采集上报数据",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_cvm_basecpuusage_avg{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "feed8b1d-c546-4f63-8177-8e0ced3119e3",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 0,
+                    "y": 9,
+                    "i": "83b1cdca-5eac-44e5-a4b2-9c1526d81771",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU 一分钟平均负载",
+                "description": "1分钟内正在使用和等待使用 CPU 的平均任务数，取 /proc/loadavg 第一列数据（windows操作系统无此指标），依赖监控组件安装采集",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_cvm_cpuloadavg_avg{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "e4b799bc-0cc0-403d-a627-10e9b1fca5c6",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 8,
+                    "y": 9,
+                    "i": "2f9dccf0-83e7-4bb1-9d0e-077556335dfc",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU 五分钟平均负载",
+                "description": "5分钟内正在使用和等待使用 CPU 的平均任务数，取 /proc/loadavg 第二列数据（windows操作系统无此指标），依赖监控组件安装采集",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_cvm_cpuloadavg5m_avg{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "37420769-9610-418a-904f-82990c3133be",
+                "layout": {
+                    "h": 4,
+                    "w": 8,
+                    "x": 16,
+                    "y": 9,
+                    "i": "c9402d97-8ca2-40b7-a2f0-4e8e600339c9",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "CPU 十五分钟平均负载",
+                "description": "15分钟内正在使用和等待使用 CPU 的平均任务数，取 /proc/loadavg 第三列数据（windows操作系统无此指标），依赖监控组件安装采集",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_cvm_cpuloadavg15m_avg{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "923c0246-3763-4e56-9962-74f07884cd5f",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 17,
+                    "i": "6a72ff7e-21f7-4364-af08-c49e9ee7bd85",
+                    "isResizable": false
+                },
+                "name": "内存监控",
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "fed21442-2a4b-438f-920c-48ae02164c64",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 18,
+                    "i": "743d2d0d-c9d3-4586-9e2f-fd9b827b752e",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "内存使用量",
+                "description": "用户实际使用的内存量，不包括缓冲区与系统缓存占用的内存，总内存 - 可用内存（包括 buffers 与 cached）得到内存使用量数值，不包含 buffers和 cached。依赖监控组件安装采集",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_cvm_memused_avg{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3f18d47a-651e-48c6-a1d2-81bb2a11d8d7",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 18,
+                    "i": "4f57b506-6d8f-4796-9630-7e21fd8ea89f",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "内存利用率",
+                "description": "用户实际内存使用率，不包括缓冲区与系统缓存占用的内存，除去缓存、buffer 和剩余，用户实际使用内存与总内存之比",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_cvm_memusage_avg{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "4db59398-155a-4e09-b1f3-289d60707572",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 26,
+                    "i": "3ff0c04a-480b-44c2-9dde-d944fe6ea8d1",
+                    "isResizable": false
+                },
+                "name": "网络监控",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "6a73339c-a308-4ec6-b040-dde306d7f789",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 19,
+                            "i": "d4c0071e-9b3a-41d0-924d-3534a501eb68",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "内网出带宽",
+                        "description": "内网网卡的平均每秒出流量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_lanouttraffic_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "897cb34b-d029-4f10-aaf5-fc3be0cce360",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 19,
+                            "i": "fd5a6723-2444-4eb5-a38d-5f09f1fcab07",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "内网入带宽",
+                        "description": "内网网卡的平均每秒入流量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_lanintraffic_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "4e8efcc1-9a2a-4cb4-9bca-5edd8ad6259a",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 27,
+                            "i": "c81f4f51-d82b-4297-bb91-10282cc705be",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "内网出包量",
+                        "description": "内网网卡的平均每秒出包量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_lanoutpkg_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "3b88166c-0b4d-48b2-b524-67ada87f18ef",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 27,
+                            "i": "724058b8-14d0-4689-9f2f-5d70647ac6dd",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "内网入包量",
+                        "description": "内网网卡的平均每秒入包量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_laninpkg_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "f0db0393-5ea7-4175-aa9f-e48491fd0652",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 35,
+                            "i": "7585dde3-fd3a-4a5e-969d-3a4d74f2d8e1",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "外网出带宽",
+                        "description": "外网平均每秒出流量速率，当前粒度数据为60秒总流量/60秒计算得出，该数据为 EIP+CLB+CVM 的外网出/入带宽总和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_wanouttraffic_max{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "a439da7c-c487-4ba7-8a79-5844e95c6786",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 35,
+                            "i": "fe14e1c1-3810-4e92-a53a-54d99aba5495",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "外网出带宽使用率",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_outratio_max{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "1430af1c-09d5-45f7-8218-29fdef2637d8",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 43,
+                            "i": "df7acd8e-e4d8-434b-ac13-28d3bc043cf2",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "外网入带宽",
+                        "description": "外网平均每秒入流量速率，当前粒度数据为60秒总流量/60秒计算得出，该数据为 EIP+CLB+CVM 的外网出/入带宽总和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_wanintraffic_max{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "5d061e92-6c1f-4bee-a178-bd5e6e076113",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 43,
+                            "i": "274a9f75-9e3e-45e4-bde7-10fe0e26ea26",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "外网出流量",
+                        "description": "外网网卡的平均每秒出流量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_accouttraffic_sum{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "a5dcd9f3-5776-4e8a-bd29-aecf6823c8be",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 51,
+                            "i": "e4532381-8a2f-4a22-a551-3a715270fd44",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "外网出包量",
+                        "description": "外网网卡的平均每秒出包量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_wanoutpkg_max{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "453b9c21-d383-439f-a430-f494c28b44b1",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 51,
+                            "i": "ee9071ad-9fd4-4c9c-9f76-e1543bf9740d",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "外网入包量",
+                        "description": "外网网卡的平均每秒入包量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_waninpkg_max{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "3a9c1a7b-402a-4a54-8f3c-376c4bfe82e6",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 59,
+                            "i": "81470e7b-67d9-42cd-b22a-2467c8f660be",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "TCP 连接数",
+                        "description": "处于 ESTABLISHED 状态的 TCP 连接数量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_tcpcurrestab_max{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "b3ff67c7-3cff-4f69-af87-b8a47a5c627e",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 59,
+                            "i": "91d259d3-1e7c-4eed-8024-83b7f1731ada",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "子机 utc 时间和 ntp 时间差值",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_timeoffset_max{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "21b8ff2c-db45-4c2f-9648-8786032721d6",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 27,
+                    "i": "3a9fe55b-13a9-4be6-ad5e-35824bd2625f",
+                    "isResizable": false
+                },
+                "name": "磁盘监控",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "fae5ae53-62ba-4af9-937c-025f28f87c9c",
+                        "layout": {
+                            "h": 4,
+                            "w": 24,
+                            "x": 0,
+                            "y": 20,
+                            "i": "07caec61-58c3-42f6-a4a4-66937bfa1c96",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "磁盘利用率",
+                        "description": "磁盘已使用容量占总容量的百分比(所有磁盘)",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_cvmdiskusage_max{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "84e45904-ff66-4813-be29-86fe2fb597ad",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 28,
+                    "i": "674628b2-e73a-49c3-877f-71a7f94356ad",
+                    "isResizable": false
+                },
+                "name": "GPU监控",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "bcaacb8f-76c9-43d7-bf1c-ce67a47a62aa",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 85,
+                            "i": "fdd2f0c0-f899-4660-917e-76689142c536",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 内存总量",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gpumemtotal_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "621b4276-af7a-45e8-94af-e9c016b5e2ce",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 85,
+                            "i": "1f4d0c9d-1266-49ce-9516-eb86b317d744",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 内存使用率",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gpumemusage_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "99d47cc2-15d7-4253-a0d5-a3f41cfe798d",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 93,
+                            "i": "91f8923b-d0b6-4abd-b57b-1bec4572b0b0",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 内存使用量",
+                        "description": "评估负载对显存占用",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gpumemused_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "70ba246a-f009-4667-9f21-9ef0c9a4a7fc",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 93,
+                            "i": "7a4f4677-8331-4ac0-ba4e-f9c89ee177c6",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 功耗使用量",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gpupowdraw_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "7f3eadf5-5c50-4450-a1a9-8722773dbd9e",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 101,
+                            "i": "63896e53-5b1a-4972-adb0-693a4b1732d5",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 功耗总量",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gpupowlimit_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "e0547596-a547-4386-a976-cae2a659fb81",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 101,
+                            "i": "e31b6128-1379-4191-833e-64eb250b0180",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 功耗使用率",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gpupowusage_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "1127f04d-211d-442d-b0a6-2c65950f96a3",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 109,
+                            "i": "c52b5746-0fff-42d4-b3f0-9b247b853cd9",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 温度",
+                        "description": "评估 GPU 散热状态",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gputemp_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "8d472c06-0d8f-4258-a5bd-02646e727a3a",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 109,
+                            "i": "91f73b78-59d3-45c0-acca-411744751c12",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 使用率",
+                        "description": "评估负载所消耗的计算能力，非空闲状态百分比",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gpuutil_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "57838c9b-b457-4668-bd79-cfdfd3d00ab9",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 117,
+                            "i": "8f09e3ae-03a1-42ea-8483-75fc700d3fbd",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 编码器使用率",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gpuencutil_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "407fba40-27e4-4f85-b3ad-94e5933b7d95",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 117,
+                            "i": "e574d6cb-7348-4a4a-a804-313f972ca7a0",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "GPU 解码器使用率",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_gpudecutil_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | GPU {{minor_number}}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "173c220d-8505-40f1-a9f8-340fd750006a",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 29,
+                    "i": "243abcfa-6290-4689-a15f-9ee3cfa36c51",
+                    "isResizable": false
+                },
+                "name": "存储监控(需要采集云硬盘数据)",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "6d98b0cf-f141-4107-80c5-ef299ddc4b98",
+                        "layout": {
+                            "h": 4,
+                            "w": 24,
+                            "x": 0,
+                            "y": 86,
+                            "i": "182c708a-b744-4f4b-b85c-dc6f2ba2dde0",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "硬盘利用率",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cbs_diskusage_max{instance_id=~\"$instance_id\"}",
+                                "legend": "{{disk_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "e353c3a5-150e-4d9b-9efe-6a2f164f1959",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 94,
+                            "i": "13caee17-6e8e-46ce-b798-d158cf30ed0a",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "硬盘读流量",
+                        "description": "数据从硬盘读取到内存中的速率",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cbs_diskreadtraffic_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_id}} | {{disk_name}} | {{disk_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "979b23c4-7512-4977-9781-9cb5792ed8f4",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 94,
+                            "i": "de8d3ed0-6ad5-40e2-9499-1108279b245a",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "硬盘写流量",
+                        "description": "数据从内存写入到硬盘中的速率",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cbs_diskwritetraffic_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_id}} | {{disk_name}} | {{disk_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "98c0e4e1-7bb3-430a-b806-5432bef09b36",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 102,
+                            "i": "2b90ee64-f210-47cc-bb87-f40c8ba88340",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "硬盘读 IOPS",
+                        "description": "每秒从硬盘读到内存中的 IO 次数",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cbs_diskreadiops_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_id}} | {{disk_name}} | {{disk_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "7d524372-e735-45ba-a9ec-470c438e6b08",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 102,
+                            "i": "393ceaec-0866-4e5f-b917-969399503121",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "硬盘写 IOPS",
+                        "description": "每秒从内存写到硬盘中的 IO 次数",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cbs_diskwriteiops_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_id}} | {{disk_name}} | {{disk_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "af2e791c-fe09-40ae-9a31-82aa03ac309c",
+                        "layout": {
+                            "h": 4,
+                            "w": 8,
+                            "x": 0,
+                            "y": 110,
+                            "i": "0683ad51-a892-4b48-bc91-abfec531cf39",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "硬盘 IO 等待时间",
+                        "description": "在采样周期内有百分之几的时间 CPU 空闲并且有仍未完成的 I/O 请求",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cbs_diskawait_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_id}} | {{disk_name}} | {{disk_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "4980750b-2f76-4c5c-b345-2187ec99225c",
+                        "layout": {
+                            "h": 4,
+                            "w": 8,
+                            "x": 8,
+                            "y": 110,
+                            "i": "8646ac74-4e98-492a-af81-2fe6c602bd5f",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "硬盘 IO 服务时间",
+                        "description": "",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cbs_disksvctm_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_id}} | {{disk_name}} | {{disk_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "1391fbd7-a3e0-4b37-ad35-2c977e2fe4b2",
+                        "layout": {
+                            "h": 4,
+                            "w": 8,
+                            "x": 16,
+                            "y": 110,
+                            "i": "b482bdfe-cf43-437f-97a2-0824f867264d",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "硬盘 IO 繁忙比率",
+                        "description": "硬盘有 IO 操作的时间（即非空间时间）的比率",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cbs_diskutil_avg{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_id}} | {{disk_name}} | {{disk_id}}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "6e4150ce-ac00-49b0-be0a-7bdd61e33ba8",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 30,
+                    "i": "0286f78e-86ae-4e33-aea9-61d9d547ff01",
+                    "isResizable": false
+                },
+                "name": "网络相关指标(需要采集云服务器内网数据)",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "630656db-7e6f-4d25-80ec-3239b4437501",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 87,
+                            "i": "b780b4cf-3eb7-4ca8-848b-417d1ddf0f62",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "子机连接数",
+                        "description": "CVM 在访问或被访问时所建立的传输层连接数量， 这个字段是在宿主机采集的，包括 tcp udp 等五元组连接，统计的比较全面，包含 tcp/udp/icmp 等所有协议。",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_sdn_vm_vmconn_sum{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "bfc09409-13a0-4a55-bad3-9e831eed9b40",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 87,
+                            "i": "842c4ac3-cbf6-4d01-bcd8-88f5e9427146",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "子机连接数百分比",
+                        "description": "用户实际使用的子机连接数与总连接数上限之比",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "multi"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_sdn_vm_vmconnratio_expr{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "13a41948-f833-4de9-8cb4-98d00ce1ce63",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 31,
+                    "i": "81d2f585-c10e-4a75-8d4e-ca8cdc874376",
+                    "isResizable": false
+                },
+                "name": "vRDMA监控",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "5f749809-f6cc-4bca-b22f-34e69fae2d61",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 8,
+                            "i": "56563de0-282d-45c1-bd6f-d3ae5f125023",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "vRDMA网卡入包量",
+                        "description": "vRDMA网卡入包量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_vrdmainpkt_sum{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "387222d7-d094-4171-978d-cd4bc23d798d",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 8,
+                            "i": "1b2d16da-bd6e-4325-b951-fff7d6ebf895",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "vRDMA网卡出包量",
+                        "description": "vRDMA网卡出包量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_vrdmaoutpkt_sum{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "bafddf6d-cde0-4286-9997-0c84b8e3777c",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 16,
+                            "i": "bab660d9-6b40-4566-a86c-d117d4633015",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "vRDMA网卡接收带宽",
+                        "description": "vRDMA网卡接收带宽",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_vrdmaintraffic_sum{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "587b7104-9ed7-4c43-b399-d5b62567c07a",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 16,
+                            "i": "3d8e0416-30fe-498a-b83b-6799b5d44a83",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "vRDMA网卡发送带宽",
+                        "description": "vRDMA网卡发送带宽",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "hidden",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "lines",
+                            "lineInterpolation": "smooth",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "off",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "none",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_cvm_vrdmaouttraffic_sum{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "version": "3.2.0"
+    }
+}

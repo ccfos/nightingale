@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/slice"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -39,6 +41,7 @@ func (rt *Router) notifyRulesAdd(c *gin.Context) {
 		nr.CreateAt = now
 		nr.UpdateBy = me.Username
 		nr.UpdateAt = now
+		nr.CleanFEFields()
 
 		err := models.Insert(rt.Ctx, nr)
 		ginx.Dangerous(err)
@@ -85,6 +88,7 @@ func (rt *Router) notifyRulePut(c *gin.Context) {
 	}
 
 	f.UpdateBy = me.Username
+	f.CleanFEFields()
 	ginx.NewRender(c).Message(nr.Update(rt.Ctx, f))
 }
 
@@ -104,7 +108,65 @@ func (rt *Router) notifyRuleGet(c *gin.Context) {
 		ginx.Bomb(http.StatusForbidden, "forbidden")
 	}
 
+	rt.fillNotifyConfigNames([]*models.NotifyRule{nr})
 	ginx.NewRender(c).Data(nr, nil)
+}
+
+// fillNotifyConfigNames 为通知配置回填展示用字段：channel_id 对应的媒介 ident，
+// 以及邮件/短信/电话等 user-info 媒介按 params 里 user_ids/user_group_ids 解析出的
+// 用户昵称与用户组名，供告警规则页「选择通知规则」列表直接展示媒介与收件人摘要。
+// FlashDuty/PagerDuty 用的是 ids/pagerduty_integration_keys，不含这两个 key，天然跳过。
+func (rt *Router) fillNotifyConfigNames(rules []*models.NotifyRule) {
+	// 汇总所有 channel_id，一次查库拿到 ident 映射，避免逐条查询
+	channelIDSet := make(map[int64]struct{})
+	for _, nr := range rules {
+		for i := range nr.NotifyConfigs {
+			if id := nr.NotifyConfigs[i].ChannelID; id > 0 {
+				channelIDSet[id] = struct{}{}
+			}
+		}
+	}
+
+	var channelIdents map[int64]string
+	if len(channelIDSet) > 0 {
+		ids := make([]int64, 0, len(channelIDSet))
+		for id := range channelIDSet {
+			ids = append(ids, id)
+		}
+		var err error
+		channelIdents, err = models.NotifyChannelIdentsGet(rt.Ctx, ids)
+		if err != nil {
+			logger.Warningf("failed to get notify channel idents: %v", err)
+		}
+	}
+
+	for _, nr := range rules {
+		for i := range nr.NotifyConfigs {
+			nc := &nr.NotifyConfigs[i]
+
+			nc.ChannelIdent = channelIdents[nc.ChannelID]
+
+			if userIDs := nc.ParseUserIDs(); len(userIDs) > 0 {
+				names := make([]string, 0, len(userIDs))
+				for _, u := range rt.UserCache.GetByUserIds(userIDs) {
+					if u.Nickname != "" {
+						names = append(names, u.Nickname)
+					} else {
+						names = append(names, u.Username)
+					}
+				}
+				nc.UserNames = names
+			}
+
+			if groupIDs := nc.ParseUserGroupIDs(); len(groupIDs) > 0 {
+				names := make([]string, 0, len(groupIDs))
+				for _, g := range rt.UserGroupCache.GetByUserGroupIds(groupIDs) {
+					names = append(names, g.Name)
+				}
+				nc.UserGroupNames = names
+			}
+		}
+	}
 }
 
 func (rt *Router) notifyRulesGetByService(c *gin.Context) {
@@ -118,7 +180,9 @@ func (rt *Router) notifyRulesGet(c *gin.Context) {
 
 	lst, err := models.NotifyRulesGet(rt.Ctx, "", nil)
 	ginx.Dangerous(err)
+	models.FillUpdateByNicknames(rt.Ctx, lst)
 	if me.IsAdmin() {
+		rt.fillNotifyConfigNames(lst)
 		ginx.NewRender(c).Data(lst, nil)
 		return
 	}
@@ -129,35 +193,76 @@ func (rt *Router) notifyRulesGet(c *gin.Context) {
 			res = append(res, nr)
 		}
 	}
+	rt.fillNotifyConfigNames(res)
 	ginx.NewRender(c).Data(res, nil)
 }
 
 type NotifyTestForm struct {
-	EventIDs     []int64             `json:"event_ids" binding:"required"`
+	EventIDs     []int64             `json:"event_ids"`
+	UseMockEvent bool                `json:"use_mock_event"` // 新环境无历史事件时，用内置模拟事件验证通知链路
 	NotifyConfig models.NotifyConfig `json:"notify_config" binding:"required"`
+}
+
+// buildNotifyTestMockEvent 构造用于通知测试的内置模拟事件，字段仅为演示用途，
+// 不落库；severity 取通知配置勾选的最低级别，保证与配置语义一致。
+// 事件骨架与工作流试跑的样例事件共用 newMockEvent，避免两处各自演化。
+func buildNotifyTestMockEvent(lang string, notifyConfig models.NotifyConfig) *models.AlertCurEvent {
+	severity := 2
+	if len(notifyConfig.Severities) > 0 {
+		severity = notifyConfig.Severities[0]
+		for _, s := range notifyConfig.Severities {
+			if s < severity {
+				severity = s
+			}
+		}
+	}
+
+	return newMockEvent(mockEventSpec{
+		RuleName:     i18n.Sprintf(lang, "Notification test mock event"),
+		RuleNote:     i18n.Sprintf(lang, "This is a mock event sent by notification test, just to verify that the notification channel works"),
+		Hash:         "notify-rule-test-mock-event",
+		Severity:     severity,
+		IsRecovered:  false,
+		PromQL:       "cpu_usage_active > 80",
+		TriggerValue: "81.5",
+		ExtraTags:    []string{"ident=mock-host-01", "source=notify-rule-test"},
+	})
 }
 
 func (rt *Router) notifyTest(c *gin.Context) {
 	var f NotifyTestForm
 	ginx.BindJSON(c, &f)
 
-	hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, f.EventIDs)
-	ginx.Dangerous(err)
-
-	if len(hisEvents) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "event not found")
+	// ChannelID 为空时 NotifyChannelGets 会查回全部渠道并取第一个，测试消息会发到无关渠道
+	if f.NotifyConfig.ChannelID <= 0 {
+		ginx.Bomb(http.StatusBadRequest, "notify_config.channel_id required")
 	}
 
-	ginx.Dangerous(err)
 	events := []*models.AlertCurEvent{}
-	for _, he := range hisEvents {
-		event := he.ToCur()
-		event.SetTagsMap()
-		if err := dispatch.NotifyRuleMatchCheck(&f.NotifyConfig, event); err != nil {
-			ginx.Bomb(http.StatusBadRequest, err.Error())
+	if f.UseMockEvent {
+		// 模拟事件用于验证通道连通性，不做筛选条件匹配校验
+		events = append(events, buildNotifyTestMockEvent(c.GetHeader("X-Language"), f.NotifyConfig))
+	} else {
+		if len(f.EventIDs) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "event_ids or use_mock_event required")
 		}
 
-		events = append(events, event)
+		hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, f.EventIDs)
+		ginx.Dangerous(err)
+
+		if len(hisEvents) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "event not found")
+		}
+
+		for _, he := range hisEvents {
+			event := he.ToCur()
+			event.SetTagsMap()
+			if err := dispatch.NotifyRuleMatchCheck(&f.NotifyConfig, event); err != nil {
+				bombErr(http.StatusBadRequest, err)
+			}
+
+			events = append(events, event)
+		}
 	}
 
 	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
@@ -165,6 +270,21 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		resp = "success"
 	}
 	ginx.NewRender(c).Data(resp, err)
+}
+
+// resolveSiteUrl 返回模板渲染与通知上下文共用的站点地址。
+func resolveSiteUrl(ctx *ctx.Context) string {
+	siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
+	if siteUrl == "" {
+		siteUrl = "http://127.0.0.1:17000"
+	}
+	return siteUrl
+}
+
+// NeedMessageTemplate 表示该媒介类型是否依赖消息模板。
+// flashduty / pagerduty 从 event 字段直接构造 payload，不走模板。
+func NeedMessageTemplate(requestType string) bool {
+	return requestType != "flashduty" && requestType != "pagerduty"
 }
 
 func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType, notifyConfig models.NotifyConfig, events []*models.AlertCurEvent) (string, error) {
@@ -181,8 +301,11 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 	if !notifyChannel.Enable {
 		return "", fmt.Errorf("notify channel not enabled, please enable it first")
 	}
+
+	siteUrl := resolveSiteUrl(ctx)
+
 	tplContent := make(map[string]interface{})
-	if notifyChannel.RequestType != "flashduty" {
+	if NeedMessageTemplate(notifyChannel.RequestType) {
 		messageTemplates, err := models.MessageTemplateGets(ctx, notifyConfig.TemplateID, "", "")
 		if err != nil {
 			return "", fmt.Errorf("failed to get message templates: %v", err)
@@ -191,80 +314,81 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if len(messageTemplates) == 0 {
 			return "", fmt.Errorf("message template not found")
 		}
-		tplContent = messageTemplates[0].RenderEvent(events)
-	}
-	var contactKey string
-	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
-		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
+		tplContent = messageTemplates[0].RenderEvent(events, siteUrl)
 	}
 
-	sendtos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
+	return sendToNotifyChannel(ctx, userCache, userGroup, notifyConfig, notifyChannel, events, tplContent, siteUrl)
+}
 
-	var resp string
-	switch notifyChannel.RequestType {
-	case "flashduty":
-		client, err := models.GetHTTPClient(notifyChannel)
-		if err != nil {
-			return "", fmt.Errorf("failed to get http client: %v", err)
-		}
+// sendToNotifyChannel 是通知投递的公共下半段：在通道配置与「已渲染」的模板内容都确定之后，
+// 构造通知上下文并按 request_type 分派投递。
+//
+// 之所以与上半段（按 ID 查库、Enable 闸门、按 template_id 查模板）拆开，是为了让
+// 「测试一份尚未保存的媒介配置」能够复用与生产完全相同的投递路径——该场景下通道配置
+// 来自请求体、模板内容来自内联源码，两者都无法从库里取。
+//
+// 注意 tplContent 必须是渲染后的结果（models.MessageTemplate.RenderEvent 的产物），
+// 不是模板源码；传源码进来会把 {{$event.RuleName}} 原样发出去。
+func sendToNotifyChannel(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType,
+	notifyConfig models.NotifyConfig, notifyChannel *models.NotifyChannelConfig,
+	events []*models.AlertCurEvent, tplContent map[string]interface{}, siteUrl string) (string, error) {
+	client, err := models.GetHTTPClient(notifyChannel)
+	if err != nil {
+		return "", fmt.Errorf("failed to get http client: %v", err)
+	}
+	nc, err := dispatch.BuildNotifyContext(ctx, userCache, userGroup, events, 0,
+		&notifyConfig, notifyChannel, tplContent, client, siteUrl)
+	if err != nil {
+		return "", err
+	}
 
-		for i := range flashDutyChannelIDs {
-			resp, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
-			if err != nil {
-				return "", fmt.Errorf("failed to send flashduty notify: %v", err)
-			}
-		}
-		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
-		return resp, nil
-	case "http":
-		client, err := models.GetHTTPClient(notifyChannel)
-		if err != nil {
-			return "", fmt.Errorf("failed to get http client: %v", err)
-		}
-
-		if notifyChannel.RequestConfig == nil {
-			return "", fmt.Errorf("request config is nil")
-		}
-
-		if notifyChannel.RequestConfig.HTTPRequestConfig == nil {
-			return "", fmt.Errorf("http request config is nil")
-		}
-
-		if dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
-			resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, sendtos, client)
-			logger.Infof("channel_name: %v, event:%+v, sendtos:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], sendtos, tplContent, customParams, resp, err)
-			if err != nil {
-				return "", fmt.Errorf("failed to send http notify: %v", err)
-			}
-			return resp, nil
-		} else {
-			for i := range sendtos {
-				resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, client)
-				logger.Infof("channel_name: %v, event:%+v,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, sendtos[i], resp, err)
-				if err != nil {
-					return "", fmt.Errorf("failed to send http notify: %v", err)
-				}
-			}
-			return resp, nil
-		}
-
-	case "smtp":
-		if len(sendtos) == 0 {
+	// smtp: Provider.Notify 走 SmtpChan 是异步入队，test-send 要同步拿结果
+	if notifyChannel.RequestType == "smtp" {
+		if len(nc.Request.Sendtos) == 0 {
 			return "", fmt.Errorf("no valid email address in the user and team")
 		}
-		err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
-		if err != nil {
+		if err := provider.SendEmailNow(notifyChannel, events, tplContent, nc.Request.Sendtos); err != nil {
 			return "", fmt.Errorf("failed to send email notify: %v", err)
 		}
-		return resp, nil
-	case "script":
-		resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
-		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
-		return resp, err
-	default:
-		logger.Errorf("unsupported request type: %v", notifyChannel.RequestType)
-		return "", fmt.Errorf("unsupported request type")
+		return "", nil
 	}
+
+	// http: test-send 特有，按 sendto 扇出，让前端能看到每个收件人的结果
+	if notifyChannel.RequestType == "http" {
+		if notifyChannel.RequestConfig == nil || notifyChannel.RequestConfig.HTTPRequestConfig == nil {
+			return "", fmt.Errorf("http request config is nil")
+		}
+		sendtos := nc.Request.Sendtos
+		batches := [][]string{sendtos}
+		if !dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) && len(sendtos) > 0 {
+			batches = make([][]string, len(sendtos))
+			for i := range sendtos {
+				batches[i] = []string{sendtos[i]}
+			}
+		}
+		var lastResp string
+		for _, batch := range batches {
+			// 每轮拷贝一份 request，保持 nc.Request 的不可变快照语义，
+			// 避免 Provider 内部异步持有引用时读到被后续迭代改写的 Sendtos
+			reqCopy := *nc.Request
+			reqCopy.Sendtos = batch
+			r := nc.Provider.Notify(ctx.Ctx, &reqCopy)
+			logger.Infof("channel_name=%s event=%s sendto=%v customParams=%v resp=%s err=%v",
+				notifyChannel.Name, events[0].Hash, batch, nc.Request.CustomParams, r.Response, r.Err)
+			if r.Err != nil {
+				return "", fmt.Errorf("failed to send http notify: %v", r.Err)
+			}
+			lastResp = r.Response
+		}
+		return lastResp, nil
+	}
+
+	// 其余：flashduty / pagerduty / script / feishuapp / wecomapp
+	// TODO(dingtalkapp): 钉钉应用本次不上线，上线时在注释中补回 dingtalkapp。
+	r := nc.Provider.Notify(ctx.Ctx, nc.Request)
+	logger.Infof("channel_name=%s event=%s sendtos=%v customParams=%v resp=%s err=%v",
+		notifyChannel.Name, events[0].Hash, nc.Request.Sendtos, nc.Request.CustomParams, r.Response, r.Err)
+	return r.Response, r.Err
 }
 
 type paramList struct {
@@ -317,8 +441,8 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 			filterKey := ""
 			for key, value := range nc.Params {
 				// 找到在通知媒介中的自定义变量配置项，进行 cname 转换
-				cname, exsits := keyMap[key]
-				if exsits {
+				cname, exists := keyMap[key]
+				if exists {
 					list = append(list, paramList{
 						Name:  key,
 						CName: cname,

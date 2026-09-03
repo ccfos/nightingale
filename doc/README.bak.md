@@ -20,73 +20,73 @@
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 </p>
 <p align="center">
-  <b>All-in-one</b> 的开源观测平台 <br/>
-  <b>开箱即用</b>，集数据采集、可视化、监控告警于一体 <br/>
-  推荐升级您的 <b>Prometheus + AlertManager + Grafana + ELK + Jaeger</b> 组合方案到夜莺！
+  An <b>all-in-one</b> open-source observability platform <br/>
+  <b>Ready out of the box</b>, combining data collection, visualization, and monitoring & alerting <br/>
+  We recommend upgrading your <b>Prometheus + AlertManager + Grafana + ELK + Jaeger</b> stack to Nightingale!
 </p>
 
-[English](./README_en.md) | [中文](./README.md)
+[English](./README_en.md) | [Chinese](./README.md)
 
 
 
-## 功能和特点
+## Features and Highlights
 
-- **开箱即用**
-  - 支持 Docker、Helm Chart、云服务等多种部署方式，集数据采集、监控告警、可视化为一体，内置多种监控仪表盘、快捷视图、告警规则模板，导入即可快速使用，**大幅降低云原生监控系统的建设成本、学习成本、使用成本**；
-- **专业告警**
-  - 可视化的告警配置和管理，支持丰富的告警规则，提供屏蔽规则、订阅规则的配置能力，支持告警多种送达渠道，支持告警自愈、告警事件管理等；
-  - **推荐您使用夜莺的同时，无缝搭配[FlashDuty](https://flashcat.cloud/product/flashcat-duty/)，实现告警聚合收敛、认领、升级、排班、协同，让告警的触达既高效，又确保告警处理不遗漏、做到件件有回响**。
-- **云原生**
-  - 以交钥匙的方式快速构建企业级的云原生监控体系，支持 [Categraf](https://github.com/flashcatcloud/categraf)、Telegraf、Grafana-agent 等多种采集器，支持 Prometheus、VictoriaMetrics、M3DB、ElasticSearch、Jaeger 等多种数据源，兼容支持导入 Grafana 仪表盘，**与云原生生态无缝集成**；
-- **高性能 高可用**
-  - 得益于夜莺的多数据源管理引擎，和夜莺引擎侧优秀的架构设计，借助于高性能时序库，可以满足数亿时间线的采集、存储、告警分析场景，节省大量成本；
-  - 夜莺监控组件均可水平扩展，无单点，已在上千家企业部署落地，经受了严苛的生产实践检验。众多互联网头部公司，夜莺集群机器达百台，处理数亿级时间线，重度使用夜莺监控；
-- **灵活扩展 中心化管理**
-  - 夜莺监控，可部署在 1 核 1G 的云主机，可在上百台机器集群化部署，可运行在 K8s 中；也可将时序库、告警引擎等组件下沉到各机房、各 Region，兼顾边缘部署和中心化统一管理，**解决数据割裂，缺乏统一视图的难题**；
-- **开放社区**
-  - 托管于[中国计算机学会开源发展委员会](https://www.ccf.org.cn/kyfzwyh/)，有[快猫星云](https://flashcat.cloud)和众多公司的持续投入，和数千名社区用户的积极参与，以及夜莺监控项目清晰明确的定位，都保证了夜莺开源社区健康、长久的发展。活跃、专业的社区用户也在持续迭代和沉淀更多的最佳实践于产品中；
+- **Ready out of the box**
+  - Supports Docker, Helm Chart, cloud services, and other deployment options. It combines data collection, monitoring & alerting, and visualization in one place, and ships with built-in dashboards, quick views, and alert rule templates that work as soon as you import them, **greatly reducing the build, learning, and operating cost of a cloud-native monitoring system**;
+- **Professional alerting**
+  - Visual alert configuration and management, a rich set of alert rules, configurable mute and subscription rules, multiple alert delivery channels, alert self-healing, alert event management, and more;
+  - **We recommend pairing Nightingale with [FlashDuty](https://flashcat.cloud/product/flashcat-duty/) for alert aggregation and deduplication, acknowledgement, escalation, on-call scheduling, and collaboration — so alerts reach the right people efficiently and nothing slips through unhandled**.
+- **Cloud native**
+  - Build an enterprise-grade cloud-native monitoring stack turnkey. Supports collectors such as [Categraf](https://github.com/flashcatcloud/categraf), Telegraf, and Grafana-agent, and data sources such as Prometheus, VictoriaMetrics, M3DB, ElasticSearch, and Jaeger. It can also import Grafana dashboards, **integrating seamlessly with the cloud-native ecosystem**;
+- **High performance, high availability**
+  - Thanks to Nightingale's multi-datasource management engine and the solid architecture on the engine side, plus a high-performance time-series database, it can handle collection, storage, and alert analysis for hundreds of millions of time series while saving significant cost;
+  - Every Nightingale component scales horizontally with no single point of failure. It has been deployed in thousands of companies and proven under demanding production conditions. Many leading internet companies run Nightingale clusters of a hundred machines handling hundreds of millions of time series;
+- **Flexible scaling, centralized management**
+  - Nightingale runs on a 1-core / 1 GB cloud host, scales to a cluster of hundreds of machines, and runs in Kubernetes. You can also push components such as the time-series database and the alerting engine down into each data center or region, combining edge deployment with centralized management to **solve the problem of fragmented data and the lack of a unified view**;
+- **Open community**
+  - Hosted by the [Open Source Development Committee of the China Computer Federation](https://www.ccf.org.cn/kyfzwyh/), with sustained investment from [Flashcat](https://flashcat.cloud) and many other companies, active participation from thousands of community users, and a clear project positioning — all of which keep the Nightingale open-source community healthy for the long run. Active, expert community users keep iterating on the product and folding more best practices into it;
 
-## 使用场景
-1. **如果您希望在一个平台中，统一管理和查看 Metrics、Logging、Tracing 数据，推荐你使用夜莺**：
-   - 请参考阅读：[不止于监控，夜莺 V6 全新升级为开源观测平台](http://flashcat.cloud/blog/nightingale-v6-release/)
-2. **如果您在使用 Prometheus 过程中，有以下的一个或者多个需求场景，推荐您无缝升级到夜莺**：
-   - Prometheus、Alertmanager、Grafana 等多个系统较为割裂，缺乏统一视图，无法开箱即用;
-   - 通过修改配置文件来管理 Prometheus、Alertmanager 的方式，学习曲线大，协同有难度;
-   - 数据量过大而无法扩展您的 Prometheus 集群；
-   - 生产环境运行多套 Prometheus 集群，面临管理和使用成本高的问题；
-3. **如果您在使用 Zabbix，有以下的场景，推荐您升级到夜莺**：
-   - 监控的数据量太大，希望有更好的扩展解决方案；
-   - 学习曲线高，多人多团队模式下，希望有更好的协同使用效率；
-   - 微服务和云原生架构下，监控数据的生命周期多变、监控数据维度基数高，Zabbix 数据模型不易适配；
-   - 了解更多Zabbix和夜莺监控的对比，推荐您进一步阅读[Zabbix 和夜莺监控选型对比](https://flashcat.cloud/blog/zabbx-vs-nightingale/)
-4. **如果您在使用 [Open-Falcon](https://github.com/open-falcon/falcon-plus)，我们推荐您升级到夜莺：**
-   - 关于 Open-Falcon 和夜莺的详细介绍，请参考阅读：[云原生监控的十个特点和趋势](http://flashcat.cloud/blog/10-trends-of-cloudnative-monitoring/)
-   - 监控系统和可观测平台的区别，请参考阅读：[从监控系统到可观测平台，Gap有多大
+## Use Cases
+1. **If you want to manage and view Metrics, Logging, and Tracing data on a single platform, we recommend Nightingale**:
+   - Further reading: [More than monitoring: Nightingale V6 becomes an open-source observability platform](http://flashcat.cloud/blog/nightingale-v6-release/)
+2. **If you use Prometheus and hit one or more of the following, we recommend a seamless upgrade to Nightingale**:
+   - Prometheus, Alertmanager, and Grafana feel fragmented, there is no unified view, and nothing works out of the box;
+   - Managing Prometheus and Alertmanager by editing configuration files has a steep learning curve and makes collaboration hard;
+   - The data volume has grown beyond what your Prometheus cluster can scale to;
+   - Running multiple Prometheus clusters in production is expensive to manage and use;
+3. **If you use Zabbix and run into the following, we recommend upgrading to Nightingale**:
+   - The monitoring data volume is too large and you want a solution that scales better;
+   - The learning curve is steep, and you want better collaboration efficiency across multiple people and teams;
+   - Under microservice and cloud-native architectures, monitoring data has a volatile lifecycle and high-cardinality dimensions that the Zabbix data model does not adapt to well;
+   - For a deeper comparison between Zabbix and Nightingale, see [Zabbix vs. Nightingale: choosing a monitoring system](https://flashcat.cloud/blog/zabbx-vs-nightingale/)
+4. **If you use [Open-Falcon](https://github.com/open-falcon/falcon-plus), we recommend upgrading to Nightingale:**
+   - For a detailed comparison of Open-Falcon and Nightingale, see [Ten characteristics and trends of cloud-native monitoring](http://flashcat.cloud/blog/10-trends-of-cloudnative-monitoring/)
+   - For the difference between a monitoring system and an observability platform, see [From monitoring system to observability platform: how big is the gap?
 ](https://flashcat.cloud/blog/gap-of-monitoring-to-o11y/)
-5. **我们推荐您使用 [Categraf](https://github.com/flashcatcloud/categraf) 作为首选的监控数据采集器**：
-   - [Categraf](https://github.com/flashcatcloud/categraf) 是夜莺监控的默认采集器，采用开放插件机制和 All-in-one 的设计理念，同时支持 metric、log、trace、event 的采集。Categraf 不仅可以采集 CPU、内存、网络等系统层面的指标，也集成了众多开源组件的采集能力，支持K8s生态。Categraf 内置了对应的仪表盘和告警规则，开箱即用。
+5. **We recommend [Categraf](https://github.com/flashcatcloud/categraf) as your first-choice collector**:
+   - [Categraf](https://github.com/flashcatcloud/categraf) is Nightingale's default collector. Built around an open plugin mechanism and an all-in-one design, it collects metrics, logs, traces, and events. Categraf gathers system-level metrics such as CPU, memory, and network, and also integrates collection for many open-source components and the Kubernetes ecosystem. It ships with matching dashboards and alert rules that work out of the box.
 
-## 文档
+## Documentation
 
-[English Doc](https://n9e.github.io/) |  [中文文档](https://flashcat.cloud/docs/)
+[English Doc](https://n9e.github.io/) |  [Chinese Doc](https://flashcat.cloud/docs/)
 
-## 产品示意图
+## Product Walkthrough
 
 https://user-images.githubusercontent.com/792850/216888712-2565fcea-9df5-47bd-a49e-d60af9bd76e8.mp4
 
-## 夜莺架构
+## Architecture
 
-夜莺监控可以接收各种采集器上报的监控数据（比如 [Categraf](https://github.com/flashcatcloud/categraf)、telegraf、grafana-agent、Prometheus），并写入多种流行的时序数据库中（可以支持Prometheus、M3DB、VictoriaMetrics、Thanos、TDEngine等），提供告警规则、屏蔽规则、订阅规则的配置能力，提供监控数据的查看能力，提供告警自愈机制（告警触发之后自动回调某个webhook地址或者执行某个脚本），提供历史告警事件的存储管理、分组查看的能力。
+Nightingale receives monitoring data reported by various collectors (such as [Categraf](https://github.com/flashcatcloud/categraf), telegraf, grafana-agent, and Prometheus) and writes it into a range of popular time-series databases (Prometheus, M3DB, VictoriaMetrics, Thanos, TDEngine, and others). It lets you configure alert rules, mute rules, and subscription rules, view monitoring data, and use alert self-healing (calling a webhook or running a script automatically once an alert fires). It also stores historical alert events and lets you browse them by group.
 
-### 中心汇聚式部署方案
+### Centralized deployment
 
-![中心汇聚式部署方案](https://download.flashcat.cloud/ulric/20230327133406.png)
+![Centralized deployment](https://download.flashcat.cloud/ulric/20230327133406.png)
 
-夜莺只有一个模块，就是 n9e，可以部署多个 n9e 实例组成集群，n9e 依赖 2 个存储，数据库、Redis，数据库可以使用 MySQL 或 Postgres，自己按需选用。
+Nightingale has a single module, n9e. You can deploy several n9e instances as a cluster. n9e depends on two data stores: a database and Redis. For the database you can pick either MySQL or Postgres, whichever suits you.
 
-n9e 提供的是 HTTP 接口，前面负载均衡可以是 4 层的，也可以是 7 层的。一般就选用 Nginx 就可以了。
+n9e exposes an HTTP interface, so the load balancer in front of it can be layer 4 or layer 7. Nginx is usually a fine choice.
 
-n9e 这个模块接收到数据之后，需要转发给后端的时序库，相关配置是：
+Once the n9e module receives data, it needs to forward it to a backing time-series database. The relevant configuration is:
 
 ```toml
 [Pushgw]
@@ -95,41 +95,41 @@ LabelRewrite = true
 Url = "http://127.0.0.1:9090/api/v1/write"
 ```
 
-> 注意：虽然数据源可以在页面配置了，但是上报转发链路，还是需要在配置文件指定。
+> Note: even though data sources can be configured in the UI, the reporting and forwarding path still has to be specified in the configuration file.
 
-所有机房的 agent（ 比如 Categraf、Telegraf、 Grafana-agent、Datadog-agent ），都直接推数据给 n9e，这个架构最为简单，维护成本最低。当然，前提是要求机房之间网络链路比较好，一般有专线。如果网络链路不好，则要使用下面的部署方式了。
+Agents in every data center (Categraf, Telegraf, Grafana-agent, Datadog-agent, and so on) push data directly to n9e. This is the simplest architecture with the lowest maintenance cost — provided the network links between data centers are good, typically over dedicated lines. If the links are poor, use the deployment described below instead.
 
-### 边缘下沉式混杂部署方案
+### Mixed deployment with edge components
 
-![边缘下沉式混杂部署方案](https://download.flashcat.cloud/ulric/20230327135615.png)
+![Mixed deployment with edge components](https://download.flashcat.cloud/ulric/20230327135615.png)
 
-这个图尝试解释 3 种不同的情形，比如 A 机房和中心网络链路很好，Categraf 可以直接汇报数据给中心 n9e 模块，另一个机房网络链路不好，就需要把时序库下沉部署，时序库下沉了，对应的告警引擎和转发网关也都要跟随下沉，这样数据不会跨机房传输，比较稳定。但是心跳还是需要往中心心跳，要不然在对象列表里看不到机器的 CPU、内存使用率。还有的时候，可能是接入的一个已有的 Prometheus，数据采集没有走 Categraf，那此时只需要把 Prometheus 作为数据源接入夜莺即可，可以在夜莺里看图、配告警规则，但是就是在对象列表里看不到，也不能使用告警自愈的功能，问题也不大，核心功能都不受影响。
+This diagram illustrates three different situations. Data center A has a good link to the center, so Categraf can report data directly to the central n9e module. Another data center has a poor link, so the time-series database has to be deployed at the edge; once it is, the alerting engine and the forwarding gateway must follow, so that data never crosses data-center boundaries and the setup stays stable. Heartbeats still go to the center, though — otherwise the machines' CPU and memory usage will not show up in the object list. In yet another case you may be onboarding an existing Prometheus whose collection does not go through Categraf; then you only need to add that Prometheus as a Nightingale data source. You can view graphs and configure alert rules in Nightingale, but the hosts will not appear in the object list and alert self-healing is unavailable — not a big deal, since none of the core features are affected.
 
-边缘机房，下沉部署时序库、告警引擎、转发网关的时候，要注意，告警引擎需要依赖数据库，因为要同步告警规则，转发网关也要依赖数据库，因为要注册对象到数据库里去，需要打通相关网络，告警引擎和转发网关都不用Redis，所以无需为 Redis 打通网络。 
+When deploying the time-series database, alerting engine, and forwarding gateway at an edge data center, note that the alerting engine depends on the database, because it has to sync alert rules, and the forwarding gateway depends on it too, because it registers objects into the database. Make sure the network path to the database is open. Neither the alerting engine nor the forwarding gateway uses Redis, so no network path to Redis is needed.
 
-### VictoriaMetrics 集群架构
+### VictoriaMetrics cluster architecture
 <img src="doc/img/install-vm.png" width="600">
 
-如果单机版本的时序数据库（比如 Prometheus） 性能有瓶颈或容灾较差，我们推荐使用 [VictoriaMetrics](https://github.com/VictoriaMetrics/VictoriaMetrics)，VictoriaMetrics 架构较为简单，性能优异，易于部署和运维，架构图如上。VictoriaMetrics 更详尽的文档，还请参考其[官网](https://victoriametrics.com/)。
+If a single-node time-series database (such as Prometheus) becomes a performance bottleneck or offers poor disaster recovery, we recommend [VictoriaMetrics](https://github.com/VictoriaMetrics/VictoriaMetrics). VictoriaMetrics has a fairly simple architecture, excellent performance, and is easy to deploy and operate; its architecture is shown above. For more detailed VictoriaMetrics documentation, see its [official site](https://victoriametrics.com/).
 
-## 夜莺社区
+## Community
 
-开源项目要更有生命力，离不开开放的治理架构和源源不断的开发者和用户共同参与，我们致力于建立开放、中立的开源治理架构，吸纳更多来自企业、高校等各方面对云原生监控感兴趣、有热情的开发者，一起打造有活力的夜莺开源社区。关于《夜莺开源项目和社区治理架构（草案）》，请查阅 [COMMUNITY GOVERNANCE](./doc/community-governance.md).
+An open-source project only stays alive through an open governance structure and a steady stream of developers and users taking part. We are committed to building an open, neutral governance structure that brings in more developers from companies, universities, and elsewhere who are interested in and enthusiastic about cloud-native monitoring, so we can grow a vibrant Nightingale open-source community together. For the *Nightingale Open Source Project and Community Governance (Draft)*, see [COMMUNITY GOVERNANCE](./doc/community-governance.md).
 
-**我们欢迎您以各种方式参与到夜莺开源项目和开源社区中来，工作包括不限于**：
-- 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)
-- 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [文章分享](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale/share/)
-- 提交产品建议 =》 [github issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md)
-- 提交代码，让夜莺监控更快、更稳、更好用 => [github pull request](https://github.com/didi/nightingale/pulls)
+**We welcome you to take part in the Nightingale open-source project and community in any way you like, including but not limited to**:
+- Extending and improving the documentation => [n9e.github.io](https://n9e.github.io/)
+- Sharing your best practices and experience using Nightingale => [Shared articles](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale/share/)
+- Submitting product suggestions => [GitHub issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md)
+- Submitting code to make Nightingale faster, more stable, and easier to use => [GitHub pull request](https://github.com/ccfos/nightingale/pulls)
 
-**尊重、认可和记录每一位贡献者的工作**是夜莺开源社区的第一指导原则，我们提倡**高效的提问**，这既是对开发者时间的尊重，也是对整个社区知识沉淀的贡献：
-- 提问之前请先查阅 [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq) 
-- 我们使用[论坛](https://answer.flashcat.cloud/)进行交流，有问题可以到这里搜索、提问
+**Respecting, recognizing, and recording the work of every contributor** is the first guiding principle of the Nightingale open-source community. We encourage **asking questions efficiently**: it respects developers' time and contributes to the community's shared knowledge:
+- Check the [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq) before asking
+- We use the [forum](https://answer.flashcat.cloud/) for discussion; search there or post your question
 
 
 ## Who is using Nightingale
 
-您可以通过在 **[Who is Using Nightingale](https://github.com/ccfos/nightingale/issues/897)** 登记您的使用情况，分享您的使用经验。
+You can register your usage under **[Who is Using Nightingale](https://github.com/ccfos/nightingale/issues/897)** and share your experience.
 
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/ccfos/nightingale.svg)](https://starchart.cc/ccfos/nightingale)
@@ -140,8 +140,8 @@ Url = "http://127.0.0.1:9090/api/v1/write"
 </a>
 
 ## License
-[Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
+[Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE)
 
-## 加入交流群
+## Join the chat group
 
 <img src="doc/img/wecom.png" width="120">

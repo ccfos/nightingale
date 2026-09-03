@@ -113,7 +113,7 @@
                 },
                 "links": [],
                 "maxPerRow": 4,
-                "name": "Network bandwith",
+                "name": "Network bandwidth",
                 "options": {
                     "legend": {
                         "displayMode": "hidden"

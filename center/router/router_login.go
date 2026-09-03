@@ -2,23 +2,29 @@ package router
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
+	"github.com/ccfos/nightingale/v6/pkg/dingtalk"
+	"github.com/ccfos/nightingale/v6/pkg/feishu"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
-	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
+	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 type loginForm struct {
@@ -31,7 +37,9 @@ type loginForm struct {
 func (rt *Router) loginPost(c *gin.Context) {
 	var f loginForm
 	ginx.BindJSON(c, &f)
-	logger.Infof("username:%s login from:%s", f.Username, c.ClientIP())
+
+	rctx := c.Request.Context()
+	logx.Infof(rctx, "username:%s login from:%s", f.Username, c.ClientIP())
 
 	if rt.HTTP.ShowCaptcha.Enable {
 		if !CaptchaVerify(f.Captchaid, f.Verifyvalue) {
@@ -44,23 +52,25 @@ func (rt *Router) loginPost(c *gin.Context) {
 	if rt.HTTP.RSA.OpenRSA {
 		decPassWord, err := secu.Decrypt(f.Password, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
 		if err != nil {
-			logger.Errorf("RSA Decrypt failed: %v username: %s", err, f.Username)
+			logx.Errorf(rctx, "RSA Decrypt failed: %v username: %s", err, f.Username)
 			ginx.NewRender(c).Message(err)
 			return
 		}
 		authPassWord = decPassWord
 	}
 
+	reqCtx := rt.Ctx.WithContext(rctx)
+
 	var user *models.User
 	var err error
 	lc := rt.Sso.LDAP.Copy()
 	if lc.Enable {
-		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, lc.DefaultRoles, lc.DefaultTeams, lc)
+		user, err = ldapx.LdapLogin(reqCtx, f.Username, authPassWord, lc.DefaultRoles, lc.DefaultTeams, lc)
 		if err != nil {
-			logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
+			logx.Debugf(rctx, "ldap login failed: %v username: %s", err, f.Username)
 			var errLoginInN9e error
 			// to use n9e as the minimum guarantee for login
-			if user, errLoginInN9e = models.PassLogin(rt.Ctx, rt.Redis, f.Username, authPassWord); errLoginInN9e != nil {
+			if user, errLoginInN9e = models.PassLogin(reqCtx, rt.Redis, f.Username, authPassWord); errLoginInN9e != nil {
 				ginx.NewRender(c).Message("ldap login failed: %v; n9e login failed: %v", err, errLoginInN9e)
 				return
 			}
@@ -68,7 +78,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 			user.RolesLst = strings.Fields(user.Roles)
 		}
 	} else {
-		user, err = models.PassLogin(rt.Ctx, rt.Redis, f.Username, authPassWord)
+		user, err = models.PassLogin(reqCtx, rt.Redis, f.Username, authPassWord)
 		ginx.Dangerous(err)
 	}
 
@@ -92,7 +102,8 @@ func (rt *Router) loginPost(c *gin.Context) {
 }
 
 func (rt *Router) logoutPost(c *gin.Context) {
-	logger.Infof("username:%s logout from:%s", c.GetString("username"), c.ClientIP())
+	rctx := c.Request.Context()
+	logx.Infof(rctx, "username:%s logout from:%s", c.GetString("username"), c.ClientIP())
 	metadata, err := rt.extractTokenMetadata(c.Request)
 	if err != nil {
 		ginx.NewRender(c, http.StatusBadRequest).Message("failed to parse jwt token")
@@ -107,9 +118,20 @@ func (rt *Router) logoutPost(c *gin.Context) {
 
 	var logoutAddr string
 	user := c.MustGet("user").(*models.User)
+
+	// 获取用户的 id_token
+	idToken, err := rt.fetchIdToken(c.Request.Context(), user.Id)
+	if err != nil {
+		logx.Debugf(rctx, "fetch id_token failed: %v, user_id: %d", err, user.Id)
+		idToken = "" // 如果获取失败，使用空字符串
+	}
+
+	// 删除 id_token
+	rt.deleteIdToken(c.Request.Context(), user.Id)
+
 	switch user.Belong {
 	case "oidc":
-		logoutAddr = rt.Sso.OIDC.GetSsoLogoutAddr()
+		logoutAddr = rt.Sso.OIDC.GetSsoLogoutAddr(idToken)
 	case "cas":
 		logoutAddr = rt.Sso.CAS.GetSsoLogoutAddr()
 	case "oauth2":
@@ -199,6 +221,14 @@ func (rt *Router) refreshPost(c *gin.Context) {
 		ginx.Dangerous(err)
 		ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
 
+		// 延长 id_token 的过期时间，使其与新的 refresh token 生命周期保持一致
+		// 注意：这里不会获取新的 id_token，只是延长 Redis 中现有 id_token 的 TTL
+		if idToken, err := rt.fetchIdToken(c.Request.Context(), userid); err == nil && idToken != "" {
+			if err := rt.saveIdToken(c.Request.Context(), userid, idToken); err != nil {
+				logx.Debugf(c.Request.Context(), "refresh id_token ttl failed: %v, user_id: %d", err, userid)
+			}
+		}
+
 		ginx.NewRender(c).Data(gin.H{
 			"access_token":  ts.AccessToken,
 			"refresh_token": ts.RefreshToken,
@@ -246,12 +276,13 @@ type CallbackOutput struct {
 }
 
 func (rt *Router) loginCallback(c *gin.Context) {
+	rctx := c.Request.Context()
 	code := ginx.QueryStr(c, "code", "")
 	state := ginx.QueryStr(c, "state", "")
 
-	ret, err := rt.Sso.OIDC.Callback(rt.Redis, c.Request.Context(), code, state)
+	ret, err := rt.Sso.OIDC.Callback(rt.Redis, rctx, code, state)
 	if err != nil {
-		logger.Errorf("sso_callback fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
+		logx.Errorf(rctx, "sso_callback fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
 		ginx.NewRender(c).Data(CallbackOutput{}, err)
 		return
 	}
@@ -274,7 +305,7 @@ func (rt *Router) loginCallback(c *gin.Context) {
 			for _, gid := range rt.Sso.OIDC.DefaultTeams {
 				err = models.UserGroupMemberAdd(rt.Ctx, gid, user.Id)
 				if err != nil {
-					logger.Errorf("user:%v UserGroupMemberAdd: %s", user, err)
+					logx.Errorf(rctx, "user:%v UserGroupMemberAdd: %s", user, err)
 				}
 			}
 		}
@@ -284,7 +315,14 @@ func (rt *Router) loginCallback(c *gin.Context) {
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
 	ginx.Dangerous(err)
-	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
+	ginx.Dangerous(rt.createAuth(rctx, userIdentity, ts))
+
+	// 保存 id_token 到 Redis，用于登出时使用
+	if ret.IdToken != "" {
+		if err := rt.saveIdToken(rctx, user.Id, ret.IdToken); err != nil {
+			logx.Errorf(rctx, "save id_token failed: %v, user_id: %d", err, user.Id)
+		}
+	}
 
 	redirect := "/"
 	if ret.Redirect != "/login" {
@@ -323,7 +361,7 @@ func (rt *Router) loginRedirectCas(c *gin.Context) {
 	}
 
 	if !rt.Sso.CAS.Enable {
-		logger.Error("cas is not enable")
+		logx.Errorf(c.Request.Context(), "cas is not enable")
 		ginx.NewRender(c).Data("", nil)
 		return
 	}
@@ -338,17 +376,18 @@ func (rt *Router) loginRedirectCas(c *gin.Context) {
 }
 
 func (rt *Router) loginCallbackCas(c *gin.Context) {
+	rctx := c.Request.Context()
 	ticket := ginx.QueryStr(c, "ticket", "")
 	state := ginx.QueryStr(c, "state", "")
-	ret, err := rt.Sso.CAS.ValidateServiceTicket(c.Request.Context(), ticket, state, rt.Redis)
+	ret, err := rt.Sso.CAS.ValidateServiceTicket(rctx, ticket, state, rt.Redis)
 	if err != nil {
-		logger.Errorf("ValidateServiceTicket: %s", err)
+		logx.Errorf(rctx, "ValidateServiceTicket: %s", err)
 		ginx.NewRender(c).Data("", err)
 		return
 	}
 	user, err := models.UserGet(rt.Ctx, "username=?", ret.Username)
 	if err != nil {
-		logger.Errorf("UserGet: %s", err)
+		logx.Errorf(rctx, "UserGet: %s", err)
 	}
 	ginx.Dangerous(err)
 	if user != nil {
@@ -367,10 +406,10 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
 	if err != nil {
-		logger.Errorf("createTokens: %s", err)
+		logx.Errorf(rctx, "createTokens: %s", err)
 	}
 	ginx.Dangerous(err)
-	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
+	ginx.Dangerous(rt.createAuth(rctx, userIdentity, ts))
 
 	redirect := "/"
 	if ret.Redirect != "/login" {
@@ -413,13 +452,180 @@ func (rt *Router) loginRedirectOAuth(c *gin.Context) {
 	ginx.NewRender(c).Data(redirect, err)
 }
 
-func (rt *Router) loginCallbackOAuth(c *gin.Context) {
+func (rt *Router) loginRedirectDingTalk(c *gin.Context) {
+	redirect := ginx.QueryStr(c, "redirect", "/")
+
+	v, exists := c.Get("userid")
+	if exists {
+		userid := v.(int64)
+		user, err := models.UserGetById(rt.Ctx, userid)
+		ginx.Dangerous(err)
+		if user == nil {
+			ginx.Bomb(200, "user not found")
+		}
+
+		if user.Username != "" { // already login
+			ginx.NewRender(c).Data(redirect, nil)
+			return
+		}
+	}
+
+	if !rt.Sso.DingTalk.Enable {
+		ginx.NewRender(c).Data("", nil)
+		return
+	}
+
+	redirect, err := rt.Sso.DingTalk.Authorize(rt.Redis, redirect)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(redirect, err)
+}
+
+func (rt *Router) loginCallbackDingTalk(c *gin.Context) {
+	rctx := c.Request.Context()
 	code := ginx.QueryStr(c, "code", "")
 	state := ginx.QueryStr(c, "state", "")
 
-	ret, err := rt.Sso.OAuth2.Callback(rt.Redis, c.Request.Context(), code, state)
+	ret, err := rt.Sso.DingTalk.Callback(rt.Redis, rctx, code, state)
 	if err != nil {
-		logger.Debugf("sso.callback() get ret %+v error %v", ret, err)
+		logx.Errorf(rctx, "sso_callback DingTalk fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
+		ginx.NewRender(c).Data(CallbackOutput{}, err)
+		return
+	}
+
+	user, err := models.UserGet(rt.Ctx, "username=?", ret.Username)
+	ginx.Dangerous(err)
+
+	if user != nil {
+		if rt.Sso.DingTalk.DingTalkConfig.CoverAttributes {
+			updatedFields := user.UpdateSsoFields(dingtalk.SsoTypeName, ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
+		}
+	} else {
+		user = new(models.User)
+		user.FullSsoFields(dingtalk.SsoTypeName, ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.DingTalk.DingTalkConfig.DefaultRoles)
+		// create user from dingtalk
+		ginx.Dangerous(user.Add(rt.Ctx))
+	}
+
+	// set user login state
+	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
+	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
+	ginx.Dangerous(err)
+	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
+
+	redirect := "/"
+	if ret.Redirect != "/login" {
+		redirect = ret.Redirect
+	}
+
+	ginx.NewRender(c).Data(CallbackOutput{
+		Redirect:     redirect,
+		User:         user,
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+	}, nil)
+
+}
+
+func (rt *Router) loginRedirectFeiShu(c *gin.Context) {
+	redirect := ginx.QueryStr(c, "redirect", "/")
+
+	v, exists := c.Get("userid")
+	if exists {
+		userid := v.(int64)
+		user, err := models.UserGetById(rt.Ctx, userid)
+		ginx.Dangerous(err)
+		if user == nil {
+			ginx.Bomb(200, "user not found")
+		}
+
+		if user.Username != "" { // already login
+			ginx.NewRender(c).Data(redirect, nil)
+			return
+		}
+	}
+
+	if rt.Sso.FeiShu == nil || !rt.Sso.FeiShu.Enable {
+		ginx.NewRender(c).Data("", nil)
+		return
+	}
+
+	redirect, err := rt.Sso.FeiShu.Authorize(rt.Redis, redirect)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(redirect, err)
+}
+
+func (rt *Router) loginCallbackFeiShu(c *gin.Context) {
+	rctx := c.Request.Context()
+	code := ginx.QueryStr(c, "code", "")
+	state := ginx.QueryStr(c, "state", "")
+
+	ret, err := rt.Sso.FeiShu.Callback(rt.Redis, rctx, code, state)
+	if err != nil {
+		logx.Errorf(rctx, "sso_callback FeiShu fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
+		ginx.NewRender(c).Data(CallbackOutput{}, err)
+		return
+	}
+
+	user, err := models.UserGet(rt.Ctx, "username=?", ret.Username)
+	ginx.Dangerous(err)
+
+	if user != nil {
+		if rt.Sso.FeiShu != nil && rt.Sso.FeiShu.FeiShuConfig != nil && rt.Sso.FeiShu.FeiShuConfig.CoverAttributes {
+			updatedFields := user.UpdateSsoFields(feishu.SsoTypeName, ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
+		}
+	} else {
+		user = new(models.User)
+		defaultRoles := []string{}
+		defaultUserGroups := []int64{}
+		if rt.Sso.FeiShu != nil && rt.Sso.FeiShu.FeiShuConfig != nil {
+			defaultRoles = rt.Sso.FeiShu.FeiShuConfig.DefaultRoles
+			defaultUserGroups = rt.Sso.FeiShu.FeiShuConfig.DefaultUserGroups
+		}
+
+		user.FullSsoFields(feishu.SsoTypeName, ret.Username, ret.Nickname, ret.Phone, ret.Email, defaultRoles)
+		ginx.Dangerous(user.Add(rt.Ctx))
+
+		if len(defaultUserGroups) > 0 {
+			err = user.AddToUserGroups(rt.Ctx, defaultUserGroups)
+			if err != nil {
+				logx.Errorf(rctx, "sso feishu add user group error %v %v", ret, err)
+			}
+		}
+
+	}
+
+	// set user login state
+	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
+	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
+	ginx.Dangerous(err)
+	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
+
+	redirect := "/"
+	if ret.Redirect != "/login" {
+		redirect = ret.Redirect
+	}
+
+	ginx.NewRender(c).Data(CallbackOutput{
+		Redirect:     redirect,
+		User:         user,
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+	}, nil)
+
+}
+
+func (rt *Router) loginCallbackOAuth(c *gin.Context) {
+	rctx := c.Request.Context()
+	code := ginx.QueryStr(c, "code", "")
+	state := ginx.QueryStr(c, "state", "")
+
+	ret, err := rt.Sso.OAuth2.Callback(rt.Redis, rctx, code, state)
+	if err != nil {
+		logx.Debugf(rctx, "sso.callback() get ret %+v error %v", ret, err)
 		ginx.NewRender(c).Data(CallbackOutput{}, err)
 		return
 	}
@@ -459,13 +665,15 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 }
 
 type SsoConfigOutput struct {
-	OidcDisplayName  string `json:"oidcDisplayName"`
-	CasDisplayName   string `json:"casDisplayName"`
-	OauthDisplayName string `json:"oauthDisplayName"`
+	OidcDisplayName     string `json:"oidcDisplayName"`
+	CasDisplayName      string `json:"casDisplayName"`
+	OauthDisplayName    string `json:"oauthDisplayName"`
+	DingTalkDisplayName string `json:"dingTalkDisplayName"`
+	FeiShuDisplayName   string `json:"feishuDisplayName"`
 }
 
 func (rt *Router) ssoConfigNameGet(c *gin.Context) {
-	var oidcDisplayName, casDisplayName, oauthDisplayName string
+	var oidcDisplayName, casDisplayName, oauthDisplayName, dingTalkDisplayName, feiShuDisplayName string
 	if rt.Sso.OIDC != nil {
 		oidcDisplayName = rt.Sso.OIDC.GetDisplayName()
 	}
@@ -478,23 +686,117 @@ func (rt *Router) ssoConfigNameGet(c *gin.Context) {
 		oauthDisplayName = rt.Sso.OAuth2.GetDisplayName()
 	}
 
+	if rt.Sso.DingTalk != nil {
+		dingTalkDisplayName = rt.Sso.DingTalk.GetDisplayName()
+	}
+
+	if rt.Sso.FeiShu != nil {
+		feiShuDisplayName = rt.Sso.FeiShu.GetDisplayName()
+	}
+
 	ginx.NewRender(c).Data(SsoConfigOutput{
-		OidcDisplayName:  oidcDisplayName,
-		CasDisplayName:   casDisplayName,
-		OauthDisplayName: oauthDisplayName,
+		OidcDisplayName:     oidcDisplayName,
+		CasDisplayName:      casDisplayName,
+		OauthDisplayName:    oauthDisplayName,
+		DingTalkDisplayName: dingTalkDisplayName,
+		FeiShuDisplayName:   feiShuDisplayName,
 	}, nil)
 }
 
 func (rt *Router) ssoConfigGets(c *gin.Context) {
-	ginx.NewRender(c).Data(models.SsoConfigGets(rt.Ctx))
+	var ssoConfigs []models.SsoConfig
+	lst, err := models.SsoConfigGets(rt.Ctx)
+	ginx.Dangerous(err)
+	if len(lst) == 0 {
+		ginx.NewRender(c).Data(ssoConfigs, nil)
+		return
+	}
+
+	// TODO: dingTalkExist 为了兼容当前前端配置, 后期单点登陆统一调整后不在预先设置默认内容
+	dingTalkExist := false
+	feiShuExist := false
+	for _, config := range lst {
+		var ssoReqConfig models.SsoConfig
+		ssoReqConfig.Id = config.Id
+		ssoReqConfig.Name = config.Name
+		ssoReqConfig.UpdateAt = config.UpdateAt
+		switch config.Name {
+		case dingtalk.SsoTypeName:
+			dingTalkExist = true
+			err := json.Unmarshal([]byte(config.Content), &ssoReqConfig.SettingJson)
+			ginx.Dangerous(err)
+		case feishu.SsoTypeName:
+			feiShuExist = true
+			err := json.Unmarshal([]byte(config.Content), &ssoReqConfig.SettingJson)
+			ginx.Dangerous(err)
+		default:
+			ssoReqConfig.Content = config.Content
+		}
+
+		ssoConfigs = append(ssoConfigs, ssoReqConfig)
+	}
+	// TODO: dingTalkExist 为了兼容当前前端配置, 后期单点登陆统一调整后不在预先设置默认内容
+	if !dingTalkExist {
+		var ssoConfig models.SsoConfig
+		ssoConfig.Name = dingtalk.SsoTypeName
+		ssoConfigs = append(ssoConfigs, ssoConfig)
+	}
+	if !feiShuExist {
+		var ssoConfig models.SsoConfig
+		ssoConfig.Name = feishu.SsoTypeName
+		ssoConfigs = append(ssoConfigs, ssoConfig)
+	}
+
+	ginx.NewRender(c).Data(ssoConfigs, nil)
 }
 
 func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 	var f models.SsoConfig
-	ginx.BindJSON(c, &f)
+	var ssoConfig models.SsoConfig
+	ginx.BindJSON(c, &ssoConfig)
 
-	err := f.Update(rt.Ctx)
-	ginx.Dangerous(err)
+	switch ssoConfig.Name {
+	case dingtalk.SsoTypeName:
+		f.Name = ssoConfig.Name
+		setting, err := json.Marshal(ssoConfig.SettingJson)
+		ginx.Dangerous(err)
+		f.Content = string(setting)
+		f.UpdateAt = time.Now().Unix()
+		sso, err := f.Query(rt.Ctx)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			ginx.Dangerous(err)
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = f.Create(rt.Ctx)
+		} else {
+			f.Id = sso.Id
+			err = f.Update(rt.Ctx)
+		}
+		ginx.Dangerous(err)
+	case feishu.SsoTypeName:
+		f.Name = ssoConfig.Name
+		setting, err := json.Marshal(ssoConfig.SettingJson)
+		ginx.Dangerous(err)
+		f.Content = string(setting)
+		f.UpdateAt = time.Now().Unix()
+		sso, err := f.Query(rt.Ctx)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			ginx.Dangerous(err)
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = f.Create(rt.Ctx)
+		} else {
+			f.Id = sso.Id
+			err = f.Update(rt.Ctx)
+		}
+		ginx.Dangerous(err)
+	default:
+		f.Id = ssoConfig.Id
+		f.Name = ssoConfig.Name
+		f.Content = ssoConfig.Content
+		err := f.Update(rt.Ctx)
+		ginx.Dangerous(err)
+	}
 
 	switch f.Name {
 	case "LDAP":
@@ -518,6 +820,22 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 		err := toml.Unmarshal([]byte(f.Content), &config)
 		ginx.Dangerous(err)
 		rt.Sso.OAuth2.Reload(config)
+	case dingtalk.SsoTypeName:
+		var config dingtalk.Config
+		err := json.Unmarshal([]byte(f.Content), &config)
+		ginx.Dangerous(err)
+		if rt.Sso.DingTalk == nil {
+			rt.Sso.DingTalk = dingtalk.New(config)
+		}
+		rt.Sso.DingTalk.Reload(config)
+	case feishu.SsoTypeName:
+		var config feishu.Config
+		err := json.Unmarshal([]byte(f.Content), &config)
+		ginx.Dangerous(err)
+		if rt.Sso.FeiShu == nil {
+			rt.Sso.FeiShu = feishu.New(config)
+		}
+		rt.Sso.FeiShu.Reload(config)
 	}
 
 	ginx.NewRender(c).Message(nil)

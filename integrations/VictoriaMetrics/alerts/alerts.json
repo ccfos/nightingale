@@ -7,7 +7,7 @@
             0
         ],
         "cluster": "",
-        "name": "vm error logging rate 大于0 ",
+        "name": "vm error logging rate 大于0",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -26,7 +26,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "sum(rate(vm_log_messages_total{job=~\"$job\",instance=~\"$instance\", level!=\"info\"}[5m])) by (job, level) \u003e 0",
+                    "prom_ql": "sum by (job, level) (rate(vm_log_messages_total{level!=\"info\"}[5m])) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -76,7 +76,9 @@
         ],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 到对应实例查看日志（journalctl -u victoria-metrics 或容器日志），按 level 过滤看具体报错；\n2) 常见为写入端数据格式错误、标签基数过高被拒、磁盘空间不足；\n3) 基数问题用 /api/v1/status/tsdb 看 topN 的高基数指标并在写入端治理；\n4) 磁盘问题按磁盘空间告警处理。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -161,7 +163,9 @@
         ],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 看 vm-storage 侧的 CPU、磁盘 IO 与 vm_slow_row_inserts_total，确认瓶颈在计算还是磁盘；\n2) 用 /api/v1/status/tsdb 看是否有高基数指标导致写入放大；\n3) 短期可减少写入并发或对高基数指标做 relabel 丢弃；\n4) 长期需扩容 vm-storage 节点或换更快的磁盘。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -244,7 +248,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -329,7 +335,9 @@
         ],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -414,7 +422,9 @@
         ],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取 path 定位是哪类查询慢；\n2) 用 /api/v1/status/top_queries 找出最慢与最频繁的查询；\n3) 常见根因是查询时间跨度过大或高基数标签——在仪表盘上收窄时间范围、减少 group by 维度；\n4) 存储侧确认磁盘 IO 与 CPU 是否打满，必要时扩容 vm-select/vm-storage。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -449,7 +459,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "net_response_result_code{service=\"vm-storage\",env!=\"luke\",env!=\"guotai\"}!=0",
+                    "prom_ql": "net_response_result_code{service=\"vm-storage\"} != 0",
                     "severity": 1
                 }
             ],
@@ -497,7 +507,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -578,7 +590,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -659,7 +673,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -740,7 +756,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

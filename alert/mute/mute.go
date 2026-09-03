@@ -1,6 +1,7 @@
 package mute
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -13,35 +14,57 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) (bool, string, int64) {
+// IsMuted 返回该事件是否被屏蔽、屏蔽原因、命中的屏蔽规则 id，以及屏蔽方式（models.MuteType*）。
+// 规则自身失效等非用户屏蔽规则导致的屏蔽，屏蔽方式恒为 MuteTypeAll（事件与通知都屏蔽）。
+func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) (bool, string, int64, int) {
 	if rule.Disabled == 1 {
-		return true, "rule disabled", 0
+		return true, "rule disabled", 0, models.MuteTypeAll
 	}
 
 	if TimeSpanMuteStrategy(rule, event) {
-		return true, "rule is not effective for period of time", 0
+		return true, "rule is not effective for period of time, was muted", 0, models.MuteTypeAll
 	}
 
 	if IdentNotExistsMuteStrategy(rule, event, targetCache) {
-		return true, "ident not exists mute", 0
+		return true, "ident not exists, was muted", 0, models.MuteTypeAll
 	}
 
 	if BgNotMatchMuteStrategy(rule, event, targetCache) {
-		return true, "bg not match mute", 0
+		return true, "ident not match busigroup, was muted", 0, models.MuteTypeAll
 	}
 
-	hit, muteId := EventMuteStrategy(event, alertMuteCache)
+	hit, muteId, muteType := EventMuteStrategy(event, alertMuteCache)
 	if hit {
-		return true, "match mute rule", muteId
+		return true, "match mute rule", muteId, muteType
 	}
 
-	return false, "", 0
+	return false, "", 0, models.MuteTypeAll
 }
 
 // TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute
 // 时间范围，左闭右开，默认范围：00:00-24:00
+// 如果规则配置了时区，则在该时区下进行时间判断；如果时区为空，则使用系统时区
 func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
-	tm := time.Unix(event.TriggerTime, 0)
+	// 确定使用的时区
+	var targetLoc *time.Location
+	var err error
+
+	timezone := rule.TimeZone
+	if timezone == "" {
+		// 如果时区为空，使用系统时区（保持原有逻辑）
+		targetLoc = time.Local
+	} else {
+		// 加载规则配置的时区
+		targetLoc, err = time.LoadLocation(timezone)
+		if err != nil {
+			// 如果时区加载失败，记录错误并使用系统时区
+			logger.Warningf("Failed to load timezone %s for rule %d, using system timezone: %v", timezone, rule.Id, err)
+			targetLoc = time.Local
+		}
+	}
+
+	// 将触发时间转换到目标时区
+	tm := time.Unix(event.TriggerTime, 0).In(targetLoc)
 	triggerTime := tm.Format("15:04")
 	triggerWeek := strconv.Itoa(int(tm.Weekday()))
 
@@ -55,8 +78,12 @@ func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) b
 	enableEtime := strings.Fields(rule.EnableEtime)
 	enableDaysOfWeek := strings.Split(rule.EnableDaysOfWeek, ";")
 	length := len(enableDaysOfWeek)
-	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
+	// 正常情况下 enableStime、enableEtime、enableDaysOfWeek 段数相同；
+	// 但历史脏数据或异常写入可能不一致，循环内已对越界做兜底跳过（见下），避免 panic
 	for i := 0; i < length; i++ {
+		if i >= len(enableStime) || i >= len(enableEtime) {
+			continue
+		}
 		enableDaysOfWeek[i] = strings.Replace(enableDaysOfWeek[i], "7", "0", 1)
 		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
 			continue
@@ -101,7 +128,7 @@ func IdentNotExistsMuteStrategy(rule *models.AlertRule, event *models.AlertCurEv
 	// 如果是target_up的告警,且ident已经不存在了,直接过滤掉
 	// 这里的判断有点太粗暴了,但是目前没有更好的办法
 	if !exists && strings.Contains(rule.PromQl, "target_up") {
-		logger.Debugf("[%s] mute: rule_eval:%d cluster:%s ident:%s", "IdentNotExistsMuteStrategy", rule.Id, event.Cluster, ident)
+		logger.Debugf("alert_eval_%d [IdentNotExistsMuteStrategy] mute: cluster:%s ident:%s", rule.Id, event.Cluster, ident)
 		return true
 	}
 	return false
@@ -123,26 +150,45 @@ func BgNotMatchMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent,
 	// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 	// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
 	if exists && !target.MatchGroupId(rule.GroupId) {
-		logger.Debugf("[%s] mute: rule_eval:%d cluster:%s", "BgNotMatchMuteStrategy", rule.Id, event.Cluster)
+		logger.Debugf("alert_eval_%d [BgNotMatchMuteStrategy] mute: cluster:%s", rule.Id, event.Cluster)
 		return true
 	}
 	return false
 }
 
-func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.AlertMuteCacheType) (bool, int64) {
+// EventMuteStrategy 判断事件是否命中业务组屏蔽规则，返回是否命中、命中规则 id、以及生效的屏蔽方式（models.MuteType*）。
+// 当事件同时命中多条规则时，更强的屏蔽方式优先：只要存在任一「屏蔽事件与通知」命中即返回 MuteTypeAll，
+// 仅当所有命中规则都是「只屏蔽通知」时才返回 MuteTypeNotifyOnly，避免结果受规则在缓存中的先后顺序影响。
+// clock 可选参数同 MatchMute：传入时以该时刻代替 event.TriggerTime 做时间匹配（如按恢复时刻重判恢复通知是否屏蔽）。
+func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.AlertMuteCacheType, clock ...int64) (bool, int64, int) {
 	mutes, has := alertMuteCache.Gets(event.GroupId)
 	if !has || len(mutes) == 0 {
-		return false, 0
+		return false, 0, models.MuteTypeAll
 	}
 
+	var (
+		notifyOnlyHit    bool
+		notifyOnlyMuteId int64
+	)
 	for i := 0; i < len(mutes); i++ {
-		matched, _ := MatchMute(event, mutes[i])
-		if matched {
-			return true, mutes[i].Id
+		matched, _ := MatchMute(event, mutes[i], clock...)
+		if !matched {
+			continue
+		}
+		if mutes[i].MuteType != models.MuteTypeNotifyOnly {
+			// 命中完全屏蔽规则，直接以最强屏蔽方式返回
+			return true, mutes[i].Id, models.MuteTypeAll
+		}
+		if !notifyOnlyHit {
+			notifyOnlyHit = true
+			notifyOnlyMuteId = mutes[i].Id
 		}
 	}
 
-	return false, 0
+	if notifyOnlyHit {
+		return true, notifyOnlyMuteId, models.MuteTypeNotifyOnly
+	}
+	return false, 0, models.MuteTypeAll
 }
 
 // MatchMute 如果传入了clock这个可选参数，就表示使用这个clock表示的时间，否则就从event的字段中取TriggerTime
@@ -153,27 +199,21 @@ func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 
 	// 如果不是全局的，判断 匹配的 datasource id
 	if len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] != 0 && event.DatasourceId != 0 {
-		idm := make(map[int64]struct{}, len(mute.DatasourceIdsJson))
-		for i := 0; i < len(mute.DatasourceIdsJson); i++ {
-			idm[mute.DatasourceIdsJson[i]] = struct{}{}
-		}
-
-		// 判断 event.datasourceId 是否包含在 idm 中
-		if _, has := idm[event.DatasourceId]; !has {
+		if !slices.Contains(mute.DatasourceIdsJson, event.DatasourceId) {
 			return false, errors.New("datasource id not match")
 		}
 	}
 
+	ts := event.TriggerTime
+	if len(clock) > 0 {
+		ts = clock[0]
+	}
+
 	if mute.MuteTimeType == models.TimeRange {
-		if !mute.IsWithinTimeRange(event.TriggerTime) {
+		if !mute.IsWithinTimeRange(ts) {
 			return false, errors.New("event trigger time not within mute time range")
 		}
 	} else if mute.MuteTimeType == models.Periodic {
-		ts := event.TriggerTime
-		if len(clock) > 0 {
-			ts = clock[0]
-		}
-
 		if !mute.IsWithinPeriodicMute(ts) {
 			return false, errors.New("event trigger time not within periodic mute range")
 		}
@@ -198,7 +238,7 @@ func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		return false, errors.New("event severity not match mute severity")
 	}
 
-	if mute.ITags == nil || len(mute.ITags) == 0 {
+	if len(mute.ITags) == 0 {
 		return true, nil
 	}
 	if !common.MatchTags(event.TagsMap, mute.ITags) {

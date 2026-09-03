@@ -1,0 +1,279 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "RocketMQ broker down",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            1
+        ],
+        "disabled": 1,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "huaweicloud_sys_dms_broker_alive == 0",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 在华为云控制台确认实例与 broker 状态；\n2) 确认客户端是否已自动切换到其他 broker——多 broker 部署时部分分区不可用；\n3) 控制台无异常但客户端报错的，检查网络与安全组、以及客户端的 nameserver 地址配置；\n4) 持续不可用的提工单给华为云。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "network_device_config": {}
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1750414791718278,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "RocketMQ CPU核均负载大于1.5",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            1
+        ],
+        "disabled": 1,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "huaweicloud_sys_dms_broker_cpu_core_load \u003e 1.5",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 在控制台看该 broker 的 TPS 与消息堆积曲线，确认是生产还是消费侧压力；\n2) 消费堆积严重的先扩消费者实例；\n3) 生产量突增的评估是否需要升级实例规格；\n4) 确认没有大消息或大批量发送把 broker 压住。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "network_device_config": {}
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1750414791763424,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "RocketMQ 内存使用率大于85%",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            1
+        ],
+        "disabled": 1,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "huaweicloud_sys_dms_broker_memory_usage \u003e 85",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 在控制台看消息堆积量——堆积会显著占用内存；\n2) 优先恢复消费把堆积清掉，这是最直接的止血；\n3) 确认消息保留时长配置是否过长；\n4) 长期需求增长的升级实例规格。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "network_device_config": {}
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1750414791822144,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s",
+        "notify_rule_ids": [],
+        "notify_version": 1
+    }
+]

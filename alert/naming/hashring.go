@@ -2,6 +2,7 @@ package naming
 
 import (
 	"errors"
+	"sort"
 	"sync"
 
 	"github.com/toolkits/pkg/consistent"
@@ -59,6 +60,21 @@ func (chr *DatasourceHashRingType) IsHit(datasourceId string, pk string, current
 		return false
 	}
 	return node == currentNode
+}
+
+// Members 返回 datasourceId 对应 hash ring 的成员节点列表，按字典序排序。
+// consistent.Members() 遍历 map、顺序不定，故此处排序使返回稳定，可直接用于签名/变更检测。
+// 成员仅在告警引擎实例增删时变化、不随心跳抖动；ring 不存在时返回 nil。
+func (chr *DatasourceHashRingType) Members(datasourceId string) []string {
+	chr.RLock()
+	defer chr.RUnlock()
+	r, ok := chr.Rings[datasourceId]
+	if !ok || r == nil {
+		return nil
+	}
+	members := r.Members()
+	sort.Strings(members)
+	return members
 }
 
 func (chr *DatasourceHashRingType) Set(datasourceId string, r *consistent.Consistent) {

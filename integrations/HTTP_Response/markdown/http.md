@@ -99,7 +99,3 @@ targets = [
 ## Use TLS but skip chain & host verification
 # insecure_skip_verify = false
 ```
-
-## dashboard and monitors
-
-夜莺提供了内置大盘和内置告警规则，克隆到自己的业务组下即可使用。

@@ -3,6 +3,50 @@
 This plugin gathers the statistic data from
 [ClickHouse](https://github.com/ClickHouse/ClickHouse) server.
 
+## Dashboard-compatible collection
+
+The two dashboards in this integration use different metric families and are
+not interchangeable:
+
+- `ClickHouse_Categraf` expects metrics emitted by Categraf's ClickHouse input.
+- `ClickHouse_Exporter` expects `clickhouse_*` metrics from a compatible
+  ClickHouse exporter.
+
+The Categraf input was validated with a real ClickHouse 24.8 workload:
+
+```toml
+# conf/input.clickhouse/clickhouse.toml
+interval = 15
+
+[[instances]]
+servers = ["http://127.0.0.1:8123"]
+username = "monitor"
+password = "<password>"
+labels = { instance = "clickhouse-01:8123" }
+```
+
+For the exporter dashboard, scrape the exporter rather than ClickHouse's HTTP
+port:
+
+```toml
+# conf/input.prometheus/clickhouse-exporter.toml
+[[instances]]
+urls = ["http://127.0.0.1:9116/metrics"]
+url_label_key = "instance"
+url_label_value = "{{.Host}}"
+labels = { job = "clickhouse-exporter" }
+```
+
+Verify the selected path before importing the matching dashboard:
+
+```bash
+./categraf --test --inputs clickhouse
+curl -fsS http://127.0.0.1:9116/metrics | grep '^clickhouse_up' | head
+```
+
+Queries for failed requests, slow queries, distributed tables, replication,
+mutations, or detached parts remain empty until those features or events exist.
+
 ## Global configuration options
 
 In addition to the plugin-specific configuration settings, plugins support
@@ -59,7 +103,7 @@ See the [CONFIGURATION.md][CONFIGURATION.md] for more details.
   ##          <replica><host>clickhouse-eu-1.local</host><port>9000</port></replica>
   ##          <replica><host>clickhouse-eu-2.local</host><port>9000</port></replica>
   ##        </shard>
-  ##    </my-onw-cluster>
+  ##    </my-own-cluster>
   ##  </remote_servers>
   ##
   ## </yandex>

@@ -1,0 +1,22 @@
+name: 'Issue Translator'
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Translate Issues
+        uses: usthe/issues-translate-action@v2.7
+        with:
+          # 是否翻译 issue 标题
+          IS_MODIFY_TITLE: true
+          # GitHub Token
+          BOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 自定义翻译标注（可选）
+          # CUSTOM_BOT_NOTE: "Translation by bot"

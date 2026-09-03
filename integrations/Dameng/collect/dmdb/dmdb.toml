@@ -1,0 +1,12 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+#address = "127.0.0.1:5236"
+#username = "SYSDBA"
+#password = "SYSDBA"
+#max_open_connections = 5
+#max_idle_connections = 1
+# # interval = global.interval * interval_times
+# interval_times = 1
+#labels = { test="dmdb" }

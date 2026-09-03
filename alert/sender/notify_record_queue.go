@@ -24,7 +24,7 @@ func ReportNotifyRecordQueueSize(stats *astats.Stats) {
 
 // 推送通知记录到队列
 // 若队列满 则返回 error
-func PushNotifyRecords(records []*models.NotificaitonRecord) error {
+func PushNotifyRecords(records []*models.NotificationRecord) error {
 	for _, record := range records {
 		if ok := NotifyRecordQueue.PushFront(record); !ok {
 			logger.Warningf("notify record queue is full, record: %+v", record)
@@ -59,16 +59,16 @@ func (c *NotifyRecordConsumer) LoopConsume() {
 		}
 
 		// 类型转换，不然 CreateInBatches 会报错
-		notis := make([]*models.NotificaitonRecord, 0, len(inotis))
+		notis := make([]*models.NotificationRecord, 0, len(inotis))
 		for _, inoti := range inotis {
-			notis = append(notis, inoti.(*models.NotificaitonRecord))
+			notis = append(notis, inoti.(*models.NotificationRecord))
 		}
 
 		c.consume(notis)
 	}
 }
 
-func (c *NotifyRecordConsumer) consume(notis []*models.NotificaitonRecord) {
+func (c *NotifyRecordConsumer) consume(notis []*models.NotificationRecord) {
 	if err := models.DB(c.ctx).CreateInBatches(notis, 100).Error; err != nil {
 		logger.Errorf("add notis:%v failed, err: %v", notis, err)
 	}

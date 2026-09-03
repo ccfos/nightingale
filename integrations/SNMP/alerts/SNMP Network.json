@@ -1,0 +1,279 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Bandwidth Usage Too High",
+        "note": "1.流量值：\ndelta(snmp_network_status_incoming [1m])\n#delta() 函数用于计算时间序列数据的增量（差值）\n/8 转换倍数\nmin_over_time(metric_name [3m])\n3 \nmax_over_time(snmp_network_status_speed [30m])/1000 * 0.7 * 1024 * 1024 * 1024 \n取物理端口的70%，90%做告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            3,
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "min_over_time(delta(snmp_network_status_incoming[3m]) * 8 / 180 / 1024 / 1024 [3m]) \u003e snmp_network_status_speed / 1000 * 0.7 * 1024 * 1024 * 1024 and snmp_network_status_speed \u003e 0",
+                    "severity": 3
+                },
+                {
+                    "prom_ql": "min_over_time(delta(snmp_network_status_incoming[3m]) * 8 / 180 / 1024 / 1024 [3m]) \u003e snmp_network_status_speed / 1000 * 0.9 * 1024 * 1024 * 1024 and snmp_network_status_speed \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 60,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 从告警标签取设备与接口，用 display interface \u003c接口\u003e 确认实际速率与峰值；\n2) 用 NetFlow/sFlow 或在上层设备抓流量，定位是哪些源/目的占用了主要带宽；\n3) 确认是正常业务增长、备份任务还是异常流量（攻击、环路）；\n4) 正常增长的扩容链路或做链路聚合，异常的先限流或隔离。"
+        },
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652216459000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "CRC Error ",
+        "note": "incoming_errors：端口历史错包总数，incoming_ucastpkts：端口历史数据包总数\n \n1. incoming_errors[1m] 的delta值 \u003e100\n2. incoming_errors[1m] 的delta值  除以  incoming_ucastpkts[1m] 的delta值 \u003e 0.001",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            3,
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "delta(snmp_network_status_incoming_errors[1m]) \u003e 100 and delta(snmp_network_status_incoming_errors[1m]) / delta(snmp_network_status_incoming_ucastpkts[1m]) \u003e 0.001",
+                    "severity": 3
+                },
+                {
+                    "prom_ql": "delta(snmp_network_status_incoming_errors[1m]) \u003e 100 and delta(snmp_network_status_incoming_errors[1m]) / delta(snmp_network_status_incoming_ucastpkts[1m]) \u003e 0.01",
+                    "severity": 2
+                }
+            ]
+        },
+        "prom_eval_interval": 60,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 从告警标签取设备与接口，用 display interface \u003c接口\u003e 看 CRC/errors 计数的增长速度；\n2) 检查网线/光模块，光口用 display transceiver 看收发光功率是否在规格范围内；\n3) 确认两端协商的速率与双工模式一致——不一致是经典错包源；\n4) 换线或换模块后清零计数（reset counters interface）复测确认。"
+        },
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652223186000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Interface Down",
+        "note": "1. admin == 1\n2. ops status最近3次都为2(down)，最近第四次为1(up)",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            3
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "snmp_network_status_admin_status == 1 and snmp_network_status_ostatus offset 4m == 1 and min_over_time(snmp_network_status_ostatus[3m]) == 2",
+                    "severity": 3
+                }
+            ]
+        },
+        "prom_eval_interval": 60,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 从告警标签取设备与 ifname，登录设备用 display interface \u003c接口\u003e 看 down 的原因与错包计数；\n2) 到现场确认网线/光模块是否松动，光模块可用 display transceiver 看收发光功率；\n3) 对端设备侧同步确认接口状态，双方都 down 才能定位是链路还是单侧问题；\n4) 确认是否有冗余链路已接管，无冗余的优先恢复。"
+        },
+        "extra_config": {
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717558652328447000
+    }
+]

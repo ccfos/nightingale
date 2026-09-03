@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/a2a"
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	"github.com/ccfos/nightingale/v6/aiagent/skill"
+	aitools "github.com/ccfos/nightingale/v6/aiagent/tools"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cstats"
@@ -19,16 +26,18 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/sandbox"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
 	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
@@ -51,39 +60,132 @@ type Router struct {
 	UserGroupCache    *memsto.UserGroupCacheType
 	UserTokenCache    *memsto.UserTokenCacheType
 	Ctx               *ctx.Context
+	LogDir            string
 
-	HeartbeatHook       HeartbeatHookFunc
-	TargetDeleteHook    models.TargetDeleteHookFunc
-	AlertRuleModifyHook AlertRuleModifyHookFunc
+	// Pushgw is this deployment's forwarding config. It is only read to answer
+	// "which datasource do host metrics end up in" (categrafMeta), so it is set
+	// after New() rather than taken as a parameter — an embedder that never
+	// sets it just gets an empty writer list and the UI falls back to letting
+	// the user pick the datasource.
+	Pushgw pconf.Pushgw
+
+	// Sandbox is the Skill script-execution isolation controller (pkg/sandbox).
+	// Built once at New() from the configured capabilities; nil-safe (a disabled
+	// sandbox simply makes run_skill_script report "execution unavailable").
+	Sandbox *sandbox.Sandbox
+
+	HeartbeatHook         HeartbeatHookFunc
+	streamBus             aiagent.StreamBus
+	pubsubBus             storage.PubsubBus
+	llmClientCache        *llm.ClientCache
+	TargetDeleteHook      models.TargetDeleteHookFunc
+	TargetDeleteCheck     TargetDeleteCheckFunc
+	TargetBgidChangeCheck TargetBgidChangeCheckFunc
+	AlertRuleModifyHook   AlertRuleModifyHookFunc
+
+	// MCPExtraToolsets lets an embedder (e.g. the enterprise edition) register
+	// additional MCP toolsets on /mcp beyond n9e-mcp-server's defaults. Set it
+	// before Config(r); the registrars run when the /mcp handler is built.
+	MCPExtraToolsets []a2a.MCPToolsetRegistrar
+
+	// AgentToolSourcesHook lets an embedder contribute per-run external tool
+	// sources to AI chat (e.g. the enterprise edition's MCP client translates
+	// the agent's bound MCP servers into sources, scoped to the chatting user).
+	// nil means agents run with no external tool sources.
+	AgentToolSourcesHook func(agent *models.AIAgent, me *models.User) []aiagent.ToolSource
+
+	// aiSkillSyncOnce ensures the DB→FS full sync runs at most once per process
+	// lifetime (startup goroutine + first chat handler both call through the
+	// same once). aiSkillSyncMu serializes the full sync against single-skill
+	// CRUD sync paths so orphan-cleanup can't race a concurrent insert.
+	aiSkillSyncOnce sync.Once
+	aiSkillSyncMu   sync.Mutex
+
+	aiSkillRemoteCommitCache *skill.RemoteCommitCache
 }
+
+// TargetDeleteCheckFunc 删除机器前的前置校验，返回不满足删除条件的机器及原因（ident -> 错误信息）。
+// 返回的 map 为空表示全部机器均可删除。
+type TargetDeleteCheckFunc func(idents []string) map[string]string
+
+// TargetBgidChangeCheckFunc 机器变更业务组（del/reset）前的前置校验，返回不满足变更条件的机器及
+// 原因（ident -> 错误信息）。返回的 map 为空表示全部机器均可变更；error 用于内部错误（如 DB 查询失败）。
+type TargetBgidChangeCheckFunc func(idents []string, action string, bgids []int64) (map[string]string, error)
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
 	pc *prom.PromClientMap, redis storage.Redis,
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
-	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType) *Router {
-	return &Router{
-		HTTP:                httpConfig,
-		Center:              center,
-		Alert:               alert,
-		Ibex:                ibex,
-		Operations:          operations,
-		DatasourceCache:     ds,
-		NotifyConfigCache:   ncc,
-		PromClients:         pc,
-		Redis:               redis,
-		MetaSet:             metaSet,
-		IdentSet:            idents,
-		TargetCache:         tc,
-		Sso:                 sso,
-		UserCache:           uc,
-		UserGroupCache:      ugc,
-		UserTokenCache:      utc,
-		Ctx:                 ctx,
-		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
-		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
-		AlertRuleModifyHook: func(ar *models.AlertRule) {},
+	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType, logDir string) *Router {
+	rt := &Router{
+		HTTP:                  httpConfig,
+		Center:                center,
+		Alert:                 alert,
+		Ibex:                  ibex,
+		Operations:            operations,
+		DatasourceCache:       ds,
+		NotifyConfigCache:     ncc,
+		PromClients:           pc,
+		Redis:                 redis,
+		MetaSet:               metaSet,
+		IdentSet:              idents,
+		TargetCache:           tc,
+		Sso:                   sso,
+		UserCache:             uc,
+		UserGroupCache:        ugc,
+		UserTokenCache:        utc,
+		Ctx:                   ctx,
+		LogDir:                logDir,
+		HeartbeatHook:         func(ident string) map[string]interface{} { return nil },
+		AlertRuleModifyHook:   func(ar *models.AlertRule) {},
+		streamBus:             aiagent.NewStreamBus(redis),
+		pubsubBus:             storage.NewPubsubBus(redis),
+		llmClientCache:        llm.NewClientCache(),
+		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
+		TargetDeleteCheck:     func(idents []string) map[string]string { return nil },
+		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) (map[string]string, error) { return nil, nil },
+
+		aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(30*time.Minute, redis),
 	}
+
+	// per-skill 文件数上限：toml 的 AIAgent.MaxFilesPerSkill 是唯一来源，这里写入
+	// models 包级权威值，供 DB 写入(ai_skill_file) 与归档解压(aiagent/skill) 共用。
+	models.MaxFilesPerSkill = rt.Center.AIAgent.MaxFilesPerSkill
+
+	// Skill 脚本执行的隔离 sandbox：启动期探测宿主能力、选定引擎（或在能力不足/
+	// 非 Linux 时禁用），全程只构建一次。run_skill_script 工具经 ToolDeps.Sandbox 用它。
+	rt.Sandbox = sandbox.New(rt.Center.Sandbox)
+
+	// 内置 skill 的磁盘解压只在进程启动时做一次——之前是在每条 assistant
+	// 消息的 InitSkills 里 destructive re-extract，多 chat 并发时 Step 1 删目录
+	// 和 Step 2 重写之间会被别的请求读到空目录，引发偶发 "file not found"。
+	// 移到启动期后，运行期对内置 skill 目录是纯只读，DB skill 由下面的 sync
+	// loop 独立维护（只动带 .fromdb 的目录，不会碰到内置 skill）。
+	if skillsPath := rt.Center.AIAgent.SkillsPath; skillsPath != "" {
+		if err := skill.ExtractBuiltin(skillsPath); err != nil {
+			logger.Warningf("extract builtin skills to %s failed: %v", skillsPath, err)
+		}
+		// QA 代码语料（仅 -tags qa_code_embed 构建内嵌，默认构建 no-op）：释放到
+		// skillsPath 父目录下的 code/（与 integrations/ 同级），list_code /
+		// search_code / read_code 工具以同一锚点定位。失败仅降级 QA，不致命。
+		if abs, err := filepath.Abs(skillsPath); err == nil {
+			if err := skill.ExtractCodeCorpus(filepath.Dir(abs)); err != nil {
+				logger.Warningf("extract QA code corpus failed: %v", err)
+			}
+		}
+	}
+
+	// Long-lived goroutine that materializes DB-backed skills onto disk. It
+	// runs one pass through sync.Once on entry (so the first chat request
+	// blocks on a real first-pass outcome, not on the ticker firing) and then
+	// re-syncs on the configured cadence. See runAISkillSyncLoop for the
+	// design rationale.
+	go rt.runAISkillSyncLoop(rt.Center.AIAgent.SkillSyncInterval)
+
+	// Reap stale http_fetch(save_to_file=true) temp files (startup sweep + hourly).
+	go aitools.StartFetchTempReaper()
+
+	return rt
 }
 
 func stat() gin.HandlerFunc {
@@ -128,7 +230,9 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 		suffix := arr[len(arr)-1]
 
 		switch suffix {
-		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "md":
+		// 前端发布包里出现的静态资源后缀都要列在这里，否则会被当成前端路由返回 index.html。
+		// 新增前端资源类型（如 n9e-collect-templates/*.toml、字体 woff2）时记得同步补充
+		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "woff2", "md", "toml":
 			if !rt.Center.UseFileAssets {
 				c.FileFromFS(c.Request.URL.Path, *fs)
 			} else {
@@ -180,6 +284,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/datasource/series", rt.auth(), rt.admin(), rt.deleteDatasourceSeries)
 		if rt.Center.AnonymousAccess.PromQuerier {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
+			pages.POST("/v2/query-batch", rt.queryBatchV2)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.datasourceBriefs)
@@ -191,6 +296,16 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/tdengine-databases", rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.tdengineTables)
 			pages.POST("/tdengine-columns", rt.tdengineColumns)
+			pages.POST("/iotdb-databases", rt.iotdbDatabases)
+			pages.POST("/iotdb-tables", rt.iotdbTables)
+			pages.POST("/iotdb-columns", rt.iotdbColumns)
+			pages.POST("/victorialogs-histogram", rt.QueryVictoriaLogsHistogram)
+			pages.POST("/victorialogs-field-names", rt.QueryVictoriaLogsFieldNames)
+			pages.POST("/victorialogs-field-values", rt.QueryVictoriaLogsFieldValues)
+			pages.POST("/loki-label-names", rt.QueryLokiLabelNames)
+			pages.POST("/loki-label-values", rt.QueryLokiLabelValues)
+			pages.POST("/loki-parsed-fields", rt.QueryLokiParsedFields)
+			pages.POST("/loki-histogram", rt.QueryLokiHistogram)
 
 			pages.POST("/log-query-batch", rt.QueryLogBatch)
 
@@ -200,25 +315,42 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/db-desc-table", rt.DescribeTable)
 
 			// es 专用接口
-			pages.POST("/indices", rt.auth(), rt.user(), rt.QueryIndices)
-			pages.POST("/es-variable", rt.auth(), rt.user(), rt.QueryESVariable)
-			pages.POST("/fields", rt.auth(), rt.user(), rt.QueryFields)
-			pages.POST("/log-query", rt.auth(), rt.user(), rt.QueryLog)
+			pages.POST("/indices", rt.QueryIndices)
+			pages.POST("/es-variable", rt.QueryESVariable)
+			pages.POST("/fields", rt.QueryFields)
+			pages.POST("/log-query", rt.QueryLog)
+			pages.POST("/es-cluster-info", rt.ESClusterInfo)
 		} else {
-			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
-			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
-			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
-			pages.GET("/datasource/brief", rt.auth(), rt.user(), rt.datasourceBriefs)
+			// proxy 也纳入分享 token 通道：dsProxy 内部按板内集合校验数据源，并只放行
+			// 只读查询路径（见 router_board_share.go isReadOnlyProxyPath），供 ES 面板与
+			// query 类型变量在匿名分享下取数；非 token 请求照常登录鉴权
+			pages.Any("/proxy/:id/*url", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.dsProxy)
+			// 仪表盘限时分享：带有效 board 分享 token 的匿名请求可走以下查询接口，
+			// 数据源被收敛到板内引用集合（见 router_board_share.go），其余照常登录鉴权
+			pages.POST("/v2/query-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.queryBatchV2)
+			pages.POST("/query-range-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.promBatchQueryRange)
+			pages.POST("/query-instant-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), rt.promBatchQueryInstant)
+			pages.GET("/datasource/brief", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.datasourceBriefs)
 			pages.POST("/datasource/query", rt.auth(), rt.user(), rt.datasourceQuery)
 
-			pages.POST("/ds-query", rt.auth(), rt.QueryData)
-			pages.POST("/logs-query", rt.auth(), rt.QueryLogV2)
+			pages.POST("/ds-query", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.QueryData)
+			pages.POST("/logs-query", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.QueryLogV2)
 
 			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
 			pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
+			pages.POST("/iotdb-databases", rt.auth(), rt.iotdbDatabases)
+			pages.POST("/iotdb-tables", rt.auth(), rt.iotdbTables)
+			pages.POST("/iotdb-columns", rt.auth(), rt.iotdbColumns)
+			pages.POST("/victorialogs-histogram", rt.auth(), rt.user(), rt.QueryVictoriaLogsHistogram)
+			pages.POST("/victorialogs-field-names", rt.auth(), rt.user(), rt.QueryVictoriaLogsFieldNames)
+			pages.POST("/victorialogs-field-values", rt.auth(), rt.user(), rt.QueryVictoriaLogsFieldValues)
+			pages.POST("/loki-label-names", rt.auth(), rt.user(), rt.QueryLokiLabelNames)
+			pages.POST("/loki-label-values", rt.auth(), rt.user(), rt.QueryLokiLabelValues)
+			pages.POST("/loki-parsed-fields", rt.auth(), rt.user(), rt.QueryLokiParsedFields)
+			pages.POST("/loki-histogram", rt.auth(), rt.user(), rt.QueryLokiHistogram)
 
-			pages.POST("/log-query-batch", rt.auth(), rt.user(), rt.QueryLogBatch)
+			pages.POST("/log-query-batch", rt.boardTokenDetect(), skipIfBoardToken(rt.auth()), skipIfBoardToken(rt.user()), rt.QueryLogBatch)
 
 			// 数据库元数据接口
 			pages.POST("/db-databases", rt.auth(), rt.user(), rt.ShowDatabases)
@@ -227,9 +359,10 @@ func (rt *Router) Config(r *gin.Engine) {
 
 			// es 专用接口
 			pages.POST("/indices", rt.auth(), rt.user(), rt.QueryIndices)
-			pages.POST("/es-variable", rt.QueryESVariable)
-			pages.POST("/fields", rt.QueryFields)
-			pages.POST("/log-query", rt.QueryLog)
+			pages.POST("/es-variable", rt.auth(), rt.user(), rt.QueryESVariable)
+			pages.POST("/fields", rt.auth(), rt.user(), rt.QueryFields)
+			pages.POST("/log-query", rt.auth(), rt.user(), rt.QueryLog)
+			pages.POST("/es-cluster-info", rt.auth(), rt.user(), rt.ESClusterInfo)
 		}
 
 		// OpenSearch 专用接口
@@ -237,7 +370,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/os-variable", rt.QueryOSVariable)
 		pages.POST("/os-fields", rt.QueryOSFields)
 
-		pages.GET("/sql-template", rt.QuerySqlTemplate)
+		pages.GET("/sql-template", rt.auth(), rt.user(), rt.QuerySqlTemplate)
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
 		pages.POST("/auth/logout", rt.jwtMock(), rt.auth(), rt.user(), rt.logoutPost)
 		pages.POST("/auth/refresh", rt.jwtMock(), rt.refreshPost)
@@ -250,17 +383,28 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/redirect", rt.loginRedirect)
 		pages.GET("/auth/redirect/cas", rt.loginRedirectCas)
 		pages.GET("/auth/redirect/oauth", rt.loginRedirectOAuth)
+		pages.GET("/auth/redirect/dingtalk", rt.loginRedirectDingTalk)
+		pages.GET("/auth/redirect/feishu", rt.loginRedirectFeiShu)
 		pages.GET("/auth/callback", rt.loginCallback)
 		pages.GET("/auth/callback/cas", rt.loginCallbackCas)
 		pages.GET("/auth/callback/oauth", rt.loginCallbackOAuth)
-		pages.GET("/auth/perms", rt.allPerms)
+		pages.GET("/auth/callback/dingtalk", rt.loginCallbackDingTalk)
+		pages.GET("/auth/callback/feishu", rt.loginCallbackFeiShu)
+		pages.GET("/auth/perms", rt.auth(), rt.user(), rt.allPerms)
 
-		pages.GET("/metrics/desc", rt.metricsDescGetFile)
-		pages.POST("/metrics/desc", rt.metricsDescGetMap)
+		// Built-in MCP OAuth Authorization Server — consent decision endpoint.
+		// The frontend /oauth-consent page (which holds the session token and
+		// handles SSO login) POSTs the signed authorization-request ticket here;
+		// behind auth()+user() the handler mints the authorization code for the
+		// logged-in user. See router_mcp_oauth.go / doc/api/mcp-oauth-as.md.
+		pages.POST("/mcp/oauth/authorize", rt.auth(), rt.user(), rt.MCPOAuthDecision)
 
-		pages.GET("/notify-channels", rt.notifyChannelsGets)
-		pages.GET("/contact-keys", rt.contactKeysGets)
-		pages.GET("/install-date", rt.installDateGet)
+		pages.GET("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetFile)
+		pages.POST("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetMap)
+
+		pages.GET("/notify-channels", rt.auth(), rt.user(), rt.notifyChannelsGets)
+		pages.GET("/contact-keys", rt.auth(), rt.user(), rt.contactKeysGets)
+		pages.GET("/install-date", rt.auth(), rt.user(), rt.installDateGet)
 
 		pages.GET("/self/perms", rt.auth(), rt.user(), rt.permsGets)
 		pages.GET("/self/profile", rt.auth(), rt.user(), rt.selfProfileGet)
@@ -298,7 +442,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/user-groups", rt.auth(), rt.user(), rt.userGroupGets)
 		pages.POST("/user-groups", rt.auth(), rt.user(), rt.perm("/user-groups/add"), rt.userGroupAdd)
-		pages.GET("/user-group/:id", rt.auth(), rt.user(), rt.userGroupGet)
+		pages.GET("/user-group/:id", rt.auth(), rt.user(), rt.userGroupWrite(), rt.userGroupGet)
 		pages.PUT("/user-group/:id", rt.auth(), rt.user(), rt.perm("/user-groups/put"), rt.userGroupWrite(), rt.userGroupPut)
 		pages.DELETE("/user-group/:id", rt.auth(), rt.user(), rt.perm("/user-groups/del"), rt.userGroupWrite(), rt.userGroupDel)
 		pages.POST("/user-group/:id/members", rt.auth(), rt.user(), rt.perm("/user-groups/put"), rt.userGroupWrite(), rt.userGroupMemberAdd)
@@ -316,6 +460,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-groups/tags", rt.auth(), rt.user(), rt.busiGroupsGetTags)
 
 		pages.GET("/targets", rt.auth(), rt.user(), rt.targetGets)
+		pages.GET("/targets/stats", rt.auth(), rt.user(), rt.targetStats)
 		pages.POST("/target-update", rt.auth(), rt.targetUpdate)
 		pages.GET("/target/extra-meta", rt.auth(), rt.user(), rt.targetExtendInfoByIdent)
 		pages.POST("/target/list", rt.auth(), rt.user(), rt.targetGetsByHostFilter)
@@ -330,6 +475,15 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/builtin-cate-favorite/:name", rt.auth(), rt.user(), rt.builtinCateFavoriteDel)
 
 		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
+
+		// Categraf install helpers. Anonymous on purpose: the target machine
+		// runs these before it holds any credential, and none of the three
+		// returns anything the caller did not already supply or that is not
+		// public software. Same posture as /pub and /site-info.
+		pages.GET("/agents/categraf/meta", rt.categrafMeta)
+		pages.GET("/agents/categraf/install.sh", rt.categrafInstallScript)
+		pages.GET("/agents/categraf/collect.sh", rt.categrafCollectScript)
+		pages.GET("/agents/categraf/download", rt.categrafDownload)
 
 		// pages.GET("/builtin-boards", rt.builtinBoardGets)
 		// pages.GET("/builtin-board/:name", rt.builtinBoardGet)
@@ -364,6 +518,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		// pages.GET("/alert-rules/builtin/alerts-cates", rt.auth(), rt.user(), rt.builtinAlertCateGets)
 		// pages.GET("/alert-rules/builtin/list", rt.auth(), rt.user(), rt.builtinAlertRules)
 		pages.GET("/alert-rules/callbacks", rt.auth(), rt.user(), rt.alertRuleCallbacks)
+		pages.GET("/timezones", rt.auth(), rt.user(), rt.timezonesGet)
 
 		pages.GET("/busi-groups/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGetsByGids)
 		pages.GET("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGets)
@@ -382,13 +537,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/busi-groups/alert-rules/clones", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.batchAlertRuleClone)
 		pages.POST("/busi-group/alert-rules/notify-tryrun", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.alertRuleNotifyTryRun)
 		pages.POST("/busi-group/alert-rules/enable-tryrun", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.alertRuleEnableTryRun)
+		pages.POST("/busi-group/:id/alert-rule/test-fire", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.alertRuleTestFire)
 
 		pages.GET("/busi-groups/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGetsByGids)
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
 		pages.POST("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules/add"), rt.bgrw(), rt.recordingRuleAddByFE)
 		pages.DELETE("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules/del"), rt.bgrw(), rt.recordingRuleDel)
-		pages.PUT("/busi-group/:id/recording-rule/:rrid", rt.auth(), rt.user(), rt.perm("/recording-rules/put"), rt.bgrw(), rt.recordingRulePutByFE)
 		pages.GET("/recording-rule/:rrid", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGet)
+		pages.PUT("/recording-rule/:rrid", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRulePutByFE)
 		pages.PUT("/busi-group/:id/recording-rules/fields", rt.auth(), rt.user(), rt.perm("/recording-rules/put"), rt.recordingRulePutFields)
 
 		pages.GET("/busi-groups/alert-mutes", rt.auth(), rt.user(), rt.perm("/alert-mutes"), rt.alertMuteGetsByGids)
@@ -400,6 +556,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-group/:id/alert-mute/:amid", rt.auth(), rt.user(), rt.perm("/alert-mutes"), rt.alertMuteGet)
 		pages.PUT("/busi-group/:id/alert-mutes/fields", rt.auth(), rt.user(), rt.perm("/alert-mutes/put"), rt.bgrw(), rt.alertMutePutFields)
 		pages.POST("/alert-mute-tryrun", rt.auth(), rt.user(), rt.perm("/alert-mutes/add"), rt.alertMuteTryRun)
+		pages.DELETE("/alert-mutes", rt.auth(), rt.admin(), rt.alertMuteBatchDelete)
 
 		pages.GET("/busi-groups/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes"), rt.alertSubscribeGetsByGids)
 		pages.GET("/busi-group/:id/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes"), rt.bgro(), rt.alertSubscribeGets)
@@ -412,9 +569,18 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 		pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
+		pages.GET("/notification-records/used", rt.auth(), rt.user(), rt.notificationRecordUsed)
+		pages.GET("/event-detail/:hash", rt.eventDetailPage)
+		pages.GET("/event-detail/:hash/logs", rt.auth(), rt.user(), rt.eventDetailJSON)
+		pages.GET("/alert-eval-detail/:id", rt.alertEvalDetailPage)
+		pages.GET("/alert-eval-detail/:id/logs", rt.auth(), rt.user(), rt.alertEvalDetailJSON)
+		pages.GET("/alert-rule/:arid/eval-records", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleEvalRecords)
+		pages.GET("/trace-logs/:traceid", rt.traceLogsPage)
+		pages.GET("/trace-logs/:traceid/logs", rt.auth(), rt.user(), rt.traceLogsJSON)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
+		pages.POST("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
 		pages.GET("/alert-cur-events/card", rt.auth(), rt.user(), rt.alertCurEventsCard)
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.user(), rt.alertHisEventsList)
@@ -440,15 +606,19 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks"), rt.bgro(), rt.taskGets)
 		pages.POST("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks/add"), rt.bgrw(), rt.taskAdd)
 
-		pages.GET("/servers", rt.auth(), rt.user(), rt.serversGet)
+		pages.GET("/servers", rt.auth(), rt.user(), rt.perm("/system/alerting-engines"), rt.serversGet)
 		pages.GET("/server-clusters", rt.auth(), rt.user(), rt.serverClustersGet)
 
 		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
 		pages.POST("/datasource/plugin/list", rt.auth(), rt.pluginList)
 		pages.POST("/datasource/upsert", rt.auth(), rt.admin(), rt.datasourceUpsert)
+		pages.POST("/datasource/grafana/fetch", rt.auth(), rt.admin(), rt.datasourceGrafanaFetch)
+		pages.POST("/datasource/grafana/import", rt.auth(), rt.admin(), rt.datasourceGrafanaImport)
 		pages.POST("/datasource/desc", rt.auth(), rt.admin(), rt.datasourceGet)
 		pages.POST("/datasource/status/update", rt.auth(), rt.admin(), rt.datasourceUpdataStatus)
 		pages.DELETE("/datasource/", rt.auth(), rt.admin(), rt.datasourceDel)
+		// 模板匹配是只读探测，普通用户可用；导入动作的权限由业务组/payload 接口各自把关
+		pages.POST("/datasource/template-match", rt.auth(), rt.user(), rt.datasourceTemplateMatch)
 
 		pages.GET("/roles", rt.auth(), rt.user(), rt.roleGets)
 		pages.POST("/roles", rt.auth(), rt.user(), rt.perm("/roles/add"), rt.roleAdd)
@@ -457,7 +627,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/role/:id/ops", rt.auth(), rt.user(), rt.perm("/roles"), rt.operationOfRole)
 		pages.PUT("/role/:id/ops", rt.auth(), rt.user(), rt.perm("/roles/put"), rt.roleBindOperation)
-		pages.GET("/operation", rt.operations)
+		pages.GET("/operation", rt.auth(), rt.user(), rt.operations)
 
 		pages.GET("/notify-tpls", rt.auth(), rt.user(), rt.notifyTplGets)
 		pages.PUT("/notify-tpl/content", rt.auth(), rt.user(), rt.notifyTplUpdateContent)
@@ -489,6 +659,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetList)
 		pages.POST("/es-index-pattern", rt.auth(), rt.user(), rt.perm("/log/index-patterns/add"), rt.esIndexPatternAdd)
 		pages.PUT("/es-index-pattern", rt.auth(), rt.user(), rt.perm("/log/index-patterns/put"), rt.esIndexPatternPut)
+		pages.PUT("/es-index-patterns/weights", rt.auth(), rt.user(), rt.perm("/log/index-patterns/put"), rt.esIndexPatternUpdateWeights)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.user(), rt.perm("/log/index-patterns/del"), rt.esIndexPatternDel)
 
 		pages.GET("/embedded-dashboards", rt.auth(), rt.user(), rt.perm("/embedded-dashboards"), rt.embeddedDashboardsGet)
@@ -498,20 +669,66 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/embedded-product", rt.auth(), rt.user(), rt.embeddedProductGets)
 		pages.GET("/embedded-product/:id", rt.auth(), rt.user(), rt.embeddedProductGet)
 		pages.POST("/embedded-product", rt.auth(), rt.user(), rt.perm("/embedded-product/add"), rt.embeddedProductAdd)
+		pages.PUT("/embedded-products/weights", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductWeightsPut)
+		pages.PUT("/embedded-product/:id/hide", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductHidePut)
 		pages.PUT("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductPut)
 		pages.DELETE("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/delete"), rt.embeddedProductDelete)
 
-		pages.GET("/user-variable-configs", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigGets)
-		pages.POST("/user-variable-config", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigAdd)
-		pages.PUT("/user-variable-config/:id", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigPut)
-		pages.DELETE("/user-variable-config/:id", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigDel)
+		pages.GET("/user-variable-configs", rt.auth(), rt.user(), rt.perm("/system/variable-settings"), rt.userVariableConfigGets)
+		pages.POST("/user-variable-config", rt.auth(), rt.user(), rt.perm("/system/variable-settings"), rt.userVariableConfigAdd)
+		pages.PUT("/user-variable-config/:id", rt.auth(), rt.user(), rt.perm("/system/variable-settings"), rt.userVariableConfigPut)
+		pages.DELETE("/user-variable-config/:id", rt.auth(), rt.user(), rt.perm("/system/variable-settings"), rt.userVariableConfigDel)
 
 		pages.GET("/config", rt.auth(), rt.admin(), rt.configGetByKey)
 		pages.PUT("/config", rt.auth(), rt.admin(), rt.configPutByKey)
 		pages.GET("/site-info", rt.siteInfo)
 
+		// AI Config management
+		pages.GET("/ai-agents", rt.auth(), rt.admin(), rt.aiAgentGets)
+		pages.GET("/ai-agent/:id", rt.auth(), rt.admin(), rt.aiAgentGet)
+		pages.POST("/ai-agents", rt.auth(), rt.admin(), rt.aiAgentAdd)
+		pages.PUT("/ai-agent/:id", rt.auth(), rt.admin(), rt.aiAgentPut)
+		pages.DELETE("/ai-agent/:id", rt.auth(), rt.admin(), rt.aiAgentDel)
+
+		pages.GET("/ai-llm-configs", rt.auth(), rt.user(), rt.perm("/ai-config/llm-configs"), rt.aiLLMConfigGets)
+		pages.GET("/ai-llm-config/:id", rt.auth(), rt.user(), rt.perm("/ai-config/llm-configs"), rt.aiLLMConfigGet)
+		pages.POST("/ai-llm-configs", rt.auth(), rt.user(), rt.perm("/ai-config/llm-configs"), rt.aiLLMConfigAdd)
+		pages.PUT("/ai-llm-config/:id", rt.auth(), rt.user(), rt.perm("/ai-config/llm-configs"), rt.aiLLMConfigPut)
+		pages.DELETE("/ai-llm-config/:id", rt.auth(), rt.user(), rt.perm("/ai-config/llm-configs"), rt.aiLLMConfigDel)
+		pages.POST("/ai-llm-config/test", rt.auth(), rt.user(), rt.perm("/ai-config/llm-configs"), rt.aiLLMConfigTest)
+
+		pages.GET("/ai-skills", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGets)
+		pages.GET("/ai-skill/:id", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGet)
+		pages.POST("/ai-skills", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillAdd)
+		pages.PUT("/ai-skill/:id", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillPut)
+		pages.DELETE("/ai-skill/:id", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillDel)
+		pages.POST("/ai-skills/import", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillImport)
+		pages.PUT("/ai-skill/:id/import", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillImportUpdate)
+		pages.POST("/ai-skills/git/install", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGitInstall)
+		pages.PUT("/ai-skill/:id/git/install", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGitInstallPut)
+		pages.POST("/ai-skill/:id/git/update", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGitUpdate)
+		pages.GET("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileGet)
+		pages.DELETE("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileDel)
+
+		// AI Assistant Chat
+		pages.POST("/assistant/chat/new", rt.auth(), rt.user(), rt.assistantChatNew)
+		pages.GET("/assistant/chat/history", rt.auth(), rt.user(), rt.assistantChatHistory)
+		pages.POST("/assistant/chat/rename", rt.auth(), rt.user(), rt.assistantChatRename)
+		pages.DELETE("/assistant/chat/:chatId", rt.auth(), rt.user(), rt.assistantChatDel)
+
+		// AI Assistant Message
+		pages.POST("/assistant/message/new", rt.auth(), rt.user(), rt.assistantMessageNew)
+		pages.POST("/assistant/message/detail", rt.auth(), rt.user(), rt.assistantMessageDetail)
+		pages.POST("/assistant/message/history", rt.auth(), rt.user(), rt.assistantMessageHistory)
+		pages.POST("/assistant/message/cancel", rt.auth(), rt.user(), rt.assistantMessageCancel)
+
+		// SSE Stream
+		pages.POST("/stream", rt.auth(), rt.user(), rt.assistantStream)
+
 		// source token 相关路由
 		pages.POST("/source-token", rt.auth(), rt.user(), rt.sourceTokenAdd)
+		pages.GET("/source-tokens", rt.auth(), rt.user(), rt.sourceTokenGets)
+		pages.DELETE("/source-token/:id", rt.auth(), rt.user(), rt.sourceTokenDel)
 
 		// for admin api
 		pages.GET("/user/busi-groups", rt.auth(), rt.admin(), rt.userBusiGroupsGets)
@@ -544,24 +761,57 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-rule/custom-params", rt.auth(), rt.user(), rt.perm("/notification-rules"), rt.notifyRuleCustomParamsGet)
 		pages.POST("/notify-rule/event-pipelines-tryrun", rt.auth(), rt.user(), rt.perm("/notification-rules/add"), rt.tryRunEventProcessorByNotifyRule)
 
+		pages.GET("/event-tagkeys", rt.auth(), rt.user(), rt.eventTagKeys)
+		pages.GET("/event-tagvalues", rt.auth(), rt.user(), rt.eventTagValues)
+
 		// 事件Pipeline相关路由
 		pages.GET("/event-pipelines", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.eventPipelinesList)
 		pages.POST("/event-pipeline", rt.auth(), rt.user(), rt.perm("/event-pipelines/add"), rt.addEventPipeline)
 		pages.PUT("/event-pipeline", rt.auth(), rt.user(), rt.perm("/event-pipelines/put"), rt.updateEventPipeline)
+		pages.PUT("/event-pipelines/disabled", rt.auth(), rt.user(), rt.perm("/event-pipelines/put"), rt.updateEventPipelinesDisabled)
 		pages.GET("/event-pipeline/:id", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipeline)
 		pages.DELETE("/event-pipelines", rt.auth(), rt.user(), rt.perm("/event-pipelines/del"), rt.deleteEventPipelines)
 		pages.POST("/event-pipeline-tryrun", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.tryRunEventPipeline)
 		pages.POST("/event-processor-tryrun", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.tryRunEventProcessor)
+
+		// API 触发工作流
+		pages.POST("/event-pipeline/:id/trigger", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.triggerEventPipelineByAPI)
+		// SSE 流式执行工作流
+		pages.POST("/event-pipeline/:id/stream", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.streamEventPipeline)
+
+		// 事件Pipeline执行记录路由
+		pages.GET("/event-pipeline-executions", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.listAllEventPipelineExecutions)
+		pages.GET("/event-pipeline/:id/executions", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.listEventPipelineExecutions)
+		pages.GET("/event-pipeline/:id/execution/:exec_id", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipelineExecution)
+		pages.GET("/event-pipeline-execution/:exec_id", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipelineExecution)
+		pages.GET("/event-pipeline/:id/execution-stats", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipelineExecutionStats)
+		pages.POST("/event-pipeline-executions/clean", rt.auth(), rt.user(), rt.admin(), rt.cleanEventPipelineExecutions)
 
 		pages.POST("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelsAdd)
 		pages.DELETE("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels/del"), rt.notifyChannelsDel)
 		pages.PUT("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notification-channels/put"), rt.notifyChannelPut)
 		pages.GET("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelGet)
 		pages.GET("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelsGet)
-		pages.GET("/simplified-notify-channel-configs", rt.notifyChannelsGetForNormalUser)
+		pages.GET("/simplified-notify-channel-configs", rt.auth(), rt.user(), rt.notifyChannelsGetForNormalUser)
 		pages.GET("/flashduty-channel-list/:id", rt.auth(), rt.user(), rt.flashDutyNotifyChannelsGet)
+		pages.POST("/feishu-visible-chats/:id", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.feishuVisibleChatsGet)
+		// TODO(dingtalkapp): 钉钉应用本次不上线，dingtalk-group-list 路由先注释；handler 也已注释。
+		// pages.POST("/dingtalk-group-list/:id", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.dingtalkGroupsGetByNotifyChannel)
+		pages.GET("/pagerduty-integration-key/:id/:service_id/:integration_id", rt.auth(), rt.user(), rt.pagerDutyIntegrationKeyGet)
+		pages.GET("/pagerduty-service-list/:id", rt.auth(), rt.user(), rt.pagerDutyNotifyServicesGet)
+		// 复用 /notification-channels/add 权限而不新增权限串：权限只定义在 cconf.builtInOps，
+		// 未进任何 SQL seed，新增串会导致所有存量部署必须手工授权后功能才可用。
+		pages.POST("/notify-channel-config/test", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelConfigTest)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)
-		pages.GET("/notify-channel-config/idents", rt.notifyChannelIdentsGet)
+		pages.GET("/notify-channel-config/idents", rt.auth(), rt.user(), rt.notifyChannelIdentsGet)
+
+		// saved view 查询条件保存相关路由
+		pages.GET("/saved-views", rt.auth(), rt.user(), rt.savedViewGets)
+		pages.POST("/saved-views", rt.auth(), rt.user(), rt.savedViewAdd)
+		pages.PUT("/saved-view/:id", rt.auth(), rt.user(), rt.savedViewPut)
+		pages.DELETE("/saved-view/:id", rt.auth(), rt.user(), rt.savedViewDel)
+		pages.POST("/saved-view/:id/favorite", rt.auth(), rt.user(), rt.savedViewFavoriteAdd)
+		pages.DELETE("/saved-view/:id/favorite", rt.auth(), rt.user(), rt.savedViewFavoriteDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
@@ -590,6 +840,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.PUT("/user/:id", rt.userProfilePutByService)
 			service.DELETE("/user/:id", rt.userDel)
 			service.GET("/users", rt.userFindAll)
+			service.POST("/user-token", rt.getXUserToken)
 
 			service.GET("/user-groups", rt.userGroupGetsByService)
 			service.GET("/user-group-members", rt.userGroupMemberGetsByService)
@@ -618,6 +869,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/busi-groups", rt.busiGroupGetsByService)
 
 			service.GET("/datasources", rt.datasourceGetsByService)
+			service.GET("/datasource-rsa-config", rt.datasourceRsaConfigGet)
 			service.GET("/datasource-ids", rt.getDatasourceIds)
 			service.POST("/server-heartbeat", rt.serverHeartbeat)
 			service.GET("/servers-active", rt.serversActive)
@@ -625,6 +877,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/recording-rules", rt.recordingRuleGetsByService)
 
 			service.GET("/alert-mutes", rt.alertMuteGets)
+			service.GET("/active-alert-mutes", rt.activeAlertMuteGets)
 			service.POST("/alert-mutes", rt.alertMuteAddByService)
 			service.DELETE("/alert-mutes", rt.alertMuteDel)
 
@@ -673,6 +926,40 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/message-templates", rt.messageTemplateGets)
 
 			service.GET("/event-pipelines", rt.eventPipelinesListByService)
+			service.POST("/event-pipeline/:id/trigger", rt.triggerEventPipelineByService)
+			service.POST("/event-pipeline/:id/stream", rt.streamEventPipelineByService)
+			service.POST("/event-pipeline-execution", rt.eventPipelineExecutionAdd)
+
+			// 手机号加密存储配置接口
+			service.POST("/users/phone/encrypt", rt.usersPhoneEncrypt)
+			service.POST("/users/phone/decrypt", rt.usersPhoneDecrypt)
+			service.POST("/users/phone/refresh-encryption-config", rt.usersPhoneDecryptRefresh)
+
+			service.GET("/builtin-components", rt.builtinComponentsGets)
+			service.GET("/builtin-payloads", rt.builtinPayloadsGets)
+
+			service.GET("/ai-skills", rt.aiSkillGets)
+			service.GET("/ai-skills/visible", rt.aiSkillVisibleGetsByService)
+			service.GET("/ai-skill/:id", rt.aiSkillGetWithFileContents)
+			service.POST("/ai-skills", rt.aiSkillAddByService)
+			service.POST("/ai-skills/import", rt.aiSkillImportByService)
+			service.PUT("/ai-skill/:id/import", rt.aiSkillImportUpdateByService)
+
+			service.GET("/ai-llm-configs", rt.aiLLMConfigGets)
+			service.GET("/ai-llm-config/:id", rt.aiLLMConfigGet)
+			service.POST("/ai-llm-configs", rt.aiLLMConfigAddByService)
+			service.PUT("/ai-llm-config/:id", rt.aiLLMConfigPutByService)
+
+			// AI Assistant (for external service, reuses frontend handlers via serviceUser middleware)
+			service.POST("/assistant/chat/new", rt.serviceUser(), rt.assistantChatNew)
+			service.GET("/assistant/chat/history", rt.serviceUser(), rt.assistantChatHistory)
+			service.POST("/assistant/chat/rename", rt.serviceUser(), rt.assistantChatRename)
+			service.DELETE("/assistant/chat/:chatId", rt.serviceUser(), rt.assistantChatDel)
+			service.POST("/assistant/message/new", rt.serviceUser(), rt.assistantMessageNew)
+			service.POST("/assistant/message/detail", rt.serviceUser(), rt.assistantMessageDetail)
+			service.POST("/assistant/message/history", rt.serviceUser(), rt.assistantMessageHistory)
+			service.POST("/assistant/message/cancel", rt.serviceUser(), rt.assistantMessageCancel)
+			service.POST("/assistant/stream", rt.assistantStream)
 		}
 	}
 
@@ -685,6 +972,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			heartbeat.POST("/heartbeat", rt.heartbeat)
 		}
 	}
+
+	rt.configRegisterA2A(r)
 
 	rt.configNoRoute(r, &statikFS)
 

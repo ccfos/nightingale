@@ -1,0 +1,263 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788186357041,
+        "collector": "Apiserver",
+        "typ": "Kubernetes",
+        "name": "apiserver响应的时间分布，按照url 和 verb 分类",
+        "unit": "",
+        "note": "apiserver服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "apiserver_request_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "apiserver服务自身指标\n类型: histogram",
+                "name": "apiserver响应的时间分布，按照url 和 verb 分类"
+            },
+            {
+                "lang": "en_US",
+                "name": "Request Duration Distribution by URL and Verb",
+                "note": "Metric exposed by the apiserver itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788186178974,
+        "collector": "Apiserver",
+        "typ": "Kubernetes",
+        "name": "apiserver的请求总数，按照verb、 version、 group、resource、scope、component、 http返回码分类统计",
+        "unit": "",
+        "note": "apiserver服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "apiserver_request_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "apiserver服务自身指标\n类型: counter",
+                "name": "apiserver的请求总数，按照verb、 version、 group、resource、scope、component、 http返回码分类统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total API Server Requests",
+                "note": "Metric exposed by the apiserver itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788186780285,
+        "collector": "Apiserver",
+        "typ": "Kubernetes",
+        "name": "最大并发请求数, 按mutating(非get list watch的请求)和readOnly(get list watch)分别限制",
+        "unit": "",
+        "note": "apiserver服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "apiserver_current_inflight_requests",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "apiserver服务自身指标\n类型: gauge",
+                "name": "最大并发请求数, 按mutating(非get list watch的请求)和readOnly(get list watch)分别限制"
+            },
+            {
+                "lang": "en_US",
+                "name": "Current Inflight Requests",
+                "note": "Metric exposed by the apiserver itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788186817515,
+        "collector": "Apiserver",
+        "typ": "Kubernetes",
+        "name": "apiserver 响应大小，单位byte, 按照verb、 version、 group、resource、scope、component分类统计",
+        "unit": "",
+        "note": "apiserver服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "apiserver_response_sizes",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "apiserver服务自身指标\n类型: histogram",
+                "name": "apiserver 响应大小，单位byte, 按照verb、 version、 group、resource、scope、component分类统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Response Size Distribution (bytes)",
+                "note": "Metric exposed by the apiserver itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788186947412,
+        "collector": "Apiserver",
+        "typ": "Kubernetes",
+        "name": "按照资源类型统计的watch缓存大小",
+        "unit": "",
+        "note": "apiserver服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "watch_cache_capacity",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "apiserver服务自身指标\n类型: gauge",
+                "name": "按照资源类型统计的watch缓存大小"
+            },
+            {
+                "lang": "en_US",
+                "name": "Watch Cache Capacity by Resource Type",
+                "note": "Metric exposed by the apiserver itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788186271995,
+        "collector": "Apiserver",
+        "typ": "Kubernetes",
+        "name": "每秒钟用户态和系统态cpu消耗时间, 计算apiserver进程的cpu的使用率",
+        "unit": "",
+        "note": "apiserver服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "process_cpu_seconds_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "apiserver服务自身指标\n类型: counter",
+                "name": "每秒钟用户态和系统态cpu消耗时间, 计算apiserver进程的cpu的使用率"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Process CPU Time (seconds)",
+                "note": "Metric exposed by the apiserver itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788186385798,
+        "collector": "Apiserver",
+        "typ": "Kubernetes",
+        "name": "apiserver的内存使用量(单位:Byte)",
+        "unit": "",
+        "note": "apiserver服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_resident_memory_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "apiserver服务自身指标\n类型: gauge",
+                "name": "apiserver的内存使用量(单位:Byte)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Resident Memory Usage (bytes)",
+                "note": "Metric exposed by the apiserver itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788186955000,
+        "collector": "Apiserver",
+        "typ": "Kubernetes",
+        "name": "apiserver中包含的controller的工作队列，已处理的任务总数",
+        "unit": "",
+        "note": "apiserver服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "workqueue_adds_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "apiserver服务自身指标\n类型: counter",
+                "name": "apiserver中包含的controller的工作队列，已处理的任务总数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Workqueue Additions",
+                "note": "Metric exposed by the apiserver itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788187253975,
+        "collector": "Apiserver",
+        "typ": "Kubernetes",
+        "name": "apiserver中包含的controller的工作队列深度，表示当前队列中要处理的任务的数量，数值越小越好",
+        "unit": "",
+        "note": "apiserver服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "workqueue_depth",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "apiserver服务自身指标\n类型: gauge",
+                "name": "apiserver中包含的controller的工作队列深度，表示当前队列中要处理的任务的数量，数值越小越好"
+            },
+            {
+                "lang": "en_US",
+                "name": "Workqueue Depth",
+                "note": "Metric exposed by the apiserver itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

@@ -1,0 +1,31 @@
+name: integrations-alert-action
+
+# 内置告警规则 action 门禁（Google SRE：每个告警都必须有对应的 action）。
+# 规则模板必须在 annotations 里带非空 action，写不出处置动作的规则不该进模板。
+# action 会随内置通知模板的 AnnotationsJSON 遍历进入告警正文，因此它是「告警
+# 能被执行」的前提，而不只是页面上的说明文字。
+#
+# 存量规则用棘轮基线 integrations/alert_action_baseline.json 兜住：门禁只允许
+# 每个组件的缺口变小。已梳理完的组件再加无 action 的规则会红；新增组件不在基线
+# 里，要求缺口为 0，即一开始就得带 action。
+# 补完 action 后运行 `go run ./cmd/integrations-alert-action update` 收紧基线。
+on:
+  push:
+    paths:
+      - 'integrations/**'
+      - 'cmd/integrations-alert-action/**'
+  pull_request:
+    paths:
+      - 'integrations/**'
+      - 'cmd/integrations-alert-action/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: Check builtin alert rules carry an actionable action annotation
+        run: go run ./cmd/integrations-alert-action check

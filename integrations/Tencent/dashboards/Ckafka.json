@@ -1,0 +1,3833 @@
+{
+    "name": "Ckafka",
+    "tags": "腾讯云 Kafka",
+    "note": "",
+    "ident": "",
+    "uuid": 1764899560846000,
+    "configs": {
+        "var": [
+            {
+                "name": "datasource",
+                "label": "DataSource",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus"
+            },
+            {
+                "name": "region",
+                "label": "Region",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_ckafka_instanceconcount_sum,instance_region)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "instance_name",
+                "label": "实例名",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_ckafka_instanceconcount_sum{instance_region=~\"$region\"},instance_name)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "instance_id",
+                "label": "实例ID",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_ckafka_instanceconcount_sum{instance_region=~\"$region\",instance_name=~\"$instance_name\"},instance_id)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "topic_name",
+                "label": "Topic Totol",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_ckafka_ctopicconcount_sum{instance_region=~\"$region\",instance_id=~\"$instance_id\"},topic_name)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "consumer_group",
+                "label": "Consumer Group",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_ckafka_cpartitionconsumerspeed_first{instance_region=~\"$region\",instance_id=~\"$instance_id\"},consumer_group)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "topic_consumed",
+                "label": "Topic Consumed",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_ckafka_cpartitionconsumerspeed_first{instance_region=~\"$region\",instance_id=~\"$instance_id\",consumer_group=~\"$consumer_group\"},topic_name)",
+                "initialized": true,
+                "options": []
+            },
+            {
+                "name": "partition",
+                "label": "Partition",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(qce_ckafka_cpartitionconsumerspeed_first{instance_region=~\"$region\",instance_id=~\"$instance_id\",consumer_group=~\"$consumer_group\"},partition)",
+                "initialized": true,
+                "options": []
+            }
+        ],
+        "panels": [
+            {
+                "type": "row",
+                "id": "9e3f10dc-0036-4db9-8414-1b6fcce83e38",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "40b2ef1e-19f5-45b4-9609-cf76c8512bd2",
+                    "isResizable": false
+                },
+                "name": "实例监控指标-性能类",
+                "collapsed": true,
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "858b3ea8-d50c-4dfc-9ab8-cc1d6428007c",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 1,
+                    "i": "0d87d0e0-05ea-4dc3-b725-82fccea11274",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "实例生产消息条数",
+                "description": "实例生产消息条数，按照一分钟时间粒度统计求和",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_ckafka_instanceprocount_sum{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3fec96a1-7e7a-4e41-9e5a-9a799bb6d15b",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1,
+                    "i": "f75bebe7-244c-4499-bf38-9dc05f1b4b06",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "实例消费消息条数",
+                "description": "实例消费消息条数，按照一分钟时间粒度统计求和",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_ckafka_instanceconcount_sum{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "dcd08a4b-c8e2-49b1-988c-1768f248ff3c",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 5,
+                    "i": "12636b89-d81d-4f07-847a-df4ca3f9b65b",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "实例生产请求次数",
+                "description": "实例级别生产请求次数，按照一分钟时间粒度统计求和",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_ckafka_instanceproreqcount_sum{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "bb3a7f43-c9be-4da0-83b4-7a0df7de2b75",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 5,
+                    "i": "8a29e5cf-b690-41a7-b668-5f54f8f9aed1",
+                    "isResizable": true
+                },
+                "version": "3.2.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "实例消费请求次数",
+                "description": "实例级别消费请求次数，按照一分钟时间粒度统计求和",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "none",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "qce_ckafka_instanceconreqcount_sum{instance_id=~\"$instance_id\"}",
+                        "legend": "{{instance_name}} | {{instance_id}}"
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "09aa0ca9-6e9d-4ca9-8cf0-cb26d2a6e271",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 9,
+                    "i": "882754f2-00cc-4d36-8d9c-922bd878720d",
+                    "isResizable": false
+                },
+                "name": "实例监控指标-系统类",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "4ce55d3c-c6ee-4d81-b490-8476f8d1e3d2",
+                        "layout": {
+                            "h": 4,
+                            "w": 24,
+                            "x": 0,
+                            "y": 2,
+                            "i": "b0632154-b786-4b48-9f4a-af1c0632a064",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "磁盘使用百分比",
+                        "description": "当前磁盘占用与实例规格磁盘总容量的百分比",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancediskusage_expr{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "9ccb9e26-2685-4372-870f-5e875947ca60",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 10,
+                    "i": "a5aef738-339f-42fe-825f-fd76e2646bca",
+                    "isResizable": false
+                },
+                "name": "实例监控指标-累计用量类",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "71657b5f-397b-4a6f-9e5d-357372faf137",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 11,
+                            "i": "cd0d0d84-515e-4b5c-99de-cc4be8cd4843",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例连接数",
+                        "description": "客户端和服务器的连接数",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceconnectcount_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "ff73e65c-fc59-41d5-abf6-993b56e9da82",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 11,
+                            "i": "f413f1b2-1829-4d28-912c-e0d242ca1085",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例连接数百分比",
+                        "description": "实例连接数百分比(客户端和服务端连接数占配额百分比)",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceconnectpercentage_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "afcdb505-3460-4834-aa83-6cd632029175",
+                        "layout": {
+                            "h": 4,
+                            "w": 8,
+                            "x": 0,
+                            "y": 15,
+                            "i": "706314f2-015c-420b-94f2-eedc29e9a8a0",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例生产消息峰值带宽（不包含副本生产的带宽）",
+                        "description": "实例生产消息峰值带宽（不包含副本生产的带宽）",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancemaxproflow_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "6bfe29eb-dae8-4f5c-be87-6275796167cf",
+                        "layout": {
+                            "h": 4,
+                            "w": 8,
+                            "x": 8,
+                            "y": 15,
+                            "i": "3a3d9fc4-d2e0-457f-a415-0d35885010d1",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例生产消息峰值带宽（包含副本生产的带宽）",
+                        "description": "实例生产消息峰值带宽（包含副本生产的带宽）",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancereplicaproduceflow_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "3304bddd-de17-424a-afaf-abd63ac1c663",
+                        "layout": {
+                            "h": 4,
+                            "w": 8,
+                            "x": 16,
+                            "y": 15,
+                            "i": "efa511a4-cb8f-4d7e-948d-a898b5be13b5",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例消费消息峰值带宽",
+                        "description": "实例消费消息峰值带宽（消费时无副本的概念）",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancemaxconflow_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "8bbf1b65-c060-4a70-800a-7f9a5f46d290",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 19,
+                            "i": "ab1449ff-31b9-446b-b5d4-9bec2e68f4da",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例落盘的消息总条数",
+                        "description": "实例落盘的消息总条数（不包含副本），按照所选择的时间粒度取最新值",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancemsgcount_sum{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "2810b6ba-0f51-4bbc-961b-1eb289319b40",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 19,
+                            "i": "49a29f42-d4a1-4fee-bafe-ac5a53d5590d",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例消费流量",
+                        "description": "实例消费流量（不包含副本产生的流量），按照一分钟时间粒度统计求和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceconflow_sum{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "a555fa0b-ba6a-45be-893a-a3df64fcf91b",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 23,
+                            "i": "774d1855-696a-422d-894b-c8a356d912c2",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例生产带宽",
+                        "description": "实例生产流量（不包含副本产生的流量），按照一分钟时间粒度统计求和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceproflow_sum{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "fc0f993b-36ce-4acb-82d0-9fd52959ee76",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 23,
+                            "i": "dd7b5a66-6da9-40c7-9da9-8f37df3bf335",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例磁盘占用量",
+                        "description": "实例磁盘占用量（包含副本），按照所选择的时间粒度取最新值",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancemsgheap_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "3467c9c6-a50d-4c26-8c96-82a3b5d3e8f7",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 27,
+                            "i": "e2dd8849-3585-4fdc-891f-484f74ac3f7e",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例生产带宽百分比",
+                        "description": "实例生产带宽百分比（占用配额百分比）",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceproducebandwidthpercentage_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "c5ce4881-cdcd-4b49-aaa1-a90010c6ab06",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 27,
+                            "i": "65ebce62-ca61-49fc-b078-7ea3b36d3a73",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例消费带宽百分比",
+                        "description": "实例消费带宽百分比(实例消费带宽占配额百分比)",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceconsumebandwidthpercentage_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "d84706f4-42d6-48e3-814f-5a32658c0421",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 31,
+                            "i": "3cb54952-fab5-4464-bc92-0e3ffad71bcc",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例消费分组数量",
+                        "description": "实例消费分组数量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceconsumegroupnum_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "3e91d3d3-ee09-437a-a4a8-2aad8443aa46",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 31,
+                            "i": "52f8ba52-3fd4-45b8-bf8c-8fc797b24d92",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例消费分组百分比",
+                        "description": "实例消费分组百分比(实例消费组数占配额百分比)",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceconsumegrouppercentage_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "90944ff5-3d2e-4e41-a3ec-a040e81b221f",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 35,
+                            "i": "1a712104-c216-4e08-91f1-441a269e6fad",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例生产限流次数",
+                        "description": "实例生产限流次数",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceproducethrottle_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "53c4e214-00c5-499c-9f5d-0938a7d4bc6c",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 35,
+                            "i": "65b1177b-30da-4328-9866-c9a88b5c78c1",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例消费限流次数",
+                        "description": "实例消费限流次数",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instanceconsumethrottle_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "5b98add6-e529-487c-ad6b-254cea0a1ece",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 39,
+                            "i": "04758af2-e58b-43c2-838c-3d2be3d116dd",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例 partition 数量",
+                        "description": "实例 partition 数量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancepartitionnum_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "02d530cc-08c9-490a-bd36-4cabb3fefc1c",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 39,
+                            "i": "b86423c3-4daf-404f-bc1e-584db4a70b18",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例 partition 百分比（占用配额百分比）",
+                        "description": "实例 partition 百分比（占用配额百分比）",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancepartitionpercentage_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "ece9b0e4-ea16-43fd-8292-83c5d0ff61da",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 43,
+                            "i": "25eddc7e-57d2-4f55-b97f-65013c0171fa",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例 Topic 数量",
+                        "description": "实例 Topic 数量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancetopicnum_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "4626305b-ff4e-46ca-a340-5abb85cbe9c6",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 43,
+                            "i": "924f45e6-4ad5-45de-b89a-6e4ef8e0b97d",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "实例 Topic 百分比",
+                        "description": "实例 Topic 百分比（占用配额）",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "list",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_instancetopicpercentage_first{instance_id=~\"$instance_id\"}",
+                                "legend": "{{instance_name}} | {{instance_id}}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "6702eb9e-b64b-46f2-97e8-3112e86a5358",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 47,
+                    "i": "c95ca9e6-845e-4e07-9a67-b0283b7439d7",
+                    "isResizable": false
+                },
+                "name": "主题监控指标（受模版变量 Topic Total 控制）",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "03e98967-38d1-4716-92bf-0a760d989f13",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 4,
+                            "i": "7760b0d3-0352-499e-9316-fecc222494f2",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic最大生产流量(不含副本流量)",
+                        "description": "Topic最大生产流量(不含副本流量)",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_tmaxproduceflow_first{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "38932e87-b8a6-4e2e-a40a-4c0fbfd7a206",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 4,
+                            "i": "7a9a61ac-39a9-4e5b-9209-5b055c5c0a6e",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic最大消费流量",
+                        "description": "Topic最大消费流量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_tmaxconsumeflow_first{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "656ebfa9-fb48-4a04-9f85-8642d99e6e9a",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 8,
+                            "i": "e1580b6e-476f-4ab0-b05a-ea77e02133ec",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic 生产流量",
+                        "description": "Topic 生产流量（不包含副本产生的流量），按照一分钟时间粒度统计求和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicproflow_sum{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "87b64109-0191-4396-9308-ce1939d919a6",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 8,
+                            "i": "81419f22-7a05-47f4-a0c7-75782a0455f7",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic 消费流量",
+                        "description": "Topic 消费流量（不包含副本产生的流量），按照一分钟时间粒度统计求和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicconflow_sum{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "2f0a77dc-d1e7-4037-a1ad-b0c9ef8b6409",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 12,
+                            "i": "bfcbd319-ce39-42b7-b2bb-277411b3ba88",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic 生产消息条数",
+                        "description": "Topic 生产消息条数，按照一分钟时间粒度统计求和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicprocount_sum{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "9050d475-d20d-46a5-bfb2-1410bce0ceff",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 12,
+                            "i": "073cbe8a-4a85-4195-8cbb-22396fcb0cfd",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic 消费消息条数",
+                        "description": "Topic 消费消息条数，按照一分钟时间粒度统计求和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicconcount_sum{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "e0a780d3-650f-495a-b7de-c08d6a5a1c0f",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 16,
+                            "i": "ffa9a7b7-33f1-4e1b-8012-d8f86078c347",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic 级别生产请求次数",
+                        "description": "Topic 级别生产请求次数，按照一分钟时间粒度统计求和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicproreqcount_sum{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "0fd59939-eed1-4d1c-b36a-d9222ae9f02e",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 16,
+                            "i": "7150de28-0f18-4960-9920-617bf9ec5160",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic 级别消费请求次数",
+                        "description": "Topic 级别消费请求次数，按照一分钟时间粒度统计求和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicconreqcount_sum{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "27e00910-9632-4231-8f49-e3073dbd3aee",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 20,
+                            "i": "91267e71-363f-44bf-b867-c139c7ea49ce",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic 落盘的消息总条数",
+                        "description": "Topic 落盘的消息总条数（不包含副本），按照所选择的时间粒度取最新值",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicmsgcount_sum{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "f87d9d3f-d355-497f-8230-15c025759c98",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 20,
+                            "i": "056af123-3dd9-4819-b1c6-d8ae10251948",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic 占用磁盘的消息总量",
+                        "description": "Topic 占用磁盘的消息总量（不包含副本），按照所选择的时间粒度取最新值",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicmsgheap_sum{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "76864df9-5c75-4d27-8c3a-1c00a761dfd0",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 24,
+                            "i": "22f08f4f-fb83-4eac-8aa8-6bd2aef03be8",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic生产限流次数",
+                        "description": "Topic生产限流次数",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ttopicproducethrottle_avg{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "3a2309a0-6fb6-480e-8abb-d3ffad2a840e",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 24,
+                            "i": "6000b8dc-b61d-4621-ae75-d63bbca5c6e1",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "Topic消费限流次数",
+                        "description": "Topic消费限流次数",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ttopicconsumethrottle_avg{topic_name=~\"$topic_name\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{topic_name}}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "4981050f-f72e-454f-8f77-41c4029732d3",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 48,
+                    "i": "472bb122-8554-4576-945e-8e75a1f69f28",
+                    "isResizable": false
+                },
+                "name": "消费分组监控指标-分区（受模版变量 Consumer Group、Topic Consumed、Partition 控制）",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "65f272ff-de11-44e1-871b-11ba8175f6cd",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 5,
+                            "i": "fbd02bbd-3244-40c7-a5d3-d5192bf2ce87",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "分区消费速度",
+                        "description": "消费分组在该分区的消费速率（条/分钟）",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_cpartitionconsumerspeed_first{consumer_group=~\"$consumer_group\",partition=~\"$partition\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}} | {{partition}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "e5a8c6d2-6814-4316-9868-7ca5fb6f2f79",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 5,
+                            "i": "b8a434c9-357e-4d88-806c-8d44dcda38fb",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "分区最大 offset",
+                        "description": "分区最大 offset",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_cpartitionmaxoffset_first{consumer_group=~\"$consumer_group\",partition=~\"$partition\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}} | {{partition}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "cc5090c2-46f2-4aa2-b692-0a4a611d7feb",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 9,
+                            "i": "0d7d16bd-b8c3-4ed7-b092-5e220f19511e",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "分区当前消费 offset",
+                        "description": "分区当前消费 offset",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_cpartitionoffset_first{consumer_group=~\"$consumer_group\",partition=~\"$partition\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}} | {{partition}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "f4c62352-14a7-4562-adcc-c7110a8d75c3",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 9,
+                            "i": "2c50e2aa-7570-4fb5-ba2b-4bae1b21fac6",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "分区当前未消费消息",
+                        "description": "分区当前未消费消息",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_cpartitionunconsume_first{consumer_group=~\"$consumer_group\",partition=~\"$partition\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}} | {{partition}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "0626fa04-2881-4a32-b240-56609b5803b6",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 13,
+                            "i": "6ad71c62-440d-47f0-a166-49331fa265cb",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "消费分组最大 offset",
+                        "description": "消费分组该分区当前消费 offset",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_cgroupmaxoffset_first{consumer_group=~\"$consumer_group\",partition=~\"$partition\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}} | {{partition}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "1f6c836c-5ef2-497b-a769-5ab92752d120",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 13,
+                            "i": "1af2d951-f544-4584-829f-4c1d02f6da11",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "主题级别消费分组 offset",
+                        "description": "主题级别消费分组 offset",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicmsgoffset_first{consumer_group=~\"$consumer_group\",partition=~\"$partition\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}} | {{partition}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "3bd7fc9c-e406-428a-a01a-b2770f56c2bc",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 17,
+                            "i": "1d130f9e-f2bd-4747-947b-42d8bdd0c74c",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "主题级别未消费消息个数",
+                        "description": "消费分组在该分区下未消费消息数",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicunconsumemsgcount_first{consumer_group=~\"$consumer_group\",partition=~\"$partition\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}} | {{partition}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "d97057fb-11ab-4f03-9211-90134405f415",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 17,
+                            "i": "823841b2-e049-4a1c-a931-82197ddf678b",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "主题级别未消费消息堆积量",
+                        "description": "消费分组在该分区下未消费消息堆积量",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicunconsumemsgoffset_first{consumer_group=~\"$consumer_group\",partition=~\"$partition\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}} | {{partition}}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "469afef8-05fb-471d-b019-727205d95344",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 49,
+                    "i": "05e4fc1b-7af6-417b-887a-ddfdbb178d3e",
+                    "isResizable": false
+                },
+                "name": "消费分组监控指标-主题（受模版变量 Consumer Group、Topic Consumed 控制）",
+                "collapsed": false,
+                "panels": [
+                    {
+                        "type": "timeseries",
+                        "id": "3256e9ad-63bc-44e7-b70b-d2104c60d345",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 6,
+                            "i": "21179cc7-5551-4586-a536-8405047e5254",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "主题消费速度",
+                        "description": "当前主题所有分区消费组消费速率总和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_ctopicconsumerspeed_sum{consumer_group=~\"$consumer_group\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "4c8da67c-b1e3-4bc2-a822-5e864cc82d20",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 6,
+                            "i": "ef7ff824-3003-4383-a69f-bcd44e3997cc",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "消费分组对应当前 topic 最大 offset",
+                        "description": "当前主题中所有分区的最大 offset",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_maxoffsettopic_max{consumer_group=~\"$consumer_group\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "1c74be4f-965a-44cf-828a-84cd7db9a53c",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 10,
+                            "i": "a3d7bf08-5aff-41b2-8d39-8ff1943461f9",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "消费分组当前消费 offset（区分 offset 最大值）",
+                        "description": "当前主题所有分区中消费组消费的最大 offset",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_offsettopic_max{consumer_group=~\"$consumer_group\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "0b6844c5-989e-4ec6-8490-40d4f8ad7e60",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 12,
+                            "y": 10,
+                            "i": "41b64ddf-407a-48b9-8f18-8fb89eb6b82e",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "消费分组未消费消息大小",
+                        "description": "当前主题所有分区消费组未消费消息大小",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_unconsumesizetopic_sum{consumer_group=~\"$consumer_group\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}}"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "timeseries",
+                        "id": "7d2ffcbf-496a-44bc-a768-ab8a3fc1763a",
+                        "layout": {
+                            "h": 4,
+                            "w": 12,
+                            "x": 0,
+                            "y": 14,
+                            "i": "0ad6bebd-ae90-406c-8c3e-59491b62fa4f",
+                            "isResizable": true
+                        },
+                        "version": "3.2.0",
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "name": "消费分组未消费消息数",
+                        "description": "当前主题所有分区消费组未消费消息总和",
+                        "maxPerRow": 4,
+                        "options": {
+                            "tooltip": {
+                                "mode": "single"
+                            },
+                            "legend": {
+                                "displayMode": "table",
+                                "placement": "bottom",
+                                "behaviour": "showItem",
+                                "selectMode": "single"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "drawStyle": "line",
+                            "lineInterpolation": "linear",
+                            "spanNulls": false,
+                            "lineWidth": 2,
+                            "fillOpacity": 0.01,
+                            "gradientMode": "none",
+                            "stack": "none",
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "showPoints": "auto",
+                            "pointSize": 5
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "qce_ckafka_unconsumetopic_sum{consumer_group=~\"$consumer_group\",topic_name=~\"$topic_consumed\"}",
+                                "legend": "{{instance_name}} | {{instance_id}} | {{consumer_group}} | {{topic_name}}"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "version": "3.2.0"
+    }
+}

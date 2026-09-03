@@ -14,5 +14,5 @@ commands = [
 # interval_times = 1
 
 # # choices: influx prometheus falcon
-# # influx stdout example: mesurement,labelkey1=labelval1,labelkey2=labelval2 field1=1.2,field2=2.3
+# # influx stdout example: measurement,labelkey1=labelval1,labelkey2=labelval2 field1=1.2,field2=2.3
 # data_format = "influx"

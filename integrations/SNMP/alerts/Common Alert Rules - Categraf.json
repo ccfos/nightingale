@@ -1,0 +1,2554 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "H3C 电源状态异常",
+        "note": "正常状态为2\n连续3次 != 2则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_power_status{Brand='H3C'} != 2",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=H3C"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display power 确认是哪个电源槽位异常；\n2) 到机房现场确认电源模块指示灯与供电线路、PDU 输出；\n3) 线路正常则判定为电源模块硬件故障，走备件更换流程；\n4) 更换前确认另一路供电正常，避免操作中整机断电。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564526780,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "H3C设备 CPU使用率大于70%",
+        "note": "连续10分钟cpu利用率大于70%",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_cpuuse{Brand='H3C'}\u003e70",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=H3C"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display cpu-usage（华为/H3C）或 show system processes（Juniper）看是哪个进程占用高；\n2) 常见根因是路由震荡、ARP/广播风暴、ACL 规则过多或被扫描；\n3) 用 display interface brief 看是否有端口流量异常，配合抓包定位广播风暴源；\n4) 确认后隔离异常端口或优化配置，持续高负载则评估设备是否已到容量上限。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564528573,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "H3C设备 内存使用率大于70%",
+        "note": "连续2分钟内存利用率大于70%",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_memuse{Brand='H3C'}\u003e70",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=H3C"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display memory-usage 看内存分布；\n2) 检查路由表与 ARP 表规模是否异常膨胀（display ip routing-table statistics、display arp statistics）；\n3) 常见根因是路由泄漏、ARP 攻击或长期未重启的内存碎片；\n4) 优化路由聚合与 ARP 老化时间，必要时安排窗口重启设备。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564530130,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "H3C设备 风扇状态异常",
+        "note": "正常状态为2\n连续3次!= 2则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_fan_status{Brand='H3C'} != 2",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=H3C"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display fan 确认异常的风扇槽位；\n2) 同时用 display temperature 确认当前温度是否已经上升；\n3) 到现场确认风扇是否卡死、滤网是否积灰，清灰后复测；\n4) 确认为硬件故障的尽快更换风扇模块，温度已高的先降低设备负载或加强机房散热。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564531683,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "ICMP 超时",
+        "note": "0 = 未响应\n1 = 响应\n1分钟内所有请求都无响应，认为设备失联",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            1
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "max_over_time(snmp_icmp_up{}[1m]) == 0",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 从其他网段再 ping 一次以排除单点路径问题，并用 traceroute 定位在哪一跳断开；\n2) 尝试 SSH/Telnet 登录设备，能登录说明是 ICMP 被策略拦截而非设备故障；\n3) 完全不可达的到现场确认设备电源与指示灯；\n4) 确认该设备承载的业务是否已切到冗余路径，未切的优先恢复流量。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564533276,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Incoming 带宽使用率高",
+        "note": "snmp_interface_incoming 表示入流量的累计值，单位为字节每秒， rate(snmp_interface_incoming{}[1m]) * 8，表示每秒的入流量，单位为bit/s\nsnmp_interface_speed 表示接口的最大传输速率\n\n本判断条件表示实际入流量大于带宽的90%\n",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "(rate(snmp_interface_incoming{}[1m]) * 8 / 10^9) \u003e ((snmp_interface_speed{}/ 10^3) *0.9) and snmp_interface_speed \u003e0",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 从告警标签取设备与接口，用 display interface \u003c接口\u003e 确认实际速率与峰值；\n2) 用 NetFlow/sFlow 或在上层设备抓流量，定位是哪些源/目的占用了主要带宽；\n3) 确认是正常业务增长、备份任务还是异常流量（攻击、环路）；\n4) 正常增长的扩容链路或做链路聚合，异常的先限流或隔离。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564534875,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 15s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Interface Down",
+        "note": "SNMP采集指标说明：\nsnmp_interface_admin_status： up = 1 ,down = 2，testing = 3\n告警规则：\n最近一次snmp_interface_admin_status == up\n最近14天up过至少1次（offset 1h是防止down变up瞬间，发生告警）\n最近1次 ostatus != 1\n60秒检测一次，连续满足3次触发告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_interface_admin_status{ifname!~'^(vlan|Vlanif|VLAN|V|irb|gr-).*'} == 1 and min_over_time(snmp_interface_ostatus{ifname!~'^(vlan|Vlanif|VLAN|V|irb|gr-).*'}[14d] offset 1h)  == 1 and snmp_interface_ostatus{ifname!~'^(vlan|Vlanif|VLAN|V|irb|gr-).*'} != 1",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 从告警标签取设备与 ifname，登录设备用 display interface \u003c接口\u003e 看 down 的原因与错包计数；\n2) 到现场确认网线/光模块是否松动，光模块可用 display transceiver 看收发光功率；\n3) 对端设备侧同步确认接口状态，双方都 down 才能定位是链路还是单侧问题；\n4) 确认是否有冗余链路已接管，无冗余的优先恢复。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564536497,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Juniper设备 CPU使用率大于70%",
+        "note": "连续10分钟cpu利用率大于70%",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_cpuuse{Brand='Juniper'}  \u003e 70",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Juniper"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display cpu-usage（华为/H3C）或 show system processes（Juniper）看是哪个进程占用高；\n2) 常见根因是路由震荡、ARP/广播风暴、ACL 规则过多或被扫描；\n3) 用 display interface brief 看是否有端口流量异常，配合抓包定位广播风暴源；\n4) 确认后隔离异常端口或优化配置，持续高负载则评估设备是否已到容量上限。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564538111,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Juniper设备 内存使用率大于70%",
+        "note": "连续2分钟内存利利用率大于70%",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_memuse{Brand='Juniper'}  \u003e 70",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Juniper"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display memory-usage 看内存分布；\n2) 检查路由表与 ARP 表规模是否异常膨胀（display ip routing-table statistics、display arp statistics）；\n3) 常见根因是路由泄漏、ARP 攻击或长期未重启的内存碎片；\n4) 优化路由聚合与 ARP 老化时间，必要时安排窗口重启设备。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564539864,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Juniper设备 电源状态异常",
+        "note": "正常状态为2，异常状态为6\n连续3次 == 6则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_power_status{Brand='Juniper'}  == 6",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Juniper"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display power 确认是哪个电源槽位异常；\n2) 到机房现场确认电源模块指示灯与供电线路、PDU 输出；\n3) 线路正常则判定为电源模块硬件故障，走备件更换流程；\n4) 更换前确认另一路供电正常，避免操作中整机断电。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564541466,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Juniper设备 风扇状态异常",
+        "note": "正常状态为2或5，异常状态为6\n连续3次== 6则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_fan_status{Brand='Juniper'}  == 6",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Juniper"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display fan 确认异常的风扇槽位；\n2) 同时用 display temperature 确认当前温度是否已经上升；\n3) 到现场确认风扇是否卡死、滤网是否积灰，清灰后复测；\n4) 确认为硬件故障的尽快更换风扇模块，温度已高的先降低设备负载或加强机房散热。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564543049,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Outgoing 带宽使用率高",
+        "note": "snmp_interface_outgoing 表示出流量的累计值，单位为字节每秒， rate(snmp_interface_outcoming{}[1m]) * 8，表示每秒的出流量，单位为bit/s\nsnmp_interface_speed 表示接口的最大传输速率\n\n本判断条件表示实际入流量大于带宽的90%\n",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "(rate(snmp_interface_outgoing{}[1m]) * 8 / 10^9) \u003e ((snmp_interface_speed{}/ 10^3) *0.9) and snmp_interface_speed \u003e0",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 从告警标签取设备与接口，用 display interface \u003c接口\u003e 确认实际速率与峰值；\n2) 用 NetFlow/sFlow 或在上层设备抓流量，定位是哪些源/目的占用了主要带宽；\n3) 确认是正常业务增长、备份任务还是异常流量（攻击、环路）；\n4) 正常增长的扩容链路或做链路聚合，异常的先限流或隔离。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564544635,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 15s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Ruijie设备 电源状态异常",
+        "note": "正常状态为4，异常状态为???\n连续3次 != 4则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_power_status{Brand='Ruijie'} != 4",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Ruijie"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display power 确认是哪个电源槽位异常；\n2) 到机房现场确认电源模块指示灯与供电线路、PDU 输出；\n3) 线路正常则判定为电源模块硬件故障，走备件更换流程；\n4) 更换前确认另一路供电正常，避免操作中整机断电。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564546160,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Ruijie设备 风扇状态异常",
+        "note": "正常状态为4或者6\n连续3次!= 4且不等于6 则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_fan_status{Brand='Ruijie'} != 4 and snmp_system_fan_status{Brand='Ruijie'} != 6",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Ruijie"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display fan 确认异常的风扇槽位；\n2) 同时用 display temperature 确认当前温度是否已经上升；\n3) 到现场确认风扇是否卡死、滤网是否积灰，清灰后复测；\n4) 确认为硬件故障的尽快更换风扇模块，温度已高的先降低设备负载或加强机房散热。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564547758,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Ruijie设备CPU使用率大于70%",
+        "note": "连续10分钟cpu利用率大于70%",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_cpuuse{Brand='Ruijie'} \u003e 70",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Ruijie"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display cpu-usage（华为/H3C）或 show system processes（Juniper）看是哪个进程占用高；\n2) 常见根因是路由震荡、ARP/广播风暴、ACL 规则过多或被扫描；\n3) 用 display interface brief 看是否有端口流量异常，配合抓包定位广播风暴源；\n4) 确认后隔离异常端口或优化配置，持续高负载则评估设备是否已到容量上限。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564549270,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Ruijie设备内存使用率大于70%",
+        "note": "连续2分钟内存利用率大于70%",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_memuse{Brand='Ruijie'} \u003e 70",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Ruijie"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display memory-usage 看内存分布；\n2) 检查路由表与 ARP 表规模是否异常膨胀（display ip routing-table statistics、display arp statistics）；\n3) 常见根因是路由泄漏、ARP 攻击或长期未重启的内存碎片；\n4) 优化路由聚合与 ARP 老化时间，必要时安排窗口重启设备。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564550880,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "入方向 CRC 错误",
+        "note": "incoming_errors：端口历史错包总数，\nincoming_ucastpkts：端口历史数据包总数\n\n1. incoming_errors一分钟变化值 大于100\n2. incoming_errors一分钟变化值  除以  incoming_ucastpkts一分钟变化值 大于 1%\n3. 60秒检测一次，连续5次满足，则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "rate(snmp_interface_incoming_errors{}[2m]) \u003e 100 and rate(snmp_interface_incoming_errors{}[2m]) / rate(snmp_interface_incoming_ucastpkts{}[2m]) \u003e 0.01",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 600,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 从告警标签取设备与接口，用 display interface \u003c接口\u003e 看 CRC/errors 计数的增长速度；\n2) 检查网线/光模块，光口用 display transceiver 看收发光功率是否在规格范围内；\n3) 确认两端协商的速率与双工模式一致——不一致是经典错包源；\n4) 换线或换模块后清零计数（reset counters interface）复测确认。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564552469,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "出方向 CRC 错误",
+        "note": "outgoing_errors：端口历史错包总数，\noutgoing_ucastpkts：端口历史数据包总数\n\n1. outgoing_errors一分钟变化值 大于100\n2. outgoing_errors一分钟变化值  除以  outgoing_ucastpkts一分钟变化值 大于 1%\n3. 60秒检测一次，连续5次满足，则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "rate(snmp_interface_outgoing_errors{}[2m]) \u003e 100 and rate(snmp_interface_outgoing_errors{}[2m]) / rate(snmp_interface_outgoing_ucastpkts{}[2m]) \u003e 0.01",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 600,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 从告警标签取设备与接口，用 display interface \u003c接口\u003e 看 CRC/errors 计数的增长速度；\n2) 检查网线/光模块，光口用 display transceiver 看收发光功率是否在规格范围内；\n3) 确认两端协商的速率与双工模式一致——不一致是经典错包源；\n4) 换线或换模块后清零计数（reset counters interface）复测确认。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564554091,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "华为设备CPU使用率大于70%",
+        "note": "连续10分钟cpu利用率大于70%",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_cpuuse{Brand='Huawei'} \u003e 70",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Huawei"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display cpu-usage（华为/H3C）或 show system processes（Juniper）看是哪个进程占用高；\n2) 常见根因是路由震荡、ARP/广播风暴、ACL 规则过多或被扫描；\n3) 用 display interface brief 看是否有端口流量异常，配合抓包定位广播风暴源；\n4) 确认后隔离异常端口或优化配置，持续高负载则评估设备是否已到容量上限。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564555703,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "华为设备内存使用率大于70%",
+        "note": "连续2分钟内存利用率大于70%",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_memuse{Brand='Huawei'} \u003e 70",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Huawei"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display memory-usage 看内存分布；\n2) 检查路由表与 ARP 表规模是否异常膨胀（display ip routing-table statistics、display arp statistics）；\n3) 常见根因是路由泄漏、ARP 攻击或长期未重启的内存碎片；\n4) 优化路由聚合与 ARP 老化时间，必要时安排窗口重启设备。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564557218,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "华为设备电源状态异常",
+        "note": "正常状态为1，异常状态为2\n连续3次 != 1 则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_power_status{Brand='Huawei'} != 1",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Huawei"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display power 确认是哪个电源槽位异常；\n2) 到机房现场确认电源模块指示灯与供电线路、PDU 输出；\n3) 线路正常则判定为电源模块硬件故障，走备件更换流程；\n4) 更换前确认另一路供电正常，避免操作中整机断电。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564558796,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "华为设备风扇状态异常",
+        "note": "正常状态为1\n连续3次!=1,则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "snmp_system_fan_status{Brand='Huawei'} != 1",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "Brand=Huawei"
+        ],
+        "annotations": {
+            "action": "1) 登录设备用 display fan 确认异常的风扇槽位；\n2) 同时用 display temperature 确认当前温度是否已经上升；\n3) 到现场确认风扇是否卡死、滤网是否积灰，清灰后复测；\n4) 确认为硬件故障的尽快更换风扇模块，温度已高的先降低设备负载或加强机房散热。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564560662,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "设备中断",
+        "note": "snmp_uptime 表示设备运行时间，单位10ms\n\ndelta(snmp_uptime{}/100 [2m])  表示设备2分钟内没有uptime 更新",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            1
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "delta(snmp_uptime{}/100 [2m]) == 0",
+                    "severity": 1,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 手工 snmpwalk 一次设备的 sysUpTime，确认设备是否真的还在响应；\n2) 能响应说明是采集侧问题，检查 categraf 的 snmp 配置、社区串与超时设置；\n3) 不响应则按设备失联处理，确认设备电源与管理网；\n4) 恢复后确认历史数据缺口，注意盲区期间没有告警。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564562282,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 15s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "设备失去连接",
+        "note": "未响应 == 0，响应 == 1\n检测频率60秒,连续3次snmp和icmp都为0，则触发告警\n如未恢复，24h后会再次发送",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "max_over_time(snmp_icmp_up{}[3m]) == 0 and max_over_time(snmp_up{}[3m]) == 0",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 1440,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 立即确认该设备下挂业务是否已切到冗余设备，未切的优先处理流量；\n2) 到现场确认设备电源、指示灯与控制台是否有输出；\n3) 能进控制台的查看是否处于重启或异常状态，收集日志；\n4) 硬件故障的走备件更换，期间保持业务在冗余路径上。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564564377,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "设备重启",
+        "note": "设备启动时间小于 600.00秒则告警",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 60,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "resets(snmp_uptime{}[10m]) == 1 and resets(snmp_enginetime{}[10m]) == 1",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 登录设备用 display version 确认运行时长，用 display logbuffer 或 display trapbuffer 查重启原因；\n2) 区分人工重启、掉电、还是异常复位（内存耗尽、软件缺陷）；\n3) 异常复位的收集日志并联系厂商，同时确认是否需要升级固件；\n4) 确认重启后所有接口与路由邻居已恢复正常。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1737357564566468,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 300s"
+    }
+]

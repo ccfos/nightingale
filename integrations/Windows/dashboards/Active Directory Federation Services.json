@@ -1,0 +1,3308 @@
+{
+    "name": "Active Directory Federation Services",
+    "tags": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "b388a4d2-9428-40ea-9779-edae38e2c654",
+                "layout": {
+                    "h": 1,
+                    "i": "b388a4d2-9428-40ea-9779-edae38e2c654",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Overview",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {
+                        "title": null
+                    },
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of connection failures between the ADFS server and the Active Directory domain controller(s)",
+                "id": "76eb55d5-7dba-4f62-adcc-18fc255804f6",
+                "layout": {
+                    "h": 8,
+                    "i": "e04e9a97-86c2-4070-812a-5eba220f0cee",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Login Connection Failures",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(206, 79, 82, 1)",
+                                "type": "",
+                                "value": 1
+                            },
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_adfs_ad_login_connection_failures_total{instance=~\"$instance\"}[1m]))",
+                        "instant": true,
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of User Certificate authentications. I.E. smart cards or mobile devices with provisioned client certificates",
+                "id": "c0b119b9-cdad-4b1f-9500-7fdf49975bbb",
+                "layout": {
+                    "h": 4,
+                    "i": "c0b119b9-cdad-4b1f-9500-7fdf49975bbb",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Certificate Authentications",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_adfs_certificate_authentications_total{instance=~\"$instance\"}[1m]))",
+                        "instant": true,
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of device authentications (SignedToken, clientTLS, PkeyAuth). Device authentication is only available on ADFS 2016 or later",
+                "id": "fc75af52-5470-4f79-9461-a20780fc4a36",
+                "layout": {
+                    "h": 4,
+                    "i": "7705400f-1d34-40ae-a4a0-75dd5a534c03",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Device Authentications",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_adfs_device_authentications_total{instance=~\"$instance\"}[1m]))",
+                        "instant": true,
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of authentications from Microsoft Passport (now named Microsoft Account)",
+                "id": "08ca1bce-bf06-4eee-a651-26ee5dc2eb1b",
+                "layout": {
+                    "h": 4,
+                    "i": "abfdb000-bf6b-4761-a99f-c013195bb55c",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Passport Authentications",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_adfs_passport_authentications_total{instance=~\"$instance\"}[1m]))",
+                        "instant": true,
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of Windows integrated authentications using Kerberos or NTLM",
+                "id": "28443091-01c7-4ccc-8735-272952dc7b25",
+                "layout": {
+                    "h": 4,
+                    "i": "baeb8dd3-856c-4d42-b5ed-dc72543fb42d",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Windows Integrated Authentications",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_adfs_windows_integrated_authentications_total{instance=~\"$instance\"}[1m]))",
+                        "instant": true,
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of passive (browser-based) requests",
+                "id": "1baf2535-8a67-4d4e-a5c3-c610cd16ad36",
+                "layout": {
+                    "h": 4,
+                    "i": "06a765a9-6460-47c9-a4ea-5287b4af30b2",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 8,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Passive Requests",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_adfs_passive_requests_total{instance=~\"$instance\"}[1m]))",
+                        "instant": true,
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of extranet lockouts. Requires the Extranet Lockout feature to be enabled",
+                "id": "e2ddadfa-2f29-4073-8d9e-1e1a54337b4b",
+                "layout": {
+                    "h": 4,
+                    "i": "9cbfec9d-63f7-4d67-8172-0fe4b72b7df7",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 12,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Extranet Account Lockouts",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_adfs_extranet_account_lockouts_total{instance=~\"$instance\"}[1m]))",
+                        "instant": true,
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of incoming requests to the OAuth Authorization endpoint",
+                "id": "ed51832b-9068-48ae-9d56-b23247ae01d8",
+                "layout": {
+                    "h": 4,
+                    "i": "f472c29d-61a4-4879-a88f-89957feae585",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 16,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Oauth Authentications",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_adfs_oauth_authorization_requests_total{instance=~\"$instance\"}[1m]))",
+                        "instant": true,
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of requested access tokens",
+                "id": "91015d31-debe-4f19-b9d3-84a97709184e",
+                "layout": {
+                    "h": 4,
+                    "i": "91015d31-debe-4f19-b9d3-84a97709184e",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 20,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Token Requests",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_adfs_token_requests_total{instance=~\"$instance\"}[1m]))",
+                        "instant": true,
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of Federation Metadata requests",
+                "id": "e1a8b5f7-b299-4df3-82da-af142152acc9",
+                "layout": {
+                    "h": 5,
+                    "i": "a9084968-f5ee-46c7-bffc-6d19472f7f4f",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 9
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Federated Metadata Requests",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_federation_metadata_requests_total{instance=~\"$instance\"}[1m])",
+                        "instant": false,
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of authentications from federated sources. E.G. Office365",
+                "id": "3d256457-e062-41e3-8cde-1df19f281922",
+                "layout": {
+                    "h": 5,
+                    "i": "8b5bae69-3e0c-41e7-b64f-7f2feaa15fc8",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 9
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Federated Authentications",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_federated_authentications_total{instance=~\"$instance\"}[1m])",
+                        "instant": false,
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "01a85c30-d4cb-45c9-94b0-882a7f2d7490",
+                "layout": {
+                    "h": 1,
+                    "i": "01a85c30-d4cb-45c9-94b0-882a7f2d7490",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 14
+                },
+                "name": "Password",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed password changes. The Password Change Portal must be enabled in the AD FS Management tool in order to allow user password changes",
+                "id": "568ad4c7-6eec-4c51-a509-7d066d3c6598",
+                "layout": {
+                    "h": 7,
+                    "i": "568ad4c7-6eec-4c51-a509-7d066d3c6598",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 15
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Password Change Failed",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_password_change_failed_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of succeeded password changes. The Password Change Portal must be enabled in the AD FS Management tool in order to allow user password changes",
+                "id": "807d8a00-93e3-4096-bd85-7384f4c270ac",
+                "layout": {
+                    "h": 7,
+                    "i": "a91deb55-fff4-4758-a7a9-20129b9f7b76",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 15
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Password Change Succeeded",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_password_change_succeeded_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "00127e6d-5480-42a5-a0f5-8342a2328590",
+                "layout": {
+                    "h": 1,
+                    "i": "00127e6d-5480-42a5-a0f5-8342a2328590",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 22
+                },
+                "name": "Userpassword",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful AD U/P authentications",
+                "id": "0451d57a-5180-4b64-a690-8cf786665580",
+                "layout": {
+                    "h": 7,
+                    "i": "0451d57a-5180-4b64-a690-8cf786665580",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 23
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Userpassword Authentications Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_userpassword_authentications_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed AD U/P authentications",
+                "id": "d112dba8-4d2d-4b03-a077-e260ae67cbdf",
+                "layout": {
+                    "h": 7,
+                    "i": "fd3319ae-d800-4fa9-9729-9f781f13048b",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 23
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Userpassword Authentications Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_userpassword_authentications_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "309fcb4d-ffc3-4d40-84e3-9e9ee3a5f745",
+                "layout": {
+                    "h": 1,
+                    "i": "309fcb4d-ffc3-4d40-84e3-9e9ee3a5f745",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 30
+                },
+                "name": "SSO",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful SSO authentications",
+                "id": "12679beb-f1f7-4b81-92bf-e79446242c18",
+                "layout": {
+                    "h": 7,
+                    "i": "54a9d230-c3ce-41ca-9e92-c325c835439c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 31
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "SSO Authentications Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_sso_authentications_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed SSO authentications",
+                "id": "e6bf9a77-bb48-49e8-833d-3bc3403dd1ec",
+                "layout": {
+                    "h": 7,
+                    "i": "66434799-b86d-47af-a3db-18700e4841d5",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 31
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "SSO Authentications Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_sso_authentications_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "- received: Number of successful zone transfers (AXFR/IXFR) received by the secondary DNS server\n- sent: Number of successful zone transfers (AXFR/IXFR) of the master DNS server",
+                "id": "fc445f84-ba77-431b-949b-9bf22dbe72bf",
+                "layout": {
+                    "h": 7,
+                    "i": "67c7eefa-721f-49a6-9f5a-19f773e333c7",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 38
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS Zone Transfer Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_dns_zone_transfer_requests_received_total{instance=~\"$instance\"}[1m])",
+                        "legend": "received ({{instance}} - {{qtype}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "__mode__": "__query__",
+                        "expr": "delta(windows_dns_zone_transfer_success_sent_total{instance=~\"$instance\"}[1m])",
+                        "legend": "sent ({{instance}} - {{qtype}})",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "04e97651-3e66-4ecf-8234-f8c7f5ca155d",
+                "layout": {
+                    "h": 1,
+                    "i": "04e97651-3e66-4ecf-8234-f8c7f5ca155d",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 45
+                },
+                "name": "Oauth",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful OAuth client Authentications",
+                "id": "6db52cb6-7f40-4765-85c3-a255cf7bf718",
+                "layout": {
+                    "h": 7,
+                    "i": "6b934526-3ab8-4b69-af43-04cc3601caba",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 46
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Authentication Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_authentication_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed OAuth client Authentications",
+                "id": "11726e58-e15e-44ce-8b7f-b6e3e586036d",
+                "layout": {
+                    "h": 7,
+                    "i": "3bb76da0-3549-4989-8a83-0c975a9b02f5",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 46
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Authentication Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_authentication_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful RP tokens issued for OAuth Client Credentials Requests",
+                "id": "04fdd2f2-368b-4632-a093-545b4b2f8dd4",
+                "layout": {
+                    "h": 7,
+                    "i": "8065c885-0d3e-48b1-a7e5-ab90bb950c49",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 53
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Credentials Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_credentials_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed OAuth Client Credentials Requests",
+                "id": "b341b1c2-2957-416c-9771-6ce8f49834a1",
+                "layout": {
+                    "h": 7,
+                    "i": "eb853228-220e-4736-aec8-d8b3003022b1",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 53
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Credentials Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_credentials_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful OAuth Client Private Key Jwt Authentications",
+                "id": "4b8db877-c3cc-455f-8c72-ca0811d9ce82",
+                "layout": {
+                    "h": 7,
+                    "i": "ba5a2cd9-eb3d-4dd5-9846-9856e0d03161",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 60
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Privkey Jwt Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_privkey_jwt_authentications_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed OAuth Client Private Key Jwt Authentications",
+                "id": "adbc4fcc-9b20-47a8-a1f9-f77d9fd78415",
+                "layout": {
+                    "h": 7,
+                    "i": "65f9566d-682d-40df-a1f7-3e3dc147f5eb",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 60
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Privkey Jwt Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_privkey_jwt_authentication_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful OAuth Client Secret Basic Authentications",
+                "id": "bfd4f1c2-6573-4822-adea-b1ee40a7c8d2",
+                "layout": {
+                    "h": 7,
+                    "i": "0a104b68-6382-49d5-838c-bde925b4015d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 67
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Secret Basic Authentications Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_secret_basic_authentications_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed OAuth Client Secret Basic Authentications",
+                "id": "e725b5fd-880c-47f3-a436-0f2c05e74d4f",
+                "layout": {
+                    "h": 7,
+                    "i": "644b199e-0f9b-4406-afe1-1c6aa31f75bf",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 67
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Secret Basic Authentications Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_secret_basic_authentications_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful OAuth Client Secret Post Authentications",
+                "id": "87d8105a-dd34-45d0-965b-ef4f182e232f",
+                "layout": {
+                    "h": 7,
+                    "i": "dd5e8aa8-b4c3-4de4-a853-daa238432c4c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 74
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Secret Post Authentications Sucess",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_secret_post_authentications_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed OAuth Client Secret Post Authentications",
+                "id": "f6a3519e-be60-433c-9173-b0071012b59f",
+                "layout": {
+                    "h": 7,
+                    "i": "e76ea16b-06ef-4305-b1ec-fa1f2afe0835",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 74
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Secret Post Authentications Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_secret_post_authentications_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful OAuth Client Windows Integrated Authentications",
+                "id": "75238002-a4a3-4e89-a8b9-287909886a82",
+                "layout": {
+                    "h": 7,
+                    "i": "3ad789c2-84c7-4e14-bb92-318ae9cb8f07",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 81
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Windows Authentications Sucess",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_windows_authentications_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed OAuth Client Windows Integrated Authentications",
+                "id": "0517f5f7-9a83-4fc1-809c-8f8b4876be4e",
+                "layout": {
+                    "h": 7,
+                    "i": "5e39b8cb-d4c2-4d15-a5f9-a742e9c573bd",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 81
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client Windows Authentications Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_client_windows_authentications_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful RP tokens issued for OAuth Logon Certificate Requests",
+                "id": "4d45c30a-501a-4239-9ddd-a0cbe9fa4e7c",
+                "layout": {
+                    "h": 7,
+                    "i": "f1ab25a2-a8b6-4a15-b411-67c0e30ab98a",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 88
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Logon Certificate Requests Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_logon_certificate_token_requests_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed OAuth Logon Certificate Requests",
+                "id": "925a4f87-3ce6-46b5-8c94-44eac5343afb",
+                "layout": {
+                    "h": 7,
+                    "i": "b807116b-2db3-4e32-8947-d5b973c1ad59",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 88
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Logon Certificate Requests Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_logon_certificate_requests_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful OAuth Password Grant Requests",
+                "id": "c376fa2f-c711-4132-9038-12cf2aac7396",
+                "layout": {
+                    "h": 7,
+                    "i": "0e2e1716-6ee3-4f53-9b37-c9fff34af364",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 95
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Password Grant Requests Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_password_grant_requests_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed OAuth Password Grant Requests",
+                "id": "8dfa5836-dc33-45aa-8769-a0d9c817b434",
+                "layout": {
+                    "h": 7,
+                    "i": "55313718-9d97-4089-a24a-28cb9b8b5f59",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 95
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Password Grant Requests Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_password_grant_requests_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful RP tokens issued over OAuth protocol",
+                "id": "27a9d7ca-d6b2-4f61-bca1-20f845401051",
+                "layout": {
+                    "h": 7,
+                    "i": "bf07816b-5b02-434c-9b35-d797debd1581",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 102
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Token Requests Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_oauth_token_requests_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "3dcd20db-0e8d-4991-af9d-3ad6b6a58799",
+                "layout": {
+                    "h": 1,
+                    "i": "3dcd20db-0e8d-4991-af9d-3ad6b6a58799",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 109
+                },
+                "name": "External",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful authentications from external MFA providers",
+                "id": "159def5c-a63d-4963-83fb-4facbdd9508f",
+                "layout": {
+                    "h": 6,
+                    "i": "9daa34ae-822c-4456-b0b6-839f542e3c6b",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 110
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "External Authentications Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_external_authentications_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "Received ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failed authentications from external MFA providers",
+                "id": "a272287f-6e41-4c69-ba1b-125fd41cccef",
+                "layout": {
+                    "h": 6,
+                    "i": "d548925a-811c-4b32-9207-b77eb792b4d5",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 110
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "External Authentications Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_external_authentications_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "Received ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "08040a35-eef4-42bc-a8dc-cb024ab02fdb",
+                "layout": {
+                    "h": 1,
+                    "i": "08040a35-eef4-42bc-a8dc-cb024ab02fdb",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 116
+                },
+                "name": "Samlp",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful RP tokens issued over SAML-P protocol",
+                "id": "fcf100e0-eb21-45ac-a9d8-2878c05a3feb",
+                "layout": {
+                    "h": 7,
+                    "i": "9f4f17f5-822b-4080-bd34-f0ff5343cb04",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 117
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Token Requests Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_samlp_token_requests_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "3477776e-4551-4f2f-b50d-a13d82f5351c",
+                "layout": {
+                    "h": 1,
+                    "i": "3477776e-4551-4f2f-b50d-a13d82f5351c",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 124
+                },
+                "name": "WS-Fed/WS-Trust",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful RP tokens issued over WS-Fed protocol",
+                "id": "7813f087-1f26-42a9-b20c-3d935d0f10f4",
+                "layout": {
+                    "h": 6,
+                    "i": "49e0799c-6816-45c5-a6b1-eab45212c417",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 125
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "WS-Fed Token Requests Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_wsfed_token_requests_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of successful RP tokens issued over WS-Trust protocol",
+                "id": "a5237f80-35e4-448b-aae3-f18ca015eefd",
+                "layout": {
+                    "h": 6,
+                    "i": "de2a4bbc-81a2-4962-92c8-6b19edf20082",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 125
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "WS-Trust Token Requests Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_wstrust_token_requests_success_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "15725c53-7cfd-47e1-a2ca-3a84940e24d1",
+                "layout": {
+                    "h": 1,
+                    "i": "15725c53-7cfd-47e1-a2ca-3a84940e24d1",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 131
+                },
+                "name": "DB",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failures connecting to the artifact database",
+                "id": "8727d398-5550-4beb-92ec-b3d99583a4f1",
+                "layout": {
+                    "h": 6,
+                    "i": "c4eda578-2b41-4599-b2b5-fc96a7bd4595",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 132
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DB Artifact Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_db_artifact_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Accumulator of time taken for an artifact database query",
+                "id": "efff92c3-568f-40f0-97a3-38804b3cc164",
+                "layout": {
+                    "h": 6,
+                    "i": "f27d3157-4945-4a73-88a6-171336f58ba5",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 132
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DB Artifact Query Time Seconds",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_db_artifact_query_time_seconds_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Total number of failures connecting to the configuration database",
+                "id": "3c7368ff-739f-4861-a9a8-01b7c0ca251b",
+                "layout": {
+                    "h": 6,
+                    "i": "f6f66a87-d442-46cf-9171-d2bb8e82557b",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 138
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DB Config Failure",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_db_config_failure_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Accumulator of time taken for a configuration database query",
+                "id": "a41e3d45-1053-46a8-9435-01d34d550586",
+                "layout": {
+                    "h": 6,
+                    "i": "70511215-e4f2-411b-9f45-ab2d2b3dd854",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 138
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DB Config Query Time",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_adfs_db_config_query_time_seconds_total{instance=~\"$instance\"}[1m])",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "hide": false,
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(windows_os_info, instance)",
+                "hide": false,
+                "multi": true,
+                "name": "instance",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "uuid": 1725259860857626000
+}

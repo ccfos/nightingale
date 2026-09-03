@@ -5020,7 +5020,8 @@
                 "allOption": true,
                 "allValue": ".*",
                 "datasource": {
-                    "cate": "prometheus"
+                    "cate": "prometheus",
+                    "value": "${datasource}"
                 },
                 "definition": "label_values(vm_app_version{job=~\"$job\"}, instance)",
                 "multi": true,

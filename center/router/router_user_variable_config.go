@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 )
 
 func (rt *Router) userVariableConfigGets(context *gin.Context) {
@@ -37,8 +37,11 @@ func (rt *Router) userVariableConfigPut(context *gin.Context) {
 	f.UpdateBy = context.MustGet("username").(string)
 	f.UpdateAt = time.Now().Unix()
 
+	configs, err := models.ConfigGet(rt.Ctx, f.Id)
+	ginx.Dangerous(err)
+
 	user := context.MustGet("user").(*models.User)
-	if !user.IsAdmin() && f.CreateBy != user.Username {
+	if !user.IsAdmin() && (configs == nil || configs.CreateBy != user.Username) {
 		// only admin or creator can update
 		ginx.Bomb(403, "forbidden")
 	}

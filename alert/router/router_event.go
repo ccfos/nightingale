@@ -12,10 +12,10 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/alert/queue"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -25,6 +25,7 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 	if event.RuleId == 0 {
 		ginx.Bomb(200, "event is illegal")
 	}
+	event.FE2DB()
 
 	event.TagsMap = make(map[string]string)
 	for i := 0; i < len(event.TagsJSON); i++ {
@@ -40,11 +41,23 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 
 		event.TagsMap[arr[0]] = arr[1]
 	}
-	hit, _ :=  mute.EventMuteStrategy(event, rt.AlertMuteCache)
-	if hit {
+	// 完全屏蔽：保持原有行为，按事件自身的 TriggerTime 判定，触发与恢复事件命中即丢弃
+	hit, muteId, muteType := mute.EventMuteStrategy(event, rt.AlertMuteCache)
+	if hit && muteType != models.MuteTypeNotifyOnly {
 		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
 		ginx.NewRender(c).Message(nil)
 		return
+	}
+
+	// 只屏蔽通知的判定：恢复事件按恢复时刻（clock=当前时间）重判，
+	// 避免 TriggerTime 早于「只屏蔽通知」窗口而漏判、导致窗口内的恢复通知被误发。
+	if event.IsRecovered {
+		hit, muteId, muteType = mute.EventMuteStrategy(event, rt.AlertMuteCache, time.Now().Unix())
+	}
+	if hit && muteType == models.MuteTypeNotifyOnly {
+		// 事件照常入队产生/记录，仅打标，通知阶段据此跳过发送并写通知记录（含恢复事件）
+		event.NotifyMuted = 1
+		event.MuteId = muteId
 	}
 
 	if err := event.ParseRule("rule_name"); err != nil {
@@ -74,9 +87,9 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 
 	dispatch.LogEvent(event, "http_push_queue")
 	if !queue.EventQueue.PushFront(event) {
-		msg := fmt.Sprintf("event:%+v push_queue err: queue is full", event)
-		ginx.Bomb(200, msg)
-		logger.Warningf(msg)
+		msg := fmt.Sprintf("event:%s push_queue err: queue is full", event.Hash)
+		ginx.Bomb(200, "%s", msg)
+		logger.Warning(msg)
 	}
 	ginx.NewRender(c).Message(nil)
 }
@@ -104,21 +117,21 @@ func (rt *Router) makeEvent(c *gin.Context) {
 	for i := 0; i < len(events); i++ {
 		node, err := naming.DatasourceHashRing.GetNode(strconv.FormatInt(events[i].DatasourceId, 10), fmt.Sprintf("%d", events[i].RuleId))
 		if err != nil {
-			logger.Warningf("event:%+v get node err:%v", events[i], err)
+			logger.Warningf("event(rule_id=%d ds_id=%d) get node err:%v", events[i].RuleId, events[i].DatasourceId, err)
 			ginx.Bomb(200, "event node not exists")
 		}
 
 		if node != rt.Alert.Heartbeat.Endpoint {
 			err := forwardEvent(events[i], node)
 			if err != nil {
-				logger.Warningf("event:%+v forward err:%v", events[i], err)
+				logger.Warningf("event(rule_id=%d ds_id=%d) forward err:%v", events[i].RuleId, events[i].DatasourceId, err)
 				ginx.Bomb(200, "event forward error")
 			}
 			continue
 		}
 
 		ruleWorker, exists := rt.ExternalProcessors.GetExternalAlertRule(events[i].DatasourceId, events[i].RuleId)
-		logger.Debugf("handle event:%+v exists:%v", events[i], exists)
+		logger.Debugf("handle event(rule_id=%d ds_id=%d) exists:%v", events[i].RuleId, events[i].DatasourceId, exists)
 		if !exists {
 			ginx.Bomb(200, "rule not exists")
 		}
@@ -142,6 +155,6 @@ func forwardEvent(event *eventForm, instance string) error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("forward event: result=succ url=%s code=%d event:%v response=%s", ur, code, event, string(res))
+	logger.Infof("forward event: result=succ url=%s code=%d rule_id=%d response=%s", ur, code, event.RuleId, string(res))
 	return nil
 }

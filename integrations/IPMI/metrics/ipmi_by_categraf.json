@@ -1,0 +1,553 @@
+[
+    {
+        "id": 1,
+        "uuid": 1719305153888541001,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI BMC 信息",
+        "unit": "",
+        "note": "包含BMC固件版本、制造商ID、系统固件版本等信息的常量指标。",
+        "lang": "zh_CN",
+        "expression": "ipmi_bmc_info",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI BMC 信息",
+                "note": "包含BMC固件版本、制造商ID、系统固件版本等信息的常量指标。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI BMC Info",
+                "note": "A constant metric containing information such as BMC firmware revision, manufacturer ID, and system firmware version."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 2,
+        "uuid": 1719305153888541002,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 机箱冷却故障状态",
+        "unit": "",
+        "note": "机箱冷却/风扇故障状态，1为无故障，0为有故障。",
+        "lang": "zh_CN",
+        "expression": "ipmi_chassis_cooling_fault_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 机箱冷却故障状态",
+                "note": "机箱冷却/风扇故障状态，1为无故障，0为有故障。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Chassis Cooling Fault State",
+                "note": "Indicates the chassis cooling/fan fault state, 1 for no fault, 0 for fault."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 3,
+        "uuid": 1719305153888541003,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 机箱磁盘故障状态",
+        "unit": "",
+        "note": "磁盘故障状态，1为无故障，0为有故障。",
+        "lang": "zh_CN",
+        "expression": "ipmi_chassis_drive_fault_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 机箱磁盘故障状态",
+                "note": "表示磁盘故障状态，1为无故障，0为有故障（原生Go实现中可能相反）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Chassis Drive Fault State",
+                "note": "Indicates the drive fault state, 1 for no fault, 0 for fault (may be reversed in native Go implementation)."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 4,
+        "uuid": 1719305153888541004,
+        "collector": "ipmi_exporter",
+        "typ": "IPMI",
+        "name": "IPMI 机箱电源状态",
+        "unit": "",
+        "note": "表示机箱电源状态，1为电源开启，0为电源关闭。",
+        "lang": "zh_CN",
+        "expression": "ipmi_chassis_power_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 机箱电源状态",
+                "note": "表示机箱电源状态，1为电源开启，0为电源关闭。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Chassis Power State",
+                "note": "Indicates the chassis power state, 1 for power on, 0 for power off."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 5,
+        "uuid": 1719305153888541005,
+        "collector": "ipmi_exporter",
+        "typ": "IPMI",
+        "name": "IPMI 电流（安培）",
+        "unit": "A",
+        "note": "电流传感器测量的电流值，单位为安培。",
+        "lang": "zh_CN",
+        "expression": "ipmi_current_amperes",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 电流（安培）",
+                "note": "电流传感器测量的电流值，单位为安培。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Current (Amperes)",
+                "note": "Current measured by current sensors, in Amperes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 6,
+        "uuid": 1719305153888541006,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 电流传感器状态",
+        "unit": "",
+        "note": "电流传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。",
+        "lang": "zh_CN",
+        "expression": "ipmi_current_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 电流传感器状态",
+                "note": "电流传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Current Sensor State",
+                "note": "State of current sensors, 0 for nominal, 1 for warning, 2 for critical, NaN for N/A."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 7,
+        "uuid": 1719305153888541007,
+        "collector": "ipmi_current_state",
+        "typ": "IPMI",
+        "name": "IPMI DCMI 功率消耗（瓦特）",
+        "unit": "W",
+        "note": "通过DCMI收集的当前功率消耗值，单位为瓦特。",
+        "lang": "zh_CN",
+        "expression": "ipmi_dcmi_power_consumption_watts",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI DCMI 功率消耗（瓦特）",
+                "note": "通过DCMI收集的当前功率消耗值，单位为瓦特。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI DCMI Power Consumption (Watts)",
+                "note": "Current power consumption collected via DCMI, in Watts."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 8,
+        "uuid": 1719305153888541008,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 风扇转速（转/分钟）",
+        "unit": "RPM",
+        "note": "风扇转速传感器测量的转速值，单位为转/分钟。",
+        "lang": "zh_CN",
+        "expression": "ipmi_fan_speed_rpm",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 风扇转速（转/分钟）",
+                "note": "风扇转速传感器测量的转速值，单位为转/分钟。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Fan Speed (RPM)",
+                "note": "Speed measured by fan speed sensors, in rotations per minute."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 9,
+        "uuid": 1719305153888541009,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 风扇转速传感器状态",
+        "unit": "",
+        "note": "风扇转速传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。",
+        "lang": "zh_CN",
+        "expression": "ipmi_fan_speed_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 风扇转速传感器状态",
+                "note": "风扇转速传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Fan Speed Sensor State",
+                "note": "State of fan speed sensors, 0 for nominal, 1 for warning, 2 for critical, NaN for N/A."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 10,
+        "uuid": 1719305153888541010,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 功率传感器状态",
+        "unit": "",
+        "note": "功率传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。",
+        "lang": "zh_CN",
+        "expression": "ipmi_power_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 功率传感器状态",
+                "note": "功率传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Power Sensor State",
+                "note": "State of power sensors, 0 for nominal, 1 for warning, 2 for critical, NaN for N/A."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 11,
+        "uuid": 1719305153888541011,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 抓取持续时间（秒）",
+        "unit": "s",
+        "note": "抓取IPMI数据所花费的时间，单位为秒。",
+        "lang": "zh_CN",
+        "expression": "ipmi_scrape_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 抓取持续时间（秒）",
+                "note": "抓取IPMI数据所花费的时间，单位为秒。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Scrape Duration (Seconds)",
+                "note": "The time taken to retrieve IPMI data, in seconds."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 12,
+        "uuid": 1719305153888541012,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI SEL 剩余空间（字节）",
+        "unit": "bytes",
+        "note": "系统事件日志（SEL）的剩余可用空间，单位为字节。",
+        "lang": "zh_CN",
+        "expression": "ipmi_sel_free_space_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI SEL 剩余空间（字节）",
+                "note": "系统事件日志（SEL）的剩余可用空间，单位为字节。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI SEL Free Space (Bytes)",
+                "note": "Free space remaining for new entries in the System Event Log (SEL), in bytes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 13,
+        "uuid": 1719305153888541013,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI SEL 日志数量",
+        "unit": "",
+        "note": "系统事件日志（SEL）中的事件日志条目总数。",
+        "lang": "zh_CN",
+        "expression": "ipmi_sel_logs_count",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI SEL 日志数量",
+                "note": "系统事件日志（SEL）中的事件日志条目总数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI SEL Logs Count",
+                "note": "Total number of event log entries in the System Event Log (SEL)."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 14,
+        "uuid": 1719305153888541014,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 传感器状态",
+        "unit": "",
+        "note": "未明确分类的通用传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。",
+        "lang": "zh_CN",
+        "expression": "ipmi_sensor_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 传感器状态",
+                "note": "未明确分类的通用传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Sensor State",
+                "note": "State of generic unclassified sensors, 0 for nominal, 1 for warning, 2 for critical, NaN for N/A."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 15,
+        "uuid": 1719305153888541015,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 温度（摄氏度）",
+        "unit": "°C",
+        "note": "温度传感器测量的温度值，单位为摄氏度。",
+        "lang": "zh_CN",
+        "expression": "ipmi_temperature_celsius",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 温度（摄氏度）",
+                "note": "温度传感器测量的温度值，单位为摄氏度。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Temperature (Celsius)",
+                "note": "Temperature measured by temperature sensors, in degrees Celsius."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 16,
+        "uuid": 1719305153888541016,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 温度传感器状态",
+        "unit": "",
+        "note": "温度传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。",
+        "lang": "zh_CN",
+        "expression": "ipmi_temperature_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 温度传感器状态",
+                "note": "温度传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Temperature Sensor State",
+                "note": "State of temperature sensors, 0 for nominal, 1 for warning, 2 for critical, NaN for N/A."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 17,
+        "uuid": 1719305153888541017,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 收集器状态",
+        "unit": "",
+        "note": "指示指定收集器是否成功从远程主机获取数据，1为成功，0为失败。",
+        "lang": "zh_CN",
+        "expression": "ipmi_up",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 收集器状态",
+                "note": "指示指定收集器是否成功从远程主机获取数据，1为成功，0为失败。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Collector Status",
+                "note": "Indicates if the specified collector successfully retrieved data from the remote host, 1 for success, 0 for failure."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 18,
+        "uuid": 1719305153888541018,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 采集状态",
+        "unit": "",
+        "note": "抓取元数据指标，1表示抓取成功，0表示失败。",
+        "lang": "zh_CN",
+        "expression": "ipmi_up",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 采集状态",
+                "note": "抓取元数据指标，1表示抓取成功，0表示失败。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Collection Status",
+                "note": "Scrape metadata metric. 1 indicates successful collection, 0 indicates failure."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 19,
+        "uuid": 1719305153888541018,
+        "collector": "categraf",
+        "typ": "IPMI",
+        "name": "IPMI 电压传感器状态",
+        "unit": "",
+        "note": "电压传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。",
+        "lang": "zh_CN",
+        "expression": "ipmi_voltage_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "IPMI 电压传感器状态",
+                "note": "电压传感器的状态，0为正常，1为警告，2为临界，NaN为不可用。"
+            },
+            {
+                "lang": "en_US",
+                "name": "IPMI Voltage Sensor State",
+                "note": "State of voltage sensors, 0 for nominal, 1 for warning, 2 for critical, NaN for N/A."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

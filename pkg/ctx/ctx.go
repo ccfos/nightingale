@@ -43,3 +43,25 @@ func (c *Context) GetContext() context.Context {
 func (c *Context) GetDB() *gorm.DB {
 	return c.DB
 }
+
+// WithContext returns a shallow copy with a different standard context.
+// Useful for carrying per-request values (e.g. traceId) without mutating the global instance.
+func (c *Context) WithContext(stdCtx context.Context) *Context {
+	return &Context{
+		DB:        c.DB,
+		CenterApi: c.CenterApi,
+		Ctx:       stdCtx,
+		IsCenter:  c.IsCenter,
+	}
+}
+
+// WithCenterApiTimeout returns a shallow copy whose per-request timeout to the
+// center (milliseconds) is overridden. CenterApi.Timeout is shared by every
+// poster call, so it is sized for the slowest of them (target queries); call
+// sites on a latency-sensitive path use this to tighten their own deadline
+// without touching the config.
+func (c *Context) WithCenterApiTimeout(timeoutMs int64) *Context {
+	cp := *c
+	cp.CenterApi.Timeout = timeoutMs
+	return &cp
+}

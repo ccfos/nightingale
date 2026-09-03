@@ -7,8 +7,8 @@
             0
         ],
         "cluster": "",
-        "name": "A slow query has occurred in Mysql within the last minute - categraf",
-        "note": "MySQL server mysql has some new slow query",
+        "name": "MySQL slow queries are piling up - categraf",
+        "note": "MySQL slow queries are piling up over the last 5 minutes",
         "prod": "metric",
         "algorithm": "",
         "algo_params": null,
@@ -26,7 +26,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "increase(mysql_global_status_slow_queries[1m]) \u003e 0",
+                    "prom_ql": "increase(mysql_global_status_slow_queries[5m]) \u003e 10",
                     "severity": 2
                 }
             ],
@@ -74,7 +74,9 @@
         "append_tags": [
             "alertname=MysqlSlowQueries"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) SHOW FULL PROCESSLIST 找当前长时间运行的 SQL，必要时 KILL \u003cid\u003e 先止血；\n2) 用 mysqldumpslow -s t -t 10 \u003cslow_log\u003e 或 pt-query-digest 定位 TOP 慢 SQL；\n3) 对定位到的 SQL 执行 EXPLAIN 看执行计划，补索引或改写；\n4) 若是 long_query_time 设置过低导致的噪音，调整该参数而不是忽略告警。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -157,7 +159,9 @@
         "append_tags": [
             "alertname=MysqlHighThreadsRunning"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) SHOW FULL PROCESSLIST 看堆积的线程集中在哪条 SQL、哪张表；\n2) SHOW ENGINE INNODB STATUS 查是否存在锁等待或死锁；\n3) 对元凶 SQL 执行 KILL 止血后补索引或限流；\n4) 排查上游是否有突发流量或慢依赖导致连接迟迟不释放。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -240,7 +244,9 @@
         "append_tags": [
             "alertname=MysqlRestarted"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 查看 error log（SHOW VARIABLES LIKE 'log_error' 指向的文件）确认是崩溃、被 OOM kill 还是人工重启；\n2) 若是 OOM，核对 innodb_buffer_pool_size 与机器物理内存后调小；\n3) 若非计划内重启，检查 systemd 或容器编排是否在反复拉起；\n4) 重启后确认主从复制已自动恢复、应用连接池已重连。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -323,7 +329,9 @@
         "append_tags": [
             "alertname=MysqlHighOpenFiles"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 SHOW GLOBAL STATUS LIKE 'Open_files' 和 SHOW VARIABLES LIKE 'open_files_limit' 确认当前水位；\n2) 调大 my.cnf 中的 open_files_limit，并同步放开系统 ulimit -n 与 systemd 的 LimitNOFILE；\n3) 检查 table_open_cache 是否设置过大导致句柄膨胀；\n4) 排查是否有大量分区表或小表被同时访问。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -406,7 +414,9 @@
         "append_tags": [
             "alertname=MysqlDown"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 登录主机用 systemctl status mysqld 或 docker ps 确认进程是否存活；\n2) 进程存活则用 mysql -h\u003chost\u003e -P\u003cport\u003e -u\u003cuser\u003e -p 手工连一次，区分是实例夯住还是网络/账号问题；\n3) 进程不在则先看 error log 尾部定位崩溃原因（OOM、磁盘满、数据文件损坏）再拉起，不要盲目重启；\n4) 有主从的立即评估是否需要切主，并确认应用已摘除该节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -489,7 +499,9 @@
         "append_tags": [
             "alertname=MysqlInnodbLogWaits"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 调大 innodb_log_buffer_size（通常从默认 16M 翻倍到 64M~256M）；\n2) 检查 innodb_log_file_size 是否过小导致频繁 checkpoint；\n3) 用 iostat -x 1 看 redo log 所在磁盘的 util 是否已经打满；\n4) 排查是否有大事务一次性写入过多数据，拆成小批次提交。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -572,7 +584,9 @@
         "append_tags": [
             "alertname=MysqlSlaveIoThreadNotRunning"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在从库执行 SHOW SLAVE STATUS\\G 看 Last_IO_Error；\n2) 常见原因是主库连不上、复制账号失效、或所需 binlog 已被 purge——分别处理网络、用 CHANGE MASTER TO 重设账号、或用备份重建从库；\n3) 处理完执行 START SLAVE IO_THREAD 并确认 Slave_IO_Running=Yes；\n4) 恢复前先把读流量从该从库摘走。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -655,7 +669,9 @@
         "append_tags": [
             "alertname=MysqlSlaveReplicationLag"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) SHOW SLAVE STATUS\\G 看 Seconds_Behind_Master 与 SQL 线程当前正在执行的事件；\n2) 到主库用 SHOW PROCESSLIST 找是否有大事务或批量 DML 正在灌数据；\n3) 从库若是单线程回放，开启并行复制（slave_parallel_workers / slave_parallel_type=LOGICAL_CLOCK）；\n4) 延迟持续扩大时先把读流量切回主库或其他从库。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -738,7 +754,9 @@
         "append_tags": [
             "alertname=MysqlSlaveSqlThreadNotRunning"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) SHOW SLAVE STATUS\\G 看 Last_SQL_Error 定位卡住的事件；\n2) 若是可安全跳过的冲突（如重复主键），核对数据一致后执行 SET GLOBAL sql_slave_skip_counter=1 再 START SLAVE SQL_THREAD；\n3) 若主从数据已经分叉，用备份重建从库，不要盲目跳过；\n4) 恢复前先把读流量从该从库摘走。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -821,7 +839,9 @@
         "append_tags": [
             "alertname=MysqlTooManyConnections"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) SHOW FULL PROCESSLIST 按来源主机统计连接，找出连接数异常的应用；\n2) 区分是业务突增还是应用连接池泄漏（大量长时间 Sleep 的连接堆积）；\n3) 应急可调大 max_connections，同时核对内存余量避免 OOM；\n4) 根因侧收敛应用连接池上限、缩短 wait_timeout。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

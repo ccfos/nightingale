@@ -2,6 +2,8 @@
 
 mongodb 监控采集插件，由 [mongodb-exporter](https://github.com/percona/mongodb_exporter)封装而来。
 
+本目录仪表盘使用 `mongodb_ss_*` 等 0.1x 兼容指标名，因此使用 Categraf MongoDB input 时必须设置 `compatible_mode = true`。
+
 ## Configuration
 
 配置文件示例：
@@ -15,13 +17,12 @@ log_level = "info"
 labels = { instance="mongo-cluster-01" }
 
 # mongodb dsn, see https://www.mongodb.com/docs/manual/reference/connection-string/
-# mongodb_uri = "mongodb://127.0.0.1:27017"
-mongodb_uri = ""
+mongodb_uri = "mongodb://127.0.0.1:27017"
 # if you don't specify the username or password in the mongodb_uri, you can set here. 
 # This will overwrite the dsn, it would be helpful when special characters existing in the username or password and you don't want to encode them.
 # NOTICE! this user must be granted enough rights to query needed stats, see ../inputs/mongodb/README.md
-username = "username@Bj"
-password = "password@Bj"
+# username = "<username>"
+# password = "<password>"
 # if set to true, use the direct connection way
 # direct_connect = true
 
@@ -49,8 +50,8 @@ collect_all = true
 # if set to true, replace -1 to DESC for label key_name of the descending_index metrics
 # enable_override_descending_index = true
 
-# which exposes metrics with 0.1x compatible metric names has been implemented which simplifies migration from the old version to the current version.
-# compatible_mode = true
+# expose the mongodb_ss_* metric names used by the bundled dashboard
+compatible_mode = true
 
 
 # [[instances]]
@@ -86,7 +87,3 @@ mongo -h xxx -u xxx -p xxx --authenticationDatabase admin
 > use admin
 > db.createUser({user:"categraf",pwd:"categraf",roles: [{role:"read",db:"local"},{"role":"clusterMonitor","db":"admin"}]})
 ```
-
-## 监控大盘和告警规则
-
-夜莺内置了 MongoDB 的告警规则和监控大盘，克隆到自己的业务组使用即可。虽然文件后缀是 `_exporter` 也可以使用，因为 categraf 这个插件是基于 mongodb-exporter 封装的。

@@ -1,0 +1,562 @@
+{
+    "name": "RDS-MySQL-全局概览",
+    "tags": "阿里云 RDS 云监控",
+    "ident": "",
+    "uuid": 1761068480141000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "type": "datasource",
+                "name": "datasource",
+                "definition": "prometheus",
+                "hide": false
+            },
+            {
+                "type": "query",
+                "name": "region",
+                "label": "区域名称",
+                "allValue": "",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunRds_CpuUsage{ engine=\"MySQL\"},regionId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "instanceName",
+                "label": "实例名",
+                "allValue": "",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunRds_CpuUsage{regionId=~\"$region\", engine=\"MySQL\"},instanceName)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "constant",
+                "name": "clusterUid",
+                "definition": "1082-5ea10b",
+                "hide": false
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.1.0",
+                "id": "6c636830-0e77-441b-b806-5c09fdba8625",
+                "type": "timeseries",
+                "name": "$region区域内云数据库RDS TOP10 CPU使用率",
+                "links": [],
+                "layout": {
+                    "h": 11,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0,
+                    "i": "6c636830-0e77-441b-b806-5c09fdba8625"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk (10,AliyunRds_CpuUsage{regionId=~\"$region\",instanceName=~\"$instanceName\",engine=\"MySQL\"})",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "5d3b93bc-8b3d-4aa0-a7a4-b2ef205b627d",
+                "type": "timeseries",
+                "name": "$region区域云数据库RDS TOP10 内存使用率",
+                "links": [],
+                "layout": {
+                    "h": 11,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0,
+                    "i": "5d3b93bc-8b3d-4aa0-a7a4-b2ef205b627d"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(10,AliyunRds_MemoryUsage{regionId=~\"$region\",instanceName=~\"$instanceName\",engine=\"MySQL\"})",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "845c34a5-784a-4473-b19e-ad1cecc48cfb",
+                "type": "timeseries",
+                "name": "$region区域内云数据库RDS TOP10 磁盘使用率",
+                "links": [],
+                "layout": {
+                    "h": 11,
+                    "w": 12,
+                    "x": 0,
+                    "y": 11,
+                    "i": "845c34a5-784a-4473-b19e-ad1cecc48cfb"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(10,AliyunRds_DiskUsage{regionId=~\"$region\",instanceName=~\"$instanceName\",engine=\"MySQL\"})",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "65254747-5136-49ce-9b7f-2ddcef4b02f8",
+                "type": "timeseries",
+                "name": "$region区域内云数据库RDS TOP10 IOPS使用率",
+                "links": [],
+                "layout": {
+                    "h": 11,
+                    "w": 12,
+                    "x": 12,
+                    "y": 11,
+                    "i": "65254747-5136-49ce-9b7f-2ddcef4b02f8"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk(10,AliyunRds_IOPSUsage{regionId=~\"$region\",instanceName=~\"$instanceName\",engine=\"MySQL\"})",
+                        "legend": "{{instanceName}}/{{instanceId}}"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "type": "tableNG",
+                "id": "26c7f267-16ed-4065-a127-5c5e673087ff",
+                "layout": {
+                    "h": 20,
+                    "w": 24,
+                    "x": 0,
+                    "y": 22,
+                    "i": "26c7f267-16ed-4065-a127-5c5e673087ff"
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunRds_CpuUsage{regionId=~\"$region\",instanceName=~\"$instanceName\",engine=\"MySQL\"}",
+                        "legend": "",
+                        "instant": true
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunRds_MemoryUsage{regionId=~\"$region\",instanceName=~\"$instanceName\",engine=\"MySQL\"}",
+                        "legend": "",
+                        "instant": true
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunRds_DiskUsage{regionId=~\"$region\",instanceName=~\"$instanceName\",engine=\"MySQL\"}",
+                        "legend": "",
+                        "instant": true
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunRds_IOPSUsage{regionId=~\"$region\",instanceName=~\"$instanceName\",engine=\"MySQL\"}",
+                        "legend": "",
+                        "instant": true
+                    }
+                ],
+                "transformationsNG": [
+                    {
+                        "id": "joinByField",
+                        "options": {
+                            "mode": "outer",
+                            "byField": "instanceId"
+                        }
+                    },
+                    {
+                        "id": "organize",
+                        "options": {
+                            "fields": [
+                                "instanceId",
+                                "__time_0",
+                                "__name___0",
+                                "app_0",
+                                "connectionString_0",
+                                "desc_0",
+                                "engine_0",
+                                "id_0",
+                                "instanceName_0",
+                                "instanceType_0",
+                                "job_0",
+                                "measure_0",
+                                "measure_desc_0",
+                                "namespace_0",
+                                "period_0",
+                                "product_0",
+                                "promEnvId_0",
+                                "promInstanceId_0",
+                                "regionId_0",
+                                "resourceGroupId_0",
+                                "resourceGroupName_0",
+                                "service_0",
+                                "userId_0",
+                                "zoneId_0",
+                                "__value_#A",
+                                "__time_1",
+                                "__name___1",
+                                "app_1",
+                                "connectionString_1",
+                                "desc_1",
+                                "engine_1",
+                                "id_1",
+                                "instanceName_1",
+                                "instanceType_1",
+                                "job_1",
+                                "measure_1",
+                                "measure_desc_1",
+                                "namespace_1",
+                                "period_1",
+                                "product_1",
+                                "promEnvId_1",
+                                "promInstanceId_1",
+                                "regionId_1",
+                                "resourceGroupId_1",
+                                "resourceGroupName_1",
+                                "service_1",
+                                "userId_1",
+                                "zoneId_1",
+                                "__value_#B",
+                                "__time_2",
+                                "__name___2",
+                                "app_2",
+                                "connectionString_2",
+                                "desc_2",
+                                "engine_2",
+                                "id_2",
+                                "instanceName_2",
+                                "instanceType_2",
+                                "job_2",
+                                "measure_2",
+                                "measure_desc_2",
+                                "namespace_2",
+                                "period_2",
+                                "product_2",
+                                "promEnvId_2",
+                                "promInstanceId_2",
+                                "regionId_2",
+                                "resourceGroupId_2",
+                                "resourceGroupName_2",
+                                "service_2",
+                                "userId_2",
+                                "zoneId_2",
+                                "__value_#C",
+                                "__time_3",
+                                "__name___3",
+                                "app_3",
+                                "connectionString_3",
+                                "desc_3",
+                                "engine_3",
+                                "id_3",
+                                "instanceName_3",
+                                "instanceType_3",
+                                "job_3",
+                                "measure_3",
+                                "measure_desc_3",
+                                "namespace_3",
+                                "period_3",
+                                "product_3",
+                                "promEnvId_3",
+                                "promInstanceId_3",
+                                "regionId_3",
+                                "resourceGroupId_3",
+                                "resourceGroupName_3",
+                                "service_3",
+                                "userId_3",
+                                "zoneId_3",
+                                "__value_#D"
+                            ],
+                            "excludeByName": {
+                                "__time_0": true,
+                                "__name___0": true,
+                                "app_0": true,
+                                "connectionString_0": true,
+                                "desc_0": true,
+                                "engine_0": true,
+                                "id_0": true,
+                                "job_0": true,
+                                "measure_0": true,
+                                "measure_desc_0": true,
+                                "namespace_0": true,
+                                "period_0": true,
+                                "product_0": true,
+                                "promEnvId_0": true,
+                                "promInstanceId_0": true,
+                                "service_0": true,
+                                "resourceGroupId_0": true,
+                                "userId_0": true,
+                                "zoneId_0": true,
+                                "__time_1": true,
+                                "__name___1": true,
+                                "app_1": true,
+                                "connectionString_1": true,
+                                "desc_1": true,
+                                "engine_1": true,
+                                "instanceName_1": true,
+                                "id_1": true,
+                                "instanceType_1": true,
+                                "job_1": true,
+                                "measure_1": true,
+                                "measure_desc_1": true,
+                                "namespace_1": true,
+                                "period_1": true,
+                                "product_1": true,
+                                "promEnvId_1": true,
+                                "promInstanceId_1": true,
+                                "regionId_1": true,
+                                "resourceGroupId_1": true,
+                                "resourceGroupName_1": true,
+                                "service_1": true,
+                                "userId_1": true,
+                                "zoneId_1": true,
+                                "__time_2": true,
+                                "__name___2": true,
+                                "app_2": true,
+                                "connectionString_2": true,
+                                "desc_2": true,
+                                "engine_2": true,
+                                "id_2": true,
+                                "instanceName_2": true,
+                                "instanceType_2": true,
+                                "job_2": true,
+                                "measure_2": true,
+                                "measure_desc_2": true,
+                                "namespace_2": true,
+                                "period_2": true,
+                                "product_2": true,
+                                "promEnvId_2": true,
+                                "promInstanceId_2": true,
+                                "regionId_2": true,
+                                "resourceGroupId_2": true,
+                                "resourceGroupName_2": true,
+                                "service_2": true,
+                                "userId_2": true,
+                                "zoneId_2": true,
+                                "__time_3": true,
+                                "__name___3": true,
+                                "app_3": true,
+                                "connectionString_3": true,
+                                "desc_3": true,
+                                "engine_3": true,
+                                "id_3": true,
+                                "instanceName_3": true,
+                                "instanceType_3": true,
+                                "job_3": true,
+                                "measure_3": true,
+                                "measure_desc_3": true,
+                                "namespace_3": true,
+                                "period_3": true,
+                                "product_3": true,
+                                "promEnvId_3": true,
+                                "promInstanceId_3": true,
+                                "regionId_3": true,
+                                "resourceGroupId_3": true,
+                                "resourceGroupName_3": true,
+                                "service_3": true,
+                                "userId_3": true,
+                                "zoneId_3": true
+                            },
+                            "renameByName": {
+                                "__value_#B": "内存使用率",
+                                "__value_#A": "CPU使用率",
+                                "__value_#C": "磁盘使用率",
+                                "__value_#D": "IOPS使用率"
+                            }
+                        }
+                    }
+                ],
+                "name": "$region区域内云数据库RDS版资源使用情况",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "filterable": false,
+                    "cellOptions": {
+                        "type": "none"
+                    }
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "__value_#B"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "none"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "valueMappings": [
+                                {
+                                    "type": "special",
+                                    "result": {
+                                        "color": "#000000"
+                                    },
+                                    "match": {}
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

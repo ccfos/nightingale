@@ -67,11 +67,32 @@ func init() {
 		PluginType:     "pgsql",
 		PluginTypeName: "PostgreSQL",
 	}
+
+	DatasourceTypes[7] = DatasourceType{
+		Id:             7,
+		Category:       "logging",
+		PluginType:     "victorialogs",
+		PluginTypeName: "VictoriaLogs",
+	}
+
+	DatasourceTypes[8] = DatasourceType{
+		Id:             8,
+		Category:       "timeseries",
+		PluginType:     "iotdb",
+		PluginTypeName: "IoTDB",
+	}
+
+	DatasourceTypes[9] = DatasourceType{
+		Id:             9,
+		Category:       "logging",
+		PluginType:     "loki",
+		PluginTypeName: "Loki",
+	}
 }
 
-type NewDatasrouceFn func(settings map[string]interface{}) (Datasource, error)
+type NewDatasourceFn func(settings map[string]interface{}) (Datasource, error)
 
-var datasourceRegister = map[string]NewDatasrouceFn{}
+var datasourceRegister = map[string]NewDatasourceFn{}
 
 type Datasource interface {
 	Init(settings map[string]interface{}) (Datasource, error) // 初始化配置
@@ -85,6 +106,12 @@ type Datasource interface {
 
 	// 在生成告警事件时，会调用该方法，用于获取额外的数据
 	QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error)
+}
+
+// ReadAddrApplier is optional: datasources with a local read addr implement this.
+// Called once at init with the process identity (isCenter). Write addresses must not be touched.
+type ReadAddrApplier interface {
+	ApplyReadAddr(isCenter bool) (usedLocal bool)
 }
 
 func RegisterDatasource(typ string, p Datasource) {
@@ -126,4 +153,5 @@ type DatasourceInfo struct {
 	CreatedAt      int64                  `json:"created_at"`
 	UpdatedAt      int64                  `json:"updated_at"`
 	IsDefault      bool                   `json:"is_default"`
+	Weight         int                    `json:"weight"`
 }

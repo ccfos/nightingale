@@ -7,7 +7,7 @@
             52
         ],
         "cluster": "",
-        "name": "kafka 数据有丢失风险-副本数小于3",
+        "name": "kafka 分区副本未同步",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -26,7 +26,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "sum(kafka_topic_partition_in_sync_replica) by (topic) \u003c 3",
+                    "prom_ql": "max by (topic) (kafka_topic_partition_under_replicated_partition) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -75,7 +75,9 @@
             "service=kafka",
             "type=categraf"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取 topic，执行 kafka-topics.sh --describe --topic \u003ctopic\u003e --bootstrap-server \u003cbroker\u003e，对比 Isr 与 Replicas 找出缺失的副本所在 broker；\n2) 到该 broker 看 server.log 是否有磁盘满、GC 卡顿或网络超时；\n3) broker 已下线则先恢复它，副本会自动追平；\n4) 长时间追不平可用 kafka-reassign-partitions.sh 把副本迁到健康 broker。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -91,7 +93,7 @@
             52
         ],
         "cluster": "",
-        "name": "kafka 服务宕机",
+        "name": "kafka broker 数量下降",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -110,7 +112,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "kafka_broker_info{service=~\"kafka\"} \u003c 1",
+                    "prom_ql": "delta(kafka_brokers[10m]) \u003c 0",
                     "severity": 1
                 }
             ],
@@ -159,7 +161,9 @@
             "type=categraf",
             "service=kafka"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 执行 kafka-broker-api-versions.sh --bootstrap-server \u003cbroker\u003e 确认当前在线 broker 列表，对比配置找出缺失的节点；\n2) 到该节点确认进程是否存活、server.log 里是否有 OOM 或磁盘错误；\n3) 拉起后用 kafka-topics.sh --describe --under-replicated-partitions 确认副本已追平；\n4) 若节点短期修不好，用 kafka-reassign-partitions.sh 把其上的分区迁走以恢复冗余。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -175,7 +179,7 @@
             52
         ],
         "cluster": "",
-        "name": "kafka 消费能力不足-延迟超过5分钟",
+        "name": "kafka 消费组积压超过 1 万条",
         "note": "",
         "prod": "metric",
         "algorithm": "",
@@ -194,7 +198,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "max(kafka_consumer_lag_millis) by (topic, consumergroup)  / 1000 \u003e 300",
+                    "prom_ql": "max by (topic, consumergroup) (kafka_consumergroup_uncommitted_offsets) \u003e 10000",
                     "severity": 2
                 }
             ],
@@ -243,7 +247,9 @@
             "service=kafka",
             "type=categraf"
         ],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取 consumergroup 与 topic，执行 kafka-consumer-groups.sh --describe --group \u003cgroup\u003e --bootstrap-server \u003cbroker\u003e 看各分区 LAG 分布；\n2) 积压集中在个别分区说明数据倾斜，检查生产端分区键；\n3) 均匀积压则是消费者处理慢——先看消费端日志有无异常重试，再考虑扩consumer 实例（不超过分区数）或提高单条处理效率；\n4) 确认消费者没有全部掉线（MEMBERS 为 0 要先把消费者拉起来）。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

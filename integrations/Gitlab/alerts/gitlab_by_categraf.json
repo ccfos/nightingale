@@ -72,7 +72,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在 Gitaly 节点看日志确认是哪类 RPC 被限流（gitaly_concurrency_limiting 相关）；\n2) 用 gitlab-ctl status 与节点 CPU/IO 确认 Gitaly 是否已过载；\n3) 定位是否有超大仓库或异常客户端在反复拉取，必要时临时限制该来源；\n4) 容量确实不足则调大 Gitaly 的并发限制并扩容节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -153,94 +155,15 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在 GitLab 节点用 gitlab-ctl status 确认 puma 进程状态，看 /var/log/gitlab/puma/ 下日志有无超时；\n2) 结合 PumaQueueing 告警判断排队深度；\n3) 短期可调大 puma['worker_processes'] 与 max_threads 后 gitlab-ctl reconfigure；\n4) 排查是否有慢请求（大 MR diff、大仓库页面）长时间占住 worker，必要时限流。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
         "update_at": 0,
         "update_by": "",
         "uuid": 1717556327474171000
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
-        "name": "PostgresDatabaseDeadlockCancels",
-        "note": "Postgres database has queries canceled due to deadlocks",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 2,
-        "severities": [
-            2
-        ],
-        "disabled": 1,
-        "prom_for_duration": 0,
-        "prom_ql": "increase(pg_stat_database_deadlocks[5m]) \u003e 0",
-        "rule_config": {
-            "algo_params": null,
-            "inhibit": false,
-            "prom_ql": "",
-            "queries": [
-                {
-                    "prom_ql": "increase(pg_stat_database_deadlocks[5m]) \u003e 0",
-                    "severity": 2
-                }
-            ],
-            "severity": 0
-        },
-        "prom_eval_interval": 15,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "23:59",
-        "enable_etimes": [
-            "23:59"
-        ],
-        "enable_days_of_week": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "0"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "0"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": null,
-        "extra_config": null,
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1717556327474653000
     },
     {
         "id": 0,
@@ -315,7 +238,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在 PG 上确认 log_lock_waits=on，从日志里取死锁双方的完整 SQL；\n2) 关联 pg_locks 与 pg_stat_activity 确认是哪两张表互相等待；\n3) GitLab 场景常见于 CI 并发更新同一批记录——降低并发或升级 GitLab 版本（上游常修此类问题）；\n4) 检查是否有长事务放大了死锁概率。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -396,7 +321,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 登录 PG 节点确认进程存活（gitlab-ctl status postgresql 或 systemctl status postgresql）；\n2) 进程存活则用 psql 手工连一次，区分实例夯住与网络/pg_hba 问题；\n3) 进程不在则看 PG 日志尾部定位（磁盘满、WAL 目录写满、OOM）再拉起；\n4) 有备库的评估是否需要切换。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -477,7 +404,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 结合 HighPumaUtilization 确认 worker 利用率；\n2) 看 /var/log/gitlab/puma/puma_stdout.log 与 gitlab-rails 日志找耗时最长的请求路径；\n3) 短期调大 puma['worker_processes'] 后 gitlab-ctl reconfigure；\n4) 长期排查慢请求根因（大仓库、大 MR、未加索引的查询），必要时扩容节点。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -558,7 +487,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 登录 Redis 节点用 gitlab-ctl status redis 或 systemctl status redis 确认进程；\n2) 进程存活则 redis-cli ping 手工验证，区分夯住与网络/密码问题；\n3) 进程不在则看日志定位（OOM、磁盘满导致 RDB 写失败）再拉起；\n4) 恢复后确认 Sidekiq 队列是否积压，必要时观察消费进度。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -639,7 +570,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取 job/instance 定位是哪个组件（gitaly/puma/sidekiq/registry 等）；\n2) 在对应节点用 gitlab-ctl status 确认进程状态；\n3) 用 gitlab-ctl tail \u003cservice\u003e 看日志定位退出原因；\n4) 拉起后用 gitlab-rake gitlab:check 做一次整体健康检查。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -720,7 +653,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 从告警标签取 name 确认是哪个队列积压；\n2) 在 GitLab 管理后台的 Background Jobs 页或用 gitlab-rails runner 看队列深度与失败任务；\n3) 确认 Sidekiq 进程是否存活、并发数配置是否偏小（sidekiq['max_concurrency']）；\n4) 大量任务失败重试导致的，先定位失败根因（Redis/PG 异常、外部依赖超时）再清理。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -801,7 +736,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 gitlab-ctl tail gitlab-workhorse 看具体报错与出错的路由；\n2) 常见根因是后端 puma 超时或 Gitaly 不可用——先确认这两者健康；\n3) 大文件相关的检查磁盘空间与临时目录权限；\n4) 若与近期升级时间吻合，优先回滚。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

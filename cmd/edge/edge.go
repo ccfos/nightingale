@@ -16,6 +16,7 @@ import (
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/evallog"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/macros"
@@ -61,8 +62,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 
 	pushgwRouter.Config(r)
-	macros.RegisterMacro(macros.MacroInVain)
-	dscache.Init(ctx, false)
+	macros.RegisterMacro(macros.ExpandTimeFilter)
+	dscache.Init(ctx, false, config.Alert.Heartbeat.EngineName)
 
 	if !config.Alert.Disable {
 		configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")
@@ -85,9 +86,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		externalProcessors := process.NewExternalProcessors()
 
 		alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache,
-			alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache)
+			alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, configCvalCache)
 
-		alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
+		alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors, config.Log.Dir)
 
 		alertrtRouter.Config(r)
 
@@ -100,6 +101,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	httpClean := httpx.Init(config.HTTP, r)
 
 	return func() {
+		// 同 alert.Initialize：排空 evallog 的写入队列与文件缓冲，且必须早于 logxClean
+		evallog.Shutdown()
 		logxClean()
 		httpClean()
 	}, nil

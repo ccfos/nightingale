@@ -34,7 +34,7 @@ labels = { instance="docker-compose-mysql" }
 # insecure_skip_verify = true
 
 #[[instances.queries]]
-# mesurement = "lock_wait"
+# measurement = "lock_wait"
 # metric_fields = [ "total" ]
 # timeout = "3s"
 # request = '''

@@ -19,7 +19,7 @@ CREATE TABLE `users` (
 
 CREATE UNIQUE INDEX idx_users_username ON `users` (username);
 
-insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', strftime('%s', 'now'), 'system', strftime('%s', 'now'), 'system');
+insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', 'Admin', 'root.2020', 'Admin', strftime('%s', 'now'), 'system', strftime('%s', 'now'), 'system');
 
 CREATE TABLE `user_group` (
     `id` integer primary key autoincrement,
@@ -184,6 +184,7 @@ CREATE TABLE `board` (
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `note` varchar(1024) not null default '',
     `public_cate` bigint not null default 0
 );
 CREATE UNIQUE INDEX idx_board_group_id_name ON `board` (group_id, name);
@@ -252,6 +253,7 @@ CREATE TABLE `alert_rule` (
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
     `cron_pattern` varchar(64),
+    `time_zone` varchar(64) not null default '',
     `datasource_queries` text
 );
 CREATE INDEX `idx_alert_rule_group_id` ON `alert_rule` (`group_id` asc);
@@ -273,6 +275,7 @@ CREATE TABLE `alert_mute` (
     `mute_time_type` tinyint(1) not null default 0,
     `periodic_mutes` varchar(4096) not null default '',
     `severities` varchar(32) not null default '',
+    `mute_type` int not null default 0,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
@@ -462,6 +465,7 @@ CREATE INDEX `idx_alert_his_event_last_eval_time` ON `alert_his_event` (`last_ev
 CREATE INDEX `idx_alert_his_event_hash` ON `alert_his_event` (`hash` asc);
 CREATE INDEX `idx_alert_his_event_rule_id` ON `alert_his_event` (`rule_id` asc);
 CREATE INDEX `idx_alert_his_event_trigger_time_group_id` ON `alert_his_event` (`trigger_time`, `group_id` asc);
+CREATE INDEX `idx_group_last_eval_time` ON `alert_his_event` (`group_id`, `last_eval_time` asc);
 
 CREATE TABLE `board_busigroup` (
   `busi_group_id` bigint(20) NOT NULL DEFAULT '0',
@@ -491,6 +495,7 @@ CREATE TABLE `builtin_payloads` (
   `name` varchar(191) not null,
   `tags` varchar(191) not null default '',
   `content` longtext not null,
+  `note` varchar(1024) not null default '',
   `created_at` bigint(20) not null default 0,
   `created_by` varchar(191) not null default '',
   `updated_at` bigint(20) not null default 0,
@@ -505,6 +510,7 @@ CREATE INDEX idx_uuid ON `builtin_payloads` (uuid);
 
 CREATE TABLE `notification_record` (
     `id` integer primary key autoincrement,
+    `notify_rule_id` integer not null default 0,
     `event_id` integer not null,
     `sub_id` integer,
     `channel` varchar(255) not null,
@@ -514,6 +520,8 @@ CREATE TABLE `notification_record` (
     `created_at` integer not null
 );
 CREATE INDEX idx_evt ON notification_record (event_id);
+CREATE INDEX idx_nr_rule_created_evt ON notification_record (notify_rule_id, created_at, event_id);
+CREATE INDEX idx_nr_created_at ON notification_record (created_at);
 
 CREATE TABLE `task_tpl` (
     `id`        integer primary key autoincrement,
@@ -587,6 +595,7 @@ CREATE TABLE `datasource`
     `http` varchar(4096) not null default '',
     `auth` varchar(8192) not null default '',
     `is_default` tinyint not null default 0,
+    `weight` int not null default 0,
     `created_at` bigint not null default 0,
     `created_by` varchar(64) not null default '',
     `updated_at` bigint not null default 0,
@@ -631,6 +640,7 @@ CREATE TABLE `es_index_pattern` (
     `allow_hide_system_indices` tinyint(1) not null default 0,
     `fields_format` varchar(4096) not null default '',
     `cross_cluster_enabled` int not null default 0,
+    `weight` int not null default 0,
     `create_at` bigint default '0',
     `create_by` varchar(64) default '',
     `update_at` bigint default '0',
@@ -649,6 +659,9 @@ CREATE TABLE `builtin_metrics` (
     `lang` varchar(191) NOT NULL DEFAULT '',
     `note` varchar(4096) NOT NULL,
     `expression` varchar(4096) NOT NULL,
+    `expression_type` varchar(32) NOT NULL DEFAULT 'promql',
+    `metric_type` varchar(191) NOT NULL DEFAULT '',
+    `extra_fields` text,
     `created_at` bigint NOT NULL DEFAULT 0,
     `created_by` varchar(191) NOT NULL DEFAULT '',
     `updated_at` bigint NOT NULL DEFAULT 0,

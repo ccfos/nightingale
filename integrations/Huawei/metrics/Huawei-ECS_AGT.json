@@ -1,0 +1,1945 @@
+[
+    {
+        "id": 0,
+        "uuid": 1764479177891370,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 磁盘读速率",
+        "unit": "bytesSecIEC",
+        "note": "该指标用于统计每秒从测量对象读出数据量。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第六列数据的变化得出磁盘读速率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：使用WMI中Win32_PerfFormattedData_PerfDisk_LogicalDisk对象获取磁盘I/O数据，每采集周期读取一次该对象，读取该对象返回的瞬时值代表该采集周期的指标值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。高CPU情况下存在获取超时的现象，会导致无法获取监控数据。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_agt_read_bytes_rate",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 磁盘读速率",
+                "note": "该指标用于统计每秒从测量对象读出数据量。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第六列数据的变化得出磁盘读速率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：使用WMI中Win32_PerfFormattedData_PerfDisk_LogicalDisk对象获取磁盘I/O数据，每采集周期读取一次该对象，读取该对象返回的瞬时值代表该采集周期的指标值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。高CPU情况下存在获取超时的现象，会导致无法获取监控数据。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Disk Read Rate",
+                "note": "This metric measures the volume of data read from the monitored object per second. Collection method (Linux): The disk read rate is calculated from the change in the sixth column of the corresponding device in /proc/diskstats during the collection period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Disk I/O data is obtained from the WMI Win32_PerfFormattedData_PerfDisk_LogicalDisk object. The object is read once per collection period, and the instantaneous value it returns represents the metric value for that period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Under high CPU usage, the query may time out, and monitoring data may fail to be collected."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178001907,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 磁盘读操作速率",
+        "unit": "none",
+        "note": "该指标用于统计每秒从测量对象读取数据的请求次数。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第四列数据的变化得出磁盘读操作速率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：使用WMI中Win32_PerfFormattedData_PerfDisk_LogicalDisk对象获取磁盘I/O数据，每采集周期读取一次该对象，读取该对象返回的瞬时值代表该采集周期的指标值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。高CPU情况下存在获取超时的现象，会导致无法获取监控数据。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_agt_read_requests_rate",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 磁盘读操作速率",
+                "note": "该指标用于统计每秒从测量对象读取数据的请求次数。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第四列数据的变化得出磁盘读操作速率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：使用WMI中Win32_PerfFormattedData_PerfDisk_LogicalDisk对象获取磁盘I/O数据，每采集周期读取一次该对象，读取该对象返回的瞬时值代表该采集周期的指标值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。高CPU情况下存在获取超时的现象，会导致无法获取监控数据。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Disk Read IOPS",
+                "note": "This metric measures the number of read requests from the monitored object per second. Collection method (Linux): The disk read IOPS is calculated from the change in the fourth column of the corresponding device in /proc/diskstats during the collection period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Disk I/O data is obtained from the WMI Win32_PerfFormattedData_PerfDisk_LogicalDisk object. The object is read once per collection period, and the instantaneous value it returns represents the metric value for that period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Under high CPU usage, the query may time out, and monitoring data may fail to be collected."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178079550,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 磁盘写速率",
+        "unit": "bytesSecIEC",
+        "note": "该指标用于统计每秒写到测量对象的数据量。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十列数据的变化得出磁盘写速率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：使用WMI中Win32_PerfFormattedData_PerfDisk_LogicalDisk对象获取磁盘I/O数据，每采集周期读取一次该对象，读取该对象返回的瞬时值代表该采集周期的指标值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。高CPU情况下存在获取超时的现象，会导致无法获取监控数据。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_agt_write_bytes_rate",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 磁盘写速率",
+                "note": "该指标用于统计每秒写到测量对象的数据量。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十列数据的变化得出磁盘写速率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：使用WMI中Win32_PerfFormattedData_PerfDisk_LogicalDisk对象获取磁盘I/O数据，每采集周期读取一次该对象，读取该对象返回的瞬时值代表该采集周期的指标值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。高CPU情况下存在获取超时的现象，会导致无法获取监控数据。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Disk Write Rate",
+                "note": "This metric measures the volume of data written to the monitored object per second. Collection method (Linux): The disk write rate is calculated from the change in the tenth column of the corresponding device in /proc/diskstats during the collection period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Disk I/O data is obtained from the WMI Win32_PerfFormattedData_PerfDisk_LogicalDisk object. The object is read once per collection period, and the instantaneous value it returns represents the metric value for that period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Under high CPU usage, the query may time out, and monitoring data may fail to be collected."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178156686,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 磁盘写操作速率",
+        "unit": "none",
+        "note": "该指标用于统计每秒向测量对象写数据的请求次数。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第八列数据的变化得出磁盘写操作速率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：使用WMI中Win32_PerfFormattedData_PerfDisk_LogicalDisk对象获取磁盘I/O数据，每采集周期读取一次该对象，读取该对象返回的瞬时值代表该采集周期的指标值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。高CPU情况下存在获取超时的现象，会导致无法获取监控数据。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_agt_write_requests_rate",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 磁盘写操作速率",
+                "note": "该指标用于统计每秒向测量对象写数据的请求次数。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第八列数据的变化得出磁盘写操作速率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：使用WMI中Win32_PerfFormattedData_PerfDisk_LogicalDisk对象获取磁盘I/O数据，每采集周期读取一次该对象，读取该对象返回的瞬时值代表该采集周期的指标值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。高CPU情况下存在获取超时的现象，会导致无法获取监控数据。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Disk Write IOPS",
+                "note": "This metric measures the number of write requests to the monitored object per second. Collection method (Linux): The disk write IOPS is calculated from the change in the eighth column of the corresponding device in /proc/diskstats during the collection period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Disk I/O data is obtained from the WMI Win32_PerfFormattedData_PerfDisk_LogicalDisk object. The object is read once per collection period, and the instantaneous value it returns represents the metric value for that period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Under high CPU usage, the query may time out, and monitoring data may fail to be collected."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178790962,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "块设备使用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象物理磁盘使用率，以百分比为单位。计算方式为: 所有已挂载磁盘分区已用存储量/磁盘存储总量。采集方式（Linux）：通过汇总每个挂载点的磁盘使用量，再通过磁盘扇区大小和扇区数量计算出磁盘总大小，计算出整体磁盘使用率采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_device_used_percent",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "块设备使用率",
+                "note": "该指标用于统计测量对象物理磁盘使用率，以百分比为单位。计算方式为: 所有已挂载磁盘分区已用存储量/磁盘存储总量。采集方式（Linux）：通过汇总每个挂载点的磁盘使用量，再通过磁盘扇区大小和扇区数量计算出磁盘总大小，计算出整体磁盘使用率采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Block Device Usage",
+                "note": "This metric measures the physical disk usage of the monitored object, in percent. It is calculated as: used storage of all mounted disk partitions / total disk storage. Collection method (Linux): The disk usage of each mount point is summed up, the total disk size is calculated from the disk sector size and sector count, and the overall disk usage is then derived. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178880528,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 文件系统读写状态",
+        "unit": "none",
+        "note": "该指标用于统计测量对象挂载文件系统的读写状态。状态分为：可读写（0）/只读（1）。采集方式（Linux）：通过读取/proc/mounts中第四列文件系统挂载参数获得。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_fs_rwstate",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 文件系统读写状态",
+                "note": "该指标用于统计测量对象挂载文件系统的读写状态。状态分为：可读写（0）/只读（1）。采集方式（Linux）：通过读取/proc/mounts中第四列文件系统挂载参数获得。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) File System Read/Write Status",
+                "note": "This metric indicates the read/write status of the file systems mounted on the monitored object. Status values: read/write (0) or read-only (1). Collection method (Linux): Obtained from the file system mount parameters in the fourth column of /proc/mounts."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178959030,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) inode空间大小",
+        "unit": "none",
+        "note": "该指标用于统计测量对象当前磁盘的inode空间量。采集方式（Linux）：执行df -i命令，查看Inodes列数据。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_inodesTotal",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) inode空间大小",
+                "note": "该指标用于统计测量对象当前磁盘的inode空间量。采集方式（Linux）：执行df -i命令，查看Inodes列数据。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Total inodes",
+                "note": "This metric measures the total inode space of the current disk on the monitored object. Collection method (Linux): Run the df -i command and check the Inodes column. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479179034787,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) inode已使用空间",
+        "unit": "none",
+        "note": "该指标用于统计测量对象当前磁盘已使用的inode空间量。采集方式（Linux）：执行df -i命令，查看IUsed列数据。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_inodesUsed",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) inode已使用空间",
+                "note": "该指标用于统计测量对象当前磁盘已使用的inode空间量。采集方式（Linux）：执行df -i命令，查看IUsed列数据。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Used inodes",
+                "note": "This metric measures the used inode space of the current disk on the monitored object. Collection method (Linux): Run the df -i command and check the IUsed column. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479179122048,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) inode已使用占比",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象当前磁盘已使用的inode占比。采集方式（Linux）：执行df -i命令，查看IUse%列数据。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_inodesUsedPercent",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) inode已使用占比",
+                "note": "该指标用于统计测量对象当前磁盘已使用的inode占比。采集方式（Linux）：执行df -i命令，查看IUse%列数据。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) inode Usage",
+                "note": "This metric measures the percentage of used inodes on the current disk of the monitored object. Collection method (Linux): Run the df -i command and check the IUse% column. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178393592,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 磁盘I/O使用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象磁盘I/O使用率。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十三列数据的变化得出磁盘I/O使用率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_ioUtils",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 磁盘I/O使用率",
+                "note": "该指标用于统计测量对象磁盘I/O使用率。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十三列数据的变化得出磁盘I/O使用率。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Disk I/O Usage",
+                "note": "This metric measures the disk I/O usage of the monitored object. Collection method (Linux): The disk I/O usage is calculated from the change in the thirteenth column of the corresponding device in /proc/diskstats during the collection period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178717899,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 平均I/O服务时长",
+        "unit": "none",
+        "note": "该指标用于统计指定时间段内，平均每个读或写I/O的操作时长。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十三列数据的变化与第四列数据和第八列数据和的变化相除得出磁盘平均I/O时长。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_io_svctm",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 平均I/O服务时长",
+                "note": "该指标用于统计指定时间段内，平均每个读或写I/O的操作时长。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十三列数据的变化与第四列数据和第八列数据和的变化相除得出磁盘平均I/O时长。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Average I/O Service Time",
+                "note": "This metric measures the average duration of each read or write I/O operation in the specified period. Collection method (Linux): The average I/O service time is calculated by dividing the change in the thirteenth column of the corresponding device in /proc/diskstats during the collection period by the sum of the changes in the fourth and eighth columns. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178473085,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 平均队列长度",
+        "unit": "none",
+        "note": "该指标反映指定时间段内磁盘的繁忙程度，可用于评估磁盘I/O性能，指标值越大代表磁盘越繁忙，I/O性能越差。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十四列数据的变化与指标采集周期时间相除得出指标的值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_queue_length",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 平均队列长度",
+                "note": "该指标反映指定时间段内磁盘的繁忙程度，可用于评估磁盘I/O性能，指标值越大代表磁盘越繁忙，I/O性能越差。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十四列数据的变化与指标采集周期时间相除得出指标的值。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Average Queue Length",
+                "note": "This metric reflects how busy the disk is in the specified period and can be used to evaluate disk I/O performance. A larger value indicates a busier disk and poorer I/O performance. Collection method (Linux): The metric value is calculated by dividing the change in the fourteenth column of the corresponding device in /proc/diskstats during the collection period by the collection period duration. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178236773,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 读操作平均耗时",
+        "unit": "none",
+        "note": "该指标用于统计测量对象磁盘读操作平均耗时。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第七列数据的变化得出磁盘读操作平均耗时。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_readTime",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 读操作平均耗时",
+                "note": "该指标用于统计测量对象磁盘读操作平均耗时。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第七列数据的变化得出磁盘读操作平均耗时。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Average Read Time",
+                "note": "This metric measures the average time taken by disk read operations on the monitored object. Collection method (Linux): The average disk read time is calculated from the change in the seventh column of the corresponding device in /proc/diskstats during the collection period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178642816,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 平均读操作大小",
+        "unit": "none",
+        "note": "该指标用于统计指定时间段内，平均每个读I/O操作传输的字节数。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第六列数据的变化与第四列数据的变化相除得出磁盘平均读操作大小。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_read_bytes_per_operation",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 平均读操作大小",
+                "note": "该指标用于统计指定时间段内，平均每个读I/O操作传输的字节数。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第六列数据的变化与第四列数据的变化相除得出磁盘平均读操作大小。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Average Read Operation Size",
+                "note": "This metric measures the average number of bytes transferred per read I/O operation in the specified period. Collection method (Linux): The average read operation size is calculated by dividing the change in the sixth column of the corresponding device in /proc/diskstats during the collection period by the change in the fourth column. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178313785,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 写操作平均耗时",
+        "unit": "none",
+        "note": "该指标用于统计测量对象磁盘写操作平均耗时。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十一列数据的变化得出磁盘写操作平均耗时。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_writeTime",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 写操作平均耗时",
+                "note": "该指标用于统计测量对象磁盘写操作平均耗时。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十一列数据的变化得出磁盘写操作平均耗时。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Average Write Time",
+                "note": "This metric measures the average time taken by disk write operations on the monitored object. Collection method (Linux): The average disk write time is calculated from the change in the eleventh column of the corresponding device in /proc/diskstats during the collection period. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479178553793,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 平均写操作大小",
+        "unit": "none",
+        "note": "该指标用于统计指定时间段内，平均每个写I/O操作传输的字节数。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十列数据的变化与第八列数据的变化相除得出磁盘平均写操作大小。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_SlAsH_disk_write_bytes_per_operation",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 平均写操作大小",
+                "note": "该指标用于统计指定时间段内，平均每个写I/O操作传输的字节数。采集方式（Linux）：通过计算采集周期内/proc/diskstats中对应设备第十列数据的变化与第八列数据的变化相除得出磁盘平均写操作大小。挂载点前缀路径长度不能超过64个字符，必须以字母开头，只能包含0-9/a-z/A-Z/-/./~。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Average Write Operation Size",
+                "note": "This metric measures the average number of bytes transferred per write I/O operation in the specified period. Collection method (Linux): The average write operation size is calculated by dividing the change in the tenth column of the corresponding device in /proc/diskstats during the collection period by the change in the eighth column. The mount point prefix path cannot exceed 64 characters, must start with a letter, and can contain only 0-9/a-z/A-Z/-/./~. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065218467,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) CPU使用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象当前CPU使用率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出cpu使用率。用户可以通过top命令查看 %Cpu(s)值。采集方式（Windows）：通过WindowsAPI GetSystemTimes获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_cpu_usage",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) CPU使用率",
+                "note": "该指标用于统计测量对象当前CPU使用率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出cpu使用率。用户可以通过top命令查看 %Cpu(s)值。采集方式（Windows）：通过WindowsAPI GetSystemTimes获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) CPU Usage",
+                "note": "This metric measures the current CPU usage of the monitored object. Collection method (Linux): The CPU usage is calculated from the change in /proc/stat during the collection period. You can check the %Cpu(s) value with the top command. Collection method (Windows): Obtained through the Windows API GetSystemTimes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065296053,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) CPU空闲时间占比",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象当前CPU空闲时间占比。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出CPU空闲时间占比。采集方式（Windows）：通过WindowsAPI GetSystemTimes获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_cpu_usage_idle",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) CPU空闲时间占比",
+                "note": "该指标用于统计测量对象当前CPU空闲时间占比。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出CPU空闲时间占比。采集方式（Windows）：通过WindowsAPI GetSystemTimes获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Idle CPU Usage",
+                "note": "This metric measures the percentage of time the CPU of the monitored object is currently idle. Collection method (Linux): The idle CPU time percentage is calculated from the change in /proc/stat during the collection period. Collection method (Windows): Obtained through the Windows API GetSystemTimes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065702309,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) iowait状态占比",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象当前iowait状态占用CPU的比率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出iowait状态占比。用户可以通过top命令查看 %Cpu(s) wa值。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_cpu_usage_iowait",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) iowait状态占比",
+                "note": "该指标用于统计测量对象当前iowait状态占用CPU的比率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出iowait状态占比。用户可以通过top命令查看 %Cpu(s) wa值。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) iowait CPU Usage",
+                "note": "This metric measures the percentage of CPU time currently occupied by the iowait state on the monitored object. Collection method (Linux): The iowait percentage is calculated from the change in /proc/stat during the collection period. You can check the %Cpu(s) wa value with the top command. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065778392,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) CPU中断时间占比",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象当前CPU处理中断用时占用CPU时间的比率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出CPU中断时间占比。用户可以通过top命令查看 %Cpu(s) hi值。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_cpu_usage_irq",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) CPU中断时间占比",
+                "note": "该指标用于统计测量对象当前CPU处理中断用时占用CPU时间的比率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出CPU中断时间占比。用户可以通过top命令查看 %Cpu(s) hi值。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) CPU Interrupt Usage",
+                "note": "This metric measures the percentage of CPU time currently spent handling interrupts on the monitored object. Collection method (Linux): The CPU interrupt time percentage is calculated from the change in /proc/stat during the collection period. You can check the %Cpu(s) hi value with the top command. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065625251,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) Nice进程CPU使用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象当前Nice进程CPU使用率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出Nice进程CPU使用率。用户可以通过top命令查看 %Cpu(s) ni值。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_cpu_usage_nice",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) Nice进程CPU使用率",
+                "note": "该指标用于统计测量对象当前Nice进程CPU使用率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出Nice进程CPU使用率。用户可以通过top命令查看 %Cpu(s) ni值。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Nice Process CPU Usage",
+                "note": "This metric measures the current CPU usage of nice processes on the monitored object. Collection method (Linux): The nice process CPU usage is calculated from the change in /proc/stat during the collection period. You can check the %Cpu(s) ni value with the top command. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065545324,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 其他CPU使用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象其他占用CPU使用率。采集方式（Linux）：其他CPU使用率=1- 空闲CPU使用率（%）- 内核空间CPU使用率- 用户空间CPU使用率。采集方式（Windows）：其他CPU使用率=1- 空闲CPU使用率（%）- 内核空间CPU使用率- 用户空间CPU使用率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_cpu_usage_other",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 其他CPU使用率",
+                "note": "该指标用于统计测量对象其他占用CPU使用率。采集方式（Linux）：其他CPU使用率=1- 空闲CPU使用率（%）- 内核空间CPU使用率- 用户空间CPU使用率。采集方式（Windows）：其他CPU使用率=1- 空闲CPU使用率（%）- 内核空间CPU使用率- 用户空间CPU使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Other CPU Usage",
+                "note": "This metric measures the CPU usage of other consumers on the monitored object. Collection method (Linux): Other CPU usage = 1 - idle CPU usage (%) - kernel space CPU usage - user space CPU usage. Collection method (Windows): Other CPU usage = 1 - idle CPU usage (%) - kernel space CPU usage - user space CPU usage."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065854001,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) CPU软中断时间占比",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象当前CPU处理软中断时间占用CPU时间的比率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出CPU软中断时间占比。用户可以通过top命令查看 %Cpu(s) si值。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_cpu_usage_softirq",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) CPU软中断时间占比",
+                "note": "该指标用于统计测量对象当前CPU处理软中断时间占用CPU时间的比率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出CPU软中断时间占比。用户可以通过top命令查看 %Cpu(s) si值。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) CPU Soft Interrupt Usage",
+                "note": "This metric measures the percentage of CPU time currently spent handling soft interrupts on the monitored object. Collection method (Linux): The CPU soft interrupt time percentage is calculated from the change in /proc/stat during the collection period. You can check the %Cpu(s) si value with the top command. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065453796,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 内核空间CPU使用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象当前内核空间占用CPU使用率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出内核空间CPU使用率。用户可以通过top命令查看 %Cpu(s) sy值。采集方式（Windows）：通过WindowsAPI GetSystemTimes获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_cpu_usage_system",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 内核空间CPU使用率",
+                "note": "该指标用于统计测量对象当前内核空间占用CPU使用率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出内核空间CPU使用率。用户可以通过top命令查看 %Cpu(s) sy值。采集方式（Windows）：通过WindowsAPI GetSystemTimes获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Kernel Space CPU Usage",
+                "note": "This metric measures the current kernel space CPU usage of the monitored object. Collection method (Linux): The kernel space CPU usage is calculated from the change in /proc/stat during the collection period. You can check the %Cpu(s) sy value with the top command. Collection method (Windows): Obtained through the Windows API GetSystemTimes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065372707,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 用户空间CPU使用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象当前用户空间占用CPU使用率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出cpu使用率。用户可以通过top命令查看 %Cpu(s) us值。采集方式（Windows）：通过WindowsAPI GetSystemTimes获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_cpu_usage_user",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 用户空间CPU使用率",
+                "note": "该指标用于统计测量对象当前用户空间占用CPU使用率。采集方式（Linux）：通过计算采集周期内/proc/stat中的变化得出cpu使用率。用户可以通过top命令查看 %Cpu(s) us值。采集方式（Windows）：通过WindowsAPI GetSystemTimes获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) User Space CPU Usage",
+                "note": "This metric measures the current user space CPU usage of the monitored object. Collection method (Linux): The CPU usage is calculated from the change in /proc/stat during the collection period. You can check the %Cpu(s) us value with the top command. Collection method (Windows): Obtained through the Windows API GetSystemTimes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479065931693,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 1分钟平均负载",
+        "unit": "none",
+        "note": "该指标用于统计测量对象过去1分钟的CPU平均负载。采集方式（Linux）：通过/proc/loadavg中load1/逻辑CPU个数得到。用户可以通过top命令查看load1值。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_load_average1",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 1分钟平均负载",
+                "note": "该指标用于统计测量对象过去1分钟的CPU平均负载。采集方式（Linux）：通过/proc/loadavg中load1/逻辑CPU个数得到。用户可以通过top命令查看load1值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) 1-Minute Load Average",
+                "note": "This metric measures the average CPU load of the monitored object over the past 1 minute. Collection method (Linux): Obtained by dividing load1 in /proc/loadavg by the number of logical CPUs. You can check the load1 value with the top command."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066086279,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 15分钟平均负载",
+        "unit": "none",
+        "note": "该指标用于统计测量对象过去15分钟的CPU平均负载。采集方式（Linux）：通过/proc/loadavg中load15/逻辑CPU个数得到。用户可以通过top命令查看load15值。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_load_average15",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 15分钟平均负载",
+                "note": "该指标用于统计测量对象过去15分钟的CPU平均负载。采集方式（Linux）：通过/proc/loadavg中load15/逻辑CPU个数得到。用户可以通过top命令查看load15值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) 15-Minute Load Average",
+                "note": "This metric measures the average CPU load of the monitored object over the past 15 minutes. Collection method (Linux): Obtained by dividing load15 in /proc/loadavg by the number of logical CPUs. You can check the load15 value with the top command."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066010141,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 5分钟平均负载",
+        "unit": "none",
+        "note": "该指标用于统计测量对象过去5分钟的CPU平均负载。采集方式（Linux）：通过/proc/loadavg中load5/逻辑CPU个数得到。用户可以通过top命令查看load5值。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_load_average5",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 5分钟平均负载",
+                "note": "该指标用于统计测量对象过去5分钟的CPU平均负载。采集方式（Linux）：通过/proc/loadavg中load5/逻辑CPU个数得到。用户可以通过top命令查看load5值。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) 5-Minute Load Average",
+                "note": "This metric measures the average CPU load of the monitored object over the past 5 minutes. Collection method (Linux): Obtained by dividing load5 in /proc/loadavg by the number of logical CPUs. You can check the load5 value with the top command."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066168345,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 可用内存",
+        "unit": "none",
+        "note": "该指标用于统计测量对象的可用内存。采集方式（Linux）：通过/proc/meminfo文件获取，若/proc/meminfo中显示MemAvailable，则直接可得若/proc/meminfo中不显示MemAvailable，则MemAvailable=MemFree+Buffers+Cached采集方式（Windows）：计算方法为（内存总量-已用内存量）。通过WindowsAPI GlobalMemoryStatusEx获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_mem_available",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 可用内存",
+                "note": "该指标用于统计测量对象的可用内存。采集方式（Linux）：通过/proc/meminfo文件获取，若/proc/meminfo中显示MemAvailable，则直接可得若/proc/meminfo中不显示MemAvailable，则MemAvailable=MemFree+Buffers+Cached采集方式（Windows）：计算方法为（内存总量-已用内存量）。通过WindowsAPI GlobalMemoryStatusEx获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Available Memory",
+                "note": "This metric measures the available memory of the monitored object. Collection method (Linux): Obtained from the /proc/meminfo file. If MemAvailable is present in /proc/meminfo, it is used directly; otherwise, MemAvailable = MemFree + Buffers + Cached. Collection method (Windows): Calculated as (total memory - used memory), obtained through the Windows API GlobalMemoryStatusEx."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066402936,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) Buffers占用量",
+        "unit": "none",
+        "note": "该指标用于统计测量对象的Buffers内存量。采集方式（Linux）：通过/proc/meminfo获取。用户可以通过top命令查看 KiB Mem:buffers值。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_mem_buffers",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) Buffers占用量",
+                "note": "该指标用于统计测量对象的Buffers内存量。采集方式（Linux）：通过/proc/meminfo获取。用户可以通过top命令查看 KiB Mem:buffers值。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Buffers",
+                "note": "This metric measures the amount of buffers memory on the monitored object. Collection method (Linux): Obtained from /proc/meminfo. You can check the KiB Mem: buffers value with the top command. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066488713,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) Cache占用量",
+        "unit": "none",
+        "note": "该指标用于统计测量对象Cache内存量。采集方式（Linux）：通过/proc/meminfo获取。用户可以通过top命令查看 KiB Swap:cached Mem值。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_mem_cached",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) Cache占用量",
+                "note": "该指标用于统计测量对象Cache内存量。采集方式（Linux）：通过/proc/meminfo获取。用户可以通过top命令查看 KiB Swap:cached Mem值。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Cached Memory",
+                "note": "This metric measures the amount of cache memory on the monitored object. Collection method (Linux): Obtained from /proc/meminfo. You can check the KiB Swap: cached Mem value with the top command. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066324715,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 空闲内存量",
+        "unit": "none",
+        "note": "该指标用于统计测量对象的空闲内存量。采集方式（Linux）：通过/proc/meminfo获取。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_mem_free",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 空闲内存量",
+                "note": "该指标用于统计测量对象的空闲内存量。采集方式（Linux）：通过/proc/meminfo获取。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Free Memory",
+                "note": "This metric measures the amount of free memory on the monitored object. Collection method (Linux): Obtained from /proc/meminfo. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066250011,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 内存使用率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象的内存使用率。采集方式（Linux）：通过/proc/meminfo文件获取，(MemTotal-MemAvailable)/MemTotal若/proc/meminfo中显示MemAvailable，则MemUsedPercent=(MemTotal-MemAvailable)/MemTotal若/proc/meminfo中不显示MemAvailable，则MemUsedPercent=(MemTotal-MemFree-Buffers-Cached)/MemTotal采集方式（Windows）：计算方法为（ 已用内存量/内存总量*100%）。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_mem_usedPercent",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 内存使用率",
+                "note": "该指标用于统计测量对象的内存使用率。采集方式（Linux）：通过/proc/meminfo文件获取，(MemTotal-MemAvailable)/MemTotal若/proc/meminfo中显示MemAvailable，则MemUsedPercent=(MemTotal-MemAvailable)/MemTotal若/proc/meminfo中不显示MemAvailable，则MemUsedPercent=(MemTotal-MemFree-Buffers-Cached)/MemTotal采集方式（Windows）：计算方法为（ 已用内存量/内存总量*100%）。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Memory Usage",
+                "note": "This metric measures the memory usage of the monitored object. Collection method (Linux): Obtained from the /proc/meminfo file as (MemTotal - MemAvailable)/MemTotal. If MemAvailable is present in /proc/meminfo, MemUsedPercent = (MemTotal - MemAvailable)/MemTotal; otherwise, MemUsedPercent = (MemTotal - MemFree - Buffers - Cached)/MemTotal. Collection method (Windows): Calculated as (used memory / total memory * 100%)."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066650111,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 出网带宽",
+        "unit": "none",
+        "note": "该指标用于统计测量对象网卡每秒发送的比特数。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：使用WMI中MibIfRow对象获取网络指标数据。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_bitRecv",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 出网带宽",
+                "note": "该指标用于统计测量对象网卡每秒发送的比特数。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：使用WMI中MibIfRow对象获取网络指标数据。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Outbound Bandwidth",
+                "note": "This metric measures the number of bits sent by the NIC of the monitored object per second. Collection method (Linux): Calculated from the change in /proc/net/dev during the collection period. Collection method (Windows): Network metric data is obtained from the WMI MibIfRow object."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066783377,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 入网带宽",
+        "unit": "none",
+        "note": "该指标用于统计测量对象网卡每秒接收的比特数。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：使用WMI中MibIfRow对象获取网络指标数据。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_bitSent",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 入网带宽",
+                "note": "该指标用于统计测量对象网卡每秒接收的比特数。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：使用WMI中MibIfRow对象获取网络指标数据。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Inbound Bandwidth",
+                "note": "This metric measures the number of bits received by the NIC of the monitored object per second. Collection method (Linux): Calculated from the change in /proc/net/dev during the collection period. Collection method (Windows): Network metric data is obtained from the WMI MibIfRow object."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067187774,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 接收丢包率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象网卡每秒接收并已丢弃的数据包数量占所接收的数据包的比率采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_dropin",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 接收丢包率",
+                "note": "该指标用于统计测量对象网卡每秒接收并已丢弃的数据包数量占所接收的数据包的比率采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Receive Packet Loss Rate",
+                "note": "This metric measures the percentage of packets received and discarded by the NIC of the monitored object per second, relative to the total packets received. Collection method (Linux): Calculated from the change in /proc/net/dev during the collection period. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067264240,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 发送丢包率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象网卡每秒发送并已丢弃的数据包数量占所发送的数据包的比率。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_dropout",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 发送丢包率",
+                "note": "该指标用于统计测量对象网卡每秒发送并已丢弃的数据包数量占所发送的数据包的比率。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Send Packet Loss Rate",
+                "note": "This metric measures the percentage of packets sent and discarded by the NIC of the monitored object per second, relative to the total packets sent. Collection method (Linux): Calculated from the change in /proc/net/dev during the collection period. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067013270,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 接收误包率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象网卡每秒接收的错误数据包数量占所接收的数据包的比率。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_errin",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 接收误包率",
+                "note": "该指标用于统计测量对象网卡每秒接收的错误数据包数量占所接收的数据包的比率。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Receive Error Rate",
+                "note": "This metric measures the percentage of error packets received by the NIC of the monitored object per second, relative to the total packets received. Collection method (Linux): Calculated from the change in /proc/net/dev during the collection period. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067091325,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 发送误包率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象网卡每秒发送的错误数据包数量占所发送的数据包的比率。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_errout",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 发送误包率",
+                "note": "该指标用于统计测量对象网卡每秒发送的错误数据包数量占所发送的数据包的比率。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Send Error Rate",
+                "note": "This metric measures the percentage of error packets sent by the NIC of the monitored object per second, relative to the total packets sent. Collection method (Linux): Calculated from the change in /proc/net/dev during the collection period. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066862633,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 网卡包接收速率",
+        "unit": "none",
+        "note": "该指标用于统计测量对象网卡每秒接收的数据包数。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：使用WMI中MibIfRow对象获取网络指标数据。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_packetRecv",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 网卡包接收速率",
+                "note": "该指标用于统计测量对象网卡每秒接收的数据包数。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：使用WMI中MibIfRow对象获取网络指标数据。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) NIC Packet Receive Rate",
+                "note": "This metric measures the number of packets received by the NIC of the monitored object per second. Collection method (Linux): Calculated from the change in /proc/net/dev during the collection period. Collection method (Windows): Network metric data is obtained from the WMI MibIfRow object."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066938255,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 网卡包发送速率",
+        "unit": "none",
+        "note": "该指标用于统计测量对象网卡每秒发送的数据包数。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：使用WMI中MibIfRow对象获取网络指标数据。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_packetSent",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 网卡包发送速率",
+                "note": "该指标用于统计测量对象网卡每秒发送的数据包数。采集方式（Linux）：通过计算采集周期内/proc/net/dev中的变化得出。采集方式（Windows）：使用WMI中MibIfRow对象获取网络指标数据。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) NIC Packet Send Rate",
+                "note": "This metric measures the number of packets sent by the NIC of the monitored object per second. Collection method (Linux): Calculated from the change in /proc/net/dev during the collection period. Collection method (Windows): Network metric data is obtained from the WMI MibIfRow object."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067972698,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP CLOSE",
+        "unit": "none",
+        "note": "该指标用于统计测量对象关闭的或未打开的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_close",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP CLOSE",
+                "note": "该指标用于统计测量对象关闭的或未打开的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP CLOSE",
+                "note": "This metric counts the number of closed or not-open TCP connections on the monitored object. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068056098,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP CLOSE_WAIT",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于CLOSE_WAIT状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_close_wait",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP CLOSE_WAIT",
+                "note": "该指标用于统计测量对象处于CLOSE_WAIT状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP CLOSE_WAIT",
+                "note": "This metric counts the number of TCP connections in the CLOSE_WAIT state on the monitored object. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068286920,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP CLOSING",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于服务端和客户端同时主动关闭状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_closing",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP CLOSING",
+                "note": "该指标用于统计测量对象处于服务端和客户端同时主动关闭状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP CLOSING",
+                "note": "This metric counts the number of TCP connections on the monitored object that are being actively closed by both the server and the client at the same time. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067498092,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP ESTABLISHED",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于ESTABLISHED状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_established",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP ESTABLISHED",
+                "note": "该指标用于统计测量对象处于ESTABLISHED状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP ESTABLISHED",
+                "note": "This metric counts the number of TCP connections in the ESTABLISHED state on the monitored object. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067732437,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP FIN_WAIT1",
+        "unit": "none",
+        "note": "该指标用于统计测量对象客户端主动关闭且没有收到服务端ACK的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_fin_wait1",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP FIN_WAIT1",
+                "note": "该指标用于统计测量对象客户端主动关闭且没有收到服务端ACK的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP FIN_WAIT1",
+                "note": "This metric counts the number of TCP connections on the monitored object where the client has actively closed the connection but has not received the ACK from the server. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067812107,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP FIN_WAIT2",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于FIN_WAIT2状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_fin_wait2",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP FIN_WAIT2",
+                "note": "该指标用于统计测量对象处于FIN_WAIT2状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP FIN_WAIT2",
+                "note": "This metric counts the number of TCP connections in the FIN_WAIT2 state on the monitored object. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068135063,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP LAST_ACK",
+        "unit": "none",
+        "note": "该指标用于统计测量对象被动关闭等待ACK报文的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_last_ack",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP LAST_ACK",
+                "note": "该指标用于统计测量对象被动关闭等待ACK报文的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP LAST_ACK",
+                "note": "This metric counts the number of TCP connections on the monitored object that are passively closed and waiting for the ACK packet. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068211091,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP LISTEN",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于LISTEN状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_listen",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP LISTEN",
+                "note": "该指标用于统计测量对象处于LISTEN状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP LISTEN",
+                "note": "This metric counts the number of TCP connections in the LISTEN state on the monitored object. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068377188,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP重传率",
+        "unit": "percent",
+        "note": "该指标用于统计测量对象重新发送的报文数与总发送的报文数之间的比值。采集方式（Linux）：通过从/proc/net/snmp文件中获取对应的数据，计算采集周期内重传包数和发送包数的比值得出。采集方式（Windows）：重传率通过WindowsAPI GetTcpStatistics获取",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_retrans",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP重传率",
+                "note": "该指标用于统计测量对象重新发送的报文数与总发送的报文数之间的比值。采集方式（Linux）：通过从/proc/net/snmp文件中获取对应的数据，计算采集周期内重传包数和发送包数的比值得出。采集方式（Windows）：重传率通过WindowsAPI GetTcpStatistics获取"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP Retransmission Rate",
+                "note": "This metric measures the ratio of retransmitted packets to the total packets sent by the monitored object. Collection method (Linux): The corresponding data is obtained from the /proc/net/snmp file, and the ratio of retransmitted packets to sent packets during the collection period is calculated. Collection method (Windows): The retransmission rate is obtained through the Windows API GetTcpStatistics."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067654456,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP SYS_RECV",
+        "unit": "none",
+        "note": "该指标用于统计测量对象服务器端收到的请求连接的TCP数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_sys_recv",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP SYS_RECV",
+                "note": "该指标用于统计测量对象服务器端收到的请求连接的TCP数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP SYS_RECV",
+                "note": "This metric counts the number of TCP connection requests received by the server side of the monitored object. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067574992,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP SYS_SENT",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于请求连接状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_sys_sent",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP SYS_SENT",
+                "note": "该指标用于统计测量对象处于请求连接状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP SYS_SENT",
+                "note": "This metric counts the number of TCP connections on the monitored object that are in the connection-requesting state. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067894242,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP TIME_WAIT",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于TIME_WAIT状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_time_wait",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP TIME_WAIT",
+                "note": "该指标用于统计测量对象处于TIME_WAIT状态的TCP连接数量。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP TIME_WAIT",
+                "note": "This metric counts the number of TCP connections in the TIME_WAIT state on the monitored object. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067416499,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) TCP TOTAL",
+        "unit": "none",
+        "note": "该指标用于统计测量对象所有状态的TCP连接数总和。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_net_tcp_total",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) TCP TOTAL",
+                "note": "该指标用于统计测量对象所有状态的TCP连接数总和。采集方式（Linux）：通过/proc/net/tcp文件获取到所有状态的TCP连接，再统计每个状态的连接数量。采集方式（Windows）：通过WindowsAPI GetTcpTable2获取。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) TCP TOTAL",
+                "note": "This metric counts the total number of TCP connections in all states on the monitored object. Collection method (Linux): All TCP connections are obtained from the /proc/net/tcp file, and the number of connections in each state is counted. Collection method (Windows): Obtained through the Windows API GetTcpTable2."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479067338509,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) NTP偏移量",
+        "unit": "milliseconds",
+        "note": "该指标用于统计测量对象当前NTP偏移量。采集方式（Linux）：执行chronyc sources -v命令，获取偏移量。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_ntp_offset",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) NTP偏移量",
+                "note": "该指标用于统计测量对象当前NTP偏移量。采集方式（Linux）：执行chronyc sources -v命令，获取偏移量。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) NTP Offset",
+                "note": "This metric measures the current NTP offset of the monitored object. Collection method (Linux): Run the chronyc sources -v command to obtain the offset. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479069027120,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 阻塞进程数",
+        "unit": "none",
+        "note": "该指标用于统计测量对象被阻塞的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_blocked_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 阻塞进程数",
+                "note": "该指标用于统计测量对象被阻塞的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Blocked Processes",
+                "note": "This metric counts the number of blocked processes on the monitored object. Collection method (Linux): The status of each process is obtained from the Status value in /proc/pid/status, and the total number of processes in each state is counted. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068872119,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 空闲进程数",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于空闲状态的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_idle_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 空闲进程数",
+                "note": "该指标用于统计测量对象处于空闲状态的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Idle Processes",
+                "note": "This metric counts the number of processes in the idle state on the monitored object. Collection method (Linux): The status of each process is obtained from the Status value in /proc/pid/status, and the total number of processes in each state is counted. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068454080,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 进程CPU使用率",
+        "unit": "percent",
+        "note": "进程消耗的CPU百分比，pHashId是（进程名+进程ID）的md5值。采集方式（Linux）：通过计算/proc/pid/stat的变化得出。采集方式（Windows）：通过Windows API GetProcessTimes获取进程CPU使用率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_pHashId_cpu",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 进程CPU使用率",
+                "note": "进程消耗的CPU百分比，pHashId是（进程名+进程ID）的md5值。采集方式（Linux）：通过计算/proc/pid/stat的变化得出。采集方式（Windows）：通过Windows API GetProcessTimes获取进程CPU使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Process CPU Usage",
+                "note": "The percentage of CPU consumed by a process. pHashId is the md5 hash of (process name + process ID). Collection method (Linux): Calculated from the change in /proc/pid/stat. Collection method (Windows): Process CPU usage is obtained through the Windows API GetProcessTimes."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068608646,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 进程打开文件数",
+        "unit": "none",
+        "note": "进程打开文件数，pHashId是（进程名+进程ID）的md5值。采集方式（Linux）：通过执行ls -l /proc/pid/fd 可以查看数量。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_pHashId_file",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 进程打开文件数",
+                "note": "进程打开文件数，pHashId是（进程名+进程ID）的md5值。采集方式（Linux）：通过执行ls -l /proc/pid/fd 可以查看数量。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Process Open Files",
+                "note": "The number of files opened by a process. pHashId is the md5 hash of (process name + process ID). Collection method (Linux): Run ls -l /proc/pid/fd to view the count. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068532361,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 进程内存使用率",
+        "unit": "percent",
+        "note": "进程消耗的内存百分比，pHashId是（进程名+进程ID）的md5值。采集方式（Linux）：RSS*PAGESIZE/MemTotalRSS: 通过获取/proc/pid/statm第二列得到PAGESIZE: 通过命令getconf PAGESIZE获取MemTotal：通过/proc/meminfo获取采集方式（Windows）：使用Windows API procGlobalMemoryStatusEx获取内存总量，通过GetProcessMemoryInfo获取内存已使用量，计算两者比值得到内存使用率。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_pHashId_mem",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 进程内存使用率",
+                "note": "进程消耗的内存百分比，pHashId是（进程名+进程ID）的md5值。采集方式（Linux）：RSS*PAGESIZE/MemTotalRSS: 通过获取/proc/pid/statm第二列得到PAGESIZE: 通过命令getconf PAGESIZE获取MemTotal：通过/proc/meminfo获取采集方式（Windows）：使用Windows API procGlobalMemoryStatusEx获取内存总量，通过GetProcessMemoryInfo获取内存已使用量，计算两者比值得到内存使用率。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Process Memory Usage",
+                "note": "The percentage of memory consumed by a process. pHashId is the md5 hash of (process name + process ID). Collection method (Linux): RSS*PAGESIZE/MemTotal, where RSS is obtained from the second column of /proc/pid/statm, PAGESIZE is obtained with the getconf PAGESIZE command, and MemTotal is obtained from /proc/meminfo. Collection method (Windows): The total memory is obtained through the Windows API GlobalMemoryStatusEx, the used memory is obtained through GetProcessMemoryInfo, and the memory usage is calculated as the ratio of the two."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068685330,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 运行中进程数",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于运行状态的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_running_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 运行中进程数",
+                "note": "该指标用于统计测量对象处于运行状态的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Running Processes",
+                "note": "This metric counts the number of processes in the running state on the monitored object. Collection method (Linux): The status of each process is obtained from the Status value in /proc/pid/status, and the total number of processes in each state is counted. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479069107003,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 睡眠进程数",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于睡眠状态的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_sleeping_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 睡眠进程数",
+                "note": "该指标用于统计测量对象处于睡眠状态的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Sleeping Processes",
+                "note": "This metric counts the number of processes in the sleeping state on the monitored object. Collection method (Linux): The status of each process is obtained from the Status value in /proc/pid/status, and the total number of processes in each state is counted. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479069263960,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 指定进程数",
+        "unit": "none",
+        "note": "该指标用于统计测量对象指定的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：通过psapi.dll系统进程状态支持模块得到进程总数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_specified_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 指定进程数",
+                "note": "该指标用于统计测量对象指定的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：通过psapi.dll系统进程状态支持模块得到进程总数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Specified Processes",
+                "note": "This metric counts the number of specified processes on the monitored object. Collection method (Linux): The status of each process is obtained from the Status value in /proc/pid/status, and the total number of processes in each state is counted. Collection method (Windows): The total number of processes is obtained through the psapi.dll system process status support module."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479069185570,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 系统进程数",
+        "unit": "none",
+        "note": "该指标用于统计测量对象的总进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：通过psapi.dll系统进程状态支持模块得到进程总数。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_total_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 系统进程数",
+                "note": "该指标用于统计测量对象的总进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：通过psapi.dll系统进程状态支持模块得到进程总数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Total Processes",
+                "note": "This metric counts the total number of processes on the monitored object. Collection method (Linux): The status of each process is obtained from the Status value in /proc/pid/status, and the total number of processes in each state is counted. Collection method (Windows): The total number of processes is obtained through the psapi.dll system process status support module."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479068950459,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 僵死进程数",
+        "unit": "none",
+        "note": "该指标用于统计测量对象处于僵死状态的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_proc_zombie_count",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 僵死进程数",
+                "note": "该指标用于统计测量对象处于僵死状态的进程数。采集方式（Linux）：通过统计 /proc/pid/status 中Status值获取每个进程的状态，进而统计各个状态进程总数。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Zombie Processes",
+                "note": "This metric counts the number of zombie processes on the monitored object. Collection method (Linux): The status of each process is obtained from the Status value in /proc/pid/status, and the total number of processes in each state is counted. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479069341681,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 指定进程打开文件数",
+        "unit": "none",
+        "note": "该指标用于统计测量对象指定进程打开的文件数。采集方式（Linux）：通过执行ls -l /proc/pid/fd 可以查看数量。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_specified_process_file",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 指定进程打开文件数",
+                "note": "该指标用于统计测量对象指定进程打开的文件数。采集方式（Linux）：通过执行ls -l /proc/pid/fd 可以查看数量。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Open Files of Specified Process",
+                "note": "This metric counts the number of files opened by the specified process on the monitored object. Collection method (Linux): Run ls -l /proc/pid/fd to view the count. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764479066572087,
+        "collector": "ECS_AGT",
+        "typ": "Huawei",
+        "name": "(Agent) 文件句柄总数",
+        "unit": "none",
+        "note": "该指标用于统计测量对象的所有进程使用的句柄总和。采集方式（Linux）：通过/proc/{pid}/fd文件汇总所有进程使用的句柄数。采集方式（Windows）：暂不支持。",
+        "lang": "zh_CN",
+        "expression": "huaweicloud_sys_agt_total_open_files",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "(Agent) 文件句柄总数",
+                "note": "该指标用于统计测量对象的所有进程使用的句柄总和。采集方式（Linux）：通过/proc/{pid}/fd文件汇总所有进程使用的句柄数。采集方式（Windows）：暂不支持。"
+            },
+            {
+                "lang": "en_US",
+                "name": "(Agent) Total File Handles",
+                "note": "This metric counts the total number of handles used by all processes on the monitored object. Collection method (Linux): The number of handles used by all processes is summed up from the /proc/{pid}/fd files. Collection method (Windows): Not supported yet."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

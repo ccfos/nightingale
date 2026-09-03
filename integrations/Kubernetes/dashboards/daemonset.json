@@ -1,0 +1,912 @@
+{
+    "name": "Kubernetes / Daemonset",
+    "tags": "",
+    "note": "",
+    "ident": "",
+    "uuid": 1751255476987000,
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "type": "stat",
+                "id": "418e5a81-3c50-47ee-ba1b-94f20b90d7c3",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 0,
+                    "y": 0,
+                    "i": "418e5a81-3c50-47ee-ba1b-94f20b90d7c3",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Pod Number",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "N/A"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "count(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"DaemonSet\",cluster=~\"$cluster\"})",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "c88cdbde-c833-4a3b-b1cc-ee0c0bc1951d",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 4,
+                    "y": 0,
+                    "i": "c88cdbde-c833-4a3b-b1cc-ee0c0bc1951d",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "spec_replicas",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(255, 153, 25, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "N/A"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg(kube_daemonset_status_desired_number_scheduled{daemonset=\"$daemonset\",cluster=~\"$cluster\"})",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "23f70efd-e0e6-43a0-8be0-2a4413b5a7c8",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 8,
+                    "y": 0,
+                    "i": "23f70efd-e0e6-43a0-8be0-2a4413b5a7c8",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Pod Mem Used",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "area",
+                    "colorMode": "background",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(148, 112, 255, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "N/A"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 3
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum (container_memory_working_set_bytes{image!=\"\",pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"})",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "e572946c-67a6-4b91-9835-9a399b4db31b",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 12,
+                    "y": 0,
+                    "i": "e572946c-67a6-4b91-9835-9a399b4db31b",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Pod memory limit",
+                "links": [],
+                "description": "没有配额的情况下默认值是0",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(230, 198, 39, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "unit": "bytesIEC"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum (container_spec_memory_limit_bytes{image!=\"\",pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"})",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "f7a083c8-1c86-4f3a-b1e1-29722ef99098",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 16,
+                    "y": 0,
+                    "i": "f7a083c8-1c86-4f3a-b1e1-29722ef99098",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Pod CPU Usage Secs",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "area",
+                    "colorMode": "background",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(84, 211, 202, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "N/A"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "seconds",
+                        "decimals": 3
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum (rate (container_cpu_usage_seconds_total{image!=\"\",pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"}[1m]))",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "d90982a8-c94d-4416-ab00-b05134b65bbd",
+                "layout": {
+                    "h": 3,
+                    "w": 4,
+                    "x": 20,
+                    "y": 0,
+                    "i": "d90982a8-c94d-4416-ab00-b05134b65bbd",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "restarts_total",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "N/A"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {
+                        "unit": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum (kube_pod_container_status_restarts_total{ pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"} )",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "7581e876-137d-494f-9445-271e0e020136",
+                "layout": {
+                    "h": 5,
+                    "w": 24,
+                    "x": 0,
+                    "y": 3,
+                    "i": "7581e876-137d-494f-9445-271e0e020136",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Pods memory usage",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 3,
+                        "displayName": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum (container_memory_working_set_bytes{image!=\"\",pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"}) by (pod)",
+                        "legend": "Used: {{ pod }}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max (kube_pod_container_resource_limits_memory_bytes{pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"})>0",
+                        "legend": "limit",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max (kube_pod_container_resource_requests_memory_bytes{pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"})>0",
+                        "legend": "request",
+                        "refId": "C"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "73a6cab3-22d3-46fd-b800-52adf42c87e6",
+                "layout": {
+                    "h": 5,
+                    "w": 24,
+                    "x": 0,
+                    "y": 8,
+                    "i": "73a6cab3-22d3-46fd-b800-52adf42c87e6",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Pods CPU usage",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgba(108, 83, 177, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "A"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "unit": "core",
+                                "decimals": 3
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum (rate (container_cpu_usage_seconds_total{image!=\"\",pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"}[1m])) by (pod)",
+                        "legend": "Used: {{ pod }}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max (kube_pod_container_resource_limits_cpu_cores{pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"})>0",
+                        "legend": "limit",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max (kube_pod_container_resource_requests_cpu_cores{pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"})>0",
+                        "legend": "request",
+                        "refId": "C"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3b5250e5-95a4-4a61-8d2b-4d85b85ee915",
+                "layout": {
+                    "h": 5,
+                    "w": 24,
+                    "x": 0,
+                    "y": 13,
+                    "i": "3b5250e5-95a4-4a61-8d2b-4d85b85ee915",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "Network I/O pressure",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgba(255, 153, 25, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum (rate (container_network_receive_bytes_total{image!=\"\",pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"}[1m])) by (pod)",
+                        "legend": "Received {{pod}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": " sum (rate (container_network_transmit_bytes_total{image!=\"\",pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"}[1m])) by (pod)",
+                        "legend": "Sent {{pod}}",
+                        "refId": "B",
+                        "maxDataPoints": 240
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "a9fd1a28-596d-4b40-b4d0-a37639d7e910",
+                "layout": {
+                    "h": 5,
+                    "w": 24,
+                    "x": 0,
+                    "y": 18,
+                    "i": "a9fd1a28-596d-4b40-b4d0-a37639d7e910",
+                    "isResizable": true
+                },
+                "version": "3.3.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "maxDataPoints": 240,
+                "name": "fs writes/reads",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "unit": "bytesIEC",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed+area"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum (rate (container_fs_writes_bytes_total{image!=\"\",pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"}[1m])) by (pod) ",
+                        "legend": "write {{pod}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum (rate (container_fs_reads_bytes_total{image!=\"\",pod=~\"$Pod\",namespace=\"$namespace\",cluster=~\"$cluster\"}[1m])) by (pod) ",
+                        "legend": "read {{pod}}",
+                        "refId": "B",
+                        "maxDataPoints": 240
+                    }
+                ]
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "hide": false,
+                "name": "datasource",
+                "type": "datasource",
+                "value": 0,
+                "options": [
+                ]
+            },
+            {
+                "name": "cluster",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(kube_daemonset_created, cluster)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*",
+                "options": [],
+                "value": [
+                    "all"
+                ],
+                "initialized": true
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(kube_daemonset_created{cluster=~\"$cluster\"}, namespace)",
+                "hide": false,
+                "label": "namespace",
+                "multi": false,
+                "name": "namespace",
+                "reg": "",
+                "type": "query",
+                "value": "",
+                "options": [
+                ],
+                "initialized": true
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(kube_daemonset_created{namespace=~\"$namespace\",cluster=~\"$cluster\"},daemonset)",
+                "hide": false,
+                "label": "daemonset",
+                "multi": false,
+                "name": "daemonset",
+                "reg": "",
+                "type": "query",
+                "value": "",
+                "options": [
+                ],
+                "initialized": true
+            },
+            {
+                "name": "Pod",
+                "label": "Pod",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "reg": "",
+                "definition": "label_values(kube_pod_info{namespace=\"$namespace\",created_by_kind=\"DaemonSet\", created_by_name=~\"$daemonset.*\",cluster=~\"$cluster\"} ,pod)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*",
+                "value": [
+                    "all"
+                ],
+                "options": []
+            }
+        ],
+        "version": "3.1.0"
+    }
+}

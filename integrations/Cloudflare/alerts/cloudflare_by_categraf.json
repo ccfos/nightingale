@@ -1,0 +1,257 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Cloudflare 边缘 5xx 占比过高",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "sum by (zone) (rate(cloudflare_zone_requests_status{status=~\"5..\"}[10m])) / (sum by (zone) (rate(cloudflare_zone_requests_total[10m])) \u003e 0) * 100 \u003e 1",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=CloudflareZone5xxHigh"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 zone，在 Cloudflare Dashboard 的 Analytics 里按状态码下钻，区分 520-527（Cloudflare 与源站之间）与 500-504（源站自身）；\n2) 52x 说明源站连接异常：521 是源站拒绝连接、524 是源站超时，直接 curl 源站 IP 验证并检查源站防火墙是否放行 Cloudflare 回源段；\n3) 5xx 为源站返回的，去源站应用日志定位；\n4) 应急可开启 Always Online 或把 DNS 记录临时切到备用源站。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785220000000018000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Cloudflare 缓存命中率较昨日同期显著下降",
+        "note": "该规则用昨日同一时段作为基线做同比，不设固定阈值，避免不同站点缓存率差异导致的误报；Zone 刚上线不足 24 小时时该规则不会产生数据。",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 900,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "sum by (zone) (rate(cloudflare_zone_requests_cached[1h])) / (sum by (zone) (rate(cloudflare_zone_requests_total[1h])) \u003e 0) \u003c 0.7 * (sum by (zone) (rate(cloudflare_zone_requests_cached[1h] offset 1d)) / (sum by (zone) (rate(cloudflare_zone_requests_total[1h] offset 1d)) \u003e 0))",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=CloudflareCacheHitDrop"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 zone，在 Dashboard 的 Caching \u003e Cache Analytics 里查看未命中请求集中在哪些路径；\n2) 确认最近是否改过 Page Rules 或 Cache Rules，误配 Bypass Cache 是最常见原因，先回滚变更；\n3) 源站响应头变化（新增 Cache-Control: no-cache 或 Set-Cookie）也会让缓存失效，对比发布前后的响应头；\n4) 若是刚做过 Purge Everything，属于预期内的缓存重建，观察命中率是否在数小时内自然回升。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785220000000019000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "Cloudflare 威胁请求占比过高",
+        "note": "",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 3,
+        "severities": [
+            3
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "sum by (zone) (rate(cloudflare_zone_threats_total[10m])) / (sum by (zone) (rate(cloudflare_zone_requests_total[10m])) \u003e 0) * 100 \u003e 10",
+                    "severity": 3
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=CloudflareThreatsHigh"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 zone，在 Security \u003e Events 里按来源国家、ASN、User-Agent 聚合，确认攻击特征；\n2) 特征明确的直接配置 WAF 自定义规则或速率限制规则拦截，优先用特征匹配而不是封 IP；\n3) 攻击量大时开启 Under Attack Mode，注意它会给正常用户加验证页面，需评估业务影响；\n4) 同时确认源站的 5xx 与响应时间是否受影响，必要时先扩容源站再慢慢调规则。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785220000000020000
+    }
+]

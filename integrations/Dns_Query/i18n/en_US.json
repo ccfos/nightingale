@@ -1,0 +1,7 @@
+{
+    "1) 在采集机上手工 dig @\u003cDNS服务器\u003e \u003c域名\u003e 复现，看 status 与耗时；\n2) 换用公共 DNS（如 dig @223.5.5.5）对比，区分是 DNS 服务器问题还是域名本身问题；\n3) 自建 DNS 的检查服务进程、上游转发配置与网络连通性；\n4) 确认探测配置里的域名、记录类型、超时设置是否合理，避免配置导致误报。": "1) Reproduce it on the collector host with dig @\u003cDNS server\u003e \u003cdomain\u003e and check the status and elapsed time;\n2) Compare against a public resolver (e.g. dig @223.5.5.5) to tell a DNS server problem from a problem with the domain itself;\n3) For a self-hosted resolver, check the service process, upstream forwarding config and network connectivity;\n4) Verify the probe's domain, record type and timeout settings are sensible so the config itself is not causing the alert.",
+    "DNS 响应状态码异常": "DNS response status code abnormal",
+    "DNS 查询异常": "DNS query failure",
+    "DNS 查询超时": "DNS query timeout",
+    "DNS查询响应时间大于5秒": "DNS query response time exceeds 5 seconds"
+}

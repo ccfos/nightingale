@@ -46,7 +46,7 @@ func (spq *SafeEventQueue) Push(event *models.AlertCurEvent) bool {
 	spq.lock.Lock()
 	defer spq.lock.Unlock()
 
-	for spq.len() > spq.maxSize {
+	for spq.len() >= spq.maxSize {
 		return false
 	}
 

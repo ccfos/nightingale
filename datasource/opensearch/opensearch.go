@@ -100,7 +100,8 @@ func (os *OpenSearch) InitClient() error {
 		Header:    headers,
 	}
 
-	if os.Basic.Enable && os.Basic.Username != "" {
+	// 只要有用户名就添加认证，不依赖 Enable 字段
+	if os.Basic.Username != "" {
 		options.Username = os.Basic.Username
 		options.Password = os.Basic.Password
 	}
@@ -139,6 +140,18 @@ func (os *OpenSearch) Equal(other datasource.Datasource) bool {
 		return false
 	}
 
+	if os.Version != other.(*OpenSearch).Version {
+		return false
+	}
+
+	if os.MinInterval != other.(*OpenSearch).MinInterval {
+		return false
+	}
+
+	if os.MaxShard != other.(*OpenSearch).MaxShard {
+		return false
+	}
+
 	return true
 }
 
@@ -154,8 +167,9 @@ func (os *OpenSearch) Validate(ctx context.Context) (err error) {
 		}
 	}
 
-	if os.Basic.Enable && (len(os.Basic.Username) == 0 || len(os.Basic.Password) == 0) {
-		return fmt.Errorf("need a valid user, password")
+	// 如果提供了用户名，必须同时提供密码
+	if len(os.Basic.Username) > 0 && len(os.Basic.Password) == 0 {
+		return fmt.Errorf("password is required when username is provided")
 	}
 
 	if os.MaxShard == 0 {
@@ -367,7 +381,7 @@ func (os *OpenSearch) QueryLog(ctx context.Context, queryParam interface{}) ([]i
 	return eslike.QueryLog(ctx, queryParam, os.Timeout, os.Version, 0, search)
 }
 
-func (os *OpenSearch) QueryFieldValue(indexs []string, field string, query string) ([]string, error) {
+func (os *OpenSearch) QueryFieldValue(indexes []string, field string, query string) ([]string, error) {
 	var values []string
 	source := elastic.NewSearchSource().
 		Size(0)
@@ -377,7 +391,7 @@ func (os *OpenSearch) QueryFieldValue(indexs []string, field string, query strin
 	}
 	source = source.Aggregation("distinct", elastic.NewTermsAggregation().Field(field).Size(10000))
 
-	result, err := search(context.Background(), indexs, source, 0, os.Client)
+	result, err := search(context.Background(), indexes, source, 0, os.Client)
 	if err != nil {
 		return values, err
 	}

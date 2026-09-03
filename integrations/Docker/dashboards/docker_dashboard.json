@@ -1,0 +1,1394 @@
+{
+  "name": "Docker Dashboard",
+  "tags": "Categraf",
+  "note": "",
+  "ident": "",
+  "uuid": 1772527800292000,
+  "configs": {
+    "version": "3.4.0",
+    "links": [],
+    "var": [
+      {
+        "type": "datasource",
+        "name": "Datasource",
+        "definition": "prometheus",
+        "hide": false
+      },
+      {
+        "type": "query",
+        "name": "ident",
+        "label": "Host",
+        "allValue": null,
+        "allOption": true,
+        "multi": true,
+        "reg": "",
+        "hide": false,
+        "definition": "label_values(docker_up,ident)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${Datasource}"
+        }
+      },
+      {
+        "name": "container",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${Datasource}"
+        },
+        "definition": "label_values(docker_container_mem_usage{ident=~\"$ident\"},container_name)",
+        "multi": true,
+        "allOption": true,
+        "allValue": ".*"
+      }
+    ],
+    "panels": [
+      {
+        "type": "stat",
+        "id": "80ab8158-461e-43fa-8ce0-27b070228b00",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 0,
+          "y": 0,
+          "i": "80ab8158-461e-43fa-8ce0-27b070228b00",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "Running Docker",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "rgb(44, 157, 61)",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_n_containers_running{ident=~\"$ident\"}",
+            "__mode__": "__query__",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "6e11f696-2881-446a-aeda-47d59ac98a13",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 4,
+          "y": 0,
+          "i": "6e11f696-2881-446a-aeda-47d59ac98a13",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "Stopped Docker",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#299c46",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#629e51",
+                "value": 0
+              },
+              {
+                "color": "#bf1b00",
+                "value": 1
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "rgb(44, 157, 61)",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_n_containers_stopped{ident=~\"$ident\"}",
+            "__mode__": "__query__",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "id": "dbf5afb6-000e-435d-9dd8-c3f506462f01",
+        "layout": {
+          "h": 5,
+          "w": 4,
+          "x": 8,
+          "y": 0,
+          "i": "dbf5afb6-000e-435d-9dd8-c3f506462f01",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "Docker Images",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "area",
+          "colorMode": "background",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 0,
+          "textSize": {},
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "#299c46",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#e0752d",
+                "value": 50
+              },
+              {
+                "color": "#bf1b00",
+                "value": 100
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "rgb(44, 157, 61)",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_n_images{ident=~\"$ident\"}",
+            "__mode__": "__query__",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "type": "tableNG",
+        "id": "8fd82975-6c10-47f3-9cde-983cb12870dd",
+        "layout": {
+          "h": 5,
+          "w": 12,
+          "x": 12,
+          "y": 0,
+          "i": "8fd82975-6c10-47f3-9cde-983cb12870dd",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "transformationsNG": [
+          {
+            "id": "joinByField",
+            "options": {
+              "mode": "outer",
+              "byField": "ident"
+            }
+          },
+          {
+            "id": "organize",
+            "options": {
+              "fields": [
+                "ident",
+                "__time_0",
+                "__name___0",
+                "engine_host_0",
+                "server_version_0",
+                "__value_#A",
+                "__time_1",
+                "__name___1",
+                "engine_host_1",
+                "server_version_1",
+                "__value_#B",
+                "__time_2",
+                "__name___2",
+                "engine_host_2",
+                "server_version_2",
+                "__value_#C"
+              ],
+              "renameByName": {
+                "ident": "Host",
+                "__name___0": "",
+                "__name___1": "",
+                "__value_#A": "Running",
+                "__value_#B": "Paused",
+                "__value_#C": "Stopped",
+                "server_version_2": "Docker Version"
+              },
+              "excludeByName": {
+                "__time_0": true,
+                "__time_1": true,
+                "engine_host_0": true,
+                "__value_#C": false,
+                "server_version_2": false,
+                "engine_host_2": true,
+                "__name___2": true,
+                "__time_2": true,
+                "__value_#B": false,
+                "server_version_0": true,
+                "engine_host_1": true,
+                "server_version_1": true,
+                "__name___0": true,
+                "__name___1": true
+              },
+              "indexByName": {
+                "ident": 0,
+                "__time_0": 1,
+                "__name___0": 2,
+                "engine_host_0": 3,
+                "server_version_0": 4,
+                "__value_#A": 5,
+                "__time_1": 6,
+                "__name___1": 7,
+                "engine_host_1": 8,
+                "server_version_1": 9,
+                "__value_#B": 10,
+                "__time_2": 11,
+                "__name___2": 12,
+                "engine_host_2": 13,
+                "__value_#C": 14,
+                "server_version_2": 15
+              }
+            }
+          }
+        ],
+        "name": "Docker Status",
+        "links": [],
+        "maxPerRow": 4,
+        "custom": {
+          "showHeader": true,
+          "filterable": false,
+          "cellOptions": {
+            "type": "color-text"
+          }
+        },
+        "options": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "value": "Running"
+            },
+            "properties": {
+              "cellOptions": {
+                "type": "gauge",
+                "mode": "lcd",
+                "valueDisplayMode": "text"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "rgb(44, 157, 61)",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "value": "Paused"
+            },
+            "properties": {
+              "cellOptions": {
+                "type": "gauge",
+                "mode": "lcd",
+                "valueDisplayMode": "text"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "rgba(255, 153, 25, 1)",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              },
+              "standardOptions": {}
+            }
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "value": "Stopped"
+            },
+            "properties": {
+              "cellOptions": {
+                "type": "gauge",
+                "mode": "lcd",
+                "valueDisplayMode": "text"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "rgba(219, 14, 72, 1)",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              },
+              "standardOptions": {}
+            }
+          }
+        ],
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "docker_n_containers_running",
+            "instant": true
+          },
+          {
+            "expr": "docker_n_containers_paused",
+            "__mode__": "__query__",
+            "refId": "B",
+            "instant": true
+          },
+          {
+            "expr": "docker_n_containers_stopped",
+            "__mode__": "__query__",
+            "refId": "C",
+            "instant": true
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "367bb137-04d1-4893-9dd1-007d4d1d3fce",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 5,
+          "i": "367bb137-04d1-4893-9dd1-007d4d1d3fce",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "CPU Usage %",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "unit": "percent",
+            "decimals": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_cpu_usage_percent{ident=~\"$ident\",container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "8b1be5a0-104f-4055-b3f5-1544a12ae611",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 5,
+          "i": "8b1be5a0-104f-4055-b3f5-1544a12ae611",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "Mem Usage %",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "unit": "percent",
+            "decimals": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_mem_usage_percent{ident=~\"$ident\",container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "aab7db66-2b04-4851-8c7a-b33744b0c7eb",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 13,
+          "i": "aab7db66-2b04-4851-8c7a-b33744b0c7eb",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "CPU限流率",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "unit": "percentUnit"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "(\n  rate(docker_container_cpu_throttling_throttled_periods{ident=~\"$ident\",container_name=~\"$container\"}[5m]) \n  / \n  rate(docker_container_cpu_throttling_periods{ident=~\"$ident\",container_name=~\"$container\"}[5m])\n) > 0",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "b0bfda7f-3b12-40ef-b8ec-7d9de2a38489",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 13,
+          "i": "b0bfda7f-3b12-40ef-b8ec-7d9de2a38489",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "容器触发OOM",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "docker_container_status_oomkilled{ident=~\"$ident\",container_name=\"$container\"}==1",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "c135039b-c989-4109-84d2-12a1ee70f988",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 21,
+          "i": "c135039b-c989-4109-84d2-12a1ee70f988",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "容器入方向的字节数",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_net_rx_bytes{ident=~\"$ident\",container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "a2de316e-cb62-494b-a815-699c6bff348c",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 21,
+          "i": "8e9ce37a-1441-4cb5-b8a0-cd7ec0606d05",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "容器入方向丢弃的报文数",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_net_rx_dropped{ident=~\"$ident\",container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "0af50194-c0f1-41e5-98b2-611c4470f399",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 29,
+          "i": "dc262949-3968-4612-b33a-1265e60d80bd",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "容器入方向错误的报文数",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_net_rx_errors{ident=~\"$ident\",container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "7ee71fa5-800d-4d2b-8490-7bfac8379b05",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 29,
+          "i": "1c5fa167-0a18-4b66-aa91-b1157428e892",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "容器出方向的字节数",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_net_tx_bytes{ident=~\"$ident\",container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "5225406c-9334-4a7d-9313-4551cfd99fb1",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 37,
+          "i": "510b2084-c36b-452e-b8d2-479c6cf9ed11",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "容器出方向丢弃的报文数",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_net_tx_dropped{ident=~\"$ident\",container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "0f249353-4461-4677-8088-2b4aa6ed779f",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 37,
+          "i": "47d55145-aecf-45d8-bca4-8569310c1692",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "容器出方向失败的报文数",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_net_tx_errors{ident=~\"$ident\",container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}}"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "db29e7d7-eaba-4a2d-99fd-21becebccb33",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 45,
+          "i": "db29e7d7-eaba-4a2d-99fd-21becebccb33",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "Disk IO Read",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_blkio_io_service_bytes_recursive_read{ident=~\"$ident\", container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}} IO_read"
+          },
+          {
+            "expr": "docker_container_blkio_io_service_bytes_recursive_write{ident=~\"$Ident\"}",
+            "__mode__": "__query__",
+            "refId": "B",
+            "legend": "container_name:{{container_name}} IO_write"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "423b8f54-d6f0-4ec2-a430-7e1b473d79c5",
+        "layout": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 45,
+          "i": "5c53bc5c-b242-46cd-aff3-fc06f6eafe5c",
+          "isResizable": true
+        },
+        "version": "3.4.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${Datasource}",
+        "name": "Disk IO Write",
+        "links": [],
+        "description": "container维度",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ],
+        "targets": [
+          {
+            "expr": "docker_container_blkio_io_service_bytes_recursive_write{ident=~\"$ident\",container_name=~\"$container\"}",
+            "__mode__": "__query__",
+            "refId": "A",
+            "legend": "container_name:{{container_name}} IO_write"
+          },
+          {
+            "expr": "docker_container_blkio_io_service_bytes_recursive_write{ident=~\"$Ident\"}",
+            "__mode__": "__query__",
+            "refId": "B",
+            "legend": "container_name:{{container_name}} IO_write"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,87 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "IPVS 后端服务器无任何连接",
+        "note": "调度器上长期无流量的测试 VIP 也会命中该规则，落地时建议按 virtual_address 收敛到真实承载业务的 VIP。",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 3,
+        "severities": [
+            3
+        ],
+        "disabled": 1,
+        "prom_for_duration": 900,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "ipvs_active_connections == 0 and ipvs_inactive_connections == 0",
+                    "severity": 3
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=IpvsRealServerNoConnection"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 virtual_address/virtual_port 与 address/port，执行 ipvsadm -Ln 确认该真实服务器的权重是否为 0；\n2) 权重为 0 的检查 keepalived 或健康检查程序的日志，确认它为什么判定后端不健康；\n3) 直接从调度器执行 curl 或 telnet 探测该后端的服务端口，确认后端进程与端口是否存活；\n4) 后端确实正常的，检查调度器到后端的网络与 LVS 转发模式配置（DR 模式下后端需要正确配置 VIP 与 arp_ignore）。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785210000000035000
+    }
+]

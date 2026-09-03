@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 )
 
 // 创建 ES Index Pattern
@@ -45,6 +45,14 @@ func (rt *Router) esIndexPatternPut(c *gin.Context) {
 	ginx.NewRender(c).Message(esIndexPattern.Update(rt.Ctx, f))
 }
 
+// 批量更新 ES Index Pattern 的排序权重
+func (rt *Router) esIndexPatternUpdateWeights(c *gin.Context) {
+	var items []models.EsIndexPatternWeight
+	ginx.BindJSON(c, &items)
+
+	ginx.NewRender(c).Message(models.EsIndexPatternUpdateWeights(rt.Ctx, items))
+}
+
 // 删除 ES Index Pattern
 func (rt *Router) esIndexPatternDel(c *gin.Context) {
 	var f idsForm
@@ -67,6 +75,10 @@ func (rt *Router) esIndexPatternGetList(c *gin.Context) {
 		lst, err = models.EsIndexPatternGets(rt.Ctx, "datasource_id = ?", datasourceId)
 	} else {
 		lst, err = models.EsIndexPatternGets(rt.Ctx, "")
+	}
+
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
 	}
 
 	ginx.NewRender(c).Data(lst, err)

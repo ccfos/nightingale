@@ -296,7 +296,7 @@
                     "y": 16
                 },
                 "links": [],
-                "name": "API Server - HTTP Requets Latency by verb",
+                "name": "API Server - HTTP Requests Latency by verb",
                 "options": {
                     "legend": {
                         "displayMode": "list",
@@ -345,7 +345,7 @@
                     "y": 24
                 },
                 "links": [],
-                "name": "API Server - HTTP Requets Latency by instance",
+                "name": "API Server - HTTP Requests Latency by instance",
                 "options": {
                     "legend": {
                         "displayMode": "list",

@@ -1,0 +1,2754 @@
+{
+    "name": "阿里云-ALB",
+    "tags": "",
+    "note": "",
+    "ident": "",
+    "uuid": 1775551620373000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "type": "datasource",
+                "name": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "type": "query",
+                "name": "regionId",
+                "label": "",
+                "allOption": false,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values({__name__=~\"AliyunAlb_LoadBalancerQPS|AliyunAlb_LoadBalancerHealthyHostCount\"}, regionId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "loadBalancerId",
+                "label": "",
+                "allOption": false,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values({__name__=~\"AliyunAlb_LoadBalancerQPS|AliyunAlb_LoadBalancerHealthyHostCount\",regionId=~\"$regionId\"},loadBalancerId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "listenerProtocol",
+                "label": "",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values({__name__=~\"AliyunAlb_ListenerQPS|AliyunAlb_ListenerHealthyHostCount\",regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"},listenerProtocol)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "listenerPort",
+                "label": "",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values({__name__=~\"AliyunAlb_ListenerQPS|AliyunAlb_ListenerHealthyHostCount\",regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\"},listenerPort)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "ruleId",
+                "label": "",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values({__name__=~\"AliyunAlb_RuleQPS|AliyunAlb_RuleHealthyHostCount\",regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"},ruleId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "serverGroupId",
+                "label": "",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values({__name__=~\"AliyunAlb_ServerGroupQPS|AliyunAlb_ServerGroupHealthyHostCount\",regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"},serverGroupId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.1.0",
+                "id": "255effae-b1ac-4eca-b566-c548f32ab540",
+                "type": "row",
+                "name": "实例",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "255effae-b1ac-4eca-b566-c548f32ab540"
+                },
+                "panels": []
+            },
+            {
+                "version": "3.1.0",
+                "id": "3c4f6589-e21e-4071-bbc7-69b432b286d4",
+                "type": "timeseries",
+                "name": "流量(bits/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 1,
+                    "i": "3c4f6589-e21e-4071-bbc7-69b432b286d4"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerOutBits{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例出带宽"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_LoadBalancerInBits{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例入带宽"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "f6f47cb7-b82d-4747-a052-c65a2661ebeb",
+                "type": "timeseries",
+                "name": "健康检查(个)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 1,
+                    "i": "f6f47cb7-b82d-4747-a052-c65a2661ebeb"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerHealthyHostCount{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例健康的服务器数"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_ListenerUnHealthyHostCount{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例不健康的服务器数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "fafb75ab-d6b4-4c7b-a1df-9647d6c064c5",
+                "type": "timeseries",
+                "name": "HTTP状态码(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 1,
+                    "i": "fafb75ab-d6b4-4c7b-a1df-9647d6c064c5"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCodeUpstream2XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒2XX个数"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCodeUpstream3XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒3XX个数"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCodeUpstream4XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒4XX个数"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCodeUpstream5XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒5XX个数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "6b9b6970-d38b-4b4c-a01e-40a779120cc9",
+                "type": "timeseries",
+                "name": "HTTP5XX状态码(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 10,
+                    "i": "6b9b6970-d38b-4b4c-a01e-40a779120cc9"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCode500{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒500个数"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCode502{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒502个数"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCode503{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒503个数"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCode504{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒504数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "704526e9-51f3-4dc8-a69b-20a243010b11",
+                "type": "timeseries",
+                "name": "后端HTTP状态码(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 10,
+                    "i": "704526e9-51f3-4dc8-a69b-20a243010b11"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCodeUpstream2XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例后端每秒2XX个数"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCodeUpstream3XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例后端每秒3XX个数"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCodeUpstream4XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例后端每秒4XX个数"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunAlb_LoadBalancerHTTPCodeUpstream5XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例后端每秒5XX个数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "18611a04-6b8f-4e08-af50-601344d22522",
+                "type": "timeseries",
+                "name": "自定义reponse个数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 10,
+                    "i": "18611a04-6b8f-4e08-af50-601344d22522"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerHTTPFixedResponse{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒自定义reponse个数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "269d9aed-d319-4903-ac9f-0566f235e054",
+                "type": "timeseries",
+                "name": "重定向个数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 19,
+                    "i": "269d9aed-d319-4903-ac9f-0566f235e054"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerHTTPRedirect{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒重定向个数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "e2fe87cd-a965-42ee-9a9c-34360fdd35e7",
+                "type": "timeseries",
+                "name": "请求数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 19,
+                    "i": "e2fe87cd-a965-42ee-9a9c-34360fdd35e7"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerQPS{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒请求数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "8498f65c-c3c8-42b3-8f7c-b238d98e2165",
+                "type": "timeseries",
+                "name": "无粘性请求数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 19,
+                    "i": "8498f65c-c3c8-42b3-8f7c-b238d98e2165"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_RuleNonStickyRequest{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒无粘性请求数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "30460c85-bb79-4c68-ad27-eb784536f0aa",
+                "type": "timeseries",
+                "name": "后端应答时间(milliseconds)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 28,
+                    "i": "30460c85-bb79-4c68-ad27-eb784536f0aa"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerUpstreamResponseTime{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例后端应答时间"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "fc6842c5-e769-435e-8614-6c52f0c94e0b",
+                "type": "timeseries",
+                "name": "活跃连接数(个)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 28,
+                    "i": "fc6842c5-e769-435e-8614-6c52f0c94e0b"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerActiveConnection{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例活跃连接数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "d5fd6d6e-d3f2-40eb-af7c-83e4f3b079d6",
+                "type": "timeseries",
+                "name": "丢弃连接数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 28,
+                    "i": "d5fd6d6e-d3f2-40eb-af7c-83e4f3b079d6"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerRejectedConnection{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒丢弃连接数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "456ecd19-6bc2-4db0-ac9f-c29549bc46d5",
+                "type": "timeseries",
+                "name": "新建连接数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 37,
+                    "i": "456ecd19-6bc2-4db0-ac9f-c29549bc46d5"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerNewConnection{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒新建连接数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "5112164e-8996-4d18-b69d-ba1f01ac50f0",
+                "type": "timeseries",
+                "name": "TLS握手失败连接数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 37,
+                    "i": "5112164e-8996-4d18-b69d-ba1f01ac50f0"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerClientTLSNegotiationError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例每秒TLS握手失败连接数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "e4cfe51a-d427-4684-ad77-99d5ea7e06ff",
+                "type": "timeseries",
+                "name": "后端连接失败数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 37,
+                    "i": "e4cfe51a-d427-4684-ad77-99d5ea7e06ff"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerUpstreamConnectionError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例后端每秒连接失败数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "74250ea9-d941-4eb6-bf4c-1047b8b101a2",
+                "type": "timeseries",
+                "name": "后端TLS握手失败数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 46,
+                    "i": "74250ea9-d941-4eb6-bf4c-1047b8b101a2"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_LoadBalancerUpstreamTLSNegotiationError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\"}",
+                        "legend": "负载均衡实例后端每秒TLS握手失败数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "ca5ff11c-4844-40b5-909c-be182f557212",
+                "type": "row",
+                "name": "监听",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 55,
+                    "i": "ca5ff11c-4844-40b5-909c-be182f557212"
+                },
+                "panels": []
+            },
+            {
+                "version": "3.1.0",
+                "id": "37d98523-1079-42bd-9e4f-af135dd9fbd7",
+                "type": "timeseries",
+                "name": "流量(bits/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 56,
+                    "i": "37d98523-1079-42bd-9e4f-af135dd9fbd7"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerOutBits{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听出带宽"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_ListenerInBits{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听入带宽"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "907e1d8e-4b67-4a60-98ea-93ee0eae8369",
+                "type": "timeseries",
+                "name": "健康检查(个)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 56,
+                    "i": "907e1d8e-4b67-4a60-98ea-93ee0eae8369"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerHealthyHostCount{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听健康的服务器数"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_ListenerUnHealthyHostCount{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听不健康的服务器数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "2e473487-ee0e-4bc0-a670-a2e4c624f4bb",
+                "type": "timeseries",
+                "name": "HTTP状态码(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 56,
+                    "i": "2e473487-ee0e-4bc0-a670-a2e4c624f4bb"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerHTTPCode2XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒2XX个数"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_ListenerHTTPCode3XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒3XX个数"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunAlb_ListenerHTTPCode4XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒4XX个数"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunAlb_ListenerHTTPCode5XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒5XX个数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "a1a6f073-c788-4093-ad6d-6880ebce9765",
+                "type": "timeseries",
+                "name": "HTTP5XX状态码(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 65,
+                    "i": "a1a6f073-c788-4093-ad6d-6880ebce9765"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerHTTPCode500{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒500个数"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_ListenerHTTPCode502{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒502个数"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunAlb_ListenerHTTPCode503{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒503个数"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunAlb_ListenerHTTPCode504{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒504数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "bbb6236e-0bb6-4b9b-86f9-9a9a87acabc5",
+                "type": "timeseries",
+                "name": "后端HTTP状态码(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 65,
+                    "i": "bbb6236e-0bb6-4b9b-86f9-9a9a87acabc5"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerHTTPCodeUpstream2XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听后端每秒2XX个数"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunAlb_ListenerHTTPCodeUpstream3XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听后端每秒3XX个数"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunAlb_ListenerHTTPCodeUpstream4XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听后端每秒4XX个数"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunAlb_ListenerHTTPCodeUpstream5XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听后端每秒5XX个数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "4387b98a-58dd-4de7-897e-00ebb5c1135f",
+                "type": "timeseries",
+                "name": "自定义reponse个数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 65,
+                    "i": "4387b98a-58dd-4de7-897e-00ebb5c1135f"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerHTTPFixedResponse{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒自定义reponse个数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "93ed75b2-3d42-40d0-8a4e-90cd96673fd1",
+                "type": "timeseries",
+                "name": "重定向个数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 74,
+                    "i": "93ed75b2-3d42-40d0-8a4e-90cd96673fd1"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerHTTPFixedRedirect{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒重定向个数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "a48ff672-d3aa-41f5-89c6-36d0fbeb0bbb",
+                "type": "timeseries",
+                "name": "请求数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 74,
+                    "i": "a48ff672-d3aa-41f5-89c6-36d0fbeb0bbb"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerQPS{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒请求数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "c49cac80-768d-495f-97b4-b7727c9bfdd1",
+                "type": "timeseries",
+                "name": "无粘性请求数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 74,
+                    "i": "c49cac80-768d-495f-97b4-b7727c9bfdd1"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerNonStickyRequest{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒无粘性请求数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "86d153ca-780b-4644-aaf0-fcc0139105bc",
+                "type": "timeseries",
+                "name": "后端应答时间(milliseconds)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 83,
+                    "i": "86d153ca-780b-4644-aaf0-fcc0139105bc"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerUpstreamResponseTime{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听后端应答时间"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "3213a24e-f11e-4aaf-ba1a-63594b757f9b",
+                "type": "timeseries",
+                "name": "活跃连接数(个)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 83,
+                    "i": "3213a24e-f11e-4aaf-ba1a-63594b757f9b"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerActiveConnection{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听活跃连接数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "134e31ae-e2b1-4a19-a227-99a408222da0",
+                "type": "timeseries",
+                "name": "丢弃连接数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 83,
+                    "i": "134e31ae-e2b1-4a19-a227-99a408222da0"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerRejectedConnection{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒丢弃连接数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "49710aab-60f3-4266-b071-5b4c42785ad2",
+                "type": "timeseries",
+                "name": "新建连接数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 92,
+                    "i": "49710aab-60f3-4266-b071-5b4c42785ad2"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerNewConnection{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒新建连接数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "febf5413-6552-47e8-9083-60e415ef3da6",
+                "type": "timeseries",
+                "name": "TLS握手失败连接数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 8,
+                    "y": 92,
+                    "i": "febf5413-6552-47e8-9083-60e415ef3da6"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerClientTLSNegotiationError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听每秒TLS握手失败连接数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "1e92bc1a-820c-4a72-82ed-7dd8c2ddcb1e",
+                "type": "timeseries",
+                "name": "后端连接失败数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 16,
+                    "y": 92,
+                    "i": "1e92bc1a-820c-4a72-82ed-7dd8c2ddcb1e"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerUpstreamConnectionError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听后端每秒连接失败数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "8bdc8fda-7d20-41f1-ab64-1ff820a017d9",
+                "type": "timeseries",
+                "name": "后端TLS握手失败数(Count/s)",
+                "links": [],
+                "layout": {
+                    "h": 9,
+                    "w": 8,
+                    "x": 0,
+                    "y": 101,
+                    "i": "8bdc8fda-7d20-41f1-ab64-1ff820a017d9"
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunAlb_ListenerUpstreamTLSNegotiationError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\"}",
+                        "legend": "监听后端每秒TLS握手失败数"
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "9614780f-faad-4531-b2cb-360f7fa233cb",
+                "type": "row",
+                "name": "转发规则",
+                "collapsed": false,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 110,
+                    "i": "9614780f-faad-4531-b2cb-360f7fa233cb"
+                },
+                "panels": [
+                    {
+                        "version": "3.1.0",
+                        "id": "9bddc22a-a095-41f3-a3d0-231c76609300",
+                        "type": "timeseries",
+                        "name": "健康检查(个)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 28,
+                            "i": "9bddc22a-a095-41f3-a3d0-231c76609300"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_RuleHealthyHostCount{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则健康的服务器数"
+                            },
+                            {
+                                "refId": "B",
+                                "expr": "AliyunAlb_RuleUnHealthyHostCount{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则不健康的服务器数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "a53d2c67-f6d6-476b-8d01-907a357e4ba9",
+                        "type": "timeseries",
+                        "name": "后端HTTP状态码(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 8,
+                            "y": 28,
+                            "i": "a53d2c67-f6d6-476b-8d01-907a357e4ba9"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_RuleHTTPCodeUpstream2XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则后端每秒2XX个数"
+                            },
+                            {
+                                "refId": "B",
+                                "expr": "AliyunAlb_RuleHTTPCodeUpstream3XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则后端每秒3XX个数"
+                            },
+                            {
+                                "refId": "C",
+                                "expr": "AliyunAlb_RuleHTTPCodeUpstream4XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则后端每秒4XX个数"
+                            },
+                            {
+                                "refId": "D",
+                                "expr": "AliyunAlb_RuleHTTPCodeUpstream5XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则后端每秒5XX个数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "102a8dc4-a16c-42f5-b28c-5f70a9747849",
+                        "type": "timeseries",
+                        "name": "请求数(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 16,
+                            "y": 28,
+                            "i": "102a8dc4-a16c-42f5-b28c-5f70a9747849"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_RuleQPS{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则每秒请求数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "3786de29-194d-4e34-852c-0901240b9181",
+                        "type": "timeseries",
+                        "name": "无粘性请求数(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 37,
+                            "i": "3786de29-194d-4e34-852c-0901240b9181"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_RuleNonStickyRequest{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则每秒无粘性请求数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "78158db0-0314-4200-8dc5-1ef0446d5925",
+                        "type": "timeseries",
+                        "name": "后端应答时间(milliseconds)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 8,
+                            "y": 37,
+                            "i": "78158db0-0314-4200-8dc5-1ef0446d5925"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_RuleUpstreamResponseTime{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则后端应答时间"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "f71894ca-f7e7-4f3e-bd8c-2dabbb8ef92c",
+                        "type": "timeseries",
+                        "name": "后端连接失败数(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 16,
+                            "y": 37,
+                            "i": "f71894ca-f7e7-4f3e-bd8c-2dabbb8ef92c"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_RuleUpstreamConnectionError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则后端每秒连接失败数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "3fee300c-9633-44d7-a37d-452746ba7159",
+                        "type": "timeseries",
+                        "name": "后端TLS握手失败数(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 46,
+                            "i": "3fee300c-9633-44d7-a37d-452746ba7159"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_RuleUpstreamTLSNegotiationError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",ruleId=~\"$ruleId\"}",
+                                "legend": "转发规则后端每秒TLS握手失败数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "59bce76a-02f3-4a3c-9a94-83f4930df00a",
+                "type": "row",
+                "name": "服务器组",
+                "collapsed": false,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 111,
+                    "i": "59bce76a-02f3-4a3c-9a94-83f4930df00a"
+                },
+                "panels": [
+                    {
+                        "version": "3.1.0",
+                        "id": "9ae0df3d-620a-4bc6-b66b-ec286ddcafeb",
+                        "type": "timeseries",
+                        "name": "健康检查(个)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 1,
+                            "i": "9ae0df3d-620a-4bc6-b66b-ec286ddcafeb"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_ServerGroupHealthyHostCount{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组健康的服务器数"
+                            },
+                            {
+                                "refId": "B",
+                                "expr": "AliyunAlb_ServerGroupUnHealthyHostCount{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组不健康的服务器数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "dc4482fa-22b6-4920-83cd-57eaee522a2d",
+                        "type": "timeseries",
+                        "name": "后端HTTP状态码(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 8,
+                            "y": 1,
+                            "i": "dc4482fa-22b6-4920-83cd-57eaee522a2d"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_ServerGroupHTTPCodeUpstream2XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组后端每秒2XX个数"
+                            },
+                            {
+                                "refId": "B",
+                                "expr": "AliyunAlb_ServerGroupHTTPCodeUpstream3XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组后端每秒3XX个数"
+                            },
+                            {
+                                "refId": "C",
+                                "expr": "AliyunAlb_ServerGroupHTTPCodeUpstream4XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组后端每秒4XX个数"
+                            },
+                            {
+                                "refId": "D",
+                                "expr": "AliyunAlb_ServerGroupHTTPCodeUpstream5XX{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组后端每秒5XX个数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "f942e58c-1052-4955-98f9-e93285178987",
+                        "type": "timeseries",
+                        "name": "请求数(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 16,
+                            "y": 1,
+                            "i": "f942e58c-1052-4955-98f9-e93285178987"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_ServerGroupQPS{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组每秒请求数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "825f67e5-76b0-460b-908d-3063b63068db",
+                        "type": "timeseries",
+                        "name": "无粘性请求数(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 10,
+                            "i": "825f67e5-76b0-460b-908d-3063b63068db"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_ServerGroupNonStickyRequest{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组每秒无粘性请求数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "e28ec12f-e553-4232-81f1-438e45b0b8c7",
+                        "type": "timeseries",
+                        "name": "后端应答时间(milliseconds)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 8,
+                            "y": 10,
+                            "i": "e28ec12f-e553-4232-81f1-438e45b0b8c7"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_ServerGroupUpstreamResponseTime{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组后端应答时间"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "88c29c79-91ac-4799-9ccc-acf2f42a2c64",
+                        "type": "timeseries",
+                        "name": "后端连接失败数(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 16,
+                            "y": 10,
+                            "i": "88c29c79-91ac-4799-9ccc-acf2f42a2c64"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_ServerGroupUpstreamConnectionError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组后端每秒连接失败数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    },
+                    {
+                        "version": "3.1.0",
+                        "id": "68da29ef-e23e-49fd-9a36-a7bf84059adb",
+                        "type": "timeseries",
+                        "name": "后端TLS握手失败数(Count/s)",
+                        "links": [],
+                        "layout": {
+                            "h": 9,
+                            "w": 8,
+                            "x": 0,
+                            "y": 19,
+                            "i": "68da29ef-e23e-49fd-9a36-a7bf84059adb"
+                        },
+                        "targets": [
+                            {
+                                "refId": "A",
+                                "expr": "AliyunAlb_ServerGroupUpstreamTLSNegotiationError{regionId=~\"$regionId\",loadBalancerId=~\"$loadBalancerId\",listenerProtocol=~\"$listenerProtocol\",listenerPort=~\"$listenerPort\",serverGroupId=~\"$serverGroupId\"}",
+                                "legend": "服务器组后端每秒TLS握手失败数"
+                            }
+                        ],
+                        "options": {
+                            "tooltip": {
+                                "mode": "single",
+                                "sort": "none"
+                            },
+                            "legend": {
+                                "displayMode": "hidden"
+                            },
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ],
+                                "mode": "absolute"
+                            },
+                            "thresholdsStyle": {
+                                "mode": "dashed"
+                            }
+                        },
+                        "custom": {
+                            "version": "3.1.0",
+                            "drawStyle": "lines",
+                            "lineInterpolation": "linear",
+                            "fillOpacity": 0,
+                            "stack": "off"
+                        },
+                        "maxPerRow": 4,
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}"
+                    }
+                ]
+            }
+        ]
+    }
+}

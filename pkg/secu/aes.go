@@ -45,23 +45,23 @@ func AesEncrypt(origData, key []byte) ([]byte, error) {
 	padOrigData := PKCS7Padding(origData, blockSize)
 	//初始化CBC加密
 	blockMode := cipher.NewCBCEncrypter(block, key[:blockSize])
-	crypted := make([]byte, len(padOrigData))
+	encrypted := make([]byte, len(padOrigData))
 	//加密
-	blockMode.CryptBlocks(crypted, padOrigData)
-	return crypted, nil
+	blockMode.CryptBlocks(encrypted, padOrigData)
+	return encrypted, nil
 }
 
 // AES解密
-func AesDecrypt(crypted, key []byte) ([]byte, error) {
+func AesDecrypt(encrypted, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 	blockSize := block.BlockSize()
 	blockMode := cipher.NewCBCDecrypter(block, key[:blockSize])
-	origData := make([]byte, len(crypted))
+	origData := make([]byte, len(encrypted))
 	//解密
-	blockMode.CryptBlocks(origData, crypted)
+	blockMode.CryptBlocks(origData, encrypted)
 	//去除填充
 	origData = PKCS7UnPadding(origData)
 	return origData, nil

@@ -219,11 +219,3 @@ Categraf 中的 `conf/input.vsphere/vsphere.toml`。
   # "Interval Duration" found on the VCenter server under Configure > General > Statistics > Statistic intervals
   # historical_interval = "5m"
 ```
-
-## 仪表盘
-
-夜莺内置了 vSphere 仪表盘，克隆到自己的业务组下即可使用。
-
-## 告警规则
-
-夜莺内置了 vSphere 告警规则，克隆到自己的业务组下即可使用。

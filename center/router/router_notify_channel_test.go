@@ -11,7 +11,7 @@ func TestGetFlashDutyChannels(t *testing.T) {
 	jsonData := []byte(`{}`)
 
 	// 调用被测试的函数
-	channels, err := getFlashDutyChannels(integrationUrl, jsonData)
+	channels, err := getFlashDutyChannels(integrationUrl, jsonData, 5000)
 
 	fmt.Println(channels, err)
 }

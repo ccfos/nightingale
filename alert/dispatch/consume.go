@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
-	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/queue"
+	"github.com/ccfos/nightingale/v6/alert/sender"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
@@ -25,10 +26,22 @@ import (
 type Consumer struct {
 	alerting aconf.Alerting
 	ctx      *ctx.Context
+	// ctx 的副本，只把发往 center 的超时收窄到 persistTimeoutMs
+	persistCtx *ctx.Context
 
-	dispatch    *Dispatch
-	promClients *prom.PromClientMap
+	dispatch       *Dispatch
+	promClients    *prom.PromClientMap
+	alertMuteCache *memsto.AlertMuteCacheType
 }
+
+type EventMuteHookFunc func(event *models.AlertCurEvent) bool
+
+var EventMuteHook EventMuteHookFunc = func(event *models.AlertCurEvent) bool { return false }
+
+// NotifyMutedEventHook 在事件命中「只屏蔽通知」、跳过正常通知流程时调用，
+// 让下游（如 n9e-plus 升级）在不发送通知的前提下完成必要的状态清理
+// （例如恢复事件清理升级用的 Redis 记录，避免屏蔽结束后继续升级已恢复的告警）。
+var NotifyMutedEventHook = func(event *models.AlertCurEvent) {}
 
 func InitRegisterQueryFunc(promClients *prom.PromClientMap) {
 	tplx.RegisterQueryFunc(func(datasourceID int64, promql string) model.Value {
@@ -43,12 +56,15 @@ func InitRegisterQueryFunc(promClients *prom.PromClientMap) {
 }
 
 // 创建一个 Consumer 实例
-func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch, promClients *prom.PromClientMap) *Consumer {
+func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch, promClients *prom.PromClientMap, alertMuteCache *memsto.AlertMuteCacheType) *Consumer {
 	return &Consumer{
 		alerting:    alerting,
 		ctx:         ctx,
+		persistCtx:  ctx.WithCenterApiTimeout(persistTimeoutMs),
 		dispatch:    dispatch,
 		promClients: promClients,
+
+		alertMuteCache: alertMuteCache,
 	}
 }
 
@@ -91,12 +107,12 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	e.dispatch.Astats.CounterAlertsTotal.WithLabelValues(event.Cluster, eventType, event.GroupName).Inc()
 
 	if err := event.ParseRule("rule_name"); err != nil {
-		logger.Warningf("ruleid:%d failed to parse rule name: %v", event.RuleId, err)
+		logger.Warningf("alert_eval_%d datasource_%d failed to parse rule name: %v", event.RuleId, event.DatasourceId, err)
 		event.RuleName = fmt.Sprintf("failed to parse rule name: %v", err)
 	}
 
 	if err := event.ParseRule("annotations"); err != nil {
-		logger.Warningf("ruleid:%d failed to parse annotations: %v", event.RuleId, err)
+		logger.Warningf("alert_eval_%d datasource_%d failed to parse annotations: %v", event.RuleId, event.DatasourceId, err)
 		event.Annotations = fmt.Sprintf("failed to parse annotations: %v", err)
 		event.AnnotationsJSON["error"] = event.Annotations
 	}
@@ -104,18 +120,86 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	e.queryRecoveryVal(event)
 
 	if err := event.ParseRule("rule_note"); err != nil {
-		logger.Warningf("ruleid:%d failed to parse rule note: %v", event.RuleId, err)
+		logger.Warningf("alert_eval_%d datasource_%d failed to parse rule note: %v", event.RuleId, event.DatasourceId, err)
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
 	e.persist(event)
 
-	if event.IsRecovered && event.NotifyRecovered == 0 {
+	if event.NotifyMuted == 1 {
+		// 命中「只屏蔽通知」规则：事件已产生并记录，此处跳过全部通知渠道，
+		// 并写一条通知记录说明被哪条屏蔽规则拦截，供事件详情「通知记录」排查（含恢复事件）。
+		LogEvent(event, "notify_muted")
+		e.recordNotifyMuted(event)
+		// 跳过发送，但仍让下游完成必要的状态清理（如恢复事件清理升级用的 Redis 记录）；
+		// 覆盖与正常 dispatch 相同的 notify rule 集合（告警规则自身 + 匹配的订阅规则）。
+		e.dispatch.CleanupNotifyMuted(event)
 		return
 	}
 
 	e.dispatch.HandleEventNotify(event, false)
 }
+
+// recordNotifyMuted 为「只屏蔽通知」而未发送的事件（含恢复事件）写一条通知记录，
+// 说明命中的屏蔽规则，替代事件表上的持久化标记。
+func (e *Consumer) recordNotifyMuted(event *models.AlertCurEvent) {
+	if event.Id == 0 {
+		return
+	}
+
+	muteName := e.muteRuleName(event.GroupId, event.MuteId)
+	detail := fmt.Sprintf("notification suppressed by notify-only mute rule %s, event still recorded", muteName)
+	if event.IsRecovered {
+		detail = fmt.Sprintf("recovery notification suppressed by notify-only mute rule %s, recovery event still recorded", muteName)
+	}
+
+	record := &models.NotificationRecord{
+		EventId:   event.Id,
+		SubId:     event.SubRuleId,
+		Channel:   models.NotiChannelMuted,
+		Status:    models.NotiStatusMuted,
+		Target:    fmt.Sprintf("id=%d", event.MuteId),
+		Details:   detail,
+		CreatedAt: time.Now().Unix(),
+	}
+	sender.RecordNotifications(e.ctx, []*models.NotificationRecord{record})
+}
+
+// muteRuleName 尽力从缓存解析屏蔽规则名（note），解析不到则回退为 id。
+func (e *Consumer) muteRuleName(groupId, muteId int64) string {
+	if muteId == 0 {
+		return "-"
+	}
+
+	if mutes, has := e.alertMuteCache.Gets(groupId); has {
+		for _, m := range mutes {
+			if m.Id == muteId {
+				if m.Note != "" {
+					return fmt.Sprintf("%s(id=%d)", m.Note, muteId)
+				}
+				break
+			}
+		}
+	}
+
+	return fmt.Sprintf("id=%d", muteId)
+}
+
+const (
+	// edge 侧 event-persist 的重试参数。persist 失败不会否决通知，但事件不落历史库、
+	// 通知记录与通知模板里的 event_id 都是 0、recordNotifyMuted 也会被跳过，
+	// 所以重试买到的是历史/详情页的完整性。
+	//
+	// 超时单独收窄：persist 在通知之前同步执行、且占着 NotifyConcurrency 的并发槽，
+	// 不能用 CenterApi.Timeout（自带 edge.toml 是 9s，那是给 targets 全量查询留的）。
+	// 服务端只有两三次 DB 往返，2s 是百倍余量，三轮最坏 6.3s（单地址），仍短于收窄前的单轮。
+	//
+	// 代价：center 已提交但响应丢了的窄窗口里，重试会在 alert_his_event 多插一条
+	// —— EventPersist 里的 his.Add 是无条件 insert。比起丢事件，这个代价可以接受。
+	persistRetryRounds   = 3
+	persistRetryInterval = 100 * time.Millisecond
+	persistTimeoutMs     = 2000
+)
 
 func (e *Consumer) persist(event *models.AlertCurEvent) {
 	if event.Status != 0 {
@@ -125,9 +209,10 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 	if !e.ctx.IsCenter {
 		event.DB2FE()
 		var err error
-		event.Id, err = poster.PostByUrlsWithResp[int64](e.ctx, "/v1/n9e/event-persist", event)
+		event.Id, err = poster.PostByUrlsWithRespRetry[int64](e.persistCtx, "/v1/n9e/event-persist", event,
+			persistRetryRounds, persistRetryInterval)
 		if err != nil {
-			logger.Errorf("event:%+v persist err:%v", event, err)
+			logger.Errorf("event:%s persist err:%v", event.Hash, err)
 			e.dispatch.Astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event", event.GroupName, fmt.Sprintf("%v", event.RuleId)).Inc()
 		}
 		return
@@ -135,7 +220,7 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 
 	err := models.EventPersist(e.ctx, event)
 	if err != nil {
-		logger.Errorf("event%+v persist err:%v", event, err)
+		logger.Errorf("event:%s persist err:%v", event.Hash, err)
 		e.dispatch.Astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event", event.GroupName, fmt.Sprintf("%v", event.RuleId)).Inc()
 	}
 }
@@ -153,12 +238,12 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 
 	promql = strings.TrimSpace(promql)
 	if promql == "" {
-		logger.Warningf("rule_eval:%s promql is blank", getKey(event))
+		logger.Warningf("alert_eval_%d datasource_%d promql is blank", event.RuleId, event.DatasourceId)
 		return
 	}
 
 	if e.promClients.IsNil(event.DatasourceId) {
-		logger.Warningf("rule_eval:%s error reader client is nil", getKey(event))
+		logger.Warningf("alert_eval_%d datasource_%d error reader client is nil", event.RuleId, event.DatasourceId)
 		return
 	}
 
@@ -167,7 +252,7 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	var warnings promsdk.Warnings
 	value, warnings, err := readerClient.Query(e.ctx.Ctx, promql, time.Now())
 	if err != nil {
-		logger.Errorf("rule_eval:%s promql:%s, error:%v", getKey(event), promql, err)
+		logger.Errorf("alert_eval_%d datasource_%d promql:%s, error:%v", event.RuleId, event.DatasourceId, promql, err)
 		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%v", promql, err)
 
 		b, err := json.Marshal(event.AnnotationsJSON)
@@ -181,12 +266,12 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	}
 
 	if len(warnings) > 0 {
-		logger.Errorf("rule_eval:%s promql:%s, warnings:%v", getKey(event), promql, warnings)
+		logger.Errorf("alert_eval_%d datasource_%d promql:%s, warnings:%v", event.RuleId, event.DatasourceId, promql, warnings)
 	}
 
 	anomalyPoints := models.ConvertAnomalyPoints(value)
 	if len(anomalyPoints) == 0 {
-		logger.Warningf("rule_eval:%s promql:%s, result is empty", getKey(event), promql)
+		logger.Warningf("alert_eval_%d datasource_%d promql:%s, result is empty", event.RuleId, event.DatasourceId, promql)
 		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%s", promql, "result is empty")
 	} else {
 		event.AnnotationsJSON["recovery_value"] = fmt.Sprintf("%v", anomalyPoints[0].Value)
@@ -199,8 +284,4 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	} else {
 		event.Annotations = string(b)
 	}
-}
-
-func getKey(event *models.AlertCurEvent) string {
-	return common.RuleKey(event.DatasourceId, event.RuleId)
 }

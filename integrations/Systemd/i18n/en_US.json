@@ -1,0 +1,18 @@
+{
+    "1) 用 journalctl -u \u003cunit\u003e -n 200 --no-pager 看每次退出前的报错；\n2) 检查退出码与是否被 OOM 杀死（dmesg -T | grep -i 'killed process'）；\n3) 依赖未就绪导致的（连不上数据库、挂载未完成），在 unit 里补 After=/Requires= 并修复依赖；\n4) 定位期间可临时 systemctl stop 该服务，避免持续刷日志占满磁盘。": "1) Run journalctl -u \u003cunit\u003e -n 200 --no-pager to see the error before each exit;\n2) Check the exit code and whether it was OOM-killed (dmesg -T | grep -i 'killed process');\n3) If an unready dependency is the cause (cannot reach the database, mount not finished), add After=/Requires= to the unit and fix the dependency;\n4) While investigating you can systemctl stop the service so it does not flood the disk with logs.",
+    "1) 用 systemctl --failed 列出所有异常单元，再用 systemctl status \u003cunit\u003e 看具体状态与最近日志；\n2) 用 journalctl -u \u003cunit\u003e -n 100 --no-pager 定位退出原因；\n3) 配置问题先修复配置再 systemctl restart \u003cunit\u003e；\n4) 反复失败的用 systemctl show \u003cunit\u003e -p NRestarts 确认是否已陷入重启循环，先定位根因不要盲目重启。": "1) Run systemctl --failed to list every failed unit, then systemctl status \u003cunit\u003e for its state and recent logs;\n2) Use journalctl -u \u003cunit\u003e -n 100 --no-pager to find the exit reason;\n3) For configuration problems, fix the config before systemctl restart \u003cunit\u003e;\n4) For repeated failures, check systemctl show \u003cunit\u003e -p NRestarts for a restart loop and find the root cause before restarting again.",
+    "1) 用 systemctl status 看整体状态，再用 systemctl --failed 列出失败的单元；\n2) 逐个用 journalctl -u \u003cunit\u003e 定位失败原因并修复；\n3) 确认失败单元是否影响关键业务——有些是无关的一次性任务，可用 systemctl reset-failed 清理状态；\n4) 修复后再次确认 systemctl is-system-running 返回 running。": "1) Run systemctl status for the overall state, then systemctl --failed to list the failed units;\n2) Use journalctl -u \u003cunit\u003e on each to find and fix the failure;\n3) Confirm whether the failed units affect critical services — some are unrelated one-shot jobs whose state can be cleared with systemctl reset-failed;\n4) After fixing, confirm systemctl is-system-running returns running.",
+    "Sytemd 监控仪表盘": "Systemd Monitoring Dashboard",
+    "systemd 版本信息": "Systemd Version",
+    "异常": "Abnormal",
+    "当前任务数量": "Current Tasks",
+    "最大任务数量限制": "Max Tasks Limit",
+    "服务状态信息": "Service Status",
+    "服务状态异常": "Service state abnormal",
+    "服务运行时间": "Service Uptime",
+    "服务重启总次数": "Total Service Restarts",
+    "服务频繁重启": "Service restarting frequently",
+    "正常": "Normal",
+    "系统状态异常": "System state abnormal",
+    "系统运行状态": "System Status"
+}

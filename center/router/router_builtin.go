@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
@@ -305,6 +305,11 @@ func (rt *Router) builtinBoardGet(c *gin.Context) {
 	ginx.Bomb(http.StatusBadRequest, "%s not found", name)
 }
 
+// iconCateAlias 老版本 DB 里拼写错误的 ident 目录别名，大小写兜底覆盖不到
+var iconCateAlias = map[string]string{
+	"Tecent": "Tencent",
+}
+
 func (rt *Router) builtinIcon(c *gin.Context) {
 	fp := rt.Center.BuiltinIntegrationsDir
 	if fp == "" {
@@ -312,8 +317,38 @@ func (rt *Router) builtinIcon(c *gin.Context) {
 	}
 
 	cate := ginx.UrlParamStr(c, "cate")
-	iconPath := fp + "/" + cate + "/icon/" + ginx.UrlParamStr(c, "name")
-	c.File(path.Join(iconPath))
+	name := ginx.UrlParamStr(c, "name")
+	if strings.Contains(cate, "..") || strings.Contains(name, "..") {
+		ginx.Bomb(http.StatusBadRequest, "invalid icon path")
+	}
+
+	if alias, ok := iconCateAlias[cate]; ok {
+		cate = alias
+	}
+
+	iconPath := path.Join(fp, cate, "icon", name)
+	if !file.IsExist(iconPath) {
+		// 老版本 DB 里 logo 的目录段大小写与磁盘不一致（如 ElasticSearch vs
+		// Elasticsearch），Linux 上直接拼路径 404，且 Init 更新存量组件不刷 Logo，
+		// 只能在出口按磁盘目录做大小写不敏感兜底；文件名也对不上时退回 icon
+		// 目录下第一个文件（与 Init 生成 logo 的取法一致）
+		if dirs, err := file.DirsUnder(fp); err == nil {
+			for _, dir := range dirs {
+				if !strings.EqualFold(dir, cate) {
+					continue
+				}
+				iconPath = path.Join(fp, dir, "icon", name)
+				if !file.IsExist(iconPath) {
+					if files, _ := file.FilesUnder(path.Join(fp, dir, "icon")); len(files) > 0 {
+						iconPath = path.Join(fp, dir, "icon", files[0])
+					}
+				}
+				break
+			}
+		}
+	}
+
+	c.File(iconPath)
 }
 
 func (rt *Router) builtinMarkdown(c *gin.Context) {

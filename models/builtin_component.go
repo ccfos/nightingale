@@ -76,6 +76,7 @@ func (bc *BuiltinComponent) Add(ctx *ctx.Context, username string) error {
 	bc.CreatedAt = now
 	bc.UpdatedAt = now
 	bc.CreatedBy = username
+	bc.UpdatedBy = username
 	return Insert(ctx, bc)
 }
 
@@ -96,6 +97,15 @@ func (bc *BuiltinComponent) Update(ctx *ctx.Context, req BuiltinComponent) error
 	req.UpdatedAt = time.Now().Unix()
 
 	return DB(ctx).Model(bc).Select("*").Updates(req).Error
+}
+
+// UpdateDisabled 只更新启停状态，UpdatedBy 有意不动：内置组件保持 system，
+// README 语言副本渲染与重启时的文件恢复都以 UpdatedBy==system 为前提
+func (bc *BuiltinComponent) UpdateDisabled(ctx *ctx.Context, disabled int) error {
+	return DB(ctx).Model(bc).Updates(map[string]interface{}{
+		"disabled":   disabled,
+		"updated_at": time.Now().Unix(),
+	}).Error
 }
 
 func BuiltinComponentDels(ctx *ctx.Context, ids []int64) error {

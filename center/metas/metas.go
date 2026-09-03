@@ -118,7 +118,7 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 	}
 
 	start := time.Now()
-	err := storage.MSet(context.Background(), s.redis, newMap)
+	err := storage.MSet(context.Background(), s.redis, newMap, 7*24*time.Hour)
 	if err != nil {
 		cstats.RedisOperationLatency.WithLabelValues("mset_target_meta", "fail").Observe(time.Since(start).Seconds())
 		return err
@@ -127,7 +127,7 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 	}
 
 	if len(extendMap) > 0 {
-		err = storage.MSet(context.Background(), s.redis, extendMap)
+		err = storage.MSet(context.Background(), s.redis, extendMap, 7*24*time.Hour)
 		if err != nil {
 			cstats.RedisOperationLatency.WithLabelValues("mset_target_extend", "fail").Observe(time.Since(start).Seconds())
 			return err

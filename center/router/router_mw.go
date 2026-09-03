@@ -9,13 +9,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent/a2a"
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 const (
@@ -36,7 +38,7 @@ func (rt *Router) handleProxyUser(c *gin.Context) *models.User {
 
 	user, err := models.UserGetByUsername(rt.Ctx, username)
 	if err != nil {
-		ginx.Bomb(http.StatusInternalServerError, err.Error())
+		bombErr(http.StatusInternalServerError, err)
 	}
 
 	if user == nil {
@@ -52,7 +54,7 @@ func (rt *Router) handleProxyUser(c *gin.Context) *models.User {
 		}
 		err = user.Add(rt.Ctx)
 		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, err.Error())
+			bombErr(http.StatusInternalServerError, err)
 		}
 	}
 	return user
@@ -63,6 +65,22 @@ func (rt *Router) proxyAuth() gin.HandlerFunc {
 		user := rt.handleProxyUser(c)
 		c.Set("userid", user.Id)
 		c.Set("username", user.Username)
+		c.Next()
+	}
+}
+
+// agentOAuthScopeKey 标记本请求命中 agent 面（/a2a /mcp）——只有带此标记时 tokenAuth
+// 才受理 OAuth access token（内建 AS 的 MCPAuth、外置 IdP 的 RSAuth）。这样一个为 agent
+// 端点签发的 OAuth token 不能被拿去调用其余 tokenAuth 保护的接口（/api/n9e/*）。由
+// agentOAuthScope() 写入，仅挂在 a2a/mcp 两个 group 上、排在 tokenAuth 之前。
+const agentOAuthScopeKey = "agent_oauth_scope"
+
+// agentOAuthScope 把请求标记为 agent 面调用，使后续的 tokenAuth 在本请求上接受 OAuth
+// access token。只在 a2a/mcp group 上、tokenAuth 之前安装；其它地方无此标记，OAuth
+// token 一律不受理，从而把它约束在签发它的 agent 端点内。
+func (rt *Router) agentOAuthScope() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(agentOAuthScopeKey, true)
 		c.Next()
 	}
 }
@@ -86,6 +104,48 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 					c.Next()
 					return
 				}
+			}
+		}
+
+		// OAuth access token（内建 AS 与外置 IdP RS）只在 agent 面（/a2a /mcp）受理，
+		// 收敛权限：避免一个为 agent 签发的 token 被拿去调用其余 /api/n9e/* 接口。无标记
+		// 时整段跳过，token 落到下面的 session-JWT 校验并以 401 结束。
+		// /mcp 工具调用的进程内回放是唯一例外：请求 ctx 带 a2a 包私有的派发标记（外部
+		// 请求无法伪造），说明该 OAuth token 已在 /mcp 边界过过一次本中间件，内部这跳
+		// 视同 agent 面继续受理，RBAC 按解析出的用户正常生效。
+		agentScope := c.GetBool(agentOAuthScopeKey) || a2a.IsMCPInProcDispatch(c.Request.Context())
+
+		// 内建 OAuth 2.1 授权服务器（builtin AS）自签发的 access token：用本服务的 MCP
+		// 签名密钥验签（与外部 IdP token、session JWT 密码学隔离，验不过即非本类 token），
+		// 命中则按 token 内的用户放行。必须排在 RS 之前——builtin token 也带 iss，靠签名
+		// 甄别才不会被误送外部 IdP 验签。
+		if agentScope && rt.mcpAuthEnabled() {
+			if raw := rt.extractToken(c.Request); raw != "" {
+				if uid, uname, ok := rt.mcpVerifyAccessToken(raw); ok {
+					c.Set("userid", uid)
+					c.Set("username", uname)
+					c.Next()
+					return
+				}
+			}
+		}
+
+		// 外置 IdP 签发的 OAuth access token（Resource Server 模式）。OIDC 走 JWT
+		// 验签（凭 iss 与 n9e 自签 session JWT 区分）；OAuth2 走 introspection/userinfo
+		// （opaque token，经由不同请求头区分：n9e 固定 token 走 X-User-Token 头、已在
+		// 上面处理，extractToken 只读 Authorization: Bearer，故此处非 JWT 即外部 token）。
+		// 校验失败直接拒绝，避免被误当成 session JWT 二次验签。
+		if agentScope && rt.rsAuthEnabled() {
+			if raw := rt.extractToken(c.Request); raw != "" && rt.shouldVerifyAsRS(raw) {
+				user, err := rt.authByIdPAccessToken(c.Request.Context(), raw)
+				if err != nil {
+					logger.Debugf("[RS] verify access token failed: %v", err)
+					ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+				}
+				c.Set("userid", user.Id)
+				c.Set("username", user.Username)
+				c.Next()
+				return
 			}
 		}
 
@@ -262,6 +322,37 @@ func (rt *Router) bgrwChecks(c *gin.Context, bgids []int64) {
 func (rt *Router) bgroCheck(c *gin.Context, bgid int64) {
 	me := c.MustGet("user").(*models.User)
 	bg := BusiGroup(rt.Ctx, bgid)
+
+	can, err := me.CanDoBusiGroup(rt.Ctx, bg)
+	ginx.Dangerous(err)
+
+	if !can {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+
+	c.Set("busi_group", bg)
+}
+
+// bgroCheckAllowMissing is bgroCheck for objects that outlive their busi group.
+// Deleting a busi group only clears alert_cur_event (models.BusiGroup.Del), so
+// alert_his_event rows keep pointing at a group that is gone; bgroCheck answers
+// those with 404 "No such BusiGroup" - even for an admin, because BusiGroup()
+// bombs before CanDoBusiGroup reaches its IsAdmin shortcut, and the caller
+// cannot tell that 404 apart from "no such event". Here a missing group is a
+// permission question instead: admins still get through, everyone else gets a
+// plain 403. A bgid of 0 lands in the same branch for the same reason.
+func (rt *Router) bgroCheckAllowMissing(c *gin.Context, bgid int64) {
+	me := c.MustGet("user").(*models.User)
+
+	bg, err := models.BusiGroupGetById(rt.Ctx, bgid)
+	ginx.Dangerous(err)
+
+	if bg == nil {
+		if !me.IsAdmin() {
+			ginx.Bomb(http.StatusForbidden, "forbidden")
+		}
+		return
+	}
 
 	can, err := me.CanDoBusiGroup(rt.Ctx, bg)
 	ginx.Dangerous(err)
@@ -451,6 +542,30 @@ func (rt *Router) deleteTokens(ctx context.Context, authD *AccessDetails) error 
 
 func (rt *Router) wrapJwtKey(key string) string {
 	return rt.HTTP.JWTAuth.RedisKeyPrefix + key
+}
+
+func (rt *Router) wrapIdTokenKey(userId int64) string {
+	return fmt.Sprintf("n9e_id_token_%d", userId)
+}
+
+// saveIdToken 保存用户的 id_token 到 Redis
+func (rt *Router) saveIdToken(ctx context.Context, userId int64, idToken string) error {
+	if idToken == "" {
+		return nil
+	}
+	// id_token 的过期时间应该与 RefreshToken 保持一致，确保在整个会话期间都可用于登出
+	expiration := time.Minute * time.Duration(rt.HTTP.JWTAuth.RefreshExpired)
+	return rt.Redis.Set(ctx, rt.wrapIdTokenKey(userId), idToken, expiration).Err()
+}
+
+// fetchIdToken 从 Redis 获取用户的 id_token
+func (rt *Router) fetchIdToken(ctx context.Context, userId int64) (string, error) {
+	return rt.Redis.Get(ctx, rt.wrapIdTokenKey(userId)).Result()
+}
+
+// deleteIdToken 从 Redis 删除用户的 id_token
+func (rt *Router) deleteIdToken(ctx context.Context, userId int64) error {
+	return rt.Redis.Del(ctx, rt.wrapIdTokenKey(userId)).Err()
 }
 
 type TokenDetails struct {

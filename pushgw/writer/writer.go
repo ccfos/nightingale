@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -33,17 +34,77 @@ type WriterType struct {
 	RetryInterval    int64 // 单位秒
 }
 
+// forceSampleTS 在开启 forceUseServerTS 时将每条 TS 的首个 sample 时间戳重写为当前服务端时间。
+func forceSampleTS(items []prompb.TimeSeries) {
+	ts := int64(fasttime.UnixTimestamp()) * 1000
+	for i := 0; i < len(items); i++ {
+		if len(items[i].Samples) == 0 {
+			continue
+		}
+		items[i].Samples[0].Timestamp = ts
+	}
+}
+
+// marshalAndSnappyEncode 用池化缓冲完成 proto.Marshal + snappy.Encode。
+// 返回的 encoded 与释放函数需配对使用：调用方在 HTTP Post 完成（含重试）后调用 release()。
+// 原实现每次 Write 都产生两块新堆分配：proto.Marshal 内部 make([]byte,size) 与
+// snappy.Encode(nil,...) 的 make([]byte,MaxEncodedLen)，在 pprof 中合计占 ~10% CPU。
+func marshalAndSnappyEncode(items []prompb.TimeSeries) (encoded []byte, release func(), err error) {
+	req := prompb.WriteRequest{Timeseries: items}
+	size := req.Size()
+
+	marshalBufP := marshalBufPool.Get().(*[]byte)
+	marshalBuf := *marshalBufP
+	if cap(marshalBuf) < size {
+		marshalBuf = make([]byte, size)
+	} else {
+		marshalBuf = marshalBuf[:size]
+	}
+	*marshalBufP = marshalBuf
+
+	if _, err = req.MarshalToSizedBuffer(marshalBuf); err != nil {
+		if cap(*marshalBufP) <= maxPooledBufCap {
+			marshalBufPool.Put(marshalBufP)
+		}
+		return nil, nil, err
+	}
+
+	// snappy.MaxEncodedLen 在 src 超过 0xFFFFFFFF (4GB) 时返回 -1，
+	// 直接走下面的 slice 表达式会 panic，这里先挡一道返回普通 error，避免 pushgw 整进程崩溃。
+	maxEnc := snappy.MaxEncodedLen(len(marshalBuf))
+	if maxEnc < 0 {
+		if cap(*marshalBufP) <= maxPooledBufCap {
+			marshalBufPool.Put(marshalBufP)
+		}
+		return nil, nil, fmt.Errorf("snappy: message too large to encode: %d bytes", len(marshalBuf))
+	}
+
+	snappyBufP := snappyEncBufPool.Get().(*[]byte)
+	snappyBuf := *snappyBufP
+	if cap(snappyBuf) < maxEnc {
+		snappyBuf = make([]byte, maxEnc)
+	} else {
+		snappyBuf = snappyBuf[:maxEnc]
+	}
+	encoded = snappy.Encode(snappyBuf, marshalBuf)
+	*snappyBufP = encoded
+
+	release = func() {
+		if cap(*marshalBufP) <= maxPooledBufCap {
+			marshalBufPool.Put(marshalBufP)
+		}
+		if cap(*snappyBufP) <= maxPooledBufCap {
+			snappyEncBufPool.Put(snappyBufP)
+		}
+	}
+	return encoded, release, nil
+}
+
 func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, encodeType string) ([]byte, error) {
-	pstat.CounterWirteTotal.WithLabelValues(key).Add(float64(len(items)))
+	pstat.CounterWriteTotal.WithLabelValues(key).Add(float64(len(items)))
 
 	if forceUseServerTS {
-		ts := int64(fasttime.UnixTimestamp()) * 1000
-		for i := 0; i < len(items); i++ {
-			if len(items[i].Samples) == 0 {
-				continue
-			}
-			items[i].Samples[0].Timestamp = ts
-		}
+		forceSampleTS(items)
 	}
 
 	if encodeType == "proto" {
@@ -56,6 +117,28 @@ func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, e
 	// 如果是 json 格式，将 NaN 值的数据丢弃掉
 	return json.Marshal(filterNaNSamples(items))
 }
+
+var (
+	marshalBufPool = sync.Pool{
+		New: func() any {
+			b := make([]byte, 0, 256*1024)
+			return &b
+		},
+	}
+	snappyEncBufPool = sync.Pool{
+		New: func() any {
+			b := make([]byte, 0, 512*1024)
+			return &b
+		},
+	}
+)
+
+const maxPooledBufCap = 8 * 1024 * 1024
+
+// nonCriticalRetryCount 是非关键 backend（AsyncWrite 的 HTTP writer、Kafka writer）写失败的
+// 总尝试次数上限。非关键数据本就允许丢，若复用全局 RetryCount（默认 1000，约 17 分钟），
+// 失败的 goroutine 会长时间占住并发配额，几次不成应直接放弃
+const nonCriticalRetryCount = 3
 
 func filterNaNSamples(items []prompb.TimeSeries) []prompb.TimeSeries {
 	// 早期检查：如果没有NaN值，直接返回原始数据
@@ -113,19 +196,25 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 		pstat.ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
 	}()
 
-	data, err := beforeWrite(key, items, w.ForceUseServerTS, "proto")
+	pstat.CounterWriteTotal.WithLabelValues(key).Add(float64(len(items)))
+	if w.ForceUseServerTS {
+		forceSampleTS(items)
+	}
+
+	encoded, release, err := marshalAndSnappyEncode(items)
 	if err != nil {
 		logger.Warningf("marshal prom data to proto got error: %v, data: %+v", err, items)
 		return
 	}
+	defer release()
 
 	for i := 0; i < w.RetryCount; i++ {
-		err := w.Post(snappy.Encode(nil, data), headers...)
+		err := w.Post(encoded, headers...)
 		if err == nil {
 			break
 		}
 
-		pstat.CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
+		pstat.CounterWriteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
 		logger.Warningf("post to %s got error: %v in %d times", w.Opts.Url, err, i)
 
 		if i == 0 {
@@ -181,7 +270,30 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 		}
 
 		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-			logger.Warningf("push data with remote write:%s request got status code: %v, response body: %s", url, resp.StatusCode, string(body))
+			// 解码并解析 req 以便打印指标信息
+			decoded, decodeErr := snappy.Decode(nil, req)
+			metricsInfo := "failed to decode request"
+			if decodeErr == nil {
+				var writeReq prompb.WriteRequest
+				if unmarshalErr := proto.Unmarshal(decoded, &writeReq); unmarshalErr == nil {
+					metricsInfo = fmt.Sprintf("timeseries count: %d", len(writeReq.Timeseries))
+					logger.Warningf("push data with remote write:%s request got status code: %v, response body: %s, %s", url, resp.StatusCode, string(body), metricsInfo)
+					// 只打印前几条样本，避免日志泛滥
+					sampleCount := 5
+					if sampleCount > len(writeReq.Timeseries) {
+						sampleCount = len(writeReq.Timeseries)
+					}
+					for i := 0; i < sampleCount; i++ {
+						logger.Warningf("push data with remote write:%s timeseries: [%d] %s", url, i, writeReq.Timeseries[i].String())
+					}
+				} else {
+					metricsInfo = fmt.Sprintf("failed to unmarshal: %v", unmarshalErr)
+					logger.Warningf("push data with remote write:%s request got status code: %v, response body: %s, metrics: %s", url, resp.StatusCode, string(body), metricsInfo)
+				}
+			} else {
+				metricsInfo = fmt.Sprintf("failed to decode: %v", decodeErr)
+				logger.Warningf("push data with remote write:%s request got status code: %v, response body: %s, metrics: %s", url, resp.StatusCode, string(body), metricsInfo)
+			}
 			continue
 		}
 
@@ -199,11 +311,18 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 }
 
 type WritersType struct {
-	pushgw          pconf.Pushgw
-	backends        map[string]Writer
-	queues          map[string]*IdentQueue
-	AllQueueLen     atomic.Value
-	PushConcurrency atomic.Int64
+	pushgw      pconf.Pushgw
+	backends    map[string]Writer
+	queues      map[string]*IdentQueue
+	AllQueueLen atomic.Value
+	// 每个非关键 backend 一个独立的并发计数器（上限都是 pushConcurrencyLimit），
+	// 避免某个故障 writer 占满全局并发额度后，连累其他健康 writer 的数据被丢弃。
+	// backends 在启动时初始化完毕后不再变更，因此运行期对该 map 只有读操作，无需加锁。
+	pushConcurrency map[string]*atomic.Int64
+	// 单个 backend 的在途写出 goroutine 上限，按核数推算而非读配置：正常在途量随消费者数
+	// （QueueNumber，默认 NumCPU）缩放；故障时每个在途 goroutine 持有 ~1MB 缓冲直到重试
+	// 结束，该值同时是故障 backend 的内存堆积上限，配太大（如上万）会有 OOM 风险
+	pushConcurrencyLimit int64
 	sync.RWMutex
 }
 
@@ -236,10 +355,12 @@ func (ws *WritersType) SetAllQueueLen() {
 
 func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	writers := &WritersType{
-		backends:    make(map[string]Writer),
-		queues:      make(map[string]*IdentQueue),
-		pushgw:      pushgwConfig,
-		AllQueueLen: atomic.Value{},
+		backends:             make(map[string]Writer),
+		queues:               make(map[string]*IdentQueue),
+		pushgw:               pushgwConfig,
+		AllQueueLen:          atomic.Value{},
+		pushConcurrency:      make(map[string]*atomic.Int64),
+		pushConcurrencyLimit: int64(max(16, runtime.NumCPU())),
 	}
 
 	writers.Init()
@@ -251,6 +372,7 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 
 func (ws *WritersType) Put(name string, writer Writer) {
 	ws.backends[name] = writer
+	ws.pushConcurrency[name] = &atomic.Int64{}
 }
 
 func (ws *WritersType) isCriticalBackend(key string) bool {
@@ -262,6 +384,10 @@ func (ws *WritersType) isCriticalBackend(key string) bool {
 	// 使用类型断言判断
 	switch backend.(type) {
 	case WriterType:
+		if backend.(WriterType).Opts.AsyncWrite {
+			return false
+		}
+
 		// HTTP Writer 作为关键后端
 		return true
 	case KafkaWriterType:
@@ -355,15 +481,17 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 }
 
 func (ws *WritersType) writeToNonCriticalBackend(key string, series []prompb.TimeSeries) {
-	// 原子性地检查并增加并发数
-	currentConcurrency := ws.PushConcurrency.Add(1)
+	// 原子性地检查并增加该 backend 自己的并发数，配额按 backend 隔离，
+	// 某个 backend 故障耗尽自己的配额时，只丢自己的数据，不影响其他 backend
+	counter := ws.pushConcurrency[key]
+	currentConcurrency := counter.Add(1)
 
-	if currentConcurrency > int64(ws.pushgw.PushConcurrency) {
+	if currentConcurrency > ws.pushConcurrencyLimit {
 		// 超过限制，立即减少计数并丢弃
-		ws.PushConcurrency.Add(-1)
+		counter.Add(-1)
 		logger.Warningf("push concurrency limit exceeded, current: %d, limit: %d, dropping %d series for backend: %s",
-			currentConcurrency-1, ws.pushgw.PushConcurrency, len(series), key)
-		pstat.CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(series)))
+			currentConcurrency-1, ws.pushConcurrencyLimit, len(series), key)
+		pstat.CounterWriteErrorTotal.WithLabelValues(key).Add(float64(len(series)))
 		return
 	}
 
@@ -373,7 +501,7 @@ func (ws *WritersType) writeToNonCriticalBackend(key string, series []prompb.Tim
 	// 启动goroutine处理
 	go func(backendKey string, data []prompb.TimeSeries) {
 		defer func() {
-			ws.PushConcurrency.Add(-1)
+			counter.Add(-1)
 			if r := recover(); r != nil {
 				logger.Errorf("panic in non-critical backend %s: %v", backendKey, r)
 			}
@@ -423,11 +551,16 @@ func (ws *WritersType) initWriters() error {
 			return err
 		}
 
+		retryCount := ws.pushgw.WriterOpt.RetryCount
+		if opts[i].AsyncWrite {
+			retryCount = min(retryCount, nonCriticalRetryCount)
+		}
+
 		writer := WriterType{
 			Opts:             opts[i],
 			Client:           cli,
 			ForceUseServerTS: ws.pushgw.ForceUseServerTS,
-			RetryCount:       ws.pushgw.WriterOpt.RetryCount,
+			RetryCount:       retryCount,
 			RetryInterval:    ws.pushgw.WriterOpt.RetryInterval,
 		}
 
@@ -437,7 +570,7 @@ func (ws *WritersType) initWriters() error {
 	return nil
 }
 
-func initKakfaSASL(cfg *sarama.Config, opt pconf.KafkaWriterOptions) {
+func initKafkaSASL(cfg *sarama.Config, opt pconf.KafkaWriterOptions) {
 	if opt.SASL != nil && opt.SASL.Enable {
 		cfg.Net.SASL.Enable = true
 		cfg.Net.SASL.User = opt.SASL.User
@@ -454,7 +587,7 @@ func (ws *WritersType) initKafkaWriters() error {
 
 	for i := 0; i < len(opts); i++ {
 		cfg := sarama.NewConfig()
-		initKakfaSASL(cfg, opts[i])
+		initKafkaSASL(cfg, opts[i])
 		if opts[i].Timeout != 0 {
 			cfg.Producer.Timeout = time.Duration(opts[i].Timeout) * time.Second
 		}
@@ -481,8 +614,9 @@ func (ws *WritersType) initKafkaWriters() error {
 			Opts:             opts[i],
 			ForceUseServerTS: ws.pushgw.ForceUseServerTS,
 			Client:           producer,
-			RetryCount:       ws.pushgw.WriterOpt.RetryCount,
-			RetryInterval:    ws.pushgw.WriterOpt.RetryInterval,
+			// Kafka writer 一律走非关键异步路径，重试次数同步收紧
+			RetryCount:    min(ws.pushgw.WriterOpt.RetryCount, nonCriticalRetryCount),
+			RetryInterval: ws.pushgw.WriterOpt.RetryInterval,
 		}
 		ws.Put(fmt.Sprintf("%v_%s", opts[i].Brokers, opts[i].Topic), writer)
 	}

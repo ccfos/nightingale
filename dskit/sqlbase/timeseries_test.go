@@ -56,6 +56,49 @@ func TestFormatMetricValues(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "test __time__ priority over time",
+			keys: types.Keys{
+				ValueKey: "value",
+				LabelKey: "host",
+			},
+			rows: []map[string]interface{}{
+				{
+					"host":     "server1",
+					"value":    100,
+					"time":     int64(1715642100), // 这个应该被忽略
+					"__time__": int64(1715642135), // 这个应该被使用
+				},
+			},
+		},
+		{
+			name: "test fallback to time when __time__ not exists",
+			keys: types.Keys{
+				ValueKey: "value",
+				LabelKey: "host",
+			},
+			rows: []map[string]interface{}{
+				{
+					"host":  "server2",
+					"value": 200,
+					"time":  int64(1715642200), // 应该使用这个
+				},
+			},
+		},
+		{
+			name: "test __time__ alone without time field",
+			keys: types.Keys{
+				ValueKey: "value",
+				LabelKey: "host",
+			},
+			rows: []map[string]interface{}{
+				{
+					"host":     "server3",
+					"value":    300,
+					"__time__": int64(1715642300), // 应该使用这个
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

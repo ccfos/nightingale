@@ -1,0 +1,64 @@
+
+Sample configuration
+```
+# Retrieves values from server hardware using the Redfish protocol.
+[[instances]]
+agent_host_tag = "ident"
+
+# You can specify multiple addresses to collect the same set of metrics.
+[[instances.addresses]]
+# example: https://192.168.1.1
+url = ""
+username = ""
+password = ""
+timeout = "10s"
+
+# Specific part for collecting metrics on disks with multiple nesting.
+[instances.disks]
+urn = "redfish/v1/Systems/1/SmartStorage/ArrayControllers/"
+# Where to get the URN from: either from the config or from the body of the parent request.
+from_data = false
+link_path = "links.Member.#.href"
+data_path = "Status.Health"
+data_tags = ["Name", "SerialNumber"]
+data_name = "array_controller_status_health"
+
+  # Disk assembly is recursive and can contain many inheritance paths.
+  [instances.disks.child]
+  urn = "links.PhysicalDrives.href"
+  from_data = true
+  link_path = "links.Member.#.href"
+  data_path = "Status.Health"
+  data_tags = ["Name", "SerialNumber"]
+  data_name = "array_controller_physical_drive_status_health"
+
+[[instances.sets]]
+# urn - is a permanent identifier for specific data resource.
+urn = "redfish/v1/Chassis/1/Power"
+# prefix - the first part of the metric name to display.
+prefix = "redfish_power"
+
+  [[instances.sets.metrics]]
+  # name - the third part of the metric name to display.
+  name = "last_power_output_watts"
+
+  # prefix - the second part of the metric name to display.
+  prefix = "power_supplies"
+
+  # path - path to the required data in the json response body.
+  #
+  # You can find information about data search syntax here:
+  # https://github.com/tidwall/gjson/blob/master/SYNTAX.md
+  path = "PowerSupplies.#.LastPowerOutputWatts"
+
+    # You can specify tags to collect from the root body.
+    [[instances.sets.metrics.tags]]
+    name = "name"
+    path = "Temperatures.#.Name"
+
+# In the example above, the metric would be emitted as:
+#    metric: redfish_power
+#    field:  power_supplies_last_power_output_watts
+# If the path contains an array, each element will be emitted as a separate sample,
+# but the field name will not have an index suffix.
+```

@@ -42,6 +42,11 @@ func (c *CvalCache) initSyncConfigs() {
 		log.Fatalln("failed to sync configs:", err)
 	}
 
+	err = models.RefreshPhoneEncryptionCache(c.ctx)
+	if err != nil {
+		logger.Errorf("failed to refresh phone encryption cache: %v", err)
+	}
+
 	go c.loopSyncConfigs()
 }
 
@@ -119,6 +124,8 @@ func (c *CvalCache) GetLastUpdateTime() int64 {
 type SiteInfo struct {
 	PrintBodyPaths []string `json:"print_body_paths"`
 	PrintAccessLog bool     `json:"print_access_log"`
+	SiteUrl        string   `json:"site_url"`
+	ReportHostNIC  bool     `json:"report_host_nic"`
 }
 
 func (c *CvalCache) GetSiteInfo() *SiteInfo {

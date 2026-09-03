@@ -79,6 +79,19 @@ var I18N = `{
     "event attributes not match attributes filter": "事件属性不匹配属性过滤器",
     "failed to parse tag filter: %v": "解析标签过滤器失败: %v",
 
+    "event is dropped": "事件已被丢弃，不会进行通知",
+    "Notification test mock event": "通知测试模拟事件",
+    "This is a mock event sent by notification test, just to verify that the notification channel works": "这是一条由通知测试发送的模拟告警事件，仅用于验证通知渠道是否可用",
+    "Event pipeline test mock event": "工作流试跑模拟事件",
+    "This is a mock event used by event pipeline tryrun, it is not persisted": "这是一条工作流试跑用的模拟告警事件，不会入库，仅用于验证处理器配置是否符合预期",
+    "Media type test mock event": "通知媒介测试模拟事件",
+    "This is a mock event sent by media type test, just to verify that the media type config works": "这是一条由通知媒介测试发送的模拟告警事件，仅用于验证媒介配置是否可用",
+    "Message template preview mock event": "消息模板预览模拟事件",
+    "This is a mock event used by message template preview, it is not persisted": "这是一条消息模板预览用的模拟告警事件，不会入库，仅用于查看模板渲染效果",
+    "drop event success": "丢弃事件成功",
+    "drop event failed": "丢弃事件失败",
+    "callback success": "回调成功",
+
     "Infrastructure": "基础设施",
     "Host - View": "机器 - 查看",
     "Host - Modify": "机器 - 修改",
@@ -187,6 +200,28 @@ var I18N = `{
     "View Alerting Engines": "查看告警引擎列表",
     "View Product Version": "查看产品版本",
 
+    "Some alert rules still in the BusiGroup": "业务组中仍有告警规则",
+    "Some alert mutes still in the BusiGroup": "业务组中仍有屏蔽规则",
+    "Some alert subscribes still in the BusiGroup": "业务组中仍有订阅规则",
+    "Some Board still in the BusiGroup": "业务组中仍有仪表盘",
+    "Some targets still in the BusiGroup": "业务组中仍有监控对象",
+    "Some recording rules still in the BusiGroup": "业务组中仍有记录规则",
+    "Some recovery scripts still in the BusiGroup": "业务组中仍有自愈脚本",
+    "Some target busigroups still in the BusiGroup": "业务组中仍有监控对象",
+
+    "saved view not found": "保存的视图不存在",
+    "saved view name is blank": "视图名称不能为空",
+    "saved view page is blank": "视图页面不能为空",
+    "saved view name already exists in this page": "该页面下已存在同名的公开视图",
+
+    "llm test: authentication failed (HTTP %d), please verify your API Key is correct. server response: %s": "LLM 连接测试失败：认证失败（HTTP %d），请检查 API Key 是否正确。服务端返回：%s",
+    "llm test: endpoint not found (HTTP 404), please check your API URL (current: %s). for OpenAI-compatible APIs the URL should end with /v1, e.g. https://api.openai.com/v1. server response: %s": "LLM 连接测试失败：接口地址不存在（HTTP 404），请检查 API URL 是否正确（当前：%s）。OpenAI 兼容接口地址通常应以 /v1 结尾，例如 https://api.openai.com/v1。服务端返回：%s",
+    "llm test: rate limit exceeded (HTTP 429), your API Key quota is exhausted or requests are too frequent. server response: %s": "LLM 连接测试失败：请求频率超限（HTTP 429），API Key 配额已耗尽或请求过于频繁，请稍后重试。服务端返回：%s",
+    "llm test: request failed (HTTP %d). server response: %s": "LLM 连接测试失败：请求失败（HTTP %d）。服务端返回：%s",
+    "llm test: unexpected response format, the API URL may point to a wrong endpoint. raw: %s": "LLM 连接测试失败：接口返回了非预期的响应格式，API URL 可能指向了错误的端点。原始内容：%s",
+    "llm test: LLM returned an error for model(%s): %s, please verify the model name is correct": "LLM 连接测试失败：模型「%s」返回错误：%s，请检查模型名称是否正确",
+    "llm test: LLM returned no content, please verify the model name(%s) is correct": "LLM 连接测试失败：LLM 未返回有效内容，请检查模型名称「%s」是否正确",
+
     "---------zh_CN--------": "---------zh_CN--------"
   },
   "zh_HK": {
@@ -269,7 +304,19 @@ var I18N = `{
     "event tag not match tag filter": "事件標籤不匹配標籤過濾器",
     "event attributes not match attributes filter": "事件屬性不匹配屬性過濾器",
     "failed to parse tag filter: %v": "解析標籤過濾器失敗: %v",
-
+    "event is dropped": "事件已被丟棄，不會進行通知",
+    "Notification test mock event": "通知測試模擬事件",
+    "This is a mock event sent by notification test, just to verify that the notification channel works": "這是一條由通知測試發送的模擬告警事件，僅用於驗證通知渠道是否可用",
+    "Event pipeline test mock event": "工作流試跑模擬事件",
+    "This is a mock event used by event pipeline tryrun, it is not persisted": "這是一條工作流試跑用的模擬告警事件，不會入庫，僅用於驗證處理器配置是否符合預期",
+    "Media type test mock event": "通知媒介測試模擬事件",
+    "This is a mock event sent by media type test, just to verify that the media type config works": "這是一條由通知媒介測試發送的模擬告警事件，僅用於驗證媒介配置是否可用",
+    "Message template preview mock event": "消息模板預覽模擬事件",
+    "This is a mock event used by message template preview, it is not persisted": "這是一條消息模板預覽用的模擬告警事件，不會入庫，僅用於查看模板渲染效果",
+    "drop event success": "丟棄事件成功",
+    "drop event failed": "丟棄事件失敗",
+    "callback success": "回調成功",
+  
     "Infrastructure": "基礎設施",
     "Host - View": "機器 - 查看",
     "Host - Modify": "機器 - 修改",
@@ -378,6 +425,28 @@ var I18N = `{
     "View Alerting Engines": "查看告警引擎列表",
     "View Product Version": "查看產品版本",
 
+    "Some alert rules still in the BusiGroup": "業務組中仍有告警規則",
+    "Some alert mutes still in the BusiGroup": "業務組中仍有屏蔽規則",
+    "Some alert subscribes still in the BusiGroup": "業務組中仍有訂閱規則",
+    "Some Board still in the BusiGroup": "業務組中仍有儀表板",
+    "Some targets still in the BusiGroup": "業務組中仍有監控對象",
+    "Some recording rules still in the BusiGroup": "業務組中仍有記錄規則",
+    "Some recovery scripts still in the BusiGroup": "業務組中仍有自愈腳本",
+    "Some target busigroups still in the BusiGroup": "業務組中仍有監控對象",
+
+    "saved view not found": "保存的視圖不存在",
+    "saved view name is blank": "視圖名稱不能為空",
+    "saved view page is blank": "視圖頁面不能為空",
+    "saved view name already exists in this page": "該頁面下已存在同名的公開視圖",
+
+    "llm test: authentication failed (HTTP %d), please verify your API Key is correct. server response: %s": "LLM 連接測試失敗：認證失敗（HTTP %d），請檢查 API Key 是否正確。服務端返回：%s",
+    "llm test: endpoint not found (HTTP 404), please check your API URL (current: %s). for OpenAI-compatible APIs the URL should end with /v1, e.g. https://api.openai.com/v1. server response: %s": "LLM 連接測試失敗：介面地址不存在（HTTP 404），請檢查 API URL 是否正確（當前：%s）。OpenAI 相容介面地址通常應以 /v1 結尾，例如 https://api.openai.com/v1。服務端返回：%s",
+    "llm test: rate limit exceeded (HTTP 429), your API Key quota is exhausted or requests are too frequent. server response: %s": "LLM 連接測試失敗：請求頻率超限（HTTP 429），API Key 配額已耗盡或請求過於頻繁，請稍後重試。服務端返回：%s",
+    "llm test: request failed (HTTP %d). server response: %s": "LLM 連接測試失敗：請求失敗（HTTP %d）。服務端返回：%s",
+    "llm test: unexpected response format, the API URL may point to a wrong endpoint. raw: %s": "LLM 連接測試失敗：介面返回了非預期的響應格式，API URL 可能指向了錯誤的端點。原始內容：%s",
+    "llm test: LLM returned an error for model(%s): %s, please verify the model name is correct": "LLM 連接測試失敗：模型「%s」返回錯誤：%s，請檢查模型名稱是否正確",
+    "llm test: LLM returned no content, please verify the model name(%s) is correct": "LLM 連接測試失敗：LLM 未返回有效內容，請檢查模型名稱「%s」是否正確",
+
     "---------zh_HK--------": "---------zh_HK--------"
   },
   "ja_JP": {
@@ -457,7 +526,19 @@ var I18N = `{
     "event tag not match tag filter": "イベントタグがタグフィルタと一致しません",
     "event attributes not match attributes filter": "イベント属性が属性フィルタと一致しません",
     "failed to parse tag filter: %v": "タグフィルタの解析に失敗しました: %v",
-
+    "event is dropped": "イベントが破棄されました，通知は行われません",
+    "Notification test mock event": "通知テストのモックイベント",
+    "This is a mock event sent by notification test, just to verify that the notification channel works": "これは通知テストが送信したモックアラートイベントで、通知チャネルが利用可能かを確認するためのものです",
+    "Event pipeline test mock event": "イベントパイプラインのテスト用モックイベント",
+    "This is a mock event used by event pipeline tryrun, it is not persisted": "これはイベントパイプラインの試験実行に使うモックアラートイベントで、保存されず、プロセッサ設定の確認のみに使われます",
+    "Media type test mock event": "通知メディアテストのモックイベント",
+    "This is a mock event sent by media type test, just to verify that the media type config works": "これは通知メディアテストが送信したモックアラートイベントで、メディア設定が利用可能かを確認するためのものです",
+    "Message template preview mock event": "メッセージテンプレートプレビューのモックイベント",
+    "This is a mock event used by message template preview, it is not persisted": "これはメッセージテンプレートのプレビューに使うモックアラートイベントで、保存されず、テンプレートの描画結果の確認のみに使われます",
+    "drop event success": "イベント破棄成功",
+    "drop event failed": "イベント破棄失敗",
+    "callback success": "コールバック成功",
+   
     "Infrastructure": "インフラストラクチャ",
     "Host - View": "機器 - 閲覧",
     "Host - Modify": "機器 - 修正",
@@ -566,6 +647,28 @@ var I18N = `{
     "View Alerting Engines": "アラートエンジンの表示",
     "View Product Version": "製品のバージョンを見る",
 
+    "Some alert rules still in the BusiGroup": "ビジネスグループにまだアラートルールがあります",
+    "Some alert mutes still in the BusiGroup": "ビジネスグループにまだミュートルールがあります",
+    "Some alert subscribes still in the BusiGroup": "ビジネスグループにまだサブスクライブルールがあります",
+    "Some Board still in the BusiGroup": "ビジネスグループにまだダッシュボードがあります",
+    "Some targets still in the BusiGroup": "ビジネスグループにまだ監視対象があります",
+    "Some recording rules still in the BusiGroup": "ビジネスグループにまだ記録ルールがあります",
+    "Some recovery scripts still in the BusiGroup": "ビジネスグループにまだ自己回復スクリプトがあります",
+    "Some target busigroups still in the BusiGroup": "ビジネスグループにまだ監視対象があります",
+
+    "saved view not found": "保存されたビューが見つかりません",
+    "saved view name is blank": "ビュー名を空にすることはできません",
+    "saved view page is blank": "ビューページを空にすることはできません",
+    "saved view name already exists in this page": "このページには同名の公開ビューが既に存在します",
+
+    "llm test: authentication failed (HTTP %d), please verify your API Key is correct. server response: %s": "LLM 接続テスト失敗：認証エラー（HTTP %d）、API Key が正しいか確認してください。サーバーの応答：%s",
+    "llm test: endpoint not found (HTTP 404), please check your API URL (current: %s). for OpenAI-compatible APIs the URL should end with /v1, e.g. https://api.openai.com/v1. server response: %s": "LLM 接続テスト失敗：エンドポイントが見つかりません（HTTP 404）、API URL を確認してください（現在：%s）。OpenAI 互換 API の URL は通常 /v1 で終わる必要があります（例：https://api.openai.com/v1）。サーバーの応答：%s",
+    "llm test: rate limit exceeded (HTTP 429), your API Key quota is exhausted or requests are too frequent. server response: %s": "LLM 接続テスト失敗：レート制限超過（HTTP 429）、API Key のクォータが枯渇したかリクエストが頻繁すぎます。しばらくしてから再試行してください。サーバーの応答：%s",
+    "llm test: request failed (HTTP %d). server response: %s": "LLM 接続テスト失敗：リクエスト失敗（HTTP %d）。サーバーの応答：%s",
+    "llm test: unexpected response format, the API URL may point to a wrong endpoint. raw: %s": "LLM 接続テスト失敗：予期しない応答形式です。API URL が誤ったエンドポイントを指している可能性があります。内容：%s",
+    "llm test: LLM returned an error for model(%s): %s, please verify the model name is correct": "LLM 接続テスト失敗：モデル「%s」がエラーを返しました：%s。モデル名が正しいか確認してください",
+    "llm test: LLM returned no content, please verify the model name(%s) is correct": "LLM 接続テスト失敗：LLM が有効なコンテンツを返しませんでした。モデル名「%s」が正しいか確認してください",
+
     "---------ja_JP--------": "---------ja_JP--------"
   },
   "ru_RU": {
@@ -645,7 +748,19 @@ var I18N = `{
     "event tag not match tag filter": "Теги события не соответствуют фильтру тегов",
     "event attributes not match attributes filter": "Атрибуты события не соответствуют фильтру атрибутов",
     "failed to parse tag filter: %v": "Не удалось разобрать фильтр тегов: %v",
-
+    "event is dropped": "Событие отброшено, уведомление не будет отправлено",
+    "Notification test mock event": "Тестовое событие уведомления",
+    "This is a mock event sent by notification test, just to verify that the notification channel works": "Это тестовое событие, отправленное проверкой уведомлений, только для проверки работоспособности канала уведомлений",
+    "Event pipeline test mock event": "Тестовое событие конвейера событий",
+    "This is a mock event used by event pipeline tryrun, it is not persisted": "Это тестовое событие для пробного запуска конвейера событий; оно не сохраняется и служит только для проверки настроек обработчиков",
+    "Media type test mock event": "Тестовое событие проверки типа медиа",
+    "This is a mock event sent by media type test, just to verify that the media type config works": "Это тестовое событие, отправленное проверкой типа медиа, только для проверки работоспособности настроек медиа",
+    "Message template preview mock event": "Тестовое событие предпросмотра шаблона сообщения",
+    "This is a mock event used by message template preview, it is not persisted": "Это тестовое событие для предпросмотра шаблона сообщения; оно не сохраняется и служит только для просмотра результата отрисовки шаблона",
+    "drop event success": "Событие успешно отброшено",
+    "drop event failed": "Не удалось отбросить событие",
+    "callback success": "Обратный вызов успешен",
+   
     "Infrastructure": "Инфраструктура",
     "Host - View": "Хост - Просмотр",
     "Host - Modify": "Хост - Изменить",
@@ -753,6 +868,28 @@ var I18N = `{
     "View SSO Settings": "Просмотр настроек единого входа",
     "View Alerting Engines": "Просмотр списка алертинг-инженеров",
     "View Product Version": "Просмотр версии продукта",
+
+    "Some alert rules still in the BusiGroup": "В бизнес-группе еще есть правила оповещений",
+    "Some alert mutes still in the BusiGroup": "В бизнес-группе еще есть правила отключения оповещений",
+    "Some alert subscribes still in the BusiGroup": "В бизнес-группе еще есть правила подписки",
+    "Some Board still in the BusiGroup": "В бизнес-группе еще есть панели мониторинга",
+    "Some targets still in the BusiGroup": "В бизнес-группе еще есть объекты мониторинга",
+    "Some recording rules still in the BusiGroup": "В бизнес-группе еще есть правила записи",
+    "Some recovery scripts still in the BusiGroup": "В бизнес-группе еще есть скрипты самоисцеления",
+    "Some target busigroups still in the BusiGroup": "В бизнес-группе еще есть объекты мониторинга",
+
+    "saved view not found": "Сохраненный вид не найден",
+    "saved view name is blank": "Название вида не может быть пустым",
+    "saved view page is blank": "Страница вида не может быть пустой",
+    "saved view name already exists in this page": "На этой странице уже существует публичный вид с таким названием",
+
+    "llm test: authentication failed (HTTP %d), please verify your API Key is correct. server response: %s": "Тест подключения LLM не пройден: ошибка аутентификации (HTTP %d), проверьте правильность API Key. Ответ сервера: %s",
+    "llm test: endpoint not found (HTTP 404), please check your API URL (current: %s). for OpenAI-compatible APIs the URL should end with /v1, e.g. https://api.openai.com/v1. server response: %s": "Тест подключения LLM не пройден: эндпоинт не найден (HTTP 404), проверьте API URL (текущий: %s). Для OpenAI-совместимых API URL должен заканчиваться на /v1, например https://api.openai.com/v1. Ответ сервера: %s",
+    "llm test: rate limit exceeded (HTTP 429), your API Key quota is exhausted or requests are too frequent. server response: %s": "Тест подключения LLM не пройден: превышен лимит запросов (HTTP 429), квота API Key исчерпана или запросы слишком частые. Повторите попытку позже. Ответ сервера: %s",
+    "llm test: request failed (HTTP %d). server response: %s": "Тест подключения LLM не пройден: запрос завершился ошибкой (HTTP %d). Ответ сервера: %s",
+    "llm test: unexpected response format, the API URL may point to a wrong endpoint. raw: %s": "Тест подключения LLM не пройден: неожиданный формат ответа, API URL может указывать на неверный эндпоинт. Содержимое: %s",
+    "llm test: LLM returned an error for model(%s): %s, please verify the model name is correct": "Тест подключения LLM не пройден: модель «%s» вернула ошибку: %s. Проверьте правильность названия модели",
+    "llm test: LLM returned no content, please verify the model name(%s) is correct": "Тест подключения LLM не пройден: LLM не вернула содержимого. Проверьте правильность названия модели «%s»",
 
     "---------ru_RU--------": "---------ru_RU--------"
   }

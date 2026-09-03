@@ -9,7 +9,7 @@ ElasticSearch 通过 HTTP JSON 的方式暴露了自身的监控指标，通过 
 
 categraf 配置文件：`conf/input.elasticsearch/elasticsearch.toml`
 
-```yaml
+```toml
 [[instances]]
 servers = ["http://192.168.11.177:9200"]
 http_timeout = "10s"
@@ -24,9 +24,3 @@ password = "xxxxxxxx"
 num_most_recent_indices = 1
 labels = { service="es" }
 ```
-
-## 仪表盘效果
-
-夜莺内置仪表盘中已经内置了 Elasticsearch 的仪表盘，导入即可使用。
-
-![](http://download.flashcat.cloud/uPic/es-dashboard.jpeg)

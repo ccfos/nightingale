@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -14,9 +15,11 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
+	"github.com/prometheus/common/model"
 	"github.com/tidwall/match"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
+	"gorm.io/gorm"
 )
 
 const (
@@ -27,13 +30,15 @@ const (
 
 	PROMETHEUS    = "prometheus"
 	TDENGINE      = "tdengine"
+	IOTDB         = "iotdb"
 	ELASTICSEARCH = "elasticsearch"
 	MYSQL         = "mysql"
 	POSTGRESQL    = "pgsql"
 	DORIS         = "doris"
 	OPENSEARCH    = "opensearch"
 
-	CLICKHOUSE = "ck"
+	CLICKHOUSE   = "ck"
+	VICTORIALOGS = "victorialogs"
 )
 
 const (
@@ -60,12 +65,12 @@ const (
 
 type AlertRule struct {
 	Id                    int64                  `json:"id" gorm:"primaryKey"`
-	GroupId               int64                  `json:"group_id"` // busi group id
-	Cate                  string                 `json:"cate"`     // alert rule cate (prometheus|elasticsearch)
-	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`
+	GroupId               int64                  `json:"group_id"`                                                               // busi group id
+	Cate                  string                 `json:"cate"`                                                                   // alert rule cate (prometheus|elasticsearch)
+	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`                                                // Deprecated: use DatasourceQueries instead
 	DatasourceIdsJson     []int64                `json:"datasource_ids,omitempty" gorm:"-"`                                      // alert rule list page use this field
 	DatasourceQueries     []DatasourceQuery      `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
-	Cluster               string                 `json:"cluster"`                                                                // take effect by clusters, seperated by space
+	Cluster               string                 `json:"cluster"`                                                                // Deprecated: use DatasourceQueries instead                                                           // take effect by clusters, separated by space
 	Name                  string                 `json:"name"`                                                                   // rule name
 	Note                  string                 `json:"note"`                                                                   // will sent in notify
 	Prod                  string                 `json:"prod"`                                                                   // product empty means n9e
@@ -76,33 +81,33 @@ type AlertRule struct {
 	Severity              int                    `json:"severity"`                                                               // 1: Emergency 2: Warning 3: Notice
 	Severities            []int                  `json:"severities" gorm:"-"`                                                    // 1: Emergency 2: Warning 3: Notice
 	Disabled              int                    `json:"disabled"`                                                               // 0: enabled, 1: disabled
-	PromForDuration       int                    `json:"prom_for_duration"`                                                      // prometheus for, unit:s
+	PromForDuration       int                    `json:"prom_for_duration"`                                                      // Deprecated: use cron pattern instead                                                     // prometheus for, unit:s
 	PromQl                string                 `json:"prom_ql"`                                                                // just one ql
 	RuleConfig            string                 `json:"-" gorm:"rule_config"`                                                   // rule config
 	RuleConfigJson        interface{}            `json:"rule_config" gorm:"-"`                                                   // rule config for fe
 	EventRelabelConfig    []*pconf.RelabelConfig `json:"event_relabel_config" gorm:"-"`                                          // event relabel config
 	PromEvalInterval      int                    `json:"prom_eval_interval"`                                                     // unit:s
-	EnableStime           string                 `json:"-"`                                                                      // split by space: "00:00 10:00 12:00"
-	EnableStimeJSON       string                 `json:"enable_stime" gorm:"-"`                                                  // for fe
+	EnableStime           string                 `json:"-"`                                                                      // Deprecated                                                                  // split by space: "00:00 10:00 12:00"
+	EnableStimeJSON       string                 `json:"enable_stime" gorm:"-"`                                                  // Deprecated                                               // for fe
 	EnableStimesJSON      []string               `json:"enable_stimes" gorm:"-"`                                                 // for fe
-	EnableEtime           string                 `json:"-"`                                                                      // split by space: "00:00 10:00 12:00"
-	EnableEtimeJSON       string                 `json:"enable_etime" gorm:"-"`                                                  // for fe
+	EnableEtime           string                 `json:"-"`                                                                      // Deprecated                                                                // split by space: "00:00 10:00 12:00"
+	EnableEtimeJSON       string                 `json:"enable_etime" gorm:"-"`                                                  // Deprecated                                             // for fe
 	EnableEtimesJSON      []string               `json:"enable_etimes" gorm:"-"`                                                 // for fe
-	EnableDaysOfWeek      string                 `json:"-"`                                                                      // eg: "0 1 2 3 4 5 6 ; 0 1 2"
-	EnableDaysOfWeekJSON  []string               `json:"enable_days_of_week" gorm:"-"`                                           // for fe
+	EnableDaysOfWeek      string                 `json:"-"`                                                                      // Deprecated                                                             // eg: "0 1 2 3 4 5 6 ; 0 1 2"
+	EnableDaysOfWeekJSON  []string               `json:"enable_days_of_week" gorm:"-"`                                           // Deprecated                                         // for fe
 	EnableDaysOfWeeksJSON [][]string             `json:"enable_days_of_weeks" gorm:"-"`                                          // for fe
 	EnableInBG            int                    `json:"enable_in_bg"`                                                           // 0: global 1: enable one busi-group
 	NotifyRecovered       int                    `json:"notify_recovered"`                                                       // whether notify when recovery
-	NotifyChannels        string                 `json:"-"`                                                                      // split by space: sms voice email dingtalk wecom
-	NotifyChannelsJSON    []string               `json:"notify_channels" gorm:"-"`                                               // for fe
-	NotifyGroups          string                 `json:"-"`                                                                      // split by space: 233 43
-	NotifyGroupsObj       []UserGroup            `json:"notify_groups_obj" gorm:"-"`                                             // for fe
-	NotifyGroupsJSON      []string               `json:"notify_groups" gorm:"-"`                                                 // for fe
+	NotifyChannels        string                 `json:"-"`                                                                      // Deprecated                                                        // split by space: sms voice email dingtalk wecom
+	NotifyChannelsJSON    []string               `json:"notify_channels" gorm:"-"`                                               // Deprecated                                            // for fe
+	NotifyGroups          string                 `json:"-"`                                                                      // Deprecated                                            // split by space: 233 43
+	NotifyGroupsObj       []UserGroup            `json:"notify_groups_obj" gorm:"-"`                                             // Deprecated                                         // for fe
+	NotifyGroupsJSON      []string               `json:"notify_groups" gorm:"-"`                                                 // Deprecated                                          // for fe
 	NotifyRepeatStep      int                    `json:"notify_repeat_step"`                                                     // notify repeat interval, unit: min
 	NotifyMaxNumber       int                    `json:"notify_max_number"`                                                      // notify: max number
 	RecoverDuration       int64                  `json:"recover_duration"`                                                       // unit: s
-	Callbacks             string                 `json:"-"`                                                                      // split by space: http://a.com/api/x http://a.com/api/y'
-	CallbacksJSON         []string               `json:"callbacks" gorm:"-"`                                                     // for fe
+	Callbacks             string                 `json:"-"`                                                                      // Deprecated                                                             // split by space: http://a.com/api/x http://a.com/api/y'
+	CallbacksJSON         []string               `json:"callbacks" gorm:"-"`                                                     // Deprecated                                                 // for fe
 	RunbookUrl            string                 `json:"runbook_url"`                                                            // sop url
 	AppendTags            string                 `json:"-"`                                                                      // split by space: service=n9e mod=api
 	AppendTagsJSON        []string               `json:"append_tags" gorm:"-"`                                                   // for fe
@@ -118,13 +123,23 @@ type AlertRule struct {
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 	CronPattern           string                 `json:"cron_pattern"`
+	TimeZone              string                 `json:"time_zone" gorm:"default:''"` // timezone for alert rule, e.g. "Asia/Shanghai", "UTC", empty for default
 	NotifyRuleIds         []int64                `json:"notify_rule_ids" gorm:"serializer:json"`
+	PipelineConfigs       []PipelineConfig       `json:"pipeline_configs" gorm:"serializer:json"`
 	NotifyVersion         int                    `json:"notify_version"` // 0: old, 1: new
 }
 
 type ChildVarConfig struct {
 	ParamVal        []map[string]ParamQuery `json:"param_val"`
 	ChildVarConfigs *ChildVarConfig         `json:"child_var_configs"`
+}
+
+func (c ChildVarConfig) MarshalJSON() ([]byte, error) {
+	if c.ParamVal == nil {
+		c.ParamVal = []map[string]ParamQuery{}
+	}
+	type Alias ChildVarConfig
+	return json.Marshal(Alias(c))
 }
 
 type ParamQuery struct {
@@ -135,6 +150,14 @@ type ParamQuery struct {
 type VarConfig struct {
 	ParamVal        []ParamQueryForFirst `json:"param_val"`
 	ChildVarConfigs *ChildVarConfig      `json:"child_var_configs"`
+}
+
+func (v VarConfig) MarshalJSON() ([]byte, error) {
+	if v.ParamVal == nil {
+		v.ParamVal = []ParamQueryForFirst{}
+	}
+	type Alias VarConfig
+	return json.Marshal(Alias(v))
 }
 
 // ParamQueryForFirst 同 ParamQuery，仅在第一层出现
@@ -295,6 +318,19 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 					val = int64(v)
 				case int32:
 					val = int64(v)
+				case string:
+					// 前端下发的是 id，但 AI 生成、模板导入、API 直调的规则里 values 可能是
+					// 数字字符串或数据源名。静默丢弃会让规则解析不出数据源（引擎不评估、
+					// test-fire 报数据源未匹配）且难以排查，这里做兼容。
+					// 先按名字匹配再按数字解析：数据源名允许是纯数字（名为 "5" 的数据源 id 未必是 5），
+					// 名字是用户显式配置的，优先级高于把字符串当 id 猜
+					if id, ok := nameMap[v]; ok {
+						val = id
+					} else if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+						val = n
+					} else {
+						continue
+					}
 				default:
 					continue
 				}
@@ -377,11 +413,40 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 		switch q.Key {
 		case "group_ids":
 			ids := ParseInt64(q.Values)
+			if len(ids) == 0 {
+				// 没有有效的 group_id，跳过该过滤项，避免生成 `group_id IN ()` 这种非法 SQL。
+				continue
+			}
+			hasZero := false
+			nonZeroIds := make([]int64, 0, len(ids))
+			for _, id := range ids {
+				if id == 0 {
+					hasZero = true
+				} else {
+					nonZeroIds = append(nonZeroIds, id)
+				}
+			}
+			// 注意：以下分支依赖 TargetFilterQueryBuild 在外层对 target_busi_group 使用 LEFT JOIN，
+			// 才能让 target_ident IS NULL 表示「该 target 未归组」。如果外层换成 INNER JOIN，
+			// `== [0]` 与 `!= [0]` 的语义都会被打破。
 			if q.Op == "==" {
-				m["target_busi_group.group_id in (?)"] = ids
+				switch {
+				case hasZero && len(nonZeroIds) == 0:
+					m["target_busi_group.target_ident IS NULL"] = nil
+				case hasZero && len(nonZeroIds) > 0:
+					m["(target_busi_group.target_ident IS NULL OR target_busi_group.group_id IN (?))"] = nonZeroIds
+				default:
+					m["target_busi_group.group_id in (?)"] = nonZeroIds
+				}
 			} else {
-				m["target.ident not in (select target_ident "+
-					"from target_busi_group where group_id in (?))"] = ids
+				switch {
+				case hasZero && len(nonZeroIds) == 0:
+					m["target_busi_group.target_ident IS NOT NULL"] = nil
+				case hasZero && len(nonZeroIds) > 0:
+					m["target_busi_group.target_ident IS NOT NULL AND NOT EXISTS (SELECT 1 FROM target_busi_group tbg WHERE tbg.target_ident = target.ident AND tbg.group_id IN (?))"] = nonZeroIds
+				default:
+					m["NOT EXISTS (SELECT 1 FROM target_busi_group tbg WHERE tbg.target_ident = target.ident AND tbg.group_id IN (?))"] = nonZeroIds
+				}
 			}
 		case "tags":
 			lst := []string{}
@@ -481,6 +546,13 @@ func (ar *AlertRule) Verify() error {
 		return errors.New("name is blank")
 	}
 
+	if ar.TimeZone != "" {
+		_, err := time.LoadLocation(ar.TimeZone)
+		if err != nil {
+			return fmt.Errorf("invalid timezone: %s", ar.TimeZone)
+		}
+	}
+
 	if str.Dangerous(ar.Name) {
 		return errors.New("Name has invalid characters")
 	}
@@ -508,10 +580,16 @@ func (ar *AlertRule) Verify() error {
 
 	ar.AppendTags = strings.TrimSpace(ar.AppendTags)
 	arr := strings.Fields(ar.AppendTags)
+	appendTagKeys := make(map[string]struct{})
 	for i := 0; i < len(arr); i++ {
 		if !strings.Contains(arr[i], "=") {
 			return fmt.Errorf("AppendTags(%s) invalid", arr[i])
 		}
+		pair := strings.SplitN(arr[i], "=", 2)
+		if _, exists := appendTagKeys[pair[0]]; exists {
+			return fmt.Errorf("AppendTags has duplicate key: %s", pair[0])
+		}
+		appendTagKeys[pair[0]] = struct{}{}
 	}
 
 	gids := strings.Fields(ar.NotifyGroups)
@@ -521,7 +599,42 @@ func (ar *AlertRule) Verify() error {
 		}
 	}
 
+	// 生效时段一致性校验：开始时间、结束时间、生效星期三者段数必须一致，且配了时段时星期不能为空。
+	// 否则运行时 mute 判断会因三个数组长度不一致而索引越界 panic（如只选了生效星期却没配起止时间）。
+	// 校验前端传入的原始数组，不依赖 FE2DB 的序列化结果。
+	enableStimeCount := len(ar.EnableStimesJSON)
+	if enableStimeCount == 0 && ar.EnableStimeJSON != "" {
+		enableStimeCount = 1 // 兼容旧版单时段字段
+	}
+	enableEtimeCount := len(ar.EnableEtimesJSON)
+	if enableEtimeCount == 0 && ar.EnableEtimeJSON != "" {
+		enableEtimeCount = 1
+	}
+	// 只统计非空的星期分组：DB2FE 对未配置生效时段（空 EnableDaysOfWeek）会 append 一个空分组，
+	// 未配置的规则（clone 时占绝大多数）不应被误判为时段不一致而拒绝。
+	enableWeekCount := 0
+	for _, days := range ar.EnableDaysOfWeeksJSON {
+		if len(days) > 0 {
+			enableWeekCount++
+		}
+	}
+	if enableWeekCount == 0 && len(ar.EnableDaysOfWeekJSON) > 0 {
+		enableWeekCount = 1 // 兼容旧版单分组字段 enable_days_of_week（与 FE2DB 的复数优先、复数空才回退单数保持一致）
+	}
+	if enableStimeCount != enableEtimeCount || enableStimeCount != enableWeekCount {
+		return fmt.Errorf("invalid effective time span: start times(%d), end times(%d) and days-of-week groups(%d) must have the same count",
+			enableStimeCount, enableEtimeCount, enableWeekCount)
+	}
+
+	if err := ar.ValidateEffectiveTimes(); err != nil {
+		return err
+	}
+
 	if err := ar.validateCronPattern(); err != nil {
+		return err
+	}
+
+	if err := ar.validateEventRelabelConfig(); err != nil {
 		return err
 	}
 
@@ -543,6 +656,43 @@ func (ar *AlertRule) Verify() error {
 	return nil
 }
 
+// hhmmPattern 严格匹配 24 小时制 HH:MM。不接受 8:00 这类缺前导零的写法：生效时段在运行时是把
+// 当前时间格式化成 HH:MM 后按字符串直接比大小的，位数不齐会让时段判断出错。
+var hhmmPattern = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
+
+// hhmmEndPattern 在 HH:MM 之外额外放行结束时间 24:00：同样是字符串比大小，触发时刻最大只到 23:59，
+// 恒小于 24:00，所以 02:00-24:00 表示生效到当日结束，是 mute.go/dispatch.go 支持的既有写法。
+var hhmmEndPattern = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$|^24:00$`)
+
+// ValidateEffectiveTimes 校验生效时段的起止时间格式。前端用 moment 格式化时间，moment 拿到脏数据
+// 会格式化出 「Invalid date」 这类字符串并原样提交，存进 DB 后按空格切分会让时段数组长度错乱。
+// 取值口径与上面的段数校验一致：复数字段为空时回退到已废弃的单数字段。
+func (ar *AlertRule) ValidateEffectiveTimes() error {
+	stimes := ar.EnableStimesJSON
+	if len(stimes) == 0 && ar.EnableStimeJSON != "" {
+		stimes = []string{ar.EnableStimeJSON}
+	}
+
+	etimes := ar.EnableEtimesJSON
+	if len(etimes) == 0 && ar.EnableEtimeJSON != "" {
+		etimes = []string{ar.EnableEtimeJSON}
+	}
+
+	for i := range stimes {
+		if !hhmmPattern.MatchString(stimes[i]) {
+			return fmt.Errorf("invalid effective time span %d: start time(%s) must be in HH:MM format", i+1, stimes[i])
+		}
+	}
+
+	for i := range etimes {
+		if !hhmmEndPattern.MatchString(etimes[i]) {
+			return fmt.Errorf("invalid effective time span %d: end time(%s) must be in HH:MM format", i+1, etimes[i])
+		}
+	}
+
+	return nil
+}
+
 func (ar *AlertRule) validateCronPattern() error {
 	if ar.CronPattern == "" {
 		return nil
@@ -555,6 +705,65 @@ func (ar *AlertRule) validateCronPattern() error {
 	_, err := scheduler.AddFunc(ar.CronPattern, func() {})
 	if err != nil {
 		return fmt.Errorf("invalid cron pattern: %s, error: %v", ar.CronPattern, err)
+	}
+
+	return nil
+}
+
+// relabelConfigForVerify 用宽松类型接收 event_relabel_config，只为把非法 label name
+// 定位到具体第几条配置：直接解成 pconf.RelabelConfig 的话，它的 SourceLabels 是
+// model.LabelNames，遇到非法 label name 会中途中止，拿不到出错的下标。
+type relabelConfigForVerify struct {
+	SourceLabels []string `json:"source_labels"`
+}
+
+// validateEventRelabelConfig 保证 rule_config.event_relabel_config 能被读取端解开。
+// 读取端用的是 pconf.RelabelConfig，source_labels 里的非法 label name（空串、数字开头等）
+// 会让它的 UnmarshalJSON 失败：center 侧表现为 event_relabel_config 被静默改坏，edge 侧表现为
+// 整批告警规则同步失败、进程退出。字段类型不合法（如 modulus 传字符串）虽不会打挂
+// edge，但读取端同样整段丢弃，表现为"保存成功但 relabel 永远不生效"。两类都拦在写入口。
+func (ar *AlertRule) validateEventRelabelConfig() error {
+	if ar.RuleConfig == "" {
+		return nil
+	}
+
+	// 用 RawMessage 接住 relabel 段：rule_config 的整体结构由各 cate 自己定义，
+	// 这里只关心 relabel 部分，其余部分解不出来就不越权报错
+	var ruleConfig struct {
+		EventRelabelConfig json.RawMessage `json:"event_relabel_config"`
+	}
+	if err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig); err != nil {
+		return nil
+	}
+
+	if len(ruleConfig.EventRelabelConfig) == 0 {
+		return nil
+	}
+
+	// 宽松类型解得开时，优先给出带下标的报错
+	var looseConfigs []*relabelConfigForVerify
+	if err := json.Unmarshal(ruleConfig.EventRelabelConfig, &looseConfigs); err == nil {
+		for i, cfg := range looseConfigs {
+			if cfg == nil {
+				continue
+			}
+
+			// 只校验 source_labels：它在读取端是 model.LabelNames，非法 label name 会让
+			// 反序列化失败。target_label 在读取端是普通 string，不参与反序列化校验，
+			// 且运行期 lowercase/uppercase/hashmod 等分支会原样写出（含点号的标签正是
+			// relabel.go 里 REPLACE_DOT 机制要支持的），所以这里不能收得比读取端更严。
+			for _, sourceLabel := range cfg.SourceLabels {
+				if !model.LabelName(sourceLabel).IsValid() {
+					return fmt.Errorf("event_relabel_config[%d]: %q is not a valid label name in source_labels", i, sourceLabel)
+				}
+			}
+		}
+	}
+
+	// 最后按读取端的真实类型解一遍，判定标准与 DB2FE 完全一致
+	var configs []*pconf.RelabelConfig
+	if err := json.Unmarshal(ruleConfig.EventRelabelConfig, &configs); err != nil {
+		return fmt.Errorf("invalid event_relabel_config: %v", err)
 	}
 
 	return nil
@@ -579,6 +788,25 @@ func (ar *AlertRule) Add(ctx *ctx.Context) error {
 	ar.UpdateAt = now
 
 	return Insert(ctx, ar)
+}
+
+// Upsert: 同 group 内若存在同名规则则覆盖（保留原 id/create_at/create_by，下游引用不破），否则插入。
+// 用于 force=true 的批量导入场景。调用方传入的 ar 不要预先调用 FE2DB —— 本方法内部处理。
+func (ar *AlertRule) Upsert(ctx *ctx.Context) error {
+	var existing AlertRule
+	err := DB(ctx).Where("group_id = ? AND name = ?", ar.GroupId, ar.Name).Take(&existing).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := ar.FE2DB(); err != nil {
+			return err
+		}
+		return ar.Add(ctx) // 复用 Add 的 Verify + 同名兜底（防 SELECT 与 INSERT 之间的并发插入）
+	}
+
+	return existing.Update(ctx, *ar) // Update 内部会 FE2DB、Verify，并保留 existing 的 id/create_at/create_by
 }
 
 func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule) error {
@@ -971,11 +1199,24 @@ func (ar *AlertRule) DB2FE() error {
 	json.Unmarshal([]byte(ar.ExtraConfig), &ar.ExtraConfigJSON)
 
 	// 解析 RuleConfig 字段
-	var ruleConfig struct {
-		EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config"`
+	// 空 rule_config 在老库里是存量数据（该列 text not null 无默认值），不是异常，直接跳过，
+	// 否则每次列表接口都会为这些行刷一条 Warning。
+	if ar.RuleConfig != "" {
+		var ruleConfig struct {
+			EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config"`
+		}
+		if err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig); err != nil {
+			// 这里的错误不能吞：SourceLabels 是 model.LabelNames，遇到非法 label name 会
+			// 中途中止，留下一个被改坏的结构体（已扩容但未赋值的元素变成空串，报错位置之后的
+			// 字段全丢）。把这份数据发给 edge，edge 反序列化整批规则都会失败并退出进程，
+			// 所以宁可整段置空，也不能把伪造出来的值传下去。
+			logger.Warningf("alert rule(id=%d name=%s) decode event_relabel_config failed, dropped: %v",
+				ar.Id, ar.Name, err)
+			ar.EventRelabelConfig = nil
+		} else {
+			ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
+		}
 	}
-	json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
-	ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
 
 	// 兼容旧逻辑填充 cron_pattern
 	if ar.CronPattern == "" && ar.PromEvalInterval != 0 {
@@ -986,6 +1227,8 @@ func (ar *AlertRule) DB2FE() error {
 	if err != nil {
 		return err
 	}
+
+	ar.FillSeverities()
 
 	return nil
 }
@@ -1072,16 +1315,76 @@ func AlertRuleGetsByBGIds(ctx *ctx.Context, bgids []int64) ([]AlertRule, error) 
 	return lst, err
 }
 
+// AlertRuleGetsLegacyNotifyByBGIds 查老式通知配置（notify_version=0）的告警规则。
+// 用于迁移审计场景：把 notify_version 过滤下推到 SQL，避免全表拉回再内存过滤。
+// includeDisabled=false 时同时过滤 disabled=0。
+func AlertRuleGetsLegacyNotifyByBGIds(ctx *ctx.Context, bgids []int64, includeDisabled bool) ([]AlertRule, error) {
+	session := DB(ctx).Where("notify_version = ?", 0)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in (?)", bgids)
+	}
+	if !includeDisabled {
+		session = session.Where("disabled = ?", 0)
+	}
+
+	var lst []AlertRule
+	err := session.Order("name").Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
+// rawAlertRule 与 json.RawMessage 一样延迟解码，额外实现 String()，
+// 避免 poster 里 %+v 的 debug 日志把整批规则打成字节十进制数组。
+type rawAlertRule []byte
+
+func (r *rawAlertRule) UnmarshalJSON(b []byte) error {
+	*r = append((*r)[:0], b...)
+	return nil
+}
+
+func (r rawAlertRule) String() string {
+	return string(r)
+}
+
 func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 	if !ctx.IsCenter {
-		lst, err := poster.GetByUrls[[]*AlertRule](ctx, "/v1/n9e/alert-rules?disabled=0")
+		// 逐条反序列化，而不是一次解成 []*AlertRule：单条规则里的脏数据（例如
+		// event_relabel_config 里的非法 label name）会让整个响应解码失败，进而
+		// 导致边缘机房一条规则都同步不到、启动阶段直接 exit。坏规则跳过并告警，
+		// 其余规则照常生效。
+		raws, err := poster.GetByUrls[[]rawAlertRule](ctx, "/v1/n9e/alert-rules?disabled=0")
 		if err != nil {
 			return nil, err
 		}
-		for i := 0; i < len(lst); i++ {
-			lst[i].FE2DB()
+
+		lst := make([]*AlertRule, 0, len(raws))
+		for i := 0; i < len(raws); i++ {
+			var ar AlertRule
+			if err := json.Unmarshal(raws[i], &ar); err != nil {
+				logger.Errorf("failed to decode alert rule, skipped: %v, raw: %s", err, string(raws[i]))
+				continue
+			}
+			ar.FE2DB()
+			lst = append(lst, &ar)
 		}
-		return lst, err
+
+		if skipped := len(raws) - len(lst); skipped > 0 {
+			logger.Errorf("%d of %d alert rules skipped due to decode failure", skipped, len(raws))
+		}
+
+		// 一条都没解出来，说明不是个别脏数据而是响应整体不可用（如 center 与 edge 版本不一致）。
+		// 此时必须返回 error：调用方据此保留旧缓存并继续重试，否则规则缓存会被清空、
+		// 同步水位又被刷成最新，告警全停且不再重试。
+		if len(raws) > 0 && len(lst) == 0 {
+			return nil, fmt.Errorf("all %d alert rules failed to decode", len(raws))
+		}
+
+		return lst, nil
 	}
 
 	session := DB(ctx).Where("disabled = ?", 0)
@@ -1211,13 +1514,15 @@ func (ar *AlertRule) IsHostRule() bool {
 
 func (ar *AlertRule) IsInnerRule() bool {
 	return ar.Cate == TDENGINE ||
+		ar.Cate == IOTDB ||
 		ar.Cate == CLICKHOUSE ||
 		ar.Cate == ELASTICSEARCH ||
 		ar.Prod == LOKI || ar.Cate == LOKI ||
 		ar.Cate == MYSQL ||
 		ar.Cate == POSTGRESQL ||
 		ar.Cate == DORIS ||
-		ar.Cate == OPENSEARCH
+		ar.Cate == OPENSEARCH ||
+		ar.Cate == VICTORIALOGS
 }
 
 func (ar *AlertRule) GetRuleType() string {
@@ -1389,6 +1694,39 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 	}
 
 	return m, nil
+}
+
+// HostAlertRuleTargetsSig 计算 host 告警规则 -> target 映射的输入签名。
+// 该映射由三部分输入共同决定，任一变化都会改变结果，签名随之变化：
+//  1. host 告警规则（增删/改/启停，都会改变 count 或 max(update_at)）
+//  2. 机器与业务组的归属关系 target_busi_group
+//  3. 机器自身的 tags/host_tags 等字段（变更时 router_heartbeat 会 bump target.update_at）
+//
+// 供 memsto 在每轮同步前做变更检测：签名未变即可跳过整轮规则查询，
+// 避免每个周期对所有 host 规则各发一条全表扫描的过滤 SQL。仅 center 直连 DB 时调用。
+func HostAlertRuleTargetsSig(ctx *ctx.Context) (string, error) {
+	var ruleStat []*Statistics
+	err := DB(ctx).Model(&AlertRule{}).
+		Select("count(*) as total", "max(update_at) as last_updated").
+		Where("prod = ?", HOST).Find(&ruleStat).Error
+	if err != nil {
+		return "", err
+	}
+
+	bgStat, err := StatisticsGet(ctx, &TargetBusiGroup{})
+	if err != nil {
+		return "", err
+	}
+
+	tgStat, err := StatisticsGet(ctx, &Target{})
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%d:%d|%d:%d|%d:%d",
+		ruleStat[0].Total, ruleStat[0].LastUpdated,
+		bgStat.Total, bgStat.LastUpdated,
+		tgStat.Total, tgStat.LastUpdated), nil
 }
 
 func (ar *AlertRule) Copy(ctx *ctx.Context) (*AlertRule, error) {

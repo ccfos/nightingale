@@ -40,6 +40,14 @@ var (
 
 // Query executes a given SQL query in Doris and returns the results with MaxQueryRows check
 func (d *Doris) Query(ctx context.Context, query *QueryParam) ([]map[string]interface{}, error) {
+	// 不可信调用方（仪表盘匿名分享 token）额外走严格只读校验：
+	// 下面的黑名单按空格切词，不构成安全边界
+	if types.ReadOnlyEnforced(ctx) {
+		if err := sqlbase.ValidateReadOnly(query.Sql); err != nil {
+			return nil, err
+		}
+	}
+
 	// 校验SQL的合法性, 过滤掉 write请求
 	sqlItem := strings.Split(strings.ToUpper(query.Sql), " ")
 	for _, item := range sqlItem {
@@ -73,35 +81,44 @@ func (d *Doris) QueryTimeseries(ctx context.Context, query *QueryParam) ([]types
 }
 
 // CheckMaxQueryRows checks if the query result exceeds the maximum allowed rows
+// It uses SQL analysis to skip unnecessary checks for aggregate queries or queries with LIMIT <= maxRows
+// For queries that need checking, it uses probe approach (LIMIT maxRows+1) instead of COUNT(*) for better performance
 func (d *Doris) CheckMaxQueryRows(ctx context.Context, database, sql string) error {
+	maxQueryRows := d.MaxQueryRows
+	if maxQueryRows == 0 {
+		maxQueryRows = 500
+	}
+
+	cleanedSQL := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(sql), ";"))
+
+	// Step 1: Analyze SQL to determine if check is needed
+	needsCheck, _, _ := NeedsRowCountCheck(cleanedSQL, maxQueryRows)
+	if !needsCheck {
+		return nil
+	}
+
+	// Step 2: Execute probe query (more efficient than COUNT(*))
+	return d.probeRowCount(ctx, database, cleanedSQL, maxQueryRows)
+}
+
+// probeRowCount uses threshold probing to check row count
+// It reads at most maxRows+1 rows, which is O(maxRows) instead of O(totalRows) for COUNT(*)
+// Doris optimizes LIMIT queries by stopping scan early once limit is reached
+func (d *Doris) probeRowCount(ctx context.Context, database, sql string, maxRows int) error {
 	timeoutCtx, cancel := d.createTimeoutContext(ctx)
 	defer cancel()
 
-	cleanedSQL := strings.ReplaceAll(sql, ";", "")
-	checkQuery := fmt.Sprintf("SELECT COUNT(*) as count FROM (%s) AS subquery;", cleanedSQL)
+	// Probe SQL: only need to check if exceeds threshold, not actual data
+	probeSQL := fmt.Sprintf("SELECT 1 FROM (%s) AS __probe_chk LIMIT %d", sql, maxRows+1)
 
-	// 执行计数查询
-	results, err := d.ExecQuery(timeoutCtx, database, checkQuery)
+	results, err := d.ExecQuery(timeoutCtx, database, probeSQL)
 	if err != nil {
 		return err
 	}
 
-	if len(results) > 0 {
-		if count, exists := results[0]["count"]; exists {
-			v, err := sqlbase.ParseFloat64Value(count)
-			if err != nil {
-				return err
-			}
-
-			maxQueryRows := d.MaxQueryRows
-			if maxQueryRows == 0 {
-				maxQueryRows = 500
-			}
-
-			if v > float64(maxQueryRows) {
-				return fmt.Errorf("query result rows count %d exceeds the maximum limit %d", int(v), maxQueryRows)
-			}
-		}
+	// If returned rows > maxRows, it exceeds the limit
+	if len(results) > maxRows {
+		return fmt.Errorf("query result rows count exceeds the maximum limit %d", maxRows)
 	}
 
 	return nil

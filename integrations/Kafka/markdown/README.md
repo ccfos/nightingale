@@ -142,14 +142,3 @@ kafka_uris = []
 # disable_calculate_lag_rate = false
 ```
 
-## 告警规则
-
-夜莺提供了内置的 Kafka 告警规则，克隆到自己的业务组下即可使用。
-
-![20230801162030](https://download.flashcat.cloud/ulric/20230801162030.png)
-
-## 仪表盘：
-
-夜莺提供了内置的 Kafka 仪表盘，克隆到自己的业务组下即可使用。
-
-![20230801162017](https://download.flashcat.cloud/ulric/20230801162017.png)

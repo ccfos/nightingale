@@ -28,12 +28,3 @@ url_label_value = "{{.Host}}"
 labels = { group = "be",job = "doris_cluster01"}
 ```
 
-## 告警规则
-
-夜莺内置了 Doris 的告警规则，克隆到自己的业务组下即可使用。
-
-## 仪表盘
-
-夜莺内置了 Doris 的仪表盘，克隆到自己的业务组下即可使用。
-
-

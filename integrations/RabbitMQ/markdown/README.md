@@ -1,21 +1,29 @@
 # RabbitMQ
 
-高版本（3.8以上版本）的 RabbitMQ，已经内置支持了暴露 Prometheus 协议的监控数据。所以，直接使用 categraf 的 prometheus 插件即可采集。开启 RabbitMQ Prometheus 访问：
+RabbitMQ 3.8 及以上内置 Prometheus 插件，推荐直接使用 Categraf Prometheus input 采集。开启插件：
 
 ```bash
 rabbitmq-plugins enable rabbitmq_prometheus
 ```
 
-启用成功的话，rabbitmq 默认会在 15692 端口起监听，访问 `http://localhost:15692/metrics` 即可看到符合 prometheus 协议的监控数据。
+默认监听 `15692`：
 
-如果低于 3.8 的版本，还是需要使用 categraf 的 rabbitmq 插件来采集监控数据。
+```bash
+curl -fsS http://127.0.0.1:15692/metrics | grep rabbitmq_build_info
+```
 
-## 告警规则
+新建 `conf/input.prometheus/rabbitmq.toml`：
 
-夜莺内置了 RabbitMQ 的告警规则，克隆到自己的业务组下即可使用。
+```toml
+interval = 15
 
-## 仪表盘
+[[instances]]
+urls = ["http://127.0.0.1:15692/metrics"]
+url_label_key = "instance"
+url_label_value = "{{.Host}}"
+labels = { job = "rabbitmq" }
+```
 
-夜莺内置了 RabbitMQ 的仪表盘，克隆到自己的业务组下即可使用。`rabbitmq_v3.8_gt` 是大于等于 3.8 版本的仪表盘，`rabbitmq_v3.8_lt` 是小于 3.8 版本的仪表盘。
+本目录的 3.8/3.8+ 模板按内置 Prometheus 指标验证。应创建真实 exchange、queue，并执行 publish/consume，才能看到吞吐、积压和确认相关面板。
 
-![20230802082542](https://download.flashcat.cloud/ulric/20230802082542.png)
+RabbitMQ 低于 3.8 时，可启用 `rabbitmq_management` 并使用 Categraf `input.rabbitmq` 访问默认管理端口 `15672`；这条链路的指标名与 3.8+ Prometheus 模板并不完全相同，应选择对应的旧版模板。

@@ -30,7 +30,7 @@ func TestMiniRedisMGet(t *testing.T) {
 	mp["key2"] = "value2"
 	mp["key3"] = "value3"
 
-	err = MSet(context.Background(), rdb, mp)
+	err = MSet(context.Background(), rdb, mp, 0)
 	if err != nil {
 		t.Fatalf("failed to set miniredis value: %v", err)
 	}

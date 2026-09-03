@@ -122,7 +122,7 @@ func (tc *Tdengine) QueryTable(query string) (APIResponse, error) {
 }
 
 func (tc *Tdengine) ShowDatabases(context.Context) ([]string, error) {
-	var databases []string
+	databases := make([]string, 0)
 	data, err := tc.QueryTable("show databases")
 	if err != nil {
 		return databases, err
@@ -135,7 +135,7 @@ func (tc *Tdengine) ShowDatabases(context.Context) ([]string, error) {
 }
 
 func (tc *Tdengine) ShowTables(ctx context.Context, database string) ([]string, error) {
-	var tables []string
+	tables := make([]string, 0)
 	sql := fmt.Sprintf("show %s", database)
 	data, err := tc.QueryTable(sql)
 	if err != nil {

@@ -12,16 +12,17 @@ import (
 )
 
 type BusiGroup struct {
-	Id          int64                   `json:"id" gorm:"primaryKey"`
-	Name        string                  `json:"name"`
-	LabelEnable int                     `json:"label_enable"`
-	LabelValue  string                  `json:"label_value"`
-	CreateAt    int64                   `json:"create_at"`
-	CreateBy    string                  `json:"create_by"`
-	UpdateAt    int64                   `json:"update_at"`
-	UpdateBy    string                  `json:"update_by"`
-	UserGroups  []UserGroupWithPermFlag `json:"user_groups" gorm:"-"`
-	DB          *gorm.DB                `json:"-" gorm:"-"`
+	Id               int64                   `json:"id" gorm:"primaryKey"`
+	Name             string                  `json:"name"`
+	LabelEnable      int                     `json:"label_enable"`
+	LabelValue       string                  `json:"label_value"`
+	CreateAt         int64                   `json:"create_at"`
+	CreateBy         string                  `json:"create_by"`
+	UpdateAt         int64                   `json:"update_at"`
+	UpdateBy         string                  `json:"update_by"`
+	UpdateByNickname string                  `json:"update_by_nickname" gorm:"-"`
+	UserGroups       []UserGroupWithPermFlag `json:"user_groups" gorm:"-"`
+	DB               *gorm.DB                `json:"-" gorm:"-"`
 }
 
 func New(db *gorm.DB) *BusiGroup {
@@ -108,6 +109,12 @@ func BusiGroupGet(ctx *ctx.Context, where string, args ...interface{}) (*BusiGro
 
 func BusiGroupGetById(ctx *ctx.Context, id int64) (*BusiGroup, error) {
 	return BusiGroupGet(ctx, "id=?", id)
+}
+
+func BusiGroupGetByIds(ctx *ctx.Context, ids []int64) ([]*BusiGroup, error) {
+	var lst []*BusiGroup
+	err := DB(ctx).Where("id in ?", ids).Find(&lst).Error
+	return lst, err
 }
 
 func BusiGroupExists(ctx *ctx.Context, where string, args ...interface{}) (bool, error) {

@@ -1,0 +1,350 @@
+[
+    {
+        "id": 0,
+        "uuid": 1764508314075766,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "服务重启总次数",
+        "unit": "none",
+        "note": "",
+        "lang": "zh_CN",
+        "expression": "systemd_service_restart_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "服务重启总次数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Service Restarts",
+                "note": ""
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314080743,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "socket 接受的连接总数",
+        "unit": "none",
+        "note": "",
+        "lang": "zh_CN",
+        "expression": "systemd_socket_accepted_connections_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "socket 接受的连接总数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Accepted Socket Connections",
+                "note": ""
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314085167,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "socket 当前连接数",
+        "unit": "none",
+        "note": "",
+        "lang": "zh_CN",
+        "expression": "systemd_socket_current_connections",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "socket 当前连接数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Current Socket Connections",
+                "note": ""
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314089647,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "socket 拒绝的连接总数",
+        "unit": "none",
+        "note": "",
+        "lang": "zh_CN",
+        "expression": "systemd_socket_refused_connections_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "socket 拒绝的连接总数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Total Refused Socket Connections",
+                "note": ""
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314093857,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "服务运行状态",
+        "unit": "none",
+        "note": "系统是否处于运行状态（1=运行，0=非运行）",
+        "lang": "zh_CN",
+        "expression": "systemd_system_running",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "服务运行状态",
+                "note": "系统是否处于运行状态（1=运行，0=非运行）"
+            },
+            {
+                "lang": "en_US",
+                "name": "System Running State",
+                "note": "Whether the system is in running state (1 = running, 0 = not running)"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314098015,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "timer 上次触发时间戳",
+        "unit": "none",
+        "note": "",
+        "lang": "zh_CN",
+        "expression": "systemd_timer_last_trigger_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "timer 上次触发时间戳",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Timer Last Trigger Timestamp",
+                "note": ""
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314102216,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "unit 启动时间戳",
+        "unit": "milliseconds",
+        "note": "Unix时间戳",
+        "lang": "zh_CN",
+        "expression": "systemd_unit_start_time_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "unit 启动时间戳",
+                "note": "Unix时间戳"
+            },
+            {
+                "lang": "en_US",
+                "name": "Unit Start Timestamp",
+                "note": "Unix timestamp"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314106441,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "unit 的状态信息",
+        "unit": "none",
+        "note": "state值为activating| active| deactivating| failed| inactive",
+        "lang": "zh_CN",
+        "expression": "systemd_unit_state",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "unit 的状态信息",
+                "note": "state值为activating| active| deactivating| failed| inactive"
+            },
+            {
+                "lang": "en_US",
+                "name": "Unit State",
+                "note": "The state value is one of activating | active | deactivating | failed | inactive"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314110740,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "当前任务数量",
+        "unit": "none",
+        "note": "",
+        "lang": "zh_CN",
+        "expression": "systemd_unit_tasks_current",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "当前任务数量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Current Task Count",
+                "note": ""
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314115097,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "最大任务数量限制",
+        "unit": "none",
+        "note": "",
+        "lang": "zh_CN",
+        "expression": "systemd_unit_tasks_max",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "最大任务数量限制",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Task Limit",
+                "note": ""
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314119223,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "systemd_units",
+        "unit": "none",
+        "note": "各状态下的 unit 总数.\nstate状态为activating|active|deactivating|failed|inactive",
+        "lang": "zh_CN",
+        "expression": "systemd_units",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "systemd_units",
+                "note": "各状态下的 unit 总数.\nstate状态为activating|active|deactivating|failed|inactive"
+            },
+            {
+                "lang": "en_US",
+                "name": "Systemd Units",
+                "note": "Total number of units in each state.\nThe state is one of activating | active | deactivating | failed | inactive"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1764508314123601,
+        "collector": "Categraf",
+        "typ": "Systemd",
+        "name": "systemd 版本信息",
+        "unit": "none",
+        "note": "",
+        "lang": "zh_CN",
+        "expression": "systemd_version",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "systemd 版本信息",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Systemd Version Information",
+                "note": ""
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

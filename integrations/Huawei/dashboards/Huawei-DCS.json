@@ -1,0 +1,1084 @@
+{
+    "name": "华为云-分布式缓存服务(DCS)",
+    "tags": "华为云-AOM",
+    "ident": "",
+    "uuid": 1755745562863000,
+    "configs": {
+        "var": [
+            {
+                "name": "datasource",
+                "label": "数据源",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus",
+                "defaultValue": ""
+            },
+            {
+                "name": "name",
+                "label": "Redis实例名称",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_dcs_cpu_usage, name)",
+                "multi": false
+            },
+            {
+                "name": "dcs_cluster_proxy2_node",
+                "label": "Proxy节点",
+                "type": "query",
+                "hide": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_dcs_cpu_usage{name=\"$name\"}, dcs_cluster_proxy2_node)",
+                "multi": true,
+                "allOption": true,
+                "allValue": ".*"
+            },
+            {
+                "name": "dcs_cluster_redis_node",
+                "label": "数据节点",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(huaweicloud_sys_dcs_cpu_usage{name=\"$name\"},dcs_cluster_redis_node)"
+            }
+        ],
+        "panels": [
+            {
+                "type": "row",
+                "id": "cb150944-44c5-4f8b-9e92-cb55278f3b4b",
+                "name": "资源总览",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "cb150944-44c5-4f8b-9e92-cb55278f3b4b",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "table",
+                "id": "f7c41854-6e1d-4cfd-b01b-16e93ad09deb",
+                "layout": {
+                    "h": 8,
+                    "w": 24,
+                    "x": 0,
+                    "y": 1,
+                    "i": "f7c41854-6e1d-4cfd-b01b-16e93ad09deb",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_cpu_usage{name=\"$name\",dcs_cluster_redis_node=~\".+\"} -0",
+                        "instant": true,
+                        "legend": "CPU使用率"
+                    },
+                    {
+                        "expr": "huaweicloud_sys_dcs_memory_usage{name=\"$name\",dcs_cluster_redis_node=~\".+\"}",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "maxDataPoints": 240,
+                        "instant": true,
+                        "legend": "内存使用率"
+                    },
+                    {
+                        "expr": "huaweicloud_sys_dcs_keyspace_hits_perc{name=\"$name\",dcs_cluster_redis_node=~\".+\"}",
+                        "__mode__": "__query__",
+                        "refId": "C",
+                        "maxDataPoints": 240,
+                        "legend": "缓存命中率",
+                        "instant": true
+                    },
+                    {
+                        "expr": "huaweicloud_sys_dcs_connected_clients{name=\"$name\",dcs_cluster_redis_node=~\".+\"}",
+                        "__mode__": "__query__",
+                        "refId": "D",
+                        "maxDataPoints": 240,
+                        "legend": "活跃的客户端数量",
+                        "instant": true
+                    },
+                    {
+                        "expr": "huaweicloud_sys_dcs_total_connections_received{name=\"$name\",dcs_cluster_redis_node=~\".+\"}",
+                        "__mode__": "__query__",
+                        "refId": "E",
+                        "maxDataPoints": 240,
+                        "legend": "新建连接数",
+                        "instant": true
+                    },
+                    {
+                        "expr": "huaweicloud_sys_dcs_command_max_delay{name=\"$name\", dcs_cluster_redis_node=~\".+\"}",
+                        "__mode__": "__query__",
+                        "refId": "F",
+                        "maxDataPoints": 240,
+                        "legend": "命令最大时延",
+                        "instant": true
+                    },
+                    {
+                        "expr": "huaweicloud_sys_dcs_rx_controlled{name=\"$name\",dcs_cluster_redis_node=~\".+\"}",
+                        "__mode__": "__query__",
+                        "refId": "G",
+                        "maxDataPoints": 240,
+                        "legend": "流控次数",
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "dcs_cluster_redis_node": "数据节点",
+                                "dcs_instance_id": "Redis实例",
+                                "name": "Redis名称"
+                            }
+                        }
+                    }
+                ],
+                "name": "服务器资源总览表",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "background",
+                    "nowrap": true,
+                    "tableLayout": "auto",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelValuesToRows",
+                    "aggrDimension": [
+                        "dcs_instance_id",
+                        "name",
+                        "dcs_cluster_redis_node"
+                    ],
+                    "sortColumn": "name",
+                    "sortOrder": "ascend",
+                    "pageLimit": 500,
+                    "linkMode": "appendLinkColumn"
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "valueMappings": []
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "03fe83a0-0784-490c-ba1c-53d257c6972b",
+                "name": "资源明细",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 9,
+                    "i": "03fe83a0-0784-490c-ba1c-53d257c6972b",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "afdf3c62-d7cf-49ec-805b-55d161472715",
+                "layout": {
+                    "h": 7,
+                    "w": 13,
+                    "x": 0,
+                    "y": 10,
+                    "i": "afdf3c62-d7cf-49ec-805b-55d161472715",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_cpu_usage{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "legend": ""
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU使用率（数据节点）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "c38a7d14-ae1a-4810-9e99-14f95aba3e41",
+                "layout": {
+                    "h": 7,
+                    "w": 11,
+                    "x": 13,
+                    "y": 10,
+                    "i": "6979916f-aa87-4213-92fb-0a51d04b09b5",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_memory_usage{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "legend": ""
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内存使用率（数据节点）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5026e782-e9d2-43b1-a3ec-2bd56b731afe",
+                "layout": {
+                    "h": 5,
+                    "w": 13,
+                    "x": 0,
+                    "y": 17,
+                    "i": "64caef92-550d-462b-b5e1-43f343b0e699",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_keys{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "legend": "{{name}}/{{dcs_cluster_redis_node}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "缓存键总数（数据节点）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": ""
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "cf26b61b-c5b8-4a1e-a1aa-72a8a57072d0",
+                "layout": {
+                    "h": 5,
+                    "w": 11,
+                    "x": 13,
+                    "y": 17,
+                    "i": "a4cd5763-8351-411b-853d-700a01fa272f",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_keyspace_hits_perc{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "legend": "{{name}}/{{dcs_cluster_redis_node}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "缓存命中率（数据节点）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3d215cd6-272e-4f1b-8ab6-abdf5b994da7",
+                "layout": {
+                    "h": 5,
+                    "w": 13,
+                    "x": 0,
+                    "y": 22,
+                    "i": "227eca03-0f96-4732-a924-657724f82087",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "(huaweicloud_sys_dcs_instantaneous_input_kbps{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"} -0) * 1000",
+                        "legend": "主机名：{{name}}，节点：{{dcs_cluster_redis_node}}-网络瞬时输入流量"
+                    },
+                    {
+                        "expr": "(0 - huaweicloud_sys_dcs_instantaneous_output_kbps{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}) * 1000",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "maxDataPoints": 240,
+                        "legend": "主机名：{{name}}，节点：{{dcs_cluster_redis_node}}-网络瞬时输出流量"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "网络瞬时（输入/输出）流量（数据节点）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bitsSecSI",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5e076403-06e3-4849-839d-8a58dbfb8909",
+                "layout": {
+                    "h": 5,
+                    "w": 11,
+                    "x": 13,
+                    "y": 22,
+                    "i": "00e6b50a-3fbd-4155-b9c1-941c620f996d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_command_max_delay{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "legend": "主机名：{{name}}，节点：{{dcs_cluster_redis_node}}-网络瞬时输入流量"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "命令最大时延（主机实例）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "fdfe9752-abc1-44c9-9a2c-057ffd300d69",
+                "layout": {
+                    "h": 5,
+                    "w": 13,
+                    "x": 0,
+                    "y": 27,
+                    "i": "0b0489c7-fa49-453d-9b55-eb1231f28882",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_expires{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "legend": "主机名：{{name}}，节点：{{dcs_cluster_redis_node}}-有过期时间的键总数"
+                    },
+                    {
+                        "expr": "0-huaweicloud_sys_dcs_expired_keys{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "maxDataPoints": 240,
+                        "legend": "主机名：{{name}}，节点：{{dcs_cluster_redis_node}}-已过期的键总数",
+                        "hide": false
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "缓存过期键总数（数据节点）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "2f1f3c40-c617-496e-9edd-1d04d3004da7",
+                "layout": {
+                    "h": 5,
+                    "w": 11,
+                    "x": 13,
+                    "y": 27,
+                    "i": "e1fd4539-434d-413c-82cd-5723e6ab42bd",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_instantaneous_ops{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "legend": "主机名：{{name}}，节点：{{dcs_cluster_redis_node}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "每秒并发操作数（数据节点）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "e9a52b5c-0cc2-475a-9602-90d621410033",
+                "layout": {
+                    "h": 5,
+                    "w": 13,
+                    "x": 0,
+                    "y": 32,
+                    "i": "43db9ae1-214a-4feb-a75b-e7f8224350cc",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_bandwidth_usage{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "legend": "主机名：{{name}}，节点：{{dcs_cluster_redis_node}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "带宽使用率（数据节点）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "8dff1055-9781-40fa-9a3e-5751354d0533",
+                "layout": {
+                    "h": 5,
+                    "w": 11,
+                    "x": 13,
+                    "y": 32,
+                    "i": "be2d1c55-49f3-4952-b08c-026dc4747e4a",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "expr": "huaweicloud_sys_dcs_rx_controlled{dcs_cluster_redis_node=~\"$dcs_cluster_redis_node\", name=~\"$name\"}",
+                        "legend": "主机名：{{name}}，节点：{{dcs_cluster_redis_node}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "流控次数（数据节点）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "columns": [
+                            "max",
+                            "min",
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "none",
+                        "decimals": 3
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            }
+        ],
+        "version": "3.1.0"
+    }
+}

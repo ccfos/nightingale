@@ -1,0 +1,3 @@
+{
+    "1) 在采集机上手工 nc -vz \u003c目标\u003e \u003c端口\u003e 或 telnet \u003c目标\u003e \u003c端口\u003e 复现；\n2) 到目标机用 ss -lntp | grep \u003c端口\u003e 确认进程是否在监听；\n3) 在监听则排查防火墙、安全组、以及是否只绑定了 127.0.0.1；\n4) 未监听则按该服务自身流程拉起，并确认上游负载均衡已把它摘除。": "1) Reproduce it on the collector host with nc -vz \u003ctarget\u003e \u003cport\u003e or telnet \u003ctarget\u003e \u003cport\u003e;\n2) On the target host run ss -lntp | grep \u003cport\u003e to confirm a process is listening;\n3) If it is listening, check the firewall, security groups and whether it is bound only to 127.0.0.1;\n4) If nothing is listening, start the service through its own procedure and confirm the upstream load balancer has taken it out of rotation."
+}

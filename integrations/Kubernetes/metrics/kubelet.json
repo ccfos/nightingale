@@ -1,0 +1,1336 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788193749537,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "gc的时间统计(summary指标)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: summary",
+        "lang": "zh_CN",
+        "expression": "go_gc_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "summary",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: summary",
+                "name": "gc的时间统计(summary指标)"
+            },
+            {
+                "lang": "en_US",
+                "name": "GC Duration (Summary Metric)",
+                "note": "Metric exposed by the kubelet service itself\nType: summary"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194203684,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "goroutine 数量",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "go_goroutines",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "goroutine 数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Goroutine Count",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788193708963,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "线程数量",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "go_threads",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "线程数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Thread Count",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788193629694,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "操作cgroup的时长分布，按照操作类型统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_cgroup_manager_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "操作cgroup的时长分布，按照操作类型统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Cgroup Operation Duration (by operation type)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194093231,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "pod中container数量的统计(spec.containers的数量)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_containers_per_pod_count",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "pod中container数量的统计(spec.containers的数量)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Containers per Pod (count of spec.containers)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194156834,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "操作docker的时长分布，按照操作类型统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_docker_operations_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "操作docker的时长分布，按照操作类型统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Docker Operation Duration (by operation type)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788193976577,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "操作docker的错误累计次数，按照操作类型统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_docker_operations_errors_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "操作docker的错误累计次数，按照操作类型统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Docker Operation Errors Total (by operation type)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194040205,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "操作docker的超时统计，按照操作类型统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_docker_operations_timeout_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "操作docker的超时统计，按照操作类型统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Docker Operation Timeouts Total (by operation type)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194638724,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "操作docker的累计次数，按照操作类型统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_docker_operations_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "操作docker的累计次数，按照操作类型统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Docker Operations Total (by operation type)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194292626,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "驱逐操作的时间分布，按照驱逐信号(原因)分类统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_eviction_stats_age_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "驱逐操作的时间分布，按照驱逐信号(原因)分类统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Eviction Stats Age (by eviction signal)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194822426,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "驱逐次数统计，按照驱逐信号(原因)统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_evictions",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "驱逐次数统计，按照驱逐信号(原因)统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Evictions Total (by eviction signal)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194150326,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "请求kubelet的inflight请求数,按照method path server_type统计, 注意与每秒的request数区别开",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubelet_http_inflight_requests",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "请求kubelet的inflight请求数,按照method path server_type统计, 注意与每秒的request数区别开"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubelet Inflight HTTP Requests (by method/path/server_type, distinct from requests per second)",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194645472,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "请求kubelet的请求时间统计, 按照method path server_type统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_http_requests_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "请求kubelet的请求时间统计, 按照method path server_type统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubelet HTTP Request Duration (by method/path/server_type)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195197532,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "请求kubelet的请求数统计,按照method path server_type统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_http_requests_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "请求kubelet的请求数统计,按照method path server_type统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubelet HTTP Requests Total (by method/path/server_type)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194844785,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "当前kubelet管理的临时容器数量",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubelet_managed_ephemeral_containers",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "当前kubelet管理的临时容器数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Currently Managed Ephemeral Containers",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195019393,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "网络插件的操作耗时分布 ，按照操作类型(operation_type)统计, 如果 --feature-gates=EphemeralContainers=false, 否则一直为0",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_network_plugin_operations_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "网络插件的操作耗时分布 ，按照操作类型(operation_type)统计, 如果 --feature-gates=EphemeralContainers=false, 否则一直为0"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Plugin Operation Duration (by operation_type; always 0 when --feature-gates=EphemeralContainers=false)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194902977,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "网络插件累计操作错误数统计，按照操作类型(operation_type)统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_network_plugin_operations_errors_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "网络插件累计操作错误数统计，按照操作类型(operation_type)统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Plugin Operation Errors Total (by operation_type)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195548946,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "网络插件累计操作数统计，按照操作类型(operation_type)统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_network_plugin_operations_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "网络插件累计操作数统计，按照操作类型(operation_type)统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "Network Plugin Operations Total (by operation_type)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194860863,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "node name",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubelet_node_name",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "node name"
+            },
+            {
+                "lang": "en_US",
+                "name": "Node Name",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788194865289,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "PLEG(pod lifecycle event generator) 丢弃的event数统计",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_pleg_discard_events",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "PLEG(pod lifecycle event generator) 丢弃的event数统计"
+            },
+            {
+                "lang": "en_US",
+                "name": "PLEG (Pod Lifecycle Event Generator) Discarded Events",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195304017,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "PLEG上次活跃的时间戳",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubelet_pleg_last_seen_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "PLEG上次活跃的时间戳"
+            },
+            {
+                "lang": "en_US",
+                "name": "PLEG Last Seen Timestamp",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195721997,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "PLEG relist pod时间分布",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_pleg_relist_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "PLEG relist pod时间分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "PLEG Relist Duration",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195747490,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "PLEG relist 间隔时间分布",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_pleg_relist_interval_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "PLEG relist 间隔时间分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "PLEG Relist Interval",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195456418,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "pod启动时间(从pending到running)分布, kubelet watch到pod时到pod中contianer都running后, watch各种source channel的pod变更",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_pod_start_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "pod启动时间(从pending到running)分布, kubelet watch到pod时到pod中contianer都running后, watch各种source channel的pod变更"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pod Start Duration (from pending to running, i.e. from when kubelet sees the pod until all its containers are running; pod changes are watched from various source channels)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195160038,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "pod状态变化的时间分布， 按照操作类型(create update sync)统计, worker就是kubelet中处理一个pod的逻辑工作单位",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_pod_worker_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "pod状态变化的时间分布， 按照操作类型(create update sync)统计, worker就是kubelet中处理一个pod的逻辑工作单位"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pod Worker Duration (by operation type: create/update/sync; a worker is kubelet's logical unit for handling a single pod)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195885448,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "kubelet watch到pod到worker启动的时间分布",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_pod_worker_start_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "kubelet watch到pod到worker启动的时间分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pod Worker Start Duration (from kubelet seeing the pod to worker start)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195710551,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "启动sandbox的时间分布",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_run_podsandbox_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "启动sandbox的时间分布"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pod Sandbox Start Duration",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195833641,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "启动sanbox出现error的总数",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_run_podsandbox_errors_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "启动sanbox出现error的总数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Pod Sandbox Start Errors Total",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195504201,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "当前containers运行状态的统计, 按照container状态统计，created running exited",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubelet_running_containers",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "当前containers运行状态的统计, 按照container状态统计，created running exited"
+            },
+            {
+                "lang": "en_US",
+                "name": "Running Containers (by container state: created/running/exited)",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195697556,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "当前处于running状态pod数量",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "kubelet_running_pods",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "当前处于running状态pod数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Currently Running Pods",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195854681,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "容器运行时的操作耗时(container在create list exec remove stop等的耗时)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "kubelet_runtime_operations_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "容器运行时的操作耗时(container在create list exec remove stop等的耗时)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container Runtime Operation Duration (container create/list/exec/remove/stop, etc.)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195710482,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "容器运行时的操作错误数统计(按操作类型统计)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_runtime_operations_errors_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "容器运行时的操作错误数统计(按操作类型统计)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container Runtime Operation Errors Total (by operation type)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196084064,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "容器运行时的操作总数统计(按操作类型统计)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_runtime_operations_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "容器运行时的操作总数统计(按操作类型统计)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Container Runtime Operations Total (by operation type)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788195919373,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "kubelet启动容器错误总数统计(按code和container_type统计)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_started_containers_errors_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "kubelet启动容器错误总数统计(按code和container_type统计)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubelet Started Container Errors Total (by code and container_type)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196538998,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "kubelet启动容器总数",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_started_containers_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "kubelet启动容器总数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubelet Started Containers Total",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196502105,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "kubelet启动pod遇到的错误总数(只有创建sandbox遇到错误才会统计)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_started_pods_errors_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "kubelet启动pod遇到的错误总数(只有创建sandbox遇到错误才会统计)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubelet Started Pod Errors Total (counted only when sandbox creation fails)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196010506,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "kubelet启动的pod总数",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "kubelet_started_pods_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "kubelet启动的pod总数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Kubelet Started Pods Total",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196039931,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "统计cpu使用率",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "process_cpu_seconds_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "统计cpu使用率"
+            },
+            {
+                "lang": "en_US",
+                "name": "CPU Usage",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196990718,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "允许进程打开的最大fd数",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_max_fds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "允许进程打开的最大fd数"
+            },
+            {
+                "lang": "en_US",
+                "name": "Max Allowed Open File Descriptors",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196605990,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "当前打开的fd数量",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_open_fds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "当前打开的fd数量"
+            },
+            {
+                "lang": "en_US",
+                "name": "Currently Open File Descriptors",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196237702,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "进程驻留内存大小",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_resident_memory_bytes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "进程驻留内存大小"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process Resident Memory Size",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196556012,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "进程启动时间",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "process_start_time_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "进程启动时间"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process Start Time",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196857276,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "请求apiserver的耗时统计(按照url和请求类型统计verb)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "rest_client_request_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "请求apiserver的耗时统计(按照url和请求类型统计verb)"
+            },
+            {
+                "lang": "en_US",
+                "name": "API Server Request Duration (by URL and request verb)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196565320,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "请求apiserver的总次数(按照返回码code和请求类型method统计)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: counter",
+        "lang": "zh_CN",
+        "expression": "rest_client_requests_total",
+        "expression_type": "metric_name",
+        "metric_type": "counter",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: counter",
+                "name": "请求apiserver的总次数(按照返回码code和请求类型method统计)"
+            },
+            {
+                "lang": "en_US",
+                "name": "API Server Requests Total (by response code and request method)",
+                "note": "Metric exposed by the kubelet service itself\nType: counter"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788197351291,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "存储操作耗时(按照存储plugin(configmap emptydir hostpath 等 )和operation_name分类统计)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: histogram",
+        "lang": "zh_CN",
+        "expression": "storage_operation_duration_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "histogram",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: histogram",
+                "name": "存储操作耗时(按照存储plugin(configmap emptydir hostpath 等 )和operation_name分类统计)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Storage Operation Duration (by storage plugin such as configmap/emptydir/hostpath and operation_name)",
+                "note": "Metric exposed by the kubelet service itself\nType: histogram"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788196690063,
+        "collector": "Kubelet",
+        "typ": "Kubernetes",
+        "name": "本机挂载的volume数量统计(按照plugin_name和state统计plugin_name包括\"host-path\" \"empty-dir\" \"configmap\" \"projected\")state(desired_state_of_world期状态/actual_state_of_world实际状态)",
+        "unit": "",
+        "note": "kubelet 服务自身指标\n类型: gauge",
+        "lang": "zh_CN",
+        "expression": "volume_manager_total_volumes",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "kubelet 服务自身指标\n类型: gauge",
+                "name": "本机挂载的volume数量统计(按照plugin_name和state统计plugin_name包括\"host-path\" \"empty-dir\" \"configmap\" \"projected\")state(desired_state_of_world期状态/actual_state_of_world实际状态)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Volumes Mounted on Node (by plugin_name and state; plugin_name includes \"host-path\", \"empty-dir\", \"configmap\", \"projected\"; state is desired_state_of_world or actual_state_of_world)",
+                "note": "Metric exposed by the kubelet service itself\nType: gauge"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

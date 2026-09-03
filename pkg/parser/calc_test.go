@@ -529,3 +529,32 @@ func TestCalc(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateExp(t *testing.T) {
+	valid := []string{
+		"$A > 80",
+		"$A > 80 && $B < 10",
+		"$A.mem_used_percent > 75",
+		"$A.status == 'firing'",
+		"between($A, [100,200])",
+		// 未知变量不报错：ValidateExp 只查语法，变量在运行期动态解析
+		"$Z > 0",
+	}
+	for _, s := range valid {
+		if err := ValidateExp(s); err != nil {
+			t.Errorf("ValidateExp(%q) should pass, got %v", s, err)
+		}
+	}
+
+	invalid := []string{
+		"$A >",
+		"$A > 80 &&",
+		"$A > 80) || ($B",
+		"between($A, [1,2)",
+	}
+	for _, s := range invalid {
+		if err := ValidateExp(s); err == nil {
+			t.Errorf("ValidateExp(%q) should fail", s)
+		}
+	}
+}

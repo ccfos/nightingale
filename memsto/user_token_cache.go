@@ -35,6 +35,20 @@ func NewUserTokenCache(ctx *ctx.Context, stats *Stats) *UserTokenCacheType {
 	return utc
 }
 
+// Inject adds a token→user mapping to the live cache immediately, without waiting
+// for the next periodic DB sync (~9s). The Skill Gateway uses this so a token it
+// just created (models.AddToken) authenticates in the SAME request instead of
+// after the sync lag. The token is persisted in user_token, so the next sync
+// (which Set-replaces the map from DB) keeps it — this only front-runs the lag.
+func (utc *UserTokenCacheType) Inject(token string, user *models.User) {
+	if token == "" || user == nil {
+		return
+	}
+	utc.Lock()
+	utc.tokens[token] = user
+	utc.Unlock()
+}
+
 func (utc *UserTokenCacheType) StatChanged(total int64) bool {
 	if utc.statTotal == total {
 		return false

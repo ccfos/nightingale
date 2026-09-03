@@ -1,0 +1,1049 @@
+{
+    "name": "阿里云 SLB",
+    "tags": "阿里云 SLB 云监控",
+    "ident": "",
+    "uuid": 1760889825712000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "type": "datasource",
+                "name": "datasource",
+                "definition": "prometheus",
+                "hide": false
+            },
+            {
+                "type": "query",
+                "name": "regionId",
+                "label": "",
+                "allOption": true,
+                "multi": true,
+                "reg": "/^(?![--])[a-zA-Z-.0-9]/",
+                "hide": false,
+                "definition": "label_values(AliyunSlb_ActiveConnection{}, regionId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "instanceName",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunSlb_ActiveConnection{regionId=~\"$regionId\"}, instanceName)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "instanceId",
+                "allOption": true,
+                "multi": true,
+                "reg": "/.*instanceId=\"(.*)\",instanceName=.*/",
+                "hide": false,
+                "definition": "query_result(AliyunSlb_ActiveConnection{regionId=~\"$regionId\", instanceName=~\"$instanceName\" })",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "vip",
+                "label": "",
+                "allOption": true,
+                "multi": true,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunSlb_ActiveConnection{regionId=~\"$regionId\",instanceName=~\"$instanceName\"},vip)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "name": "ConnectionStatus",
+                "type": "custom",
+                "hide": false,
+                "definition": "Active,Inactive,Drop,Max",
+                "multi": true,
+                "allOption": false
+            },
+            {
+                "name": "RT",
+                "type": "custom",
+                "hide": false,
+                "definition": "Listen RT : Rt,Instance RT : InstanceRt,Listen Upstream RT : UpstreamRt,Instance Upstream RT : UpstreamInstanceRt",
+                "multi": true,
+                "allOption": false
+            },
+            {
+                "name": "StatusCode",
+                "type": "custom",
+                "hide": false,
+                "definition": "Listen 2XX : StatusCode2xx,Listen 3XX : StatusCode3xx,Listen 4XX : StatusCode4xx,Listen 5XX : StatusCode5xx,Listen Other : StatusCodeOther,Listen Upstream 4XX : UpstreamCode4xx,Listen Upstream 5XX : UpstreamCode5xx,Instance 2XX : InstanceStatusCode2xx,Instance 3XX : InstanceStatusCode3xx,Instance 4XX : InstanceStatusCode4xx,Instance 5XX : InstanceStatusCode5xx,Instance Other : StatusCodeOther",
+                "multi": true,
+                "allOption": false
+            }
+        ],
+        "panels": [
+            {
+                "type": "timeseries",
+                "id": "2d8c7b2a-3ce8-4a5c-851a-13e0326a7484",
+                "layout": {
+                    "h": 7,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "2d8c7b2a-3ce8-4a5c-851a-13e0326a7484",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Healthy Server Count",
+                "links": [],
+                "description": "后端健康ECS实例个数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "avg(AliyunSlb_HeathyServerCount{instanceId=~\"$instanceId.*\",vip=~\"$vip.*\"}) by (instanceName,vip)",
+                        "legend": "{{instanceName}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "2514868a-74ac-413e-a641-a7b8090d5561",
+                "type": "row",
+                "name": "RX/TX",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 7,
+                    "i": "2514868a-74ac-413e-a641-a7b8090d5561",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "48ab388e-aa48-4a9e-9d99-715ceaffa0fe",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8,
+                    "i": "48ab388e-aa48-4a9e-9d99-715ceaffa0fe",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Instance TrafficRX/TX",
+                "links": [],
+                "description": "实例每秒入/流出 bit数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunSlb_InstanceTrafficTX{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\",vip=~\"$vip.*\"}",
+                        "legend": "{{instanceName}}/{{vip}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "-AliyunSlb_InstanceTrafficRX{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\",vip=~\"$vip.*\"}",
+                        "legend": "{{instanceName}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "92ce9c81-8ab2-4c04-b41d-67412f8cf37d",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8,
+                    "i": "92ce9c81-8ab2-4c04-b41d-67412f8cf37d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "TrafficRX/TX",
+                "links": [],
+                "description": "流入/流出 带宽",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunSlb_TrafficTXNew{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\",vip=~\"$vip.*\"}",
+                        "legend": "{{instanceName}}:{{port}}/{{vip}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "-AliyunSlb_TrafficRXNew{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\",vip=~\"$vip.*\"}",
+                        "legend": "{{instanceName}}:{{port}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "6fbc7d97-4947-4534-b6c5-0a3af4c487f7",
+                "layout": {
+                    "h": 8,
+                    "w": 24,
+                    "x": 0,
+                    "y": 16,
+                    "i": "6fbc7d97-4947-4534-b6c5-0a3af4c487f7",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Package RX/TX",
+                "links": [],
+                "description": "每秒流出/流入数据包数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": " AliyunSlb_PacketTX{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\",vip=~\"$vip.*\"}",
+                        "legend": "{{instanceName}}:{{port}}/{{vip}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": " -AliyunSlb_PacketRX{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\",vip=~\"$vip.*\"}",
+                        "legend": "{{instanceName}}:{{port}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "53e0da59-7b6d-4a1e-909c-df03e0b21cb4",
+                "type": "row",
+                "name": "Connection",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 24,
+                    "i": "53e0da59-7b6d-4a1e-909c-df03e0b21cb4",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "e61e9c55-6938-4b70-9cda-c5fa9fa86d74",
+                "layout": {
+                    "h": 8,
+                    "w": 8,
+                    "x": 0,
+                    "y": 25,
+                    "i": "e61e9c55-6938-4b70-9cda-c5fa9fa86d74",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "${ConnectionStatus} Connection",
+                "links": [],
+                "description": "",
+                "repeat": "ConnectionStatus",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "C",
+                        "expr": "AliyunSlb_${ConnectionStatus}Connection{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\",vip=~\"$vip.*\"}",
+                        "legend": "{{instanceName}}:{{port}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "3d96d655-4bdf-4472-8fef-64cbec5663aa",
+                "type": "row",
+                "name": "Instance Connection",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 33,
+                    "i": "3d96d655-4bdf-4472-8fef-64cbec5663aa",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "62eca8b4-18ce-423d-960c-ab0ba9d9d22c",
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 0,
+                    "y": 34,
+                    "i": "62eca8b4-18ce-423d-960c-ab0ba9d9d22c",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Instance ${ConnectionStatus} Connection",
+                "links": [],
+                "description": "",
+                "repeat": "ConnectionStatus",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunSlb_Instance${ConnectionStatus}Connection{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\"}",
+                        "legend": "$ConnectionStatus {{instanceName}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "6e0cefb9-9fe1-4869-b818-33c3b0e2004c",
+                "type": "row",
+                "name": "QPS(Layer 7)",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 40,
+                    "i": "6e0cefb9-9fe1-4869-b818-33c3b0e2004c",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "9b6ae9c8-3e75-402b-83b1-ecaa484b64c0",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 41,
+                    "i": "9b6ae9c8-3e75-402b-83b1-ecaa484b64c0",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Instance QPS",
+                "links": [],
+                "description": "7层协议实例QPS",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunSlb_InstanceQps{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\"}",
+                        "legend": "{{instanceName}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "22272284-ba92-4087-bb24-f355b1c21325",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 41,
+                    "i": "22272284-ba92-4087-bb24-f355b1c21325",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "Instance Qps Utilization",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunSlb_InstanceQpsUtilization{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\"}",
+                        "legend": "{{instanceName}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b51f748f-b3d7-4a34-b80f-dbdc55ac2ea1",
+                "layout": {
+                    "h": 8,
+                    "w": 24,
+                    "x": 0,
+                    "y": 49,
+                    "i": "b51f748f-b3d7-4a34-b80f-dbdc55ac2ea1",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "QPS",
+                "links": [],
+                "description": "7层协议端口QPS",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "sum(AliyunSlb_Qps{instanceId=~\"$instanceId.*\"}) by (instanceId,vip)",
+                        "legend": "{{instanceName}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "ed7acba5-9f58-422f-b7eb-4c56fe0f5769",
+                "type": "row",
+                "name": "RT(Layer 7)",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 57,
+                    "i": "ed7acba5-9f58-422f-b7eb-4c56fe0f5769",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "967bfbe8-4c6a-43a2-bf71-78a60cb358de",
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 0,
+                    "y": 58,
+                    "i": "967bfbe8-4c6a-43a2-bf71-78a60cb358de",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "${RT}",
+                "links": [],
+                "description": "",
+                "repeat": "RT",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunSlb_${RT}{regionId=~\"$regionId.*\",instanceId=~\"$instanceId.*\",vip=~\"$vip.*\"}",
+                        "legend": "{{instanceName}}/{{vip}}"
+                    }
+                ]
+            },
+            {
+                "version": "3.1.0",
+                "id": "cb2bd4d2-30d4-4f09-ade2-2335d7496901",
+                "type": "row",
+                "name": "Status Code(Layer 7)",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 66,
+                    "i": "cb2bd4d2-30d4-4f09-ade2-2335d7496901",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "221ab3f6-c589-4aef-b6a8-ae1be047ac35",
+                "layout": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 67,
+                    "i": "221ab3f6-c589-4aef-b6a8-ae1be047ac35",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "name": "${StatusCode}",
+                "links": [],
+                "description": "",
+                "repeat": "StatusCode",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunSlb_${StatusCode}{instanceId=~\"$instanceId.*\"}",
+                        "legend": "{{instanceName}}:{{port}}/{{vip}}"
+                    },
+                    {
+                        "expr": "AliyunSlb_Status",
+                        "__mode__": "__query__",
+                        "refId": "B"
+                    }
+                ]
+            }
+        ]
+    }
+}

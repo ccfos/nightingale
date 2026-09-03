@@ -6,9 +6,9 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -33,7 +33,7 @@ type Record struct {
 
 // notificationRecordAdd
 func (rt *Router) notificationRecordAdd(c *gin.Context) {
-	var req []*models.NotificaitonRecord
+	var req []*models.NotificationRecord
 	ginx.BindJSON(c, &req)
 	err := sender.PushNotifyRecords(req)
 	ginx.Dangerous(err, 429)
@@ -43,14 +43,31 @@ func (rt *Router) notificationRecordAdd(c *gin.Context) {
 
 func (rt *Router) notificationRecordList(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
-	lst, err := models.NotificaitonRecordsGetByEventId(rt.Ctx, eid)
+	lst, err := models.NotificationRecordsGetByEventId(rt.Ctx, eid)
 	ginx.Dangerous(err)
 
 	response := buildNotificationResponse(rt.Ctx, lst)
 	ginx.NewRender(c).Data(response, nil)
 }
 
-func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord) NotificationResponse {
+// notificationRecordUsed 回答「这套部署是否产生过通知记录（无论成败）」，供新手引导判定「发送测试告警」这一步是否完成。
+// 只回布尔和时间戳，不回渠道、接收人或内容，避免把通知明细暴露给只有页面权限的用户。
+func (rt *Router) notificationRecordUsed(c *gin.Context) {
+	record, err := models.NotificationRecordLatest(rt.Ctx)
+	ginx.Dangerous(err)
+
+	var lastAt int64
+	if record != nil {
+		lastAt = record.CreatedAt
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"used":    record != nil,
+		"last_at": lastAt,
+	}, nil)
+}
+
+func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificationRecord) NotificationResponse {
 	response := NotificationResponse{
 		SubRules: []SubRule{},
 		Notifies: make(map[string][]Record),
@@ -159,20 +176,22 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord
 	return response
 }
 
-// check channel is one of the following:  tx-sms, tx-voice, ali-sms, ali-voice, email, script
+// check channel is one of the following: tx-sms, tx-voice, ali-sms, ali-voice, email, script,
+// or the notify-muted pseudo channel (its target is a mute rule id, no need to mask)
 func checkChannel(channel string) bool {
 	switch channel {
-	case "tx-sms", "tx-voice", "ali-sms", "ali-voice", "email", "script":
+	case "tx-sms", "tx-voice", "ali-sms", "ali-voice", "email", "script", models.NotiChannelMuted:
 		return true
 	}
 	return false
 }
 
 func replaceLastEightChars(s string) string {
-	if len(s) <= 8 {
-		return strings.Repeat("*", len(s))
+	runes := []rune(s)
+	if len(runes) <= 8 {
+		return strings.Repeat("*", len(runes))
 	}
-	return s[:len(s)-8] + strings.Repeat("*", 8)
+	return string(runes[:len(runes)-8]) + strings.Repeat("*", 8)
 }
 
 func fillUserNames(ctx *ctx.Context, groupIdSet map[int64]struct{}) map[string]map[string]struct{} {

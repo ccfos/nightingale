@@ -15,6 +15,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 )
 
 const (
@@ -114,6 +116,10 @@ func (m *MySQL) Equal(p datasource.Datasource) bool {
 		return false
 	}
 
+	if oldShard.DsnExtraParams != newShard.DsnExtraParams {
+		return false
+	}
+
 	return true
 }
 
@@ -137,7 +143,7 @@ func (m *MySQL) QueryData(ctx context.Context, query interface{}) ([]models.Data
 
 	if strings.Contains(mysqlQueryParam.SQL, "$__") {
 		var err error
-		mysqlQueryParam.SQL, err = macros.Macro(mysqlQueryParam.SQL, mysqlQueryParam.From, mysqlQueryParam.To)
+		mysqlQueryParam.SQL, err = macros.Macro(mysqlQueryParam.SQL, mysqlQueryParam.From, mysqlQueryParam.To, MySQLType)
 		if err != nil {
 			return nil, err
 		}
@@ -165,7 +171,7 @@ func (m *MySQL) QueryData(ctx context.Context, query interface{}) ([]models.Data
 	})
 
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", mysqlQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", mysqlQueryParam, err)
 		return []models.DataResp{}, err
 	}
 	data := make([]models.DataResp, 0)
@@ -188,7 +194,7 @@ func (m *MySQL) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 
 	if strings.Contains(mysqlQueryParam.SQL, "$__") {
 		var err error
-		mysqlQueryParam.SQL, err = macros.Macro(mysqlQueryParam.SQL, mysqlQueryParam.From, mysqlQueryParam.To)
+		mysqlQueryParam.SQL, err = macros.Macro(mysqlQueryParam.SQL, mysqlQueryParam.From, mysqlQueryParam.To, MySQLType)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -207,7 +213,7 @@ func (m *MySQL) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 	})
 
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", mysqlQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", mysqlQueryParam, err)
 		return []interface{}{}, 0, err
 	}
 	logs := make([]interface{}, 0)

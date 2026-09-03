@@ -8,11 +8,11 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/i18n"
+	"github.com/toolkits/pkg/logger"
 )
 
 // Return all, front-end search and paging
@@ -20,7 +20,11 @@ func (rt *Router) alertMuteGetsByBG(c *gin.Context) {
 	bgid := ginx.UrlParamInt64(c, "id")
 	prods := strings.Fields(ginx.QueryStr(c, "prods", ""))
 	query := ginx.QueryStr(c, "query", "")
-	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, -1, query)
+	expired := ginx.QueryInt(c, "expired", -1)
+	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, -1, expired, query)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 
 	ginx.NewRender(c).Data(lst, err)
 }
@@ -46,6 +50,9 @@ func (rt *Router) alertMuteGetsByGids(c *gin.Context) {
 	}
 
 	lst, err := models.AlertMuteGetsByBGIds(rt.Ctx, gids)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 
 	ginx.NewRender(c).Data(lst, err)
 }
@@ -55,8 +62,17 @@ func (rt *Router) alertMuteGets(c *gin.Context) {
 	bgid := ginx.QueryInt64(c, "bgid", -1)
 	query := ginx.QueryStr(c, "query", "")
 	disabled := ginx.QueryInt(c, "disabled", -1)
-	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, disabled, query)
+	expired := ginx.QueryInt(c, "expired", -1)
+	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, disabled, expired, query)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 
+	ginx.NewRender(c).Data(lst, err)
+}
+
+func (rt *Router) activeAlertMuteGets(c *gin.Context) {
+	lst, err := models.AlertMuteGetsAll(rt.Ctx)
 	ginx.NewRender(c).Data(lst, err)
 }
 
@@ -69,7 +85,9 @@ func (rt *Router) alertMuteAdd(c *gin.Context) {
 	f.CreateBy = username
 	f.UpdateBy = username
 	f.GroupId = ginx.UrlParamInt64(c, "id")
-	ginx.NewRender(c).Message(f.Add(rt.Ctx))
+
+	ginx.Dangerous(f.Add(rt.Ctx))
+	ginx.NewRender(c).Data(f.Id, nil)
 }
 
 type MuteTestForm struct {
@@ -106,9 +124,7 @@ func (rt *Router) alertMuteTryRun(c *gin.Context) {
 
 	match, err := mute.MatchMute(&curEvent, &f.AlertMute)
 	if err != nil {
-		// 对错误信息进行 i18n 翻译
-		translatedErr := i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
-		ginx.Bomb(http.StatusBadRequest, translatedErr)
+		bombMsg(http.StatusBadRequest, translate(c, err.Error()))
 	}
 
 	if !match {
@@ -190,6 +206,43 @@ func (rt *Router) alertMutePutByFE(c *gin.Context) {
 type alertMuteFieldForm struct {
 	Ids    []int64                `json:"ids"`
 	Fields map[string]interface{} `json:"fields"`
+}
+
+type alertMuteBatchDeleteForm struct {
+	GroupIds  []int64 `json:"group_ids"`
+	Timestamp int64   `json:"timestamp" binding:"required"`
+}
+
+func (rt *Router) alertMuteBatchDelete(c *gin.Context) {
+	var f alertMuteBatchDeleteForm
+	ginx.BindJSON(c, &f)
+
+	if f.Timestamp == 0 {
+		ginx.Bomb(http.StatusBadRequest, "timestamp parameter is required")
+		return
+	}
+
+	user := c.MustGet("user").(*models.User)
+
+	go func() {
+		limit := 1000
+		for {
+			n, err := models.AlertMuteBatchDelete(rt.Ctx, f.Timestamp, f.GroupIds, limit)
+			if err != nil {
+				logger.Errorf("Failed to delete alert mutes: operator=%s, timestamp=%d, group_ids=%v, error=%v",
+					user.Username, f.Timestamp, f.GroupIds, err)
+				break
+			}
+			logger.Debugf("Successfully deleted alert mutes: operator=%s, timestamp=%d, group_ids=%v, deleted=%d",
+				user.Username, f.Timestamp, f.GroupIds, n)
+			if n < int64(limit) {
+				break
+			}
+
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
+	ginx.NewRender(c).Data("Alert mutes deletion started", nil)
 }
 
 func (rt *Router) alertMutePutFields(c *gin.Context) {

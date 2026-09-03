@@ -1,6 +1,7 @@
 package sso
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/dingtalk"
+	"github.com/ccfos/nightingale/v6/pkg/feishu"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
@@ -24,6 +27,8 @@ type SsoClient struct {
 	LDAP                 *ldapx.SsoClient
 	CAS                  *cas.SsoClient
 	OAuth2               *oauth2x.SsoClient
+	DingTalk             *dingtalk.SsoClient
+	FeiShu               *feishu.SsoClient
 	LastUpdateTime       int64
 	configCache          *memsto.ConfigCache
 	configLastUpdateTime int64
@@ -45,6 +50,8 @@ SyncInterval = 86400
 AuthFilter = '(&(uid=%s))'
 UserFilter = '(&(uid=*))'
 CoverAttributes = true
+# Whether to overwrite roles with mapping (or DefaultRoles on miss) on each login. Requires CoverAttributes = true.
+CoverRoles = false
 TLS = false
 StartTLS = true
 DefaultRoles = ['Standard']
@@ -58,7 +65,7 @@ Email = 'mail'
 
 const OAuth2 = `
 Enable = false
-DisplayName = 'OAuth2登录'
+DisplayName = 'Sign in with OAuth2'
 RedirectURL = 'http://n9e.com/callback/oauth'
 SsoAddr = 'https://sso.example.com/oauth2/authorize'
 SsoLogoutAddr = 'https://sso.example.com/oauth2/authorize/session/end'
@@ -72,6 +79,17 @@ DefaultRoles = ['Standard']
 UserinfoIsArray = false
 UserinfoPrefix = 'data'
 Scopes = ['profile', 'email', 'phone']
+# a2a/mcp OAuth2 Resource Server 的 access token 校验方式（HTTP.RSAuth.Provider="oauth2" 时生效）：
+#   留空（默认）/ userinfo = 复用上面的 UserInfoAddr，靠 UserInfo 调用是否成功判定 token 有效，
+#                            对接最省事（多数 OAuth2 server 都有 UserInfo）。注意：UserInfo 响应不含
+#                            aud，本模式【不校验 audience】，同一 IdP 下任意有效 token 都会被接受。
+#   introspect             = RFC 7662 内省，校验 token 的 aud，安全性更高；有安全要求时切到这个。
+RSVerifyMethod = ''
+# RFC 7662 token introspection 端点；RSVerifyMethod=introspect 时必填。IdP 的 introspection 响应
+# 必须返回 aud（须包含 HTTP.RSAuth.Audience），否则拒绝。留空/userinfo 模式则复用上面的 UserInfoAddr。
+IntrospectAddr = ''
+# RS 校验结果按 token 哈希缓存的秒数（introspect 再以 token 自身 exp 封顶），0 表示不缓存。
+IntrospectCacheSeconds = 60
 
 [Attributes]
 Username = 'sub'
@@ -82,7 +100,7 @@ Email = 'email'
 
 const CAS = `
 Enable = false
-DisplayName = 'CAS登录'
+DisplayName = 'Sign in with CAS'
 RedirectURL = 'http://n9e.com/callback/cas'
 SsoAddr = 'https://cas.example.com/cas/'
 SsoLogoutAddr = 'https://cas.example.com/cas/session/end'
@@ -99,7 +117,7 @@ Email = 'email'
 
 const OIDC = `
 Enable = false
-DisplayName = 'OIDC登录'
+DisplayName = 'Sign in with OIDC'
 RedirectURL = 'http://n9e.com/callback'
 SsoAddr = 'http://sso.example.org'
 SsoLogoutAddr = 'http://sso.example.org/session/end'
@@ -193,6 +211,20 @@ func Init(center cconf.Center, ctx *ctx.Context, configCache *memsto.ConfigCache
 				log.Fatalln("init oauth2 failed:", err)
 			}
 			ssoClient.OAuth2 = oauth2x.New(config)
+		case dingtalk.SsoTypeName:
+			var config dingtalk.Config
+			err := json.Unmarshal([]byte(cfg.Content), &config)
+			if err != nil {
+				log.Fatalf("init %s failed: %s", dingtalk.SsoTypeName, err)
+			}
+			ssoClient.DingTalk = dingtalk.New(config)
+		case feishu.SsoTypeName:
+			var config feishu.Config
+			err := json.Unmarshal([]byte(cfg.Content), &config)
+			if err != nil {
+				log.Fatalf("init %s failed: %s", feishu.SsoTypeName, err)
+			}
+			ssoClient.FeiShu = feishu.New(config)
 		}
 	}
 
@@ -218,7 +250,9 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 		return err
 	}
 	userVariableMap := s.configCache.Get()
+	ssoConfigMap := make(map[string]models.SsoConfig, 0)
 	for _, cfg := range configs {
+		ssoConfigMap[cfg.Name] = cfg
 		cfg.Content = tplx.ReplaceTemplateUseText(cfg.Name, cfg.Content, userVariableMap)
 		switch cfg.Name {
 		case "LDAP":
@@ -259,7 +293,40 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 				continue
 			}
 			s.OAuth2.Reload(config)
+
 		}
+	}
+
+	if dingTalkConfig, ok := ssoConfigMap[dingtalk.SsoTypeName]; ok {
+		var config dingtalk.Config
+		err := json.Unmarshal([]byte(dingTalkConfig.Content), &config)
+		if err != nil {
+			logger.Warningf("reload %s failed: %s", dingtalk.SsoTypeName, err)
+		} else {
+			if s.DingTalk != nil {
+				s.DingTalk.Reload(config)
+			} else {
+				s.DingTalk = dingtalk.New(config)
+			}
+		}
+	} else {
+		s.DingTalk = nil
+	}
+
+	if feiShuConfig, ok := ssoConfigMap[feishu.SsoTypeName]; ok {
+		var config feishu.Config
+		err := json.Unmarshal([]byte(feiShuConfig.Content), &config)
+		if err != nil {
+			logger.Warningf("reload %s failed: %s", feishu.SsoTypeName, err)
+		} else {
+			if s.FeiShu != nil {
+				s.FeiShu.Reload(config)
+			} else {
+				s.FeiShu = feishu.New(config)
+			}
+		}
+	} else {
+		s.FeiShu = nil
 	}
 
 	s.LastUpdateTime = lastUpdateTime

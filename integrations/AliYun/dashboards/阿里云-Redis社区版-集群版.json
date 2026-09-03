@@ -1,0 +1,1660 @@
+{
+    "name": "Redis社区版-监控大盘-集群版",
+    "tags": "Redis社区版集群版 阿里云 云监控",
+    "ident": "",
+    "uuid": 1760978746483000,
+    "configs": {
+        "version": "3.1.0",
+        "links": [],
+        "var": [
+            {
+                "type": "datasource",
+                "name": "datasource",
+                "definition": "prometheus",
+                "hide": false
+            },
+            {
+                "type": "custom",
+                "name": "Top_Number",
+                "definition": "5,10,20,30",
+                "allOption": false,
+                "multi": false,
+                "hide": false
+            },
+            {
+                "type": "query",
+                "name": "RegionID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_ShardingCpuUsage, regionId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "Proxy_InstanceID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_ShardingProxyCpuUsage{regionId=~\"$RegionID\"}, instanceId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "Proxy_NodeID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_ShardingProxyCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"}, nodeId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "Node_InstanceID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_ShardingCpuUsage{regionId=~\"$RegionID\"}, instanceId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            },
+            {
+                "type": "query",
+                "name": "Node_NodeID",
+                "allOption": true,
+                "multi": false,
+                "reg": "",
+                "hide": false,
+                "definition": "label_values(AliyunKvstore_ShardingCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"},  nodeId)",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                }
+            }
+        ],
+        "panels": [
+            {
+                "version": "3.1.0",
+                "id": "23ae6ce1-69fd-4a1e-8f44-560f7e83fca8",
+                "type": "barGauge",
+                "name": "节点资源分配一览",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "23ae6ce1-69fd-4a1e-8f44-560f7e83fca8",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "count(count by (instanceId) (AliyunKvstore_ShardingProxyCpuUsage))",
+                        "legend": "Proxy实例数量"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "count by (userId) (AliyunKvstore_ShardingProxyCpuUsage)",
+                        "legend": "Proxy节点数量"
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "count(count by (instanceId) (AliyunKvstore_ShardingCpuUsage))",
+                        "legend": "Node实例数量"
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "count by (userId) (AliyunKvstore_ShardingProxyCpuUsage)",
+                        "legend": "Node节点数量"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "914d8d56-8d6a-492c-81a2-f82efdea478d",
+                "type": "row",
+                "name": "Proxy监控指标-Top$Top_Number",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 6,
+                    "i": "914d8d56-8d6a-492c-81a2-f82efdea478d",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "barGauge",
+                "id": "4b56f3a1-5b6b-471e-8a95-143b55d847d8",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 7,
+                    "i": "4b56f3a1-5b6b-471e-8a95-143b55d847d8",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingProxyCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}",
+                        "instant": true
+                    }
+                ],
+                "name": "Proxy-CPU使用率（%）-Top$Top_Number",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {}
+                }
+            },
+            {
+                "version": "3.1.0",
+                "id": "6fb3ccae-5674-4645-b3de-ac34e5d7de98",
+                "type": "stat",
+                "name": "Proxy-总QPS（个）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 7,
+                    "i": "6fb3ccae-5674-4645-b3de-ac34e5d7de98",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingProxyTotalQps{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 25000
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 50000
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "textMode": "value",
+                    "calc": "last",
+                    "colorMode": "value"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "97ab8b4e-3b9f-434e-a64a-d58fc70e5b4e",
+                "type": "barGauge",
+                "name": "Proxy-平均响应时间（us）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 14,
+                    "i": "97ab8b4e-3b9f-434e-a64a-d58fc70e5b4e",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingProxyAvgRt{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "590626cd-d57c-4f9d-a4dc-e01c9c2d1144",
+                "type": "barGauge",
+                "name": "Proxy-入流量速率（bits/s）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 14,
+                    "i": "590626cd-d57c-4f9d-a4dc-e01c9c2d1144",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingProxyIntranetIn{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "bf137af8-fe9d-4250-bd3d-b7f338d95f9b",
+                "type": "barGauge",
+                "name": "Proxy-出流量速率（bits/s）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 14,
+                    "i": "bf137af8-fe9d-4250-bd3d-b7f338d95f9b",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingProxyIntranetOut{regionId=~\"$RegionID\", instanceId=~\"$Proxy_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "cf096a04-4dde-48bb-8a20-2d6278f6f0cc",
+                "type": "row",
+                "name": "Node监控指标-Top$Top_Number",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 21,
+                    "i": "cf096a04-4dde-48bb-8a20-2d6278f6f0cc",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "barGauge",
+                "id": "92208a50-f0ed-4302-af23-261f3c88bacb",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 22,
+                    "i": "92208a50-f0ed-4302-af23-261f3c88bacb",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{instanceId}}{{nodeId}}"
+                    }
+                ],
+                "name": "Node-CPU使用率（%）-Top$Top_Number",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {}
+                }
+            },
+            {
+                "version": "3.1.0",
+                "id": "84d0b9d0-62cf-49d0-9916-b84c7a269d2c",
+                "type": "stat",
+                "name": "Node-内存使用率（%）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 22,
+                    "i": "84d0b9d0-62cf-49d0-9916-b84c7a269d2c",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingMemoryUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#FADE2A",
+                                "value": 60
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 75
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "textMode": "value",
+                    "calc": "last",
+                    "colorMode": "value"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "6f399470-7ddf-49aa-90fe-428d6a8183dd",
+                "type": "barGauge",
+                "name": "Node-平均响应时间（us）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 28,
+                    "i": "6f399470-7ddf-49aa-90fe-428d6a8183dd",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingAvgRt{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "f2786265-978d-4722-941f-513e8c92eac4",
+                "type": "barGauge",
+                "name": "Node-最大响应时间（us）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 28,
+                    "i": "f2786265-978d-4722-941f-513e8c92eac4",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingMaxRt{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "70761144-39da-40a2-ba51-b67a2744bab3",
+                "type": "barGauge",
+                "name": "node-QPS使用率（%）-Top$Top_Number",
+                "links": [],
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 28,
+                    "i": "70761144-39da-40a2-ba51-b67a2744bab3",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingQPSUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "options": {
+                    "valueMappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "style": "line",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "calc": "last"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "type": "barGauge",
+                "id": "b7a1c0e4-d4ec-4b6d-8f0e-8aff09e409b9",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 35,
+                    "i": "b7a1c0e4-d4ec-4b6d-8f0e-8aff09e409b9",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingIntranetIn{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingIntranetInRatio{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "name": "Node-数据节点流入带宽情况-Top$Top_Number",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "8a038074-b7f4-4ad5-b3c2-a74109855d70",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 12,
+                    "y": 35,
+                    "i": "8a038074-b7f4-4ad5-b3c2-a74109855d70",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingIntranetOut{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "topk($Top_Number, AliyunKvstore_ShardingIntranetOutRatio{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\"})",
+                        "legend": "{{desc}}.{{nodeId}}"
+                    }
+                ],
+                "name": "Node-数据节点流出带宽情况-Top$Top_Number",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {}
+                }
+            },
+            {
+                "version": "3.1.0",
+                "id": "5f185cc9-02e4-452a-8e33-7ad4663429f0",
+                "type": "row",
+                "name": "详细监控指标",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 41,
+                    "i": "5f185cc9-02e4-452a-8e33-7ad4663429f0",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "version": "3.1.0",
+                "id": "182692bd-8cd8-418a-8c88-dc1bd0d36146",
+                "type": "timeseries",
+                "name": "CPU使用率（%）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 0,
+                    "y": 42,
+                    "i": "182692bd-8cd8-418a-8c88-dc1bd0d36146",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_ShardingCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "944c9202-7a52-4d20-ad33-bf363600c80e",
+                "type": "timeseries",
+                "name": "内存使用率（%）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 6,
+                    "y": 42,
+                    "i": "944c9202-7a52-4d20-ad33-bf363600c80e",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_ShardingMemoryUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "4e4c221b-18a9-4bc4-8eb9-c0ab164c7fb9",
+                "type": "timeseries",
+                "name": "响应时间（us）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 12,
+                    "y": 42,
+                    "i": "4e4c221b-18a9-4bc4-8eb9-c0ab164c7fb9",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_ShardingAvgRt{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "2c6858ec-a4c2-42da-b978-dbbe55fc7aab",
+                "type": "timeseries",
+                "name": "QPS（个）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 18,
+                    "y": 42,
+                    "i": "2c6858ec-a4c2-42da-b978-dbbe55fc7aab",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_ShardingUsedQPS{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "616cc245-fc45-4866-a485-59e5dcac96f1",
+                "type": "timeseries",
+                "name": "命中率（%）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 0,
+                    "y": 50,
+                    "i": "616cc245-fc45-4866-a485-59e5dcac96f1",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_ShardingHitRate{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "d77bdbb5-d085-4a97-8efd-2e7d7135e8a0",
+                "type": "timeseries",
+                "name": "连接数使用率（%）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 6,
+                    "y": 50,
+                    "i": "d77bdbb5-d085-4a97-8efd-2e7d7135e8a0",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_ShardingConnectionUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "320be02d-44f9-44f9-8a9c-d77ace759bd1",
+                "type": "timeseries",
+                "name": "流入带宽（KByte/s）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 12,
+                    "y": 50,
+                    "i": "320be02d-44f9-44f9-8a9c-d77ace759bd1",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_ShardingIntranetIn{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "version": "3.1.0",
+                "id": "8721e2c9-60d0-4279-9060-0c1d715382fc",
+                "type": "timeseries",
+                "name": "流出带宽（KByte/s）",
+                "links": [],
+                "layout": {
+                    "h": 8,
+                    "w": 6,
+                    "x": 18,
+                    "y": 50,
+                    "i": "8721e2c9-60d0-4279-9060-0c1d715382fc",
+                    "isResizable": true
+                },
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_ShardingIntranetOut{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": ""
+                    }
+                ],
+                "options": {
+                    "tooltip": {
+                        "mode": "single",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ],
+                        "mode": "absolute"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "version": "3.1.0",
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "fillOpacity": 0,
+                    "stack": "off"
+                },
+                "maxPerRow": 4,
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
+            },
+            {
+                "type": "tableNG",
+                "id": "3b790d61-04fc-41f4-8f5e-42a65746819b",
+                "layout": {
+                    "h": 11,
+                    "w": 24,
+                    "x": 0,
+                    "y": 58,
+                    "i": "3b790d61-04fc-41f4-8f5e-42a65746819b",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "AliyunKvstore_ShardingCpuUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": "",
+                        "instant": true
+                    },
+                    {
+                        "refId": "B",
+                        "expr": "AliyunKvstore_ShardingMemoryUsage{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": "",
+                        "instant": true
+                    },
+                    {
+                        "refId": "C",
+                        "expr": "AliyunKvstore_ShardingAvgRt{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": "",
+                        "instant": true
+                    },
+                    {
+                        "refId": "D",
+                        "expr": "AliyunKvstore_ShardingIntranetIn{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": "",
+                        "instant": true
+                    },
+                    {
+                        "refId": "E",
+                        "expr": "AliyunKvstore_ShardingIntranetOut{regionId=~\"$RegionID\", instanceId=~\"$Node_InstanceID\", nodeId=~\"$Node_NodeID\"}",
+                        "legend": "",
+                        "instant": true
+                    }
+                ],
+                "transformationsNG": [
+                    {
+                        "id": "joinByField",
+                        "options": {
+                            "mode": "outer",
+                            "byField": "nodeId"
+                        }
+                    },
+                    {
+                        "id": "organize",
+                        "options": {
+                            "fields": [
+                                "nodeId",
+                                "__time_0",
+                                "__name___0",
+                                "app_0",
+                                "connectionDomain_0",
+                                "engineVersion_0",
+                                "id_0",
+                                "instanceId_0",
+                                "instanceName_0",
+                                "instanceType_0",
+                                "job_0",
+                                "measure_0",
+                                "measure_desc_0",
+                                "namespace_0",
+                                "packageType_0",
+                                "period_0",
+                                "product_0",
+                                "promEnvId_0",
+                                "promInstanceId_0",
+                                "regionId_0",
+                                "resourceGroupId_0",
+                                "resourceGroupName_0",
+                                "rmgroup_name_0",
+                                "service_0",
+                                "userId_0",
+                                "zoneId_0",
+                                "__value_#A",
+                                "__time_1",
+                                "__name___1",
+                                "app_1",
+                                "connectionDomain_1",
+                                "engineVersion_1",
+                                "id_1",
+                                "instanceId_1",
+                                "instanceName_1",
+                                "instanceType_1",
+                                "job_1",
+                                "measure_1",
+                                "measure_desc_1",
+                                "namespace_1",
+                                "packageType_1",
+                                "period_1",
+                                "product_1",
+                                "promEnvId_1",
+                                "promInstanceId_1",
+                                "regionId_1",
+                                "resourceGroupId_1",
+                                "resourceGroupName_1",
+                                "rmgroup_name_1",
+                                "service_1",
+                                "userId_1",
+                                "zoneId_1",
+                                "__value_#B",
+                                "__time_2",
+                                "__name___2",
+                                "app_2",
+                                "connectionDomain_2",
+                                "engineVersion_2",
+                                "id_2",
+                                "instanceId_2",
+                                "instanceName_2",
+                                "instanceType_2",
+                                "job_2",
+                                "measure_2",
+                                "measure_desc_2",
+                                "namespace_2",
+                                "packageType_2",
+                                "period_2",
+                                "product_2",
+                                "promEnvId_2",
+                                "promInstanceId_2",
+                                "regionId_2",
+                                "resourceGroupId_2",
+                                "resourceGroupName_2",
+                                "rmgroup_name_2",
+                                "service_2",
+                                "userId_2",
+                                "zoneId_2",
+                                "__value_#C",
+                                "__time_3",
+                                "__name___3",
+                                "app_3",
+                                "connectionDomain_3",
+                                "engineVersion_3",
+                                "id_3",
+                                "instanceId_3",
+                                "instanceName_3",
+                                "instanceType_3",
+                                "job_3",
+                                "measure_3",
+                                "measure_desc_3",
+                                "namespace_3",
+                                "packageType_3",
+                                "period_3",
+                                "product_3",
+                                "promEnvId_3",
+                                "promInstanceId_3",
+                                "regionId_3",
+                                "resourceGroupId_3",
+                                "resourceGroupName_3",
+                                "rmgroup_name_3",
+                                "service_3",
+                                "userId_3",
+                                "zoneId_3",
+                                "__value_#D",
+                                "__time_4",
+                                "__name___4",
+                                "app_4",
+                                "connectionDomain_4",
+                                "engineVersion_4",
+                                "id_4",
+                                "instanceId_4",
+                                "instanceName_4",
+                                "instanceType_4",
+                                "job_4",
+                                "measure_4",
+                                "measure_desc_4",
+                                "namespace_4",
+                                "packageType_4",
+                                "period_4",
+                                "product_4",
+                                "promEnvId_4",
+                                "promInstanceId_4",
+                                "regionId_4",
+                                "resourceGroupId_4",
+                                "resourceGroupName_4",
+                                "rmgroup_name_4",
+                                "service_4",
+                                "userId_4",
+                                "zoneId_4",
+                                "__value_#E"
+                            ],
+                            "excludeByName": {
+                                "__time_0": true,
+                                "__name___0": true,
+                                "app_0": true,
+                                "connectionDomain_0": true,
+                                "engineVersion_0": true,
+                                "id_0": true,
+                                "job_0": true,
+                                "measure_0": true,
+                                "measure_desc_0": true,
+                                "namespace_0": true,
+                                "period_0": true,
+                                "product_0": true,
+                                "promEnvId_0": true,
+                                "promInstanceId_0": true,
+                                "resourceGroupId_0": true,
+                                "resourceGroupName_0": true,
+                                "service_0": true,
+                                "userId_0": true,
+                                "zoneId_0": true,
+                                "__time_1": true,
+                                "__name___1": true,
+                                "app_1": true,
+                                "connectionDomain_1": true,
+                                "engineVersion_1": true,
+                                "id_1": true,
+                                "instanceId_1": true,
+                                "instanceName_1": true,
+                                "instanceType_1": true,
+                                "job_1": true,
+                                "measure_1": true,
+                                "measure_desc_1": true,
+                                "namespace_1": true,
+                                "packageType_1": true,
+                                "period_1": true,
+                                "product_1": true,
+                                "promEnvId_1": true,
+                                "promInstanceId_1": true,
+                                "regionId_1": true,
+                                "resourceGroupId_1": true,
+                                "resourceGroupName_1": true,
+                                "rmgroup_name_1": true,
+                                "service_1": true,
+                                "userId_1": true,
+                                "zoneId_1": true,
+                                "__time_2": true,
+                                "__name___2": true,
+                                "app_2": true,
+                                "connectionDomain_2": true,
+                                "engineVersion_2": true,
+                                "id_2": true,
+                                "instanceId_2": true,
+                                "instanceName_2": true,
+                                "instanceType_2": true,
+                                "job_2": true,
+                                "measure_2": true,
+                                "measure_desc_2": true,
+                                "namespace_2": true,
+                                "packageType_2": true,
+                                "period_2": true,
+                                "product_2": true,
+                                "promEnvId_2": true,
+                                "promInstanceId_2": true,
+                                "regionId_2": true,
+                                "resourceGroupId_2": true,
+                                "resourceGroupName_2": true,
+                                "rmgroup_name_2": true,
+                                "service_2": true,
+                                "userId_2": true,
+                                "zoneId_2": true,
+                                "__value_#C": false,
+                                "__time_3": true,
+                                "__name___3": true,
+                                "app_3": true,
+                                "connectionDomain_3": true,
+                                "engineVersion_3": true,
+                                "id_3": true,
+                                "instanceId_3": true,
+                                "instanceName_3": true,
+                                "instanceType_3": true,
+                                "job_3": true,
+                                "measure_3": true,
+                                "measure_desc_3": true,
+                                "namespace_3": true,
+                                "packageType_3": true,
+                                "period_3": true,
+                                "product_3": true,
+                                "promEnvId_3": true,
+                                "promInstanceId_3": true,
+                                "regionId_3": true,
+                                "resourceGroupId_3": true,
+                                "resourceGroupName_3": true,
+                                "rmgroup_name_3": true,
+                                "service_3": true,
+                                "userId_3": true,
+                                "zoneId_3": true,
+                                "__time_4": true,
+                                "__name___4": true,
+                                "app_4": true,
+                                "connectionDomain_4": true,
+                                "engineVersion_4": true,
+                                "id_4": true,
+                                "instanceId_4": true,
+                                "instanceName_4": true,
+                                "instanceType_4": true,
+                                "job_4": true,
+                                "measure_4": true,
+                                "measure_desc_4": true,
+                                "namespace_4": true,
+                                "packageType_4": true,
+                                "period_4": true,
+                                "product_4": true,
+                                "promEnvId_4": true,
+                                "promInstanceId_4": true,
+                                "regionId_4": true,
+                                "resourceGroupId_4": true,
+                                "resourceGroupName_4": true,
+                                "rmgroup_name_4": true,
+                                "service_4": true,
+                                "userId_4": true,
+                                "zoneId_4": true
+                            },
+                            "renameByName": {
+                                "__value_#A": "CPU使用率",
+                                "__value_#B": "内存使用率",
+                                "__value_#C": "平均响应时间",
+                                "__value_#D": "流入带宽（KByte/s）",
+                                "__value_#E": "流出带宽（KByte/s）"
+                            }
+                        }
+                    }
+                ],
+                "name": "节点详情",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "filterable": false,
+                    "cellOptions": {
+                        "type": "none"
+                    }
+                },
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "入流量"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "none"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": ""
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -106,28 +106,32 @@ func PostJSON(url string, timeout time.Duration, headers map[string]string, v in
 		return
 	}
 
-	bf := bytes.NewBuffer(bs)
-
 	client := http.Client{
 		Timeout: timeout,
 	}
 
-	req, err := http.NewRequest("POST", url, bf)
-	if err != nil {
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	if len(headers) > 0 {
+	newRequest := func() (*http.Request, error) {
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(bs))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
 		for k, v := range headers {
 			req.Header.Set(k, v)
 		}
+		return req, nil
 	}
 
 	var resp *http.Response
 
 	if len(retries) > 0 {
 		for i := 0; i < retries[0]; i++ {
+			var req *http.Request
+			req, err = newRequest()
+			if err != nil {
+				return
+			}
+
 			resp, err = client.Do(req)
 			if err == nil {
 				break
@@ -145,6 +149,11 @@ func PostJSON(url string, timeout time.Duration, headers map[string]string, v in
 			}
 		}
 	} else {
+		var req *http.Request
+		req, err = newRequest()
+		if err != nil {
+			return
+		}
 		resp, err = client.Do(req)
 	}
 

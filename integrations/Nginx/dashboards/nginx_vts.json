@@ -44,7 +44,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(nginx_vts_main_connections{instance=~\"$Instance\", status=~\"active|writing|reading|waiting\"}) by (status)",
+                        "expr": "sum(nginx_vts_main_connections{instance=\"$Instance\", status=~\"active|writing|reading|waiting\"}) by (status)",
                         "legend": "{{status}}",
                         "refId": "B"
                     }
@@ -205,7 +205,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(irate(nginx_vts_server_requests_total{instance=~\"$Instance\", host=~\"$Host\", code!=\"total\"}[5m])) by (code)",
+                        "expr": "sum(irate(nginx_vts_server_requests_total{instance=\"$Instance\", host=\"$Host\", code!=\"total\"}[5m])) by (code)",
                         "legend": "{{ code }}",
                         "refId": "A"
                     }
@@ -247,7 +247,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(irate(nginx_vts_upstream_requests_total{instance=~\"$Instance\", upstream=~\"^$Upstream$\", backend=~\"^$Backend$\", code!=\"total\"}[5m])) by (code)",
+                        "expr": "sum(irate(nginx_vts_upstream_requests_total{instance=\"$Instance\", upstream=\"$Upstream\", backend=\"$Backend\", code!=\"total\"}[5m])) by (code)",
                         "legend": "{{ code }}",
                         "refId": "A"
                     }
@@ -288,7 +288,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(irate(nginx_vts_upstream_requests_total{backend=~\"$Backend\", instance=~\"$Instance\", code!=\"total\"} [1m])) by (code)",
+                        "expr": "sum(irate(nginx_vts_upstream_requests_total{backend=\"$Backend\", instance=\"$Instance\", code!=\"total\"} [1m])) by (code)",
                         "legend": "{{code}}",
                         "refId": "A"
                     }
@@ -329,7 +329,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(irate(nginx_vts_filter_requests_total{filter=~\"country::$Host\", filter_name=~\"$Country\", instance=~\"$Instance\", direction!=\"total\"} [1m])) by (direction)",
+                        "expr": "sum(irate(nginx_vts_filter_requests_total{filter=\"country::$Host\", filter_name=~\"$Country\", instance=\"$Instance\", direction!=\"total\"} [1m])) by (direction)",
                         "legend": "{{direction}}",
                         "refId": "A"
                     }
@@ -370,7 +370,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(irate(nginx_vts_filter_request_seconds{filter=~\"country::$Host\", filter_name=~\"$Country\", instance=~\"$Instance\"} [1m])) by (filter_name) * 1000",
+                        "expr": "sum(irate(nginx_vts_filter_request_seconds{filter=\"country::$Host\", filter_name=~\"$Country\", instance=\"$Instance\"} [1m])) by (filter_name) * 1000",
                         "legend": "{{filter_name}}",
                         "refId": "A"
                     }
@@ -399,7 +399,7 @@
                     "y": 17
                 },
                 "links": [],
-                "name": "bandwith delta/sec (FILTER)",
+                "name": "bandwidth delta/sec (FILTER)",
                 "options": {
                     "legend": {
                         "displayMode": "hidden"
@@ -411,7 +411,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(irate(nginx_vts_filter_bytes_total{filter=~\"country::$Host\", filter_name=~\"$Country\", instance=~\"$Instance\"} [1m])) by (direction)",
+                        "expr": "sum(irate(nginx_vts_filter_bytes_total{filter=\"country::$Host\", filter_name=~\"$Country\", instance=\"$Instance\"} [1m])) by (direction)",
                         "legend": "{{direction}}",
                         "refId": "A"
                     }
@@ -452,7 +452,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(irate(nginx_vts_server_bytes_total{instance=~\"$Instance\", host=~\"$Host\"}[5m])) by (direction)",
+                        "expr": "sum(irate(nginx_vts_server_bytes_total{instance=\"$Instance\", host=\"$Host\"}[5m])) by (direction)",
                         "legend": "{{ direction }}",
                         "refId": "A"
                     }
@@ -493,7 +493,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(irate(nginx_vts_upstream_bytes_total{instance=~\"$Instance\", upstream=~\"^$Upstream$\", backend=~\"^$Backend$\"}[5m])) by (direction)",
+                        "expr": "sum(irate(nginx_vts_upstream_bytes_total{instance=\"$Instance\", upstream=\"$Upstream\", backend=\"$Backend\"}[5m])) by (direction)",
                         "legend": "{{ direction }}",
                         "refId": "A"
                     }
@@ -534,7 +534,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(nginx_vts_upstream_response_seconds{instance=~\"$Instance\", upstream=~\"^$Upstream$\", backend=~\"^$Backend$\"}) by (backend)",
+                        "expr": "sum(nginx_vts_upstream_response_seconds{instance=\"$Instance\", upstream=\"$Upstream\", backend=\"$Backend\"}) by (backend)",
                         "legend": "{{ backend }}",
                         "refId": "A"
                     }
@@ -575,7 +575,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "sum(irate(nginx_vts_server_cache_total{instance=~\"$Instance\", host=~\"$Host\"}[5m])) by (status)",
+                        "expr": "sum(irate(nginx_vts_server_cache_total{instance=\"$Instance\", host=\"$Host\"}[5m])) by (status)",
                         "legend": "{{ status }}",
                         "refId": "A"
                     }
@@ -599,10 +599,11 @@
                 "definition": "nginx_vts_filter_bytes_total",
                 "multi": true,
                 "name": "Country",
-                "type": "query"
+                "type": "query",
+                "allValue": ".*"
             },
             {
-                "allOption": true,
+                "allOption": false,
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${datasource}"
@@ -610,40 +611,44 @@
                 "definition": "label_values(nginx_vts_server_bytes_total, instance)",
                 "multi": false,
                 "name": "Instance",
-                "type": "query"
+                "type": "query",
+                "allValue": ""
             },
             {
-                "allOption": true,
+                "allOption": false,
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${datasource}"
                 },
-                "definition": "label_values(nginx_vts_server_requests_total{instance=~\"$Instance\"}, host)",
+                "definition": "label_values(nginx_vts_server_requests_total{instance=\"$Instance\"}, host)",
                 "multi": false,
                 "name": "Host",
-                "type": "query"
+                "type": "query",
+                "allValue": ""
             },
             {
-                "allOption": true,
+                "allOption": false,
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${datasource}"
                 },
-                "definition": "label_values(nginx_vts_upstream_requests_total{instance=~\"$Instance\"}, upstream)",
+                "definition": "label_values(nginx_vts_upstream_requests_total{instance=\"$Instance\"}, upstream)",
                 "multi": false,
                 "name": "Upstream",
-                "type": "query"
+                "type": "query",
+                "allValue": ""
             },
             {
-                "allOption": true,
+                "allOption": false,
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${datasource}"
                 },
-                "definition": "label_values(nginx_vts_upstream_requests_total{instance=~\"$Instance\", upstream=~\"$Upstream\"}, backend)",
+                "definition": "label_values(nginx_vts_upstream_requests_total{instance=\"$Instance\", upstream=\"$Upstream\"}, backend)",
                 "multi": false,
                 "name": "Backend",
-                "type": "query"
+                "type": "query",
+                "allValue": ""
             }
         ],
         "version": "3.0.0"

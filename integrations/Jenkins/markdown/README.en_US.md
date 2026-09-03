@@ -1,0 +1,21 @@
+## Jenkins
+
+Jenkins collector plugin for collecting Jenkins data.
+
+## Configuration
+
+```toml
+# # collect interval
+# interval = 15
+
+[[instances]]
+# Address (host:port) of jenkins server.
+# jenkins_url = "http://my-jenkins-instance:8080"
+
+#jenkins_username = "admin"
+#jenkins_password = ""
+
+#response_timeout = "5s"
+
+
+```

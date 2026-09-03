@@ -38,7 +38,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "description": "设备数量",
                 "id": "c9d829c1-240f-46c1-8269-82879081eea2",
                 "layout": {
@@ -100,7 +100,7 @@
                     "showHeader": true
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "id": "24fbb1bf-9817-4fa0-9525-17dd4fa2a710",
                 "layout": {
                     "h": 8,
@@ -146,7 +146,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "id": "b9f030af-0c68-45e5-9f64-d4b4216c3ef0",
                 "layout": {
                     "h": 4,
@@ -219,7 +219,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "2df514d0-6858-48d4-b2fc-ed6c4932cb33",
                 "layout": {
@@ -277,7 +277,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "id": "e028227f-cf3d-4f4e-abc6-96e16d2508c3",
                 "layout": {
                     "h": 11,
@@ -339,7 +339,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "description": "通电时间",
                 "id": "c270b82c-610b-4f58-bba3-0ed2838cc925",
                 "layout": {
@@ -386,7 +386,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "description": "通电次数",
                 "id": "33f83d64-23be-4d58-807a-4a3570da8b97",
                 "layout": {
@@ -433,7 +433,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "description": "非预期掉电次数统计",
                 "id": "20700be8-a0d8-4cef-84c5-cecef88bcbc9",
                 "layout": {
@@ -494,7 +494,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "9f364792-45b4-444c-be76-20714396eadc",
                 "layout": {
@@ -545,7 +545,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "description": "Aggregated graph for all types of errors",
                 "id": "074ffe0a-7bda-4ac0-867a-08ba44a8c4fb",
                 "layout": {
@@ -627,7 +627,7 @@
                     "sortOrder": "desc"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "f2d6fe6e-3cd5-4b5a-9978-6dcf3be45b39",
                 "layout": {
@@ -738,7 +738,9 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "3.0.0"
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
             },
             {
                 "custom": {
@@ -809,7 +811,9 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "3.0.0"
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
             },
             {
                 "custom": {
@@ -869,7 +873,9 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "3.0.0"
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
             },
             {
                 "custom": {
@@ -929,14 +935,21 @@
                     }
                 ],
                 "type": "barGauge",
-                "version": "3.0.0"
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
                 "datasource": {
                     "cate": "prometheus",
-                    "value": 4
+                    "value": "${datasource}"
                 },
                 "definition": "label_values(smart_device_temp_c,ident)",
                 "multi": false,
@@ -947,7 +960,7 @@
             {
                 "datasource": {
                     "cate": "prometheus",
-                    "value": 4
+                    "value": "${datasource}"
                 },
                 "definition": "label_values(smart_device_temp_c, device)",
                 "multi": false,

@@ -72,7 +72,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 SELECT * FROM V$RECOVERY_FILE_DEST 确认 FRA 的配额与已用空间；\n2) 用 RMAN 的 crosscheck archivelog all; delete expired archivelog all; 清理已备份的归档；\n3) 确认归档备份任务是否正常执行——归档堆积通常是备份失败导致的；\n4) 长期需调大 db_recovery_file_dest_size 或把归档目录迁到更大的存储。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -159,7 +161,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 SELECT COUNT(*) FROM V$PROCESS 与 SHOW PARAMETER processes 对比当前水位与上限；\n2) 用 SELECT machine, program, COUNT(*) FROM V$SESSION GROUP BY 1,2 ORDER BY 3 DESC 找出连接数异常的应用；\n3) 区分业务增长与应用连接池泄漏（大量 INACTIVE 会话堆积）；\n4) 应急可调大 processes 参数（需重启实例），根因侧收敛应用连接池上限。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -191,7 +195,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "oracle_sessions_value{address='localhost:1111/erpdb',status='ACTIVE',type='USER'}\u003e100",
+                    "prom_ql": "sum by (instance) (oracle_sessions_value{status='ACTIVE',type='USER'}) \u003e 100",
                     "severity": 2
                 }
             ]
@@ -240,7 +244,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 SELECT sid, serial#, sql_id, event, seconds_in_wait FROM V$SESSION WHERE status='ACTIVE' AND type='USER' ORDER BY seconds_in_wait DESC 看活跃会话在等什么；\n2) 等待事件集中在某类（如 enq: TX - row lock contention）说明有锁冲突，顺着 blocking_session 找源头；\n3) 用 sql_id 查 V$SQL 定位慢 SQL，必要时 ALTER SYSTEM KILL SESSION 止血；\n4) 定位后补索引或改写 SQL，并排查上游是否有突发流量。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -320,7 +326,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 登录主机确认 pmon 进程与监听器状态（ps -ef | grep pmon、lsnrctl status）；\n2) 进程存活则用 sqlplus 手工连一次，区分实例夯住与监听/账号问题；\n3) 进程不在则看 alert_\u003cSID\u003e.log 尾部定位原因（ORA-00600、归档满、磁盘满）再拉起；\n4) 有 Data Guard 的立即评估是否需要 failover。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -401,7 +409,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 SELECT tablespace_name, bytes/1024/1024 mb FROM DBA_DATA_FILES 与 DBA_FREE_SPACE 确认是哪个表空间、数据文件是否已达最大；\n2) 应急扩容：ALTER DATABASE DATAFILE '\u003cpath\u003e' RESIZE \u003c更大值\u003e，或 ADD DATAFILE 新增文件；\n3) 确认是否有大表或历史数据可归档删除，删除后需 shrink 或 move 才能真正释放；\n4) 检查数据文件是否开了 AUTOEXTEND 及其 MAXSIZE 设置。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

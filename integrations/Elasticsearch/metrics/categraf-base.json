@@ -9,10 +9,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_delayed_unassigned_shards",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -24,7 +22,11 @@
                 "name": "Number of Cluster Health delayed unassigned shards",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -36,10 +38,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_number_of_pending_tasks",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -51,7 +51,11 @@
                 "name": "Cluster Health Pending tasks quantity",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -63,10 +67,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_relocating_shards",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -78,7 +80,11 @@
                 "name": "Number of shards for Cluster Health relocating",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -90,10 +96,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_unassigned_shards",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -105,7 +109,11 @@
                 "name": "Cluster Health unassigned number of shards",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -117,10 +125,8 @@
         "note": "- 1：Green，绿色状态，表示所有分片都正常\n- 2：Yellow，黄色状态，主分片都正常，从分片有不正常的\n- 3：Red，红色状态，有些主分片不正常",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_status_code",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -132,7 +138,11 @@
                 "name": "Cluster Health health status code",
                 "note": "-1: Green, Green state, indicating that all shards are normal \n-2: Yellow, Yellow state, the main shard is normal, the slave shard is abnormal \n-3: Red, Red state, some main shards are abnormal"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -144,10 +154,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_number_of_data_nodes",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -159,7 +167,11 @@
                 "name": "Number of Cluster Health data nodes",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -171,10 +183,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_initializing_shards",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -186,7 +196,11 @@
                 "name": "Number of shards being initialized by Cluster Health",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -198,10 +212,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_active_primary_shards",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -213,7 +225,11 @@
                 "name": "Cluster Health Number of active primary shards",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -225,10 +241,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_active_shards",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -240,7 +254,11 @@
                 "name": "Cluster Health Active Shards",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -252,10 +270,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_cluster_health_number_of_nodes",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -267,7 +283,11 @@
                 "name": "Number of Cluster Health nodes",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -279,10 +299,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_indices_indexing_index_time_in_millis[3m])\n/\nirate(elasticsearch_indices_indexing_index_total[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -294,7 +312,11 @@
                 "name": "Indexing average time consumption",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -306,10 +328,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_indices_merges_total_time_in_millis[3m])\n/\nirate(elasticsearch_indices_merges_total[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -321,7 +341,11 @@
                 "name": "Average time consumed by Merge",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -333,10 +357,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_indices_search_query_time_in_millis[3m])\n/\nirate(elasticsearch_indices_search_query_total[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -348,7 +370,11 @@
                 "name": "Query average time consumption",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -360,10 +386,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_indices_indexing_index_total[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -375,7 +399,11 @@
                 "name": "indexing per second",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -387,10 +415,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_indices_merges_total_size_in_bytes[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -402,7 +428,11 @@
                 "name": "merge size per second",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -414,10 +444,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_indices_merges_total_docs[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -429,7 +457,11 @@
                 "name": "Number of merges per second",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -441,10 +473,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_indices_docs_deleted[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -456,7 +486,11 @@
                 "name": "Number of docs deleted per second",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -468,10 +502,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "100 - 100 * elasticsearch_fs_total_available_in_bytes / elasticsearch_fs_total_total_in_bytes",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -483,7 +515,11 @@
                 "name": "Hard Drive Usage",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -495,10 +531,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_transport_rx_size_in_bytes[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -510,7 +544,11 @@
                 "name": "Network traffic-inbound traffic per second",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -522,10 +560,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_transport_tx_size_in_bytes[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -537,7 +573,11 @@
                 "name": "Network traffic-outbound traffic per second",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -549,10 +589,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_process_cpu_percent",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -564,7 +602,11 @@
                 "name": "Process CPU usage",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -576,10 +618,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_jvm_mem_heap_used_percent",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -591,7 +631,11 @@
                 "name": "Process JVM Heap Usage",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -603,10 +647,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_jvm_mem_heap_committed_in_bytes",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -618,7 +660,11 @@
                 "name": "Process JVM Heap area committed size",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -630,10 +676,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_jvm_mem_non_heap_committed_in_bytes",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -645,7 +689,11 @@
                 "name": "Process JVM Non Heap area committed size",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -657,10 +705,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_jvm_mem_pools_old_used_in_bytes",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -672,7 +718,11 @@
                 "name": "Process JVM Old memory pool used size",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -684,10 +734,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "elasticsearch_jvm_mem_pools_young_used_in_bytes",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -699,7 +747,11 @@
                 "name": "Process JVM Young memory pool used size",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -711,10 +763,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_jvm_gc_collectors_young_collection_count[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -726,7 +776,11 @@
                 "name": "Number of GCs per second for the new generation of the process",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -738,10 +792,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_jvm_gc_collectors_young_collection_time_in_millis[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -753,7 +805,11 @@
                 "name": "Process new generation time per second GC",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -765,10 +821,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_jvm_gc_collectors_old_collection_count[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -780,7 +834,11 @@
                 "name": "Number of GCs per second of process old generation",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -792,10 +850,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "irate(elasticsearch_jvm_gc_collectors_old_collection_time_in_millis[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -807,6 +863,10 @@
                 "name": "Process old generation GC time per second",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     }
 ]

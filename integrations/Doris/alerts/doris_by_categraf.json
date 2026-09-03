@@ -7,103 +7,6 @@
             0
         ],
         "cluster": "",
-        "name": "Doris JVM 线程数",
-        "note": "",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 0,
-        "severities": [
-            2
-        ],
-        "disabled": 1,
-        "prom_for_duration": 60,
-        "prom_ql": "",
-        "rule_config": {
-            "queries": [
-                {
-                    "keys": {
-                        "labelKey": "",
-                        "metricKey": "",
-                        "valueKey": ""
-                    },
-                    "prom_ql": "jvm_thread",
-                    "severity": 2
-                }
-            ],
-            "version": "v1"
-        },
-        "event_relabel_config": null,
-        "prom_eval_interval": 30,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "00:00",
-        "enable_etimes": [
-            "00:00"
-        ],
-        "enable_days_of_week": [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": {},
-        "extra_config": {
-            "escalation": {
-                "for_duration": 60,
-                "new_severity": 2,
-                "notify_max_number": 0,
-                "notify_repeat_step": 60
-            },
-            "network_device_config": {},
-            "notify_aggregation": {
-                "wait": 1
-            }
-        },
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1730292784164489700,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
         "name": "Doris JVM内存使用率",
         "note": "",
         "prod": "metric",
@@ -125,7 +28,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "sum(jvm_heap_size_bytes{type=\"used\"})by(ident)/sum(jvm_heap_size_bytes{type=\"committed\"})by(ident)",
+                    "prom_ql": "sum by (ident) (jvm_heap_size_bytes{type=\"used\"}) / sum by (ident) (jvm_heap_size_bytes{type=\"max\"}) \u003e 0.85",
                     "severity": 2
                 }
             ],
@@ -172,7 +75,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 jstat -gcutil \u003cpid\u003e 1000 观察 GC 频率与老年代占用；\n2) FE 内存高常见于元数据过多（表/分区/tablet 数量爆炸），用 SHOW PROC '/statistic' 看规模；\n3) 调大 FE 的 JAVA_OPTS -Xmx 并重启（滚动重启避免影响）；\n4) 根因侧收敛分区数、清理无用表，Doris 元数据全在内存里，规模控制是长期功课。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -190,105 +95,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784169880800,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
-        "name": "Doris_BE 1 分钟 Load Avg",
-        "note": "",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 0,
-        "severities": [
-            2
-        ],
-        "disabled": 1,
-        "prom_for_duration": 60,
-        "prom_ql": "",
-        "rule_config": {
-            "queries": [
-                {
-                    "keys": {
-                        "labelKey": "",
-                        "metricKey": "",
-                        "valueKey": ""
-                    },
-                    "prom_ql": "doris_be_load_average{mode=\"1_minutes\"}",
-                    "severity": 2
-                }
-            ],
-            "version": "v1"
-        },
-        "event_relabel_config": null,
-        "prom_eval_interval": 30,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "00:00",
-        "enable_etimes": [
-            "00:00"
-        ],
-        "enable_days_of_week": [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": {},
-        "extra_config": {
-            "escalation": {
-                "for_duration": 60,
-                "new_severity": 2,
-                "notify_max_number": 0,
-                "notify_repeat_step": 60
-            },
-            "network_device_config": {},
-            "notify_aggregation": {
-                "wait": 1
-            }
-        },
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1730292784171517400,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -319,7 +126,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "increase(doris_be_snmp_tcp_in_errs[1m])",
+                    "prom_ql": "increase(doris_be_snmp_tcp_in_errs[1m]) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -366,7 +173,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在该 BE 节点用 netstat -s | grep -i error 看具体错误类型；\n2) 用 ethtool -S \u003c网卡\u003e 确认是否有物理层错包；\n3) 检查 BE 之间以及 FE 到 BE 的网络质量（mtr）；\n4) 确认没有跑满带宽——Doris 查询分片传输是带宽密集的。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -384,202 +193,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784172854000,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
-        "name": "Doris_BE 15 分钟 Load Avg",
-        "note": "",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 0,
-        "severities": [
-            2
-        ],
-        "disabled": 1,
-        "prom_for_duration": 60,
-        "prom_ql": "",
-        "rule_config": {
-            "queries": [
-                {
-                    "keys": {
-                        "labelKey": "",
-                        "metricKey": "",
-                        "valueKey": ""
-                    },
-                    "prom_ql": "doris_be_load_average{mode=\"15_minutes\"}",
-                    "severity": 2
-                }
-            ],
-            "version": "v1"
-        },
-        "event_relabel_config": null,
-        "prom_eval_interval": 30,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "00:00",
-        "enable_etimes": [
-            "00:00"
-        ],
-        "enable_days_of_week": [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": {},
-        "extra_config": {
-            "escalation": {
-                "for_duration": 60,
-                "new_severity": 2,
-                "notify_max_number": 0,
-                "notify_repeat_step": 60
-            },
-            "network_device_config": {},
-            "notify_aggregation": {
-                "wait": 1
-            }
-        },
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1730292784174515000,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
-        "name": "Doris_BE 5 分钟 Load Avg",
-        "note": "",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 0,
-        "severities": [
-            2
-        ],
-        "disabled": 1,
-        "prom_for_duration": 60,
-        "prom_ql": "",
-        "rule_config": {
-            "queries": [
-                {
-                    "keys": {
-                        "labelKey": "",
-                        "metricKey": "",
-                        "valueKey": ""
-                    },
-                    "prom_ql": "doris_be_load_average{mode=\"5_minutes\"}",
-                    "severity": 2
-                }
-            ],
-            "version": "v1"
-        },
-        "event_relabel_config": null,
-        "prom_eval_interval": 30,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "00:00",
-        "enable_etimes": [
-            "00:00"
-        ],
-        "enable_days_of_week": [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": {},
-        "extra_config": {
-            "escalation": {
-                "for_duration": 60,
-                "new_severity": 2,
-                "notify_max_number": 0,
-                "notify_repeat_step": 60
-            },
-            "network_device_config": {},
-            "notify_aggregation": {
-                "wait": 1
-            }
-        },
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1730292784175691000,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -610,7 +224,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_be_add_batch_task_queue_size > 20",
+                    "prom_ql": "doris_be_add_batch_task_queue_size \u003e 20",
                     "severity": 2
                 }
             ],
@@ -657,7 +271,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 SHOW PROC '/backends' 确认各 BE 的负载是否均衡；\n2) 降低导入任务并发或增大单批数据量，减少小批次导入；\n3) 调大 be.conf 的 doris_max_pending_batch_size / 相关线程池参数后重启 BE；\n4) 检查磁盘 IO 是否已打满，导入最终瓶颈通常在盘上。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -675,8 +291,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784177409800,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -707,7 +322,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "(sum(doris_be_cpu)by(instance)-sum(doris_be_cpu{mode=~\"idle|iowait\"})by(instance))/sum(doris_be_cpu)by(instance)*100 > 70",
+                    "prom_ql": "(sum(doris_be_cpu)by(instance)-sum(doris_be_cpu{mode=~\"idle|iowait\"})by(instance))/sum(doris_be_cpu)by(instance)*100 \u003e 70",
                     "severity": 2
                 }
             ],
@@ -754,7 +369,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 SHOW PROCESSLIST 找当前正在执行的大查询，必要时 KILL 止血；\n2) 查 fe.audit.log 定位扫描行数最多的 SQL，补分区裁剪或物化视图；\n3) 确认是否有 compaction 在占用大量 CPU（BE 日志里搜 compaction）；\n4) 查询量确实增长的则扩容 BE 节点。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -772,8 +389,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784179069200,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -804,7 +420,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_be_scanner_thread_pool_queue_size > 0",
+                    "prom_ql": "doris_be_scanner_thread_pool_queue_size \u003e 0",
                     "severity": 2
                 }
             ],
@@ -851,7 +467,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.audit.log 找扫描行数最大的 SQL，优先加分区裁剪、前缀索引或物化视图减少扫描量；\n2) 用 SHOW PROC '/backends' 看各 BE 是否负载不均；\n3) 调大 be.conf 的 doris_scanner_thread_pool_thread_num 后重启，但前提是 CPU 有余量；\n4) 磁盘 IO 打满的考虑换 SSD 或增加 BE。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -869,8 +487,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784180644600,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -901,7 +518,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_be_send_batch_thread_pool_queue_size > 0",
+                    "prom_ql": "doris_be_send_batch_thread_pool_queue_size \u003e 0",
                     "severity": 2
                 }
             ],
@@ -948,7 +565,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 检查 BE 之间的网络带宽与延迟（iperf3、mtr）；\n2) 确认是否有大结果集查询在做大量 shuffle，用 EXPLAIN 看是否可以改为 colocate join 减少传输；\n3) 调大 be.conf 的 send_batch_thread_pool_thread_num；\n4) 确认网卡未跑满，必要时升级到万兆。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -966,8 +585,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784181912800,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -998,7 +616,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_query_latency_ms{quantile=\"0.95\"}",
+                    "prom_ql": "doris_fe_query_latency_ms{quantile=\"0.95\"} \u003e 5000",
                     "severity": 2
                 }
             ],
@@ -1045,7 +663,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在 FE 上用 SHOW PROCESSLIST 看当前慢查询，必要时 KILL \u003cid\u003e 止血；\n2) 查 fe.audit.log 按 QueryTime 排序找出 TOP 慢 SQL；\n3) 用 EXPLAIN 看是否命中分区裁剪与索引，检查是否有大表 JOIN 未做 colocate；\n4) 结合 BE 侧的 CPU 与扫描线程池队列判断瓶颈在 FE 规划还是 BE 执行。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1063,8 +683,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784184238600,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -1095,7 +714,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_query_latency_ms{quantile=\"0.99\"}",
+                    "prom_ql": "doris_fe_query_latency_ms{quantile=\"0.99\"} \u003e 10000",
                     "severity": 2
                 }
             ],
@@ -1142,7 +761,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 在 FE 上用 SHOW PROCESSLIST 看当前慢查询，必要时 KILL \u003cid\u003e 止血；\n2) 查 fe.audit.log 按 QueryTime 排序找出 TOP 慢 SQL；\n3) 用 EXPLAIN 看是否命中分区裁剪与索引，检查是否有大表 JOIN 未做 colocate；\n4) 结合 BE 侧的 CPU 与扫描线程池队列判断瓶颈在 FE 规划还是 BE 执行。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1160,8 +781,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784185714400,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -1192,7 +812,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_txn_publish_latency_ms{quantile=\"0.95\"}",
+                    "prom_ql": "doris_fe_txn_publish_latency_ms{quantile=\"0.95\"} \u003e 5000",
                     "severity": 2
                 }
             ],
@@ -1239,7 +859,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.log 里事务相关的耗时日志，确认是 publish 阶段还是执行阶段慢；\n2) publish 慢通常是 BE 响应慢或 tablet 副本不健康——用 SHOW PROC '/statistic' 看不健康副本数；\n3) 检查导入任务并发是否过高，适当降低并发或增大单批数据量；\n4) 确认 BE 的磁盘 IO 与 compaction 压力。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1257,8 +879,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784187173400,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -1289,7 +910,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_txn_publish_latency_ms{quantile=\"0.99\"}",
+                    "prom_ql": "doris_fe_txn_publish_latency_ms{quantile=\"0.99\"} \u003e 10000",
                     "severity": 2
                 }
             ],
@@ -1336,7 +957,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.log 里事务相关的耗时日志，确认是 publish 阶段还是执行阶段慢；\n2) publish 慢通常是 BE 响应慢或 tablet 副本不健康——用 SHOW PROC '/statistic' 看不健康副本数；\n3) 检查导入任务并发是否过高，适当降低并发或增大单批数据量；\n4) 确认 BE 的磁盘 IO 与 compaction 压力。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1354,8 +977,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784188659500,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -1386,7 +1008,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_txn_exec_latency_ms{quantile=\"0.95\"}",
+                    "prom_ql": "doris_fe_txn_exec_latency_ms{quantile=\"0.95\"} \u003e 5000",
                     "severity": 2
                 }
             ],
@@ -1433,7 +1055,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.log 里事务相关的耗时日志，确认是 publish 阶段还是执行阶段慢；\n2) publish 慢通常是 BE 响应慢或 tablet 副本不健康——用 SHOW PROC '/statistic' 看不健康副本数；\n3) 检查导入任务并发是否过高，适当降低并发或增大单批数据量；\n4) 确认 BE 的磁盘 IO 与 compaction 压力。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1451,8 +1075,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784190024000,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -1483,7 +1106,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_txn_exec_latency_ms{quantile=\"0.99\"}",
+                    "prom_ql": "doris_fe_txn_exec_latency_ms{quantile=\"0.99\"} \u003e 10000",
                     "severity": 2
                 }
             ],
@@ -1530,7 +1153,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.log 里事务相关的耗时日志，确认是 publish 阶段还是执行阶段慢；\n2) publish 慢通常是 BE 响应慢或 tablet 副本不健康——用 SHOW PROC '/statistic' 看不健康副本数；\n3) 检查导入任务并发是否过高，适当降低并发或增大单批数据量；\n4) 确认 BE 的磁盘 IO 与 compaction 压力。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1548,8 +1173,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784191466000,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -1580,7 +1204,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_txn_counter{type=\"failed\"}",
+                    "prom_ql": "increase(doris_fe_txn_counter{type=\"failed\"}[5m]) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -1627,7 +1251,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.log 搜索 transaction failed 找到失败原因；\n2) 常见为 tablet 副本不足、BE 不可用、超时；用 SHOW PROC '/statistic' 看不健康副本；\n3) 确认导入端是否有重试机制，没有的要补上；\n4) 修复 BE 或副本问题后重跑失败的导入任务。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1645,8 +1271,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784192987100,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -1677,7 +1302,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "sum(doris_fe_txn_status{type=~\"aborted|unknown\"})by(type)",
+                    "prom_ql": "sum by (type) (doris_fe_txn_status{type=~\"aborted|unknown\"}) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -1724,7 +1349,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 用 SHOW TRANSACTION WHERE STATUS='ABORTED' 查看具体事务与原因；\n2) aborted 多为超时或副本不足，unknown 需要重点排查——它意味着 FE 无法确认最终状态；\n3) 修复底层问题（BE 可用性、副本健康）后重新导入；\n4) 对 unknown 事务，需与业务侧核对数据是否重复或缺失。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1742,8 +1369,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784194383000,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -1774,7 +1400,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_editlog_write_latency_ms{quantile=\"0.95\"}",
+                    "prom_ql": "doris_fe_editlog_write_latency_ms{quantile=\"0.95\"} \u003e 1000",
                     "severity": 2
                 }
             ],
@@ -1821,7 +1447,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) editlog 写入慢直接影响所有元数据操作，先用 iostat -x 1 确认 FE 元数据目录所在磁盘是否打满；\n2) 确认 FE 元数据目录是否与数据盘混用，建议独占 SSD；\n3) 检查 FE 之间的网络延迟——多副本 editlog 需要同步；\n4) 排查是否有大量 DDL 或导入任务在短时间内集中提交。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1839,8 +1467,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784195737900,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -1871,7 +1498,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_editlog_write_latency_ms{quantile=\"0.99\"}",
+                    "prom_ql": "doris_fe_editlog_write_latency_ms{quantile=\"0.99\"} \u003e 2000",
                     "severity": 2
                 }
             ],
@@ -1918,7 +1545,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) editlog 写入慢直接影响所有元数据操作，先用 iostat -x 1 确认 FE 元数据目录所在磁盘是否打满；\n2) 确认 FE 元数据目录是否与数据盘混用，建议独占 SSD；\n3) 检查 FE 之间的网络延迟——多副本 editlog 需要同步；\n4) 排查是否有大量 DDL 或导入任务在短时间内集中提交。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -1936,105 +1565,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784197151700,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
-    },
-    {
-        "id": 0,
-        "group_id": 0,
-        "cate": "prometheus",
-        "datasource_ids": [
-            0
-        ],
-        "cluster": "",
-        "name": "Doris_FE 每秒查询数量",
-        "note": "",
-        "prod": "metric",
-        "algorithm": "",
-        "algo_params": null,
-        "delay": 0,
-        "severity": 0,
-        "severities": [
-            2
-        ],
-        "disabled": 1,
-        "prom_for_duration": 60,
-        "prom_ql": "",
-        "rule_config": {
-            "queries": [
-                {
-                    "keys": {
-                        "labelKey": "",
-                        "metricKey": "",
-                        "valueKey": ""
-                    },
-                    "prom_ql": "doris_fe_qps",
-                    "severity": 2
-                }
-            ],
-            "version": "v1"
-        },
-        "event_relabel_config": null,
-        "prom_eval_interval": 30,
-        "enable_stime": "00:00",
-        "enable_stimes": [
-            "00:00"
-        ],
-        "enable_etime": "00:00",
-        "enable_etimes": [
-            "00:00"
-        ],
-        "enable_days_of_week": [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6"
-        ],
-        "enable_days_of_weeks": [
-            [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6"
-            ]
-        ],
-        "enable_in_bg": 0,
-        "notify_recovered": 1,
-        "notify_channels": [],
-        "notify_groups_obj": null,
-        "notify_groups": null,
-        "notify_repeat_step": 60,
-        "notify_max_number": 0,
-        "recover_duration": 0,
-        "callbacks": [],
-        "runbook_url": "",
-        "append_tags": [],
-        "annotations": {},
-        "extra_config": {
-            "escalation": {
-                "for_duration": 60,
-                "new_severity": 2,
-                "notify_max_number": 0,
-                "notify_repeat_step": 60
-            },
-            "network_device_config": {},
-            "notify_aggregation": {
-                "wait": 1
-            }
-        },
-        "create_at": 0,
-        "create_by": "",
-        "update_at": 0,
-        "update_by": "",
-        "uuid": 1730292784198568000,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -2065,7 +1596,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_query_err_rate",
+                    "prom_ql": "doris_fe_query_err_rate \u003e 1",
                     "severity": 2
                 }
             ],
@@ -2112,7 +1643,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.audit.log 过滤 State=ERR 的记录，看具体报错信息；\n2) 区分是语法/权限类（用户侧问题）还是资源/超时类（服务端问题）；\n3) 资源类的结合 BE CPU、内存、扫描队列判断瓶颈；\n4) 若与近期变更（升级、表结构调整）时间吻合，优先回滚验证。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -2130,8 +1663,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784199959300,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -2162,7 +1694,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "increase(doris_fe_image_clean[1m]) > 0",
+                    "prom_ql": "increase(doris_fe_image_clean[1m]) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -2209,7 +1741,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.log 搜 image clean 相关报错，确认是权限还是磁盘问题；\n2) 用 df -h 与 ls -lh \u003cmeta_dir\u003e/image 确认目录大小与磁盘余量；\n3) 权限问题修正目录属主；磁盘满的先清理其他文件；\n4) 长期需给 FE 元数据目录单独分配足够空间。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -2227,8 +1761,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784201470700,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -2259,7 +1792,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "increase(doris_fe_edit_log_clean[1m]) > 0",
+                    "prom_ql": "increase(doris_fe_edit_log_clean[1m]) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -2306,7 +1839,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.log 搜 edit log clean 相关报错；\n2) 确认元数据目录磁盘余量与权限；\n3) 检查是否有 FE 节点长期落后导致日志无法被裁剪——用 SHOW FRONTENDS 看各节点状态；\n4) 落后节点无法恢复的，考虑移除后重新加入。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -2324,8 +1859,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784202892800,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -2356,7 +1890,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "increase(doris_fe_image_write[1m]) > 0",
+                    "prom_ql": "increase(doris_fe_image_write[1m]) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -2403,7 +1937,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.log 搜 image write 相关报错，常见为磁盘空间不足或内存不足；\n2) 用 df -h 确认元数据目录余量，用 jstat 确认 FE 堆是否吃紧；\n3) 内存不足的调大 FE 的 -Xmx；磁盘不足的清理或扩容；\n4) 修复后确认 \u003cmeta_dir\u003e/image 下有新的 image 文件生成——这一步必须验证。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -2421,8 +1957,7 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784204482600,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     },
     {
         "id": 0,
@@ -2453,7 +1988,7 @@
                         "metricKey": "",
                         "valueKey": ""
                     },
-                    "prom_ql": "doris_fe_txn_counter{type=\"reject\"}",
+                    "prom_ql": "increase(doris_fe_txn_counter{type=\"reject\"}[5m]) \u003e 0",
                     "severity": 2
                 }
             ],
@@ -2500,7 +2035,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": {},
+        "annotations": {
+            "action": "1) 查 fe.log 搜 reject 相关日志确认拒绝原因；\n2) 最常见是导入并发超过 FE 的事务数上限（max_running_txn_num_per_db），用 SHOW PROC '/transactions' 看当前运行中的事务数；\n3) 应急可调大 max_running_txn_num_per_db，但更根本的是降低导入并发、增大单批数据量；\n4) 确认导入端有重试机制，并重跑被拒绝的任务。"
+        },
         "extra_config": {
             "escalation": {
                 "for_duration": 60,
@@ -2518,7 +2055,6 @@
         "update_at": 0,
         "update_by": "",
         "uuid": 1730292784205710300,
-        "cur_event_count": 0,
-        "update_by_nickname": "管理员"
+        "cur_event_count": 0
     }
 ]

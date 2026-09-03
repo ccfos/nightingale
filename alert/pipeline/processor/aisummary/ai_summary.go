@@ -2,6 +2,7 @@ package aisummary
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	"github.com/ccfos/nightingale/v6/aiagent/llmconfig"
 	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/callback"
 	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/common"
 	"github.com/ccfos/nightingale/v6/models"
@@ -24,9 +27,18 @@ const (
 	HTTP_STATUS_SUCCESS_MAX = 299
 )
 
+// summaryClientCache caches LLM clients keyed by config fingerprint so repeated
+// events reusing the same centralized LLM config don't rebuild the client.
+var summaryClientCache = llm.NewClientCache()
+
 // AISummaryConfig 配置结构体
 type AISummaryConfig struct {
 	callback.HTTPConfig
+	// LLMConfigId, when > 0, makes the node reuse a centrally-managed
+	// ai_llm_config (model/api_key/url/params) via the aiagent/llm client.
+	// When 0 (default), the inline ModelName/APIKey/URL fields are used,
+	// preserving backward compatibility with existing pipelines.
+	LLMConfigId    int64                  `json:"llm_config_id"`
 	ModelName      string                 `json:"model_name"`
 	APIKey         string                 `json:"api_key"`
 	PromptTemplate string                 `json:"prompt_template"`
@@ -55,23 +67,31 @@ func (c *AISummaryConfig) Init(settings interface{}) (models.Processor, error) {
 	return result, err
 }
 
-func (c *AISummaryConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) (*models.AlertCurEvent, string, error) {
-	if c.Client == nil {
-		if err := c.initHTTPClient(); err != nil {
-			return event, "", fmt.Errorf("failed to initialize HTTP client: %v processor: %v", err, c)
-		}
-	}
+func (c *AISummaryConfig) Process(ctx *ctx.Context, wfCtx *models.WorkflowContext) (*models.WorkflowContext, string, error) {
+	event := wfCtx.Event
 
 	// 准备告警事件信息
-	eventInfo, err := c.prepareEventInfo(event)
+	eventInfo, err := c.prepareEventInfo(wfCtx)
 	if err != nil {
-		return event, "", fmt.Errorf("failed to prepare event info: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to prepare event info: %v processor: %v", err, c)
 	}
 
-	// 调用AI模型生成总结
-	summary, err := c.generateAISummary(eventInfo)
+	// 调用AI模型生成总结：
+	// - LLMConfigId > 0：复用集中式 LLM 配置（ai_llm_config），走统一的 aiagent/llm 客户端
+	// - 否则：回退到内联的 model/api_key/url 手写 HTTP 调用（向后兼容）
+	var summary string
+	if c.LLMConfigId > 0 {
+		summary, err = c.generateWithLLMConfig(ctx, eventInfo)
+	} else {
+		if c.Client == nil {
+			if err := c.initHTTPClient(); err != nil {
+				return wfCtx, "", fmt.Errorf("failed to initialize HTTP client: %v processor: %v", err, c)
+			}
+		}
+		summary, err = c.generateAISummary(eventInfo)
+	}
 	if err != nil {
-		return event, "", fmt.Errorf("failed to generate AI summary: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to generate AI summary: %v processor: %v", err, c)
 	}
 
 	// 将总结添加到annotations字段
@@ -83,11 +103,11 @@ func (c *AISummaryConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent)
 	// 更新Annotations字段
 	b, err := json.Marshal(event.AnnotationsJSON)
 	if err != nil {
-		return event, "", fmt.Errorf("failed to marshal annotations: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to marshal annotations: %v processor: %v", err, c)
 	}
 	event.Annotations = string(b)
 
-	return event, "", nil
+	return wfCtx, "", nil
 }
 
 func (c *AISummaryConfig) initHTTPClient() error {
@@ -110,9 +130,10 @@ func (c *AISummaryConfig) initHTTPClient() error {
 	return nil
 }
 
-func (c *AISummaryConfig) prepareEventInfo(event *models.AlertCurEvent) (string, error) {
+func (c *AISummaryConfig) prepareEventInfo(wfCtx *models.WorkflowContext) (string, error) {
 	var defs = []string{
-		"{{$event := .}}",
+		"{{$event := .Event}}",
+		"{{$inputs := .Inputs}}",
 	}
 
 	text := strings.Join(append(defs, c.PromptTemplate), "")
@@ -122,12 +143,37 @@ func (c *AISummaryConfig) prepareEventInfo(event *models.AlertCurEvent) (string,
 	}
 
 	var body bytes.Buffer
-	err = t.Execute(&body, event)
+	err = t.Execute(&body, wfCtx)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute prompt template: %v", err)
 	}
 
 	return body.String(), nil
+}
+
+// generateWithLLMConfig 复用集中式 LLM 配置（ai_llm_config）生成总结，
+// 走统一的 aiagent/llm 客户端，从而支持 openai/claude/gemini 等各类 provider。
+func (c *AISummaryConfig) generateWithLLMConfig(dbCtx *ctx.Context, eventInfo string) (string, error) {
+	cfg, err := models.AILLMConfigGetById(dbCtx, c.LLMConfigId)
+	if err != nil {
+		return "", fmt.Errorf("failed to load llm config %d: %v", c.LLMConfigId, err)
+	}
+	if cfg == nil {
+		return "", fmt.Errorf("llm config %d not found", c.LLMConfigId)
+	}
+	if !cfg.Enabled {
+		return "", fmt.Errorf("llm config %d (%s) is disabled", cfg.Id, cfg.Name)
+	}
+
+	client, err := summaryClientCache.GetOrCreate(llmconfig.BuildLLMConfig(cfg))
+	if err != nil {
+		return "", fmt.Errorf("failed to create llm client: %v", err)
+	}
+
+	reqCtx, cancel := context.WithTimeout(context.Background(), llmconfig.ProbeTimeout(cfg.ExtraConfig))
+	defer cancel()
+
+	return llm.Chat(reqCtx, client, []llm.Message{{Role: llm.RoleUser, Content: eventInfo}})
 }
 
 func (c *AISummaryConfig) generateAISummary(eventInfo string) (string, error) {

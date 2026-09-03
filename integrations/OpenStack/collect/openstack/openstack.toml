@@ -1,0 +1,147 @@
+# Collects performance metrics from OpenStack services
+[[instances]]
+## The recommended interval to poll is '30m'
+
+## The identity endpoint to authenticate against and get the service catalog from.
+# Keystone
+authentication_endpoint = "https://my.openstack.cloud:5000"
+## The metric endpoint to collect metrics from.
+# Gnocchi
+metric_endpoint = "http://my.openstack.cloud:5000/metric/v1"
+## The compute endpoint to collect metrics from.
+# Nova
+compute_endpoint = "http://my.openstack.cloud:5000/compute/v2.1"
+
+## metric interval is the interval to collect metrics from the metric endpoint.
+metric_interval = "5m"
+
+# catch_ttl="4h"
+
+## whether to gather metric in batch
+use_batch = false
+
+## openstack version
+version = "v6"
+
+## The domain to authenticate against when using a V3 identity endpoint.
+# domain = "default"
+
+## The project to authenticate as.
+# project = "admin"
+
+## User authentication credentials. Must have admin rights.
+username = "admin"
+password = "password"
+
+# rate limit for the OpenStack API requests
+# ratelimit=25
+
+## Available services are:
+## "agents", "aggregates", "cinder_services", "flavors", "hypervisors", "networks",
+## "nova_services", "ports", "projects", "servers", "services", "stacks", "storage_pools",
+## "metrics", "subnets", "volumes"
+# enabled_services = ["metrics", "services", "projects", "hypervisors", "flavors", "networks", "volumes"]
+
+# metric_resources = ["volume", "instance_network_interface", "instance_disk"]
+
+## Collect Server Diagnostics
+# server_diagnotics = false
+
+## output secrets (such as adminPass(for server) and UserID(for volume)).
+# output_secrets = false
+
+## Amount of time allowed to complete the HTTP(s) request.
+# timeout = "5s"
+
+## HTTP Proxy support
+# http_proxy_url = ""
+
+## Optional TLS Config
+# tls_ca = /path/to/cafile
+# tls_cert = /path/to/certfile
+# tls_key = /path/to/keyfile
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = false
+
+## Options for tags received from Openstack
+# tag_prefix = "openstack_tag_"
+# tag_value = "true" # tag value is required.
+
+## Timestamp format for timestamp data received from Openstack.
+## If false format is unix nanoseconds.
+# human_readable_timestamps = false
+
+## Measure Openstack call duration
+# measure_openstack_requests = false
+
+#[[instances]]
+### The recommended interval to poll is '30m'
+
+### The identity endpoint to authenticate against and get the service catalog from.
+#authentication_endpoint = "https://my.openstack.cloud:5000"
+### The metric endpoint to collect metrics from.
+#metric_endpoint = "http://my.openstack.cloud:5000/metric/v1"
+### The compute endpoint to collect metrics from.
+#compute_endpoint = "http://my.openstack.cloud:5000/compute/v2.1"
+
+### metric interval is the interval to collect metrics from the metric endpoint.
+#metric_interval = "5m"
+
+# catch_ttl="4h"
+
+## whether to gather metric in batch
+# use_batch = false
+
+## openstack version
+# version = "v6"
+
+### The domain to authenticate against when using a V3 identity endpoint.
+## domain = "default"
+
+### The project to authenticate as.
+## project = "admin"
+
+### User authentication credentials. Must have admin rights.
+#username = "admin"
+#password = "password"
+
+# rate limit for the OpenStack API requests
+# ratelimit=25
+
+### Available services are:
+### "agents", "aggregates", "cinder_services", "flavors", "hypervisors", "networks",
+### "nova_services", "ports", "projects", "servers", "services", "stacks", "storage_pools",
+### "metrics", "subnets", "volumes"
+## enabled_services = ["metrics", "services", "projects", "hypervisors", "flavors", "networks", "volumes"]
+
+# metric_resources = ["volume", "instance_network_interface", "instance_disk"]
+
+### Collect Server Diagnostics
+## server_diagnotics = false
+
+### output secrets (such as adminPass(for server) and UserID(for volume)).
+## output_secrets = false
+
+### Amount of time allowed to complete the HTTP(s) request.
+## timeout = "5s"
+
+### HTTP Proxy support
+## http_proxy_url = ""
+
+### Optional TLS Config
+## tls_ca = /path/to/cafile
+## tls_cert = /path/to/certfile
+## tls_key = /path/to/keyfile
+### Use TLS but skip chain & host verification
+## insecure_skip_verify = false
+
+### Options for tags received from Openstack
+## tag_prefix = "openstack_tag_"
+## tag_value = "true" # tag value is required.
+
+### Timestamp format for timestamp data received from Openstack.
+### If false format is unix nanoseconds.
+## human_readable_timestamps = false
+
+### Measure Openstack call duration
+## measure_openstack_requests = false

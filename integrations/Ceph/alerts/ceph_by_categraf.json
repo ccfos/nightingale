@@ -72,7 +72,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 立即用 ceph health detail 看具体是哪一项 ERR；\n2) 常见为 PG inactive/incomplete、OSD 大量 down、或 full osd 导致集群只读；\n3) 先恢复 down 的 OSD 或释放已满 OSD 的空间，这是绝大多数 ERR 的根因；\n4) 恢复期间不要执行扩缩容或调整 crush map，避免加重数据迁移。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -153,7 +155,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph osd tree 确认是哪个 OSD 被降权、当前权重多少；\n2) 确认是人工 reweight 还是 reweight-by-utilization 自动调整；\n3) 若故障已恢复，用 ceph osd reweight \u003cid\u003e 1.0 恢复权重让数据回填；\n4) 若是为了平衡容量而降权，评估是否该改用 balancer 模块统一处理。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -169,7 +173,7 @@
             0
         ],
         "cluster": "",
-        "name": "CephOSDUtilizatoin",
+        "name": "CephOSDUtilization",
         "note": "Osd free space for  {{ $labels.osd }} is higher tan 90%. Please validate why its so big, reweight or add storage",
         "prod": "metric",
         "algorithm": "",
@@ -234,7 +238,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph osd df 看各 OSD 使用率分布，确认是个别 OSD 偏高还是整体接近满；\n2) 个别偏高的用 ceph balancer status 确认均衡器是否开启，未开启则 ceph balancer on；\n3) 整体接近满的必须扩容 OSD，或先删除无用的 pool/快照释放空间；\n4) 应急可临时调高 mon_osd_full_ratio 争取时间，但这是危险操作，必须同时进行扩容。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -315,7 +321,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph -s 与 ceph health detail 看集群整体状态和具体告警项；\n2) 用 ceph pg dump_stuck 与 ceph pg \u003cpgid\u003e query 定位卡住的 PG 及其原因；\n3) 多数情况根因是 OSD down 或磁盘满——先恢复 OSD 或释放空间，PG 会自动回到 active+clean；\n4) 恢复期间用 ceph -w 持续观察，避免同时做其他会加重负载的操作。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -396,7 +404,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph osd df 找出空间不足的 OSD；\n2) 释放空间或扩容 OSD 是根本解法；\n3) 应急可调高 osd_backfill_full_ratio 让回填继续，但要确认磁盘确实还有余量；\n4) 回填完成前避免再有 OSD 下线，否则冗余会进一步降低。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -477,7 +487,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph pg \u003cpgid\u003e query 看 down 的原因，重点看 blocked_by 指向哪些 OSD；\n2) 把这些 OSD 恢复上线是最直接的解法——通常是磁盘或主机故障；\n3) OSD 确实无法恢复时，需要评估 osd lost 操作的数据丢失风险后再执行；\n4) 全程记录操作，涉及数据丢失的决策要有人复核。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -558,7 +570,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph -s 与 ceph health detail 看集群整体状态和具体告警项；\n2) 用 ceph pg dump_stuck 与 ceph pg \u003cpgid\u003e query 定位卡住的 PG 及其原因；\n3) 多数情况根因是 OSD down 或磁盘满——先恢复 OSD 或释放空间，PG 会自动回到 active+clean；\n4) 恢复期间用 ceph -w 持续观察，避免同时做其他会加重负载的操作。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -639,7 +653,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph health detail 找出不一致的 PG，再用 rados list-inconsistent-obj \u003cpgid\u003e 看具体对象；\n2) 用 ceph pg repair \u003cpgid\u003e 触发修复，Ceph 会用权威副本覆盖；\n3) 修复前确认坏的是哪一份——若主副本本身损坏，需先确认权威副本可靠；\n4) 反复出现不一致的 OSD 要查磁盘 SMART，多为坏道，应换盘。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -720,7 +736,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph -s 与 ceph health detail 看集群整体状态和具体告警项；\n2) 用 ceph pg dump_stuck 与 ceph pg \u003cpgid\u003e query 定位卡住的 PG 及其原因；\n3) 多数情况根因是 OSD down 或磁盘满——先恢复 OSD 或释放空间，PG 会自动回到 active+clean；\n4) 恢复期间用 ceph -w 持续观察，避免同时做其他会加重负载的操作。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -801,7 +819,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 确认 ceph exporter / mgr 所在节点是否存活，进程是否运行；\n2) 用 ceph -s 在任一 mon 节点手工确认集群本身是否健康；\n3) mgr 挂了会导致大量指标缺失，用 ceph mgr fail 触发切换到备用 mgr；\n4) 恢复采集后确认历史数据缺口，注意盲区期间没有告警。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -882,7 +902,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph health detail 看具体是哪些 WARN 项；\n2) 常见为 OSD 单点 down、PG 未 clean、时钟偏移、pool 未设置 pg_autoscale；\n3) 逐项按提示处理，Ceph 的 health detail 通常已给出明确指引；\n4) 处理完确认 ceph -s 回到 HEALTH_OK。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -963,7 +985,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 df -h 确认 /var/lib/ceph/mon 所在分区的余量；\n2) mon 目录膨胀最常见的原因是集群长期不 clean 导致 osdmap 无法裁剪——先解决集群 health 问题；\n3) 用 ceph tell mon.\u003cid\u003e compact 触发 rocksdb 压缩释放空间；\n4) 长期需给 mon 单独分配更大的磁盘。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -980,7 +1004,7 @@
         ],
         "cluster": "",
         "name": "MonitorClockSkewTooHigh",
-        "note": "Monitor clock skew detected on  {{ $labels.monitor }} - please check ntp and harware clock settins",
+        "note": "Monitor clock skew detected on  {{ $labels.monitor }} - please check ntp and hardware clock settings",
         "prod": "metric",
         "algorithm": "",
         "algo_params": null,
@@ -1044,7 +1068,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 在各 mon 节点用 chronyc tracking 确认偏移量与上游源状态；\n2) 确认所有 mon 节点用的是同一组 NTP 源；\n3) chronyd 未运行的启动并设开机自启，偏移过大的用 chronyc makestep 强制对时；\n4) 对完时后用 ceph -s 确认 clock skew 告警消失。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1125,7 +1151,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph osd perf 看各 OSD 的 commit/apply 延迟，定位是个别还是普遍；\n2) 个别 OSD 高延迟的，到该节点用 iostat -x 1 与 smartctl 检查磁盘健康与是否已打满；\n3) 普遍高延迟的确认是否正在做大规模 recovery/backfill，可调低 osd_max_backfills 降低影响；\n4) 磁盘故障的按换盘流程处理。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",
@@ -1142,7 +1170,7 @@
         ],
         "cluster": "",
         "name": "OsdDown",
-        "note": "OSD is down longer than 30 min, please check whats the status",
+        "note": "OSD is down longer than 30 min, please check what's the status",
         "prod": "metric",
         "algorithm": "",
         "algo_params": null,
@@ -1206,7 +1234,9 @@
         "callbacks": [],
         "runbook_url": "",
         "append_tags": [],
-        "annotations": null,
+        "annotations": {
+            "action": "1) 用 ceph osd tree 确认是哪个 OSD、在哪个节点；\n2) 到该节点用 systemctl status ceph-osd@\u003cid\u003e 与其日志定位原因（磁盘故障、OOM、进程崩溃）；\n3) 磁盘正常的直接拉起 OSD；磁盘故障的走换盘流程并 ceph osd out 让数据迁走；\n4) 恢复期间用 ceph -s 观察 recovery 进度，避免同时下线更多 OSD。"
+        },
         "extra_config": null,
         "create_at": 0,
         "create_by": "",

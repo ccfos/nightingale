@@ -49,7 +49,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(oracle_activity_execute_count_value{ident=\"$ident\", instance=\"$instance\"}[2m])",
+                        "expr": "rate(oracle_activity_execute_count_value{address=\"$address\"}[2m])",
                         "refId": "A"
                     }
                 ],
@@ -80,7 +80,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(oracle_activity_user_commits_value{ident=\"$ident\", instance=\"$instance\"}[2m])",
+                        "expr": "rate(oracle_activity_user_commits_value{address=\"$address\"}[2m])",
                         "refId": "A"
                     }
                 ],
@@ -111,7 +111,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(oracle_activity_user_rollbacks_value{ident=\"$ident\", instance=\"$instance\"}[2m])",
+                        "expr": "rate(oracle_activity_user_rollbacks_value{address=\"$address\"}[2m])",
                         "refId": "A"
                     }
                 ],
@@ -164,7 +164,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_up{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_up{address=\"$address\"}",
                         "refId": "A"
                     }
                 ],
@@ -217,7 +217,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_wait_time_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_wait_time_value{address=\"$address\"}",
                         "legend": "{{wait_class}}",
                         "refId": "A"
                     }
@@ -273,7 +273,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_tablespace_bytes{ident=\"$ident\", instance=\"$instance\"}/oracle_tablespace_max_bytes{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_tablespace_bytes{address=\"$address\"}/oracle_tablespace_max_bytes{address=\"$address\"}",
                         "legend": "{{tablespace}}",
                         "refId": "A"
                     }
@@ -317,7 +317,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_tablespace_free{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_tablespace_free{address=\"$address\"}",
                         "legend": "{{tablespace}}",
                         "refId": "A"
                     }
@@ -371,7 +371,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_io_requests_per_second_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_io_requests_per_second_value{address=\"$address\"}",
                         "refId": "A"
                     }
                 ],
@@ -413,7 +413,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_user_transaction_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_user_transaction_per_sec_value{address=\"$address\"}",
                         "refId": "A"
                     }
                 ],
@@ -456,7 +456,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_io_megabytes_per_second_value{ident=\"$ident\", instance=\"$instance\"}*1024*1024",
+                        "expr": "oracle_sysmetric_io_megabytes_per_second_value{address=\"$address\"}*1024*1024",
                         "refId": "A"
                     }
                 ],
@@ -509,7 +509,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sessions_value{ident=\"$ident\", instance=\"$instance\",status=\"ACTIVE\"}",
+                        "expr": "oracle_sessions_value{address=\"$address\",status=\"ACTIVE\"}",
                         "legend": "",
                         "refId": "A"
                     }
@@ -563,7 +563,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_buffer_cache_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_buffer_cache_hit_ratio_value{address=\"$address\"}",
                         "refId": "A"
                     }
                 ],
@@ -603,7 +603,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_redo_allocation_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_redo_allocation_hit_ratio_value{address=\"$address\"}",
                         "refId": "A"
                     }
                 ],
@@ -643,7 +643,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_row_cache_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_row_cache_hit_ratio_value{address=\"$address\"}",
                         "refId": "A"
                     }
                 ],
@@ -683,7 +683,7 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_library_cache_hit_ratio_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_library_cache_hit_ratio_value{address=\"$address\"}",
                         "refId": "A"
                     }
                 ],
@@ -736,11 +736,11 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_physical_read_bytes_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_physical_read_bytes_per_sec_value{address=\"$address\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "oracle_sysmetric_Physical_Write_Bytes_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_physical_write_bytes_per_sec_value{address=\"$address\"}",
                         "refId": "B"
                     }
                 ],
@@ -780,11 +780,11 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_physical_read_total_bytes_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_physical_read_total_bytes_per_sec_value{address=\"$address\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "oracle_sysmetric_Physical_Write_Total_Bytes_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_physical_write_total_bytes_per_sec_value{address=\"$address\"}",
                         "refId": "B"
                     }
                 ],
@@ -824,11 +824,11 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_physical_read_io_requests_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_physical_read_io_requests_per_sec_value{address=\"$address\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "oracle_sysmetric_Physical_Write_IO_Requests_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_physical_write_io_requests_per_sec_value{address=\"$address\"}",
                         "refId": "B"
                     }
                 ],
@@ -868,11 +868,11 @@
                 },
                 "targets": [
                     {
-                        "expr": "oracle_sysmetric_physical_read_total_io_requests_per_sec_value{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_physical_read_total_io_requests_per_sec_value{address=\"$address\"}",
                         "refId": "A"
                     },
                     {
-                        "expr": "oracle_sysmetric_Physical_Write_Total_IO_Requests_Per_Sec{ident=\"$ident\", instance=\"$instance\"}",
+                        "expr": "oracle_sysmetric_physical_write_total_io_requests_per_sec_value{address=\"$address\"}",
                         "refId": "B"
                     }
                 ],
@@ -891,20 +891,11 @@
                     "cate": "prometheus",
                     "value": "${prom}"
                 },
-                "definition": "label_values(oracle_up,ident)",
-                "name": "ident",
+                "definition": "label_values(oracle_up,address)",
+                "name": "address",
                 "options": [
                     "tt-fc-log00.nj"
                 ],
-                "type": "query"
-            },
-            {
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${prom}"
-                },
-                "definition": "label_values(oracle_up{ident=\"$ident\"},instance)",
-                "name": "instance",
                 "type": "query"
             }
         ],

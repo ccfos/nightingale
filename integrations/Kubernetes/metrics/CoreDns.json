@@ -1,0 +1,640 @@
+[
+    {
+        "id": 0,
+        "uuid": 1768826788208723569,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS请求速率",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "sum(rate(coredns_dns_requests_total{}[5m])) by (proto,instance)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS请求速率"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Request Rate",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209067106,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS请求速率(记录类型分组)",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "sum(rate(coredns_dns_requests_total{}[5m])) by (type,instance)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS请求速率(记录类型分组)"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Request Rate (by record type)",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209529155,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS请求速率(DO标志位)",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "sum(rate(coredns_dns_do_requests_total{}[5m])) by (instance)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS请求速率(DO标志位)"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Request Rate (DO flag)",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209650183,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS UDP请求数据包大小 P99",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.99,sum(rate(coredns_dns_request_size_bytes_bucket{proto=\"udp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS UDP请求数据包大小 P99"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS UDP Request Packet Size P99",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788208958002,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS UDP请求数据包大小 P90",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.90,sum(rate(coredns_dns_request_size_bytes_bucket{proto=\"udp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS UDP请求数据包大小 P90"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS UDP Request Packet Size P90",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209181991,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS UDP请求数据包大小 P50",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.50,sum(rate(coredns_dns_request_size_bytes_bucket{proto=\"udp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS UDP请求数据包大小 P50"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS UDP Request Packet Size P50",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209537097,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS TCP请求数据包大小 P99",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.99,sum(rate(coredns_dns_request_size_bytes_bucket{proto=\"tcp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS TCP请求数据包大小 P99"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS TCP Request Packet Size P99",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209043044,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS TCP请求数据包大小 P90",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.90,sum(rate(coredns_dns_request_size_bytes_bucket{proto=\"tcp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS TCP请求数据包大小 P90"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS TCP Request Packet Size P90",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209792585,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS TCP请求数据包大小 P50",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.50,sum(rate(coredns_dns_request_size_bytes_bucket{proto=\"tcp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS TCP请求数据包大小 P50"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS TCP Request Packet Size P50",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209534148,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS响应速率(根据响应状态码分组)",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "sum(rate(coredns_dns_responses_total{}[5m])) by(rcode,instance)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS响应速率(根据响应状态码分组)"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Response Rate (by response code)",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209665125,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS响应时延 P99",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.99,sum(rate(coredns_dns_request_duration_seconds_bucket{}[5m])) by(le,job,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS响应时延 P99"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Response Latency P99",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209259368,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS响应时延 P90",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.90,sum(rate(coredns_dns_request_duration_seconds_bucket{}[5m])) by(le,job,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS响应时延 P90"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Response Latency P90",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209058384,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS响应时延 P50",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.50,sum(rate(coredns_dns_request_duration_seconds_bucket{}[5m])) by(le,job,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS响应时延 P50"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Response Latency P50",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209786200,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS UDP响应数据包大小 P99",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.99,sum(rate(coredns_dns_response_size_bytes_bucket{proto=\"udp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS UDP响应数据包大小 P99"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS UDP Response Packet Size P99",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209804277,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS UDP响应数据包大小 P90",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.90,sum(rate(coredns_dns_response_size_bytes_bucket{proto=\"udp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS UDP响应数据包大小 P90"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS UDP Response Packet Size P90",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209092517,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS UDP响应数据包大小 P50",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.50,sum(rate(coredns_dns_response_size_bytes_bucket{proto=\"udp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS UDP响应数据包大小 P50"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS UDP Response Packet Size P50",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209048246,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS TCP响应数据包大小 P99",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.99,sum(rate(coredns_dns_response_size_bytes_bucket{proto=\"tcp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS TCP响应数据包大小 P99"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS TCP Response Packet Size P99",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209035120,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS TCP响应数据包大小 P90",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.90,sum(rate(coredns_dns_response_size_bytes_bucket{proto=\"tcp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS TCP响应数据包大小 P90"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS TCP Response Packet Size P90",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209558593,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS TCP响应数据包大小 P50",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "histogram_quantile(0.50,sum(rate(coredns_dns_response_size_bytes_bucket{proto=\"tcp\"}[5m])) by(le,proto,instance))",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS TCP响应数据包大小 P50"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS TCP Response Packet Size P50",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209650384,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS缓存的DNS记录数",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "sum (coredns_cache_entries{}) by(type,instance)",
+        "expression_type": "promql",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS缓存的DNS记录数"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Cached DNS Records",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209603972,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS缓存命中率",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "sum (rate(coredns_cache_hits_total{}[5m])) by (type,instance)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS缓存命中率"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Cache Hit Rate",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1768826788209855951,
+        "collector": "CoreDns",
+        "typ": "Kubernetes",
+        "name": "coreDNS缓存丢失率",
+        "unit": "",
+        "note": "CoreDNS自身指标",
+        "lang": "zh_CN",
+        "expression": "sum (rate(coredns_cache_misses_total{}[5m])) by (type,instance)",
+        "expression_type": "promql",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "note": "CoreDNS自身指标",
+                "name": "coreDNS缓存丢失率"
+            },
+            {
+                "lang": "en_US",
+                "name": "CoreDNS Cache Miss Rate",
+                "note": "Metric exposed by CoreDNS itself"
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

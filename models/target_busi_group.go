@@ -83,11 +83,16 @@ func TargetBindBgids(ctx *ctx.Context, idents []string, bgids []int64, tags []st
 	case "sqlite":
 		cl = clause.Insert{Modifier: "or ignore"}
 	case "postgres":
-		cl = clause.OnConflict{DoNothing: true}
+		// 磐维数据库(基于OpenGauss/PostgreSQL 9.2)不支持 ON CONFLICT DO NOTHING（无冲突目标）语法，
+		// 必须显式指定冲突列：ON CONFLICT (target_ident, group_id) DO NOTHING
+		cl = clause.OnConflict{
+			Columns:   []clause.Column{{Name: "target_ident"}, {Name: "group_id"}},
+			DoNothing: true,
+		}
 	}
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := DB(ctx).Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
+		if err := tx.Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
 			return err
 		}
 		if targets, err := TargetsGetByIdents(ctx, idents); err != nil {
@@ -100,13 +105,24 @@ func TargetBindBgids(ctx *ctx.Context, idents []string, bgids []int64, tags []st
 			}
 		}
 
+		// update target.update_at so that syncTargets can detect the change and refresh GroupIds cache
+		if err := tx.Model(&Target{}).Where("ident in ?", idents).Update("update_at", updateAt).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 }
 
 func TargetUnbindBgids(ctx *ctx.Context, idents []string, bgids []int64) error {
-	return DB(ctx).Where("target_ident in ? and group_id in ?",
-		idents, bgids).Delete(&TargetBusiGroup{}).Error
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("target_ident in ? and group_id in ?",
+			idents, bgids).Delete(&TargetBusiGroup{}).Error; err != nil {
+			return err
+		}
+		// update target.update_at so that syncTargets can detect the change and refresh GroupIds cache
+		return tx.Model(&Target{}).Where("ident in ?", idents).Update("update_at", time.Now().Unix()).Error
+	})
 }
 
 func TargetDeleteBgids(tx *gorm.DB, idents []string) error {
@@ -144,13 +160,19 @@ func TargetOverrideBgids(ctx *ctx.Context, idents []string, bgids []int64, tags 
 		case "sqlite":
 			cl = clause.Insert{Modifier: "or ignore"}
 		case "postgres":
-			cl = clause.OnConflict{DoNothing: true}
+			// 磐维数据库(基于OpenGauss/PostgreSQL 9.2)不支持 ON CONFLICT DO NOTHING（无冲突目标）语法，
+			// 必须显式指定冲突列：ON CONFLICT (target_ident, group_id) DO NOTHING
+			cl = clause.OnConflict{
+				Columns:   []clause.Column{{Name: "target_ident"}, {Name: "group_id"}},
+				DoNothing: true,
+			}
 		}
 		if err := tx.Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
 			return err
 		}
 		if len(tags) == 0 {
-			return nil
+			// update target.update_at so that syncTargets can detect the change and refresh GroupIds cache
+			return tx.Model(&Target{}).Where("ident IN ?", idents).Update("update_at", updateAt).Error
 		}
 
 		return tx.Model(Target{}).Where("ident IN ?", idents).Updates(map[string]interface{}{

@@ -1,0 +1,342 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "CDN 探测失败",
+        "note": "cdn 插件的耗时类指标单位为毫秒（与配置项 connect_timeout_ms / dns_timeout_ms 保持一致）。",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 1,
+        "severities": [
+            1
+        ],
+        "disabled": 1,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "cdn_probe_result != 0",
+                    "severity": 1
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=CdnProbeFailed"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取被探测的 target，在本地执行 curl -sv \u003ctarget\u003e 复现，对照 cdn_probe_result 的取值判断故障环节；\n2) 值为 3（DNS 失败）的执行 dig \u003c域名\u003e 确认 CNAME 是否仍指向 CDN 厂商，排查是否有人误改解析；\n3) 值为 1/2 的从探测点执行 mtr \u003cCDN节点IP\u003e 判断是网络还是 CDN 节点故障，并到厂商控制台确认是否有节点异常公告；\n4) 值为 5/6 的说明回源内容或状态码变了，先查源站是否发布过版本或已经故障。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785220000000010000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "CDN 响应状态码异常",
+        "note": "cdn 插件的耗时类指标单位为毫秒（与配置项 connect_timeout_ms / dns_timeout_ms 保持一致）。",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 1,
+        "severities": [
+            1
+        ],
+        "disabled": 1,
+        "prom_for_duration": 120,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "cdn_response_status_code \u003e= 400",
+                    "severity": 1
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=CdnBadStatusCode"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 target 并执行 curl -sI \u003ctarget\u003e 确认实际状态码；\n2) 4xx 中 403 最常见，检查 CDN 的防盗链、Referer 白名单、URL 鉴权配置是否刚变更过；404 则确认源站资源是否被删；\n3) 5xx 说明回源失败，直接 curl 源站地址验证源站健康度，并检查回源 Host 头与源站站点配置是否匹配；\n4) 确认是 CDN 侧配置问题的，回滚最近一次配置变更并刷新缓存。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785220000000011000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "CDN 首包响应时间过长",
+        "note": "cdn 插件的耗时类指标单位为毫秒（与配置项 connect_timeout_ms / dns_timeout_ms 保持一致）。",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "cdn_first_byte \u003e 2000",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=CdnSlowFirstByte"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 target，执行 curl -w '%{time_namelookup} %{time_connect} %{time_starttransfer}\\n' -o /dev/null -s \u003ctarget\u003e 拆解耗时分布；\n2) 首包慢而连接快说明是回源慢，检查源站响应时间与 CDN 的缓存命中率；\n3) 缓存命中率低的检查缓存规则：是否被 Cache-Control: no-cache 或带随机查询参数导致无法缓存；\n4) 源站本身慢的先优化源站，并考虑开启 CDN 的回源长连接与预取。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785220000000012000
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "CDN 请求总耗时过长",
+        "note": "cdn 插件的耗时类指标单位为毫秒（与配置项 connect_timeout_ms / dns_timeout_ms 保持一致）。",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 300,
+        "prom_ql": "",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "cdn_total_cost \u003e 5000",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [
+            "alertname=CdnSlowTotalCost"
+        ],
+        "annotations": {
+            "action": "1) 从告警标签取 target，用 curl -w 拆解 DNS/TCP/TLS/首包/传输各阶段耗时，找出占比最大的阶段；\n2) DNS 阶段慢的检查解析链路与 TTL 设置；TLS 阶段慢的确认证书链是否过长、是否开启会话复用；\n3) 传输阶段慢的多为文件过大或边缘带宽被打满，评估开启压缩与分片；\n4) 各阶段都不突出但总量高的，从多个地域的探测点对比，确认是否是特定区域的节点问题并反馈厂商。"
+        },
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1785220000000013000
+    }
+]

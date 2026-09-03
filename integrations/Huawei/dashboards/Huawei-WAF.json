@@ -1,0 +1,846 @@
+{
+  "name": "华为云-Web应用防火墙(WAF)",
+  "tags": "华为云-AOM",
+  "ident": "",
+  "uuid": 1755745355046000,
+  "configs": {
+    "version": "3.1.0",
+    "links": [],
+    "var": [
+      {
+        "type": "datasource",
+        "name": "DS_PROMETHEUS",
+        "definition": "prometheus"
+      },
+      {
+        "type": "query",
+        "name": "waf_name",
+        "label": "防护域名",
+        "allOption": true,
+        "multi": true,
+        "reg": "",
+        "hide": false,
+        "definition": "label_values(huaweicloud_sys_waf_requests,name)",
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${DS_PROMETHEUS}"
+        }
+      }
+    ],
+    "panels": [
+      {
+        "version": "3.1.0",
+        "id": "67f32989-0c4e-4d89-b067-3905df876d2b",
+        "type": "timeseries",
+        "name": "请求量",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 0,
+          "i": "67f32989-0c4e-4d89-b067-3905df876d2b"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_requests{name=~\"$waf_name\"}",
+            "legend": "{{name}}-请求量"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "linear",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "ac0dc6c0-bdea-4925-bcb8-73d70255c395",
+        "type": "timeseries",
+        "name": "入网总流量/出网总流量（5min）",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 0,
+          "i": "ac0dc6c0-bdea-4925-bcb8-73d70255c395"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_inbound_traffic{name=~\"$waf_name\"}",
+            "legend": "{{name}}-入网总流量(5min)"
+          },
+          {
+            "refId": "B",
+            "expr": "0 - huaweicloud_sys_waf_outbound_traffic{name=~\"$waf_name\"}",
+            "legend": "{{name}}-出网总流量(5min)"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "b853292e-aed4-4a15-a5e3-b559e5d072d1",
+        "type": "timeseries",
+        "name": "入网流量/出网流量(均值+峰值)",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 0,
+          "i": "b853292e-aed4-4a15-a5e3-b559e5d072d1"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_inbound_traffic_peak{name=~\"$waf_name\"}",
+            "legend": "{{name}}-入网流量的峰值(5min)"
+          },
+          {
+            "refId": "B",
+            "expr": "0 - huaweicloud_sys_waf_outbound_traffic_peak{name=~\"$waf_name\"}",
+            "legend": "{{name}}-出网流量的峰值(5min)"
+          },
+          {
+            "refId": "C",
+            "expr": "huaweicloud_sys_waf_inbound_traffic_mean{name=~\"$waf_name\"}",
+            "legend": "{{name}}-入网流量的均值(5min)"
+          },
+          {
+            "refId": "D",
+            "expr": "0 - huaweicloud_sys_waf_outbound_traffic_mean{name=~\"$waf_name\"}",
+            "legend": "{{name}}-出网流量的均值(5min)"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "75720dda-0255-472b-af5a-a87c7ee5ed62",
+        "type": "timeseries",
+        "name": "WAF返回码2XX",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 8,
+          "i": "75720dda-0255-472b-af5a-a87c7ee5ed62"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_waf_http_2xx{name=~\"$waf_name\"}",
+            "legend": "{{name}}-WAF返回码（2XX）"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "9445faf5-5b2c-44cb-aedf-05e9d81f1a0d",
+        "type": "timeseries",
+        "name": "WAF返回码3XX",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 8,
+          "i": "9445faf5-5b2c-44cb-aedf-05e9d81f1a0d"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_waf_http_3xx{name=~\"$waf_name\"}",
+            "legend": "{{name}}-WAF返回码（3XX）"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "2491aa63-c471-4a59-ba93-aeabd73fb20e",
+        "type": "timeseries",
+        "name": "WAF返回码4XX",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 8,
+          "i": "2491aa63-c471-4a59-ba93-aeabd73fb20e"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_waf_http_4xx{name=~\"$waf_name\"}",
+            "legend": "{{name}}-WAF返回码（4XX）"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "353d9e1b-e7c2-4a95-b034-6dcd2e39c3ec",
+        "type": "timeseries",
+        "name": "WAF返回码5XX",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 16,
+          "i": "353d9e1b-e7c2-4a95-b034-6dcd2e39c3ec"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_waf_http_5xx{name=~\"$waf_name\"}",
+            "legend": "{{name}}-WAF返回码（5XX）"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "18c36c0f-f6d6-428e-aba7-8e26ab581fc9",
+        "type": "timeseries",
+        "name": "QPS峰值",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 16,
+          "i": "18c36c0f-f6d6-428e-aba7-8e26ab581fc9"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_qps_peak{name=~\"$waf_name\"}",
+            "legend": "{{name}}-QPS峰值"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "12cd6519-e765-44d5-ad2a-23e293365823",
+        "type": "timeseries",
+        "name": "QPS均值",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 16,
+          "i": "12cd6519-e765-44d5-ad2a-23e293365823"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_qps_mean{name=~\"$waf_name\"}",
+            "legend": "{{name}}-QPS均值"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "acc49df0-0f3a-4ae9-a8bd-b1b0e15d6709",
+        "type": "timeseries",
+        "name": "基础防护次数",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 24,
+          "i": "acc49df0-0f3a-4ae9-a8bd-b1b0e15d6709"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_base_protection_counts{name=~\"$waf_name\"}",
+            "legend": "{{name}}-基础防护次数"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "c0916458-91a1-4817-89fd-f4b154bce76e",
+        "type": "timeseries",
+        "name": "CC防护次数",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 24,
+          "i": "c0916458-91a1-4817-89fd-f4b154bce76e"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_cc_protection_counts{name=~\"$waf_name\"}",
+            "legend": "{{name}}-CC防护次数"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "f19c8c7a-4ea2-4aeb-a485-5a62602a45a5",
+        "type": "timeseries",
+        "name": "精准防护次数",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 24,
+          "i": "f19c8c7a-4ea2-4aeb-a485-5a62602a45a5"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_precise_protection_counts{name=~\"$waf_name\"}",
+            "legend": "{{name}}-精准防护次数"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      },
+      {
+        "version": "3.1.0",
+        "id": "70e42033-5974-44eb-92e7-a4563ddfc65d",
+        "type": "timeseries",
+        "name": "爬虫攻击请求量",
+        "description": "",
+        "links": [],
+        "layout": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 32,
+          "i": "70e42033-5974-44eb-92e7-a4563ddfc65d"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "huaweicloud_sys_waf_crawlers{name=~\"$waf_name\"}",
+            "legend": "{{name}}-爬虫攻击请求量"
+          }
+        ],
+        "options": {
+          "valueMappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "style": "off",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null,
+                "type": "base"
+              },
+              {
+                "color": "#F2495C",
+                "value": 80
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          }
+        },
+        "custom": {
+          "version": "3.1.0",
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "fillOpacity": 0.05,
+          "stack": "off"
+        },
+        "maxPerRow": 4,
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${DS_PROMETHEUS}"
+      }
+    ]
+  }
+}

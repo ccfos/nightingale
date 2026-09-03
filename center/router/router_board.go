@@ -6,17 +6,17 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/i18n"
 )
 
 type boardForm struct {
 	Name       string  `json:"name"`
 	Ident      string  `json:"ident"`
 	Tags       string  `json:"tags"`
+	Note       string  `json:"note"`
 	Configs    string  `json:"configs"`
 	Public     int     `json:"public"`
 	PublicCate int     `json:"public_cate"`
@@ -34,6 +34,7 @@ func (rt *Router) boardAdd(c *gin.Context) {
 		Name:     f.Name,
 		Ident:    f.Ident,
 		Tags:     f.Tags,
+		Note:     f.Note,
 		Configs:  f.Configs,
 		CreateBy: me.Username,
 		UpdateBy: me.Username,
@@ -61,6 +62,31 @@ func (rt *Router) boardGet(c *gin.Context) {
 
 	if board == nil {
 		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+	}
+
+	// 限时分享令牌：绑定本板的有效令牌直接匿名返回（含 Configs）。
+	//
+	// 令牌有效、但绑的是**别的板**属于横向越权，必须就地拒绝，不能 fall-through 到
+	// 下面的 public/登录判定——否则配了「匿名访问」(PublicCate=PublicAnonymous) 的板
+	// 会被任意一条有效分享链接顺带打开，令牌作用域从「一个板」放大成「全部匿名板」。
+	//
+	// 这里刻意返回 403 而不是 401：401 在前端的语义是「去重新认证」，拦截器会先刷新
+	// access_token 再重载同一个 URL，而本判定与登录态无关，重载后仍被拒，登录用户会
+	// 陷入无限刷新。
+	//
+	// 令牌不存在/已注销/已过期则不报错，继续走原有判定（行为与不带令牌完全一致），
+	// 保证过期链接仍跳登录页、登录用户带失效链接也能正常访问。
+	if token := ginx.QueryStr(c, "__token", ""); token != "" {
+		st, err := models.GetSourceTokenByToken(rt.Ctx, models.SourceTypeBoard, token)
+		ginx.Dangerous(err)
+
+		switch judgeBoardToken(st, board.Id) {
+		case boardTokenDeny:
+			ginx.Bomb(http.StatusForbidden, "share link does not match this dashboard")
+		case boardTokenAllow:
+			ginx.NewRender(c).Data(board, nil)
+			return
+		}
 	}
 
 	if board.Public == 0 {
@@ -114,6 +140,10 @@ func (rt *Router) boardPureGet(c *gin.Context) {
 	if board == nil {
 		ginx.Bomb(http.StatusNotFound, "No such dashboard")
 	}
+
+	// 清除创建者和更新者信息
+	board.CreateBy = ""
+	board.UpdateBy = ""
 
 	ginx.NewRender(c).Data(board, nil)
 }
@@ -180,10 +210,11 @@ func (rt *Router) boardPut(c *gin.Context) {
 	bo.Name = f.Name
 	bo.Ident = f.Ident
 	bo.Tags = f.Tags
+	bo.Note = f.Note
 	bo.UpdateBy = me.Username
 	bo.UpdateAt = time.Now().Unix()
 
-	err = bo.Update(rt.Ctx, "name", "ident", "tags", "update_by", "update_at")
+	err = bo.Update(rt.Ctx, "name", "ident", "tags", "note", "update_by", "update_at")
 	ginx.NewRender(c).Data(bo, err)
 }
 
@@ -253,6 +284,9 @@ func (rt *Router) boardGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 
 	boards, err := models.BoardGetsByGroupId(rt.Ctx, bgid, query)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, boards)
+	}
 	ginx.NewRender(c).Data(boards, err)
 }
 
@@ -266,6 +300,9 @@ func (rt *Router) publicBoardGets(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	boards, err := models.BoardGets(rt.Ctx, "", "public=1 and (public_cate in (?) or id in (?))", []int64{0, 1}, boardIds)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, boards)
+	}
 	ginx.NewRender(c).Data(boards, err)
 }
 
@@ -305,6 +342,7 @@ func (rt *Router) boardGetsByGids(c *gin.Context) {
 			boards[i].Bgids = ids
 		}
 	}
+	models.FillUpdateByNicknames(rt.Ctx, boards)
 
 	ginx.NewRender(c).Data(boards, err)
 }
@@ -351,12 +389,12 @@ func (rt *Router) boardBatchClone(c *gin.Context) {
 			newBoard := bo.Clone(me.Username, bgid, "")
 			payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
 			if err != nil {
-				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = i18n.Sprintf(lang, err.Error())
+				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = translateText(lang, err.Error())
 				continue
 			}
 
 			if err = newBoard.AtomicAdd(rt.Ctx, payload); err != nil {
-				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = i18n.Sprintf(lang, err.Error())
+				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = translateText(lang, err.Error())
 			}
 		}
 	}

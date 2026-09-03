@@ -5,7 +5,7 @@ RunMode = "release"
 # log write dir
 Dir = "logs"
 # log level: DEBUG INFO WARNING ERROR
-Level = "DEBUG"
+Level = "INFO"
 # stdout, stderr, file
 Output = "stdout"
 # # rotate by time
@@ -75,12 +75,28 @@ Enable = true
 # open RSA
 OpenRSA = false
 
+[HTTP.A2A]
+# The /a2a and /mcp endpoints are enabled by default and reuse HTTP.TokenAuth (X-User-Token).
+# Both also accept OAuth access tokens (Authorization: Bearer) when the built-in
+# authorization server (MCPAuth) or external-IdP resource-server auth (RSAuth) is enabled.
+# Disable = false
+# DisableMCP = false
+# MCPToolsets: enabled toolset whitelist for the /mcp endpoint. Empty = all
+# default toolsets (metrics included). Valid names:
+#   alerts, targets, datasource, mutes, busi_groups, notify_rules,
+#   alert_subscribes, event_pipelines, users, metrics, logs, dashboards, roles
+# List names explicitly to restrict (unknown names are ignored, never widened).
+# MCPToolsets = ["alerts", "dashboards"]
+# MCPEnableWriteTools: /mcp exposes read-only tools by default; set true to
+# also register write tools (create/update/delete) — an explicit opt-in.
+# MCPEnableWriteTools = false
+
 [DB]
 # mysql postgres sqlite
 DBType = "sqlite"
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
 # postgres: DSN="host=127.0.0.1 port=5432 user=root dbname=n9e_v6 password=1234 sslmode=disable"
-# mysql: DSN="root:1234@tcp(localhost:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local"
+# mysql: DSN="root:1234@tcp(localhost:3306)/n9e_v6?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=True&loc=Local"
 DSN = "n9e.db"
 # enable debug mode or not
 Debug = false
@@ -90,8 +106,6 @@ MaxLifetime = 7200
 MaxOpenConns = 150
 # max idle connections
 MaxIdleConns = 50
-# enable auto migrate or not
-# EnableAutoMigrate = false
 
 [Redis]
 # address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
@@ -119,13 +133,94 @@ EngineName = "default"
 # [Alert.Alerting]
 # NotifyConcurrency = 10
 
+# eval execution records: what each rule evaluation queried and judged,
+# stored on local disk of the alert engine, queryable on the rule page
+# [Alert.EvalLog]
+# Disable = false
+# records dir, defaults to <[Log] Dir>/evallog
+# Dir = "logs/evallog"
+# RetentionHours = 192
+# MaxSeriesPerQuery = 100
+# MaxPointsPerSeries = 60
+# MaxRecordBytes = 262144
+# PerRuleDailyMB = 1024
+# write queue length; also caps memory retained when the disk stalls (the queue
+# holds in-memory records, ~200KB each at the default caps)
+# QueueSize = 512
+# MaxDiskGB = 20
+# read-side caps: keep query load off the eval loop.
+# MaxQueryBytes is the serialized-bytes budget of one query's result; a query that hits it
+# returns the newest records it fits plus an explicit "truncated" note. Raising it costs
+# roughly MaxConcurrentQueries x MaxQueryBytes x 3.7 of extra heap on this engine (decoded
+# records measure ~2.7x their on-disk bytes, plus one marshalled copy in the handler), and it
+# must stay below the 48MB per-node response cap on the center side.
+# MaxQueryBytes = 33554432
+# MaxConcurrentQueries = 2
+
 [Center]
 MetricsYamlFile = "./etc/metrics.yaml"
 I18NHeaderKey = "X-Language"
+# directory holding the bundled collector packages (categraf tar.gz) served by
+# /api/n9e/agents/categraf/download; relative paths resolve against the workdir
+# AgentsDir = "agents/categraf"
+# retention days of alert history events (table: alert_his_event)
+# events older than this are deleted in batches daily at 02:00
+# <= 0 means keep forever (default)
+# CleanAlertHisEventDay = 365
 
 [Center.AnonymousAccess]
 PromQuerier = true
 AlertDetail = true
+
+[EmbeddedTSDB]
+# built-in time series database. When enabled, metrics pushed by categraf are
+# stored locally, no external TSDB (Prometheus/VictoriaMetrics) is needed to
+# view data, a prometheus datasource named "embedded-tsdb" is auto registered.
+# suitable for small scale (up to ~100k active series). for larger scale,
+# disable this and configure [[Pushgw.Writers]] to an external TSDB, both can
+# be enabled at the same time (dual write) during migration.
+# NOTE: data is stored on the local disk of THIS center instance, so it only
+# fits single-instance center deployment; with multiple center replicas each
+# replica would hold a fragment of the data, disable this and use an
+# external TSDB instead
+# NOTE: this section is handled by the center process only. n9e-edge /
+# n9e-alert / n9e-pushgw read the same etc directory but ignore it
+Enable = true
+# data directory
+Dir = "data/tsdb"
+# how long to retain samples, e.g. 12h 7d 15d
+RetentionDuration = "15d"
+# max disk space used by data blocks, oldest blocks are deleted first when
+# exceeded, e.g. 512MiB 10GiB. empty or 0 means unlimited
+MaxBytes = "10GiB"
+# tolerate out-of-order samples within this window (agent clock skew/resend)
+OutOfOrderTimeWindow = "10m"
+# query engine settings
+QueryTimeout = "1m"
+QueryMaxSamples = 50000000
+LookbackDelta = "5m"
+# max concurrent queries, extra queries are queued (default 20, same as
+# prometheus --query.max-concurrency)
+# QueryMaxConcurrency = 20
+# optional basic auth of the /prometheus/api/v1/* endpoints (query and
+# remote write), also written into the auto registered datasource and the
+# internal write path. when left empty, these endpoints only accept requests
+# from this machine and the auto registered datasource points at 127.0.0.1;
+# set user/pass to allow remote access (e.g. n9e-edge, grafana, or agents
+# writing to this endpoint directly), the datasource url then uses the
+# detected ip
+BasicAuthUser = ""
+BasicAuthPass = ""
+# register the destructive admin endpoints delete_series/clean_tombstones
+# (default false, same as prometheus --web.enable-admin-api); configure
+# BasicAuthUser/Pass before enabling this
+# EnableAdminAPI = false
+# override the url of the auto registered datasource, e.g. a vip/domain in
+# front of this instance; setting it also lifts the local-only restriction
+# of the /prometheus/api/v1/* endpoints. default when basic auth is
+# configured: http(s)://<detected ip>:<http port>/prometheus, otherwise
+# http(s)://127.0.0.1:<http port>/prometheus
+# DatasourceUrl = ""
 
 [Pushgw]
 # use target labels in database instead of in series
@@ -140,25 +235,27 @@ ForceUseServerTS = true
 # QueueMaxSize = 1000000
 # QueuePopSize = 1000
 
-[[Pushgw.Writers]] 
+# uncomment to forward samples to an external TSDB, can be enabled together
+# with [EmbeddedTSDB] (dual write)
+# [[Pushgw.Writers]]
 # Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
-Url = "http://127.0.0.1:9090/api/v1/write"
+# Url = "http://127.0.0.1:9090/api/v1/write"
 # Basic auth username
-BasicAuthUser = ""
+# BasicAuthUser = ""
 # Basic auth password
-BasicAuthPass = ""
+# BasicAuthPass = ""
 # timeout settings, unit: ms
-Headers = ["X-From", "n9e"]
-Timeout = 10000
-DialTimeout = 3000
-TLSHandshakeTimeout = 30000
-ExpectContinueTimeout = 1000
-IdleConnTimeout = 90000
+# Headers = ["X-From", "n9e"]
+# Timeout = 10000
+# DialTimeout = 3000
+# TLSHandshakeTimeout = 30000
+# ExpectContinueTimeout = 1000
+# IdleConnTimeout = 90000
 # time duration, unit: ms
-KeepAlive = 30000
-MaxConnsPerHost = 0
-MaxIdleConns = 100
-MaxIdleConnsPerHost = 100
+# KeepAlive = 30000
+# MaxConnsPerHost = 0
+# MaxIdleConns = 100
+# MaxIdleConnsPerHost = 100
 ## Optional TLS Config
 # UseTLS = false
 # TLSCA = "/etc/n9e/ca.pem"

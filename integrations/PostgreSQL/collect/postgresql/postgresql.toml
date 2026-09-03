@@ -40,10 +40,13 @@
   ## with pool_mode set to transaction.
   #prepared_statements = true
   # [[instances.metrics]]
-  # mesurement = "sessions"
-  # label_fields = [ "status", "type" ]
+  # measurement = "sessions"
+  # label_fields = [ "state" ]
   # metric_fields = [ "value" ]
   # timeout = "3s"
   # request = '''
-  # SELECT status, type, COUNT(*) as value FROM v$session GROUP BY status, type
+  # SELECT COALESCE(state, 'unknown') AS state,
+  #        COUNT(*)::double precision AS value
+  # FROM pg_stat_activity
+  # GROUP BY COALESCE(state, 'unknown')
   # '''

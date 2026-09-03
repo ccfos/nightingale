@@ -34,6 +34,7 @@ type Shard struct {
 	MaxOpenConns    int    `json:"mysql.max_open_conns" mapstructure:"mysql.max_open_conns"`
 	ConnMaxLifetime int    `json:"mysql.conn_max_lifetime" mapstructure:"mysql.conn_max_lifetime"`
 	MaxQueryRows    int    `json:"mysql.max_query_rows" mapstructure:"mysql.max_query_rows"`
+	DsnExtraParams  string `json:"mysql.dsn_extra_params" mapstructure:"mysql.dsn_extra_params"`
 }
 
 func NewMySQLWithSettings(ctx context.Context, settings interface{}) (*MySQL, error) {
@@ -60,6 +61,11 @@ func NewMySQLWithSettings(ctx context.Context, settings interface{}) (*MySQL, er
 
 // NewConn establishes a new connection to MySQL
 func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) {
+	if database != "" {
+		if err := sqlbase.ValidateIdentifier(database); err != nil {
+			return nil, fmt.Errorf("mysql connect: %w", err)
+		}
+	}
 	if len(m.Shards) == 0 {
 		return nil, errors.New("empty pgsql shards")
 	}
@@ -93,13 +99,20 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 	if len(shard.Addr) == 0 {
 		return nil, errors.New("empty addr")
 	}
+	extraParams, err := NormalizeDSNExtraParams(shard.DsnExtraParams)
+	if err != nil {
+		return nil, fmt.Errorf("mysql connect: invalid mysql.dsn_extra_params: %w", err)
+	}
+
 	var keys []string
-	var err error
 	keys = append(keys, shard.Addr)
 
 	keys = append(keys, shard.Password, shard.User)
 	if len(database) > 0 {
 		keys = append(keys, database)
+	}
+	if extraParams != "" {
+		keys = append(keys, extraParams)
 	}
 	cachedKey := strings.Join(keys, ":")
 	// cache conn with database
@@ -115,6 +128,9 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 	}()
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True", shard.User, shard.Password, shard.Addr, database)
+	if extraParams != "" {
+		dsn += "&" + extraParams
+	}
 	db, err = sqlbase.NewDB(
 		ctx,
 		mysql.Open(dsn),
@@ -144,22 +160,35 @@ func (m *MySQL) ShowTables(ctx context.Context, database string) ([]string, erro
 }
 
 func (m *MySQL) DescTable(ctx context.Context, database, table string) ([]*types.ColumnProperty, error) {
+	if err := sqlbase.ValidateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("describe table: %w", err)
+	}
+	// database is validated inside NewConn
 	db, err := m.NewConn(ctx, database)
 	if err != nil {
 		return nil, err
 	}
 
-	query := fmt.Sprintf("DESCRIBE %s", table)
+	query := "DESCRIBE " + sqlbase.QuoteBacktick(table)
 	return sqlbase.DescTable(ctx, db, query)
 }
 
+// SelectRows selects rows from the given table. table is validated as a SQL
+// identifier; query is a WHERE clause fragment that callers must validate.
 func (m *MySQL) SelectRows(ctx context.Context, database, table, query string) ([]map[string]interface{}, error) {
+	if err := sqlbase.ValidateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("select rows: %w", err)
+	}
 	db, err := m.NewConn(ctx, database)
 	if err != nil {
 		return nil, err
 	}
 
-	return sqlbase.SelectRows(ctx, db, table, query)
+	sql := "SELECT * FROM " + sqlbase.QuoteBacktick(table)
+	if query != "" {
+		sql += " WHERE " + query
+	}
+	return sqlbase.ExecQuery(ctx, db, sql)
 }
 
 func (m *MySQL) ExecQuery(ctx context.Context, database string, sql string) ([]map[string]interface{}, error) {

@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 )
 
 const EMBEDDEDDASHBOARD = "embedded-dashboards"
@@ -15,6 +15,9 @@ func (rt *Router) configsGet(c *gin.Context) {
 	prefix := ginx.QueryStr(c, "prefix", "")
 	limit := ginx.QueryInt(c, "limit", 10)
 	configs, err := models.ConfigsGets(rt.Ctx, prefix, limit, ginx.Offset(c, limit))
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, configs)
+	}
 	ginx.NewRender(c).Data(configs, err)
 }
 

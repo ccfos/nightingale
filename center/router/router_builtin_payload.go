@@ -9,16 +9,37 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/i18n"
+	"gopkg.in/yaml.v2"
 )
+
+// verifyCollectContent 校验采集模板内容。绝大多数 categraf 采集插件配置是 TOML，
+// 因此先按 TOML 解析；失败再尝试 YAML（prometheus-agent 等外挂配置为 YAML）。
+// 两者都无法解析时返回 TOML 的报错——历史模板默认是 TOML，沿用 TOML 错误更贴近用户预期。
+// 这里的宽松程度与 n9e-plus 采集配置的校验保持一致，避免模板能存、
+// 由模板生成的采集配置却存不下。
+func verifyCollectContent(content string) error {
+	var tomlMap map[string]interface{}
+	tomlErr := toml.Unmarshal([]byte(content), &tomlMap)
+	if tomlErr == nil {
+		return nil
+	}
+
+	var yamlMap map[string]interface{}
+	if yamlErr := yaml.Unmarshal([]byte(content), &yamlMap); yamlErr == nil && len(yamlMap) > 0 {
+		return nil
+	}
+
+	return tomlErr
+}
 
 type Board struct {
 	Name    string      `json:"name"`
 	Tags    string      `json:"tags"`
 	Configs interface{} `json:"configs"`
 	UUID    int64       `json:"uuid"`
+	Note    string      `json:"note"`
 }
 
 func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
@@ -66,7 +87,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
-						reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+						reterr[bp.Name] = translateText(c.GetHeader("X-Language"), err.Error())
 					}
 				}
 				continue
@@ -101,7 +122,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
-				reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+				reterr[bp.Name] = translateText(c.GetHeader("X-Language"), err.Error())
 			}
 		} else if lst[i].Type == "dashboard" {
 			if strings.HasPrefix(strings.TrimSpace(lst[i].Content), "[") {
@@ -129,13 +150,14 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 						Name:        dashboard.Name,
 						Tags:        dashboard.Tags,
 						UUID:        dashboard.UUID,
+						Note:        dashboard.Note,
 						Content:     string(contentBytes),
 						CreatedBy:   username,
 						UpdatedBy:   username,
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
-						reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+						reterr[bp.Name] = translateText(c.GetHeader("X-Language"), err.Error())
 					}
 				}
 				continue
@@ -143,7 +165,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 			dashboard := Board{}
 			if err := json.Unmarshal([]byte(lst[i].Content), &dashboard); err != nil {
-				reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+				reterr[lst[i].Name] = translateText(c.GetHeader("X-Language"), err.Error())
 				continue
 			}
 
@@ -164,25 +186,25 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				Name:        dashboard.Name,
 				Tags:        dashboard.Tags,
 				UUID:        dashboard.UUID,
+				Note:        dashboard.Note,
 				Content:     string(contentBytes),
 				CreatedBy:   username,
 				UpdatedBy:   username,
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
-				reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+				reterr[bp.Name] = translateText(c.GetHeader("X-Language"), err.Error())
 			}
 		} else {
 			if lst[i].Type == "collect" {
-				c := make(map[string]interface{})
-				if _, err := toml.Decode(lst[i].Content, &c); err != nil {
+				if err := verifyCollectContent(lst[i].Content); err != nil {
 					reterr[lst[i].Name] = err.Error()
 					continue
 				}
 			}
 
 			if err := lst[i].Add(rt.Ctx, username); err != nil {
-				reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+				reterr[lst[i].Name] = translateText(c.GetHeader("X-Language"), err.Error())
 			}
 		}
 
@@ -202,10 +224,12 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	cate := ginx.QueryStr(c, "cate", "")
 	query := ginx.QueryStr(c, "query", "")
 
+	// DB 里的用户自建模板不做语言处理（用户内容语言无关），仅内置模板按请求语言渲染
 	lst, err := models.BuiltinPayloadGets(rt.Ctx, uint64(ComponentID), typ, cate, query)
 	ginx.Dangerous(err)
 
-	lstInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
+	lang := integration.NormalizeLang(c.GetHeader("X-Language"))
+	lstInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayload(typ, cate, query, uint64(ComponentID), lang)
 	ginx.Dangerous(err)
 
 	if len(lstInFile) > 0 {
@@ -222,7 +246,8 @@ func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	cates, err := models.BuiltinPayloadCates(rt.Ctx, typ, uint64(ComponentID))
 	ginx.Dangerous(err)
 
-	catesInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayloadCates(typ, uint64(ComponentID))
+	lang := integration.NormalizeLang(c.GetHeader("X-Language"))
+	catesInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayloadCates(typ, uint64(ComponentID), lang)
 	ginx.Dangerous(err)
 
 	// 使用 map 进行去重
@@ -262,7 +287,7 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 	if req.Type == "alert" {
 		alertRule := models.AlertRule{}
 		if err := json.Unmarshal([]byte(req.Content), &alertRule); err != nil {
-			ginx.Bomb(http.StatusBadRequest, err.Error())
+			bombErr(http.StatusBadRequest, err)
 		}
 
 		req.Name = alertRule.Name
@@ -270,15 +295,15 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 	} else if req.Type == "dashboard" {
 		dashboard := Board{}
 		if err := json.Unmarshal([]byte(req.Content), &dashboard); err != nil {
-			ginx.Bomb(http.StatusBadRequest, err.Error())
+			bombErr(http.StatusBadRequest, err)
 		}
 
 		req.Name = dashboard.Name
 		req.Tags = dashboard.Tags
+		req.Note = dashboard.Note
 	} else if req.Type == "collect" {
-		c := make(map[string]interface{})
-		if _, err := toml.Decode(req.Content, &c); err != nil {
-			ginx.Bomb(http.StatusBadRequest, err.Error())
+		if err := verifyCollectContent(req.Content); err != nil {
+			bombErr(http.StatusBadRequest, err)
 		}
 	}
 
@@ -300,12 +325,15 @@ func (rt *Router) builtinPayloadsDel(c *gin.Context) {
 func (rt *Router) builtinPayloadsGetByUUID(c *gin.Context) {
 	uuid := ginx.QueryInt64(c, "uuid")
 
+	// 优先查内存中的文件数据，与列表接口保持一致（按请求语言取变体）
+	lang := integration.NormalizeLang(c.GetHeader("X-Language"))
+	if bp := integration.BuiltinPayloadInFile.GetByUUID(uuid, lang); bp != nil {
+		ginx.NewRender(c).Data(bp, nil)
+		return
+	}
+
 	bp, err := models.BuiltinPayloadGet(rt.Ctx, "uuid = ?", uuid)
 	ginx.Dangerous(err)
 
-	if bp != nil {
-		ginx.NewRender(c).Data(bp, nil)
-	} else {
-		ginx.NewRender(c).Data(integration.BuiltinPayloadInFile.IndexData[uuid], nil)
-	}
+	ginx.NewRender(c).Data(bp, nil)
 }

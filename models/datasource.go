@@ -1,7 +1,10 @@
 package models
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -10,41 +13,69 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
+
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
+	"gorm.io/gorm"
 )
 
 type Datasource struct {
-	Id             int64                  `json:"id"`
-	Name           string                 `json:"name"`
-	Identifier     string                 `json:"identifier"`
-	Description    string                 `json:"description"`
-	PluginId       int64                  `json:"plugin_id"`
-	PluginType     string                 `json:"plugin_type"`      // prometheus
-	PluginTypeName string                 `json:"plugin_type_name"` // Prometheus Like
-	Category       string                 `json:"category"`         // timeseries
-	ClusterName    string                 `json:"cluster_name"`
-	Settings       string                 `json:"-" gorm:"settings"`
-	SettingsJson   map[string]interface{} `json:"settings" gorm:"-"`
-	Status         string                 `json:"status"`
-	HTTP           string                 `json:"-" gorm:"http"`
-	HTTPJson       HTTP                   `json:"http" gorm:"-"`
-	Auth           string                 `json:"-" gorm:"auth"`
-	AuthJson       Auth                   `json:"auth" gorm:"-"`
-	CreatedAt      int64                  `json:"created_at"`
-	UpdatedAt      int64                  `json:"updated_at"`
-	CreatedBy      string                 `json:"created_by"`
-	UpdatedBy      string                 `json:"updated_by"`
-	IsDefault      bool                   `json:"is_default"`
-	Transport      *http.Transport        `json:"-" gorm:"-"`
-	ForceSave      bool                   `json:"force_save" gorm:"-"`
+	Id              int64                  `json:"id"`
+	Name            string                 `json:"name"`
+	Identifier      string                 `json:"identifier"`
+	Description     string                 `json:"description"`
+	PluginId        int64                  `json:"plugin_id"`
+	PluginType      string                 `json:"plugin_type"`      // prometheus
+	PluginTypeName  string                 `json:"plugin_type_name"` // Prometheus Like
+	Category        string                 `json:"category"`         // timeseries
+	ClusterName     string                 `json:"cluster_name"`
+	Settings        string                 `json:"-" gorm:"settings"`
+	SettingsJson    map[string]interface{} `json:"settings" gorm:"-"`
+	SettingsEncoded string                 `json:"settings_encoded" gorm:"-"`
+	Status          string                 `json:"status"`
+	HTTP            string                 `json:"-" gorm:"http"`
+	HTTPJson        HTTP                   `json:"http" gorm:"-"`
+	Auth            string                 `json:"-" gorm:"auth"`
+	AuthJson        Auth                   `json:"auth" gorm:"-"`
+	AuthEncoded     string                 `json:"auth_encoded" gorm:"-"`
+	CreatedAt       int64                  `json:"created_at"`
+	UpdatedAt       int64                  `json:"updated_at"`
+	CreatedBy       string                 `json:"created_by"`
+	UpdatedBy       string                 `json:"updated_by"`
+	IsDefault       bool                   `json:"is_default"`
+	Weight          int                    `json:"weight"`
+	Transport       *http.Transport        `json:"-" gorm:"-"`
+	ForceSave       bool                   `json:"force_save" gorm:"-"`
 }
 
 type Auth struct {
 	BasicAuth         bool   `json:"basic_auth"`
 	BasicAuthUser     string `json:"basic_auth_user"`
 	BasicAuthPassword string `json:"basic_auth_password"`
+}
+
+var rsaConfig *RsaConfig
+
+type RsaConfig struct {
+	OpenRSA         bool   `json:"open_rsa"`
+	RSAPublicKey    string `json:"rsa_public_key,omitempty"`
+	RSAPrivateKey   string `json:"rsa_private_key,omitempty"`
+	RSAPassWord     string `json:"rsa_password,omitempty"`
+	PrivateKeyBytes []byte
+}
+
+func SetRsaConfig(cfg *RsaConfig) {
+	if cfg != nil {
+		rsaConfig = cfg
+		return
+	}
+	logger.Warning("Rsa config is nil")
+}
+
+func GetRsaConfig() *RsaConfig {
+	return rsaConfig
 }
 
 type HTTP struct {
@@ -117,6 +148,72 @@ func (h HTTP) ParseUrl() (target *url.URL, err error) {
 
 type TLS struct {
 	SkipTlsVerify bool `json:"skip_tls_verify"`
+	// mTLS 配置
+	CACert            string `json:"ca_cert"`             // CA 证书内容 (PEM 格式)
+	ClientCert        string `json:"client_cert"`         // 客户端证书内容 (PEM 格式)
+	ClientKey         string `json:"client_key"`          // 客户端密钥内容 (PEM 格式)
+	ClientKeyPassword string `json:"client_key_password"` // 密钥密码（可选）
+	ServerName        string `json:"server_name"`         // TLS ServerName（可选，用于证书验证）
+	MinVersion        string `json:"min_version"`         // TLS 最小版本 (1.0, 1.1, 1.2, 1.3)
+	MaxVersion        string `json:"max_version"`         // TLS 最大版本
+}
+
+// TLSConfig 从证书内容创建 tls.Config
+// 证书内容为 PEM 格式字符串
+func (t *TLS) TLSConfig() (*tls.Config, error) {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: t.SkipTlsVerify,
+	}
+
+	// 设置 ServerName
+	if t.ServerName != "" {
+		tlsConfig.ServerName = t.ServerName
+	}
+
+	// 设置 TLS 版本
+	if t.MinVersion != "" {
+		if v, ok := tlsVersionMap[t.MinVersion]; ok {
+			tlsConfig.MinVersion = v
+		}
+	}
+	if t.MaxVersion != "" {
+		if v, ok := tlsVersionMap[t.MaxVersion]; ok {
+			tlsConfig.MaxVersion = v
+		}
+	}
+
+	// 如果配置了客户端证书，则加载 mTLS 配置
+	clientCert := strings.TrimSpace(t.ClientCert)
+	clientKey := strings.TrimSpace(t.ClientKey)
+	caCert := strings.TrimSpace(t.CACert)
+
+	if clientCert != "" && clientKey != "" {
+		// 加载客户端证书和密钥
+		cert, err := tls.X509KeyPair([]byte(clientCert), []byte(clientKey))
+		if err != nil {
+			return nil, fmt.Errorf("failed to load client certificate: %w", err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	// 加载 CA 证书
+	if caCert != "" {
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM([]byte(caCert)) {
+			return nil, fmt.Errorf("failed to parse CA certificate")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	return tlsConfig, nil
+}
+
+// tlsVersionMap TLS 版本映射
+var tlsVersionMap = map[string]uint16{
+	"1.0": tls.VersionTLS10,
+	"1.1": tls.VersionTLS11,
+	"1.2": tls.VersionTLS12,
+	"1.3": tls.VersionTLS13,
 }
 
 func (ds *Datasource) TableName() string {
@@ -140,7 +237,7 @@ func (ds *Datasource) Update(ctx *ctx.Context, selectField interface{}, selectFi
 	if ds.UpdatedAt == 0 {
 		ds.UpdatedAt = time.Now().Unix()
 	}
-	return DB(ctx).Model(ds).Select(selectField, selectFields...).Updates(ds).Error
+	return DB(ctx).Model(ds).Session(&gorm.Session{SkipHooks: true}).Select(selectField, selectFields...).Updates(ds).Error
 }
 
 func (ds *Datasource) Add(ctx *ctx.Context) error {
@@ -210,6 +307,10 @@ func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
 			return nil, err
 		}
 		for i := 0; i < len(lst); i++ {
+			if err := lst[i].Decrypt(); err != nil {
+				logger.Errorf("decrypt datasource %+v fail: %v", lst[i], err)
+				continue
+			}
 			lst[i].FE2DB()
 		}
 		return lst, nil
@@ -308,10 +409,10 @@ func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name, status string) ([]*
 	return lst, err
 }
 
-func GetDatasourcesGetsByTypes(ctx *ctx.Context, typs []string) (map[string]*Datasource, error) {
+func GetDatasourcesGetsByTypes(ctx *ctx.Context, types []string) (map[string]*Datasource, error) {
 	var lst []*Datasource
 	m := make(map[string]*Datasource)
-	err := DB(ctx).Where("plugin_type in ?", typs).Find(&lst).Error
+	err := DB(ctx).Where("plugin_type in ?", types).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
@@ -386,6 +487,106 @@ func (ds *Datasource) DB2FE() error {
 	return nil
 }
 
+// Encrypt 数据源密码加密
+func (ds *Datasource) Encrypt(openRsa bool, publicKeyData []byte) error {
+	if !openRsa {
+		return nil
+	}
+
+	if ds.Settings != "" {
+		encVal, err := secu.EncryptValue(ds.Settings, publicKeyData)
+		if err != nil {
+			logger.Errorf("encrypt settings failed: datasource=%s err=%v", ds.Name, err)
+			return err
+		} else {
+			ds.SettingsEncoded = encVal
+		}
+	}
+	if ds.Auth != "" {
+		encVal, err := secu.EncryptValue(ds.Auth, publicKeyData)
+		if err != nil {
+			logger.Errorf("encrypt basic failed: datasource=%s err=%v", ds.Name, err)
+			return err
+		} else {
+			ds.AuthEncoded = encVal
+		}
+	}
+	ds.ClearPlaintext()
+	return nil
+}
+
+// Decrypt 用于 edge 将从中心同步的数据源解密，中心不可调用
+func (ds *Datasource) Decrypt() error {
+	if rsaConfig == nil {
+		logger.Debugf("datasource %s rsa config is nil", ds.Name)
+		return nil
+	}
+
+	if !rsaConfig.OpenRSA {
+		return nil
+	}
+
+	privateKeyData := rsaConfig.PrivateKeyBytes
+	password := rsaConfig.RSAPassWord
+	if ds.SettingsEncoded != "" {
+		settings, err := secu.Decrypt(ds.SettingsEncoded, privateKeyData, password)
+		if err != nil {
+			return err
+		}
+		ds.Settings = settings
+		err = json.Unmarshal([]byte(settings), &ds.SettingsJson)
+		if err != nil {
+			return err
+		}
+	}
+
+	if ds.AuthEncoded != "" {
+		auth, err := secu.Decrypt(ds.AuthEncoded, privateKeyData, password)
+		if err != nil {
+			return err
+		}
+		ds.Auth = auth
+		err = json.Unmarshal([]byte(auth), &ds.AuthJson)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ClearPlaintext 清理 Settings / Auth 的明文字段。
+// 仅用于 Encrypt() 之后，加密产物（SettingsEncoded / AuthEncoded）和 HTTP headers
+// 必须保留以便 edge 节点解密和使用。给最终用户脱敏请用 RedactSecrets()。
+func (ds *Datasource) ClearPlaintext() {
+	ds.Settings = ""
+	ds.SettingsJson = nil
+
+	ds.Auth = ""
+	ds.AuthJson.BasicAuthUser = ""
+	ds.AuthJson.BasicAuthPassword = ""
+}
+
+// RedactSecrets 抹掉所有可能携带密钥 / 口令 / 令牌的字段，用于把数据源对象
+// 返回给非管理员用户。HTTPJson.Url/Urls 等非敏感连接信息保留，方便前端展示。
+func (ds *Datasource) RedactSecrets() {
+	ds.Settings = ""
+	ds.SettingsJson = nil
+	ds.SettingsEncoded = ""
+
+	ds.HTTP = ""
+	ds.HTTPJson.Headers = nil
+	// mTLS 客户端私钥及其口令属于密钥材料，必须抹掉；
+	// CA / 客户端证书不算口令，但也没有展示需求，一并清空。
+	ds.HTTPJson.TLS.CACert = ""
+	ds.HTTPJson.TLS.ClientCert = ""
+	ds.HTTPJson.TLS.ClientKey = ""
+	ds.HTTPJson.TLS.ClientKeyPassword = ""
+
+	ds.Auth = ""
+	ds.AuthJson = Auth{}
+	ds.AuthEncoded = ""
+}
+
 func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 	var lst []*Datasource
 	var err error
@@ -395,6 +596,10 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 			return nil, err
 		}
 		for i := 0; i < len(lst); i++ {
+			if err := lst[i].Decrypt(); err != nil {
+				logger.Errorf("decrypt datasource %+v fail: %v", lst[i], err)
+				continue
+			}
 			lst[i].FE2DB()
 		}
 	} else {
@@ -435,4 +640,120 @@ func DatasourceStatistics(ctx *ctx.Context) (*Statistics, error) {
 	}
 
 	return stats[0], nil
+}
+
+// EmbeddedTSDBIdentifier marks the datasource auto-created for the embedded
+// tsdb, so restarts can find it regardless of user renames.
+const EmbeddedTSDBIdentifier = "n9e-embedded-tsdb"
+
+const EmbeddedTSDBName = "embedded-tsdb"
+
+// embeddedTSDBTsdbType 必须与前端时序库类型下拉框的取值、以及
+// center/router.DatasourceTypePrometheus 保持一致（大小写敏感），否则按该字段
+// 分发的功能（如删除序列接口）会认不出这个数据源。
+const embeddedTSDBTsdbType = "Prometheus"
+
+const embeddedTSDBTsdbTypeKey = "prometheus.tsdb_type"
+
+// InitEmbeddedTSDBDatasource ensures a prometheus datasource pointing at the
+// embedded tsdb query endpoints exists. Idempotent: creates the record on
+// first start, updates url/auth/tsdb_type if they drift (e.g. server ip changed).
+// Creation is skipped when other enabled prometheus datasources already
+// exist, so setups with an external TSDB don't get a surprise datasource;
+// once created though, it is kept up to date even if external datasources
+// are added later.
+// The alert engine reader and memsto caches poll the datasource table, so the
+// record takes effect without any notification.
+func InitEmbeddedTSDBDatasource(ctx *ctx.Context, url, basicAuthUser, basicAuthPass string, skipTLSVerify bool) {
+	auth := Auth{}
+	if basicAuthUser != "" {
+		auth = Auth{BasicAuth: true, BasicAuthUser: basicAuthUser, BasicAuthPassword: basicAuthPass}
+	}
+
+	var lst []*Datasource
+	if err := DB(ctx).Where("identifier = ?", EmbeddedTSDBIdentifier).Find(&lst).Error; err != nil {
+		logger.Warningf("InitEmbeddedTSDBDatasource query failed: %v", err)
+		return
+	}
+
+	now := time.Now().Unix()
+
+	if len(lst) > 0 {
+		ds := lst[0]
+		if err := ds.DB2FE(); err != nil {
+			logger.Warningf("InitEmbeddedTSDBDatasource unmarshal failed: %v", err)
+			return
+		}
+
+		if ds.HTTPJson.Url == url && ds.AuthJson == auth && ds.HTTPJson.TLS.SkipTlsVerify == skipTLSVerify &&
+			ds.SettingsJson[embeddedTSDBTsdbTypeKey] == embeddedTSDBTsdbType {
+			return
+		}
+
+		ds.HTTPJson.Url = url
+		ds.HTTPJson.TLS.SkipTlsVerify = skipTLSVerify
+		ds.AuthJson = auth
+		if ds.SettingsJson == nil {
+			ds.SettingsJson = make(map[string]interface{})
+		}
+		ds.SettingsJson[embeddedTSDBTsdbTypeKey] = embeddedTSDBTsdbType
+		ds.UpdatedAt = now
+		ds.UpdatedBy = "system"
+		if err := ds.Update(ctx, "settings", "http", "auth", "updated_at", "updated_by"); err != nil {
+			logger.Warningf("InitEmbeddedTSDBDatasource update failed: %v", err)
+			return
+		}
+		logger.Infof("embedded tsdb datasource url updated to %s", url)
+		return
+	}
+
+	// respect existing setups: if usable prometheus datasources already
+	// exist, don't add a built-in one. Note samples are still written to the
+	// local storage as long as EmbeddedTSDB is enabled.
+	var promCount int64
+	if err := DB(ctx).Model(&Datasource{}).Where("plugin_type = ? and status = ?", PROMETHEUS, "enabled").Count(&promCount).Error; err != nil {
+		logger.Warningf("InitEmbeddedTSDBDatasource count failed: %v", err)
+		return
+	}
+	if promCount > 0 {
+		logger.Infof("embedded tsdb datasource auto register skipped: %d enabled prometheus datasource(s) already exist. samples are still stored locally, to query them create a prometheus datasource with url %s, or disable EmbeddedTSDB if the local storage is not needed", promCount, url)
+		return
+	}
+
+	var nameCount int64
+	if err := DB(ctx).Model(&Datasource{}).Where("name = ?", EmbeddedTSDBName).Count(&nameCount).Error; err != nil {
+		logger.Warningf("InitEmbeddedTSDBDatasource count by name failed: %v", err)
+		return
+	}
+	if nameCount > 0 {
+		logger.Warningf("datasource named %s already exists but was not created for the embedded tsdb, skip auto register", EmbeddedTSDBName)
+		return
+	}
+
+	ds := &Datasource{
+		Name:           EmbeddedTSDBName,
+		Identifier:     EmbeddedTSDBIdentifier,
+		Description:    "auto-created datasource backed by the built-in tsdb of n9e",
+		PluginId:       1,
+		PluginType:     PROMETHEUS,
+		PluginTypeName: "Prometheus Like",
+		Category:       "timeseries",
+		ClusterName:    "default",
+		SettingsJson: map[string]interface{}{
+			embeddedTSDBTsdbTypeKey: embeddedTSDBTsdbType,
+		},
+		HTTPJson:  HTTP{Url: url, Timeout: 10000, DialTimeout: 3000, MaxIdleConnsPerHost: 100, TLS: TLS{SkipTlsVerify: skipTLSVerify}},
+		AuthJson:  auth,
+		Status:    "enabled",
+		IsDefault: true,
+		CreatedBy: "system",
+		UpdatedBy: "system",
+	}
+
+	if err := ds.Add(ctx); err != nil {
+		logger.Warningf("InitEmbeddedTSDBDatasource insert failed: %v", err)
+		return
+	}
+
+	logger.Infof("embedded tsdb datasource auto registered, url: %s", url)
 }

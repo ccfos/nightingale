@@ -9,10 +9,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
         "lang": "zh_CN",
         "expression": "nginx_waiting",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -24,7 +22,11 @@
                 "name": "Nginx stub _ status Number of current idle connections",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -36,10 +38,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
         "lang": "zh_CN",
         "expression": "nginx_writing",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -51,7 +51,11 @@
                 "name": "Nginx stub _ status The number of connections that are writing back response",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -63,10 +67,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)\n\nReading + Writing + Waiting 的总和",
         "lang": "zh_CN",
         "expression": "nginx_active",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -78,7 +80,11 @@
                 "name": "Nginx stub _ status Number of active connections being processed",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md) \n \nSum of Reading + Writing + Waiting"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -90,10 +96,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
         "lang": "zh_CN",
         "expression": "nginx_reading",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -105,7 +109,11 @@
                 "name": "Nginx stub _ status is reading the number of connections to the request header",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -117,10 +125,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
         "lang": "zh_CN",
         "expression": "irate(nginx_accepts[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -132,7 +138,11 @@
                 "name": "Nginx stub _ status New connections accepted per second",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -144,10 +154,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)",
         "lang": "zh_CN",
         "expression": "irate(nginx_handled[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -159,7 +167,11 @@
                 "name": "Nginx stub _ status New connections per second handle",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -171,10 +183,8 @@
         "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)\n\n如果有 keep-alive 连接的情况，一个连接上会处理多个请求。",
         "lang": "zh_CN",
         "expression": "irate(nginx_requests[3m])",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "promql",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -186,6 +196,10 @@
                 "name": "Nginx stub _ status requests processed per second",
                 "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md) \n \nIf there is a keep-alive connection, multiple requests will be processed on one connection."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     }
 ]

@@ -1,0 +1,321 @@
+[
+    {
+        "id": 1,
+        "uuid": 1719305153888541012,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "活跃线程数",
+        "unit": "",
+        "note": "数据库活跃状态工作线程数量。",
+        "lang": "zh_CN",
+        "expression": "dmdb_active_threads",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "活跃线程数",
+                "note": "数据库活跃状态工作线程数量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Active Threads",
+                "note": "The number of active worker threads in the database."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 2,
+        "uuid": 1719305153888541013,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "缓存命中率",
+        "unit": "%",
+        "note": "缓存的命中比例。",
+        "lang": "zh_CN",
+        "expression": "dmdb_cache_hit_rate",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "缓存命中率",
+                "note": "缓存的命中比例。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Cache Hit Rate",
+                "note": "The hit ratio of database cache."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 3,
+        "uuid": 1719305153888541014,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "锁等待线程数",
+        "unit": "",
+        "note": "数据库锁（轻量级锁）的线程数量。",
+        "lang": "zh_CN",
+        "expression": "dmdb_latches_threads",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "锁等待线程数",
+                "note": "数据库锁（轻量级锁）状态的线程数量。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Latches Waiting Threads",
+                "note": "The number of threads in the state of database latches."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 4,
+        "uuid": 1719305153888541015,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "锁数量",
+        "unit": "",
+        "note": "数据库当前持有的锁总数。",
+        "lang": "zh_CN",
+        "expression": "dmdb_lock_cnt",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "锁数量",
+                "note": "数据库当前持有的锁总数。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Lock Count",
+                "note": "The total number of locks currently held by the database."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 5,
+        "uuid": 1719305153888541016,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "缓存缓冲区大小",
+        "unit": "bytes",
+        "note": "内存缓冲区的配置/使用大小。",
+        "lang": "zh_CN",
+        "expression": "dmdb_mem_buffer_size",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "缓存缓冲区大小",
+                "note": "内存缓冲区（数据缓冲区、日志缓冲区等）的配置/使用大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Memory Buffer Size",
+                "note": "The configured/used size of the database memory buffer (data buffer, log buffer, etc.)."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 6,
+        "uuid": 1719305153888541017,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "内存池大小",
+        "unit": "bytes",
+        "note": "数据库专用内存池（会话内存池、系统内存池等）的配置/使用大小。",
+        "lang": "zh_CN",
+        "expression": "dmdb_mem_pool_size",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "内存池大小",
+                "note": "数据库专用内存池（会话内存池、系统内存池等）的配置/使用大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Memory Pool Size",
+                "note": "The configured/used size of the dedicated memory pool of DMDB (session memory pool, system memory pool, etc.)."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 7,
+        "uuid": 1719305153888541018,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "总内存使用量",
+        "unit": "bytes",
+        "note": "数据库进程占用的总内存大小。",
+        "lang": "zh_CN",
+        "expression": "dmdb_mem_total_size",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "总内存使用量",
+                "note": "数据库进程占用的总内存大小。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Total Memory Usage",
+                "note": "The total memory size occupied by the database process."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 8,
+        "uuid": 1719305153888541019,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "指标采集耗时（秒）",
+        "unit": "s",
+        "note": "采集所有监控指标的总耗时，反映采集性能。",
+        "lang": "zh_CN",
+        "expression": "dmdb_scrape_use_seconds",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "指标采集耗时（秒）",
+                "note": "从数据库采集所有监控指标的总耗时，反映采集性能。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Scrape Duration (Seconds)",
+                "note": "The total time taken to collect all monitoring metrics from the DMDB database, reflecting the collection performance."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 9,
+        "uuid": 1719305153888541020,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "会话数量",
+        "unit": "",
+        "note": "数据库当前建立的有效会话总数，包含用户会话、系统会话。",
+        "lang": "zh_CN",
+        "expression": "dmdb_sessions_cnt",
+        "expression_type": "metric_name",
+        "metric_type": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "会话数量",
+                "note": "数据库当前建立的有效会话总数，包含用户会话、系统会话。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Sessions Count",
+                "note": "The total number of valid sessions currently established in the database, including user sessions and system sessions."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 10,
+        "uuid": 1719305153888541021,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "表空间大小",
+        "unit": "bytes",
+        "note": "数据库各表空间的总大小/已使用大小，是核心存储指标。",
+        "lang": "zh_CN",
+        "expression": "dmdb_tablespace_size",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "表空间大小",
+                "note": "数据库各表空间的总大小/已使用大小，是核心存储指标。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Tablespace Size",
+                "note": "The total/used size of each tablespace in the database, which is a core storage indicator."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 11,
+        "uuid": 1719305153888541022,
+        "collector": "categraf",
+        "typ": "DMDB",
+        "name": "数据库连通状态",
+        "unit": "",
+        "note": "基础可用性指标，1表示数据库连通正常，0表示断开/异常。",
+        "lang": "zh_CN",
+        "expression": "dmdb_up",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "数据库连通状态",
+                "note": "基础可用性指标，1表示数据库连通正常，0表示断开/异常。"
+            },
+            {
+                "lang": "en_US",
+                "name": "DMDB Connection Status",
+                "note": "A basic availability indicator, 1 indicates normal database connection, 0 indicates disconnection/abnormality."
+            }
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

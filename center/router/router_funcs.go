@@ -7,9 +7,9 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 )
 
 const defaultLimit = 300
@@ -127,6 +127,12 @@ func UserGroup(ctx *ctx.Context, id int64) *models.UserGroup {
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "No such UserGroup")
 	}
+
+	bgids, err := models.BusiGroupIds(ctx, []int64{id})
+	ginx.Dangerous(err)
+
+	obj.BusiGroups, err = models.BusiGroupGetByIds(ctx, bgids)
+	ginx.Dangerous(err)
 
 	return obj
 }

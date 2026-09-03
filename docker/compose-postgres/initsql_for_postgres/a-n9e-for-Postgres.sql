@@ -27,7 +27,7 @@ COMMENT ON COLUMN users.roles IS 'Admin | Standard | Guest, split by space';
 COMMENT ON COLUMN users.contacts IS 'json e.g. {wecom:xx, dingtalk_robot_token:yy}';
 COMMENT ON COLUMN users.belong IS 'belong';
 
-insert into users(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', date_part('epoch',current_timestamp)::int, 'system', date_part('epoch',current_timestamp)::int, 'system');
+insert into users(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', 'Admin', 'root.2020', 'Admin', date_part('epoch',current_timestamp)::int, 'system', date_part('epoch',current_timestamp)::int, 'system');
 
 CREATE TABLE user_group (
     id bigserial,
@@ -209,6 +209,7 @@ CREATE TABLE board (
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
     update_by varchar(64) not null default '',
+    note varchar(1024) not null default '',
     PRIMARY KEY (id),
     UNIQUE (group_id, name)
 ) ;
@@ -219,6 +220,7 @@ COMMENT ON COLUMN board.public IS '0:false 1:true';
 COMMENT ON COLUMN board.built_in IS '0:false 1:true';
 COMMENT ON COLUMN board.hide IS '0:false 1:true';
 COMMENT ON COLUMN board.public_cate IS '0 anonymous 1 login 2 busi';
+COMMENT ON COLUMN board.note IS 'note';
 
 
 -- for dashboard new version
@@ -319,6 +321,7 @@ CREATE TABLE alert_rule (
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
     update_by varchar(64) not null default '',
+    time_zone varchar(64) not null default '',
     PRIMARY KEY (id)
 ) ;
 CREATE INDEX alert_rule_group_id_idx ON alert_rule (group_id);
@@ -361,6 +364,7 @@ CREATE TABLE alert_mute (
     mute_time_type smallint not null default 0,
     periodic_mutes varchar(4096) not null default '',
     severities varchar(32) not null default '',
+    mute_type int not null default 0,
     create_at bigint not null default 0,
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
@@ -375,6 +379,7 @@ COMMENT ON COLUMN alert_mute.tags IS 'json,map,tagkey->regexp|value';
 COMMENT ON COLUMN alert_mute.btime IS 'begin time';
 COMMENT ON COLUMN alert_mute.etime IS 'end time';
 COMMENT ON COLUMN alert_mute.disabled IS '0:enabled 1:disabled';
+COMMENT ON COLUMN alert_mute.mute_type IS '0-mute event and notify,1-mute notify only';
 
 
 CREATE TABLE alert_subscribe (
@@ -623,6 +628,7 @@ CREATE INDEX alert_his_event_hash_idx ON alert_his_event (hash);
 CREATE INDEX alert_his_event_rule_id_idx ON alert_his_event (rule_id);
 CREATE INDEX alert_his_event_tg_idx ON alert_his_event (trigger_time, group_id);
 CREATE INDEX alert_his_event_nrn_idx ON alert_his_event (last_eval_time);
+CREATE INDEX idx_group_last_eval_time ON alert_his_event (group_id, last_eval_time);
 COMMENT ON COLUMN alert_his_event.group_id IS 'busi group id of rule';
 COMMENT ON COLUMN alert_his_event.datasource_id IS 'datasource id';
 COMMENT ON COLUMN alert_his_event.group_name IS 'busi group name';
@@ -736,6 +742,7 @@ CREATE TABLE datasource
     http varchar(4096) not null default '',
     auth varchar(8192) not null default '',
     is_default boolean not null default false,
+    weight int not null default 0,
     created_at bigint not null default 0,
     created_by varchar(64) not null default '',
     updated_at bigint not null default 0,
@@ -787,6 +794,7 @@ CREATE TABLE es_index_pattern (
     update_at bigint default '0',
     update_by varchar(64) default '',
     note varchar(4096) not null default '',
+    weight int not null default 0,
     PRIMARY KEY (id),
     UNIQUE (datasource_id, name)
 ) ;
@@ -802,6 +810,9 @@ CREATE TABLE builtin_metrics (
   lang varchar(191) NOT NULL DEFAULT '',
   note varchar(4096) NOT NULL,
   expression varchar(4096) NOT NULL,
+  expression_type varchar(32) NOT NULL DEFAULT 'promql',
+  metric_type varchar(191) NOT NULL DEFAULT '',
+  extra_fields text,
   created_at bigint NOT NULL DEFAULT 0,
   created_by varchar(191) NOT NULL DEFAULT '',
   updated_at bigint NOT NULL DEFAULT 0,
@@ -824,6 +835,9 @@ COMMENT ON COLUMN builtin_metrics.unit IS 'unit of metric';
 COMMENT ON COLUMN builtin_metrics.lang IS 'language of metric';
 COMMENT ON COLUMN builtin_metrics.note IS 'description of metric in Chinese';
 COMMENT ON COLUMN builtin_metrics.expression IS 'expression of metric';
+COMMENT ON COLUMN builtin_metrics.expression_type IS 'expression type: metric_name or promql';
+COMMENT ON COLUMN builtin_metrics.metric_type IS 'metric type like counter/gauge';
+COMMENT ON COLUMN builtin_metrics.extra_fields IS 'custom extra fields';
 COMMENT ON COLUMN builtin_metrics.created_at IS 'create time';
 COMMENT ON COLUMN builtin_metrics.created_by IS 'creator';
 COMMENT ON COLUMN builtin_metrics.updated_at IS 'update time';
@@ -873,6 +887,7 @@ CREATE TABLE builtin_payloads (
   name VARCHAR(191) NOT NULL,
   tags VARCHAR(191) NOT NULL DEFAULT '',
   content TEXT NOT NULL,
+  note VARCHAR(1024) NOT NULL DEFAULT '',
   created_at BIGINT NOT NULL DEFAULT 0,
   created_by VARCHAR(191) NOT NULL DEFAULT '',
   updated_at BIGINT NOT NULL DEFAULT 0,
@@ -905,12 +920,14 @@ CREATE TABLE source_token (
     source_type varchar(64) NOT NULL DEFAULT '',
     source_id varchar(255) NOT NULL DEFAULT '',
     token varchar(255) NOT NULL DEFAULT '',
+    note varchar(255) NOT NULL DEFAULT '',
     expire_at bigint NOT NULL DEFAULT 0,
     create_at bigint NOT NULL DEFAULT 0,
     create_by varchar(64) NOT NULL DEFAULT ''
 );
 
 CREATE INDEX idx_source_token_type_id_token ON source_token (source_type, source_id, token);
+CREATE INDEX idx_source_token_token ON source_token (token);
 
 CREATE TABLE notification_record (
     id BIGSERIAL PRIMARY KEY,
@@ -925,6 +942,8 @@ CREATE TABLE notification_record (
 );
 
 CREATE INDEX idx_evt ON notification_record (event_id);
+CREATE INDEX idx_nr_rule_created_evt ON notification_record (notify_rule_id, created_at, event_id);
+CREATE INDEX idx_nr_created_at ON notification_record (created_at);
 
 COMMENT ON COLUMN notification_record.event_id IS 'event history id';
 COMMENT ON COLUMN notification_record.sub_id IS 'subscribed rule id';
@@ -991,6 +1010,7 @@ CREATE TABLE message_template (
     notify_channel_ident varchar(64) NOT NULL DEFAULT '',
     private int NOT NULL DEFAULT 0,
     weight int NOT NULL DEFAULT 0,
+    lang varchar(32) NOT NULL DEFAULT '',
     create_at bigint NOT NULL DEFAULT 0,
     create_by varchar(64) NOT NULL DEFAULT '',
     update_at bigint NOT NULL DEFAULT 0,
@@ -1017,9 +1037,11 @@ CREATE TABLE embedded_product (
     name varchar(255) DEFAULT NULL,
     url varchar(255) DEFAULT NULL,
     is_private boolean DEFAULT NULL,
+    hide boolean NOT NULL DEFAULT false,
     team_ids varchar(255),
     create_at bigint NOT NULL DEFAULT 0,
     create_by varchar(64) NOT NULL DEFAULT '',
     update_at bigint NOT NULL DEFAULT 0,
-    update_by varchar(64) NOT NULL DEFAULT ''
+    update_by varchar(64) NOT NULL DEFAULT '',
+    weight int NOT NULL DEFAULT 0
 );

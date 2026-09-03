@@ -16,6 +16,13 @@ import (
 	"github.com/toolkits/pkg/str"
 )
 
+const (
+	StageCheckQuery = "check_query"
+	StageGetClient  = "get_client"
+	StageQueryData  = "query_data"
+	StageWriteData  = "write_data"
+)
+
 type RecordRuleContext struct {
 	datasourceId int64
 	quit         chan struct{}
@@ -74,38 +81,64 @@ func (rrc *RecordRuleContext) Start() {
 }
 
 func (rrc *RecordRuleContext) Eval() {
-	rrc.stats.CounterRecordEval.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
+	begin := time.Now()
+	dsIdStr := fmt.Sprintf("%d", rrc.datasourceId)
+	ruleIdStr := fmt.Sprintf("%d", rrc.rule.Id)
+	var message string
+
+	defer func() {
+		rrc.stats.GaugeRecordEvalDuration.WithLabelValues(ruleIdStr, dsIdStr).Set(float64(time.Since(begin).Milliseconds()))
+		if len(message) == 0 {
+			logger.Infof("record_eval:%s finished, duration:%v", rrc.Key(), time.Since(begin))
+		} else {
+			logger.Warningf("record_eval:%s finished, duration:%v, message:%s", rrc.Key(), time.Since(begin), message)
+		}
+	}()
+
+	rrc.stats.CounterRecordEval.WithLabelValues(dsIdStr, ruleIdStr).Inc()
+
 	promql := strings.TrimSpace(rrc.rule.PromQl)
 	if promql == "" {
-		logger.Errorf("eval:%s promql is blank", rrc.Key())
+		message = "promql is blank"
+		logger.Errorf("record_eval:%s promql is blank", rrc.Key())
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(dsIdStr, dsIdStr, StageCheckQuery, ruleIdStr).Inc()
 		return
 	}
 
 	if rrc.promClients.IsNil(rrc.datasourceId) {
-		logger.Errorf("eval:%s reader client is nil", rrc.Key())
-		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
+		message = "reader client is nil"
+		logger.Errorf("record_eval:%s reader client is nil", rrc.Key())
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(dsIdStr, dsIdStr, StageGetClient, ruleIdStr).Inc()
+		rrc.stats.GaugeRecordSeriesCount.WithLabelValues(ruleIdStr, dsIdStr).Set(-2)
 		return
 	}
 
 	value, warnings, err := rrc.promClients.GetCli(rrc.datasourceId).Query(context.Background(), promql, time.Now())
 	if err != nil {
-		logger.Errorf("eval:%s promql:%s, error:%v", rrc.Key(), promql, err)
-		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
+		message = fmt.Sprintf("query error: %v", err)
+		logger.Errorf("record_eval:%s promql:%s, error:%v", rrc.Key(), promql, err)
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(dsIdStr, dsIdStr, StageQueryData, ruleIdStr).Inc()
+		rrc.stats.GaugeRecordSeriesCount.WithLabelValues(ruleIdStr, dsIdStr).Set(-1)
 		return
 	}
 
 	if len(warnings) > 0 {
-		logger.Errorf("eval:%s promql:%s, warnings:%v", rrc.Key(), promql, warnings)
-		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
+		message = fmt.Sprintf("query warnings: %v", warnings)
+		logger.Errorf("record_eval:%s promql:%s, warnings:%v", rrc.Key(), promql, warnings)
+		rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(dsIdStr, dsIdStr, StageQueryData, ruleIdStr).Inc()
+		rrc.stats.GaugeRecordSeriesCount.WithLabelValues(ruleIdStr, dsIdStr).Set(-1)
 		return
 	}
 
 	ts := ConvertToTimeSeries(value, rrc.rule)
+	rrc.stats.GaugeRecordSeriesCount.WithLabelValues(ruleIdStr, dsIdStr).Set(float64(len(ts)))
+
 	if len(ts) != 0 {
 		err := rrc.promClients.GetWriterCli(rrc.datasourceId).Write(ts)
 		if err != nil {
-			logger.Errorf("eval:%s promql:%s, error:%v", rrc.Key(), promql, err)
-			rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(fmt.Sprintf("%d", rrc.datasourceId)).Inc()
+			message = fmt.Sprintf("write error: %v", err)
+			logger.Errorf("record_eval:%s promql:%s, error:%v", rrc.Key(), promql, err)
+			rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues(dsIdStr, dsIdStr, StageWriteData, ruleIdStr).Inc()
 		}
 	}
 }

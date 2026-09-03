@@ -39,7 +39,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "内存占用",
                         "id": "8687b3a6-c7f2-4af6-8509-29c99969a55d",
                         "layout": {
@@ -114,7 +114,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "tcp连接数",
                         "id": "af8f29d3-8992-450e-8caa-749518669da1",
                         "layout": {
@@ -205,7 +205,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "需要解释和可能执行的查询数量，不包括失败的查询",
                         "id": "0524900d-99fd-42b8-a647-d4da462fc309",
                         "layout": {
@@ -286,7 +286,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "SELECT查询的数量",
                         "id": "9e288fcd-4513-46bb-bcb5-b2f4e0b4edde",
                         "layout": {
@@ -367,7 +367,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "6a95c841-5ac7-4cd9-9597-21b0f41441e4",
                         "layout": {
@@ -385,7 +385,9 @@
                                 "behaviour": "showItem",
                                 "displayMode": "hidden"
                             },
-                            "standardOptions": {},
+                            "standardOptions": {
+                                "util": "microseconds"
+                            },
                             "thresholds": {
                                 "steps": [
                                     {
@@ -412,7 +414,7 @@
                         ],
                         "targets": [
                             {
-                                "expr": "increase(clickhouse_events_query_time_microseconds[1m]) / (increase(clickhouse_events_query_time_microseconds[1m]) + 0.001)",
+                                "expr": "increase(clickhouse_events_query_time_microseconds[1m]) / clamp_min(increase(clickhouse_events_query[1m]), 1)",
                                 "legend": "{{instance}}",
                                 "maxDataPoints": 240,
                                 "refId": "A"
@@ -441,7 +443,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "4584d584-054b-4d42-b2f9-215a71fca118",
                         "layout": {
@@ -459,7 +461,9 @@
                                 "behaviour": "showItem",
                                 "displayMode": "hidden"
                             },
-                            "standardOptions": {},
+                            "standardOptions": {
+                                "util": "microseconds"
+                            },
                             "thresholds": {
                                 "steps": [
                                     {
@@ -486,8 +490,8 @@
                         ],
                         "targets": [
                             {
-                                "expr": "increase(clickhouse_events_select_query_time_microseconds[1m] )/ (increase(clickhouse_events_select_query_time_microseconds[1m]) + 0.001)",
-                                "legend": "peaks - {{instance}}",
+                                "expr": "increase(clickhouse_events_select_query_time_microseconds[1m]) / clamp_min(increase(clickhouse_events_select_query[1m]), 1)",
+                                "legend": "{{instance}}",
                                 "maxDataPoints": 240,
                                 "refId": "A"
                             }
@@ -531,7 +535,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "所有表INSERT的行数",
                         "id": "6ea9312d-2334-4912-864c-4cea25bf65f9",
                         "layout": {
@@ -612,7 +616,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "所有表INSERT的字节数（未压缩列以它们在内存中存储的形式）",
                         "id": "8a4987ad-c10f-419c-b2e9-107502e4bc20",
                         "layout": {
@@ -693,7 +697,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "由于分区的活动数据部分数量过多，INSERT到MergeTree表的块被限制的次数",
                         "id": "dd6d8098-1cab-483d-9462-3436678cbbb8",
                         "layout": {
@@ -738,17 +742,10 @@
                         ],
                         "targets": [
                             {
-                                "expr": "max_over_time(irate(clickhouse_metrics_delayed_inserts[2m]) [1h:1m]) * $peeks",
-                                "legend": "peaks - {{instance}}",
+                                "expr": "clickhouse_metrics_delayed_inserts",
+                                "legend": "{{instance}}",
                                 "maxDataPoints": 240,
                                 "refId": "A"
-                            },
-                            {
-                                "__mode__": "__query__",
-                                "expr": "rate(clickhouse_metrics_delayed_inserts[1m]) * $trends",
-                                "legend": "trend - {{instance}}",
-                                "maxDataPoints": 240,
-                                "refId": "B"
                             }
                         ],
                         "transformations": [
@@ -790,7 +787,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "从所有表SELECT的字节数（未压缩列以它们在内存中存储的形式）",
                         "id": "244865f5-c78a-4b21-8068-462612b8730c",
                         "layout": {
@@ -871,7 +868,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "从所有表SELECT的行数",
                         "id": "a7e4857b-cf88-4ed7-8cf6-adadeb521e78",
                         "layout": {
@@ -968,7 +965,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "6be5bfc5-8d91-414f-9781-e4b390307961",
                         "layout": {
@@ -1049,7 +1046,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "df47ce32-e3b6-4d5b-8bc9-4a640ec9c75c",
                         "layout": {
@@ -1130,7 +1127,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "从文件描述符进行读取（read/pread）的次数，不包括套接字",
                         "id": "26318204-5e2c-43dd-93b1-2d0ff34c3c9b",
                         "layout": {
@@ -1211,7 +1208,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "向FD写入的次数，不包括套接字",
                         "id": "222a5968-672b-4f4f-ba1a-c823c4be1116",
                         "layout": {
@@ -1292,7 +1289,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "fc2a63e9-aec2-4755-b4a2-8b0f54868bc6",
                         "layout": {
@@ -1373,7 +1370,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "从文件描述符读取的字节数。如果文件是压缩的，这将显示压缩后的数据大小",
                         "id": "b5546ead-ef3d-406c-acfc-33759f9d5ad9",
                         "layout": {
@@ -1454,7 +1451,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "从压缩源（文件，网络）读取的压缩块数（独立压缩的数据块）",
                         "id": "dc75e7de-7728-4f12-91fc-789cdc2610dd",
                         "layout": {
@@ -1541,7 +1538,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "从压缩源（文件，网络）读取的未压缩字节数（解压后的字节数）",
                         "id": "44c6e097-4114-4ef5-89d3-96da2c11ccf3",
                         "layout": {
@@ -1638,7 +1635,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "在ClickHouse集群中，由于特定情况而暂时处于只读状态的复制表数量。这种情况通常发生在以下两种情形下：\n\nZooKeeper会话丢失后重新初始化：ClickHouse使用ZooKeeper来维护集群间的协调和一致性。如果与ZooKeeper的会话丢失，为了防止数据不一致，相关的复制表可能会被自动设置为只读模式，直到与ZooKeeper的连接恢复并且数据同步完成为止。\n\n未配置ZooKeeper启动：如果ClickHouse实例在没有正确配置ZooKeeper的情况下启动，它可能无法确定其在复制集群中的准确状态，从而为了安全起见，将涉及复制的表设置为只读，以避免潜在的数据冲突或不一致性问题。",
                         "id": "24f224bb-3f8c-4dae-9485-d2015e238ba4",
                         "layout": {
@@ -1728,7 +1725,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "启动的后台合并次数",
                         "id": "505ab54d-1897-45d6-a087-db2c2570f8f7",
                         "layout": {
@@ -1809,7 +1806,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "后台合并读取的行数。这是合并前的行数",
                         "id": "cf1cbd45-4762-4b57-b674-91520ee63ff4",
                         "layout": {
@@ -1890,7 +1887,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "后台合并读取的未压缩字节数（列以它们在内存中存储的形式）。这是合并前的字节数",
                         "id": "bee87dc6-ace1-47c2-8676-3a7a4c33d2bd",
                         "layout": {
@@ -1971,7 +1968,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "63c16da6-f138-4f8f-9a36-a0f71454ba5d",
                         "layout": {
@@ -2045,7 +2042,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "a01d3de2-a79d-49d9-b238-e5db403d8259",
                         "layout": {
@@ -2126,7 +2123,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "向MergeTree系列表（包括ReplicatedMergeTree等变种）中插入数据时所用的数据块数量",
                         "id": "87a118d2-305d-4eb9-921a-39bbf11b56b5",
                         "layout": {
@@ -2207,7 +2204,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "插入到MergeTree表的未压缩字节数（列以它们在内存中存储的形式）",
                         "id": "3dca4a05-b0cc-4e63-ae32-ee5261b6b7b3",
                         "layout": {
@@ -2288,7 +2285,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "插入到MergeTree表的数据写入到文件系统的字节数",
                         "id": "6777102c-5efe-4082-9a86-d58f76d751ba",
                         "layout": {
@@ -2369,7 +2366,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "为当前运行的后台合并保留的磁盘空间。它略大于当前合并部分的总大小",
                         "id": "2b70d3a1-f9e2-4b35-b181-809091fe0aa0",
                         "layout": {
@@ -2459,7 +2456,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "从文件缓存中打开文件时没有命中缓存的次数",
                         "id": "6423431d-916e-4a79-9db1-d0146e0c83fd",
                         "layout": {
@@ -2556,7 +2553,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "目前正在生成的部分，不在数据部分列表中",
                         "id": "3a06dade-4969-40bf-aab1-1a5f3950a75f",
                         "layout": {
@@ -2630,7 +2627,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "在数据部分中，但不用于SELECT查询的部分\t\n",
                         "id": "fd497233-3f93-4f73-9dc7-4045d1454eef",
                         "layout": {
@@ -2704,7 +2701,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "已经提交的数据部分的数量",
                         "id": "b688234f-b66a-440f-8a95-20e2a45df833",
                         "layout": {
@@ -2778,7 +2775,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "暂时保留、等待相关查询结束即可清理的数据分区的数量。",
                         "id": "85faac0b-b923-4f38-b10a-9a38b98f89ee",
                         "layout": {
@@ -2852,7 +2849,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "1e45da14-63a6-4adb-be34-a83f9469af84",
                         "layout": {
@@ -2926,7 +2923,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "记录了当前有多少个数据分区正处于这样一种待删除的状态——即这些分区已经被逻辑上标记为“待清理”，并且它们的物理删除操作将在资源被正式释放时由系统自动执行。",
                         "id": "0fb33f4e-2392-4fb7-bbdb-486c8520e957",
                         "layout": {
@@ -3000,7 +2997,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "包含了大量列或者说是字段广泛的数据。一个宽数据分区意味着单个数据块或行包含很多列，这可能会影响到数据处理和查询的效率，尤其是在涉及大量列的选择或聚合操作时。",
                         "id": "75a6156e-66c8-4b05-a7f3-303d6babe521",
                         "layout": {
@@ -3074,7 +3071,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "当前数据库中经过压缩处理的数据分区的数量。这些分区通过算法减少了数据占用的空间，同时保持了数据的完整性和查询的可行性。",
                         "id": "bb287913-7ef7-408f-9feb-d875b3683157",
                         "layout": {
@@ -3164,7 +3161,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "衡量的是向远程服务器发送数据的连接数量，这些数据最初是插入到 Distributed 表中的。Distributed 表是 ClickHouse 中用于分布式存储和处理数据的一种特殊表类型，它实际上不存储数据，而是将数据操作（如 INSERT 查询）转发到表所定义的远程节点上。通过监控这个指标，您可以了解到数据分布的活跃程度，即 ClickHouse 集群内部数据流动的频繁程度，以及分布式查询或数据加载操作的负载情况。高数值可能意味着大量的数据正在被分布式地处理或存储，这可能是系统繁忙或数据管道高效运行的迹象。然而，如果发现该指标异常高且伴随性能问题，可能需要进一步调查网络状况、远程服务器的处理能力或分布式表的配置，以优化数据传输效率和系统整体性能。",
                         "id": "b9dde172-3e02-4e71-891f-5fb97c9c0571",
                         "layout": {
@@ -3238,7 +3235,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "等待异步插入到 Distributed 表中的文件数量\n这个指标对于监控数据导入或异步处理流程的效率至关重要。如果数值较大，可能意味着有大量数据正在排队等待写入 Distributed 表，这可能会影响数据的实时性或处理速度。高数值还可能指示了数据导入作业的积压、网络瓶颈、远程节点处理能力不足或其他与分布式系统相关的性能问题。\n\n监控 ClickHouseMetrics_DistributedFilesToInsert 可以帮助识别和诊断数据流中的瓶颈，进而采取相应的优化措施，比如调整插入作业的并发度、优化网络配置、增加目标表的处理能力或调整分布式表的配置参数，以确保数据能够高效、及时地被分布式存储和处理。",
                         "id": "4f1782d0-5572-4a75-ba90-c74914246557",
                         "layout": {
@@ -3328,7 +3325,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "后台任务池中的活跃任务数",
                         "id": "f329dc5d-6276-4652-855f-b26153d9155a",
                         "layout": {
@@ -3402,7 +3399,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "ClickHouse 中后台获取任务池（BackgroundFetchesPool）当前活跃任务的数量。",
                         "id": "71ba46cc-be89-400f-ab7a-27189c309e25",
                         "layout": {
@@ -3476,7 +3473,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "ClickHouse中后台移动任务池（BackgroundMovePool）当前激活的任务数量",
                         "id": "47096333-948c-4010-bb0e-ced6581ea2c5",
                         "layout": {
@@ -3550,7 +3547,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "ClickHouse 中后台调度任务池（BackgroundSchedulePool）当前激活的任务数量",
                         "id": "d8d3c10b-236d-408f-b20c-012d7444b71e",
                         "layout": {
@@ -3624,7 +3621,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "ClickHouse 中后台缓冲区刷新调度任务池（BackgroundBufferFlushSchedulePool）当前激活的任务数量。这个任务池专注于处理与缓冲区数据定期刷新相关的后台任务",
                         "id": "b16eff73-78d4-4554-946c-8e36dcee3678",
                         "layout": {
@@ -3698,7 +3695,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": " ClickHouse 中后台分布式调度任务池（BackgroundDistributedSchedulePool）当前激活的任务数量。这个任务池专门负责处理异步执行的分布式数据发送任务",
                         "id": "9d3dece1-0765-4e25-a21e-e71f6ac57848",
                         "layout": {
@@ -3772,7 +3769,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 1,
+                        "datasourceValue": "${datasource}",
                         "description": "ClickHouse 中后台处理池（针对消息流处理的部分）当前激活的任务数量，专注于消息代理相关的后台任务",
                         "id": "4f590117-7281-443a-8713-5ea9696bd3c1",
                         "layout": {
@@ -3843,14 +3840,20 @@
         ],
         "var": [
             {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
                 "datasource": {
                     "cate": "prometheus",
-                    "value": 1
+                    "value": "${datasource}"
                 },
-                "definition": "label_values(ClickHouseMetrics_Move,instance)",
+                "definition": "label_values(clickhouse_metrics_memory_tracking, ident)",
                 "hide": false,
-                "name": "instance",
-                "type": "query"
+                "name": "ident",
+                "type": "query",
+                "label": "ident"
             },
             {
                 "definition": "1,null",

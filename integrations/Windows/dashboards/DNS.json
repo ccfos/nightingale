@@ -1,0 +1,988 @@
+{
+    "name": "DNS",
+    "tags": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "b388a4d2-9428-40ea-9779-edae38e2c654",
+                "layout": {
+                    "h": 1,
+                    "i": "b388a4d2-9428-40ea-9779-edae38e2c654",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Overview",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "DNS Queries total last minute",
+                "id": "91015d31-debe-4f19-b9d3-84a97709184e",
+                "layout": {
+                    "h": 5,
+                    "i": "91015d31-debe-4f19-b9d3-84a97709184e",
+                    "isResizable": true,
+                    "w": 11,
+                    "x": 0,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS Queries",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(windows_dns_queries_total{instance=~\"$instance\",protocol=\"udp\"}[1m]))",
+                        "instant": true,
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "orientation": "auto",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Last minute DNS Queries/Sec",
+                "id": "c0b119b9-cdad-4b1f-9500-7fdf49975bbb",
+                "layout": {
+                    "h": 5,
+                    "i": "c0b119b9-cdad-4b1f-9500-7fdf49975bbb",
+                    "isResizable": true,
+                    "w": 13,
+                    "x": 11,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS Queries/Sec",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(irate(windows_dns_queries_total{instance=~\"$instance\",protocol=\"udp\"}[1m]))",
+                        "instant": true,
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "01a85c30-d4cb-45c9-94b0-882a7f2d7490",
+                "layout": {
+                    "h": 1,
+                    "i": "01a85c30-d4cb-45c9-94b0-882a7f2d7490",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 6
+                },
+                "name": "DNS Queries",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Number of queries received/responses by DNS server",
+                "id": "568ad4c7-6eec-4c51-a509-7d066d3c6598",
+                "layout": {
+                    "h": 7,
+                    "i": "568ad4c7-6eec-4c51-a509-7d066d3c6598",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 7
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS Queries/Responses",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_dns_queries_total{instance=~\"$instance\"}[1m])",
+                        "legend": "in-{{protocol}} ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "-delta(windows_dns_responses_total{instance=~\"$instance\"}[1m])",
+                        "legend": "out-{{protocol}} ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Number of recursive query total/failures",
+                "id": "89ffa719-5417-4b32-a842-cf732e45dc85",
+                "layout": {
+                    "h": 7,
+                    "i": "89ffa719-5417-4b32-a842-cf732e45dc85",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 14
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Recursive Queries / Failures",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_dns_recursive_query_failures_total{instance=~\"$instance\"}[1m])",
+                        "legend": "failures ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "delta(windows_dns_recursive_queries_total{instance=~\"$instance\"}[1m])",
+                        "legend": "queries ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "delta(windows_dns_recursive_query_send_timeouts_total{instance=~\"$instance\"}[1m])",
+                        "legend": "sent timeouts ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "04e97651-3e66-4ecf-8234-f8c7f5ca155d",
+                "layout": {
+                    "h": 1,
+                    "i": "04e97651-3e66-4ecf-8234-f8c7f5ca155d",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 21
+                },
+                "name": "DNS WINS Queries",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Number of WINS lookup requests/responses by the server",
+                "id": "6db52cb6-7f40-4765-85c3-a255cf7bf718",
+                "layout": {
+                    "h": 7,
+                    "i": "6b934526-3ab8-4b69-af43-04cc3601caba",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 22
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS WINS Queries/Responses",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_dns_wins_queries_total{instance=~\"$instance\"}[1m])",
+                        "legend": "in-{{protocol}} ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "-delta(windows_dns_wins_responses_total{instance=~\"$instance\"}[1m])",
+                        "legend": "out-{{protocol}} ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "08040a35-eef4-42bc-a8dc-cb024ab02fdb",
+                "layout": {
+                    "h": 1,
+                    "i": "08040a35-eef4-42bc-a8dc-cb024ab02fdb",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 29
+                },
+                "name": "DNS Updates",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "- Queued: Number of dynamic updates queued by the DNS server\n- Received: Number of dynamic update requests received by the DNS server\n- Failures: Number of dynamic updates which timed out or were rejected by the DNS server",
+                "id": "fcf100e0-eb21-45ac-a9d8-2878c05a3feb",
+                "layout": {
+                    "h": 7,
+                    "i": "9f4f17f5-822b-4080-bd34-f0ff5343cb04",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 30
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS Dynamic Updates",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "windows_dns_dynamic_updates_queued{instance=~\"$instance\"}",
+                        "legend": "Queued ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "__mode__": "__query__",
+                        "expr": "delta(windows_dns_dynamic_updates_received_total{instance=~\"$instance\"}[1m])",
+                        "legend": "Received ({{instance}} - {{operation}})",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "__mode__": "__query__",
+                        "expr": "delta(windows_dns_dynamic_updates_failures_total{instance=~\"$instance\"}[1m])",
+                        "legend": "Failures ({{instance}} - {{reason}})",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "- Received: Number of secure update requests received by the DNS server\n- Failures: Number of secure updates that failed on the DNS server",
+                "id": "503deaed-0ece-49e1-bae0-588654a2a3dd",
+                "layout": {
+                    "h": 7,
+                    "i": "503deaed-0ece-49e1-bae0-588654a2a3dd",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 37
+                },
+                "maxPerRow": 4,
+                "name": "DNS Secure Updates",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_dns_secure_update_received_total{instance=~\"$instance\"}[1m])",
+                        "legend": "Received ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "__mode__": "__query__",
+                        "expr": "delta(windows_dns_secure_update_failures_total{instance=~\"$instance\"}[1m])",
+                        "legend": "Failures ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "309fcb4d-ffc3-4d40-84e3-9e9ee3a5f745",
+                "layout": {
+                    "h": 1,
+                    "i": "309fcb4d-ffc3-4d40-84e3-9e9ee3a5f745",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 44
+                },
+                "name": "DNS Zone Transfer",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "- master received: Number of zone transfer requests (AXFR/IXFR) received by the master DNS server\n- secondary sent: Number of zone transfer requests (AXFR/IXFR) sent by the secondary DNS server",
+                "id": "e6bf9a77-bb48-49e8-833d-3bc3403dd1ec",
+                "layout": {
+                    "h": 7,
+                    "i": "66434799-b86d-47af-a3db-18700e4841d5",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 45
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS Zone Transfer Requests",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_dns_zone_transfer_requests_received_total{instance=~\"$instance\"}[1m])",
+                        "legend": "master received ({{instance}} - {{qtype}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "__mode__": "__query__",
+                        "expr": "delta(windows_dns_zone_transfer_requests_sent_total{instance=~\"$instance\"}[1m])",
+                        "legend": "secondary sent ({{instance}} - {{qtype}})",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "- received: Number of successful zone transfers (AXFR/IXFR) received by the secondary DNS server\n- sent: Number of successful zone transfers (AXFR/IXFR) of the master DNS server",
+                "id": "fc445f84-ba77-431b-949b-9bf22dbe72bf",
+                "layout": {
+                    "h": 7,
+                    "i": "67c7eefa-721f-49a6-9f5a-19f773e333c7",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 52
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS Zone Transfer Success",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_dns_zone_transfer_requests_received_total{instance=~\"$instance\"}[1m])",
+                        "legend": "received ({{instance}} - {{qtype}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "__mode__": "__query__",
+                        "expr": "delta(windows_dns_zone_transfer_success_sent_total{instance=~\"$instance\"}[1m])",
+                        "legend": "sent ({{instance}} - {{qtype}})",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "3477776e-4551-4f2f-b50d-a13d82f5351c",
+                "layout": {
+                    "h": 1,
+                    "i": "3477776e-4551-4f2f-b50d-a13d82f5351c",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 59
+                },
+                "name": "DNS Notifies",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "- Received: Number of notifies received by the secondary DNS server\n- Sent: Number of notifies sent by the master DNS server",
+                "id": "7813f087-1f26-42a9-b20c-3d935d0f10f4",
+                "layout": {
+                    "h": 7,
+                    "i": "49e0799c-6816-45c5-a6b1-eab45212c417",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 60
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS Notify Received/Sent",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(windows_dns_notify_received_total{instance=~\"$instance\"}[1m])",
+                        "legend": "Received ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "-delta(windows_dns_notify_sent_total{instance=~\"$instance\"}[1m])",
+                        "legend": "Sent ({{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "00127e6d-5480-42a5-a0f5-8342a2328590",
+                "layout": {
+                    "h": 1,
+                    "i": "00127e6d-5480-42a5-a0f5-8342a2328590",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 67
+                },
+                "name": "DNS Memory",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Current memory used by DNS server",
+                "id": "0451d57a-5180-4b64-a690-8cf786665580",
+                "layout": {
+                    "h": 7,
+                    "i": "0451d57a-5180-4b64-a690-8cf786665580",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 68
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DNS Memory Usage",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(windows_dns_memory_used_bytes{instance=~\"$instance\"}) by (area, instance)",
+                        "legend": "{{area}} ({{instance}})",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "hide": false,
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(windows_os_info, instance)",
+                "hide": false,
+                "multi": true,
+                "name": "instance",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "uuid": 1725260574093605000
+}

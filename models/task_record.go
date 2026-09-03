@@ -20,6 +20,8 @@ type TaskRecord struct {
 	Pause        string `json:"pause"`
 	Script       string `json:"script"`
 	Args         string `json:"args"`
+	AuthLevel    int    `json:"auth_level"`
+	SystemCaller string `json:"system_caller"`
 	CreateAt     int64  `json:"create_at"`
 	CreateBy     string `json:"create_by"`
 }
@@ -38,8 +40,8 @@ func (r *TaskRecord) Add(ctx *ctx.Context) error {
 	return Insert(ctx, r)
 }
 
-// list task, filter by group_id, create_by
-func TaskRecordTotal(ctx *ctx.Context, bgids []int64, beginTime int64, createBy, query string) (int64, error) {
+// list task, filter by group_id, create_by, auth_level
+func TaskRecordTotal(ctx *ctx.Context, bgids []int64, beginTime int64, createBy, query string, authLevels []int) (int64, error) {
 	session := DB(ctx).Model(&TaskRecord{}).Where("create_at > ?", beginTime)
 	if len(bgids) > 0 {
 		session = session.Where("group_id in (?)", bgids)
@@ -53,10 +55,14 @@ func TaskRecordTotal(ctx *ctx.Context, bgids []int64, beginTime int64, createBy,
 		session = session.Where("title like ?", "%"+query+"%")
 	}
 
+	if len(authLevels) > 0 {
+		session = session.Where("auth_level in (?)", authLevels)
+	}
+
 	return Count(session)
 }
 
-func TaskRecordGets(ctx *ctx.Context, bgids []int64, beginTime int64, createBy, query string, limit, offset int) ([]*TaskRecord, error) {
+func TaskRecordGets(ctx *ctx.Context, bgids []int64, beginTime int64, createBy, query string, authLevels []int, limit, offset int) ([]*TaskRecord, error) {
 	session := DB(ctx).Where("create_at > ?", beginTime).Order("create_at desc").Limit(limit).Offset(offset)
 	if len(bgids) > 0 {
 		session = session.Where("group_id in (?)", bgids)
@@ -68,6 +74,10 @@ func TaskRecordGets(ctx *ctx.Context, bgids []int64, beginTime int64, createBy, 
 
 	if query != "" {
 		session = session.Where("title like ?", "%"+query+"%")
+	}
+
+	if len(authLevels) > 0 {
+		session = session.Where("auth_level in (?)", authLevels)
 	}
 
 	var lst []*TaskRecord

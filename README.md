@@ -19,11 +19,13 @@
 <img alt="GitHub Repo issues closed" src="https://img.shields.io/github/issues-closed/ccfos/nightingale">
 <img alt="GitHub latest release" src="https://img.shields.io/github/v/release/ccfos/nightingale"/>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
-<a href="https://n9e-talk.slack.com/">
+<a href="https://join.slack.com/t/n9e/shared_invite/zt-480klxytf-P9qm3C1M87kDmRPp_H30Kw">
   <img alt="GitHub contributors" src="https://img.shields.io/badge/join%20slack-%23n9e-brightgreen.svg"/></a>
 </p>
 
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=3f539666-22f5-468d-914d-1e344945d3d8" />
 
+![](https://gettrack.link/p/h7tXLNpu)
 
 [English](./README.md) | [中文](./README_zh.md)
 
@@ -31,7 +33,9 @@
 
 Nightingale is an open-source monitoring project that focuses on alerting. Similar to Grafana, Nightingale also connects with various existing data sources. However, while Grafana emphasizes visualization, Nightingale places greater emphasis on the alerting engine, as well as the processing and distribution of alarms.
 
-> The Nightingale project was initially developed and open-sourced by DiDi.inc. On May 11, 2022, it was donated to the Open Source Development Committee of the China Computer Federation (CCF ODC).
+> 💡 Nightingale now speaks MCP out of the box: the server itself exposes a built-in [MCP](https://modelcontextprotocol.io/) endpoint at `/mcp`, so AI assistants can manage alerting and explore observability data in natural language with no extra process to deploy. See [MCP Server](#-mcp-server) below.
+> 
+> The Nightingale project was initially developed and open-sourced by DiDi.inc. On May 11, 2022, it was donated to the Open Source Development Committee of the China Computer Federation (CCF ODTC).
 
 ![](https://n9e.github.io/img/global/arch-bg.png)
 
@@ -47,9 +51,59 @@ Nightingale itself does not provide monitoring data collection capabilities. We 
 
 For certain edge data centers with poor network connectivity to the central Nightingale server, we offer a distributed deployment mode for the alerting engine. In this mode, even if the network is disconnected, the alerting functionality remains unaffected.
 
-![Edge Deployment Mode](doc/img/readme/20240222102119.png)
+![Edge Deployment Mode](doc/img/readme/multi-region-arch.png)
 
 > In the above diagram, Data Center A has a good network with the central data center, so it uses the Nightingale process in the central data center as the alerting engine. Data Center B has a poor network with the central data center, so it deploys `n9e-edge` as the alerting engine to handle alerting for its own data sources.
+
+## 🤖 MCP Server
+
+Nightingale has a **built-in MCP Server**: the `n9e` process itself serves the [Model Context Protocol](https://modelcontextprotocol.io/) at `/mcp` over the Streamable HTTP transport. Any MCP client — Claude Code / Claude Desktop, Cursor, ChatGPT connectors, or your own agent — can query and manage Nightingale in natural language, with no extra process to deploy.
+
+### Connecting a client
+
+The endpoint is `http(s)://<nightingale>:17000/mcp` — a root path, not under `/api/n9e`. Authenticate with a personal access token (create one in the web UI under *Profile → Token Management*) sent in the `X-User-Token` header:
+
+```json
+{
+  "mcpServers": {
+    "nightingale": {
+      "type": "http",
+      "url": "http://127.0.0.1:17000/mcp",
+      "headers": { "X-User-Token": "<your-token>" }
+    }
+  }
+}
+```
+
+Every tool call is dispatched onto Nightingale's own HTTP API inside the process, carrying your token, so RBAC and business-group permissions apply exactly as they do for that user in the UI — a client can never reach anything its token's owner cannot.
+
+### Tools
+
+74 fine-grained tools (42 read, 32 write) across 13 toolsets: `alerts`, `targets`, `datasource`, `mutes`, `busi_groups`, `notify_rules`, `alert_subscribes`, `event_pipelines`, `users`, `metrics`, `logs`, `dashboards`, `roles`.
+
+**The endpoint is read-only by default** — the write tools (create / update / delete) are an explicit config opt-in.
+
+### Configuration
+
+Everything below is optional; `/mcp` is enabled out of the box (`etc/config.toml`):
+
+```toml
+[HTTP.A2A]
+# DisableMCP = true                        # turn off /mcp (Disable = true turns off /a2a as well)
+# MCPToolsets = ["alerts", "dashboards"]   # restrict the exposed toolsets; empty = all of them
+# MCPEnableWriteTools = true               # also register the write tools; read-only by default
+```
+
+`/mcp` reuses `[HTTP.TokenAuth]` for authentication, so keep that enabled.
+
+### OAuth 2.1 instead of a token
+
+`/mcp` also accepts OAuth access tokens via `Authorization: Bearer`, in two flavors:
+
+- Nightingale acts as the **authorization server** itself, with RFC 7591 dynamic client registration and PKCE, so hosted clients such as Claude or ChatGPT can connect with zero pre-registration — see [doc/api/mcp-oauth-as.md](./doc/api/mcp-oauth-as.md).
+- Nightingale acts as a **resource server** for your existing enterprise IdP (Keycloak, Entra ID, Okta, Auth0), mapping each token to its local user so permissions and audit stay per-person — see [doc/api/a2a-oauth-rs.md](./doc/api/a2a-oauth-rs.md).
+
+Alongside MCP, the same process exposes an [A2A](https://a2a-protocol.org/) endpoint at `/a2a` that wraps Nightingale's built-in AI assistant for agent-to-agent integration ([doc/api/a2a.md](./doc/api/a2a.md)). If you would rather run MCP as a separate process against a remote Nightingale, the standalone [n9e-mcp-server](https://github.com/n9e/n9e-mcp-server/) provides the same tools.
 
 ## 🔕 Alert Noise Reduction, Escalation, and Collaboration
 
@@ -68,7 +122,7 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 
 ## 🔑 Key Features
 
-![Nightingale Alerting rules](doc/img/readme/2025-05-23_18-43-37.png)
+![Nightingale Alerting rules](doc/img/readme/alerting-rules-en.png)
 
 - Nightingale supports alerting rules, mute rules, subscription rules, and notification rules. It natively supports 20 types of notification media and allows customization of message templates.  
 - It supports event pipelines for Pipeline processing of alarms, facilitating automated integration with in-house systems. For example, it can append metadata to alarms or perform relabeling on events. 
@@ -76,19 +130,19 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 - Many databases and middleware come with built-in alert rules that can be directly imported and used. It also supports direct import of Prometheus alerting rules.  
 - It supports alerting self-healing, which automatically triggers a script to execute predefined logic after an alarm is generated—such as cleaning up disk space or capturing the current system state.
 
-![Nightingale Alarm Dashboard](doc/img/readme/2025-05-30_08-49-28.png)
+![Nightingale Alarm Dashboard](doc/img/readme/active-events-en.png)
 
 - Nightingale archives historical alarms and supports multi-dimensional query and statistics.  
 - It supports flexible aggregation grouping, allowing a clear view of the distribution of alarms across the company.
 
-![Nightingale Integration Center](doc/img/readme/2025-05-23_18-46-06.png)
+![Nightingale Integration Center](doc/img/readme/integration-components-en.png)
 
 - Nightingale has built-in metric descriptions, dashboards, and alerting rules for common operating systems, middleware, and databases, which are contributed by the community with varying quality.  
 - It directly receives data via multiple protocols such as Remote Write, OpenTSDB, Datadog, and Falcon, integrates with various Agents.  
 - It supports data sources like Prometheus, ElasticSearch, Loki, ClickHouse, MySQL, Postgres, allowing alerting based on data from these sources.  
 - Nightingale can be easily embedded into internal enterprise systems (e.g. Grafana, CMDB), and even supports configuring menu visibility for these embedded systems.
 
-![Nightingale dashboards](doc/img/readme/2025-05-23_18-49-02.png)
+![Nightingale dashboards](doc/img/readme/dashboard-en.png)
 
 - Nightingale supports dashboard functionality, including common chart types, and comes with pre-built dashboards. The image above is a screenshot of one of these dashboards.  
 - If you are already accustomed to Grafana, it is recommended to continue using Grafana for visualization, as Grafana has deeper expertise in this area.  
@@ -97,7 +151,7 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 
 ## 🌟 Stargazers over time
 
-[![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)
+[![Stargazers over time](https://star-history.dera.page/svg?repos=ccfos/nightingale&type=Date)](https://star-history.dera.page/#ccfos/nightingale&Date)
 
 ## 🔥 Users
 
@@ -112,4 +166,4 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 </a>
 
 ## 📜 License
-- [Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
+- [Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE)

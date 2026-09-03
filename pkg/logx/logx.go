@@ -1,6 +1,7 @@
 package logx
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -45,4 +46,45 @@ func Init(c Config) (func(), error) {
 		fmt.Println("logger exiting")
 		logger.Close()
 	}, nil
+}
+
+// traceKey is the context key for storing traceId.
+type traceKey struct{}
+
+// NewTraceContext returns a new context carrying the given traceId.
+func NewTraceContext(ctx context.Context, traceId string) context.Context {
+	return context.WithValue(ctx, traceKey{}, traceId)
+}
+
+// GetTraceId extracts the traceId from ctx, or returns "" if absent.
+func GetTraceId(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	id, _ := ctx.Value(traceKey{}).(string)
+	return id
+}
+
+func prefix(ctx context.Context) string {
+	id := GetTraceId(ctx)
+	if id == "" {
+		return ""
+	}
+	return "trace_id=" + id + " "
+}
+
+func Infof(ctx context.Context, format string, args ...interface{}) {
+	logger.Infof(prefix(ctx)+format, args...)
+}
+
+func Errorf(ctx context.Context, format string, args ...interface{}) {
+	logger.Errorf(prefix(ctx)+format, args...)
+}
+
+func Warningf(ctx context.Context, format string, args ...interface{}) {
+	logger.Warningf(prefix(ctx)+format, args...)
+}
+
+func Debugf(ctx context.Context, format string, args ...interface{}) {
+	logger.Debugf(prefix(ctx)+format, args...)
 }

@@ -18,23 +18,35 @@ type Pushgw struct {
 	UpdateTargetRetryIntervalMills int64
 	UpdateTargetTimeoutMills       int64
 	UpdateTargetBatchSize          int
-	UpdateDBTargetConcurrency      int
-	UpdateDBTargetTimestampDisable bool
-	PushConcurrency                int
 	UpdateTargetByUrlConcurrency   int
 
-	BusiGroupLabelKey   string
-	IdentMetrics        []string
-	IdentStatsThreshold int
-	IdentDropThreshold  int // 每分钟单个 ident 的样本数超过该阈值，则丢弃
-	WriteConcurrency    int
-	LabelRewrite        bool
-	ForceUseServerTS    bool
-	DebugSample         map[string]string
-	DropSample          []map[string]string
-	WriterOpt           WriterGlobalOpt
-	Writers             []WriterOptions
-	KafkaWriters        []KafkaWriterOptions
+	GetHeartbeatFromMetric bool // 是否从时序数据中提取机器心跳时间，默认 false
+	BusiGroupLabelKey      string
+	IdentMetrics           []string
+	IdentStatsThreshold    int
+	IdentDropThreshold     int // 每分钟单个 ident 的样本数超过该阈值，则丢弃
+	WriteConcurrency       int
+
+	// ProxyInflightMax 控制 /proxy/v1/write 的并发上限。超过阈值直接返回 429，
+	// 把背压交给客户端 WAL（remote_write 协议原生支持）。<=0 使用默认值。
+	ProxyInflightMax int
+
+	// ProxyMaxBodyBytes 限制 /proxy/v1/write 单个请求 body 的最大字节数，超过返回 413。
+	// 和 ProxyInflightMax 配套：并发 × 单请求大小 = pushgw 内存占用上限。<=0 使用默认值。
+	ProxyMaxBodyBytes int64
+
+	// ProxyConcurrentForward 控制 /proxy/v1/write 转发给多个 writer 时是否并行。
+	// 默认 false 串行；置 true 且 writer 数大于 1 时并行转发，把单请求耗时从 sum(latency)
+	// 降到 max(latency)，同时缩短 in-flight slot 持有时间、缓解慢 writer 拖累健康 writer。
+	ProxyConcurrentForward bool
+
+	LabelRewrite     bool
+	ForceUseServerTS bool
+	DebugSample      map[string]string
+	DropSample       []map[string]string
+	WriterOpt        WriterGlobalOpt
+	Writers          []WriterOptions
+	KafkaWriters     []KafkaWriterOptions
 }
 
 type WriterGlobalOpt struct {
@@ -53,6 +65,7 @@ type WriterOptions struct {
 	Url           string
 	BasicAuthUser string
 	BasicAuthPass string
+	AsyncWrite    bool // 如果有多个转发 writer，对应不重要的 writer，可以设置为 true，异步转发提供转发效率
 
 	Timeout               int64
 	DialTimeout           int64
@@ -128,14 +141,6 @@ func (p *Pushgw) PreCheck() {
 		p.UpdateTargetBatchSize = 20
 	}
 
-	if p.UpdateDBTargetConcurrency <= 0 {
-		p.UpdateDBTargetConcurrency = 16
-	}
-
-	if p.PushConcurrency <= 0 {
-		p.PushConcurrency = 16
-	}
-
 	if p.UpdateTargetByUrlConcurrency <= 0 {
 		p.UpdateTargetByUrlConcurrency = 10
 	}
@@ -194,7 +199,30 @@ func (p *Pushgw) PreCheck() {
 		p.IdentDropThreshold = 5000000
 	}
 
+	if p.ProxyInflightMax <= 0 {
+		p.ProxyInflightMax = 1000
+	}
+
+	if p.ProxyMaxBodyBytes <= 0 {
+		p.ProxyMaxBodyBytes = 32 * 1024 * 1024
+	}
+
 	for index := range p.Writers {
+		// 超时不能为 0：0 会被透传成 transport 的"无超时"，端点 hang 死时
+		// 写出 goroutine 永久卡住，非关键 backend 的并发配额也永不释放。
+		// 默认值与 etc/config.toml 示例一致
+		if p.Writers[index].Timeout <= 0 {
+			p.Writers[index].Timeout = 10000
+		}
+
+		if p.Writers[index].DialTimeout <= 0 {
+			p.Writers[index].DialTimeout = 3000
+		}
+
+		if p.Writers[index].TLSHandshakeTimeout <= 0 {
+			p.Writers[index].TLSHandshakeTimeout = 30000
+		}
+
 		for _, relabel := range p.Writers[index].WriteRelabels {
 			if relabel.Regex == "" {
 				relabel.Regex = "(.*)"

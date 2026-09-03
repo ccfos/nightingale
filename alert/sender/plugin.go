@@ -35,7 +35,7 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 
 	channel := "script"
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
-	fpath := ".notify_scriptt"
+	fpath := ".notify_script"
 	if config.Type == 1 {
 		fpath = config.Content
 	} else {
@@ -89,7 +89,7 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
 
 	res := buf.String()
-	res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
+	res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
 
 	// 截断超出长度的输出
 	if len(res) > 512 {

@@ -2,12 +2,15 @@ package i18nx
 
 import (
 	"encoding/json"
+	"fmt"
 	"path"
 
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/logger"
 )
+
+var dict map[string]map[string]string
 
 func Init(configDir string) {
 	filePath := path.Join(configDir, "i18n.json")
@@ -59,5 +62,38 @@ func Init(configDir string) {
 		}
 	}
 
+	dict = m
 	i18n.DictRegister(m)
+}
+
+func Translate(lang, key string) string {
+	if key == "" || len(dict) == 0 {
+		return key
+	}
+
+	if msg, ok := lookup(lang, key); ok {
+		return msg
+	}
+
+	normalized := NormalizeLang(lang)
+	if normalized != lang {
+		if msg, ok := lookup(normalized, key); ok {
+			return msg
+		}
+	}
+
+	return key
+}
+
+func Translatef(lang, format string, args ...interface{}) string {
+	return fmt.Sprintf(Translate(lang, format), args...)
+}
+
+func lookup(lang, key string) (string, bool) {
+	if catalog, ok := dict[lang]; ok {
+		if msg, ok := catalog[key]; ok {
+			return msg, true
+		}
+	}
+	return "", false
 }

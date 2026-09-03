@@ -82,7 +82,7 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 	}
 	defer conn.Close()
 
-	srs, err := lc.ldapReq(conn, lc.UserFilter)
+	srs, err := lc.ldapReq(conn, "%s", lc.UserFilter)
 	if err != nil {
 		return nil, fmt.Errorf("ldap.error: ldap search fail: %v", err)
 	}

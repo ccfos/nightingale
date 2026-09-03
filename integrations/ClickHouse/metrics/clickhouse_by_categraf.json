@@ -9,10 +9,8 @@
         "note": "通过HTTP协议连接到ClickHouse服务器的客户端数量。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_http_connection",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -24,7 +22,11 @@
                 "name": "ClickHouse HTTP Connections",
                 "note": "The number of clients connected to the ClickHouse server via the HTTP protocol."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -36,10 +38,8 @@
         "note": "插入查询执行的平均时间（微秒）。",
         "lang": "zh_CN",
         "expression": "clickhouse_events_insert_query_time_microseconds_microseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -51,7 +51,11 @@
                 "name": "ClickHouse INSERT query average time",
                 "note": "The average time in microseconds for the insertion query to execute."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -63,10 +67,8 @@
         "note": "执行的选择（SELECT）查询的数量",
         "lang": "zh_CN",
         "expression": "clickhouse_events_select_query",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -78,7 +80,11 @@
                 "name": "ClickHouse SELECT Query Number",
                 "note": "Number of SELECT queries executed"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -90,10 +96,8 @@
         "note": "选择查询执行的平均时间（微秒）。",
         "lang": "zh_CN",
         "expression": "clickhouse_events_select_query_time_microseconds_microseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -105,7 +109,11 @@
                 "name": "ClickHouse SELECT query average time",
                 "note": "Select the average time (microseconds) for query execution."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -117,10 +125,8 @@
         "note": "通过TCP协议连接到ClickHouse服务器的客户端数量。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_tcp_connection",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -132,7 +138,11 @@
                 "name": "ClickHouse TCP Connections",
                 "note": "The number of clients connected to the ClickHouse server via the TCP protocol."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -144,10 +154,8 @@
         "note": "临时数据部分的数量，这些部分当前正在生成。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_parts_temporary",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -159,7 +167,11 @@
                 "name": "ClickHouse Temporary Data Volume",
                 "note": "The number of temporary data sections that are currently being generated."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -171,10 +183,8 @@
         "note": "发送到分布式表的远程服务器的数据连接数。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_distributed_send",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -186,7 +196,11 @@
                 "name": "ClickHouse Distributed Table Joins",
                 "note": "The number of data connections sent to the remote server of the distributed table."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -198,10 +212,8 @@
         "note": "宽数据部分的数量。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_parts_wide",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -213,7 +225,11 @@
                 "name": "ClickHouse wide data volume",
                 "note": "Number of wide data sections."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -225,10 +241,8 @@
         "note": "等待异步插入到分布式表的文件数量。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_distributed_files_to_insert",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -240,7 +254,11 @@
                 "name": "ClickHouse Number of distributed table files to be inserted",
                 "note": "The number of files waiting to be inserted asynchronously into the distributed table."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -252,10 +270,8 @@
         "note": "提交前的数据部分数量，这些部分在data_parts列表中，但不用于SELECT查询。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_parts_pre_committed",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -267,7 +283,11 @@
                 "name": "Data volume before ClickHouse submission",
                 "note": "The number of data parts before submission, which are in the data _ parts list, but are not used for SELECT queries."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -279,10 +299,8 @@
         "note": "提交后的数据部分数量，这些部分在data_parts列表中，并且用于SELECT查询。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_parts_committed",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -294,7 +312,11 @@
                 "name": "Data volume after ClickHouse submission",
                 "note": "The number of submitted data parts, which are in the data _ parts list and used for SELECT queries."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -306,10 +328,8 @@
         "note": " 插入操作写入的未压缩字节数。",
         "lang": "zh_CN",
         "expression": "clickhouse_events_inserted_bytes",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -321,7 +341,11 @@
                 "name": "ClickHouse Insert Uncompressed",
                 "note": "The number of uncompressed bytes written by the insert operation."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -333,10 +357,8 @@
         "note": "",
         "lang": "zh_CN",
         "expression": "clickhouse_events_inserted_rows",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -348,7 +370,11 @@
                 "name": "Number of ClickHouse inserted rows",
                 "note": ""
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -360,10 +386,8 @@
         "note": "由于优先级设置，被停止并等待的查询数量。\n",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_query_preempted",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -375,7 +399,11 @@
                 "name": "ClickHouse Query Priority",
                 "note": "The number of queries that were stopped and waiting due to the priority setting. \n"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -387,10 +415,8 @@
         "note": "ClickHouse执行的查询总数。",
         "lang": "zh_CN",
         "expression": "clickhouse_events_query",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -402,7 +428,11 @@
                 "name": "Total ClickHouse Queries",
                 "note": "The total number of queries executed by ClickHouse."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -414,10 +444,8 @@
         "note": "查询执行的总时间（微秒）。",
         "lang": "zh_CN",
         "expression": "clickhouse_events_query_time_microseconds",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -429,7 +457,11 @@
                 "name": "Total ClickHouse query time",
                 "note": "The total time in microseconds for the query to execute."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -441,10 +473,8 @@
         "note": "正在被删除的数据部分数量。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_parts_deleting",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -456,7 +486,11 @@
                 "name": "ClickHouse Amount of Data being Deleted",
                 "note": "The number of data parts being deleted."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -468,10 +502,8 @@
         "note": "后台移动池中的活动任务数，用于处理数据移动。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_background_move_pool_task",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -483,7 +515,11 @@
                 "name": "Number of active tasks in ClickHouse mobile pool",
                 "note": "The number of active tasks in the background move pool, used to handle data moves."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -495,10 +531,8 @@
         "note": "紧凑数据部分的数量。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_parts_compact",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -510,7 +544,11 @@
                 "name": "ClickHouse Compact Data Volume",
                 "note": "Number of compact data sections."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -522,10 +560,8 @@
         "note": "后台缓冲区冲洗调度池中的活动任务数，用于定期缓冲区冲洗。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_background_buffer_flush_schedule_pool_task",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -537,7 +573,11 @@
                 "name": "Number of active tasks in ClickHouse buffer",
                 "note": "The number of active tasks in the background buffer flushing scheduling pool for periodic buffer flushing."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -549,10 +589,8 @@
         "note": "移动到另一个磁盘并应在析构函数中删除的数据部分数量。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_parts_delete_on_destroy",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -564,7 +602,11 @@
                 "name": "ClickHouse cross-disk volume",
                 "note": "The number of portions of data that are moved to another disk and should be deleted in the destructor."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -576,10 +618,8 @@
         "note": " 过时的数据部分数量，这些部分不是活动数据部分，但当前SELECT查询可能使用它们。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_parts_outdated",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -591,7 +631,11 @@
                 "name": "ClickHouse Obsolete Data Volume",
                 "note": "The number of obsolete data parts that are not active data parts, but may be used by the current SELECT query."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -603,10 +647,8 @@
         "note": "ClickHouse服务器使用的总内存量。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_memory_tracking",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -618,7 +660,11 @@
                 "name": "Memory usage in ClickHouse",
                 "note": "The total amount of memory used by the ClickHouse server."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -630,10 +676,8 @@
         "note": "ClickHouse数据库数量",
         "lang": "zh_CN",
         "expression": "clickhouse_asynchronous_metrics_number_of_databases",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -645,7 +689,11 @@
                 "name": "Number of databases in ClickHouse",
                 "note": "Number of ClickHouse databases"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -657,10 +705,8 @@
         "note": "ClickHouse表数量",
         "lang": "zh_CN",
         "expression": "clickhouse_asynchronous_metrics_number_of_tables",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -672,7 +718,11 @@
                 "name": "Number of tables in ClickHouse",
                 "note": "Number of ClickHouse tables"
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -684,10 +734,8 @@
         "note": "ClickHouse服务器的修订号，通常是一个用于标识特定构建的数字。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_revision",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -699,7 +747,11 @@
                 "name": "ClickHouse Revision",
                 "note": "The revision number of the ClickHouse server, usually a number used to identify a specific build."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -711,10 +763,8 @@
         "note": "ClickHouse服务器自启动以来的运行时间。",
         "lang": "zh_CN",
         "expression": "clickhouse_asynchronous_metrics_uptime",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -726,7 +776,11 @@
                 "name": "ClickHouse server runtime",
                 "note": "The running time of the ClickHouse server since it started."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     },
     {
         "id": 0,
@@ -738,10 +792,8 @@
         "note": "ClickHouse服务器的版本号，以整数形式表示。",
         "lang": "zh_CN",
         "expression": "clickhouse_metrics_version_integer",
-        "created_at": 0,
-        "created_by": "",
-        "updated_at": 0,
-        "updated_by": "",
+        "expression_type": "metric_name",
+        "metric_type": "gauge",
         "translation": [
             {
                 "lang": "zh_CN",
@@ -753,6 +805,10 @@
                 "name": "ClickHouse version number",
                 "note": "Version number of the ClickHouse server, expressed as an integer."
             }
-        ]
+        ],
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
     }
 ]
