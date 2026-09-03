@@ -1280,16 +1280,16 @@ func (ar *AlertRule) DB2FE() error {
 	if ar.DatasourceQueries == nil {
 		ar.DatasourceQueries = []DatasourceQuery{}
 	}
-	if ar.Severities == nil {
-		ar.Severities = []int{}
-	}
 	if ar.EventRelabelConfig == nil {
 		ar.EventRelabelConfig = []*pconf.RelabelConfig{}
 	}
 	if ar.NotifyGroupsObj == nil {
 		ar.NotifyGroupsObj = []UserGroup{}
 	}
-	// pipeline_configs 故意不归一：前端编辑页靠 null 触发默认工作流行，返回 [] 会让工作流区渲染成空且无法添加。
+	// pipeline_configs 与 severities 故意不归一：这两个字段前端都是用真值兜底的，[] 是真值、null 才是假值，归一会让兜底失效。
+	// pipeline_configs：编辑页 `pipeline_configs ?? [{enable:true}]` 靠 null 出默认工作流行，[] 会让工作流区空白且无法添加。
+	// severities：列表页筛选是 `(item.severities && ...) || !item.severities`，[] 会让推不出严重度的规则整条从列表消失
+	// （rule_config 为空串、或非 prom 规则 triggers 为空时 FillSeverities 一个都 append 不出来）。该字段 gorm:"-" 且只给前端用。
 	if ar.AnnotationsJSON == nil {
 		ar.AnnotationsJSON = map[string]string{}
 	}
