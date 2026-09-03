@@ -16,7 +16,10 @@ type DatasourceType struct {
 }
 
 type Keys struct {
-	ValueKey   string `json:"valueKey" mapstructure:"valueKey"` // 多个用空格分隔
+	ValueKey string `json:"valueKey" mapstructure:"valueKey"` // 多个用空格分隔
+	// MetricKey is accepted for compatibility with older IoTDB/TDengine
+	// dashboard payloads. New clients should send valueKey.
+	MetricKey  string `json:"metricKey,omitempty" mapstructure:"metricKey"`
 	LabelKey   string `json:"labelKey" mapstructure:"labelKey"` // 多个用空格分隔
 	TimeKey    string `json:"timeKey" mapstructure:"timeKey"`
 	TimeFormat string `json:"timeFormat" mapstructure:"timeFormat"`
