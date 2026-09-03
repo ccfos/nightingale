@@ -3865,8 +3865,6 @@ func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]
 	}
 
 	escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
-	escaped = strings.ReplaceAll(escaped, "\n", "\\n")
-	escaped = strings.ReplaceAll(escaped, "\r", "\\r")
 	if isSlackIdent(t.NotifyChannelIdent) {
 		escaped = strings.ReplaceAll(escaped, "&lt;", "<")
 	}
