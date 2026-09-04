@@ -51,7 +51,12 @@ func (p *PostgreSQL) InitClient() error {
 		return fmt.Errorf("not found postgresql addr, please check datasource config")
 	}
 	for _, shard := range p.Shards {
-		if db, err := shard.NewConn(context.TODO(), "postgres"); err != nil {
+		dbName := shard.DB
+		if dbName == "" {
+			dbName = "postgres"
+		}
+
+		if db, err := shard.NewConn(context.TODO(), dbName); err != nil {
 			defer sqlbase.CloseDB(db)
 			return err
 		}
