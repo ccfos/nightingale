@@ -1,10 +1,147 @@
 package models_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/models"
 )
+
+func TestAlertRuleVerify_Severity(t *testing.T) {
+	tests := []struct {
+		name       string
+		cate       string
+		ruleConfig string
+		wantErr    bool
+	}{
+		{"prometheus v1 query severity 1", models.PROMETHEUS, `{"queries":[{"prom_ql":"up == 0","severity":1}]}`, false},
+		{"prometheus v1 query severity 3", models.PROMETHEUS, `{"queries":[{"prom_ql":"up == 0","severity":3}]}`, false},
+		{"prometheus v1 query severity 0", models.PROMETHEUS, `{"queries":[{"prom_ql":"up == 0","severity":0}]}`, true},
+		{"prometheus v1 query severity 4", models.PROMETHEUS, `{"queries":[{"prom_ql":"up == 0","severity":4}]}`, true},
+		{"prometheus legacy config severity", models.PROMETHEUS, `{"severity":2}`, false},
+		{"prometheus legacy config invalid severity", models.PROMETHEUS, `{"severity":-1}`, true},
+		{"unused legacy severity may remain zero", models.PROMETHEUS, `{"severity":0,"queries":[{"prom_ql":"up == 0","severity":2}]}`, false},
+		{"unused legacy severity cannot be another invalid value", models.PROMETHEUS, `{"severity":4,"queries":[{"prom_ql":"up == 0","severity":2}]}`, true},
+		{"prometheus v2 trigger severity", models.PROMETHEUS, `{"version":"v2","triggers":[{"exp":"$A > 0","severity":1}]}`, false},
+		{"prometheus v2 invalid trigger severity", models.PROMETHEUS, `{"version":"v2","triggers":[{"exp":"$A > 0","severity":9}]}`, true},
+		{"host trigger severity", models.HOST, `{"triggers":[{"severity":3}]}`, false},
+		{"host invalid trigger severity", models.HOST, `{"triggers":[{"severity":0}]}`, true},
+		{"enabled nodata trigger severity", models.CLICKHOUSE, `{"nodata_trigger":{"enable":true,"severity":2}}`, false},
+		{"enabled nodata trigger invalid severity", models.CLICKHOUSE, `{"nodata_trigger":{"enable":true,"severity":0}}`, true},
+		{"disabled nodata trigger may retain zero", models.CLICKHOUSE, `{"nodata_trigger":{"enable":false,"severity":0}}`, false},
+		{"enabled anomaly trigger invalid severity", models.CLICKHOUSE, `{"anomaly_trigger":{"enable":true,"severity":4}}`, true},
+		{"empty config has no active severity", models.PROMETHEUS, `{}`, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ar := &models.AlertRule{Name: "testrule", Cate: tt.cate, RuleConfig: tt.ruleConfig}
+			err := ar.Verify()
+			if tt.wantErr {
+				if err == nil || !strings.Contains(err.Error(), "severity must be 1, 2 or 3") {
+					t.Fatalf("expected severity error, got: %v", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("expected no error, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestAlertRuleVerify_LegacyTopLevelSeverity(t *testing.T) {
+	for _, severity := range []int{-1, 4} {
+		ar := &models.AlertRule{
+			Name:       "testrule",
+			Cate:       models.PROMETHEUS,
+			Severity:   severity,
+			RuleConfig: `{"queries":[{"prom_ql":"up == 0","severity":2}]}`,
+		}
+		if err := ar.Verify(); err == nil || !strings.Contains(err.Error(), "severity must be 1, 2 or 3") {
+			t.Fatalf("severity %d: expected severity error, got: %v", severity, err)
+		}
+	}
+}
+
+func TestAlertRuleVerify_RequiredExpressions(t *testing.T) {
+	tests := []struct {
+		name       string
+		cate       string
+		ruleConfig string
+		wantErr    string
+	}{
+		{"prometheus v1 blank prom_ql", models.PROMETHEUS, `{"queries":[{"prom_ql":"","severity":2}]}`, "prom_ql is blank"},
+		{"prometheus v1 whitespace prom_ql", models.PROMETHEUS, `{"queries":[{"prom_ql":"  ","severity":2}]}`, "prom_ql is blank"},
+		{"loki v1 blank prom_ql", models.LOKI, `{"queries":[{"prom_ql":"","severity":2}]}`, "prom_ql is blank"},
+		{"prometheus v2 blank exp", models.PROMETHEUS, `{"version":"v2","triggers":[{"exp":"","severity":2}]}`, "exp is blank"},
+		{"clickhouse blank exp", models.CLICKHOUSE, `{"triggers":[{"exp":"","severity":2}]}`, "exp is blank"},
+		{"clickhouse valid exp", models.CLICKHOUSE, `{"triggers":[{"exp":"$A > 0","severity":2}]}`, ""},
+		{"disabled threshold conditions allow blank exp", models.CLICKHOUSE, `{"exp_trigger_disable":true,"triggers":[{"exp":"","severity":2}],"nodata_trigger":{"enable":true,"severity":2}}`, ""},
+		{"host triggers have no exp", models.HOST, `{"triggers":[{"type":"target_miss","duration":60,"severity":2}]}`, ""},
+		// n9e-plus 老智能告警规则（prod=anomaly）经 AlertRuleModifyHook 迁移后的 GET 返回形态：
+		// queries 是算法输入（无 prom_ql/severity），事件 severity 由 anomaly_trigger 承载
+		{"anomaly migrated queries are exempt", models.PROMETHEUS, `{"version":"","queries":[{"ref":"A","query":"cpu_usage_active","unit":""}],"triggers":null,"anomaly_trigger":{"enable":true,"severity":2,"algorithm":"holt-winters"}}`, ""},
+		{"anomaly migrated shape still validates anomaly severity", models.PROMETHEUS, `{"queries":[{"ref":"A","query":"cpu_usage_active"}],"anomaly_trigger":{"enable":true,"severity":4}}`, "severity must be 1, 2 or 3"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ar := &models.AlertRule{Name: "testrule", Cate: tt.cate, RuleConfig: tt.ruleConfig}
+			err := ar.Verify()
+			if tt.wantErr == "" {
+				if err != nil {
+					t.Fatalf("expected no error, got: %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+				t.Fatalf("expected error containing %q, got: %v", tt.wantErr, err)
+			}
+		})
+	}
+}
+
+// Host rules are dispatched by prod; the cate may be blank (Verify then defaults
+// it to prometheus) or stale, and neither must route them into the prom v1 checks.
+func TestAlertRuleVerify_HostRuleClassifiedByProd(t *testing.T) {
+	hostConfig := `{"queries":[{"key":"group_ids","op":"==","values":[1]}],"triggers":[{"type":"target_miss","duration":60,"severity":2}]}`
+	tests := []struct {
+		name       string
+		cate       string
+		ruleConfig string
+		wantErr    string
+	}{
+		{"blank cate", "", hostConfig, ""},
+		{"stale prometheus cate", models.PROMETHEUS, hostConfig, ""},
+		{"blank cate still validates trigger severity", "", `{"queries":[{"key":"group_ids","op":"==","values":[1]}],"triggers":[{"type":"target_miss","duration":60,"severity":0}]}`, "severity must be 1, 2 or 3"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ar := &models.AlertRule{Name: "testrule", Prod: models.HOST, Cate: tt.cate, RuleConfig: tt.ruleConfig}
+			err := ar.Verify()
+			if tt.wantErr == "" {
+				if err != nil {
+					t.Fatalf("expected no error, got: %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+				t.Fatalf("expected error containing %q, got: %v", tt.wantErr, err)
+			}
+		})
+	}
+}
+
+func TestAlertRuleUpdateColumn_RejectsInvalidSeverity(t *testing.T) {
+	ar := &models.AlertRule{}
+	for _, severity := range []interface{}{float64(0), float64(4), float64(1.5), "2"} {
+		if err := ar.UpdateColumn(nil, "severity", severity); err == nil || !strings.Contains(err.Error(), "severity must be 1, 2 or 3") {
+			t.Fatalf("severity %v: expected severity error, got: %v", severity, err)
+		}
+	}
+}
 
 func TestAlertRuleVerify_EffectiveTimeSpan(t *testing.T) {
 	base := func() *models.AlertRule {

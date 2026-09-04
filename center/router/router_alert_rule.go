@@ -533,6 +533,9 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				originRule["triggers"] = triggers
 				b, err := json.Marshal(originRule)
 				ginx.Dangerous(err)
+				candidate := *ar
+				candidate.RuleConfig = string(b)
+				ginx.Dangerous(candidate.ValidateRuleConfig(), http.StatusBadRequest)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"rule_config": string(b)}))
 			}
 
