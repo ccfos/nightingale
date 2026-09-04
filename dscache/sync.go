@@ -135,7 +135,6 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					continue
 				}
 
-				// logger.Debugf("get datasource: %+v", item)
 				ds := datasource.DatasourceInfo{
 					Id:             item.Id,
 					Name:           item.Name,
@@ -265,14 +264,14 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 		}
 
 		if item.Name == "" {
-			logger.Warningf("cluster name is empty, ignore %+v", item)
+			logger.Warningf("cluster name is empty, ignore datasource_id=%d plugin_type=%s", item.Id, item.Type)
 			continue
 		}
 		typ := strings.ReplaceAll(item.Type, ".logging", "")
 
 		ds, err := datasource.GetDatasourceByType(typ, item.Settings)
 		if err != nil {
-			logger.Debugf("get plugin:%+v fail: %v", item, err)
+			logger.Debugf("get plugin datasource_id=%d plugin_type=%s fail: error_type=%T", item.Id, typ, err)
 			continue
 		}
 
@@ -280,7 +279,7 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 
 		err = ds.Validate(context.Background())
 		if err != nil {
-			logger.Warningf("get plugin:%+v fail: %v", item, err)
+			logger.Warningf("get plugin datasource_id=%d plugin_type=%s fail: error_type=%T", item.Id, typ, err)
 			continue
 		}
 		ids = append(ids, item.Id)
@@ -295,7 +294,7 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					logger.Errorf("panic in datasource item: %+v panic:%v", item, r)
+					logger.Errorf("panic in datasource init datasource_id=%d plugin_type=%s panic_type=%T", item.Id, typ, r)
 				}
 			}()
 			DsCache.Put(typ, item.Id, ds)
