@@ -3,6 +3,7 @@ package dscache
 import (
 	"io"
 	"sync"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/toolkits/pkg/logger"
@@ -24,19 +25,38 @@ func closeIfPossible(cate string, dsId int64, ds datasource.Datasource, reason s
 }
 
 type Cache struct {
-	datas map[string]map[int64]datasource.Datasource
-	mutex *sync.RWMutex
+	datas        map[string]map[int64]datasource.Datasource
+	initAttempts map[string]map[int64]initAttempt
+	mutex        *sync.RWMutex
 }
 
+type initAttempt struct {
+	candidate  datasource.Datasource
+	generation uint64
+	inFlight   bool
+	retryAfter time.Time
+}
+
+// 配置没变而远端持续不可达时，不应跟着 2 秒同步周期反复建连、打日志。
+// 30 秒仍能很快感知恢复，同时把失败风暴降到原来的约 1/15。
+var failedInitRetryInterval = 30 * time.Second
+
 var DsCache = Cache{
-	datas: make(map[string]map[int64]datasource.Datasource),
-	mutex: new(sync.RWMutex),
+	datas:        make(map[string]map[int64]datasource.Datasource),
+	initAttempts: make(map[string]map[int64]initAttempt),
+	mutex:        new(sync.RWMutex),
 }
 
 func (cs *Cache) Put(cate string, dsId int64, ds datasource.Datasource) {
 	cs.mutex.Lock()
 	if _, found := cs.datas[cate]; !found {
 		cs.datas[cate] = make(map[int64]datasource.Datasource)
+	}
+	if cs.initAttempts == nil {
+		cs.initAttempts = make(map[string]map[int64]initAttempt)
+	}
+	if _, found := cs.initAttempts[cate]; !found {
+		cs.initAttempts[cate] = make(map[int64]initAttempt)
 	}
 
 	if _, found := cs.datas[cate][dsId]; found {
@@ -45,33 +65,61 @@ func (cs *Cache) Put(cate string, dsId int64, ds datasource.Datasource) {
 			return
 		}
 	}
+
+	now := time.Now()
+	previous, hasPrevious := cs.initAttempts[cate][dsId]
+	if hasPrevious && previous.candidate.Equal(ds) {
+		if previous.inFlight || now.Before(previous.retryAfter) {
+			cs.mutex.Unlock()
+			return
+		}
+	} else {
+		previous.generation++
+	}
+	attempt := initAttempt{
+		candidate:  ds,
+		generation: previous.generation,
+		inFlight:   true,
+	}
+	cs.initAttempts[cate][dsId] = attempt
 	cs.mutex.Unlock()
 
 	// InitClient() 在用户配置错误或远端不可用时, 会非常耗时, mutex被长期持有, 导致Get()会超时
 	err := ds.InitClient()
 	if err != nil {
-		logger.Errorf("init plugin:%s %d %+v client fail: %v", cate, dsId, ds, err)
+		// Datasource errors may embed a DSN or URL credentials. Log only the type;
+		// operators can identify the affected datasource by cate/id without leaking secrets.
+		logger.Errorf("init plugin:%s %d client fail: error_type=%T", cate, dsId, err)
 		// 防御性兜底: 当前 InitClient 实现在失败时通常不会留下半成品(各分支均在 return 前
 		// 自行 Close 或直接未赋值), 此处 Close 多数情况下为 no-op. 保留是为了未来 InitClient
 		// 出现部分初始化状态时不漏关. 注: gorm.Open 内部由 Dialector.Initialize 创建的
 		// *sql.DB 当前架构下无法触达, 那条泄漏需要 InitCli 改为自管 *sql.DB 才能根治.
 		closeIfPossible(cate, dsId, ds, "init failed")
+		cs.mutex.Lock()
+		current, found := cs.initAttempts[cate][dsId]
+		if found && current.generation == attempt.generation {
+			current.inFlight = false
+			current.retryAfter = time.Now().Add(failedInitRetryInterval)
+			cs.initAttempts[cate][dsId] = current
+		}
+		cs.mutex.Unlock()
 		return
 	}
 
-	logger.Debugf("init plugin:%s %d %+v client success", cate, dsId, ds)
+	logger.Debugf("init plugin:%s %d client success", cate, dsId)
 	cs.mutex.Lock()
+	current, found := cs.initAttempts[cate][dsId]
+	if !found || current.generation != attempt.generation {
+		cs.mutex.Unlock()
+		closeIfPossible(cate, dsId, ds, "superseded")
+		return
+	}
 	old := cs.datas[cate][dsId]
 	cs.datas[cate][dsId] = ds
+	delete(cs.initAttempts[cate], dsId)
 	cs.mutex.Unlock()
 	// 替换旧实例时关闭旧值, 在锁外执行避免阻塞读路径.
 	//
-	// TODO(ABA): Put 当前是"读-检查-解锁-初始化-加锁-覆盖"模式, 中间窗口内可能有别的
-	// goroutine 已成功写入更新的 ds. 本次 Put 仍会用本 goroutine 的 ds 无条件覆盖,
-	// 把已生效的更新实例 Close 掉(可能正被 Get 出来的查询使用), 导致并发查询拿到
-	// "sql: database is closed". *sql.DB.Close 会等待 in-flight 查询完成,
-	// 缓解了一部分但不能根治. 根治需要给缓存条目加版本号, Put 写回前对比版本一致才覆盖,
-	// 不一致就 Close 自己新建的 ds. 这是独立改造点, 不在本 PR 范围.
 	if old != nil {
 		closeIfPossible(cate, dsId, old, "replaced")
 	}
@@ -93,6 +141,9 @@ func (cs *Cache) Get(cate string, dsId int64) (datasource.Datasource, bool) {
 
 func (cs *Cache) Delete(cate string, dsId int64) {
 	cs.mutex.Lock()
+	if attempts, found := cs.initAttempts[cate]; found {
+		delete(attempts, dsId)
+	}
 	if _, found := cs.datas[cate]; !found {
 		cs.mutex.Unlock()
 		return
@@ -107,14 +158,30 @@ func (cs *Cache) Delete(cate string, dsId int64) {
 	logger.Debugf("delete plugin:%s %d from cache", cate, dsId)
 }
 
-// GetAllIds 返回缓存中所有数据源的 ID，按类型分组
+// GetAllIds 返回已成功缓存或仍在初始化/退避中的数据源 ID，按类型分组。
+// 同步删除阶段需要看见失败过但尚未入 datas 的条目，避免配置删除后留下退避状态。
 func (cs *Cache) GetAllIds() map[string][]int64 {
 	cs.mutex.RLock()
 	defer cs.mutex.RUnlock()
 	result := make(map[string][]int64)
 	for cate, dsMap := range cs.datas {
-		ids := make([]int64, 0, len(dsMap))
+		ids := make([]int64, 0, len(dsMap)+len(cs.initAttempts[cate]))
 		for dsId := range dsMap {
+			ids = append(ids, dsId)
+		}
+		for dsId := range cs.initAttempts[cate] {
+			if _, cached := dsMap[dsId]; !cached {
+				ids = append(ids, dsId)
+			}
+		}
+		result[cate] = ids
+	}
+	for cate, attempts := range cs.initAttempts {
+		if _, found := result[cate]; found {
+			continue
+		}
+		ids := make([]int64, 0, len(attempts))
+		for dsId := range attempts {
 			ids = append(ids, dsId)
 		}
 		result[cate] = ids

@@ -128,8 +128,12 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 
 			var dss []datasource.DatasourceInfo
 			for _, item := range items {
-
-				// logger.Debugf("get datasource: %+v", item)
+				// disabled 数据源不建立运行时查询 client：既符合「禁用」语义，也避免导入的待补充鉴权
+				// (pending_auth) 源每 2s 反复 InitClient，堆积连接/goroutine/DB 句柄。排除后
+				// 它们不进 PutDatasources 的 validIds，已注册的会被一并从缓存移除。
+				if item.Status == "disabled" {
+					continue
+				}
 				ds := datasource.DatasourceInfo{
 					Id:             item.Id,
 					Name:           item.Name,
@@ -259,14 +263,14 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 		}
 
 		if item.Name == "" {
-			logger.Warningf("cluster name is empty, ignore %+v", item)
+			logger.Warningf("cluster name is empty, ignore datasource_id=%d plugin_type=%s", item.Id, item.Type)
 			continue
 		}
 		typ := strings.ReplaceAll(item.Type, ".logging", "")
 
 		ds, err := datasource.GetDatasourceByType(typ, item.Settings)
 		if err != nil {
-			logger.Debugf("get plugin:%+v fail: %v", item, err)
+			logger.Debugf("get plugin datasource_id=%d plugin_type=%s fail: error_type=%T", item.Id, typ, err)
 			continue
 		}
 
@@ -274,7 +278,7 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 
 		err = ds.Validate(context.Background())
 		if err != nil {
-			logger.Warningf("get plugin:%+v fail: %v", item, err)
+			logger.Warningf("get plugin datasource_id=%d plugin_type=%s fail: error_type=%T", item.Id, typ, err)
 			continue
 		}
 		ids = append(ids, item.Id)
@@ -289,7 +293,7 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					logger.Errorf("panic in datasource item: %+v panic:%v", item, r)
+					logger.Errorf("panic in datasource init datasource_id=%d plugin_type=%s panic_type=%T", item.Id, typ, r)
 				}
 			}()
 			DsCache.Put(typ, item.Id, ds)
