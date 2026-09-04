@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
+	"github.com/ccfos/nightingale/v6/datasource/es"
 	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
@@ -418,7 +419,7 @@ func (e queryBatchV2Executor) executeDatasourceQuery(
 		if err != nil {
 			return queryBatchV2Value{}, queryBatchV2FailureFromError(query.RefID, queryBatchV2DatasourceErrorCode(err), err)
 		}
-		records := queryBatchV2Records(cate, items)
+		records := queryBatchV2Records(cate, items, queryBatchV2ElasticsearchSQLPayload(cate, payload))
 		value := queryBatchV2Value{ResultType: resultTypeLogs, Records: records}
 		return value, queryBatchV2Success(query.RefID, value)
 	}
@@ -611,7 +612,26 @@ func queryBatchV2MetricLabels(metric model.Metric) map[string]string {
 	return labels
 }
 
-func queryBatchV2Records(cate string, items []interface{}) []QueryBatchV2Record {
+// queryBatchV2ElasticsearchSQLPayload reports whether the payload selects the
+// ES plugin's SQL branch. Only the elasticsearch plugin (datasource/es) has
+// that branch: QueryLog routes such a payload to XPackSQL and returns plain
+// column→value row maps, not SearchHit objects, so the _source unwrapping in
+// queryBatchV2Records must be skipped for them. The payload inspection is
+// delegated to es.IsSQLQueryLog, which shares the decode with the plugin's
+// own routing (extractSQLRequest), so this check cannot drift from what the
+// plugin actually does — e.g. a payload with a non-string index makes the
+// plugin fall back to the DSL path, and this check reports false too.
+// OpenSearch has no SQL branch — its plugin ignores "sql" and always returns
+// SearchHits — so opensearch cates must keep the unwrapping no matter what
+// the payload carries.
+func queryBatchV2ElasticsearchSQLPayload(cate string, payload map[string]interface{}) bool {
+	if strings.TrimSuffix(cate, ".logging") != "elasticsearch" {
+		return false
+	}
+	return es.IsSQLQueryLog(payload)
+}
+
+func queryBatchV2Records(cate string, items []interface{}, esSQLMode bool) []QueryBatchV2Record {
 	records := make([]QueryBatchV2Record, 0, len(items))
 	for _, item := range items {
 		fields, ok := item.(map[string]interface{})
@@ -624,10 +644,12 @@ func queryBatchV2Records(cate string, items []interface{}) []QueryBatchV2Record 
 		if fields == nil {
 			fields = map[string]interface{}{"value": item}
 		}
-		// Elasticsearch QueryLog returns SearchHit objects. V2 ES records expose
-		// only the source document; ES metadata (_id, _index and sort) remains
-		// available on the legacy logs-query endpoint used for pagination.
-		if queryBatchV2IsElasticsearchCate(cate) {
+		// Elasticsearch QueryLog returns SearchHit objects on the DSL path. V2
+		// ES records expose only the source document; ES metadata (_id, _index
+		// and sort) remains available on the legacy logs-query endpoint used
+		// for pagination. The SQL path returns row maps without _source, which
+		// must pass through untouched instead of being wiped to an empty object.
+		if queryBatchV2IsElasticsearchCate(cate) && !esSQLMode {
 			source, _ := fields["_source"].(map[string]interface{})
 			if source == nil {
 				source = map[string]interface{}{}
