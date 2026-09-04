@@ -3,7 +3,9 @@ package iotdb
 import (
 	"context"
 	"fmt"
+	"math"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +28,15 @@ const (
 
 type IoTDB struct {
 	iot.Iotdb `json:",inline" mapstructure:",squash"`
+}
+
+// String intentionally omits authentication material because datasource
+// instances may be included in generic cache/error logs.
+func (it *IoTDB) String() string {
+	if it == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("IoTDB{addr:%q rpc_addr:%q database:%q}", it.Addr, it.RPCAddr, it.Database)
 }
 
 type QueryParam struct {
@@ -66,6 +77,8 @@ func (it *IoTDB) Equal(other datasource.Datasource) bool {
 	}
 
 	if it.Addr != otherIoTDB.Addr ||
+		it.RPCAddr != otherIoTDB.RPCAddr ||
+		it.Database != otherIoTDB.Database ||
 		it.Timeout != otherIoTDB.Timeout ||
 		it.DialTimeout != otherIoTDB.DialTimeout ||
 		it.MaxIdleConnsPerHost != otherIoTDB.MaxIdleConnsPerHost ||
@@ -91,8 +104,8 @@ func (it *IoTDB) Equal(other datasource.Datasource) bool {
 }
 
 func (it *IoTDB) Validate(ctx context.Context) error {
-	if strings.TrimSpace(it.Addr) == "" {
-		return fmt.Errorf("iotdb addr is invalid, please check datasource setting")
+	if strings.TrimSpace(it.Addr) == "" && strings.TrimSpace(it.RPCAddr) == "" {
+		return fmt.Errorf("iotdb REST or RPC address is required")
 	}
 	return nil
 }
@@ -131,7 +144,8 @@ func (it *IoTDB) QueryData(ctx context.Context, query interface{}) ([]models.Dat
 	if err != nil {
 		return nil, err
 	}
-	if normalizeRowsTime(rows, queryParam.Keys.TimeKey) {
+	timeKey := effectiveTimeKey(rows, queryParam.Keys.TimeKey)
+	if normalizeRowsTime(rows, timeKey) {
 		// After normalizing IoTDB epoch values to seconds, let the generic
 		// timeseries parser treat them as unix timestamps instead of re-parsing
 		// them with a datetime layout.
@@ -139,6 +153,9 @@ func (it *IoTDB) QueryData(ctx context.Context, query interface{}) ([]models.Dat
 	}
 
 	valueKey := strings.TrimSpace(queryParam.Keys.ValueKey)
+	if valueKey == "" {
+		valueKey = strings.TrimSpace(queryParam.Keys.MetricKey)
+	}
 	if valueKey == "" {
 		valueKey = strings.Join(metricKeysFromRows(rows), " ")
 	}
@@ -149,7 +166,7 @@ func (it *IoTDB) QueryData(ctx context.Context, query interface{}) ([]models.Dat
 	items := sqlbase.FormatMetricValues(types.Keys{
 		ValueKey:   valueKey,
 		LabelKey:   queryParam.Keys.LabelKey,
-		TimeKey:    queryParam.Keys.TimeKey,
+		TimeKey:    timeKey,
 		TimeFormat: queryParam.Keys.TimeFormat,
 	}, rows)
 
@@ -185,6 +202,9 @@ func (it *IoTDB) QueryLog(ctx context.Context, query interface{}) ([]interface{}
 }
 
 func (it *IoTDB) queryRows(ctx context.Context, queryParam *QueryParam) ([]map[string]interface{}, error) {
+	if strings.TrimSpace(queryParam.Database) == "" {
+		queryParam.Database = strings.TrimSpace(it.Database)
+	}
 	sqlText := strings.TrimSpace(queryParam.SQL)
 	if sqlText == "" {
 		sqlText = strings.TrimSpace(queryParam.Query)
@@ -207,7 +227,7 @@ func (it *IoTDB) queryRows(ctx context.Context, queryParam *QueryParam) ([]map[s
 		if err != nil {
 			return nil, fmt.Errorf("parse to failed: %w", err)
 		}
-		sqlText, err = macros.Macro(sqlText, from, to, IoTDBType)
+		sqlText, err = expandIoTDBMacros(sqlText, from, to)
 		if err != nil {
 			return nil, err
 		}
@@ -215,6 +235,11 @@ func (it *IoTDB) queryRows(ctx context.Context, queryParam *QueryParam) ([]map[s
 		var err error
 		sqlText, err = appendTimeFilter(sqlText, queryParam)
 		if err != nil {
+			return nil, err
+		}
+	}
+	if types.ReadOnlyEnforced(ctx) {
+		if err := sqlbase.ValidateReadOnly(sqlText); err != nil {
 			return nil, err
 		}
 	}
@@ -233,6 +258,57 @@ func (it *IoTDB) queryRows(ctx context.Context, queryParam *QueryParam) ([]map[s
 	}
 
 	return responseToRows(resp), nil
+}
+
+// expandIoTDBMacros expands the macros supported by the table-model query
+// path. The shared macro registry currently owns $__timeFilter, while
+// $__timeFrom and $__timeTo are scalar bounds that are specific to SQL data
+// sources. IoTDB TIMESTAMP comparisons use Unix milliseconds, which is also
+// the unit returned by the table-model REST/RPC APIs.
+func expandIoTDBMacros(sqlText string, from, to int64) (string, error) {
+	var hasTimeFrom, hasTimeTo bool
+	sqlText, hasTimeFrom = replaceIoTDBMacro(sqlText, iotdbTimeFromPattern, strconv.FormatInt(from*1000, 10))
+	sqlText, hasTimeTo = replaceIoTDBMacro(sqlText, iotdbTimeToPattern, strconv.FormatInt(to*1000, 10))
+	if (hasTimeFrom && from == 0) || (hasTimeTo && to == 0) {
+		return "", fmt.Errorf("$__timeFrom/$__timeTo requires a query time range, got none")
+	}
+	return macros.ExpandTimeFilter(sqlText, from, to, IoTDBType)
+}
+
+// replaceIoTDBMacro replaces complete scalar time macros while leaving an
+// identifier that merely starts with the macro text untouched (for example,
+// $__timeFromExtra). Go's regexp package has no lookaround, so the boundary
+// check is done while stitching the matched spans back together.
+func replaceIoTDBMacro(sqlText string, pattern *regexp.Regexp, replacement string) (string, bool) {
+	matches := pattern.FindAllStringIndex(sqlText, -1)
+	if len(matches) == 0 {
+		return sqlText, false
+	}
+
+	var builder strings.Builder
+	last := 0
+	replaced := false
+	for _, match := range matches {
+		if len(match) != 2 || match[0] < last {
+			continue
+		}
+		if match[1] < len(sqlText) && isMacroIdentifierByte(sqlText[match[1]]) {
+			continue
+		}
+		builder.WriteString(sqlText[last:match[0]])
+		builder.WriteString(replacement)
+		last = match[1]
+		replaced = true
+	}
+	if !replaced {
+		return sqlText, false
+	}
+	builder.WriteString(sqlText[last:])
+	return builder.String(), true
+}
+
+func isMacroIdentifierByte(value byte) bool {
+	return value == '_' || value >= 'a' && value <= 'z' || value >= 'A' && value <= 'Z' || value >= '0' && value <= '9'
 }
 
 func decodeQueryParam(query interface{}) (*QueryParam, error) {
@@ -295,14 +371,65 @@ func responseToRows(resp iot.APIResponse) []map[string]interface{} {
 					row[expr] = nil
 					continue
 				}
-				row[expr] = resp.Values[colIdx][rowIdx]
+				row[expr] = sanitizeJSONValue(resp.Values[colIdx][rowIdx])
 			}
+			canonicalizeTimeColumn(row)
 			rows = append(rows, row)
 		}
 		return rows
 	}
 
-	return iotColumnarToRows(resp)
+	rows := iotColumnarToRows(resp)
+	for _, row := range rows {
+		canonicalizeTimeColumn(row)
+	}
+	return rows
+}
+
+// Table-model servers may preserve the selected column's spelling (for
+// example, returning "Time" for an unquoted time column). Keep the default
+// timeseries key usable without forcing every query editor to spell out a
+// case-sensitive timeKey.
+func canonicalizeTimeColumn(row map[string]interface{}) {
+	if _, exists := row["time"]; exists {
+		return
+	}
+	for key, value := range row {
+		if strings.EqualFold(key, "time") {
+			row["time"] = value
+			delete(row, key)
+			return
+		}
+	}
+}
+
+// effectiveTimeKey keeps an explicitly configured case variant usable after
+// responseToRows canonicalizes the server's time column to "time".
+func effectiveTimeKey(rows []map[string]interface{}, configured string) string {
+	configured = strings.TrimSpace(configured)
+	if configured == "" {
+		return ""
+	}
+	for _, row := range rows {
+		if _, exists := row[configured]; exists {
+			return configured
+		}
+	}
+	for _, row := range rows {
+		for key := range row {
+			if strings.EqualFold(key, configured) {
+				return key
+			}
+		}
+	}
+	if configured != "time" {
+		for _, row := range rows {
+			if _, exists := row["time"]; exists {
+				return "time"
+			}
+		}
+	}
+	return configured
 }
 
 func iotColumnarToRows(resp iot.APIResponse) []map[string]interface{} {
@@ -324,7 +451,7 @@ func iotColumnarToRows(resp iot.APIResponse) []map[string]interface{} {
 					row[colName] = nil
 					continue
 				}
-				row[colName] = rawRow[colIdx]
+				row[colName] = sanitizeJSONValue(rawRow[colIdx])
 			}
 			rows = append(rows, row)
 		}
@@ -346,11 +473,28 @@ func iotColumnarToRows(resp iot.APIResponse) []map[string]interface{} {
 				row[colName] = nil
 				continue
 			}
-			row[colName] = resp.Values[colIdx][rowIdx]
+			row[colName] = sanitizeJSONValue(resp.Values[colIdx][rowIdx])
 		}
 		rows = append(rows, row)
 	}
 	return rows
+}
+
+// IoTDB DOUBLE columns can contain NaN or Infinity. These values are valid
+// floating-point values but are not representable in JSON, so normalize them
+// at the datasource boundary before log rows reach the HTTP renderer.
+func sanitizeJSONValue(value interface{}) interface{} {
+	switch v := value.(type) {
+	case float64:
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return nil
+		}
+	case float32:
+		if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
+			return nil
+		}
+	}
+	return value
 }
 
 func metricKeysFromRows(rows []map[string]interface{}) []string {
@@ -360,11 +504,12 @@ func metricKeysFromRows(rows []map[string]interface{}) []string {
 
 	keys := make([]string, 0)
 	for k := range rows[0] {
-		if k == "__time__" {
+		if k == "__time__" || strings.EqualFold(k, "time") {
 			continue
 		}
 		keys = append(keys, k)
 	}
+	sort.Strings(keys)
 	return keys
 }
 
@@ -434,6 +579,8 @@ func scaleEpoch(ts int64) int64 {
 var (
 	explicitTimeFilterOperators = []string{">=", "<=", "<>", "!=", ">", "<", "="}
 	sqlTailClauses              = []string{"group by", "having", "fill", "order by", "offset", "limit"}
+	iotdbTimeFromPattern        = regexp.MustCompile(`\$__timeFrom(?:\(\))?`)
+	iotdbTimeToPattern          = regexp.MustCompile(`\$__timeTo(?:\(\))?`)
 )
 
 func applyIntervalWindow(queryParam *QueryParam) {
