@@ -713,7 +713,11 @@ func (ar *AlertRule) ValidateRuleConfig() error {
 		return fmt.Errorf("invalid rule_config: %v", err)
 	}
 
-	isPromV1 := (ar.Cate == PROMETHEUS || ar.Cate == LOKI) && config.Version != "v2"
+	// Host rules are keyed by prod, not cate: Verify defaults an empty cate to
+	// prometheus and the engine dispatches host rules by prod (GetRuleType), so
+	// classifying by cate alone would validate a host rule as prom v1.
+	isHost := ar.Prod == HOST || ar.Cate == HOST
+	isPromV1 := !isHost && (ar.Cate == PROMETHEUS || ar.Cate == LOKI) && config.Version != "v2"
 	legacyConfigSeverityActive := isPromV1 && len(config.Queries) == 0
 	if config.Severity != nil && (legacyConfigSeverityActive || *config.Severity != 0) {
 		if err := validateAlertRuleSeverity("rule_config.severity", *config.Severity); err != nil {
@@ -738,7 +742,7 @@ func (ar *AlertRule) ValidateRuleConfig() error {
 		// Host rules describe triggers with type/duration/percent instead of
 		// an expression, so the exp requirement only applies to other cates
 		// with threshold conditions enabled.
-		expRequired := ar.Cate != HOST && !config.ExpTriggerDisable
+		expRequired := !isHost && !config.ExpTriggerDisable
 		for i := range config.Triggers {
 			if expRequired && strings.TrimSpace(config.Triggers[i].Exp) == "" {
 				return fmt.Errorf("rule_config.triggers[%d].exp is blank", i)

@@ -102,6 +102,38 @@ func TestAlertRuleVerify_RequiredExpressions(t *testing.T) {
 	}
 }
 
+// Host rules are dispatched by prod; the cate may be blank (Verify then defaults
+// it to prometheus) or stale, and neither must route them into the prom v1 checks.
+func TestAlertRuleVerify_HostRuleClassifiedByProd(t *testing.T) {
+	hostConfig := `{"queries":[{"key":"group_ids","op":"==","values":[1]}],"triggers":[{"type":"target_miss","duration":60,"severity":2}]}`
+	tests := []struct {
+		name       string
+		cate       string
+		ruleConfig string
+		wantErr    string
+	}{
+		{"blank cate", "", hostConfig, ""},
+		{"stale prometheus cate", models.PROMETHEUS, hostConfig, ""},
+		{"blank cate still validates trigger severity", "", `{"queries":[{"key":"group_ids","op":"==","values":[1]}],"triggers":[{"type":"target_miss","duration":60,"severity":0}]}`, "severity must be 1, 2 or 3"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ar := &models.AlertRule{Name: "testrule", Prod: models.HOST, Cate: tt.cate, RuleConfig: tt.ruleConfig}
+			err := ar.Verify()
+			if tt.wantErr == "" {
+				if err != nil {
+					t.Fatalf("expected no error, got: %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+				t.Fatalf("expected error containing %q, got: %v", tt.wantErr, err)
+			}
+		})
+	}
+}
+
 func TestAlertRuleUpdateColumn_RejectsInvalidSeverity(t *testing.T) {
 	ar := &models.AlertRule{}
 	for _, severity := range []interface{}{float64(0), float64(4), float64(1.5), "2"} {
