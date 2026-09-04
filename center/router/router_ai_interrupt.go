@@ -186,8 +186,16 @@ func parseApprovalVerdict(out string) string {
 
 // tryResumePending 处理待确认中断。返回 true 表示本轮已被确定性处理完毕
 // （已写终态、调用方直接 return）；false 表示回复语义不明，回归正常 agent 流程。
-func (rt *Router) tryResumePending(state *MessageState, streamID string, pending *models.PendingInterrupt, history []aiagent.ChatMessage, prevRoute *models.ConversationRoute, lang string) bool {
+// 返回 (handled, continuation)：
+//   - handled=true：本轮已被确定性处理完毕（含取消/终态回执），调用方直接 return；
+//   - handled=false 且 continuation==""：回复语义不明（或 input 类），回归正常 agent 流程；
+//   - handled=false 且 continuation!=""：确认成功且工具声明 ResumeAfterConfirm，
+//     由调用方把 continuation 作为正式历史上下文注入 agent，让模型基于结果继续分析。
+func (rt *Router) tryResumePending(state *MessageState, streamID string, pending *models.PendingInterrupt, history []aiagent.ChatMessage, prevRoute *models.ConversationRoute, lang string) (bool, string) {
 	msg := state.Msg()
+	if pending == nil {
+		return false, ""
+	}
 
 	// input 类中断（缺参表单）不做确定性重放：
 	// 表单选择可能改变后续生成（如换了数据源，PromQL 必须重写），重放陈旧参数会
@@ -196,7 +204,7 @@ func (rt *Router) tryResumePending(state *MessageState, streamID string, pending
 	if pending.Kind == aiagent.InterruptKindInput {
 		logger.Infof("[Assistant] pending input tool=%s: re-entering agent flow with enriched context (chat=%s seq=%d)",
 			pending.Tool, msg.ChatID, msg.SeqID)
-		return false
+		return false, ""
 	}
 
 	// 三层裁决：结构化 param → 整串精确匹配 → LLM 意图分类（仅自由文本）。
@@ -216,10 +224,16 @@ func (rt *Router) tryResumePending(state *MessageState, streamID string, pending
 	if verdict == approvalUnclear {
 		logger.Infof("[Assistant] pending %s tool=%s: reply unclear, falling back to agent flow (chat=%s seq=%d)",
 			pending.Kind, pending.Tool, msg.ChatID, msg.SeqID)
-		return false
+		return false, ""
 	}
 
 	var text string
+
+	// 是否"确认后回接 agent 续跑"由提出确认的工具在 propose 腿声明的 flag 决定
+	// （随 PendingInterrupt 持久化，见 ToolInterrupt.ResumeAfterConfirm），而非按
+	// 工具名或静态工具定义判断——与"是否需要确认"同源同址，新增此类工具无需改路由。
+	cont := pending.ResumeAfterConfirm
+
 	if verdict == approvalNo {
 		text = resumeText(lang,
 			"好的，已取消本次改动，原配置保持不变。如需继续调整，直接说明新的要求即可。",
@@ -228,7 +242,13 @@ func (rt *Router) tryResumePending(state *MessageState, streamID string, pending
 	} else if cached, ok := rt.getResumeEffect(resumeEffectKey(msg.ChatID, pending.SeqID, pending.Tool, pending.ResumeArgs)); ok {
 		// 效果台账命中：同一个 pending 已成功重放过
 		// （比如落库后终态持久化失败、客户端重试确认）。幂等返回首次效果，
-		// 绝不二次执行写操作。
+		// 绝不二次执行写操作。cont 工具则直接把首次效果喂回 agent 续跑分析，
+		// 同样避免重复执行。
+		if cont {
+			logger.Infof("[Assistant] pending tool=%s already applied, feeding result back to agent (chat=%s seq=%d)",
+				pending.Tool, msg.ChatID, msg.SeqID)
+			return false, toolContinuationText(lang, cached)
+		}
 		text = formatResumeResult(cached, lang)
 		logger.Infof("[Assistant] pending tool=%s already applied, served from effect ledger (chat=%s seq=%d)",
 			pending.Tool, msg.ChatID, msg.SeqID)
@@ -256,9 +276,16 @@ func (rt *Router) tryResumePending(state *MessageState, streamID string, pending
 				"确认失败：%v\n\n请重新发起修改。",
 				"Confirmation failed: %v\n\nPlease restart the modification."), err)
 		default:
-			text = formatResumeResult(out, lang)
 			// 仅成功记账：瞬时失败保持可重试。
 			rt.putResumeEffect(resumeEffectKey(msg.ChatID, pending.SeqID, pending.Tool, pending.ResumeArgs), out)
+			if cont {
+				// cont 工具确认腿已真正执行并拿到结果：不终结本轮，
+				// 把结果作为正式上下文交回 agent 继续分析（模型基于结果产出最终结论）。
+				logger.Infof("[Assistant] pending tool=%s approved, feeding result back to agent (chat=%s seq=%d)",
+					pending.Tool, msg.ChatID, msg.SeqID)
+				return false, toolContinuationText(lang, out)
+			}
+			text = formatResumeResult(out, lang)
 		}
 		logger.Infof("[Assistant] pending tool=%s approved, replayed deterministically (chat=%s seq=%d handled=%v err=%v)",
 			pending.Tool, msg.ChatID, msg.SeqID, handled, err)
@@ -269,7 +296,15 @@ func (rt *Router) tryResumePending(state *MessageState, streamID string, pending
 		Content:     text,
 	}}
 	rt.finishHaltedMessage(state, streamID, history, responses, prevRoute, text)
-	return true
+	return true, ""
+}
+
+// toolContinuationText 构造把工具执行结果注入 agent 续跑的 user input 载荷。
+// 通过 aiagent.LangText 做中英文案选取，符合 router 其余回执的一致性约定。
+func toolContinuationText(lang, result string) string {
+	return fmt.Sprintf(aiagent.LangText(lang,
+		"\n\n用户已确认，操作已执行完毕。请基于以下执行结果，结合原始请求给出结论（例如：需要处理的对象及理由、下一步建议）。\n\n执行结果：\n%s",
+		"\n\nThe user has confirmed and the operation has completed. Based on the execution result below and the original request, give a conclusion (for example: items to address with reasons, next-step suggestions).\n\nResult:\n%s"), result)
 }
 
 // resumeText 选取确定性 resume 路径的预制文案：这些文案不经 LLM、无法逐语言
@@ -366,6 +401,7 @@ func (rt *Router) buildToolDeps() *aiagent.ToolDeps {
 		GetEventProcessingLogs: rt.getEventLogs,
 		Redis:                  rt.Redis,
 		Sandbox:                rt.Sandbox,
+		IbexEnabled:            rt.Ibex.Enable,
 		// Skill Gateway HTTP passthrough: loopback base for n9e's own API + a hook
 		// to inject a freshly-created user token into the live auth cache so it
 		// works immediately (skips the ~9s sync). 127.0.0.1 reaches our own

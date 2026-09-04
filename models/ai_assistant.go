@@ -81,6 +81,10 @@ type PendingInterrupt struct {
 	Params     map[string]string `json:"params"`      // 原轮 AgentRequest.Params（user_id 等；重放时覆盖 chat_id/seq_id）
 	Prompt     string            `json:"prompt"`      // 当时给用户看的确认文案（拒绝/重提案时供上下文）
 	SeqID      int64             `json:"seq_id"`      // 提案所在轮
+
+	// ResumeAfterConfirm 仅 approval 类：确认并成功重放工具后回接 agent 续跑
+	// （读工具在 propose 腿声明的 flag，见 aiagent.ToolInterrupt.ResumeAfterConfirm）。
+	ResumeAfterConfirm bool `json:"resume_after_confirm,omitempty"`
 }
 
 // ConversationRoute 会话级路由状态，随每条 AssistantMessage 持久化、下一轮加载读取。

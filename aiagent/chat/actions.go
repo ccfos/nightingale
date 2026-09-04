@@ -313,6 +313,7 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		"list_alert_mutes", "get_alert_mute_detail",
 		"list_alert_subscribes", "get_alert_subscribe_detail",
 		"list_task_tpls", "get_task_tpl_detail",
+		"get_task_status", "list_task_records",
 		"list_notify_rules", "get_notify_rule_detail",
 		"list_notify_channels", "list_message_templates", "list_notify_rule_custom_params",
 		"list_datasources", "get_datasource_detail",
@@ -347,6 +348,9 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		"create_notify_rule", "create_alert_mute", "create_alert_subscribe",
 		"update_alert_rule", "update_dashboard",
 		"update_notify_rule", "update_alert_mute", "update_alert_subscribe",
+		// 任务下发：把 AI 现场生成的脚本下发到指定目标机执行（高危写操作，自动走
+		// 两阶段人在环确认，见 update_proposal 范式）。
+		"dispatch_task_stateless",
 		// 技能创作（skill-creator）：让用户在对话里把流程固化成可复用技能。
 		// 写工具自带 /ai-config/skills 权限门 + 两阶段确认门，只读的发现工具无副作用。
 		"list_skill_builtin_tools", "get_skill", "create_skill", "update_skill",

@@ -8,7 +8,7 @@ import "strings"
 
 // writeToolPrefixes 标记"会产生副作用"的内置工具命名前缀（与路由层抽卡名单的
 // create_*/update_*/import_* 同一命名约定）。
-var writeToolPrefixes = []string{"create_", "update_", "import_", "delete_", "add_"}
+var writeToolPrefixes = []string{"create_", "update_", "import_", "delete_", "add_", "dispatch_"}
 
 // isWriteTool 按命名约定判断工具是否为写类工具。
 func isWriteTool(name string) bool {
