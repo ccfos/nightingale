@@ -61,6 +61,48 @@ func TestVictoriaLogs_QueryWithOffsetAddsOffset(t *testing.T) {
 	}
 }
 
+func TestVictoriaLogsQueryContextQueriesBothDirections(t *testing.T) {
+	var requests []url.Values
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		requests = append(requests, r.Form)
+		if len(requests) == 1 {
+			fmt.Fprintln(w, `{"_time":"2026-07-02T00:00:01Z","_msg":"before"}`)
+			return
+		}
+		fmt.Fprintln(w, `{"_time":"2026-07-02T00:00:03Z","_msg":"after"}`)
+	}))
+	defer server.Close()
+
+	logs, err := newTestVictoriaLogs(server.URL).QueryContext(context.Background(), LogContextRequest{
+		Query:    `_stream_id:"stream-1"`,
+		Time:     1782950402000,
+		StreamID: "stream-1",
+		Before:   1,
+		After:    1,
+	})
+	if err != nil {
+		t.Fatalf("QueryContext error: %v", err)
+	}
+	if len(logs) != 2 || logs[0]["_msg"] != "before" || logs[1]["_msg"] != "after" {
+		t.Fatalf("unexpected context logs: %#v", logs)
+	}
+	if len(requests) != 2 {
+		t.Fatalf("got %d requests, want 2", len(requests))
+	}
+	if requests[0].Get("end") != "1782950402000" || requests[0].Get("limit") != "1" {
+		t.Fatalf("unexpected before request: %v", requests[0])
+	}
+	if requests[1].Get("start") != "1782950402000" || requests[1].Get("limit") != "1" {
+		t.Fatalf("unexpected after request: %v", requests[1])
+	}
+	if !strings.Contains(requests[0].Get("query"), `_stream_id:"stream-1"`) {
+		t.Fatalf("stream filter missing from before request: %q", requests[0].Get("query"))
+	}
+}
+
 func TestFormatVictoriaLogsTimestamp(t *testing.T) {
 	cases := []struct {
 		name string
