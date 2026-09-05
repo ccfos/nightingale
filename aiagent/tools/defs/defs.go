@@ -956,6 +956,50 @@ var GetTaskTplDetail = aiagent.AgentTool{
 }
 
 // =============================================================================
+// Ibex task dispatch & result
+// =============================================================================
+
+var DispatchTaskStateless = aiagent.AgentTool{
+	Name:        "dispatch_task_stateless",
+	Description: "把一段脚本直接下发到指定目标机执行（无需预建任务模板）。脚本由你现场生成，适合临时/按需运维。靶机上执行脚本属于高危操作，首次调用仅展示脚本全文供用户确认，用户确认后才真正下发。",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "busi_group_id", Type: "integer", Description: "任务所属业务组 ID", Required: true},
+		{Name: "host", Type: "string", Description: "目标机 ident，如 host01", Required: true},
+		{Name: "script", Type: "string", Description: "要在目标机上执行的脚本完整内容（sh/python 等），由你现场生成", Required: true},
+		{Name: "title", Type: "string", Description: "任务标题（展示用），默认 honor: <host>", Required: false},
+		{Name: "account", Type: "string", Description: "执行脚本的操作系统账号，默认 root", Required: false},
+		{Name: "args", Type: "string", Description: "执行脚本时附加的命令行参数", Required: false},
+		{Name: "stdin", Type: "string", Description: "注入脚本 stdin 的 JSON 字符串", Required: false},
+		{Name: "timeout", Type: "integer", Description: "单机执行超时（秒），默认30，上限432000（5天）", Required: false},
+		{Name: "wait_seconds", Type: "integer", Description: "用户确认后自动等待脚本执行结果的最长时间（秒），默认30，上限300；超时未完成会返回当前进度，可再用 get_task_status 查看完整结果", Required: false},
+		{Name: "auth_level", Type: "integer", Description: "AI 任务授权等级 0-3，默认0（沿用业务组授权策略）", Required: false},
+	},
+}
+
+var GetTaskStatus = aiagent.AgentTool{
+	Name:        "get_task_status",
+	Description: "查询一次已下发任务（dispatch_task_stateless）的记录元数据及各目标机的实时执行状态与脚本输出（host/status/stdout/stderr，用于下发后闭环查看结果。",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "task_id", Type: "integer", Description: "任务ID（dispatch_task_stateless 返回的 task_id）", Required: true},
+	},
+}
+
+var ListTaskRecords = aiagent.AgentTool{
+	Name:        "list_task_records",
+	Description: "查询当前用户可见的已下发任务记录（task_record）列表，可按业务组/关键词/时间窗过滤。",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "busi_group_id", Type: "integer", Description: "业务组 ID 过滤；不传则返回当前用户可见的所有业务组记录", Required: false},
+		{Name: "query", Type: "string", Description: "搜索关键词，匹配任务标题", Required: false},
+		{Name: "days", Type: "integer", Description: "只看最近 N 天的记录，默认7", Required: false},
+		{Name: "limit", Type: "integer", Description: "返回数量限制，默认20，最大100", Required: false},
+		{Name: "auth_level", Type: "string", Description: "逗号分隔的授权等级过滤，如 \"0,1\"；不传不过滤", Required: false},
+	},
+}
+
+// =============================================================================
 // Team
 // =============================================================================
 

@@ -296,8 +296,15 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 处理（approve = 直接重放工具 apply 腿，分层裁决见 router_ai_interrupt.go），
 	// 不进入 action 解析与 agent 流程；语义不明的回复回归正常流程，pending 不再携带
 	// （旧提案由工具自身 TTL/单次消费门作废）。
-	if prevPending != nil && rt.tryResumePending(state, streamID, prevPending, history, prevRoute, lang) {
-		return
+	// 返回的 continuation（确认成功且工具声明 ResumeAfterConfirm）作为**正式历史上下文**
+	// 追加到 history 末尾，让模型基于工具执行结果继续分析——它是普通 transcript，
+	// 会随上下文投影正常进入模型、并在结束轮持久化到下一轮历史。
+	if prevPending != nil {
+		if handled, continuation := rt.tryResumePending(state, streamID, prevPending, history, prevRoute, lang); handled {
+			return
+		} else if continuation != "" {
+			history = append(history, aiagent.ChatMessage{Role: "user", Content: continuation})
+		}
 	}
 
 	// ② Create LLM client（agent 执行用）
@@ -624,13 +631,15 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			toolName, _ := chunk.Metadata["tool"].(string)
 			resumeArgs, _ := chunk.Metadata["resume_args"].(string)
 			interruptForm, _ = chunk.Metadata["form"].(string)
+			resumeAfter, _ := chunk.Metadata["resume_after_confirm"].(bool)
 			pendingI = &models.PendingInterrupt{
-				Kind:       kind,
-				Tool:       toolName,
-				ResumeArgs: resumeArgs,
-				Params:     inputs,
-				Prompt:     chunk.Content,
-				SeqID:      msg.SeqID,
+				Kind:               kind,
+				Tool:               toolName,
+				ResumeArgs:         resumeArgs,
+				Params:             inputs,
+				Prompt:             chunk.Content,
+				SeqID:              msg.SeqID,
+				ResumeAfterConfirm: resumeAfter,
 			}
 		case aiagent.StreamTypeError:
 			errMsg := chunk.Error
