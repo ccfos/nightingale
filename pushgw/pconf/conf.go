@@ -40,13 +40,15 @@ type Pushgw struct {
 	// 降到 max(latency)，同时缩短 in-flight slot 持有时间、缓解慢 writer 拖累健康 writer。
 	ProxyConcurrentForward bool
 
-	LabelRewrite     bool
-	ForceUseServerTS bool
-	DebugSample      map[string]string
-	DropSample       []map[string]string
-	WriterOpt        WriterGlobalOpt
-	Writers          []WriterOptions
-	KafkaWriters     []KafkaWriterOptions
+	EnableTargetTagAppend     bool `default:"true"`
+	EnableTargetHostTagAppend bool `default:"true"`
+	LabelRewrite              bool
+	ForceUseServerTS          bool
+	DebugSample               map[string]string
+	DropSample                []map[string]string
+	WriterOpt                 WriterGlobalOpt
+	Writers                   []WriterOptions
+	KafkaWriters              []KafkaWriterOptions
 }
 
 type WriterGlobalOpt struct {

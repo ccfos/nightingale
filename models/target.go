@@ -32,6 +32,8 @@ type Target struct {
 	Tags         string            `json:"-"` // user tags
 	TagsJSON     []string          `json:"tags" gorm:"-"`
 	TagsMap      map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
+	UserTagsMap  map[string]string `json:"-" gorm:"-"`         // parsed user-defined tags
+	HostTagsMap  map[string]string `json:"-" gorm:"-"`         // parsed heartbeat-reported tags
 	UpdateAt     int64             `json:"update_at"`
 	HostIp       string            `json:"host_ip"` //ipv4，do not needs range select
 	AgentVersion string            `json:"agent_version"`
@@ -302,6 +304,12 @@ func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, li
 func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*Target](ctx, "/v1/n9e/targets")
+		if err != nil {
+			return lst, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].fillTagsMaps()
+		}
 		return lst, err
 	}
 
@@ -568,34 +576,32 @@ func (t *Target) DelTags(ctx *ctx.Context, tags []string) error {
 
 func (t *Target) FillTagsMap() {
 	t.TagsJSON = strings.Fields(t.Tags)
-	t.TagsMap = make(map[string]string)
-	m := make(map[string]string)
-	allTags := append(t.TagsJSON, t.HostTags...)
-	for _, item := range allTags {
-		arr := strings.Split(item, "=")
-		if len(arr) != 2 {
-			continue
-		}
-		m[arr[0]] = arr[1]
-	}
+	t.fillTagsMaps()
+}
 
-	t.TagsMap = m
+func (t *Target) fillTagsMaps() {
+	t.UserTagsMap = tagsToMap(t.TagsJSON)
+	t.HostTagsMap = tagsToMap(t.HostTags)
+	t.TagsMap = make(map[string]string, len(t.UserTagsMap)+len(t.HostTagsMap))
+	for key, value := range t.UserTagsMap {
+		t.TagsMap[key] = value
+	}
+	for key, value := range t.HostTagsMap {
+		t.TagsMap[key] = value
+	}
 }
 
 func (t *Target) GetTagsMap() map[string]string {
-	tagsJSON := strings.Fields(t.Tags)
-	m := make(map[string]string)
-	for _, item := range tagsJSON {
-		if arr := strings.Split(item, "="); len(arr) == 2 {
-			m[arr[0]] = arr[1]
-		}
-	}
-	return m
+	return tagsToMap(strings.Fields(t.Tags))
 }
 
 func (t *Target) GetHostTagsMap() map[string]string {
+	return tagsToMap(t.HostTags)
+}
+
+func tagsToMap(tags []string) map[string]string {
 	m := make(map[string]string)
-	for _, item := range t.HostTags {
+	for _, item := range tags {
 		arr := strings.Split(item, "=")
 		if len(arr) != 2 {
 			continue
