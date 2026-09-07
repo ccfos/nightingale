@@ -300,7 +300,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 追加到 history 末尾，让模型基于工具执行结果继续分析——它是普通 transcript，
 	// 会随上下文投影正常进入模型、并在结束轮持久化到下一轮历史。
 	if prevPending != nil {
-		if handled, continuation := rt.tryResumePending(state, streamID, prevPending, history, prevRoute, lang); handled {
+		if handled, continuation := rt.tryResumePending(parentCtx, state, streamID, prevPending, history, prevRoute, lang); handled {
 			return
 		} else if continuation != "" {
 			history = append(history, aiagent.ChatMessage{Role: "user", Content: continuation})

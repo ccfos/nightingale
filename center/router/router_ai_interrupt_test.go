@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -162,8 +163,32 @@ func TestTryResumePendingInputPassthrough(t *testing.T) {
 		msg.Query.Content = content
 		state := NewMessageState(nil, msg)
 		pending := &models.PendingInterrupt{Kind: aiagent.InterruptKindInput, Tool: "create_dashboard", SeqID: 1}
-		if rt.tryResumePending(state, "s1", pending, nil, nil, "") {
-			t.Fatalf("input pending must fall through to agent flow (content=%q)", content)
+		handled, continuation := rt.tryResumePending(context.Background(), state, "s1", pending, nil, nil, "")
+		if handled || continuation != "" {
+			t.Fatalf("input pending must fall through to agent flow (content=%q handled=%v continuation=%q)", content, handled, continuation)
 		}
+	}
+}
+
+// TestToolContinuationText：ResumeAfterConfirm 工具确认成功后，工具结果经这里
+// 包成一条正式的 user 上下文交回 agent 续跑。要点是结果原样带上（模型要基于
+// 真实 stdout/stderr 下结论），且中英文各走各的预制文案。
+func TestToolContinuationText(t *testing.T) {
+	const result = "✅ 已在 `host01` 上执行（任务ID: 42）\n- `host01`: **success**"
+
+	zh := toolContinuationText("zh_CN", result)
+	if !strings.Contains(zh, result) {
+		t.Fatalf("zh continuation must carry the tool result verbatim, got %q", zh)
+	}
+	if !strings.Contains(zh, "用户已确认") {
+		t.Fatalf("zh continuation must use the zh copy, got %q", zh)
+	}
+
+	en := toolContinuationText("en_US", result)
+	if !strings.Contains(en, result) {
+		t.Fatalf("en continuation must carry the tool result verbatim, got %q", en)
+	}
+	if !strings.Contains(en, "The user has confirmed") {
+		t.Fatalf("en continuation must use the en copy, got %q", en)
 	}
 }

@@ -184,14 +184,15 @@ func parseApprovalVerdict(out string) string {
 	return approvalUnclear
 }
 
-// tryResumePending 处理待确认中断。返回 true 表示本轮已被确定性处理完毕
-// （已写终态、调用方直接 return）；false 表示回复语义不明，回归正常 agent 流程。
+// tryResumePending 处理待确认中断。ctx 是本轮消息的 parentCtx——确认腿的工具
+// 重放挂在它上面，用户点取消（/assistant/message/cancel）时正在等待的工具能
+// 立即收手（如 dispatch_task_stateless 的执行结果轮询最长会等 300s）。
 // 返回 (handled, continuation)：
 //   - handled=true：本轮已被确定性处理完毕（含取消/终态回执），调用方直接 return；
 //   - handled=false 且 continuation==""：回复语义不明（或 input 类），回归正常 agent 流程；
 //   - handled=false 且 continuation!=""：确认成功且工具声明 ResumeAfterConfirm，
 //     由调用方把 continuation 作为正式历史上下文注入 agent，让模型基于结果继续分析。
-func (rt *Router) tryResumePending(state *MessageState, streamID string, pending *models.PendingInterrupt, history []aiagent.ChatMessage, prevRoute *models.ConversationRoute, lang string) (bool, string) {
+func (rt *Router) tryResumePending(ctx context.Context, state *MessageState, streamID string, pending *models.PendingInterrupt, history []aiagent.ChatMessage, prevRoute *models.ConversationRoute, lang string) (bool, string) {
 	msg := state.Msg()
 	if pending == nil {
 		return false, ""
@@ -265,7 +266,7 @@ func (rt *Router) tryResumePending(state *MessageState, streamID string, pending
 		// 语言用本轮的（而非提案轮快照），confirm 腿的回执文案跟随当前 UI 语言。
 		params["lang"] = lang
 
-		out, handled, err := aiagent.ExecuteBuiltinTool(context.Background(), rt.buildToolDeps(), pending.Tool, params, pending.ResumeArgs)
+		out, handled, err := aiagent.ExecuteBuiltinTool(ctx, rt.buildToolDeps(), pending.Tool, params, pending.ResumeArgs)
 		switch {
 		case !handled:
 			text = fmt.Sprintf(resumeText(lang,

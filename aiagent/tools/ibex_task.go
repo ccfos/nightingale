@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	imodels "github.com/flashcatcloud/ibex/src/models"
 
@@ -238,7 +239,7 @@ func dispatchTaskStateless(ctx context.Context, deps *aiagent.ToolDeps, args map
 	if waitSeconds > 300 {
 		waitSeconds = 300
 	}
-	return waitTaskResult(taskID, host, waitSeconds), nil
+	return waitTaskResult(ctx, taskID, host, waitSeconds), nil
 }
 
 // ibexTerminalStatuses 是任务的终态集合（来自 ibex agentd/server 的 SetStatus 与
@@ -249,10 +250,14 @@ var ibexTerminalStatuses = map[string]bool{
 
 // waitTaskResult 在用户确认下发后轮询 ibex 直到任务终态或超时，返回给用户的可读
 // 结果（markdown）。waitSeconds<=0 表示不等待、直接返回已下发的简要信息。
-func waitTaskResult(taskID int64, host string, waitSeconds int) string {
+// ctx 取消（用户点了 /assistant/message/cancel）立即停止等待并返回当前进度——
+// 任务已经下发出去了，中断的只是等待，结果仍可用 get_task_status 补看。
+func waitTaskResult(ctx context.Context, taskID int64, host string, waitSeconds int) string {
 	var sts []map[string]string
 	deadline := time.Now().Add(time.Duration(waitSeconds) * time.Second)
 	completed := false
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
 	for {
 		sts = ibexHostStatus(taskID)
 		if len(sts) > 0 && taskAllTerminal(sts) {
@@ -261,9 +266,18 @@ func waitTaskResult(taskID int64, host string, waitSeconds int) string {
 		if completed || waitSeconds <= 0 || time.Now().After(deadline) {
 			break
 		}
-		time.Sleep(time.Second)
+		select {
+		case <-ctx.Done():
+			return renderTaskResult(taskID, host, sts, false)
+		case <-ticker.C:
+		}
 	}
 
+	return renderTaskResult(taskID, host, sts, completed)
+}
+
+// renderTaskResult 把各目标机状态渲染成给用户看的 markdown 回执。
+func renderTaskResult(taskID int64, host string, sts []map[string]string, completed bool) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "✅ 已在 `%s` 上执行（任务ID: %d）\n", host, taskID)
 	if len(sts) == 0 {
@@ -329,11 +343,14 @@ func ibexHostStatus(taskID int64) (statuses []map[string]string) {
 }
 
 // truncateUTF8 按字节界截断字符串，并保证不会从 UTF-8 字符中间切断。
+// 判定要看第一个被排除的字节 s[maxBytes]：它是续字节就说明切点落在多字节字符
+// 中间，往前退到该字符的起始位置。看最后一个保留字节 s[maxBytes-1] 是错的——
+// 回退会停在前导字节上，把半个字符留在结果里，产出非法 UTF-8。
 func truncateUTF8(s string, maxBytes int) string {
 	if len(s) <= maxBytes {
 		return s
 	}
-	for maxBytes > 0 && (s[maxBytes-1]&0xC0) == 0x80 {
+	for maxBytes > 0 && !utf8.RuneStart(s[maxBytes]) {
 		maxBytes--
 	}
 	return s[:maxBytes] + "...[truncated]"
