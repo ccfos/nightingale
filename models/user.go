@@ -333,7 +333,9 @@ func (u *User) UpdateAllFields(ctx *ctx.Context) error {
 	}
 
 	u.UpdateAt = time.Now().Unix()
-	return DB(ctx).Model(u).Select("*").Updates(u).Error
+	// 禁用状态只由 UpdateDisabled 维护：资料表单是先读后写的，读到的是禁用前的快照，
+	// 中间管理员完成禁用的话，这里的整表写回会把 disabled 又刷成 0
+	return DB(ctx).Model(u).Select("*").Omit("disabled").Updates(u).Error
 }
 
 func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error {
@@ -533,10 +535,28 @@ func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
 	return UserGet(ctx, "id=?", id)
 }
 
+// CountAdminUsers 统计的是「还能登录的管理员」——被禁用的管理员进不来系统，
+// 不能算进「最后一个管理员」这类保护的分母，否则先禁用再删除就能把管理面锁死
 func CountAdminUsers(ctx *ctx.Context) (int64, error) {
 	var count int64
-	err := DB(ctx).Model(&User{}).Where("roles LIKE ?", "%"+AdminRole+"%").Count(&count).Error
+	err := DB(ctx).Model(&User{}).Where("roles LIKE ?", "%"+AdminRole+"%").
+		Where("disabled = ?", UserEnabled).Count(&count).Error
 	return count, err
+}
+
+// UserDisabledById 只取禁用状态，供每个请求的鉴权环节做权威判断
+func UserDisabledById(ctx *ctx.Context, id int64) (bool, error) {
+	var disabled []int
+	err := DB(ctx).Model(&User{}).Where("id = ?", id).Pluck("disabled", &disabled).Error
+	if err != nil {
+		return false, err
+	}
+
+	if len(disabled) == 0 {
+		return false, nil
+	}
+
+	return disabled[0] == UserDisabled, nil
 }
 
 func UsersGetByGroupIds(ctx *ctx.Context, groupIds []int64) ([]User, error) {

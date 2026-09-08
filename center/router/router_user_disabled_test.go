@@ -100,6 +100,7 @@ func TestUserDisabledPutKeepsOtherFields(t *testing.T) {
 }
 
 func TestCheckUserCanBeDisabled(t *testing.T) {
+	rt, _ := setupUserDisabledTest(t)
 	me := &models.User{Id: 1, Username: "admin"}
 
 	cases := []struct {
@@ -114,7 +115,7 @@ func TestCheckUserCanBeDisabled(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := checkUserCanBeDisabled(me, tc.target)
+			err := checkUserCanBeDisabled(rt.Ctx, me, tc.target)
 			if tc.wantErr && err == nil {
 				t.Fatalf("want error, got nil")
 			}
@@ -125,7 +126,40 @@ func TestCheckUserCanBeDisabled(t *testing.T) {
 	}
 }
 
-// 列表按状态筛选：不传 disabled 返回全部，传 0/1 分别只返回正常/已禁用的账号。
+// 禁用最后一个可用管理员会让管理面彻底进不去，必须拦住；还有别的启用管理员时放行。
+func TestCheckUserCanBeDisabledLastAdmin(t *testing.T) {
+	rt, _ := setupUserDisabledTest(t)
+	me := &models.User{Id: 1, Username: "operator"}
+
+	admin := &models.User{Username: "alice", Roles: models.AdminRole, Contacts: []byte("{}")}
+	if err := models.DB(rt.Ctx).Create(admin).Error; err != nil {
+		t.Fatalf("seed admin: %v", err)
+	}
+	target := &models.User{Id: admin.Id, Username: admin.Username, RolesLst: []string{models.AdminRole}}
+
+	if err := checkUserCanBeDisabled(rt.Ctx, me, target); err == nil {
+		t.Fatalf("want error when disabling the last enabled admin, got nil")
+	}
+
+	// 再加一个启用的管理员，就可以禁用其中一个了
+	if err := models.DB(rt.Ctx).Create(&models.User{Username: "bob", Roles: models.AdminRole, Contacts: []byte("{}")}).Error; err != nil {
+		t.Fatalf("seed second admin: %v", err)
+	}
+	if err := checkUserCanBeDisabled(rt.Ctx, me, target); err != nil {
+		t.Fatalf("want no error when another enabled admin exists, got %v", err)
+	}
+
+	// 已被禁用的管理员不算数：把 bob 禁掉后，alice 又成了最后一个可用管理员
+	if err := models.DB(rt.Ctx).Model(&models.User{}).Where("username = ?", "bob").
+		Update("disabled", models.UserDisabled).Error; err != nil {
+		t.Fatalf("disable second admin: %v", err)
+	}
+	if err := checkUserCanBeDisabled(rt.Ctx, me, target); err == nil {
+		t.Fatalf("want error when the only other admin is disabled, got nil")
+	}
+}
+
+// 列表分页总数要按状态过滤。
 func TestUserTotalFilterByDisabled(t *testing.T) {
 	rt, _ := setupUserDisabledTest(t)
 	if err := models.DB(rt.Ctx).Create(&models.User{Username: "lisi", Contacts: []byte("{}"), Disabled: models.UserDisabled}).Error; err != nil {
@@ -208,5 +242,61 @@ func TestUpdateDisabledRejectsZeroId(t *testing.T) {
 	}
 	if got.IsDisabled() {
 		t.Fatalf("existing user must stay enabled, got disabled=%d", got.Disabled)
+	}
+}
+
+// 资料表单是先读后写的：读到禁用前的快照、期间管理员完成了禁用，
+// 保存资料不能把 disabled 刷回 0，否则普通用户自己就能解除禁用。
+func TestUpdateAllFieldsKeepsDisabled(t *testing.T) {
+	rt, target := setupUserDisabledTest(t)
+
+	stale, err := models.UserGetById(rt.Ctx, target.Id)
+	if err != nil {
+		t.Fatalf("get user: %v", err)
+	}
+
+	if err := target.UpdateDisabled(rt.Ctx, models.UserDisabled, "root"); err != nil {
+		t.Fatalf("disable user: %v", err)
+	}
+
+	stale.Nickname = "张三丰"
+	if err := stale.UpdateAllFields(rt.Ctx); err != nil {
+		t.Fatalf("update profile: %v", err)
+	}
+
+	got, err := models.UserGetById(rt.Ctx, target.Id)
+	if err != nil {
+		t.Fatalf("get user: %v", err)
+	}
+	if !got.IsDisabled() {
+		t.Fatalf("profile update must not resurrect a disabled account")
+	}
+	if got.Nickname != "张三丰" {
+		t.Fatalf("profile update should still apply, got nickname=%q", got.Nickname)
+	}
+}
+
+// 鉴权环节直接读库判断禁用状态，不受用户缓存同秒不刷新的影响。
+func TestUserDisabledById(t *testing.T) {
+	rt, target := setupUserDisabledTest(t)
+
+	disabled, err := models.UserDisabledById(rt.Ctx, target.Id)
+	if err != nil {
+		t.Fatalf("query disabled: %v", err)
+	}
+	if disabled {
+		t.Fatalf("want enabled, got disabled")
+	}
+
+	if err := target.UpdateDisabled(rt.Ctx, models.UserDisabled, "root"); err != nil {
+		t.Fatalf("disable user: %v", err)
+	}
+
+	disabled, err = models.UserDisabledById(rt.Ctx, target.Id)
+	if err != nil {
+		t.Fatalf("query disabled: %v", err)
+	}
+	if !disabled {
+		t.Fatalf("want disabled, got enabled")
 	}
 }

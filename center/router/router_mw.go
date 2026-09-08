@@ -91,15 +91,19 @@ func (rt *Router) agentOAuthScope() gin.HandlerFunc {
 }
 
 // setAuthUser 把认证结果写入请求上下文。账号被禁用时在这里统一拒绝，
-// 于是 session、固定 token、OAuth token 几种入口都会立刻失效，
-// 不必等 token 自然过期。用户缓存以 users.update_at 的变化为刷新条件，
-// 禁用操作会更新该字段，因此状态最迟在一次缓存同步内生效；
-// user()/admin() 里还会再读一次库做权威判断。
+// 于是 session、固定 token、OAuth token 几种入口都会立刻失效，不必等 token 过期。
+// 这里直接读库而不是查用户缓存：缓存以 count(*) 与 max(update_at) 判断是否需要同步，
+// update_at 只有秒级精度，禁用若与上一次用户变更落在同一秒，两个统计值都不变，
+// 同步会被一直跳过，禁用迟迟不生效。取单列的主键查询，代价与 user() 里那次读库同级。
 func (rt *Router) setAuthUser(c *gin.Context, userid int64, username string) {
-	if rt.UserCache != nil {
-		if u := rt.UserCache.GetByUserId(userid); u != nil && u.IsDisabled() {
-			ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
-		}
+	disabled, err := models.UserDisabledById(rt.Ctx, userid)
+	if err != nil {
+		logger.Warningf("failed to check user(id=%d) disabled: %v", userid, err)
+		ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+	}
+
+	if disabled {
+		ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
 	}
 
 	c.Set("userid", userid)
@@ -242,10 +246,6 @@ func (rt *Router) user() gin.HandlerFunc {
 
 		if user == nil {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
-		}
-
-		if user.IsDisabled() {
-			ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
 		}
 
 		c.Set("user", user)
@@ -415,10 +415,6 @@ func (rt *Router) admin() gin.HandlerFunc {
 
 		if user == nil {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
-		}
-
-		if user.IsDisabled() {
-			ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
 		}
 
 		roles := strings.Fields(user.Roles)

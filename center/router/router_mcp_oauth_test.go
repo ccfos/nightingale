@@ -14,12 +14,16 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/redis/go-redis/v9"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 // newMCPRouter builds a Router with the built-in AS enabled and a miniredis
@@ -32,7 +36,16 @@ func newMCPRouter(t *testing.T) *Router {
 		t.Fatalf("miniredis: %v", err)
 	}
 	t.Cleanup(mr.Close)
-	rt := &Router{Redis: redis.NewClient(&redis.Options{Addr: mr.Addr()})}
+	// tokenAuth 会读 users 表判断账号是否被禁用，给它一个空的内存库即可
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: gormlogger.Default.LogMode(gormlogger.Silent)})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+
+	rt := &Router{Redis: redis.NewClient(&redis.Options{Addr: mr.Addr()}), Ctx: &ctx.Context{DB: db}}
 	rt.HTTP.JWTAuth = httpx.JWTAuth{SigningKey: "session-signing-key"}
 	rt.HTTP.MCPAuth = httpx.MCPAuth{
 		Enable:     true,
