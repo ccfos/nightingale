@@ -216,6 +216,11 @@ type ToolDeps struct {
 	GetAlertEvalLogs       func(ruleId string) (logs []string, instance string, truncatedReason string, err error)
 	GetEventProcessingLogs func(eventHash string) (logs []string, instance string, truncatedReason string, err error)
 
+	// IbexEnabled 标记本进程是否启用了 ibex 任务下发能力（由宿主从 conf.Ibex.Enable
+	// 注入）。为 false 时，dispatch_task_stateless 等下发工具返回友好提示而非
+	// 一串 DB/Redis 报错；get_task_status 也据此决定是否尝试读取 ibex 侧执行状态。
+	IbexEnabled bool
+
 	// Redis 用于读取主机心跳 (n9e_meta_update_time_*) 和 HostMeta (n9e_meta_*)。
 	// host-health-diagnose skill 的实时态判断（BeatTime / Offset / CpuUtil / MemUtil）从这里来。
 	Redis storage.Redis

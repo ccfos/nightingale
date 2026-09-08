@@ -35,6 +35,13 @@ type ToolInterrupt struct {
 	// preflight 表单字节级同构）。router 把它渲染成 ContentTypeFormSelect
 	// response——前端契约与 preflight 路径完全一致。
 	Form string `json:"form,omitempty"`
+
+	// ResumeAfterConfirm 仅 approval 类：用户确认并成功重放工具后，是否把工具结果
+	// 回接 agent 续跑（由模型基于结果继续分析）。默认 false = 确认后以回执文案终结
+	// 本轮（update_* 等一次性写操作）；true = 回接 agent（dispatch 场景）。
+	// 归在确认信号（ToolInterrupt）而非 AgentTool：与"是否需要确认"（本中断）天然成对，
+	// 且确认是否触发本就是运行期动态的——由提出确认的 handler 一并决定。
+	ResumeAfterConfirm bool `json:"resume_after_confirm,omitempty"`
 }
 
 const (

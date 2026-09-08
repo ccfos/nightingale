@@ -392,6 +392,8 @@ func emitInterrupt(config *ToolLoopConfig, ti *ToolInterrupt, toolName string) {
 			// form 仅 input 类非空：form_select 载荷，路由层渲染成与 preflight
 			// 同契约的表单 response。
 			"form": ti.Form,
+			// 仅 approval 类：确认并重放成功后，是否把工具结果回接 agent 续跑。
+			"resume_after_confirm": ti.ResumeAfterConfirm,
 		},
 		RequestID: config.RequestID,
 		Timestamp: time.Now().UnixMilli(),
