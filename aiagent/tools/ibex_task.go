@@ -155,6 +155,7 @@ func dispatchTaskStateless(ctx context.Context, deps *aiagent.ToolDeps, args map
 		Args:      getArgString(args, "args"),
 		Stdin:     getArgString(args, "stdin"),
 		Action:    "start",
+		Creator:   user.Username,
 		AuthLevel: authLevel,
 		Hosts:     []string{host},
 	}
