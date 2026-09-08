@@ -69,6 +69,14 @@ type Router struct {
 	// the user pick the datasource.
 	Pushgw pconf.Pushgw
 
+	// TargetsOfAlertRuleCache is the alert engine's in-memory "host rule ->
+	// target idents" map (built by alert.Start). When set, the
+	// /v1/n9e/targets-of-alert-rule service endpoint answers edge/alert nodes
+	// from it instead of re-scanning the target table once per host rule on
+	// every poll. Left nil, the handler falls back to the DB computation, so
+	// embedders that do not wire it keep the old behaviour.
+	TargetsOfAlertRuleCache *memsto.TargetsOfAlertRuleCacheType
+
 	// Sandbox is the Skill script-execution isolation controller (pkg/sandbox).
 	// Built once at New() from the configured capabilities; nil-safe (a disabled
 	// sandbox simply makes run_skill_script report "execution unavailable").
