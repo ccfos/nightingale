@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -27,9 +28,17 @@ func setupUserDisabledTest(t *testing.T) (*Router, *models.User) {
 		t.Fatalf("open sqlite: %v", err)
 	}
 	if err := db.AutoMigrate(&models.User{}, &models.UserGroup{}, &models.UserGroupMember{},
-		&models.BusiGroup{}, &models.BusiGroupMember{}); err != nil {
+		&models.BusiGroup{}, &models.BusiGroupMember{}, &models.UserToken{}); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
+
+	// sqlite 的 :memory: 是每连接一个库，并发用例必须限定单连接，
+	// 否则第二个 goroutine 会拿到一个空库
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("get sql db: %v", err)
+	}
+	sqlDB.SetMaxOpenConns(1)
 
 	rt := &Router{Ctx: &ctx.Context{DB: db}}
 
@@ -100,7 +109,6 @@ func TestUserDisabledPutKeepsOtherFields(t *testing.T) {
 }
 
 func TestCheckUserCanBeDisabled(t *testing.T) {
-	rt, _ := setupUserDisabledTest(t)
 	me := &models.User{Id: 1, Username: "admin"}
 
 	cases := []struct {
@@ -115,7 +123,7 @@ func TestCheckUserCanBeDisabled(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := checkUserCanBeDisabled(rt.Ctx, me, tc.target)
+			err := checkUserCanBeDisabled(me, tc.target)
 			if tc.wantErr && err == nil {
 				t.Fatalf("want error, got nil")
 			}
@@ -127,35 +135,62 @@ func TestCheckUserCanBeDisabled(t *testing.T) {
 }
 
 // 禁用最后一个可用管理员会让管理面彻底进不去，必须拦住；还有别的启用管理员时放行。
-func TestCheckUserCanBeDisabledLastAdmin(t *testing.T) {
+func TestUpdateDisabledKeepsLastEnabledAdmin(t *testing.T) {
 	rt, _ := setupUserDisabledTest(t)
-	me := &models.User{Id: 1, Username: "operator"}
 
-	admin := &models.User{Username: "alice", Roles: models.AdminRole, Contacts: []byte("{}")}
-	if err := models.DB(rt.Ctx).Create(admin).Error; err != nil {
+	alice := &models.User{Username: "alice", Roles: models.AdminRole, Contacts: []byte("{}")}
+	if err := models.DB(rt.Ctx).Create(alice).Error; err != nil {
 		t.Fatalf("seed admin: %v", err)
 	}
-	target := &models.User{Id: admin.Id, Username: admin.Username, RolesLst: []string{models.AdminRole}}
 
-	if err := checkUserCanBeDisabled(rt.Ctx, me, target); err == nil {
+	if err := alice.UpdateDisabled(rt.Ctx, models.UserDisabled, "root"); err == nil {
 		t.Fatalf("want error when disabling the last enabled admin, got nil")
 	}
 
-	// 再加一个启用的管理员，就可以禁用其中一个了
-	if err := models.DB(rt.Ctx).Create(&models.User{Username: "bob", Roles: models.AdminRole, Contacts: []byte("{}")}).Error; err != nil {
+	// 再来一个启用的管理员，就可以禁用 alice 了
+	bob := &models.User{Username: "bob", Roles: models.AdminRole, Contacts: []byte("{}")}
+	if err := models.DB(rt.Ctx).Create(bob).Error; err != nil {
 		t.Fatalf("seed second admin: %v", err)
 	}
-	if err := checkUserCanBeDisabled(rt.Ctx, me, target); err != nil {
+	if err := alice.UpdateDisabled(rt.Ctx, models.UserDisabled, "root"); err != nil {
 		t.Fatalf("want no error when another enabled admin exists, got %v", err)
 	}
 
-	// 已被禁用的管理员不算数：把 bob 禁掉后，alice 又成了最后一个可用管理员
-	if err := models.DB(rt.Ctx).Model(&models.User{}).Where("username = ?", "bob").
-		Update("disabled", models.UserDisabled).Error; err != nil {
-		t.Fatalf("disable second admin: %v", err)
+	// alice 已被禁用，bob 成了最后一个可用管理员，禁不掉
+	if err := bob.UpdateDisabled(rt.Ctx, models.UserDisabled, "root"); err == nil {
+		t.Fatalf("want error when the only other admin is already disabled, got nil")
 	}
-	if err := checkUserCanBeDisabled(rt.Ctx, me, target); err == nil {
-		t.Fatalf("want error when the only other admin is disabled, got nil")
+}
+
+// 「先冻结、后清理」是本功能的主线运维流程：已禁用的管理员不算可用管理员，
+// 只要还有别的启用管理员，删除它就该放行。
+func TestDelAllowsDisabledAdminButKeepsLastEnabledOne(t *testing.T) {
+	rt, _ := setupUserDisabledTest(t)
+
+	root := &models.User{Username: "root", Roles: models.AdminRole, Contacts: []byte("{}")}
+	if err := models.DB(rt.Ctx).Create(root).Error; err != nil {
+		t.Fatalf("seed root: %v", err)
+	}
+	alice := &models.User{Username: "alice", Roles: models.AdminRole, Contacts: []byte("{}"), Disabled: models.UserDisabled}
+	if err := models.DB(rt.Ctx).Create(alice).Error; err != nil {
+		t.Fatalf("seed disabled admin: %v", err)
+	}
+
+	target, err := models.UserGetById(rt.Ctx, alice.Id)
+	if err != nil {
+		t.Fatalf("get user: %v", err)
+	}
+	if err := target.Del(rt.Ctx); err != nil {
+		t.Fatalf("deleting a disabled admin should be allowed, got %v", err)
+	}
+
+	// root 是最后一个可用管理员，删不得
+	target, err = models.UserGetById(rt.Ctx, root.Id)
+	if err != nil {
+		t.Fatalf("get user: %v", err)
+	}
+	if err := target.Del(rt.Ctx); err == nil {
+		t.Fatalf("want error when deleting the last enabled admin, got nil")
 	}
 }
 
@@ -276,27 +311,91 @@ func TestUpdateAllFieldsKeepsDisabled(t *testing.T) {
 	}
 }
 
-// 鉴权环节直接读库判断禁用状态，不受用户缓存同秒不刷新的影响。
-func TestUserDisabledById(t *testing.T) {
+// 鉴权环节直接读库判断账号状态，不受用户缓存同秒不刷新的影响；
+// 账号不存在也要如实报出来——删号不会清掉 Redis 里的会话，旧 token 还能撑一段时间，
+// 期间若重建了同名账号，放行就等于把旧凭证接到新账号上。
+func TestUserStatusById(t *testing.T) {
 	rt, target := setupUserDisabledTest(t)
 
-	disabled, err := models.UserDisabledById(rt.Ctx, target.Id)
+	exists, disabled, err := models.UserStatusById(rt.Ctx, target.Id)
 	if err != nil {
-		t.Fatalf("query disabled: %v", err)
+		t.Fatalf("query status: %v", err)
 	}
-	if disabled {
-		t.Fatalf("want enabled, got disabled")
+	if !exists || disabled {
+		t.Fatalf("want exists&enabled, got exists=%v disabled=%v", exists, disabled)
 	}
 
 	if err := target.UpdateDisabled(rt.Ctx, models.UserDisabled, "root"); err != nil {
 		t.Fatalf("disable user: %v", err)
 	}
 
-	disabled, err = models.UserDisabledById(rt.Ctx, target.Id)
+	exists, disabled, err = models.UserStatusById(rt.Ctx, target.Id)
 	if err != nil {
-		t.Fatalf("query disabled: %v", err)
+		t.Fatalf("query status: %v", err)
 	}
-	if !disabled {
-		t.Fatalf("want disabled, got enabled")
+	if !exists || !disabled {
+		t.Fatalf("want exists&disabled, got exists=%v disabled=%v", exists, disabled)
+	}
+
+	exists, _, err = models.UserStatusById(rt.Ctx, 99999)
+	if err != nil {
+		t.Fatalf("query status: %v", err)
+	}
+	if exists {
+		t.Fatalf("want not exists for a removed account")
+	}
+}
+
+// 旧 token 的 userid 已经不存在时（账号被删、会话还没过期），鉴权必须拒绝，
+// 否则重建的同名账号会被旧凭证接管。
+func TestSetAuthUserRejectsMissingUser(t *testing.T) {
+	rt, _ := setupUserDisabledTest(t)
+
+	gin.SetMode(gin.TestMode)
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+
+	defer func() {
+		if recover() == nil {
+			t.Fatalf("want 401 for a userid that no longer exists")
+		}
+	}()
+
+	rt.setAuthUser(c, 99999, "zhangsan")
+}
+
+// 「禁用 alice」和「删除 root」并发执行时，两条路径必须走同一把锁：
+// 不管谁先谁后、谁失败，做完之后至少还得剩一个能登录的管理员。
+func TestDisableAndDeleteAdminConcurrently(t *testing.T) {
+	rt, _ := setupUserDisabledTest(t)
+
+	root := &models.User{Username: "root", Roles: models.AdminRole, Contacts: []byte("{}")}
+	if err := models.DB(rt.Ctx).Create(root).Error; err != nil {
+		t.Fatalf("seed root: %v", err)
+	}
+	alice := &models.User{Username: "alice", Roles: models.AdminRole, Contacts: []byte("{}")}
+	if err := models.DB(rt.Ctx).Create(alice).Error; err != nil {
+		t.Fatalf("seed alice: %v", err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		alice.UpdateDisabled(rt.Ctx, models.UserDisabled, "root") //nolint:errcheck // 允许其中一方失败
+	}()
+	go func() {
+		defer wg.Done()
+		target := &models.User{Id: root.Id, Username: root.Username}
+		target.Del(rt.Ctx) //nolint:errcheck // 允许其中一方失败
+	}()
+	wg.Wait()
+
+	enabled := models.UserEnabled
+	admins, err := models.UsersGet(rt.Ctx, "roles LIKE ? and disabled = ?", "%"+models.AdminRole+"%", enabled)
+	if err != nil {
+		t.Fatalf("list admins: %v", err)
+	}
+	if len(admins) < 1 {
+		t.Fatalf("no enabled admin left: disable and delete must not both succeed")
 	}
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const (
@@ -149,11 +150,80 @@ func (u *User) UpdateDisabled(ctx *ctx.Context, disabled int, updateBy string) e
 		return errors.New("user id is required")
 	}
 
-	return DB(ctx).Model(&User{}).Where("id = ?", u.Id).Updates(map[string]interface{}{
-		"disabled":  disabled,
-		"update_at": time.Now().Unix(),
-		"update_by": updateBy,
-	}).Error
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		if disabled == UserDisabled {
+			if err := ensureEnabledAdminRemains(tx, u.Id, "disable"); err != nil {
+				return err
+			}
+		}
+
+		return tx.Model(&User{}).Where("id = ?", u.Id).Updates(map[string]interface{}{
+			"disabled":  disabled,
+			"update_at": time.Now().Unix(),
+			"update_by": updateBy,
+		}).Error
+	})
+}
+
+// ensureEnabledAdminRemains 拦住「把最后一个还能登录的管理员禁用/删除」——真发生了
+// 就没人进得了管理面，只能直接改库自救。
+// 禁用与删除共用这一套协议：先锁住全部管理员行，再在事务内重新读取目标状态并计数。
+// 少了这把锁，「禁用 alice」和「删除 root」并发执行时两边都会读到还剩 2 个可用管理员，
+// 各自提交后一个可用管理员都不剩。
+func ensureEnabledAdminRemains(tx *gorm.DB, id int64, action string) error {
+	if err := lockAdminUsers(tx); err != nil {
+		return err
+	}
+
+	var lst []*User
+	if err := tx.Where("id = ?", id).Find(&lst).Error; err != nil {
+		return err
+	}
+
+	if len(lst) == 0 {
+		// 目标已经不在了，交给后续语句处理
+		return nil
+	}
+
+	target := lst[0]
+	target.RolesLst = strings.Fields(target.Roles)
+
+	// 已被禁用的管理员本来就不算「可用管理员」，删掉它不会让谁失去管理入口
+	if !target.IsAdmin() || target.IsDisabled() {
+		return nil
+	}
+
+	count, err := countEnabledAdminsExcept(tx, id)
+	if err != nil {
+		return err
+	}
+
+	if count < 1 {
+		return fmt.Errorf("cannot %s the last enabled admin user", action)
+	}
+
+	return nil
+}
+
+// lockAdminUsers 在事务里锁住所有管理员行，使上面两条路径互相排队。
+// SQLite 的写事务本身就是排他的，也不认识 FOR UPDATE，跳过即可
+func lockAdminUsers(tx *gorm.DB) error {
+	if tx.Dialector.Name() == "sqlite" {
+		return nil
+	}
+
+	var ids []int64
+	return tx.Model(&User{}).Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("roles LIKE ?", "%"+AdminRole+"%").Pluck("id", &ids).Error
+}
+
+// countEnabledAdminsExcept 统计除 excludeId 外还有几个能登录的管理员，
+// 也就是「这次禁用/删除做完之后还剩几个人进得来」
+func countEnabledAdminsExcept(tx *gorm.DB, excludeId int64) (int64, error) {
+	var count int64
+	err := tx.Model(&User{}).Where("roles LIKE ?", "%"+AdminRole+"%").
+		Where("disabled = ?", UserEnabled).Where("id <> ?", excludeId).Count(&count).Error
+	return count, err
 }
 
 // has group permission
@@ -367,6 +437,10 @@ func UpdateUserLastActiveTime(ctx *ctx.Context, userId int64, lastActiveTime int
 
 func (u *User) Del(ctx *ctx.Context) error {
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := ensureEnabledAdminRemains(tx, u.Id, "delete"); err != nil {
+			return err
+		}
+
 		if err := tx.Where("user_id=?", u.Id).Delete(&UserGroupMember{}).Error; err != nil {
 			return err
 		}
@@ -535,28 +609,21 @@ func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
 	return UserGet(ctx, "id=?", id)
 }
 
-// CountAdminUsers 统计的是「还能登录的管理员」——被禁用的管理员进不来系统，
-// 不能算进「最后一个管理员」这类保护的分母，否则先禁用再删除就能把管理面锁死
-func CountAdminUsers(ctx *ctx.Context) (int64, error) {
-	var count int64
-	err := DB(ctx).Model(&User{}).Where("roles LIKE ?", "%"+AdminRole+"%").
-		Where("disabled = ?", UserEnabled).Count(&count).Error
-	return count, err
-}
-
-// UserDisabledById 只取禁用状态，供每个请求的鉴权环节做权威判断
-func UserDisabledById(ctx *ctx.Context, id int64) (bool, error) {
-	var disabled []int
-	err := DB(ctx).Model(&User{}).Where("id = ?", id).Pluck("disabled", &disabled).Error
+// UserStatusById 按认证得到的用户 id 取账号状态，供每个请求的鉴权环节做权威判断。
+// 账号不存在也要报出来：删号并不会清掉 Redis 里的会话，旧 token 还能用一段时间，
+// 期间若有人重建同名账号，放行就等于把旧凭证接到了新账号上
+func UserStatusById(ctx *ctx.Context, id int64) (exists bool, disabled bool, err error) {
+	var lst []int
+	err = DB(ctx).Model(&User{}).Where("id = ?", id).Pluck("disabled", &lst).Error
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 
-	if len(disabled) == 0 {
-		return false, nil
+	if len(lst) == 0 {
+		return false, false, nil
 	}
 
-	return disabled[0] == UserDisabled, nil
+	return true, lst[0] == UserDisabled, nil
 }
 
 func UsersGetByGroupIds(ctx *ctx.Context, groupIds []int64) ([]User, error) {

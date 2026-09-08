@@ -96,9 +96,14 @@ func (rt *Router) agentOAuthScope() gin.HandlerFunc {
 // update_at 只有秒级精度，禁用若与上一次用户变更落在同一秒，两个统计值都不变，
 // 同步会被一直跳过，禁用迟迟不生效。取单列的主键查询，代价与 user() 里那次读库同级。
 func (rt *Router) setAuthUser(c *gin.Context, userid int64, username string) {
-	disabled, err := models.UserDisabledById(rt.Ctx, userid)
+	exists, disabled, err := models.UserStatusById(rt.Ctx, userid)
 	if err != nil {
-		logger.Warningf("failed to check user(id=%d) disabled: %v", userid, err)
+		logger.Warningf("failed to check user(id=%d) status: %v", userid, err)
+		ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+	}
+
+	// 账号已删除但 token 还没过期：不能放行，否则重建的同名账号会被旧凭证接管
+	if !exists {
 		ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 	}
 
@@ -237,9 +242,11 @@ func (rt *Router) User() gin.HandlerFunc {
 
 func (rt *Router) user() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username := c.MustGet("username").(string)
+		// 按认证得到的 userid 取账号，而不是按用户名：账号被删除后若重建了同名账号，
+		// 旧 token 里的用户名会指到新账号上
+		userid := c.MustGet("userid").(int64)
 
-		user, err := models.UserGetByUsername(rt.Ctx, username)
+		user, err := models.UserGetById(rt.Ctx, userid)
 		if err != nil {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		}

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
@@ -252,33 +251,22 @@ func (rt *Router) userDisabledPut(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 
 	if f.Disabled == models.UserDisabled {
-		ginx.Dangerous(checkUserCanBeDisabled(rt.Ctx, me, target), http.StatusBadRequest)
+		ginx.Dangerous(checkUserCanBeDisabled(me, target), http.StatusBadRequest)
 	}
 
 	ginx.NewRender(c).Message(target.UpdateDisabled(rt.Ctx, f.Disabled, me.Username))
 }
 
 // 禁用自己会立刻把自己锁在门外，禁用 root 会让系统失去最后的兜底账号，两者都拦掉。
-// 还要挡住「禁用最后一个可用管理员」：禁用后管理面就没人进得去了，只能改库恢复
-func checkUserCanBeDisabled(ctx *ctx.Context, me, target *models.User) error {
+// 「不能禁用最后一个可用管理员」放在 UpdateDisabled 的事务里判，那里和删除账号
+// 共用同一把锁，才挡得住「一边禁用、一边删除」的并发
+func checkUserCanBeDisabled(me, target *models.User) error {
 	if me.Id == target.Id {
 		return fmt.Errorf("cannot disable yourself")
 	}
 
 	if target.Username == "root" {
 		return fmt.Errorf("cannot disable the root user")
-	}
-
-	if target.IsAdmin() {
-		// target 此刻仍是启用状态，所以计数里包含它自己，<=1 即说明它是最后一个
-		adminCount, err := models.CountAdminUsers(ctx)
-		if err != nil {
-			return err
-		}
-
-		if adminCount <= 1 {
-			return fmt.Errorf("cannot disable the last enabled admin user")
-		}
 	}
 
 	return nil
@@ -294,16 +282,8 @@ func (rt *Router) userDel(c *gin.Context) {
 		return
 	}
 
-	// 如果要删除的用户是 admin 角色，检查是否是最后一个 admin
-	if target.IsAdmin() {
-		adminCount, err := models.CountAdminUsers(rt.Ctx)
-		ginx.Dangerous(err)
-
-		if adminCount <= 1 {
-			ginx.Bomb(http.StatusBadRequest, "Cannot delete the last admin user")
-		}
-	}
-
+	// 「不能删掉最后一个可用管理员」在 Del 的事务里判：它和禁用账号共用同一把锁，
+	// 单独在这里数一次挡不住两条路径并发
 	ginx.NewRender(c).Message(target.Del(rt.Ctx))
 }
 

@@ -44,6 +44,10 @@ func newMCPRouter(t *testing.T) *Router {
 	if err := db.AutoMigrate(&models.User{}); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
+	// tokenAuth 现在按 token 里的 userid 核对账号是否还在、是否被禁用
+	if err := db.Create(&models.User{Id: 7, Username: "alice", Contacts: []byte("{}")}).Error; err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
 
 	rt := &Router{Redis: redis.NewClient(&redis.Options{Addr: mr.Addr()}), Ctx: &ctx.Context{DB: db}}
 	rt.HTTP.JWTAuth = httpx.JWTAuth{SigningKey: "session-signing-key"}
