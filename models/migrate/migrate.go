@@ -490,6 +490,7 @@ type Users struct {
 	Belong         string `gorm:"column:belong;type:varchar(16);default:'';comment:belong"`
 	LastActiveTime int64  `gorm:"column:last_active_time;type:int;default:0;comment:last_active_time"`
 	Phone          string `gorm:"column:phone;type:varchar(1024);not null;default:''"`
+	Disabled       int    `gorm:"column:disabled;type:int;not null;default:0;comment:0:enabled 1:disabled"`
 }
 
 type SsoConfig struct {

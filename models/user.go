@@ -66,6 +66,12 @@ const (
 	TelegramDomain   = "api.telegram.org"
 	IbexDomain       = "ibex"
 	DefaultDomain    = "default"
+
+	UserEnabled  = 0
+	UserDisabled = 1
+
+	// ErrUserDisabled 是账号被禁用时统一的登录/鉴权失败提示，前端据此提示用户联系管理员
+	ErrUserDisabled = "user is disabled, please contact the administrator"
 )
 
 var (
@@ -86,6 +92,7 @@ type User struct {
 	TeamsLst       []int64         `json:"-" gorm:"-"`     // 这个字段方便映射团队，前端和数据库都不用到
 	Contacts       ormx.JSONObj    `json:"contacts"`       // 内容为 map[string]string 结构
 	Maintainer     int             `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
+	Disabled       int             `json:"disabled"`       // 0:enabled 1:disabled
 	CreateAt       int64           `json:"create_at"`
 	CreateBy       string          `json:"create_by"`
 	UpdateAt       int64           `json:"update_at"`
@@ -127,6 +134,26 @@ func (u *User) IsAdmin() bool {
 		}
 	}
 	return false
+}
+
+// IsDisabled 账号被管理员冻结，禁止登录，也禁止用已签发的凭证访问接口
+func (u *User) IsDisabled() bool {
+	return u.Disabled == UserDisabled
+}
+
+// UpdateDisabled 只更新禁用状态，不碰角色、团队等其他字段，保证禁用可逆且无损。
+// 显式带上 id 条件：map 形式的 Updates 只从主键推导 where，收到零值 Id 会退化成
+// 全表更新，把所有人一起锁在门外
+func (u *User) UpdateDisabled(ctx *ctx.Context, disabled int, updateBy string) error {
+	if u.Id == 0 {
+		return errors.New("user id is required")
+	}
+
+	return DB(ctx).Model(&User{}).Where("id = ?", u.Id).Updates(map[string]interface{}{
+		"disabled":  disabled,
+		"update_at": time.Now().Unix(),
+		"update_by": updateBy,
+	}).Error
 }
 
 // has group permission
@@ -687,14 +714,22 @@ func PassLogin(ctx *ctx.Context, redis storage.Redis, username, pass string) (*U
 		return nil, fmt.Errorf("Username or password invalid")
 	}
 
+	if user.IsDisabled() {
+		return nil, errors.New(ErrUserDisabled)
+	}
+
 	return user, nil
 }
 
-func UserTotal(ctx *ctx.Context, query string, stime, etime int64) (num int64, err error) {
+func UserTotal(ctx *ctx.Context, query string, stime, etime int64, disabled *int) (num int64, err error) {
 	db := DB(ctx).Model(&User{})
 
 	if stime != 0 && etime != 0 {
 		db = db.Where("last_active_time between ? and ?", stime, etime)
+	}
+
+	if disabled != nil {
+		db = db.Where("disabled = ?", *disabled)
 	}
 
 	if query != "" {
@@ -753,12 +788,16 @@ func validateOrderField(order string, defaultField string) string {
 }
 
 func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime int64,
-	order string, desc bool, usernames, phones, emails []string) ([]User, error) {
+	order string, desc bool, usernames, phones, emails []string, disabled *int) ([]User, error) {
 
 	session := DB(ctx)
 
 	if stime != 0 && etime != 0 {
 		session = session.Where("last_active_time between ? and ?", stime, etime)
+	}
+
+	if disabled != nil {
+		session = session.Where("disabled = ?", *disabled)
 	}
 
 	order = validateOrderField(order, "username")

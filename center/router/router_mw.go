@@ -57,6 +57,11 @@ func (rt *Router) handleProxyUser(c *gin.Context) *models.User {
 			bombErr(http.StatusInternalServerError, err)
 		}
 	}
+
+	if user.IsDisabled() {
+		ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
+	}
+
 	return user
 }
 
@@ -85,6 +90,22 @@ func (rt *Router) agentOAuthScope() gin.HandlerFunc {
 	}
 }
 
+// setAuthUser 把认证结果写入请求上下文。账号被禁用时在这里统一拒绝，
+// 于是 session、固定 token、OAuth token 几种入口都会立刻失效，
+// 不必等 token 自然过期。用户缓存以 users.update_at 的变化为刷新条件，
+// 禁用操作会更新该字段，因此状态最迟在一次缓存同步内生效；
+// user()/admin() 里还会再读一次库做权威判断。
+func (rt *Router) setAuthUser(c *gin.Context, userid int64, username string) {
+	if rt.UserCache != nil {
+		if u := rt.UserCache.GetByUserId(userid); u != nil && u.IsDisabled() {
+			ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
+		}
+	}
+
+	c.Set("userid", userid)
+	c.Set("username", username)
+}
+
 // tokenAuth 支持两种方式的认证，固定 token 和 jwt token
 // 因为不太好区分用户使用哪个方式，所以两种方式放在一个中间件里
 func (rt *Router) tokenAuth() gin.HandlerFunc {
@@ -99,8 +120,7 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 			if token != "" {
 				user := rt.UserTokenCache.GetByToken(token)
 				if user != nil && user.Username != "" {
-					c.Set("userid", user.Id)
-					c.Set("username", user.Username)
+					rt.setAuthUser(c, user.Id, user.Username)
 					c.Next()
 					return
 				}
@@ -122,8 +142,7 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 		if agentScope && rt.mcpAuthEnabled() {
 			if raw := rt.extractToken(c.Request); raw != "" {
 				if uid, uname, ok := rt.mcpVerifyAccessToken(raw); ok {
-					c.Set("userid", uid)
-					c.Set("username", uname)
+					rt.setAuthUser(c, uid, uname)
 					c.Next()
 					return
 				}
@@ -142,8 +161,7 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 					logger.Debugf("[RS] verify access token failed: %v", err)
 					ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 				}
-				c.Set("userid", user.Id)
-				c.Set("username", user.Username)
+				rt.setAuthUser(c, user.Id, user.Username)
 				c.Next()
 				return
 			}
@@ -171,8 +189,7 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		}
 
-		c.Set("userid", userid)
-		c.Set("username", arr[1])
+		rt.setAuthUser(c, userid, arr[1])
 
 		c.Next()
 	}
@@ -225,6 +242,10 @@ func (rt *Router) user() gin.HandlerFunc {
 
 		if user == nil {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+		}
+
+		if user.IsDisabled() {
+			ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
 		}
 
 		c.Set("user", user)
@@ -394,6 +415,10 @@ func (rt *Router) admin() gin.HandlerFunc {
 
 		if user == nil {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+		}
+
+		if user.IsDisabled() {
+			ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
 		}
 
 		roles := strings.Fields(user.Roles)

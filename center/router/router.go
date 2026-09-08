@@ -419,6 +419,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)
 		pages.PUT("/user/:id/profile", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userProfilePut)
 		pages.PUT("/user/:id/password", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userPasswordPut)
+		pages.PUT("/user/:id/disabled", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userDisabledPut)
 		pages.DELETE("/user/:id", rt.auth(), rt.user(), rt.perm("/users/del"), rt.userDel)
 
 		pages.GET("/metric-views", rt.auth(), rt.metricViewGets)

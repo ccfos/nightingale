@@ -88,6 +88,11 @@ func (rt *Router) loginPost(c *gin.Context) {
 		return
 	}
 
+	if user.IsDisabled() {
+		ginx.NewRender(c).Message(models.ErrUserDisabled)
+		return
+	}
+
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
@@ -311,6 +316,12 @@ func (rt *Router) loginCallback(c *gin.Context) {
 		}
 	}
 
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
+	}
+
 	// set user login state
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
@@ -400,6 +411,12 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 		user.FullSsoFields("cas", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.CAS.DefaultRoles)
 		// create user from cas
 		ginx.Dangerous(user.Add(rt.Ctx))
+	}
+
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
 	}
 
 	// set user login state
@@ -508,6 +525,12 @@ func (rt *Router) loginCallbackDingTalk(c *gin.Context) {
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
 
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
+	}
+
 	// set user login state
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
@@ -598,6 +621,12 @@ func (rt *Router) loginCallbackFeiShu(c *gin.Context) {
 
 	}
 
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
+	}
+
 	// set user login state
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
@@ -643,6 +672,12 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 		user.FullSsoFields("oauth2", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.OAuth2.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
+	}
+
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
 	}
 
 	// set user login state
