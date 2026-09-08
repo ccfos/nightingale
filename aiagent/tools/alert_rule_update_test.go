@@ -1,6 +1,10 @@
 package tools
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/VictoriaMetrics/metricsql"
+)
 
 func TestRebuildBakedPromQL(t *testing.T) {
 	cases := []struct {
@@ -155,4 +159,59 @@ func TestApplyRuleConfigSeverity(t *testing.T) {
 	applyRuleConfigSeverity(nil, 1)
 	applyRuleConfigSeverity("not a map", 1)
 	applyRuleConfigSeverity(map[string]interface{}{}, 1)
+}
+
+func TestValidateBakedPromQL(t *testing.T) {
+	cases := []struct {
+		name    string
+		baked   string
+		wantErr bool
+	}{
+		{name: "simple threshold", baked: `kafka_messages_in_per_sec{topic="abc"} < 20000`},
+		{name: "different operator", baked: "cpu_usage_active > 80"},
+		{name: ">= operator", baked: "mem >= 90"},
+		{name: "wrapped base stays valid", baked: "(a / b) > 0.5"},
+		{name: "function base stays valid", baked: "rate(counter[5m]) > 10"},
+		{name: "new complex base wrapped", baked: "(a/b) > 5"},
+		// Regression: the model passed the full baked expression as prom_ql, so
+		// rebuildBakedPromQL appended the current operator+threshold onto it.
+		{name: "nested comparison rejected", baked: `kafka_messages_in_per_sec{topic="abc"} < 20000 < 40000`, wantErr: true},
+		{name: "three-way comparison rejected", baked: "x < 1 < 2 < 3", wantErr: true},
+		{name: "no comparison rejected", baked: "plain_metric", wantErr: true},
+		{name: "empty rejected", baked: "", wantErr: true},
+		{name: "garbage rejected", baked: "garbage !!! <<<", wantErr: true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := validateBakedPromQL(c.baked)
+			if c.wantErr && err == nil {
+				t.Fatalf("validateBakedPromQL(%q) = nil, want error", c.baked)
+			}
+			if !c.wantErr && err != nil {
+				t.Fatalf("validateBakedPromQL(%q) = %v, want nil", c.baked, err)
+			}
+		})
+	}
+}
+
+func TestCountCompareOps(t *testing.T) {
+	cases := []struct {
+		expr string
+		want int
+	}{
+		{expr: `kafka_messages_in_per_sec{topic="abc"} < 20000`, want: 1},
+		{expr: `kafka_messages_in_per_sec{topic="abc"} < 20000 < 40000`, want: 2},
+		{expr: "(a / b) > 0.5", want: 1},
+		{expr: "rate(counter[5m]) > 10", want: 1},
+		{expr: "plain_metric", want: 0},
+	}
+	for _, c := range cases {
+		expr, err := metricsql.Parse(c.expr)
+		if err != nil {
+			t.Fatalf("metricsql.Parse(%q): %v", c.expr, err)
+		}
+		if got := countCompareOps(expr); got != c.want {
+			t.Fatalf("countCompareOps(%q) = %d, want %d", c.expr, got, c.want)
+		}
+	}
 }

@@ -14,6 +14,8 @@ import (
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/VictoriaMetrics/metricsql"
 )
 
 type alertRuleResult struct {
@@ -493,6 +495,9 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		// Wrap the PromQL in parentheses when it contains operators, so e.g.
 		// `a/b > 0.5` parses as `(a/b) > 0.5`, not `a/(b > 0.5)`.
 		bakedPromQL := fmt.Sprintf("%s %s %v", wrapIfComplex(promQL), op, threshold)
+		if err := validateBakedPromQL(bakedPromQL); err != nil {
+			return "", err
+		}
 		ruleConfig = map[string]interface{}{
 			"queries": []map[string]interface{}{
 				{
@@ -616,6 +621,43 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 // "<base> <op> <number>" into its three parts. Longer operators come first
 // in the alternation so ">=" wins over ">".
 var promThresholdRe = regexp.MustCompile(`^(.*?)\s*(>=|<=|==|!=|>|<)\s*(-?\d+(?:\.\d+)?)\s*$`)
+
+// validateBakedPromQL 出口硬防线：烘焙后的简单阈值 PromQL 在写库前必须通过
+// metricsql.Parse 语法校验，且顶层只允许一个比较操作符。
+//
+// 背景：模型误把完整表达式（如 `metric{...} < 20000`）当作 prom_ql 传入时，
+// rebuildBakedPromQL 会把整条表达式当 base 再拼当前操作符/阈值，产出形如
+// `metric{...} < 20000 < 40000` 的嵌套比较——PromQL 非法，评估引擎无法正确
+// 触发。语法解析虽能拦住部分畸形输入，但 `a < b < c` 这类链式比较在语法层
+// 合法（左结合成 (a<b)<c），必须从 AST 层数比较符数量拦截。
+func validateBakedPromQL(baked string) error {
+	if strings.TrimSpace(baked) == "" {
+		return fmt.Errorf("empty promql after baking")
+	}
+	expr, err := metricsql.Parse(baked)
+	if err != nil {
+		return fmt.Errorf("invalid promql %q: %v", baked, err)
+	}
+	if n := countCompareOps(expr); n != 1 {
+		return fmt.Errorf("invalid promql %q: expected exactly one comparison operator, got %d; pass prom_ql as the bare metric expression and operator/threshold separately", baked, n)
+	}
+	return nil
+}
+
+// countCompareOps 深度统计表达式里比较操作符（> >= < <= == !=）的个数。
+// 简单阈值规则必须是 `metric <op> number` 的单层比较；大于 1 说明出现了
+// `... < 20000 < 40000` 这类嵌套比较，需要拒绝。
+func countCompareOps(e metricsql.Expr) int {
+	bop, ok := e.(*metricsql.BinaryOpExpr)
+	if !ok {
+		return 0
+	}
+	n := 0
+	if isValidOperator(bop.Op) {
+		n = 1
+	}
+	return n + countCompareOps(bop.Left) + countCompareOps(bop.Right)
+}
 
 // rebuildBakedPromQL recomputes the baked "<base> <op> <num>" expression used
 // by the simple Prometheus path. It keeps whichever component the caller did
@@ -834,6 +876,9 @@ func updateAlertRule(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		qs, ok := promQueries(updated.RuleConfigJson)
 		if !ok {
 			return "", fmt.Errorf("this rule's config is not a simple prometheus threshold rule; pass rule_config_json to replace the whole config instead")
+		}
+		if err := validateBakedPromQL(baked); err != nil {
+			return "", err
 		}
 		qs[0]["prom_ql"] = baked
 		updated.PromQl = ""
