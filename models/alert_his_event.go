@@ -264,6 +264,17 @@ func AlertHisEventGetByHash(ctx *ctx.Context, hash string) (*AlertHisEvent, erro
 	return lst[0], nil
 }
 
+// AlertHisEventHashScope 把历史告警列表限定为指定 hash 的事件，等值匹配走 alert_his_event 的 KEY(hash)。
+// 走 scopes 而不是给 AlertHisEventGets/Total 加位置参数：这几个函数在 n9e-plus 里也被调用
+// （go.mod 用 replace 指向本仓库），改签名会变成必须成对提交的跨仓改动；
+// 用 scope 还能让 hash 过滤天然只作用于显式传它的调用方，通知规则详情、聚合告警等复用路径不受影响。
+// hash 是否为空由调用方判断
+func AlertHisEventHashScope(hash string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("hash = ?", hash)
+	}
+}
+
 // AlertHisEventBatchDelete 按 id 游标批量删除 last_eval_time 早于 timestamp 的历史事件，
 // activeIds 是活跃告警 id 快照（cur.id 即对应的 his.id），命中的记录跳过不删。
 // 返回本批候选数 fetched（< limit 表示已扫完）、实际删除数 deleted、本批最大 id（下一批游标）。
