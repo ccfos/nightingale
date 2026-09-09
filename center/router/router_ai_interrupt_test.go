@@ -192,3 +192,16 @@ func TestToolContinuationText(t *testing.T) {
 		t.Fatalf("en continuation must use the en copy, got %q", en)
 	}
 }
+
+// TestOrphanResumeDirective：孤儿确认注入文案必须明确"没有待确认的提案、
+// 不得声称已生效"，并按语言选取 zh/en。
+func TestOrphanResumeDirective(t *testing.T) {
+	zh := orphanResumeDirective("")
+	if !strings.Contains(zh, "没有待确认的修改提案") || !strings.Contains(zh, "不要声称任何改动已生效") {
+		t.Fatalf("zh directive = %q", zh)
+	}
+	en := orphanResumeDirective("en_US")
+	if !strings.Contains(en, "no pending change proposal") || !strings.Contains(en, "do NOT claim anything was applied") {
+		t.Fatalf("en directive = %q", en)
+	}
+}

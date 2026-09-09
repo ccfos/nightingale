@@ -314,6 +314,16 @@ func resumeText(lang, zh, en string) string {
 	return aiagent.LangText(lang, zh, en)
 }
 
+// orphanResumeDirective 生成"孤儿确认"注入文案：用户明确回复确认意图，但
+// 上一条消息没有待确认的提案（模型伪造提案文案而未调用工具、或提案已过期/
+// 被消费）。注入到 agent 的 userPrompt，强制模型不得在无提案时声称改动已
+// 生效——这是服务端硬防线，闭合 propose 腿，不依赖模型自觉。
+func orphanResumeDirective(lang string) string {
+	return resumeText(lang,
+		"\n\n【系统提示】用户回复了确认，但当前没有待确认的修改提案（上一轮可能只输出了确认文案而实际未调用修改工具，或提案已失效/已被处理）。请如实告知用户当前没有待确认的修改，不要声称任何改动已生效；如果用户仍要修改，请重新调用对应的 update_* 工具提交新提案。",
+		"\n\n[SYSTEM] The user replied with a confirmation, but there is no pending change proposal right now (the previous turn may only have printed the confirmation copy without actually calling the update tool, or the proposal expired / was already consumed). Tell the user honestly that there is no pending change; do NOT claim anything was applied. If a change is still wanted, call the update_* tool again to submit a fresh proposal.")
+}
+
 // formatResumeResult 把工具 apply 腿的 JSON 结果渲染成给用户看的 markdown；
 // 不认识的形态原样返回。
 func formatResumeResult(out, lang string) string {

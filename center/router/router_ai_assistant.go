@@ -467,6 +467,17 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	inputs := buildAgentInputs(chatReq, userId, msg.ChatID, msg.SeqID)
 
+	// 孤儿确认注入（resumeOrphanInject）：用户明确回复确认意图（approve 词
+	// 精确命中），但上一条消息没有待确认的提案（prevPending == nil —— 上一轮
+	// 模型可能伪造了确认文案而未真正调用 update_* 工具，或提案已过期/被消费）。
+	// 此时不能静默进入 agent 流程让模型自由发挥（它可能谎报"已确认生效"），
+	// 而是注入明确约束：没有待确认的提案，不得声称任何改动已生效。
+	// 透传字段 inputs["orphan_resume"] 让 aiagent 层/工具层可见该场景。
+	if prevPending == nil && classifyApprovalExact(msg.Query.Content) == approvalYes {
+		userPrompt += orphanResumeDirective(lang)
+		inputs["orphan_resume"] = "1"
+	}
+
 	// 用 UserPromptRendered 而非 UserPromptTemplate：handler.BuildPrompt 已经用
 	// fmt.Sprintf 把 msg.Query.Content 原样拼进 userPrompt，不能再经 text/template
 	// 解析——否则用户问 "告警模板怎么写 {{ .Alertname }}" 会让 Parse 失败，整轮 500。
