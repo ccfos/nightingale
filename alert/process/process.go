@@ -424,6 +424,7 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 	cachedRule.UpdateEvent(event)
 	event.IsRecovered = true
 	event.LastEvalTime = now
+	event.RecoverTime = now
 
 	// 恢复通知是否屏蔽，按"恢复时刻"（clock=now）重新判定，而不是沿用触发期写入 p.fires 的陈旧 NotifyMuted：
 	// 仅当此刻仍命中「只屏蔽通知」规则才继续静默恢复通知，屏蔽已到期/删除则正常发出恢复通知。
