@@ -838,6 +838,34 @@ func TestApplyPanelPatches_TypeChangeWithQueriesClearsInstant(t *testing.T) {
 	}
 }
 
+func TestApplyPanelPatches_TypeChangeToTableNGForcesInstant(t *testing.T) {
+	const raw = `{
+		"panels":[
+			{"id":"panel-1","type":"timeseries","name":"CPU","datasourceCate":"prometheus",
+			 "targets":[{"refId":"A","expr":"cpu_usage_active","instant":false}]}
+		]
+	}`
+	var cfg map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	queries := []QuerySpec{{Ref: "A", PromQL: "cpu_usage_active", Instant: ptrBool(false)}}
+	if _, err := applyPanelPatches("", cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("tableNG"), Queries: &queries}}); err != nil {
+		t.Fatalf("timeseries→tableNG should succeed: %v", err)
+	}
+	p := findPanel(cfg["panels"].([]interface{}), "panel-1", "")
+	if p["type"] != "tableNG" {
+		t.Fatalf("type = %v, want tableNG", p["type"])
+	}
+	if p["targets"].([]interface{})[0].(map[string]interface{})["instant"] != true {
+		t.Fatalf("tableNG target must be instant: %#v", p["targets"])
+	}
+	options := p["options"].(map[string]interface{})
+	if _, ok := options["legend"]; ok {
+		t.Errorf("tableNG must not retain legend: %#v", options)
+	}
+}
+
 // TestApplyPanelPatches_TypelessPanelTimeseriesIsNoOp is the regression for the
 // effective-type bug: a type-less panel (the FE renders it as timeseries) set to
 // type:timeseries is a no-op and must NOT run a full changePanelType, which would
@@ -1069,6 +1097,17 @@ func TestMergeTargets_NextRefIdSkipsTaken(t *testing.T) {
 	got := out[2].(map[string]interface{})["refId"]
 	if got != "B" {
 		t.Fatalf("new refId = %v, want B (first free letter)", got)
+	}
+}
+
+func TestMergeTargets_NextRefIdContinuesPastZ(t *testing.T) {
+	existing := make([]interface{}, 26)
+	for i := range existing {
+		existing[i] = map[string]interface{}{"refId": refIDAt(i), "expr": "up"}
+	}
+	out := mergeTargets(existing, []QuerySpec{{PromQL: "new"}})
+	if got := out[len(out)-1].(map[string]interface{})["refId"]; got != "AA" {
+		t.Fatalf("new refId = %v, want AA", got)
 	}
 }
 
