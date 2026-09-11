@@ -58,6 +58,7 @@ type RequestConfig struct {
 	ScriptRequestConfig      *ScriptRequestConfig      `json:"script_request_config,omitempty" gorm:"serializer:json"`
 	FlashDutyRequestConfig   *FlashDutyRequestConfig   `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
 	PagerDutyRequestConfig   *PagerDutyRequestConfig   `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
+	PlivoRequestConfig       *PlivoRequestConfig       `json:"plivo_request_config,omitempty" gorm:"serializer:json"`
 	DingtalkAppRequestConfig *DingtalkAppRequestConfig `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
 	FeishuAppRequestConfig   *FeishuAppRequestConfig   `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
 	WecomAppRequestConfig    *WecomAppRequestConfig    `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
@@ -97,6 +98,20 @@ type PagerDutyRequestConfig struct {
 	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
 	RetryTimes int    `json:"retry_times"` // 重试次数
 	RetrySleep int    `json:"retry_sleep"` // 重试等待时间（毫秒）
+}
+
+// PlivoRequestConfig Plivo 类型的参数配置，只保存用户自有的信息，
+// URL、Method、请求体由 provider 在代码中构造
+type PlivoRequestConfig struct {
+	AuthID       string `json:"auth_id"`       // Plivo Auth ID
+	AuthToken    string `json:"auth_token"`    // Plivo Auth Token
+	SrcNumber    string `json:"src_number"`    // 短信发送号码 / 语音主叫号码 (E.164)
+	AnswerURL    string `json:"answer_url"`    // 语音通道使用，返回 Plivo XML 的 answer_url
+	AnswerMethod string `json:"answer_method"` // 语音通道使用，拉取 answer_url 的 HTTP 方法，默认 POST
+	Proxy        string `json:"proxy"`
+	Timeout      int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes   int    `json:"retry_times"` // 重试次数
+	RetrySleep   int    `json:"retry_sleep"` // 重试等待时间（毫秒）
 }
 
 // ParamItem 自定义参数项
@@ -308,6 +323,10 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	if nc.RequestType == "pagerduty" && nc.RequestConfig.PagerDutyRequestConfig != nil && nc.RequestConfig.PagerDutyRequestConfig.Proxy != "" {
 		proxy = nc.RequestConfig.PagerDutyRequestConfig.Proxy
 	}
+	// 对于 Plivo 类型，优先使用 Plivo 配置中的代理
+	if nc.RequestType == "plivo" && nc.RequestConfig.PlivoRequestConfig != nil && nc.RequestConfig.PlivoRequestConfig.Proxy != "" {
+		proxy = nc.RequestConfig.PlivoRequestConfig.Proxy
+	}
 	// TODO(dingtalkapp): 钉钉应用本次不上线，DingtalkApp 超时/代理合并分支先注释；上线时恢复。
 	// if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil {
 	// 	dingtalkAppTimeout := nc.RequestConfig.DingtalkAppRequestConfig.Timeout
@@ -402,10 +421,11 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		ncc.RequestType != "script" &&
 		ncc.RequestType != "flashduty" &&
 		ncc.RequestType != "pagerduty" &&
+		ncc.RequestType != "plivo" &&
 		// ncc.RequestType != "dingtalkapp" &&
 		ncc.RequestType != "feishuapp" &&
 		ncc.RequestType != "wecomapp" {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp'")
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'plivo', 'feishuapp', 'wecomapp'")
 	}
 
 	if ncc.ParamConfig != nil {
@@ -495,6 +515,20 @@ func (ncc *NotifyChannelConfig) ValidateFlashDutyRequestConfig() error {
 func (ncc *NotifyChannelConfig) ValidatePagerDutyRequestConfig() error {
 	if ncc.RequestConfig.PagerDutyRequestConfig == nil {
 		return errors.New("pagerduty request config cannot be nil")
+	}
+	return nil
+}
+
+func (ncc *NotifyChannelConfig) ValidatePlivoRequestConfig() error {
+	c := ncc.RequestConfig.PlivoRequestConfig
+	if c == nil {
+		return errors.New("plivo request config cannot be nil")
+	}
+	if c.AuthID == "" || c.AuthToken == "" {
+		return errors.New("plivo request config requires auth_id and auth_token")
+	}
+	if c.SrcNumber == "" {
+		return errors.New("plivo request config requires src_number")
 	}
 	return nil
 }
