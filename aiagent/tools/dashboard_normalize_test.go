@@ -153,6 +153,16 @@ func TestNormalizeConfigs_GrafanaStyle(t *testing.T) {
 	t.Logf("Normalized result (first 500 chars): %.500s...", result)
 }
 
+func TestNormalizeTarget_RefIDsFollowFrontendSequence(t *testing.T) {
+	for index, want := range map[int]string{0: "A", 25: "Z", 26: "AA", 27: "AB"} {
+		target := map[string]interface{}{"expr": "up"}
+		normalizeTarget(target, index)
+		if got := target["refId"]; got != want {
+			t.Errorf("target[%d] refId = %v, want %s", index, got, want)
+		}
+	}
+}
+
 func TestNormalizeConfigs_RealCase(t *testing.T) {
 	// 用户反馈的真实错误 configs
 	input := `{"version":"1.0","var":[{"name":"ident","type":"query","definition":"label_values(cpu_usage_active,ident)","options":[],"multi":true}],"panels":[{"type":"timeseries","title":"CPU 使用率","x":0,"y":0,"w":12,"h":8,"targets":[{"ref":"A","expr":"cpu_usage_active{cpu=\"cpu-total\",ident=~\"$ident\"}"}],"options":{"legend":{"displayMode":"table","placement":"bottom"}}},{"type":"timeseries","title":"内存使用率","x":12,"y":0,"w":12,"h":8,"targets":[{"ref":"A","expr":"mem_used_percent{ident=~\"$ident\"}"}],"options":{"legend":{"displayMode":"table","placement":"bottom"}}},{"type":"timeseries","title":"系统负载","x":0,"y":8,"w":12,"h":8,"targets":[{"ref":"A","expr":"load1{ident=~\"$ident\"}"},{"ref":"B","expr":"load5{ident=~\"$ident\"}"},{"ref":"C","expr":"load15{ident=~\"$ident\"}"}],"options":{"legend":{"displayMode":"table","placement":"bottom"}}},{"type":"timeseries","title":"磁盘使用率","x":12,"y":8,"w":12,"h":8,"targets":[{"ref":"A","expr":"disk_used_percent{ident=~\"$ident\"}"}],"options":{"legend":{"displayMode":"table","placement":"bottom"}}}]}`
