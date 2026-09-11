@@ -439,6 +439,31 @@ func TestRenderEventBranchDependsOnNotifyChannelIdent(t *testing.T) {
 	})
 }
 
+func TestRenderEventBranchDependsOnRequestType(t *testing.T) {
+	events := []*AlertCurEvent{{RuleName: "r1", TagsMap: map[string]string{}}}
+	content := map[string]string{"content": "line1\nsay \"hi\""}
+
+	for _, requestType := range []string{"smtp", "script"} {
+		t.Run(requestType+" keeps raw text for provider serialization", func(t *testing.T) {
+			got := (&MessageTemplate{Content: content, NotifyChannelIdent: "custom"}).RenderEventForRequestType(
+				events, "http://site", requestType,
+			)
+			if want := "line1\nsay \"hi\""; fmt.Sprint(got["content"]) != want {
+				t.Fatalf("got %q, want %q", fmt.Sprint(got["content"]), want)
+			}
+		})
+	}
+
+	t.Run("http keeps JSON string escaping", func(t *testing.T) {
+		got := (&MessageTemplate{Content: content, NotifyChannelIdent: "custom"}).RenderEventForRequestType(
+			events, "http://site", "http",
+		)
+		if want := `line1\nsay \"hi\"`; fmt.Sprint(got["content"]) != want {
+			t.Fatalf("got %q, want %q", fmt.Sprint(got["content"]), want)
+		}
+	})
+}
+
 // RenderEvent 把模板错误当正文返回（生产链路的既有行为，不改），
 // RenderEventStrict 必须往外抛——否则「保存前测试」会在模板写错时报成功，
 // 而第三方收到的是一段 "failed to parse template: ..."。
