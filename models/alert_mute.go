@@ -522,15 +522,9 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 
 	session := DB(ctx).Model(&AlertMute{}).Where("disabled = 0")
 
-	// Only drop time-range mutes that have already expired; they can never become
-	// active again, so keeping them out of the engine cache is safe.
-	//
-	// Do NOT filter on btime here. The cache is only re-synced when the table's
-	// count/max(update_at) changes, and a mute reaching its btime changes neither.
-	// A mute saved with a future btime would therefore be excluded by the SQL and
-	// never picked up once its window opens, until some unrelated mute is edited.
-	// Not-yet-active mutes are harmless in the cache: MatchMute checks the time
-	// window against the event trigger time before applying any mute.
+	// Keep not-yet-active mutes: the cache only re-syncs on count/max(update_at)
+	// change, so a mute reaching its btime would never be picked up if filtered
+	// here. MatchMute checks the time window per event; only expired ones are dropped.
 	now := time.Now().Unix()
 	session = session.Where("(mute_time_type = ? AND etime >= ?) OR mute_time_type = ?", TimeRange, now, Periodic)
 
