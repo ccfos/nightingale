@@ -92,14 +92,20 @@ var (
 	}
 )
 
+// normalizeApprovalText 把用户回复归一成整串比对用的形态。两张确认词表
+// （approveExact / orphanApproveExact）共用它，避免各写一份 trim 集后漂移。
+// trim 集含反引号/引号：A2A 协议提示写的是 Reply exactly `approve`，上游
+// LLM 把 exactly 理解为连反引号照抄时回复是 "`approve`"——自己的协议提示
+// 必须自己接得住，否则白白多烧一次 LLM 分类调用。
+func normalizeApprovalText(text string) string {
+	t := strings.ToLower(strings.TrimSpace(text))
+	return strings.Trim(t, "。.!！~ `\"'“”‘’「」")
+}
+
 // classifyApprovalExact 整串精确匹配层。命不中返回 unclear，由调用方决定是否
 // 升级 LLM 分类。纯函数，可表测。reject 先查：两表撞词时拒绝优先。
 func classifyApprovalExact(text string) string {
-	t := strings.ToLower(strings.TrimSpace(text))
-	// trim 集含反引号/引号：A2A 协议提示写的是 Reply exactly `approve`，上游
-	// LLM 把 exactly 理解为连反引号照抄时回复是 "`approve`"——自己的协议提示
-	// 必须自己接得住，否则白白多烧一次 LLM 分类调用。
-	t = strings.Trim(t, "。.!！~ `\"'“”‘’「」")
+	t := normalizeApprovalText(text)
 	if t == "" {
 		return approvalUnclear
 	}
@@ -312,6 +318,40 @@ func toolContinuationText(lang, result string) string {
 // 生成。语言选取规则（zh 默认 / en 兜底）统一在 aiagent.LangText。
 func resumeText(lang, zh, en string) string {
 	return aiagent.LangText(lang, zh, en)
+}
+
+// orphanApproveExact 是"孤儿确认"判定专用的确认词表，只收无歧义的显式确认词。
+// 不复用 approveExact：那张表里的裸词（好/嗯/对/行/ok/yes/go…）只有在
+// prevPending != nil——上一轮刚问过"确不确认"——的强上下文里才等价于同意。孤儿
+// 判定发生在没有待确认提案的普通对话轮上，而 GuidedFollowup 要求每轮答案末尾
+// 都追问一句"下一步"（见 aiagent/prompts/guided_followup.md），用户回"好"是接受
+// 建议，不是确认写操作；确认腿成功后的回执轮同样不带 pending，用户回"好的"也会
+// 落到这里。按裸词注入会让这两条主路径都被"当前没有待确认的修改"打断。
+//
+// 收窄不损失真阳性：要拦的那条伪造路径本身就在教用户回"确认"——伪造文案抄的是
+// 工具的确认文案，A2A 提示是 Reply exactly `approve`，FE 按钮是 BuildApprovalForm
+// 的"确认执行"/"Apply"。真确认只会落在显式词上。
+var orphanApproveExact = map[string]bool{
+	"确认": true, "确认修改": true, "确认提交": true, "确认无误": true,
+	"同意": true, "就这么改": true,
+	"approve": true, "approved": true, "confirm": true, "confirmed": true,
+}
+
+// shouldInjectOrphanResume 判定本轮是否为"孤儿确认"：用户明确表达了确认，但上
+// 一条消息没有待确认的提案。纯函数，可表测。
+// seqID <= 1 直接否：首轮没有"上一轮"，此时的 confirm 不可能是在确认什么。
+// 结构化通道优先于文本，与 tryResumePending 的分层裁决保持同一口径。
+func shouldInjectOrphanResume(seqID int64, prevPending *models.PendingInterrupt, content string, param map[string]interface{}) bool {
+	if seqID <= 1 || prevPending != nil {
+		return false
+	}
+	switch approvalFromParam(param) {
+	case approvalYes:
+		return true
+	case approvalNo:
+		return false
+	}
+	return orphanApproveExact[normalizeApprovalText(content)]
 }
 
 // orphanResumeDirective 生成"孤儿确认"注入文案：用户明确回复确认意图，但
