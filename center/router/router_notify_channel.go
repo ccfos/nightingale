@@ -609,7 +609,7 @@ func buildTestTplContent(nc *models.NotifyChannelConfig, tplSrc map[string]strin
 		return make(map[string]interface{}), nil
 	}
 	tpl := &models.MessageTemplate{Content: tplSrc, NotifyChannelIdent: nc.Ident}
-	return tpl.RenderEventStrict(events, siteUrl)
+	return tpl.RenderEventStrictForRequestType(events, siteUrl, nc.RequestType)
 }
 
 func (rt *Router) notifyChannelConfigTest(c *gin.Context) {

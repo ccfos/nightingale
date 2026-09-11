@@ -3840,10 +3840,10 @@ func isSlackIdent(ident string) bool {
 //
 // 与 RenderEvent 的唯一区别是错误处理：这里把错误交给调用方，由调用方决定是继续
 // 投递（RenderEvent：把错误文本当正文，保持既有行为）还是中止（RenderEventStrict）。
-func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]interface{}) (interface{}, error) {
+func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]interface{}, requestType string) (interface{}, error) {
 	text := strings.Join(append(GetDefs(renderData), msgTpl), "")
 
-	if t.NotifyChannelIdent == "email" {
+	if requestType == "smtp" || requestType == "script" || (requestType == "" && t.NotifyChannelIdent == "email") {
 		tpl, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse template: %v", err)
@@ -3874,6 +3874,17 @@ func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]
 }
 
 func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent, siteUrl string) map[string]interface{} {
+	return t.renderEvent(events, siteUrl, "")
+}
+
+// RenderEventForRequestType renders message fields for a concrete transport.
+// Transports that serialize the result themselves need raw text, while HTTP
+// request templates need JSON-string escaping before interpolation.
+func (t *MessageTemplate) RenderEventForRequestType(events []*AlertCurEvent, siteUrl, requestType string) map[string]interface{} {
+	return t.renderEvent(events, siteUrl, requestType)
+}
+
+func (t *MessageTemplate) renderEvent(events []*AlertCurEvent, siteUrl, requestType string) map[string]interface{} {
 	if t == nil {
 		return nil
 	}
@@ -3883,7 +3894,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent, siteUrl string) m
 	// event 内容渲染到 messageTemplate
 	tplContent := make(map[string]interface{})
 	for key, msgTpl := range t.Content {
-		val, err := t.renderField(key, msgTpl, renderData)
+		val, err := t.renderField(key, msgTpl, renderData, requestType)
 		if err != nil {
 			logger.Errorf("failed to render template field %s: %v events: %v", key, err, events)
 			// slack 分支历来是把出错的字段整个丢掉（下游按缺字段处理），其余分支把错误
@@ -3906,6 +3917,16 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent, siteUrl string) m
 // 会让模板写错时接口仍报成功，而第三方群里收到的是一段 "failed to parse template: ..."，
 // 错误只在真实消息里才看得见。
 func (t *MessageTemplate) RenderEventStrict(events []*AlertCurEvent, siteUrl string) (map[string]interface{}, error) {
+	return t.renderEventStrict(events, siteUrl, "")
+}
+
+// RenderEventStrictForRequestType is the strict counterpart of
+// RenderEventForRequestType.
+func (t *MessageTemplate) RenderEventStrictForRequestType(events []*AlertCurEvent, siteUrl, requestType string) (map[string]interface{}, error) {
+	return t.renderEventStrict(events, siteUrl, requestType)
+}
+
+func (t *MessageTemplate) renderEventStrict(events []*AlertCurEvent, siteUrl, requestType string) (map[string]interface{}, error) {
 	if t == nil {
 		return nil, nil
 	}
@@ -3922,7 +3943,7 @@ func (t *MessageTemplate) RenderEventStrict(events []*AlertCurEvent, siteUrl str
 
 	tplContent := make(map[string]interface{}, len(keys))
 	for _, key := range keys {
-		val, err := t.renderField(key, t.Content[key], renderData)
+		val, err := t.renderField(key, t.Content[key], renderData, requestType)
 		if err != nil {
 			return nil, fmt.Errorf("template field %q: %v", key, err)
 		}

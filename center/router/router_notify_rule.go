@@ -314,7 +314,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if len(messageTemplates) == 0 {
 			return "", fmt.Errorf("message template not found")
 		}
-		tplContent = messageTemplates[0].RenderEvent(events, siteUrl)
+		tplContent = messageTemplates[0].RenderEventForRequestType(events, siteUrl, notifyChannel.RequestType)
 	}
 
 	return sendToNotifyChannel(ctx, userCache, userGroup, notifyConfig, notifyChannel, events, tplContent, siteUrl)
