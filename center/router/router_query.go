@@ -68,11 +68,18 @@ func logQueryAccess(c *gin.Context, cate string, dsID int64, query interface{}) 
 
 // withCallContext
 // Operator is best-effort: empty for anonymous endpoints.
+//
+// Inherit the CallContext already on the parent instead of rebuilding it, then
+// overwrite only what this call resolves. Rebuilding drops every other field —
+// notably EnforceReadOnly, which the board-share channel sets at the entry
+// handler; QueryLogBatchConcurrently derives a per-query context *after* that,
+// so a literal here silently cleared the strict read-only check on exactly the
+// path that needs it. Any field added to CallContext later inherits for free.
 func withCallContext(parent context.Context, dsID int64, operator string) context.Context {
-	return dskittypes.WithCallContext(parent, dskittypes.CallContext{
-		DatasourceID: dsID,
-		Operator:     operator,
-	})
+	cc, _ := dskittypes.CallContextFromCtx(parent)
+	cc.DatasourceID = dsID
+	cc.Operator = operator
+	return dskittypes.WithCallContext(parent, cc)
 }
 
 type CheckDsPermFunc func(c *gin.Context, dsId int64, cate string, q interface{}) bool
@@ -197,7 +204,17 @@ func (rt *Router) QueryLogBatch(c *gin.Context) {
 		logQueryAccess(c, f.Queries[i].DsCate, f.Queries[i].Did, f.Queries[i].Query)
 	}
 
-	resp, err := QueryLogBatchConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
+	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
+	// 分享 token 请求：本接口每条 query 自带数据源 id，需逐条校验板内归属
+	dsIds := make([]int64, 0, len(f.Queries))
+	for i := range f.Queries {
+		dsIds = append(dsIds, f.Queries[i].Did)
+	}
+	if rt.boardTokenQueryContext(c, dsIds...) {
+		anonymousAccess = true
+	}
+
+	resp, err := QueryLogBatchConcurrently(anonymousAccess, c, f)
 	if err != nil {
 		ginx.Bomb(200, "err:%v", err)
 	}
@@ -269,7 +286,14 @@ func (rt *Router) QueryData(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
-	resp, err := QueryDataConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
+	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
+	// 分享 token 请求：数据源按板内集合校验、SQL 家族置位强只读，
+	// 跳过基于登录用户的 CheckDsPerm
+	if rt.boardTokenQueryContext(c, f.DatasourceId) {
+		anonymousAccess = true
+	}
+
+	resp, err := QueryDataConcurrently(anonymousAccess, c, f)
 	if err != nil {
 		ginx.Bomb(200, "err:%v", err)
 	}
@@ -337,7 +361,14 @@ func (rt *Router) QueryLogV2(c *gin.Context) {
 	logQueryAccess(c, f.Cate, f.DatasourceId, f.Queries)
 	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
-	resp, err := QueryLogConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
+	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
+	// 分享 token 请求：数据源按板内集合校验、SQL 家族置位强只读，
+	// 跳过基于登录用户的 CheckDsPerm
+	if rt.boardTokenQueryContext(c, f.DatasourceId) {
+		anonymousAccess = true
+	}
+
+	resp, err := QueryLogConcurrently(anonymousAccess, c, f)
 	ginx.NewRender(c).Data(resp, err)
 }
 

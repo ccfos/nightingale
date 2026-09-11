@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // runOpenAIStream 把一段 SSE 文本灌进 streamResponse，收齐所有 chunk。
@@ -575,5 +577,46 @@ func TestGenerate_DoesNotRetryUnrelated400(t *testing.T) {
 	}
 	if calls != 1 {
 		t.Errorf("unrelated 400 must not be retried, got %d upstream calls", calls)
+	}
+}
+
+func TestNormalizeOpenAIURL(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		// 标准OpenAI/Ollama场景
+		{name: "ollama v1", input: "http://127.0.0.1:11434/v1", expected: "http://127.0.0.1:11434/v1/chat/completions"},
+		{name: "openai official v1", input: "https://api.openai.com/v1", expected: "https://api.openai.com/v1/chat/completions"},
+
+		// DeepSeek 场景
+		{name: "deepseek bare domain special rule", input: "https://api.deepseek.com", expected: "https://api.deepseek.com/v1/chat/completions"},
+		{name: "deepseek v1 base", input: "https://api.deepseek.com/v1", expected: "https://api.deepseek.com/v1/chat/completions"},
+		{name: "deepseek full url already", input: "https://api.deepseek.com/v1/chat/completions", expected: "https://api.deepseek.com/v1/chat/completions"},
+
+		// 本次修复：国内厂商
+		{name: "zhipu glm v4 base", input: "https://open.bigmodel.cn/api/paas/v4", expected: "https://open.bigmodel.cn/api/paas/v4/chat/completions"},
+		{name: "volc ark v3 base", input: "https://ark.cn-beijing.volces.com/api/v3", expected: "https://ark.cn-beijing.volces.com/api/v3/chat/completions"},
+
+		// 边界场景放最后
+		{name: "trailing slash trim", input: "https://open.bigmodel.cn/api/paas/v4/", expected: "https://open.bigmodel.cn/api/paas/v4/chat/completions"},
+		{name: "already full endpoint", input: "https://demo.test.com/chat/completions", expected: "https://demo.test.com/chat/completions"},
+
+		// 带 query 的完整端点（如 Azure 的 api-version）必须原样透传，不能重复拼路径
+		{name: "full endpoint with query passes through", input: "https://res.openai.azure.com/openai/deployments/gpt4/chat/completions?api-version=2024-02-01", expected: "https://res.openai.azure.com/openai/deployments/gpt4/chat/completions?api-version=2024-02-01"},
+		// 非版本号结尾的自定义网关端点原样透传，保证存量配置不被改写
+		{name: "custom gateway endpoint passes through", input: "https://gw.example.com/llm/proxy", expected: "https://gw.example.com/llm/proxy"},
+		// query 参数在补路径后保留
+		{name: "v1 base with query keeps query", input: "https://host.example.com/v1?key=abc", expected: "https://host.example.com/v1/chat/completions?key=abc"},
+		{name: "v1 trailing slash before query", input: "https://host.example.com/v1/?key=abc", expected: "https://host.example.com/v1/chat/completions?key=abc"},
+		{name: "azure v1 endpoint with query", input: "https://res.openai.azure.com/openai/v1?api-version=preview", expected: "https://res.openai.azure.com/openai/v1/chat/completions?api-version=preview"},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			out := NormalizeOpenAIURL(c.input)
+			assert.Equal(t, c.expected, out)
+		})
 	}
 }

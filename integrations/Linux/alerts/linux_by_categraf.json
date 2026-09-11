@@ -77,9 +77,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "按最近 1 小时的写入速度线性外推，该磁盘预计 4 小时内会被写满。磁盘写满会让日志、数据库、容器运行时全部报错，且往往需要停服务才能恢复。",
-            "action": "1) 用 df -h 确认是哪个挂载点，再用 du -x --max-depth=1 \u003c挂载点\u003e | sort -h 逐层找出增长最快的目录；2) 优先清理日志（journalctl --vacuum-size=500M、清 *.log.N）与临时文件，这是最快见效的；3) 用 lsof +L1 找出已删除但句柄未释放的文件，重启对应进程才能真正释放空间；4) 确认是否有异常写入（应用死循环打日志、备份任务堆积），不解决根因清理只是拖延。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 df -h 确认是哪个挂载点，再用 du -x --max-depth=1 \u003c挂载点\u003e | sort -h 逐层找出增长最快的目录；\n2) 优先清理日志（journalctl --vacuum-size=500M、清 *.log.N）与临时文件，这是最快见效的；\n3) 用 lsof +L1 找出已删除但句柄未释放的文件，重启对应进程才能真正释放空间；\n4) 确认是否有异常写入（应用死循环打日志、备份任务堆积），不解决根因清理只是拖延。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -166,9 +164,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "磁盘 IO 使用率接近 100%，请求在排队，所有依赖该磁盘的读写都会变慢，数据库和日志写入首当其冲。",
-            "action": "1) 用 iostat -x 1 确认是哪块盘、await 与 %util 的具体数值；2) 用 iotop -oP 或 pidstat -d 1 找出占用 IO 最高的进程；3) 常见元凶是数据库大查询、备份任务、日志刷盘——把可延后的任务错峰执行；4) 若是持续高负载而非突发，考虑换 SSD 或把热数据分散到多块盘。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 iostat -x 1 确认是哪块盘、await 与 %util 的具体数值；\n2) 用 iotop -oP 或 pidstat -d 1 找出占用 IO 最高的进程；\n3) 常见元凶是数据库大查询、备份任务、日志刷盘——把可延后的任务错峰执行；\n4) 若是持续高负载而非突发，考虑换 SSD 或把热数据分散到多块盘。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -254,8 +250,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "采集 agent 已超过 60 秒没有上报数据，这台机器现在处于监控盲区——它上面所有其他告警规则都不会再触发。",
-            "action": "1) 先用 ping 与 ssh 确认机器本身是否存活，机器宕机要按宕机处理；2) 机器存活则用 systemctl status categraf 确认 agent 进程，看日志 journalctl -u categraf -n 100 定位；3) 常见原因是 agent 崩溃、配置错误、或到服务端的网络/认证不通——用 curl 手工打一次服务端的写入接口验证；4) 恢复后确认数据已连续，注意盲区期间的故障不会有历史告警。"
+            "action": "1) 先用 ping 与 ssh 确认机器本身是否存活，机器宕机要按宕机处理；\n2) 机器存活则用 systemctl status categraf 确认 agent 进程，看日志 journalctl -u categraf -n 100 定位；\n3) 常见原因是 agent 崩溃、配置错误、或到服务端的网络/认证不通——用 curl 手工打一次服务端的写入接口验证；\n4) 恢复后确认数据已连续，注意盲区期间的故障不会有历史告警。"
         },
         "extra_config": {
             "escalation": {},
@@ -352,9 +347,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "可用内存低于 25%，继续下降会触发 swap 抖动甚至 OOM Killer 杀进程。",
-            "action": "1) 用 free -h 确认 available 与 swap 使用情况；2) 用 ps aux --sort=-%mem | head 找出占用最高的进程，对比它们的历史内存曲线判断是否泄漏；3) 内核回收不及时可用 sync; echo 1 \u003e /proc/sys/vm/drop_caches 释放 page cache（生产慎用）；4) 确认是业务增长还是进程泄漏——泄漏要在应用侧抓堆定位，不能只靠重启。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 free -h 确认 available 与 swap 使用情况；\n2) 用 ps aux --sort=-%mem | head 找出占用最高的进程，对比它们的历史内存曲线判断是否泄漏；\n3) 内核回收不及时可用 sync; echo 1 \u003e /proc/sys/vm/drop_caches 释放 page cache（生产慎用）；\n4) 确认是业务增长还是进程泄漏——泄漏要在应用侧抓堆定位，不能只靠重启。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -441,9 +434,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TIME_WAIT 状态连接超过 2 万，会占用大量端口与内存，端口耗尽后新建外连会失败。",
-            "action": "1) 用 ss -s 确认各状态连接数分布；2) 用 ss -tan state time-wait | awk '{print $4}' | cut -d: -f1 | sort | uniq -c | sort -rn 看集中在哪个目标；3) 根因通常是短连接过多——在应用侧改用长连接或连接池，这是最有效的手段；4) 应急可开启 net.ipv4.tcp_tw_reuse=1 并调大 net.ipv4.ip_local_port_range（不要开 tcp_tw_recycle，NAT 环境下会丢包）。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 ss -s 确认各状态连接数分布；\n2) 用 ss -tan state time-wait | awk '{print $4}' | cut -d: -f1 | sort | uniq -c | sort -rn 看集中在哪个目标；\n3) 根因通常是短连接过多——在应用侧改用长连接或连接池，这是最有效的手段；\n4) 应急可开启 net.ipv4.tcp_tw_reuse=1 并调大 net.ipv4.ip_local_port_range（不要开 tcp_tw_recycle，NAT 环境下会丢包）。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -530,9 +521,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "网卡入方向出现丢包，说明接收侧处理不过来或链路有问题，表现为请求超时、重传增多。",
-            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 RX dropped/errors 的增长；2) 用 ethtool -S \u003c网卡\u003e 看具体丢包原因（rx_no_buffer、rx_missed_errors 等）；3) 环形缓冲区不足可用 ethtool -G \u003c网卡\u003e rx \u003c更大值\u003e 调大，并检查 net.core.netdev_max_backlog；4) 若伴随 CPU 软中断偏高（top 里 %si），开启 RPS/RSS 把中断分散到多核。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 RX dropped/errors 的增长；\n2) 用 ethtool -S \u003c网卡\u003e 看具体丢包原因（rx_no_buffer、rx_missed_errors 等）；\n3) 环形缓冲区不足可用 ethtool -G \u003c网卡\u003e rx \u003c更大值\u003e 调大，并检查 net.core.netdev_max_backlog；\n4) 若伴随 CPU 软中断偏高（top 里 %si），开启 RPS/RSS 把中断分散到多核。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -619,9 +608,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "网卡出方向出现丢包，发送队列已经拥塞，对外请求与响应会出现超时和重传。",
-            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 TX dropped/errors 的增长；2) 用 ethtool -S \u003c网卡\u003e 看具体计数，并用 tc -s qdisc show dev \u003c网卡\u003e 看队列是否溢出；3) 发送队列不足可调大 txqueuelen 与 ethtool -G \u003c网卡\u003e tx；4) 确认是否已跑满带宽——是则限流或扩带宽，不是则排查网卡驱动与对端设备。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 确认 TX dropped/errors 的增长；\n2) 用 ethtool -S \u003c网卡\u003e 看具体计数，并用 tc -s qdisc show dev \u003c网卡\u003e 看队列是否溢出；\n3) 发送队列不足可调大 txqueuelen 与 ethtool -G \u003c网卡\u003e tx；\n4) 确认是否已跑满带宽——是则限流或扩带宽，不是则排查网卡驱动与对端设备。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -711,9 +698,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "大于 200G 的磁盘剩余空间已不足 20G，按大盘的写入速度这个余量很快会被吃掉。",
-            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 \u003c挂载点\u003e | sort -h 找出占用最大的目录；2) 清理日志与过期数据，注意用 lsof +L1 检查已删除但未释放的文件；3) 评估是否该把数据目录迁到独立磁盘或加盘扩容；4) 若是数据库或对象存储的数据盘，按业务侧的归档策略下沉冷数据。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 \u003c挂载点\u003e | sort -h 找出占用最大的目录；\n2) 清理日志与过期数据，注意用 lsof +L1 检查已删除但未释放的文件；\n3) 评估是否该把数据目录迁到独立磁盘或加盘扩容；\n4) 若是数据库或对象存储的数据盘，按业务侧的归档策略下沉冷数据。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -803,9 +788,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "小于 200G 的磁盘使用率已超过 90%，小盘余量本来就少，触顶会很快。",
-            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 \u003c挂载点\u003e | sort -h 找出占用最大的目录；2) 系统盘常见是 /var/log 与容器镜像层（docker system df 看占用，docker system prune 清理）；3) 用 lsof +L1 检查已删除但句柄未释放的文件；4) 长期需扩容或把大数据目录迁到独立磁盘。",
-            "runbook_url": "https://man7.org/linux/man-pages/man5/proc.5.html"
+            "action": "1) 用 df -h 定位挂载点，用 du -x --max-depth=1 \u003c挂载点\u003e | sort -h 找出占用最大的目录；\n2) 系统盘常见是 /var/log 与容器镜像层（docker system df 看占用，docker system prune 清理）；\n3) 用 lsof +L1 检查已删除但句柄未释放的文件；\n4) 长期需扩容或把大数据目录迁到独立磁盘。"
         },
         "extra_config": null,
         "create_at": 0,

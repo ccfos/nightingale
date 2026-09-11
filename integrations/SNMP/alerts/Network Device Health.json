@@ -1,0 +1,204 @@
+[
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "SNMP 探测失败（设备在线）",
+        "note": "设备 ICMP 可达但 SNMP 探测持续失败。\n说明不是设备宕机，而是 SNMP 服务未启用、ACL 拦截、UDP 161 不通或凭据（团体字/v3 认证）错误。",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 180,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "max_over_time(snmp_icmp_up{}[3m]) == 1 and max_over_time(snmp_up{}[3m]) == 0",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 在设备上确认 SNMP 服务已启用且团体字/v3 用户配置正确；\n2) 检查设备 ACL 与中间防火墙是否放行采集机到设备的 UDP 161；\n3) 在采集机上用 snmpwalk 手工验证凭据；\n4) 若近期变更过凭据，同步更新平台上该设备的 SNMP 认证配置并使用页面「测试」验证。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1755500000000001,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    },
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "SNMP 采集中断（曾有数据）",
+        "note": "设备 SNMP 探测在过去 1 小时内有过成功记录，但最近 10 分钟没有任何 snmp_up 样本。\n常见原因：采集 Agent 离线或配置被移除、设备被停用、网络中断。与「探测失败」不同，这代表采集链路整体没有产出数据。",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 0,
+        "severities": [
+            2
+        ],
+        "disabled": 0,
+        "prom_for_duration": 0,
+        "prom_ql": "",
+        "rule_config": {
+            "queries": [
+                {
+                    "keys": {
+                        "labelKey": "",
+                        "metricKey": "",
+                        "valueKey": ""
+                    },
+                    "prom_ql": "max_over_time(snmp_up{}[1h]) == 1 unless max_over_time(snmp_up{}[10m])",
+                    "severity": 2,
+                    "unit": "none"
+                }
+            ],
+            "version": "v1"
+        },
+        "event_relabel_config": null,
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "00:00",
+        "enable_etimes": [
+            "00:00"
+        ],
+        "enable_days_of_week": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 300,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": {
+            "action": "1) 到网络设备列表查看该设备健康列：区分是采集 Agent 失联还是设备探测失败；\n2) 确认所配采集 Agent（categraf）进程与心跳正常；\n3) 确认设备未被停用采集、采集模板仍在关联；\n4) 网络设备详情页可发起「测试」快速验证采集链路。"
+        },
+        "extra_config": {
+            "enrich_queries": [],
+            "escalation": {
+                "for_duration": 60,
+                "new_severity": 2,
+                "notify_max_number": 0,
+                "notify_repeat_step": 60
+            },
+            "network_device_config": {},
+            "notify_aggregation": {
+                "wait": 1
+            }
+        },
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1755500000000002,
+        "cur_event_count": 0,
+        "cron_pattern": "@every 60s"
+    }
+]

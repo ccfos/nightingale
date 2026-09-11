@@ -9,6 +9,9 @@ type AssistantChat struct {
 	PageFrom   AssistantPageInfo `json:"page_from"`
 	UserID     int64             `json:"user_id"`
 	IsNew      bool              `json:"is_new"`
+	// IsRenamed prevents the first message from replacing a title explicitly
+	// chosen by the user before the message is sent.
+	IsRenamed bool `json:"is_renamed"`
 }
 
 type AssistantPageType string

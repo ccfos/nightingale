@@ -233,7 +233,8 @@ func pickSentinels(metrics map[string]int, isShared func(string) bool, max int) 
 // ---------- 索引构建（懒构建 + TTL 缓存） ----------
 
 // 按语言分桶：模板名要跟着请求方的 X-Language 走，否则英文用户看到的是中文盘名/规则名。
-// NormalizeLang 只会归一到源语言与 en_US 两个值，桶数有界。
+// key 必须是 ResolveBucketLang 收敛后的语言：归一化后的语言码直接来自请求头，
+// 只有收敛到真实存在的词条桶，这里的 key 空间才随内置语言数有界。
 var (
 	tplMatchIdxMu sync.Mutex
 	tplMatchIdx   = map[string]*tplMatchIndex{}
@@ -438,7 +439,11 @@ func (rt *Router) datasourceTemplateMatch(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "prometheus client not ready, try again later")
 	}
 
-	idx, err := rt.getTplMatchIndex(integration.NormalizeLang(c.GetHeader("X-Language")))
+	lang := integration.NormalizeLang(c.GetHeader("X-Language"))
+	if integration.BuiltinPayloadInFile != nil {
+		lang = integration.BuiltinPayloadInFile.ResolveBucketLang(lang)
+	}
+	idx, err := rt.getTplMatchIndex(lang)
 	ginx.Dangerous(err)
 
 	if len(idx.sentinels) == 0 {

@@ -75,9 +75,7 @@
             "alertname=OpenstackNeutronAgentDown"
         ],
         "annotations": {
-            "summary": "有 Neutron Agent 处于非存活状态，该节点上的虚拟机网络将无法下发新配置，浮动 IP、安全组变更都不会生效。",
-            "action": "1) 从告警标签取 agent_host 与 agent_type，执行 openstack network agent list 确认状态；2) 登录该节点执行 systemctl status neutron-openvswitch-agent（或对应 agent）查看进程与日志；3) 进程存活但心跳超时的，检查该节点到消息队列（RabbitMQ）的连通性，agent 心跳走 RPC，MQ 不通是最常见原因；4) 恢复后执行 openstack network agent list 确认 alive 变为 True，并抽查一台该节点上的虚拟机网络是否正常。",
-            "runbook_url": "https://docs.openstack.org/operations-guide/ops-maintenance.html"
+            "action": "1) 从告警标签取 agent_host 与 agent_type，执行 openstack network agent list 确认状态；\n2) 登录该节点执行 systemctl status neutron-openvswitch-agent（或对应 agent）查看进程与日志；\n3) 进程存活但心跳超时的，检查该节点到消息队列（RabbitMQ）的连通性，agent 心跳走 RPC，MQ 不通是最常见原因；\n4) 恢复后执行 openstack network agent list 确认 alive 变为 True，并抽查一台该节点上的虚拟机网络是否正常。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=OpenstackNovaServiceForcedDown"
         ],
         "annotations": {
-            "summary": "有 Nova 服务被标记为 forced_down，通常是运维手工下线或 HA 组件判定该计算节点已失联，该节点上的虚拟机可能已被疏散或即将被疏散。",
-            "action": "1) 从告警标签取 host_machine 与 name，执行 openstack compute service list 确认状态；2) 确认是否是计划内的维护下线，核对变更单；3) 非计划的登录该计算节点检查 nova-compute 进程、到 MQ 与数据库的连通性；4) 节点确认恢复后执行 nova service-force-down \u003chost\u003e nova-compute --unset 取消强制下线标记，再验证虚拟机调度是否恢复正常。",
-            "runbook_url": "https://docs.openstack.org/operations-guide/ops-maintenance.html"
+            "action": "1) 从告警标签取 host_machine 与 name，执行 openstack compute service list 确认状态；\n2) 确认是否是计划内的维护下线，核对变更单；\n3) 非计划的登录该计算节点检查 nova-compute 进程、到 MQ 与数据库的连通性；\n4) 节点确认恢复后执行 nova service-force-down \u003chost\u003e nova-compute --unset 取消强制下线标记，再验证虚拟机调度是否恢复正常。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -249,9 +245,7 @@
             "alertname=OpenstackHypervisorVcpuHigh"
         ],
         "annotations": {
-            "summary": "该 Hypervisor 的 vCPU 分配率已超过 90%，新虚拟机无法调度到这台机器，集群整体的调度余量在收缩。",
-            "action": "1) 从告警标签取 hypervisor_hostname，执行 openstack hypervisor show \u003chost\u003e 确认 vcpus_used 与 vcpus；2) 结合 cpu_allocation_ratio 确认是否还有超分空间，默认 16:1 的超分比下 vcpus 已是折算后的值；3) 该节点上有闲置虚拟机的先清理或迁移（openstack server migrate）；4) 集群整体余量不足的需要扩容计算节点，扩容前先确认调度器的 filter 配置没有把负载压在少数节点上。",
-            "runbook_url": "https://docs.openstack.org/operations-guide/ops-maintenance.html"
+            "action": "1) 从告警标签取 hypervisor_hostname，执行 openstack hypervisor show \u003chost\u003e 确认 vcpus_used 与 vcpus；\n2) 结合 cpu_allocation_ratio 确认是否还有超分空间，默认 16:1 的超分比下 vcpus 已是折算后的值；\n3) 该节点上有闲置虚拟机的先清理或迁移（openstack server migrate）；\n4) 集群整体余量不足的需要扩容计算节点，扩容前先确认调度器的 filter 配置没有把负载压在少数节点上。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -336,9 +330,7 @@
             "alertname=OpenstackHypervisorMemoryHigh"
         ],
         "annotations": {
-            "summary": "该 Hypervisor 的内存分配率已超过 90%，新虚拟机无法调度到这台机器；内存通常不做超分，打满后该节点将完全无法接收新实例。",
-            "action": "1) 从告警标签取 hypervisor_hostname，执行 openstack hypervisor show \u003chost\u003e 对比 memory_mb_used 与 memory_mb；2) 登录节点执行 free -g 对比实际使用，分配率高但实际使用低说明虚拟机规格开大了，可推动业务缩容；3) 需要腾空间的用 openstack server migrate 把部分实例迁到空闲节点；4) 集群整体紧张的扩容计算节点，并复核 ram_allocation_ratio 是否被误设为大于 1。",
-            "runbook_url": "https://docs.openstack.org/operations-guide/ops-maintenance.html"
+            "action": "1) 从告警标签取 hypervisor_hostname，执行 openstack hypervisor show \u003chost\u003e 对比 memory_mb_used 与 memory_mb；\n2) 登录节点执行 free -g 对比实际使用，分配率高但实际使用低说明虚拟机规格开大了，可推动业务缩容；\n3) 需要腾空间的用 openstack server migrate 把部分实例迁到空闲节点；\n4) 集群整体紧张的扩容计算节点，并复核 ram_allocation_ratio 是否被误设为大于 1。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -423,9 +415,7 @@
             "alertname=OpenstackHypervisorDiskHigh"
         ],
         "annotations": {
-            "summary": "该 Hypervisor 的本地磁盘分配率已超过 90%，新虚拟机无法在此创建系统盘，且已有实例的磁盘增长可能把宿主机写满导致全节点故障。",
-            "action": "1) 从告警标签取 hypervisor_hostname，登录节点执行 df -h 与 du -sh /var/lib/nova/instances/* | sort -rh | head 找出占用大头；2) 清理已删除实例的残留目录与旧的 base 镜像缓存（nova 的 image cache manager 未开启时会持续累积）；3) 需要腾空间的把实例迁到其他节点，或把系统盘改为 Cinder 卷启动；4) 长期建议给 /var/lib/nova/instances 使用独立卷并配置扩容告警。",
-            "runbook_url": "https://docs.openstack.org/operations-guide/ops-maintenance.html"
+            "action": "1) 从告警标签取 hypervisor_hostname，登录节点执行 df -h 与 du -sh /var/lib/nova/instances/* | sort -rh | head 找出占用大头；\n2) 清理已删除实例的残留目录与旧的 base 镜像缓存（nova 的 image cache manager 未开启时会持续累积）；\n3) 需要腾空间的把实例迁到其他节点，或把系统盘改为 Cinder 卷启动；\n4) 长期建议给 /var/lib/nova/instances 使用独立卷并配置扩容告警。"
         },
         "extra_config": null,
         "create_at": 0,

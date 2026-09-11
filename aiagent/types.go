@@ -208,9 +208,13 @@ type ToolDeps struct {
 	FilterDatasources func([]*models.Datasource, *models.User) []*models.Datasource
 
 	// 告警排障日志获取。由 center 路由注入：包装 alert-eval-detail / event-detail
-	// 两个内部接口，用于排查"告警规则为什么没发告警"。两者都返回 (logs, instance, err)。
-	GetAlertEvalLogs       func(ruleId string) ([]string, string, error)
-	GetEventProcessingLogs func(eventHash string) ([]string, string, error)
+	// 两个内部接口，用于排查"告警规则为什么没发告警"。
+	// 两者都返回 (logs, instance, truncatedReason, err)：日志检索有时间预算和条数
+	// 上限，truncatedReason 非空表示这次只捞到了一部分（"timeout" = 更早的日志没读
+	// 到，"limit" = 命中太多只留了最新的）。这个信号必须一路传到模型手里，否则模型
+	// 会把半截日志当成全部，得出"日志里没有报错"这种错误结论。
+	GetAlertEvalLogs       func(ruleId string) (logs []string, instance string, truncatedReason string, err error)
+	GetEventProcessingLogs func(eventHash string) (logs []string, instance string, truncatedReason string, err error)
 
 	// Redis 用于读取主机心跳 (n9e_meta_update_time_*) 和 HostMeta (n9e_meta_*)。
 	// host-health-diagnose skill 的实时态判断（BeatTime / Offset / CpuUtil / MemUtil）从这里来。

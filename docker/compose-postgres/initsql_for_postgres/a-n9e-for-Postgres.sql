@@ -920,12 +920,14 @@ CREATE TABLE source_token (
     source_type varchar(64) NOT NULL DEFAULT '',
     source_id varchar(255) NOT NULL DEFAULT '',
     token varchar(255) NOT NULL DEFAULT '',
+    note varchar(255) NOT NULL DEFAULT '',
     expire_at bigint NOT NULL DEFAULT 0,
     create_at bigint NOT NULL DEFAULT 0,
     create_by varchar(64) NOT NULL DEFAULT ''
 );
 
 CREATE INDEX idx_source_token_type_id_token ON source_token (source_type, source_id, token);
+CREATE INDEX idx_source_token_token ON source_token (token);
 
 CREATE TABLE notification_record (
     id BIGSERIAL PRIMARY KEY,
@@ -940,6 +942,8 @@ CREATE TABLE notification_record (
 );
 
 CREATE INDEX idx_evt ON notification_record (event_id);
+CREATE INDEX idx_nr_rule_created_evt ON notification_record (notify_rule_id, created_at, event_id);
+CREATE INDEX idx_nr_created_at ON notification_record (created_at);
 
 COMMENT ON COLUMN notification_record.event_id IS 'event history id';
 COMMENT ON COLUMN notification_record.sub_id IS 'subscribed rule id';

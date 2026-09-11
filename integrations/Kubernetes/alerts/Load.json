@@ -69,8 +69,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Deployment 的实际副本数与期望不符，服务容量低于预期，滚动发布可能卡住。",
-            "action": "1) kubectl describe deploy \u003cname\u003e -n \u003cns\u003e 看 Conditions 与 Events；2) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 看未就绪 Pod 的状态与原因；3) 常见为资源不足无法调度、镜像拉取失败、就绪探针不通过；4) 按 Pod 的具体状态排查，资源不足的扩容节点或调低 requests。"
+            "action": "1) kubectl describe deploy \u003cname\u003e -n \u003cns\u003e 看 Conditions 与 Events；\n2) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 看未就绪 Pod 的状态与原因；\n3) 常见为资源不足无法调度、镜像拉取失败、就绪探针不通过；\n4) 按 Pod 的具体状态排查，资源不足的扩容节点或调低 requests。"
         },
         "extra_config": {
             "escalation": {
@@ -160,8 +159,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Job 执行失败，它负责的任务（数据处理、定时清理、迁移等）没有完成。",
-            "action": "1) kubectl get job \u003cjob\u003e -n \u003cns\u003e 看失败次数，再 kubectl logs job/\u003cjob\u003e 看失败原因；2) kubectl describe job 看 Events，确认是否因 backoffLimit 耗尽而放弃；3) 修复根因后 kubectl delete job 再重新提交，或让 CronJob 下次调度重跑；4) 确认该任务失败是否有下游影响（数据未产出、清理未执行），需要时手工补做。"
+            "action": "1) kubectl get job \u003cjob\u003e -n \u003cns\u003e 看失败次数，再 kubectl logs job/\u003cjob\u003e 看失败原因；\n2) kubectl describe job 看 Events，确认是否因 backoffLimit 耗尽而放弃；\n3) 修复根因后 kubectl delete job 再重新提交，或让 CronJob 下次调度重跑；\n4) 确认该任务失败是否有下游影响（数据未产出、清理未执行），需要时手工补做。"
         },
         "extra_config": {
             "escalation": {
@@ -251,8 +249,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Pod 启动耗时过长，滚动发布与扩容都会被拖慢，故障恢复时间也会拉长。",
-            "action": "1) kubectl describe pod \u003cpod\u003e -n \u003cns\u003e 看 Events 的时间戳，定位卡在拉镜像、挂载卷还是初始化容器；2) 拉镜像慢的检查镜像大小与仓库带宽，考虑预热镜像或用本地仓库；3) 挂载卷慢的排查 PV/CSI 驱动状态；4) 应用自身启动慢的优化启动逻辑，并把就绪探针的 initialDelaySeconds 调到合理值。"
+            "action": "1) kubectl describe pod \u003cpod\u003e -n \u003cns\u003e 看 Events 的时间戳，定位卡在拉镜像、挂载卷还是初始化容器；\n2) 拉镜像慢的检查镜像大小与仓库带宽，考虑预热镜像或用本地仓库；\n3) 挂载卷慢的排查 PV/CSI 驱动状态；\n4) 应用自身启动慢的优化启动逻辑，并把就绪探针的 initialDelaySeconds 调到合理值。"
         },
         "extra_config": {
             "escalation": {
@@ -342,8 +339,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Pod 长时间不处于 Ready 状态，它承载的流量无法被 Service 转发，副本数不足会直接影响服务容量。",
-            "action": "1) kubectl get pod \u003cpod\u003e -n \u003cns\u003e -o wide 看 STATUS 与 READY，再 kubectl describe pod 看 Events；2) Pending 多为资源不足或调度约束（节点亲和、污点、PVC 未绑定）；ImagePullBackOff 查镜像地址与拉取凭据；3) Running 但未 Ready 的看就绪探针配置与 kubectl logs \u003cpod\u003e 里的启动报错；4) 确认副本数是否已不足以承载流量，不足的先扩容其他健康副本。"
+            "action": "1) kubectl get pod \u003cpod\u003e -n \u003cns\u003e -o wide 看 STATUS 与 READY，再 kubectl describe pod 看 Events；\n2) Pending 多为资源不足或调度约束（节点亲和、污点、PVC 未绑定）；ImagePullBackOff 查镜像地址与拉取凭据；\n3) Running 但未 Ready 的看就绪探针配置与 kubectl logs \u003cpod\u003e 里的启动报错；\n4) 确认副本数是否已不足以承载流量，不足的先扩容其他健康副本。"
         },
         "extra_config": {
             "escalation": {
@@ -433,8 +429,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Pod 在反复重启（CrashLoopBackOff），服务实际不可用，且会持续消耗节点资源与镜像拉取带宽。",
-            "action": "1) kubectl logs \u003cpod\u003e -n \u003cns\u003e --previous 看上一次退出前的日志，这是最关键的一步；2) kubectl describe pod 看退出码与 Events：137 通常是 OOM 或被 kill，1/2 多为应用自身启动失败；3) 配置或依赖问题（连不上数据库、ConfigMap/Secret 缺失）先修依赖再拉起；4) OOM 的对照 resources.limits.memory 与实际用量调整，或修复应用内存泄漏。"
+            "action": "1) kubectl logs \u003cpod\u003e -n \u003cns\u003e --previous 看上一次退出前的日志，这是最关键的一步；\n2) kubectl describe pod 看退出码与 Events：137 通常是 OOM 或被 kill，1/2 多为应用自身启动失败；\n3) 配置或依赖问题（连不上数据库、ConfigMap/Secret 缺失）先修依赖再拉起；\n4) OOM 的对照 resources.limits.memory 与实际用量调整，或修复应用内存泄漏。"
         },
         "extra_config": {
             "escalation": {
@@ -524,8 +519,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "容器 CPU 使用率超过 limit 的 80%，接近配额上限后会被 CFS 限流，应用响应时间明显变长。",
-            "action": "1) kubectl top pod \u003cpod\u003e -n \u003cns\u003e --containers 确认实际用量与 limit 的比值；2) 对照 CPUThrottlingHigh 指标确认是否已经在被限流；3) 业务量增长的调大 resources.limits.cpu 或做水平扩容（HPA）；4) 用量异常的在应用侧抓 CPU profile 定位热点，避免只靠加配额掩盖问题。"
+            "action": "1) kubectl top pod \u003cpod\u003e -n \u003cns\u003e --containers 确认实际用量与 limit 的比值；\n2) 对照 CPUThrottlingHigh 指标确认是否已经在被限流；\n3) 业务量增长的调大 resources.limits.cpu 或做水平扩容（HPA）；\n4) 用量异常的在应用侧抓 CPU profile 定位热点，避免只靠加配额掩盖问题。"
         },
         "extra_config": {
             "escalation": {
@@ -615,8 +609,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "容器内存使用率超过 limit 的 80%，触顶会被 OOMKilled，容器内所有请求中断。",
-            "action": "1) kubectl top pod \u003cpod\u003e -n \u003cns\u003e --containers 确认用量与 limit；2) 对照历史曲线判断是持续爬升（疑似泄漏）还是业务高峰的正常波动；3) 正常波动的调大 resources.limits.memory 并预留余量；4) 持续爬升的在应用侧抓堆定位泄漏，扩配额只是拖延。"
+            "action": "1) kubectl top pod \u003cpod\u003e -n \u003cns\u003e --containers 确认用量与 limit；\n2) 对照历史曲线判断是持续爬升（疑似泄漏）还是业务高峰的正常波动；\n3) 正常波动的调大 resources.limits.memory 并预留余量；\n4) 持续爬升的在应用侧抓堆定位泄漏，扩配额只是拖延。"
         },
         "extra_config": {
             "escalation": {

@@ -100,6 +100,17 @@ type claudeContentBlock struct {
 	Data      string `json:"data,omitempty"`
 }
 
+func (b claudeContentBlock) MarshalJSON() ([]byte, error) {
+	type alias claudeContentBlock
+	if b.Type != "thinking" {
+		return json.Marshal(alias(b))
+	}
+	return json.Marshal(struct {
+		alias
+		Thinking string `json:"thinking"`
+	}{alias: alias(b), Thinking: b.Thinking})
+}
+
 type claudeTool struct {
 	Name        string                 `json:"name"`
 	Description string                 `json:"description"`

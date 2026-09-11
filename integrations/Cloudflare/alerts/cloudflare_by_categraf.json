@@ -75,9 +75,7 @@
             "alertname=CloudflareZone5xxHigh"
         ],
         "annotations": {
-            "summary": "该 Zone 的 5xx 响应占比超过 1%，用户访问已有相当比例失败，通常是源站故障或 Cloudflare 与源站之间的链路问题。",
-            "action": "1) 从告警标签取 zone，在 Cloudflare Dashboard 的 Analytics 里按状态码下钻，区分 520-527（Cloudflare 与源站之间）与 500-504（源站自身）；2) 52x 说明源站连接异常：521 是源站拒绝连接、524 是源站超时，直接 curl 源站 IP 验证并检查源站防火墙是否放行 Cloudflare 回源段；3) 5xx 为源站返回的，去源站应用日志定位；4) 应急可开启 Always Online 或把 DNS 记录临时切到备用源站。",
-            "runbook_url": "https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/"
+            "action": "1) 从告警标签取 zone，在 Cloudflare Dashboard 的 Analytics 里按状态码下钻，区分 520-527（Cloudflare 与源站之间）与 500-504（源站自身）；\n2) 52x 说明源站连接异常：521 是源站拒绝连接、524 是源站超时，直接 curl 源站 IP 验证并检查源站防火墙是否放行 Cloudflare 回源段；\n3) 5xx 为源站返回的，去源站应用日志定位；\n4) 应急可开启 Always Online 或把 DNS 记录临时切到备用源站。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=CloudflareCacheHitDrop"
         ],
         "annotations": {
-            "summary": "该 Zone 的缓存命中率已跌到昨日同一时段的 70% 以下。回源流量随之放大，源站负载与带宽成本都会上升，严重时会把源站打垮。",
-            "action": "1) 从告警标签取 zone，在 Dashboard 的 Caching \u003e Cache Analytics 里查看未命中请求集中在哪些路径；2) 确认最近是否改过 Page Rules 或 Cache Rules，误配 Bypass Cache 是最常见原因，先回滚变更；3) 源站响应头变化（新增 Cache-Control: no-cache 或 Set-Cookie）也会让缓存失效，对比发布前后的响应头；4) 若是刚做过 Purge Everything，属于预期内的缓存重建，观察命中率是否在数小时内自然回升。",
-            "runbook_url": "https://developers.cloudflare.com/cache/"
+            "action": "1) 从告警标签取 zone，在 Dashboard 的 Caching \u003e Cache Analytics 里查看未命中请求集中在哪些路径；\n2) 确认最近是否改过 Page Rules 或 Cache Rules，误配 Bypass Cache 是最常见原因，先回滚变更；\n3) 源站响应头变化（新增 Cache-Control: no-cache 或 Set-Cookie）也会让缓存失效，对比发布前后的响应头；\n4) 若是刚做过 Purge Everything，属于预期内的缓存重建，观察命中率是否在数小时内自然回升。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -249,9 +245,7 @@
             "alertname=CloudflareThreatsHigh"
         ],
         "annotations": {
-            "summary": "该 Zone 被 Cloudflare 判定为威胁的请求占比超过 10%，说明正在遭遇扫描、爬虫或 DDoS，虽然已被拦截但仍会消耗配额并可能有漏网请求打到源站。",
-            "action": "1) 从告警标签取 zone，在 Security \u003e Events 里按来源国家、ASN、User-Agent 聚合，确认攻击特征；2) 特征明确的直接配置 WAF 自定义规则或速率限制规则拦截，优先用特征匹配而不是封 IP；3) 攻击量大时开启 Under Attack Mode，注意它会给正常用户加验证页面，需评估业务影响；4) 同时确认源站的 5xx 与响应时间是否受影响，必要时先扩容源站再慢慢调规则。",
-            "runbook_url": "https://developers.cloudflare.com/waf/"
+            "action": "1) 从告警标签取 zone，在 Security \u003e Events 里按来源国家、ASN、User-Agent 聚合，确认攻击特征；\n2) 特征明确的直接配置 WAF 自定义规则或速率限制规则拦截，优先用特征匹配而不是封 IP；\n3) 攻击量大时开启 Under Attack Mode，注意它会给正常用户加验证页面，需评估业务影响；\n4) 同时确认源站的 5xx 与响应时间是否受影响，必要时先扩容源站再慢慢调规则。"
         },
         "extra_config": null,
         "create_at": 0,

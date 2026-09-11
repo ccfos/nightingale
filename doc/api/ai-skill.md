@@ -1,76 +1,76 @@
 # AI Skill API
 
-页面接口需要管理员权限（`auth` + `admin`），Service 接口（`/v1/n9e`）使用 BasicAuth 认证。
+The UI endpoints require administrator privileges (`auth` + `admin`); the service endpoints (`/v1/n9e`) use BasicAuth.
 
-## 数据结构
+## Data structures
 
 ### AISkill
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |------|------|------|------|
-| id | int64 | - | 主键，自增 |
-| name | string | 是 | Skill 名称 |
-| description | string | 否 | 描述，建议说明用途和触发场景 |
-| instructions | string | 是 | 提示词指令，支持 Markdown |
-| license | string | 否 | 许可证，如 `MIT`、`Apache-2.0` |
-| compatibility | string | 否 | 兼容性说明，如环境依赖、网络需求等 |
-| metadata | map[string]string | 否 | 扩展元数据，如 `{"author": "org", "version": "1.0"}` |
-| allowed_tools | string | 否 | 预授权工具列表，空格分隔，如 `Bash(git:*) Read` |
-| enabled | bool | 否 | 是否启用，请显式传入 `true` 或 `false` |
-| source_type | string | 否 | 来源类型：`local` / `git`，默认 `local` |
-| git_info | AISkillGitInfo | 否 | Git 来源信息。内置 Skill 仅返回 `current_commit` |
-| has_new_version | bool | - | 内置 Git Skill 返回；基于后台缓存异步判断是否有新版本 |
-| created_at | int64 | - | 创建时间（Unix 时间戳） |
-| created_by | string | - | 创建人 |
-| updated_at | int64 | - | 更新时间（Unix 时间戳） |
-| updated_by | string | - | 更新人 |
-| files | AISkillFile[] | - | 关联的资源文件列表（仅详情接口返回，不含 content） |
+| id | int64 | - | Primary key, auto-increment |
+| name | string | Yes | Skill name |
+| description | string | No | Description; state what it is for and when it triggers |
+| instructions | string | Yes | The prompt instructions, Markdown supported |
+| license | string | No | License, e.g. `MIT` or `Apache-2.0` |
+| compatibility | string | No | Compatibility notes, such as environment dependencies or network requirements |
+| metadata | map[string]string | No | Extra metadata, e.g. `{"author": "org", "version": "1.0"}` |
+| allowed_tools | string | No | Pre-authorized tool list, space separated, e.g. `Bash(git:*) Read` |
+| enabled | bool | No | Whether the skill is enabled; pass `true` or `false` explicitly |
+| source_type | string | No | Source type: `local` / `git`, default `local` |
+| git_info | AISkillGitInfo | No | Git source information. For built-in skills only `current_commit` is returned |
+| has_new_version | bool | - | Returned for built-in Git skills; determined asynchronously from a background cache |
+| created_at | int64 | - | Creation time (Unix timestamp) |
+| created_by | string | - | Creator |
+| updated_at | int64 | - | Last update time (Unix timestamp) |
+| updated_by | string | - | Last updated by |
+| files | AISkillFile[] | - | The associated resource files (returned by the detail endpoint only, without `content`) |
 
-> Git token 仅允许写入，不在接口响应中返回。内置 Skill 在所有接口中只返回 `git_info.current_commit`，其他 Git 配置都会隐藏；`has_new_version` 对内置 Git Skill 有意义。
+> The Git token is write-only and is never returned in a response. For built-in skills every endpoint returns only `git_info.current_commit` and hides the rest of the Git configuration; `has_new_version` is meaningful for built-in Git skills.
 
-> `license`、`compatibility`、`metadata`、`allowed_tools` 字段参考 [Agent Skills Specification](https://agentskills.io/specification)。
+> The `license`, `compatibility`, `metadata`, and `allowed_tools` fields follow the [Agent Skills Specification](https://agentskills.io/specification).
 
 ### AISkillGitInfo
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |------|------|------|------|
-| url | string | 否 | Git HTTPS 仓库地址 |
-| ref_type | string | 否 | Git 引用类型：`branch` / `tag` / `commit` |
-| ref | string | 否 | Git 分支、Tag 或 Commit |
-| auth_type | string | 否 | Git 认证类型：`none` / `token` |
-| token | string | 否 | Git token，仅请求允许写入，响应不返回 |
-| subdir | string | 否 | Skill 在仓库内的相对目录 |
-| current_commit | string | 否 | 当前已同步 commit |
+| url | string | No | HTTPS Git repository URL |
+| ref_type | string | No | Git reference type: `branch` / `tag` / `commit` |
+| ref | string | No | Git branch, tag, or commit |
+| auth_type | string | No | Git authentication type: `none` / `token` |
+| token | string | No | Git token; write-only, never returned in a response |
+| subdir | string | No | Relative directory of the skill inside the repository |
+| current_commit | string | No | The commit currently synced |
 
 ### AISkillFile
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |------|------|------|
-| id | int64 | 主键，自增 |
-| skill_id | int64 | 关联的 Skill ID |
-| name | string | 文件相对路径，如 `references/common/llm.md`、`scripts/api.py` |
-| content | string | 文件内容（仅文件详情接口返回） |
-| size | int64 | 文件大小（字节），创建时自动计算 |
-| created_at | int64 | 创建时间（Unix 时间戳） |
-| created_by | string | 创建人 |
-| updated_at | int64 | 更新时间（Unix 时间戳） |
-| updated_by | string | 更新人 |
+| id | int64 | Primary key, auto-increment |
+| skill_id | int64 | ID of the associated skill |
+| name | string | Relative file path, e.g. `references/common/llm.md` or `scripts/api.py` |
+| content | string | File content (returned by the file detail endpoint only) |
+| size | int64 | File size in bytes, computed automatically on creation |
+| created_at | int64 | Creation time (Unix timestamp) |
+| created_by | string | Creator |
+| updated_at | int64 | Last update time (Unix timestamp) |
+| updated_by | string | Last updated by |
 
 ---
 
-## 获取 Skill 列表
+## List skills
 
 ```
 GET /api/n9e/ai-skills
 ```
 
-### 查询参数
+### Query parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
-| search | string | 可选，按 name 或 description 模糊搜索 |
+| search | string | Optional; fuzzy search on name or description |
 
-### 响应
+### Response
 
 ```json
 {
@@ -78,7 +78,7 @@ GET /api/n9e/ai-skills
     {
       "id": 1,
       "name": "query-generator",
-      "description": "生成 PromQL/SQL 查询语句",
+      "description": "Generates PromQL/SQL queries",
       "instructions": "# Query Generator\n...",
       "license": "Apache-2.0",
       "compatibility": "Requires network access",
@@ -98,32 +98,32 @@ GET /api/n9e/ai-skills
 }
 ```
 
-> 列表接口不返回 `files` 字段。
+> The list endpoint does not return the `files` field.
 
 ---
 
-## 获取 Skill 详情
+## Get skill details
 
 ```
 GET /api/n9e/ai-skill/:id
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Skill ID |
 
-### 响应
+### Response
 
-返回 Skill 完整信息，并包含关联的资源文件列表（不含文件 content）。文件的 `name` 字段为压缩包内的相对路径，前端可按 `/` 分割渲染为树形结构。
+Returns the complete skill along with its resource files (without file `content`). A file's `name` is its relative path inside the archive, so the frontend can split on `/` and render a tree.
 
 ```json
 {
   "dat": {
     "id": 1,
     "name": "firemap-skill",
-    "description": "灭火图分析技能",
+    "description": "Firemap analysis skill",
     "instructions": "# Firemap Skill\n...",
     "enabled": true,
     "created_at": 1710000000,
@@ -167,25 +167,25 @@ GET /api/n9e/ai-skill/:id
 }
 ```
 
-### 错误
+### Errors
 
-- `404` Skill 不存在
+- `404` the skill does not exist
 
 ---
 
-## 创建 Skill
+## Create a skill
 
 ```
 POST /api/n9e/ai-skills
 ```
 
-### 请求体
+### Request body
 
 ```json
 {
   "name": "query-generator",
-  "description": "生成 PromQL/SQL 查询语句",
-  "instructions": "# Query Generator\n根据用户输入生成查询语句...",
+  "description": "Generates PromQL/SQL queries",
+  "instructions": "# Query Generator\nGenerate a query from the user's input...",
   "license": "Apache-2.0",
   "compatibility": "Requires network access",
   "metadata": {
@@ -197,12 +197,12 @@ POST /api/n9e/ai-skills
 }
 ```
 
-### 校验规则
+### Validation rules
 
-- `name` 必填（自动 trim）
-- `instructions` 必填（自动 trim）
+- `name` is required (trimmed automatically)
+- `instructions` is required (trimmed automatically)
 
-### 响应
+### Response
 
 ```json
 {
@@ -211,31 +211,31 @@ POST /api/n9e/ai-skills
 }
 ```
 
-返回新创建的 Skill ID。
+Returns the ID of the newly created skill.
 
 ---
 
-## 更新 Skill
+## Update a skill
 
 ```
 PUT /api/n9e/ai-skill/:id
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Skill ID |
 
-### 请求体
+### Request body
 
-同创建接口。
+Same as the create endpoint.
 
-### 可更新字段
+### Updatable fields
 
-`name`、`description`、`instructions`、`license`、`compatibility`、`metadata`、`allowed_tools`、`enabled`。
+`name`, `description`, `instructions`, `license`, `compatibility`, `metadata`, `allowed_tools`, `enabled`.
 
-### 响应
+### Response
 
 ```json
 {
@@ -244,21 +244,21 @@ PUT /api/n9e/ai-skill/:id
 }
 ```
 
-### 错误
+### Errors
 
-- `404` Skill 不存在
+- `404` the skill does not exist
 
 ---
 
-## 从 Git 安装 Skill
+## Install a skill from Git
 
-从 HTTPS Git 仓库拉取 Skill。仓库根目录或 `git_subdir` 指定目录必须包含 `SKILL.md`。
+Pulls a skill from an HTTPS Git repository. The repository root, or the directory given by `git_subdir`, must contain a `SKILL.md`.
 
 ```
 POST /api/n9e/ai-skills/git/install
 ```
 
-### 请求体
+### Request body
 
 ```json
 {
@@ -272,15 +272,15 @@ POST /api/n9e/ai-skills/git/install
 }
 ```
 
-### 说明
+### Notes
 
-- `git_auth_type` 支持 `none` 和 `token`；使用 `token` 时 `git_token` 必填，可传明文或 `enc:` RSA 密文。Deploy Token 等需要用户名的凭据，请使用 `用户名:令牌` 格式；不含冒号时使用默认用户名。
-- `git_ref_type` 支持 `branch`、`tag`、`commit`。
-- `git_subdir` 只能是仓库内相对路径。
-- 拉取成功后会创建 `ai_skill` 和 `ai_skill_file`，并记录 `git_info.current_commit`。
-- `git_token` 加密存储，响应不回显。
+- `git_auth_type` supports `none` and `token`; with `token`, `git_token` is required and may be plaintext or an `enc:` RSA ciphertext. For credentials that need a username, such as a Deploy Token, use the `username:token` format; without a colon the default username is used.
+- `git_ref_type` supports `branch`, `tag`, and `commit`.
+- `git_subdir` must be a relative path inside the repository.
+- A successful pull creates `ai_skill` and `ai_skill_file` records and records `git_info.current_commit`.
+- `git_token` is stored encrypted and is never echoed back in a response.
 
-### 响应
+### Response
 
 ```json
 {
@@ -289,27 +289,27 @@ POST /api/n9e/ai-skills/git/install
 }
 ```
 
-返回新创建的 Skill ID。
+Returns the ID of the newly created skill.
 
 ---
 
-## 更新 Git 配置
+## Update the Git configuration
 
-只更新已有 Git Skill 的 Git 来源配置，不拉取仓库，不覆盖 Skill 内容和资源文件。
+Updates only the Git source configuration of an existing Git skill. It does not pull the repository and does not overwrite the skill's content or resource files.
 
 ```
 PUT /api/n9e/ai-skill/:id/git/install
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Skill ID |
 
-### 请求体
+### Request body
 
-字段未传时沿用已有配置。`git_auth_type=token` 且当前没有已保存 token 时，必须传 `git_token`。
+Fields that are not supplied keep their existing values. When `git_auth_type=token` and no token has been saved yet, `git_token` must be supplied.
 
 ```json
 {
@@ -322,7 +322,7 @@ PUT /api/n9e/ai-skill/:id/git/install
 }
 ```
 
-### 响应
+### Response
 
 ```json
 {
@@ -331,31 +331,31 @@ PUT /api/n9e/ai-skill/:id/git/install
 }
 ```
 
-### 错误
+### Errors
 
-- `404` Skill 不存在
-- `400` 目标 Skill 不是 Git 来源
-- `400` 内置 Git Skill 不允许通过该接口修改 Git 配置
+- `404` the skill does not exist
+- `400` the target skill does not come from Git
+- `400` the Git configuration of a built-in Git skill cannot be changed through this endpoint
 
 ---
 
-## 从 Git 更新 Skill
+## Update a skill from Git
 
-重新从 Git 拉取并覆盖已有 Git Skill 的内容和资源文件。
+Pulls from Git again and overwrites the content and resource files of an existing Git skill.
 
 ```
 POST /api/n9e/ai-skill/:id/git/update
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Skill ID |
 
-### 请求体
+### Request body
 
-普通 Git Skill 可以传入新的 Git 配置；字段未传时沿用现有配置。
+An ordinary Git skill may be given a new Git configuration; fields that are not supplied keep their existing values.
 
 ```json
 {
@@ -366,9 +366,9 @@ POST /api/n9e/ai-skill/:id/git/update
 }
 ```
 
-内置 Git Skill 会忽略请求体中的 Git 配置，只使用数据库中预置的 Git 信息更新，避免前端暴露或篡改内置来源。
+For a built-in Git skill the Git configuration in the request body is ignored and only the Git information preset in the database is used, so the built-in source can be neither exposed nor tampered with by the frontend.
 
-### 响应
+### Response
 
 ```json
 {
@@ -377,28 +377,28 @@ POST /api/n9e/ai-skill/:id/git/update
 }
 ```
 
-### 错误
+### Errors
 
-- `404` Skill 不存在
-- `400` 目标 Skill 不是 Git 来源
+- `404` the skill does not exist
+- `400` the target skill does not come from Git
 
 ---
 
-## 删除 Skill
+## Delete a skill
 
-删除 Skill 时会级联删除关联的所有资源文件。
+Deleting a skill cascades to all of its resource files.
 
 ```
 DELETE /api/n9e/ai-skill/:id
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Skill ID |
 
-### 响应
+### Response
 
 ```json
 {
@@ -407,52 +407,52 @@ DELETE /api/n9e/ai-skill/:id
 }
 ```
 
-### 错误
+### Errors
 
-- `404` Skill 不存在
+- `404` the skill does not exist
 
 ---
 
-## 导入 Skill（新建）
+## Import a skill (create)
 
-从压缩包导入创建新 Skill。压缩包根目录必须包含 `SKILL.md` 文件（含有效的 YAML frontmatter），其他文件作为资源文件存入数据库。如果同名 Skill 已存在则拒绝创建。
+Creates a new skill from an archive. The archive root must contain a `SKILL.md` file (with valid YAML frontmatter); every other file is stored in the database as a resource file. If a skill with the same name already exists, creation is rejected.
 
 ```
 POST /api/n9e/ai-skills/import
 ```
 
-### 请求格式
+### Request format
 
 `multipart/form-data`
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |------|------|------|
-| file | file | `.zip` 或 `.tar.gz`/`.tgz` 压缩包 |
+| file | file | A `.zip` or `.tar.gz`/`.tgz` archive |
 
-### 压缩包结构
+### Archive structure
 
 ```
-SKILL.md                           # 必须，Skill 定义文件
-references/                        # 可选，参考资料
+SKILL.md                           # required, the skill definition file
+references/                        # optional, reference material
   common/
     llm.md
     workspace.md
   firemap/
     abnormal-analysis.md
     query-firemap.md
-scripts/                           # 可选，脚本文件
+scripts/                           # optional, script files
   api.py
   rule_from_template.py
 ```
 
-### SKILL.md 格式
+### SKILL.md format
 
-必须包含有效的 YAML frontmatter，且 `name` 字段不能为空：
+It must contain valid YAML frontmatter, and the `name` field must not be empty:
 
 ```markdown
 ---
 name: my-skill
-description: 技能描述
+description: Skill description
 license: MIT
 compatibility: Requires git, docker
 metadata:
@@ -461,26 +461,26 @@ metadata:
 allowed-tools: Bash(git:*) Read
 ---
 
-# Skill 指令内容
+# Skill instructions
 
-这里是 instructions 部分...
+This is the instructions section...
 ```
 
-- `name` 必填，用于唯一标识 Skill
-- `instructions`（frontmatter 之后的正文部分）必填，不能为空
-- 没有有效 frontmatter 或 `name` 为空时，接口返回错误
+- `name` is required and uniquely identifies the skill
+- `instructions` (the body after the frontmatter) is required and must not be empty
+- If there is no valid frontmatter, or `name` is empty, the endpoint returns an error
 
-### 限制
+### Limits
 
-| 限制项 | 值 | 说明 |
+| Limit | Value | Description |
 |--------|------|------|
-| 压缩包大小 | 10MB | 上传文件大小上限 |
-| 解压后总大小 | 50MB | 防御高压缩比攻击 |
-| SKILL.md 大小 | 64KB | 对应数据库 TEXT 字段上限 |
-| 单个资源文件大小 | 16MB | 对应数据库 MEDIUMTEXT 字段上限 |
-| 资源文件数量 | 50 | 每个 Skill 最多 50 个资源文件 |
+| Archive size | 10MB | Maximum size of the uploaded file |
+| Total size after extraction | 50MB | Guards against high-compression-ratio attacks |
+| SKILL.md size | 64KB | Matches the database TEXT column limit |
+| Size of a single resource file | 16MB | Matches the database MEDIUMTEXT column limit |
+| Number of resource files | 50 | At most 50 resource files per skill |
 
-### 响应
+### Response
 
 ```json
 {
@@ -489,43 +489,43 @@ allowed-tools: Bash(git:*) Read
 }
 ```
 
-返回新创建的 Skill ID。
+Returns the ID of the newly created skill.
 
-### 错误
+### Errors
 
-- `400` 仅支持 `.zip` 和 `.tar.gz`/`.tgz` 文件
-- `400` 压缩包超过 10MB
-- `400` 根目录未找到 `SKILL.md`
-- `400` `SKILL.md` 缺少有效的 YAML frontmatter 或 `name` 为空
-- `400` `name` 或 `instructions` 为空（校验失败）
-- `400` 同名 Skill 已存在
-- `400` 文件数量或大小超限
+- `400` only `.zip` and `.tar.gz`/`.tgz` files are supported
+- `400` the archive is larger than 10MB
+- `400` no `SKILL.md` found in the root directory
+- `400` `SKILL.md` has no valid YAML frontmatter, or `name` is empty
+- `400` `name` or `instructions` is empty (validation failure)
+- `400` a skill with the same name already exists
+- `400` the file count or size limit was exceeded
 
 ---
 
-## 导入 Skill（更新）
+## Import a skill (update)
 
-从压缩包更新已有 Skill。按 Skill ID 定位，全量替换：压缩包中存在的文件会覆盖同名旧文件，压缩包中不存在的旧文件会被删除。如果 SKILL.md 中的 `name` 与其他 Skill 冲突则拒绝。
+Updates an existing skill from an archive. The skill is located by ID and fully replaced: files present in the archive overwrite the old files of the same name, and old files absent from the archive are deleted. If the `name` in SKILL.md collides with another skill, the request is rejected.
 
 ```
 PUT /api/n9e/ai-skill/:id/import
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Skill ID |
 
-### 请求格式
+### Request format
 
-同"导入 Skill（新建）"。
+Same as "Import a skill (create)".
 
-### 限制
+### Limits
 
-同"导入 Skill（新建）"。
+Same as "Import a skill (create)".
 
-### 响应
+### Response
 
 ```json
 {
@@ -534,32 +534,32 @@ PUT /api/n9e/ai-skill/:id/import
 }
 ```
 
-返回更新的 Skill ID。
+Returns the ID of the updated skill.
 
-### 错误
+### Errors
 
-- `404` Skill 不存在
-- `400` 仅支持 `.zip` 和 `.tar.gz`/`.tgz` 文件
-- `400` `SKILL.md` 缺少有效的 YAML frontmatter 或 `name` 为空
-- `400` `name` 与其他 Skill 冲突
+- `404` the skill does not exist
+- `400` only `.zip` and `.tar.gz`/`.tgz` files are supported
+- `400` `SKILL.md` has no valid YAML frontmatter, or `name` is empty
+- `400` `name` collides with another skill
 
 ---
 
-## 获取资源文件详情
+## Get resource file details
 
-获取单个资源文件的完整内容。
+Returns the full content of a single resource file.
 
 ```
 GET /api/n9e/ai-skill-file/:fileId
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
-| fileId | int64 | 文件 ID |
+| fileId | int64 | File ID |
 
-### 响应
+### Response
 
 ```json
 {
@@ -567,7 +567,7 @@ GET /api/n9e/ai-skill-file/:fileId
     "id": 10,
     "skill_id": 1,
     "name": "references/common/llm.md",
-    "content": "# LLM Reference\n文件完整内容...",
+    "content": "# LLM Reference\nfull file content...",
     "size": 1024,
     "created_at": 1710000000,
     "created_by": "admin",
@@ -578,25 +578,25 @@ GET /api/n9e/ai-skill-file/:fileId
 }
 ```
 
-### 错误
+### Errors
 
-- `404` 文件不存在
+- `404` the file does not exist
 
 ---
 
-## 删除资源文件
+## Delete a resource file
 
 ```
 DELETE /api/n9e/ai-skill-file/:fileId
 ```
 
-### 路径参数
+### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
-| fileId | int64 | 文件 ID |
+| fileId | int64 | File ID |
 
-### 响应
+### Response
 
 ```json
 {
@@ -605,33 +605,33 @@ DELETE /api/n9e/ai-skill-file/:fileId
 }
 ```
 
-### 错误
+### Errors
 
-- `404` 文件不存在
-
----
-
-## Service API（v1）
-
-以下接口供其他服务调用，使用 BasicAuth 认证（需开启 `APIForService`）。写入类接口的 `created_by` / `updated_by` 固定为 `system`。
+- `404` the file does not exist
 
 ---
 
-### 获取 Skill 列表
+## Service API (v1)
+
+The following endpoints are for other services and use BasicAuth (`APIForService` must be enabled). For write endpoints, `created_by` / `updated_by` is always `system`.
+
+---
+
+### List skills
 
 ```
 GET /v1/n9e/ai-skills
 ```
 
-行为与页面接口 `GET /api/n9e/ai-skills` 一致。
+Behaves the same as the UI endpoint `GET /api/n9e/ai-skills`.
 
-#### 查询参数
+#### Query parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
-| search | string | 可选，按 name 或 description 模糊搜索 |
+| search | string | Optional; fuzzy search on name or description |
 
-#### 响应
+#### Response
 
 ```json
 {
@@ -639,7 +639,7 @@ GET /v1/n9e/ai-skills
     {
       "id": 1,
       "name": "firemap-skill",
-      "description": "灭火图分析技能",
+      "description": "Firemap analysis skill",
       "instructions": "# Firemap Skill\n...",
       "enabled": true,
       "created_at": 1710000000,
@@ -652,34 +652,34 @@ GET /v1/n9e/ai-skills
 }
 ```
 
-> 列表接口不返回 `files` 字段。
+> The list endpoint does not return the `files` field.
 
 ---
 
-### 获取 Skill 详情（含文件内容）
+### Get skill details (including file content)
 
 ```
 GET /v1/n9e/ai-skill/:id
 ```
 
-返回 Skill 完整信息及所有资源文件（**含 `content` 字段**），服务端可一次请求获取全部数据。
+Returns the complete skill and all of its resource files (**including the `content` field**), so a service can fetch everything in one request.
 
-> 与页面接口 `GET /api/n9e/ai-skill/:id` 的区别：页面接口的 files 不含 `content`（前端按需加载），Service 接口的 files 含 `content`（一次拿齐）。
+> How it differs from the UI endpoint `GET /api/n9e/ai-skill/:id`: the UI endpoint's files omit `content` (the frontend loads it on demand), while the service endpoint's files include `content` (everything at once).
 
-#### 路径参数
+#### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Skill ID |
 
-#### 响应
+#### Response
 
 ```json
 {
   "dat": {
     "id": 1,
     "name": "firemap-skill",
-    "description": "灭火图分析技能",
+    "description": "Firemap analysis skill",
     "instructions": "# Firemap Skill\n...",
     "enabled": true,
     "created_at": 1710000000,
@@ -691,7 +691,7 @@ GET /v1/n9e/ai-skill/:id
         "id": 10,
         "skill_id": 1,
         "name": "references/common/llm.md",
-        "content": "# LLM Reference\n模型调用说明...",
+        "content": "# LLM Reference\nHow to call the model...",
         "size": 1024,
         "created_at": 1710000000,
         "created_by": "admin",
@@ -715,27 +715,27 @@ GET /v1/n9e/ai-skill/:id
 }
 ```
 
-#### 错误
+#### Errors
 
-- `404` Skill 不存在
+- `404` the skill does not exist
 
 ---
 
-### 创建/更新 Skill（Upsert）
+### Create or update a skill (upsert)
 
 ```
 POST /v1/n9e/ai-skills
 ```
 
-按 `name` 做 Upsert：同名 Skill 已存在则更新，不存在则创建。
+Upserts by `name`: if a skill with the same name exists it is updated, otherwise it is created.
 
-#### 请求体
+#### Request body
 
 ```json
 {
   "name": "query-generator",
-  "description": "生成 PromQL/SQL 查询语句",
-  "instructions": "# Query Generator\n根据用户输入生成查询语句...",
+  "description": "Generates PromQL/SQL queries",
+  "instructions": "# Query Generator\nGenerate a query from the user's input...",
   "license": "Apache-2.0",
   "compatibility": "Requires network access",
   "metadata": {
@@ -747,14 +747,14 @@ POST /v1/n9e/ai-skills
 }
 ```
 
-#### 校验规则
+#### Validation rules
 
-- `name` 必填（自动 trim）
-- `instructions` 必填（自动 trim）
-- 仅当 `source_type=git` 时按 Git 来源处理：服务端会先拉取仓库，以仓库中的 `SKILL.md` 和资源文件作为最终内容；请求体中的 `name` 仅用于查找已有记录。
-- Service 接口允许写入内置 Skill 的 Git 信息，但所有查询接口都不会暴露内置 Skill 的 Git 配置。
+- `name` is required (trimmed automatically)
+- `instructions` is required (trimmed automatically)
+- The request is treated as a Git source only when `source_type=git`: the server pulls the repository first and uses the `SKILL.md` and resource files from it as the final content; the `name` in the request body is only used to find an existing record.
+- The service endpoint may write the Git information of a built-in skill, but no read endpoint ever exposes a built-in skill's Git configuration.
 
-Git 来源请求示例：
+Example of a Git-source request:
 
 ```json
 {
@@ -770,7 +770,7 @@ Git 来源请求示例：
 }
 ```
 
-#### 响应
+#### Response
 
 ```json
 {
@@ -779,31 +779,31 @@ Git 来源请求示例：
 }
 ```
 
-返回 Skill ID（创建时为新 ID，更新时为已有 ID）。
+Returns the skill ID (a new one on creation, the existing one on update).
 
 ---
 
-### 导入 Skill（新建）
+### Import a skill (create)
 
 ```
 POST /v1/n9e/ai-skills/import
 ```
 
-从压缩包导入创建新 Skill，行为与页面接口 `POST /api/n9e/ai-skills/import` 一致，`created_by` / `updated_by` 固定为 `system`。
+Creates a new skill from an archive. Behaves the same as the UI endpoint `POST /api/n9e/ai-skills/import`, with `created_by` / `updated_by` always set to `system`.
 
-#### 请求格式
+#### Request format
 
 `multipart/form-data`
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |------|------|------|
-| file | file | `.zip` 或 `.tar.gz`/`.tgz` 压缩包 |
+| file | file | A `.zip` or `.tar.gz`/`.tgz` archive |
 
-#### 限制
+#### Limits
 
-同页面接口"导入 Skill（新建）"。
+Same as the UI endpoint "Import a skill (create)".
 
-#### 响应
+#### Response
 
 ```json
 {
@@ -812,41 +812,41 @@ POST /v1/n9e/ai-skills/import
 }
 ```
 
-返回新创建的 Skill ID。
+Returns the ID of the newly created skill.
 
-#### 错误
+#### Errors
 
-同页面接口"导入 Skill（新建）"。
+Same as the UI endpoint "Import a skill (create)".
 
 ---
 
-### 导入 Skill（更新）
+### Import a skill (update)
 
 ```
 PUT /v1/n9e/ai-skill/:id/import
 ```
 
-从压缩包更新已有 Skill，行为与页面接口 `PUT /api/n9e/ai-skill/:id/import` 一致，全量替换资源文件，`updated_by` 固定为 `system`。
+Updates an existing skill from an archive. Behaves the same as the UI endpoint `PUT /api/n9e/ai-skill/:id/import`, fully replacing the resource files, with `updated_by` always set to `system`.
 
-#### 路径参数
+#### Path parameters
 
-| 参数 | 类型 | 说明 |
+| Parameter | Type | Description |
 |------|------|------|
 | id | int64 | Skill ID |
 
-#### 请求格式
+#### Request format
 
 `multipart/form-data`
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |------|------|------|
-| file | file | `.zip` 或 `.tar.gz`/`.tgz` 压缩包 |
+| file | file | A `.zip` or `.tar.gz`/`.tgz` archive |
 
-#### 限制
+#### Limits
 
-同页面接口"导入 Skill（更新）"。
+Same as the UI endpoint "Import a skill (update)".
 
-#### 响应
+#### Response
 
 ```json
 {
@@ -855,9 +855,9 @@ PUT /v1/n9e/ai-skill/:id/import
 }
 ```
 
-返回更新的 Skill ID。
+Returns the ID of the updated skill.
 
-#### 错误
+#### Errors
 
-- `404` Skill 不存在
-- 其他同页面接口"导入 Skill（更新）"
+- `404` the skill does not exist
+- Everything else is the same as the UI endpoint "Import a skill (update)"

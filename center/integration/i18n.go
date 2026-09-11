@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
@@ -16,26 +17,51 @@ import (
 // integrations/<Component>/i18n/<lang>.json（flat map，中文原文作 key），
 // 加载时按显示字段白名单查表渲染出对应语言的变体，同一 uuid 多语言。
 // 词条缺失时按单字段粒度回退源语言原文。
+//
+// 语言不是固定两档：放进一个组件的 i18n 目录的 <lang>.json 就会为该语言建桶，
+// 无需改代码。因此新增语言通常只覆盖部分组件，读取时必须按「组件」而不是按
+// 「语言桶」回退，见 LangFallbackChain 与 resolveComponentData。
 const (
-	LangSource = "zh_CN"
-	LangEnUS   = "en_US"
+	LangSource = i18nx.LangZhCN
+	LangZhHK   = i18nx.LangZhHK
+	LangEnUS   = i18nx.LangEnUS
 )
 
 // ComponentDict 单个组件单语言的词条表：源语言原文 -> 译文
 type ComponentDict map[string]string
 
-// NormalizeLang 归一化 X-Language 请求头：空值与 zh 前缀视为源语言（zh_CN），
-// 其余（含 en 前缀和未支持语言）归入 en_US——en_US 桶对全部内置内容完整存在
-// （无词条的组件为 pass-through），因此不需要列表级回退。
-// 大小写不敏感：前端只发 zh_CN，但第三方直连 API 可能传 ZH-CN
+// NormalizeLang 归一化 X-Language 请求头为语言桶代码，空值按源语言处理
+// （页面接口的缺省语言是中文，与 languageDetector 中间件一致）。
+//
+// 归一化的结果不保证有对应词条桶：桶按 i18n/<lang>.json 的存在情况建立，
+// 命中与否交给读取时的 LangFallbackChain。
 func NormalizeLang(lang string) string {
-	if lang == "" || strings.HasPrefix(strings.ToLower(lang), "zh") {
+	if lang == "" {
 		return LangSource
 	}
-	return LangEnUS
+	return i18nx.NormalizeLang(lang)
 }
 
-// LoadComponentDicts 读取组件目录下 i18n/<lang>.json 词条文件
+// LangFallbackChain 返回读取语言桶时的回退顺序。
+//
+// 繁体不经英文回退：词条缺失时简体比英文更接近读者预期。其余语言统一
+// <lang> → en_US → zh_CN，即未翻译的内容退到英文，英文也没有才见源语言中文。
+func LangFallbackChain(lang string) []string {
+	switch lang {
+	case LangSource:
+		return []string{LangSource}
+	case LangZhHK:
+		return []string{LangZhHK, LangSource}
+	case LangEnUS:
+		return []string{LangEnUS, LangSource}
+	default:
+		return []string{lang, LangEnUS, LangSource}
+	}
+}
+
+// LoadComponentDicts 读取组件目录下 i18n/<lang>.json 词条文件。
+// 桶名走 NormalizeLang：文件名可以写 ja.json 也可以写 ja_JP.json，
+// 不归一化的话短码建出的桶永远等不到查询（查的是标准码），且没有任何报错
 func LoadComponentDicts(componentDir string) map[string]ComponentDict {
 	dicts := make(map[string]ComponentDict)
 
@@ -49,7 +75,7 @@ func LoadComponentDicts(componentDir string) map[string]ComponentDict {
 		if !strings.HasSuffix(f, ".json") {
 			continue
 		}
-		lang := strings.TrimSuffix(f, ".json")
+		lang := NormalizeLang(strings.TrimSuffix(f, ".json"))
 
 		bs, err := file.ReadBytes(componentDir + "/i18n/" + f)
 		if err != nil {

@@ -3,8 +3,8 @@ package router
 import (
 	"fmt"
 
-	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,11 +18,12 @@ func (rt *Router) alertEvalDetail(c *gin.Context) {
 	instance := fmt.Sprintf("%s:%d", rt.Alert.Heartbeat.IP, rt.HTTP.Port)
 
 	keyword := fmt.Sprintf("alert_eval_%s", id)
-	logs, err := loggrep.GrepLogDir(rt.LogDir, keyword)
-	ginx.Dangerous(err)
+	res := loggrep.GrepLogDir(c.Request.Context(), rt.LogDir, keyword, logGrepOptions(c))
 
 	ginx.NewRender(c).Data(loggrep.EventDetailResp{
-		Logs:     logs,
-		Instance: instance,
+		Logs:      res.Logs,
+		Instance:  instance,
+		Truncated: res.Truncated,
+		Reason:    res.Reason,
 	}, nil)
 }

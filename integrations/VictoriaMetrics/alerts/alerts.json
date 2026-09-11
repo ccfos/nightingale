@@ -77,9 +77,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "VictoriaMetrics 正在输出 warn/error 级别日志，通常对应写入被拒、查询失败或磁盘异常。",
-            "action": "1) 到对应实例查看日志（journalctl -u victoria-metrics 或容器日志），按 level 过滤看具体报错；2) 常见为写入端数据格式错误、标签基数过高被拒、磁盘空间不足；3) 基数问题用 /api/v1/status/tsdb 看 topN 的高基数指标并在写入端治理；4) 磁盘问题按磁盘空间告警处理。",
-            "runbook_url": "https://docs.victoriametrics.com/troubleshooting/"
+            "action": "1) 到对应实例查看日志（journalctl -u victoria-metrics 或容器日志），按 level 过滤看具体报错；\n2) 常见为写入端数据格式错误、标签基数过高被拒、磁盘空间不足；\n3) 基数问题用 /api/v1/status/tsdb 看 topN 的高基数指标并在写入端治理；\n4) 磁盘问题按磁盘空间告警处理。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -166,9 +164,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "vm-insert 到 vm-storage 的 RPC 发送耗时占比偏高，说明存储侧写入已经跟不上，继续恶化会开始丢数据。",
-            "action": "1) 看 vm-storage 侧的 CPU、磁盘 IO 与 vm_slow_row_inserts_total，确认瓶颈在计算还是磁盘；2) 用 /api/v1/status/tsdb 看是否有高基数指标导致写入放大；3) 短期可减少写入并发或对高基数指标做 relabel 丢弃；4) 长期需扩容 vm-storage 节点或换更快的磁盘。",
-            "runbook_url": "https://docs.victoriametrics.com/troubleshooting/"
+            "action": "1) 看 vm-storage 侧的 CPU、磁盘 IO 与 vm_slow_row_inserts_total，确认瓶颈在计算还是磁盘；\n2) 用 /api/v1/status/tsdb 看是否有高基数指标导致写入放大；\n3) 短期可减少写入并发或对高基数指标做 relabel 丢弃；\n4) 长期需扩容 vm-storage 节点或换更快的磁盘。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -253,9 +249,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "vm-insert 实例端口探测失败，写入链路的入口不可用，指标数据会开始丢失。",
-            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；3) 进程存活但端口不通的排查防火墙与监听地址配置；4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。",
-            "runbook_url": "https://docs.victoriametrics.com/troubleshooting/"
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -342,9 +336,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "vm-select 实例端口探测失败，查询入口不可用，依赖它的仪表盘与告警规则都会查不到数据。",
-            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；3) 进程存活但端口不通的排查防火墙与监听地址配置；4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。",
-            "runbook_url": "https://docs.victoriametrics.com/troubleshooting/"
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -431,9 +423,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "vm-select 的查询延迟超过 15 秒，仪表盘会转圈，基于该数据源的告警规则也可能因超时而漏判。",
-            "action": "1) 从告警标签取 path 定位是哪类查询慢；2) 用 /api/v1/status/top_queries 找出最慢与最频繁的查询；3) 常见根因是查询时间跨度过大或高基数标签——在仪表盘上收窄时间范围、减少 group by 维度；4) 存储侧确认磁盘 IO 与 CPU 是否打满，必要时扩容 vm-select/vm-storage。",
-            "runbook_url": "https://docs.victoriametrics.com/troubleshooting/"
+            "action": "1) 从告警标签取 path 定位是哪类查询慢；\n2) 用 /api/v1/status/top_queries 找出最慢与最频繁的查询；\n3) 常见根因是查询时间跨度过大或高基数标签——在仪表盘上收窄时间范围、减少 group by 维度；\n4) 存储侧确认磁盘 IO 与 CPU 是否打满，必要时扩容 vm-select/vm-storage。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -518,9 +508,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "vm-storage 实例端口探测失败，存储节点不可用，写入与查询都会受影响，且该节点上的数据暂时不可读。",
-            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；3) 进程存活但端口不通的排查防火墙与监听地址配置；4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。",
-            "runbook_url": "https://docs.victoriametrics.com/troubleshooting/"
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -603,9 +591,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "vm-insert 服务已宕机，写入链路入口中断，指标数据正在丢失。",
-            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；3) 进程存活但端口不通的排查防火墙与监听地址配置；4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。",
-            "runbook_url": "https://docs.victoriametrics.com/troubleshooting/"
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -688,9 +674,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "vm-select 服务已宕机，查询入口中断，仪表盘与告警规则都拿不到数据。",
-            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；3) 进程存活但端口不通的排查防火墙与监听地址配置；4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。",
-            "runbook_url": "https://docs.victoriametrics.com/troubleshooting/"
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -773,9 +757,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "vm-storage 服务已宕机，存储节点退出，集群冗余下降，该节点数据暂不可读。",
-            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；3) 进程存活但端口不通的排查防火墙与监听地址配置；4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。",
-            "runbook_url": "https://docs.victoriametrics.com/troubleshooting/"
+            "action": "1) 从告警标签取实例地址，在采集机上手工 nc -vz \u003c地址\u003e \u003c端口\u003e 复现；\n2) 到该机器确认对应进程是否存活、日志有无 panic 或 OOM；\n3) 进程存活但端口不通的排查防火墙与监听地址配置；\n4) 集群模式下确认剩余节点数是否仍满足读写要求，不足时优先恢复节点而非重启整个集群。"
         },
         "extra_config": null,
         "create_at": 0,

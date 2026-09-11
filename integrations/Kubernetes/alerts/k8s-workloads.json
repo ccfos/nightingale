@@ -47,8 +47,7 @@
             "alertname=DeploymentReplicasMismatch"
         ],
         "annotations": {
-            "summary": "Deployment 的实际副本数与期望不符，服务容量低于预期，滚动发布可能卡住。",
-            "action": "1) kubectl describe deploy \u003cname\u003e -n \u003cns\u003e 看 Conditions 与 Events；2) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 看未就绪 Pod 的状态与原因；3) 常见为资源不足无法调度、镜像拉取失败、就绪探针不通过；4) 按 Pod 的具体状态排查，资源不足的扩容节点或调低 requests。"
+            "action": "1) kubectl describe deploy \u003cname\u003e -n \u003cns\u003e 看 Conditions 与 Events；\n2) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 看未就绪 Pod 的状态与原因；\n3) 常见为资源不足无法调度、镜像拉取失败、就绪探针不通过；\n4) 按 Pod 的具体状态排查，资源不足的扩容节点或调低 requests。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -104,8 +103,7 @@
             "alertname=StatefulsetReplicasMismatch"
         ],
         "annotations": {
-            "summary": "StatefulSet 的实际副本数与期望不符。有状态服务的副本是按序启动的，一个卡住会阻塞后续全部副本。",
-            "action": "1) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 按序号看是哪个副本卡住；2) kubectl describe pod 排查该副本的 PVC 是否绑定成功——这是有状态服务最常见的卡点；3) 存储问题排查 PV/StorageClass 与 CSI 驱动；4) 应用自身问题看 kubectl logs，修复后 StatefulSet 会自动继续。"
+            "action": "1) kubectl get pod -n \u003cns\u003e -l \u003cselector\u003e 按序号看是哪个副本卡住；\n2) kubectl describe pod 排查该副本的 PVC 是否绑定成功——这是有状态服务最常见的卡点；\n3) 存储问题排查 PV/StorageClass 与 CSI 驱动；\n4) 应用自身问题看 kubectl logs，修复后 StatefulSet 会自动继续。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -161,8 +159,7 @@
             "alertname=DaemonSetNotReady"
         ],
         "annotations": {
-            "summary": "DaemonSet 没有在应有的节点上调度，那些节点缺少该 DaemonSet 提供的能力（日志采集、网络、监控等）。",
-            "action": "1) kubectl describe ds \u003cname\u003e -n \u003cns\u003e 看 Events 与期望/实际数量；2) 对比节点的污点与 DaemonSet 的容忍配置——污点不匹配是最常见原因；3) 检查 nodeSelector/affinity 是否把节点排除在外；4) 资源不足导致的调低 DaemonSet 的 requests 或释放节点资源。"
+            "action": "1) kubectl describe ds \u003cname\u003e -n \u003cns\u003e 看 Events 与期望/实际数量；\n2) 对比节点的污点与 DaemonSet 的容忍配置——污点不匹配是最常见原因；\n3) 检查 nodeSelector/affinity 是否把节点排除在外；\n4) 资源不足导致的调低 DaemonSet 的 requests 或释放节点资源。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -218,8 +215,7 @@
             "alertname=HPAScaleUpFailure"
         ],
         "annotations": {
-            "summary": "HPA 的实际副本数与它计算出的期望副本数不符，说明扩缩容没能执行，容量调整失效。",
-            "action": "1) kubectl describe hpa \u003cname\u003e -n \u003cns\u003e 看 Conditions 里的具体原因；2) ScalingLimited 说明触及了 min/max 边界；FailedGetScale 说明目标工作负载有问题；3) 指标获取失败的检查 metrics-server 或自定义指标适配器是否健康；4) 资源不足导致新副本 Pending 的，扩容节点。"
+            "action": "1) kubectl describe hpa \u003cname\u003e -n \u003cns\u003e 看 Conditions 里的具体原因；\n2) ScalingLimited 说明触及了 min/max 边界；FailedGetScale 说明目标工作负载有问题；\n3) 指标获取失败的检查 metrics-server 或自定义指标适配器是否健康；\n4) 资源不足导致新副本 Pending 的，扩容节点。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -275,8 +271,7 @@
             "alertname=PodFailed"
         ],
         "annotations": {
-            "summary": "Pod 长时间不处于 Ready 状态，它承载的流量无法被 Service 转发，副本数不足会直接影响服务容量。",
-            "action": "1) kubectl get pod \u003cpod\u003e -n \u003cns\u003e -o wide 看 STATUS 与 READY，再 kubectl describe pod 看 Events；2) Pending 多为资源不足或调度约束（节点亲和、污点、PVC 未绑定）；ImagePullBackOff 查镜像地址与拉取凭据；3) Running 但未 Ready 的看就绪探针配置与 kubectl logs \u003cpod\u003e 里的启动报错；4) 确认副本数是否已不足以承载流量，不足的先扩容其他健康副本。"
+            "action": "1) kubectl get pod \u003cpod\u003e -n \u003cns\u003e -o wide 看 STATUS 与 READY，再 kubectl describe pod 看 Events；\n2) Pending 多为资源不足或调度约束（节点亲和、污点、PVC 未绑定）；ImagePullBackOff 查镜像地址与拉取凭据；\n3) Running 但未 Ready 的看就绪探针配置与 kubectl logs \u003cpod\u003e 里的启动报错；\n4) 确认副本数是否已不足以承载流量，不足的先扩容其他健康副本。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -332,8 +327,7 @@
             "alertname=JobFailed"
         ],
         "annotations": {
-            "summary": "Job 执行失败，它负责的任务（数据处理、定时清理、迁移等）没有完成。",
-            "action": "1) kubectl get job \u003cjob\u003e -n \u003cns\u003e 看失败次数，再 kubectl logs job/\u003cjob\u003e 看失败原因；2) kubectl describe job 看 Events，确认是否因 backoffLimit 耗尽而放弃；3) 修复根因后 kubectl delete job 再重新提交，或让 CronJob 下次调度重跑；4) 确认该任务失败是否有下游影响（数据未产出、清理未执行），需要时手工补做。"
+            "action": "1) kubectl get job \u003cjob\u003e -n \u003cns\u003e 看失败次数，再 kubectl logs job/\u003cjob\u003e 看失败原因；\n2) kubectl describe job 看 Events，确认是否因 backoffLimit 耗尽而放弃；\n3) 修复根因后 kubectl delete job 再重新提交，或让 CronJob 下次调度重跑；\n4) 确认该任务失败是否有下游影响（数据未产出、清理未执行），需要时手工补做。"
         },
         "extra_config": null,
         "create_at": 0,

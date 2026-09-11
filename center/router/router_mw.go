@@ -333,6 +333,37 @@ func (rt *Router) bgroCheck(c *gin.Context, bgid int64) {
 	c.Set("busi_group", bg)
 }
 
+// bgroCheckAllowMissing is bgroCheck for objects that outlive their busi group.
+// Deleting a busi group only clears alert_cur_event (models.BusiGroup.Del), so
+// alert_his_event rows keep pointing at a group that is gone; bgroCheck answers
+// those with 404 "No such BusiGroup" - even for an admin, because BusiGroup()
+// bombs before CanDoBusiGroup reaches its IsAdmin shortcut, and the caller
+// cannot tell that 404 apart from "no such event". Here a missing group is a
+// permission question instead: admins still get through, everyone else gets a
+// plain 403. A bgid of 0 lands in the same branch for the same reason.
+func (rt *Router) bgroCheckAllowMissing(c *gin.Context, bgid int64) {
+	me := c.MustGet("user").(*models.User)
+
+	bg, err := models.BusiGroupGetById(rt.Ctx, bgid)
+	ginx.Dangerous(err)
+
+	if bg == nil {
+		if !me.IsAdmin() {
+			ginx.Bomb(http.StatusForbidden, "forbidden")
+		}
+		return
+	}
+
+	can, err := me.CanDoBusiGroup(rt.Ctx, bg)
+	ginx.Dangerous(err)
+
+	if !can {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+
+	c.Set("busi_group", bg)
+}
+
 func (rt *Router) Perm(operation string) gin.HandlerFunc {
 	return rt.perm(operation)
 }

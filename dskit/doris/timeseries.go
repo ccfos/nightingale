@@ -40,6 +40,14 @@ var (
 
 // Query executes a given SQL query in Doris and returns the results with MaxQueryRows check
 func (d *Doris) Query(ctx context.Context, query *QueryParam) ([]map[string]interface{}, error) {
+	// 不可信调用方（仪表盘匿名分享 token）额外走严格只读校验：
+	// 下面的黑名单按空格切词，不构成安全边界
+	if types.ReadOnlyEnforced(ctx) {
+		if err := sqlbase.ValidateReadOnly(query.Sql); err != nil {
+			return nil, err
+		}
+	}
+
 	// 校验SQL的合法性, 过滤掉 write请求
 	sqlItem := strings.Split(strings.ToUpper(query.Sql), " ")
 	for _, item := range sqlItem {

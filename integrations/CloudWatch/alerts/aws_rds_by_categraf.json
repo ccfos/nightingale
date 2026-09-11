@@ -75,9 +75,7 @@
             "alertname=RdsCpuHigh"
         ],
         "annotations": {
-            "summary": "RDS 实例 CPU 使用率持续超过 85%，查询会开始排队，响应时间上升，突发流量时可能直接不可用。",
-            "action": "1) 从告警标签取 db_instance_identifier 与 region，在 Performance Insights 里按 Top SQL 排序找出消耗 CPU 最多的语句；2) 对定位到的 SQL 执行 EXPLAIN 看执行计划，缺索引导致的全表扫描是最常见原因；3) 确认没有异常的批量任务或统计查询打在主库上，有则迁到只读副本；4) 优化后仍不足的再考虑升级实例规格，注意变更需要在维护窗口内进行。",
-            "runbook_url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/monitoring-cloudwatch.html"
+            "action": "1) 从告警标签取 db_instance_identifier 与 region，在 Performance Insights 里按 Top SQL 排序找出消耗 CPU 最多的语句；\n2) 对定位到的 SQL 执行 EXPLAIN 看执行计划，缺索引导致的全表扫描是最常见原因；\n3) 确认没有异常的批量任务或统计查询打在主库上，有则迁到只读副本；\n4) 优化后仍不足的再考虑升级实例规格，注意变更需要在维护窗口内进行。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=RdsFreeStorageLow"
         ],
         "annotations": {
-            "summary": "RDS 实例可用存储空间已不足 10GB，写满后实例会进入 storage-full 状态，所有写操作失败且无法自动恢复。",
-            "action": "1) 从告警标签取 db_instance_identifier，在控制台确认当前分配容量与已用容量；2) 立即执行存储扩容（Modify \u003e Allocated storage），RDS 扩容可在线进行但有 6 小时冷却期，不要拖到写满；3) 同时清理占用：删除过期的临时表、缩短 binlog 保留时间（call mysql.rds_set_configuration('binlog retention hours', N)）、归档历史分区；4) 长期建议开启 Storage Autoscaling 并设置合理的上限。",
-            "runbook_url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/monitoring-cloudwatch.html"
+            "action": "1) 从告警标签取 db_instance_identifier，在控制台确认当前分配容量与已用容量；\n2) 立即执行存储扩容（Modify \u003e Allocated storage），RDS 扩容可在线进行但有 6 小时冷却期，不要拖到写满；\n3) 同时清理占用：删除过期的临时表、缩短 binlog 保留时间（call mysql.rds_set_configuration('binlog retention hours', N)）、归档历史分区；\n4) 长期建议开启 Storage Autoscaling 并设置合理的上限。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -249,9 +245,7 @@
             "alertname=RdsBurstBalanceLow"
         ],
         "annotations": {
-            "summary": "gp2 卷的 IO 突发余额已低于 20%，耗尽后 IOPS 会跌回基线水平（每 GB 3 IOPS），数据库性能会断崖式下降。",
-            "action": "1) 从告警标签取 db_instance_identifier，在 CloudWatch 里对比 ReadIOPS/WriteIOPS 与卷的基线 IOPS，确认超用幅度；2) 先从源头降 IO：用 Performance Insights 找出物理读最多的查询并补索引；3) 应急可把存储类型改为 gp3 或 io1/io2 拿到稳定 IOPS，gp3 变更可在线完成；4) 也可通过扩大卷容量提高基线 IOPS，但成本效率通常不如直接换 gp3。",
-            "runbook_url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/general-purpose.html"
+            "action": "1) 从告警标签取 db_instance_identifier，在 CloudWatch 里对比 ReadIOPS/WriteIOPS 与卷的基线 IOPS，确认超用幅度；\n2) 先从源头降 IO：用 Performance Insights 找出物理读最多的查询并补索引；\n3) 应急可把存储类型改为 gp3 或 io1/io2 拿到稳定 IOPS，gp3 变更可在线完成；\n4) 也可通过扩大卷容量提高基线 IOPS，但成本效率通常不如直接换 gp3。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -336,9 +330,7 @@
             "alertname=RdsFreeableMemoryLow"
         ],
         "annotations": {
-            "summary": "RDS 实例可释放内存已不足 512MB，缓冲池会开始换出，物理读激增，严重时实例会因内存耗尽而重启。",
-            "action": "1) 从告警标签取 db_instance_identifier，在 Performance Insights 里查看内存相关等待事件；2) 检查参数组中 innodb_buffer_pool_size（MySQL）或 shared_buffers（PostgreSQL）是否设置过大，超过实例内存的 75% 容易触发；3) 连接数过多也会吃内存，确认应用侧使用了连接池，并核对 max_connections 是否远超实际需要；4) 确认配置合理后再考虑升级到内存更大的实例规格。",
-            "runbook_url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/monitoring-cloudwatch.html"
+            "action": "1) 从告警标签取 db_instance_identifier，在 Performance Insights 里查看内存相关等待事件；\n2) 检查参数组中 innodb_buffer_pool_size（MySQL）或 shared_buffers（PostgreSQL）是否设置过大，超过实例内存的 75% 容易触发；\n3) 连接数过多也会吃内存，确认应用侧使用了连接池，并核对 max_connections 是否远超实际需要；\n4) 确认配置合理后再考虑升级到内存更大的实例规格。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -423,9 +415,7 @@
             "alertname=RdsReadLatencyHigh"
         ],
         "annotations": {
-            "summary": "RDS 实例平均读延迟超过 50 毫秒（CloudWatch ReadLatency 单位为秒），存储已成为瓶颈，查询响应时间会明显变长。",
-            "action": "1) 从告警标签取 db_instance_identifier，对比同时段的 ReadIOPS 与 BurstBalance，先排除 IO 突发余额耗尽；2) IOPS 未打满却延迟高的，检查是否有大批量扫描把缓冲池冲掉，用 Performance Insights 找出物理读最多的 SQL；3) 补索引减少物理读是最有效的手段，其次是把分析型查询迁到只读副本；4) 确认负载合理仍延迟高的，升级存储类型到 gp3/io1 拿到更稳定的延迟。",
-            "runbook_url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/monitoring-cloudwatch.html"
+            "action": "1) 从告警标签取 db_instance_identifier，对比同时段的 ReadIOPS 与 BurstBalance，先排除 IO 突发余额耗尽；\n2) IOPS 未打满却延迟高的，检查是否有大批量扫描把缓冲池冲掉，用 Performance Insights 找出物理读最多的 SQL；\n3) 补索引减少物理读是最有效的手段，其次是把分析型查询迁到只读副本；\n4) 确认负载合理仍延迟高的，升级存储类型到 gp3/io1 拿到更稳定的延迟。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -510,9 +500,7 @@
             "alertname=RdsWriteLatencyHigh"
         ],
         "annotations": {
-            "summary": "RDS 实例平均写延迟超过 50 毫秒（CloudWatch WriteLatency 单位为秒），事务提交被拖慢，整体写入吞吐下降。",
-            "action": "1) 从告警标签取 db_instance_identifier，先确认是否开启了 Multi-AZ，同步复制会使写延迟高于单可用区实例，属于预期；2) 对比 WriteIOPS 与卷的 IOPS 上限，打满的按突发余额/存储类型处理；3) 检查是否有大事务或批量导入正在执行，拆小批次可显著降低延迟；4) binlog/WAL 写放大明显的，确认 sync_binlog 与 innodb_flush_log_at_trx_commit 的配置是否符合业务对持久性的真实要求。",
-            "runbook_url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/monitoring-cloudwatch.html"
+            "action": "1) 从告警标签取 db_instance_identifier，先确认是否开启了 Multi-AZ，同步复制会使写延迟高于单可用区实例，属于预期；\n2) 对比 WriteIOPS 与卷的 IOPS 上限，打满的按突发余额/存储类型处理；\n3) 检查是否有大事务或批量导入正在执行，拆小批次可显著降低延迟；\n4) binlog/WAL 写放大明显的，确认 sync_binlog 与 innodb_flush_log_at_trx_commit 的配置是否符合业务对持久性的真实要求。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -597,9 +585,7 @@
             "alertname=RdsDiskQueueDepthHigh"
         ],
         "annotations": {
-            "summary": "RDS 实例磁盘队列深度持续超过 10，说明 IO 请求排队严重，存储已经跟不上负载，所有查询都会被拖慢。",
-            "action": "1) 从告警标签取 db_instance_identifier，同时看 ReadIOPS/WriteIOPS 与 BurstBalance，确认是否已触及 IOPS 上限；2) 用 Performance Insights 按 IO 等待排序找出制造 IO 的 SQL，优先优化这些语句；3) 确认没有备份、快照、索引重建等重 IO 任务与业务高峰重叠；4) 负载确实需要更高 IOPS 的，切换到 gp3 并显式配置 IOPS 与吞吐。",
-            "runbook_url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/monitoring-cloudwatch.html"
+            "action": "1) 从告警标签取 db_instance_identifier，同时看 ReadIOPS/WriteIOPS 与 BurstBalance，确认是否已触及 IOPS 上限；\n2) 用 Performance Insights 按 IO 等待排序找出制造 IO 的 SQL，优先优化这些语句；\n3) 确认没有备份、快照、索引重建等重 IO 任务与业务高峰重叠；\n4) 负载确实需要更高 IOPS 的，切换到 gp3 并显式配置 IOPS 与吞吐。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -684,9 +670,7 @@
             "alertname=RdsSwapUsageHigh"
         ],
         "annotations": {
-            "summary": "RDS 实例 Swap 使用超过 256MB，说明物理内存已经不够用，数据库开始使用交换分区，查询延迟会明显且不稳定地上升。",
-            "action": "1) 从告警标签取 db_instance_identifier，结合 FreeableMemory 一起看，确认内存压力的持续时间；2) 检查参数组里缓冲池相关参数是否设置过大，以及连接数是否超出预期；3) 排查是否有大排序、大临时表的查询把内存吃满，用 Performance Insights 定位后优化；4) 配置与查询都合理仍持续换页的，升级到内存更大的实例规格。",
-            "runbook_url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/monitoring-cloudwatch.html"
+            "action": "1) 从告警标签取 db_instance_identifier，结合 FreeableMemory 一起看，确认内存压力的持续时间；\n2) 检查参数组里缓冲池相关参数是否设置过大，以及连接数是否超出预期；\n3) 排查是否有大排序、大临时表的查询把内存吃满，用 Performance Insights 定位后优化；\n4) 配置与查询都合理仍持续换页的，升级到内存更大的实例规格。"
         },
         "extra_config": null,
         "create_at": 0,

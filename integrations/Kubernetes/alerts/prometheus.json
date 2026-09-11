@@ -73,8 +73,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "配置热加载 sidecar 报错，Prometheus/Alertmanager 的新配置可能没有生效——你改的规则或抓取配置实际上还没上线。",
-            "action": "1) kubectl logs \u003cpod\u003e -c config-reloader -n \u003cns\u003e 看具体报错；2) 常见为配置文件语法错误导致 reload 被拒绝；3) 用 promtool check config / amtool check-config 校验配置；4) 修正后确认 reload 成功，并在 Prometheus 的 /config 页核对配置已更新。"
+            "action": "1) kubectl logs \u003cpod\u003e -c config-reloader -n \u003cns\u003e 看具体报错；\n2) 常见为配置文件语法错误导致 reload 被拒绝；\n3) 用 promtool check config / amtool check-config 校验配置；\n4) 修正后确认 reload 成功，并在 Prometheus 的 /config 页核对配置已更新。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -157,9 +156,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 配置加载失败，最近一次配置变更没有生效，抓取目标与告警规则仍是旧的。",
-            "action": "1) kubectl logs 或实例日志里找配置解析报错的具体行；2) 用 promtool check config prometheus.yml 本地校验；3) K8s 上通常由 Operator 生成配置，检查 ServiceMonitor/PrometheusRule 是否有非法字段；4) 修正后确认 /-/reload 成功且 /config 页显示新配置。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusbadconfig/"
+            "action": "1) kubectl logs 或实例日志里找配置解析报错的具体行；\n2) 用 promtool check config prometheus.yml 本地校验；\n3) K8s 上通常由 Operator 生成配置，检查 ServiceMonitor/PrometheusRule 是否有非法字段；\n4) 修正后确认 /-/reload 成功且 /config 页显示新配置。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -242,9 +239,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 收到重复时间戳的样本并丢弃，说明有目标被重复抓取，部分数据正在丢失。",
-            "action": "1) 在 /targets 页找出被重复抓取的目标（同一实例出现在多个 job 下）；2) 检查 ServiceMonitor/PodMonitor 的 selector 是否过于宽泛导致重叠；3) 收敛 selector 让每个目标只被一个 job 抓取；4) 修正后确认丢弃计数不再增长。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusduplicatetimestamps/"
+            "action": "1) 在 /targets 页找出被重复抓取的目标（同一实例出现在多个 job 下）；\n2) 检查 ServiceMonitor/PodMonitor 的 selector 是否过于宽泛导致重叠；\n3) 收敛 selector 让每个目标只被一个 job 抓取；\n4) 修正后确认丢弃计数不再增长。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -327,9 +322,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 到 Alertmanager 的告警投递出现问题。这意味着规则可能已经触发但告警发不出去——是监控体系本身的盲区。",
-            "action": "1) 检查 Alertmanager 实例是否健康、网络是否连通；2) 在 Prometheus 的 /status 页确认 Alertmanager 发现是否正常；3) 队列满的排查 Alertmanager 处理是否卡住，或告警量是否异常暴涨；4) 恢复后确认 Alertmanager 已收到告警，避免静默失败。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheuserrorsendingalertstoanyalertmanager/"
+            "action": "1) 检查 Alertmanager 实例是否健康、网络是否连通；\n2) 在 Prometheus 的 /status 页确认 Alertmanager 发现是否正常；\n3) 队列满的排查 Alertmanager 处理是否卡住，或告警量是否异常暴涨；\n4) 恢复后确认 Alertmanager 已收到告警，避免静默失败。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -412,9 +405,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 到 Alertmanager 的告警投递出现问题。这意味着规则可能已经触发但告警发不出去——是监控体系本身的盲区。",
-            "action": "1) 检查 Alertmanager 实例是否健康、网络是否连通；2) 在 Prometheus 的 /status 页确认 Alertmanager 发现是否正常；3) 队列满的排查 Alertmanager 处理是否卡住，或告警量是否异常暴涨；4) 恢复后确认 Alertmanager 已收到告警，避免静默失败。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheuserrorsendingalertstosomealertmanagers/"
+            "action": "1) 检查 Alertmanager 实例是否健康、网络是否连通；\n2) 在 Prometheus 的 /status 页确认 Alertmanager 发现是否正常；\n3) 队列满的排查 Alertmanager 处理是否卡住，或告警量是否异常暴涨；\n4) 恢复后确认 Alertmanager 已收到告警，避免静默失败。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -497,8 +488,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 查询负载过高，查询队列接近饱和，仪表盘会变慢，告警规则评估也可能超时被跳过。",
-            "action": "1) 在 /status 页看查询引擎的并发与队列指标；2) 用 topk 类查询或 query log 找出最重的查询；3) 常见根因是高基数标签与过大的时间范围——收窄范围、减少 group by 维度；4) 优化后仍高的扩容 Prometheus 或做联邦/分片。"
+            "action": "1) 在 /status 页看查询引擎的并发与队列指标；\n2) 用 topk 类查询或 query log 找出最重的查询；\n3) 常见根因是高基数标签与过大的时间范围——收窄范围、减少 group by 维度；\n4) 优化后仍高的扩容 Prometheus 或做联邦/分片。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -581,9 +571,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "抓取时触发标签数量限制，超限的目标被丢弃，这些目标的指标完全没有采集到。",
-            "action": "1) 在 /targets 页找出被拒绝的目标与具体原因；2) 到目标侧确认为何标签数异常多，通常是把高基数信息（用户ID、请求ID）打成了标签；3) 在目标侧修正指标设计，或用 metric_relabel_configs 丢弃多余标签；4) 确需更多标签的调大 label_limit，但要先评估基数影响。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheuslabellimithit/"
+            "action": "1) 在 /targets 页找出被拒绝的目标与具体原因；\n2) 到目标侧确认为何标签数异常多，通常是把高基数信息（用户ID、请求ID）打成了标签；\n3) 在目标侧修正指标设计，或用 metric_relabel_configs 丢弃多余标签；\n4) 确需更多标签的调大 label_limit，但要先评估基数影响。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -666,9 +654,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 跳过了规则评估，意味着这段时间的告警规则没有被计算——期间发生的故障不会产生告警。",
-            "action": "1) 看日志中 rule evaluation 相关的超时报错；2) 找出评估耗时最长的规则组，通常是包含重查询的记录规则；3) 拆分规则组、拉长 evaluation_interval，或优化规则里的查询；4) 资源不足的扩容 Prometheus。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusmissingruleevaluations/"
+            "action": "1) 看日志中 rule evaluation 相关的超时报错；\n2) 找出评估耗时最长的规则组，通常是包含重查询的记录规则；\n3) 拆分规则组、拉长 evaluation_interval，或优化规则里的查询；\n4) 资源不足的扩容 Prometheus。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -751,9 +737,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 到 Alertmanager 的告警投递出现问题。这意味着规则可能已经触发但告警发不出去——是监控体系本身的盲区。",
-            "action": "1) 检查 Alertmanager 实例是否健康、网络是否连通；2) 在 Prometheus 的 /status 页确认 Alertmanager 发现是否正常；3) 队列满的排查 Alertmanager 处理是否卡住，或告警量是否异常暴涨；4) 恢复后确认 Alertmanager 已收到告警，避免静默失败。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusnotconnectedtoalertmanagers/"
+            "action": "1) 检查 Alertmanager 实例是否健康、网络是否连通；\n2) 在 Prometheus 的 /status 页确认 Alertmanager 发现是否正常；\n3) 队列满的排查 Alertmanager 处理是否卡住，或告警量是否异常暴涨；\n4) 恢复后确认 Alertmanager 已收到告警，避免静默失败。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -836,9 +820,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 到 Alertmanager 的告警投递出现问题。这意味着规则可能已经触发但告警发不出去——是监控体系本身的盲区。",
-            "action": "1) 检查 Alertmanager 实例是否健康、网络是否连通；2) 在 Prometheus 的 /status 页确认 Alertmanager 发现是否正常；3) 队列满的排查 Alertmanager 处理是否卡住，或告警量是否异常暴涨；4) 恢复后确认 Alertmanager 已收到告警，避免静默失败。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusnotificationqueuerunningfull/"
+            "action": "1) 检查 Alertmanager 实例是否健康、网络是否连通；\n2) 在 Prometheus 的 /status 页确认 Alertmanager 发现是否正常；\n3) 队列满的排查 Alertmanager 处理是否卡住，或告警量是否异常暴涨；\n4) 恢复后确认 Alertmanager 已收到告警，避免静默失败。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -921,9 +903,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 没有在写入任何样本，监控数据完全中断——所有基于它的告警都已失效。",
-            "action": "1) 在 /targets 页确认是否所有目标都 down；2) 检查服务发现是否正常（/service-discovery 页）；3) 配置错误导致目标为空的按配置问题处理；4) 这是监控体系的完全失明，应最高优先级处理。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusnotingestingsamples/"
+            "action": "1) 在 /targets 页确认是否所有目标都 down；\n2) 检查服务发现是否正常（/service-discovery 页）；\n3) 配置错误导致目标为空的按配置问题处理；\n4) 这是监控体系的完全失明，应最高优先级处理。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1006,9 +986,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 收到乱序时间戳的样本并丢弃，部分数据正在丢失。",
-            "action": "1) 确认是哪个目标在上报乱序数据；2) 常见根因是目标机器时钟不同步，或指标由多个来源汇聚后时间戳错乱；3) 先校准目标机器时钟（chronyc）；4) Pushgateway 类场景确认推送端的时间戳处理逻辑。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusoutofordertimestamps/"
+            "action": "1) 确认是哪个目标在上报乱序数据；\n2) 常见根因是目标机器时钟不同步，或指标由多个来源汇聚后时间戳错乱；\n3) 先校准目标机器时钟（chronyc）；\n4) Pushgateway 类场景确认推送端的时间戳处理逻辑。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1091,9 +1069,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 的远程写入或本地存储出现失败，监控数据正在丢失。",
-            "action": "1) 看 Prometheus 日志中 remote_write 或 tsdb 相关报错；2) 远程写入失败的确认远端存储可用性与鉴权配置，并看是否触发了限流；3) 本地存储失败的检查磁盘空间与权限，TSDB 损坏时可能需要清理 WAL；4) 确认队列积压是否在下降，持续积压需要调大 queue_config 或降低写入量。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusremotestoragefailures/"
+            "action": "1) 看 Prometheus 日志中 remote_write 或 tsdb 相关报错；\n2) 远程写入失败的确认远端存储可用性与鉴权配置，并看是否触发了限流；\n3) 本地存储失败的检查磁盘空间与权限，TSDB 损坏时可能需要清理 WAL；\n4) 确认队列积压是否在下降，持续积压需要调大 queue_config 或降低写入量。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1176,9 +1152,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 的远程写入或本地存储出现失败，监控数据正在丢失。",
-            "action": "1) 看 Prometheus 日志中 remote_write 或 tsdb 相关报错；2) 远程写入失败的确认远端存储可用性与鉴权配置，并看是否触发了限流；3) 本地存储失败的检查磁盘空间与权限，TSDB 损坏时可能需要清理 WAL；4) 确认队列积压是否在下降，持续积压需要调大 queue_config 或降低写入量。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusremotewritebehind/"
+            "action": "1) 看 Prometheus 日志中 remote_write 或 tsdb 相关报错；\n2) 远程写入失败的确认远端存储可用性与鉴权配置，并看是否触发了限流；\n3) 本地存储失败的检查磁盘空间与权限，TSDB 损坏时可能需要清理 WAL；\n4) 确认队列积压是否在下降，持续积压需要调大 queue_config 或降低写入量。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1261,9 +1235,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Prometheus 的远程写入或本地存储出现失败，监控数据正在丢失。",
-            "action": "1) 看 Prometheus 日志中 remote_write 或 tsdb 相关报错；2) 远程写入失败的确认远端存储可用性与鉴权配置，并看是否触发了限流；3) 本地存储失败的检查磁盘空间与权限，TSDB 损坏时可能需要清理 WAL；4) 确认队列积压是否在下降，持续积压需要调大 queue_config 或降低写入量。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusremotewritedesiredshards/"
+            "action": "1) 看 Prometheus 日志中 remote_write 或 tsdb 相关报错；\n2) 远程写入失败的确认远端存储可用性与鉴权配置，并看是否触发了限流；\n3) 本地存储失败的检查磁盘空间与权限，TSDB 损坏时可能需要清理 WAL；\n4) 确认队列积压是否在下降，持续积压需要调大 queue_config 或降低写入量。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1346,9 +1318,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "告警规则评估失败，这些规则对应的告警不会触发——相关故障将无人知晓。",
-            "action": "1) 看日志中失败规则的名称与错误；2) 常见为规则里的查询语法错误、引用了不存在的指标、或返回数据量过大；3) 用 promtool check rules 校验规则文件；4) 修正后确认 /rules 页该规则状态为 ok。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheusrulefailures/"
+            "action": "1) 看日志中失败规则的名称与错误；\n2) 常见为规则里的查询语法错误、引用了不存在的指标、或返回数据量过大；\n3) 用 promtool check rules 校验规则文件；\n4) 修正后确认 /rules 页该规则状态为 ok。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1431,8 +1401,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "抓取响应体超过大小限制，目标被丢弃，其指标完全没有采集到。",
-            "action": "1) 在 /targets 页找出被拒绝的目标；2) 手工 curl 该目标的 /metrics 看实际大小，确认是否指标数量异常膨胀；3) 常见根因是高基数指标，在目标侧治理或用 metric_relabel_configs 丢弃；4) 确需更大限制的调大 body_size_limit。"
+            "action": "1) 在 /targets 页找出被拒绝的目标；\n2) 手工 curl 该目标的 /metrics 看实际大小，确认是否指标数量异常膨胀；\n3) 常见根因是高基数指标，在目标侧治理或用 metric_relabel_configs 丢弃；\n4) 确需更大限制的调大 body_size_limit。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1515,8 +1484,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "抓取样本数超过限制，目标被丢弃，其指标完全没有采集到。",
-            "action": "1) 在 /targets 页找出被拒绝的目标与样本数；2) 手工 curl /metrics | wc -l 确认实际规模；3) 高基数指标是主因，在目标侧减少标签维度，或用 metric_relabel_configs 丢弃不需要的指标；4) 确需更大限制的调大 sample_limit，但要评估存储与查询压力。"
+            "action": "1) 在 /targets 页找出被拒绝的目标与样本数；\n2) 手工 curl /metrics | wc -l 确认实际规模；\n3) 高基数指标是主因，在目标侧减少标签维度，或用 metric_relabel_configs 丢弃不需要的指标；\n4) 确需更大限制的调大 sample_limit，但要评估存储与查询压力。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1599,8 +1567,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "服务发现刷新失败，目标列表可能已经过时——新上线的实例不会被采集，已下线的还在被抓取。",
-            "action": "1) 看日志中服务发现相关的报错；2) K8s SD 的检查 Prometheus 的 RBAC 权限是否覆盖所需资源；3) 其他 SD（Consul/文件等）的检查后端可达性与凭据；4) 修复后在 /service-discovery 页确认目标列表已更新。"
+            "action": "1) 看日志中服务发现相关的报错；\n2) K8s SD 的检查 Prometheus 的 RBAC 权限是否覆盖所需资源；\n3) 其他 SD（Consul/文件等）的检查后端可达性与凭据；\n4) 修复后在 /service-discovery 页确认目标列表已更新。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1683,9 +1650,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "抓取目标数超过限制，超出的目标被丢弃，这部分实例完全没有监控。",
-            "action": "1) 在 /targets 页确认当前目标数与限制；2) 检查 ServiceMonitor 的 selector 是否过于宽泛，抓取了不需要的目标；3) 收敛 selector 或按业务拆分到多个 Prometheus 实例；4) 确需更多目标的调大 target_limit 并评估资源。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheustargetlimithit/"
+            "action": "1) 在 /targets 页确认当前目标数与限制；\n2) 检查 ServiceMonitor 的 selector 是否过于宽泛，抓取了不需要的目标；\n3) 收敛 selector 或按业务拆分到多个 Prometheus 实例；\n4) 确需更多目标的调大 target_limit 并评估资源。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1768,9 +1733,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "目标同步失败，部分目标的抓取配置没能生效，这些目标的数据可能缺失。",
-            "action": "1) 看日志中 target sync 的具体报错；2) 常见为 relabel 配置错误导致目标地址非法；3) 检查最近变更的 ServiceMonitor/PodMonitor 配置；4) 修正后在 /targets 页确认目标恢复正常。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheustargetsyncfailure/"
+            "action": "1) 看日志中 target sync 的具体报错；\n2) 常见为 relabel 配置错误导致目标地址非法；\n3) 检查最近变更的 ServiceMonitor/PodMonitor 配置；\n4) 修正后在 /targets 页确认目标恢复正常。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1853,9 +1816,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TSDB 压缩失败，磁盘占用会持续增长且查询性能会下降，长期可能导致 Prometheus 不可用。",
-            "action": "1) 看日志中 compaction 相关报错；2) 最常见是磁盘空间不足——先确认剩余空间；3) 数据块损坏的可能需要删除损坏的 block 目录（会丢失该段数据）；4) 修复后确认后续 compaction 成功完成。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheustsdbcompactionsfailing/"
+            "action": "1) 看日志中 compaction 相关报错；\n2) 最常见是磁盘空间不足——先确认剩余空间；\n3) 数据块损坏的可能需要删除损坏的 block 目录（会丢失该段数据）；\n4) 修复后确认后续 compaction 成功完成。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1938,9 +1899,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TSDB 数据块重载失败，部分历史数据可能无法查询。",
-            "action": "1) 看日志中 reload 相关报错与涉及的 block；2) 常见为数据块损坏或权限问题；3) 权限问题修正数据目录属主；损坏的 block 只能删除（会丢失该段数据）；4) 修复后重启 Prometheus 并确认数据可查。",
-            "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheustsdbreloadsfailing/"
+            "action": "1) 看日志中 reload 相关报错与涉及的 block；\n2) 常见为数据块损坏或权限问题；\n3) 权限问题修正数据目录属主；损坏的 block 只能删除（会丢失该段数据）；\n4) 修复后重启 Prometheus 并确认数据可查。"
         },
         "extra_config": null,
         "create_at": 0,

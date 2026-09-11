@@ -71,9 +71,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "节点 CPU 使用率超过 80%，TiDB/TiKV 的请求处理会开始排队，SQL 延迟上升。",
-            "action": "1) 用 top -H 定位是 tidb-server、tikv-server 还是其他进程占用；2) TiKV 高 CPU 常见于 coprocessor 请求过多，查 TiDB 慢日志找扫描量大的 SQL；3) TiDB 高 CPU 常见于复杂计算或大量小查询，看 Grafana 的 TiDB Query Summary；4) 优化 SQL 后仍高则扩容节点。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 top -H 定位是 tidb-server、tikv-server 还是其他进程占用；\n2) TiKV 高 CPU 常见于 coprocessor 请求过多，查 TiDB 慢日志找扫描量大的 SQL；\n3) TiDB 高 CPU 常见于复杂计算或大量小查询，看 Grafana 的 TiDB Query Summary；\n4) 优化 SQL 后仍高则扩容节点。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -154,9 +152,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "node_exporter 不可达，该机器的系统层指标全部缺失，主机层告警会失效。",
-            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；3) 进程存活但探测失败的排查端口监听与防火墙；4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；\n2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；\n3) 进程存活但探测失败的排查端口监听与防火墙；\n4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -237,9 +233,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "PD 的 WAL fsync P99 延迟超过 1 秒。PD 是集群的调度大脑，写盘慢会导致 leader 频繁切换，进而引发全局调度抖动。",
-            "action": "1) 在 PD 节点用 iostat -x 1 确认磁盘 util 与 await，PD 必须用 SSD；2) 确认 PD 数据目录未与 TiKV 数据盘混用；3) 检查是否有其他进程在抢占该盘 IO；4) 磁盘性能确实不足的，迁移 PD 到独立 SSD 是唯一根本解法。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 在 PD 节点用 iostat -x 1 确认磁盘 util 与 await，PD 必须用 SSD；\n2) 确认 PD 数据目录未与 TiKV 数据盘混用；\n3) 检查是否有其他进程在抢占该盘 IO；\n4) 磁盘性能确实不足的，迁移 PD 到独立 SSD 是唯一根本解法。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -320,9 +314,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "PD 集群没有 leader，整个 TiDB 集群的调度与 TSO 分配停摆，所有事务都会失败。",
-            "action": "1) 用 pd-ctl member 查看各 PD 成员状态，确认存活节点是否已不足多数派；2) 不足多数派的立即恢复宕掉的 PD 节点；3) 节点都活着却选不出 leader 的，检查 PD 之间的网络连通性与时钟偏移；4) 查各 PD 的日志定位选举失败原因，必要时按官方文档做 PD 恢复。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 pd-ctl member 查看各 PD 成员状态，确认存活节点是否已不足多数派；\n2) 不足多数派的立即恢复宕掉的 PD 节点；\n3) 节点都活着却选不出 leader 的，检查 PD 之间的网络连通性与时钟偏移；\n4) 查各 PD 的日志定位选举失败原因，必要时按官方文档做 PD 恢复。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -403,9 +395,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "PD 节点间网络往返延迟超过 1 秒，会导致 raft 心跳超时与频繁重新选举，集群调度不稳定。",
-            "action": "1) 在 PD 节点间用 mtr 确认延迟与丢包出现在哪一跳；2) 确认 PD 节点是否被跨机房部署——PD 对网络延迟非常敏感，应同机房；3) 检查网卡是否有错包丢包、带宽是否打满；4) 联系网络侧排查，期间避免做大规模数据迁移加重网络压力。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 在 PD 节点间用 mtr 确认延迟与丢包出现在哪一跳；\n2) 确认 PD 节点是否被跨机房部署——PD 对网络延迟非常敏感，应同机房；\n3) 检查网卡是否有错包丢包、带宽是否打满；\n4) 联系网络侧排查，期间避免做大规模数据迁移加重网络压力。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -486,9 +476,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "节点 TCP 连接数超过 5 万，通常意味着连接泄漏，会耗尽端口与内存。",
-            "action": "1) 用 ss -s 看连接状态分布，确认是 ESTABLISHED 还是 TIME_WAIT 为主；2) 用 ss -tan | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -rn 定位连接来源；3) 应用侧未复用连接的改用连接池；4) TIME_WAIT 为主的开启 tcp_tw_reuse 并调大端口范围。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 ss -s 看连接状态分布，确认是 ESTABLISHED 还是 TIME_WAIT 为主；\n2) 用 ss -tan | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -rn 定位连接来源；\n3) 应用侧未复用连接的改用连接池；\n4) TIME_WAIT 为主的开启 tcp_tw_reuse 并调大端口范围。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -569,9 +557,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "tidb-server 实例不可达，SQL 入口中断，连到该实例的业务会全部失败。",
-            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；3) 进程存活但探测失败的排查端口监听与防火墙；4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；\n2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；\n3) 进程存活但探测失败的排查端口监听与防火墙；\n4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -652,9 +638,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "blackbox_exporter 不可达，所有基于探测的存活告警都会失效，集群进入部分监控盲区。",
-            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；3) 进程存活但探测失败的排查端口监听与防火墙；4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；\n2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；\n3) 进程存活但探测失败的排查端口监听与防火墙；\n4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -735,9 +719,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "drainer 不可达，binlog 下游同步中断，下游数据会开始落后并可能超出 pump 的保留窗口。",
-            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；3) 进程存活但探测失败的排查端口监听与防火墙；4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；\n2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；\n3) 进程存活但探测失败的排查端口监听与防火墙；\n4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -818,9 +800,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "Grafana 不可达，监控看板不可用（不影响集群本身，但会影响故障排查效率）。",
-            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；3) 进程存活但探测失败的排查端口监听与防火墙；4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；\n2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；\n3) 进程存活但探测失败的排查端口监听与防火墙；\n4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -901,9 +881,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "PD 实例不可达，若失去多数派则整个集群调度与 TSO 停摆。",
-            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；3) 进程存活但探测失败的排查端口监听与防火墙；4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；\n2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；\n3) 进程存活但探测失败的排查端口监听与防火墙；\n4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -984,9 +962,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "pump 不可达，binlog 写入中断，可能导致下游同步断档甚至 TiDB 写入受阻。",
-            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；3) 进程存活但探测失败的排查端口监听与防火墙；4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；\n2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；\n3) 进程存活但探测失败的排查端口监听与防火墙；\n4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1067,9 +1043,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "tidb-server 进程 CPU 使用率超过其可用配额的 80%，SQL 处理会排队。",
-            "action": "1) 看 Grafana 的 TiDB Query Summary 找 QPS 与耗时最高的语句类型；2) 用 TiDB 慢日志定位具体 SQL，检查是否缺索引导致大量数据回表；3) 确认 tidb_server_maxprocs 配置是否与容器/机器规格匹配；4) 优化 SQL 后仍高则扩容 tidb-server 实例。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 看 Grafana 的 TiDB Query Summary 找 QPS 与耗时最高的语句类型；\n2) 用 TiDB 慢日志定位具体 SQL，检查是否缺索引导致大量数据回表；\n3) 确认 tidb_server_maxprocs 配置是否与容器/机器规格匹配；\n4) 优化 SQL 后仍高则扩容 tidb-server 实例。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1150,9 +1124,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TiDB 加载 schema 出现 outdated 错误，说明该实例的元数据版本落后，DDL 之后的读写可能报错。",
-            "action": "1) 查该 tidb-server 的日志搜 schema lease 相关报错；2) 常见根因是该实例与 PD/TiKV 网络不稳，或 GC 压力大导致租约续期失败；3) 确认是否有长时间运行的大事务阻塞 schema 变更；4) 单实例问题可先摘流量重启该实例，全局问题需排查 PD 与网络。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 查该 tidb-server 的日志搜 schema lease 相关报错；\n2) 常见根因是该实例与 PD/TiKV 网络不稳，或 GC 压力大导致租约续期失败；\n3) 确认是否有长时间运行的大事务阻塞 schema 变更；\n4) 单实例问题可先摘流量重启该实例，全局问题需排查 PD 与网络。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1233,9 +1205,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TiDB 出现 critical error（含跳过 binlog），下游同步可能已经丢数据，是数据一致性风险。",
-            "action": "1) 查 tidb-server 日志搜 critical error 与 binlog 相关记录，确认跳过的原因与范围；2) 检查 pump/drainer 是否可用——写不进 binlog 是最常见原因；3) 确认下游数据是否已缺失，必要时用工具做数据校验与补齐；4) 修复 binlog 链路后持续观察，确认不再跳过。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 查 tidb-server 日志搜 critical error 与 binlog 相关记录，确认跳过的原因与范围；\n2) 检查 pump/drainer 是否可用——写不进 binlog 是最常见原因；\n3) 确认下游数据是否已缺失，必要时用工具做数据校验与补齐；\n4) 修复 binlog 链路后持续观察，确认不再跳过。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1316,9 +1286,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TiDB 频繁加载 schema 失败，元数据无法同步，DDL 与依赖新表结构的读写都会异常。",
-            "action": "1) 查该实例日志确认失败的具体报错；2) 排查到 PD/TiKV 的网络连通性与延迟；3) 确认是否有 DDL 长时间卡住（ADMIN SHOW DDL JOBS）阻塞了 schema 版本推进；4) 卡住的 DDL 可用 ADMIN CANCEL DDL JOBS 取消后重做。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 查该实例日志确认失败的具体报错；\n2) 排查到 PD/TiKV 的网络连通性与延迟；\n3) 确认是否有 DDL 长时间卡住（ADMIN SHOW DDL JOBS）阻塞了 schema 版本推进；\n4) 卡住的 DDL 可用 ADMIN CANCEL DDL JOBS 取消后重做。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1399,9 +1367,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TiFlash 实例不可达，列存副本不可用，走 TiFlash 的分析型查询会回退到 TiKV 或直接失败。",
-            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；3) 进程存活但探测失败的排查端口监听与防火墙；4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；\n2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；\n3) 进程存活但探测失败的排查端口监听与防火墙；\n4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1482,9 +1448,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TiKV 进程 5 分钟内内存增长超过 5G，可能是有大查询把大量数据加载到内存，继续增长会被 OOM 杀掉。",
-            "action": "1) 用 TiDB 慢日志与 Grafana 的 TiKV Coprocessor 面板定位是否有超大范围扫描的 SQL；2) 必要时 KILL 该查询止血；3) 检查 block-cache-size 配置是否超过物理内存的合理比例（建议不超过 45%）；4) 若为实例刚启动的正常预热，可忽略但需确认后续趋于平稳。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 TiDB 慢日志与 Grafana 的 TiKV Coprocessor 面板定位是否有超大范围扫描的 SQL；\n2) 必要时 KILL 该查询止血；\n3) 检查 block-cache-size 配置是否超过物理内存的合理比例（建议不超过 45%）；\n4) 若为实例刚启动的正常预热，可忽略但需确认后续趋于平稳。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1565,9 +1529,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TiKV 实例发生重启，其上的 region leader 需要重新选举，期间相关读写会短暂失败。",
-            "action": "1) 查 tikv 日志尾部与 dmesg -T | grep -i 'killed process'，区分崩溃、被 OOM 杀死、人工重启；2) OOM 的核对 block-cache-size 与机器内存；3) panic 的收集日志并对照 TiDB 版本的已知问题；4) 重启后用 pd-ctl store 确认该 store 已恢复 Up 且 region 已重新均衡。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 查 tikv 日志尾部与 dmesg -T | grep -i 'killed process'，区分崩溃、被 OOM 杀死、人工重启；\n2) OOM 的核对 block-cache-size 与机器内存；\n3) panic 的收集日志并对照 TiDB 版本的已知问题；\n4) 重启后用 pd-ctl store 确认该 store 已恢复 Up 且 region 已重新均衡。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1648,9 +1610,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TiKV 节点可用空间低于 20%。达到 PD 的 low-space-ratio 后调度会拒绝往该节点放数据，继续下降会导致集群写入受阻。",
-            "action": "1) 用 pd-ctl store 看各 store 的容量与使用率，确认是个别还是普遍；2) 个别节点满的检查 region 是否分布不均，用 pd-ctl 调整调度；3) 普遍满的必须扩容 TiKV 节点；4) 确认 GC 是否正常运行（GC life time 是否被设得过长导致旧版本堆积）。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 pd-ctl store 看各 store 的容量与使用率，确认是个别还是普遍；\n2) 个别节点满的检查 region 是否分布不均，用 pd-ctl 调整调度；\n3) 普遍满的必须扩容 TiKV 节点；\n4) 确认 GC 是否正常运行（GC life time 是否被设得过长导致旧版本堆积）。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1731,9 +1691,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "TiKV 实例不可达，其上的 region 副本失效，集群冗余下降，副本不足时相关数据不可写。",
-            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；3) 进程存活但探测失败的排查端口监听与防火墙；4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 从告警标签取实例地址，先 ping/ssh 确认机器存活；\n2) 到该节点确认对应进程是否运行、日志中有无 panic 或 OOM；\n3) 进程存活但探测失败的排查端口监听与防火墙；\n4) 用 tiup cluster display \u003c集群名\u003e 看整体拓扑状态，确认剩余节点是否仍满足多数派。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1814,9 +1772,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "节点内存使用率超过 80%，继续增长会触发 swap 或 OOM，TiKV/TiDB 进程有被杀风险。",
-            "action": "1) 用 ps aux --sort=-%mem | head 确认是哪个进程占用最高；2) TiKV 内存高优先核对 block-cache-size；TiDB 内存高排查是否有大查询未设 mem-quota-query；3) 设置 tidb_mem_quota_query 限制单查询内存；4) 确认无泄漏后仍不足的，扩内存或迁移实例。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 ps aux --sort=-%mem | head 确认是哪个进程占用最高；\n2) TiKV 内存高优先核对 block-cache-size；TiDB 内存高排查是否有大查询未设 mem-quota-query；\n3) 设置 tidb_mem_quota_query 限制单查询内存；\n4) 确认无泄漏后仍不足的，扩内存或迁移实例。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1897,9 +1853,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "文件系统变为只读，通常是磁盘出现硬件错误后内核的保护动作。落在该盘上的 TiKV/TiDB 数据已无法写入。",
-            "action": "1) 用 dmesg -T | grep -iE 'i/o error|remount|read-only' 确认触发原因；2) 用 smartctl -a /dev/sdX 检查磁盘健康，多数是坏道；3) 立即把该节点上的服务下线（pd-ctl store delete 或 tiup 摘除），避免继续尝试写入；4) 换盘后重新加入集群并等待数据回补。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 dmesg -T | grep -iE 'i/o error|remount|read-only' 确认触发原因；\n2) 用 smartctl -a /dev/sdX 检查磁盘健康，多数是坏道；\n3) 立即把该节点上的服务下线（pd-ctl store delete 或 tiup 摘除），避免继续尝试写入；\n4) 换盘后重新加入集群并等待数据回补。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -1980,9 +1934,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "文件系统 inode 使用率超过 80%，耗尽后即使有剩余空间也无法创建新文件，表现为「磁盘没满却写不进去」。",
-            "action": "1) 用 df -i 确认是哪个挂载点；2) 逐层统计文件数找出小文件最多的目录；3) TiDB 场景常见是日志文件未轮转清理，先清理旧日志；4) 长期可调整日志保留策略或格式化时提高 inode 密度。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 df -i 确认是哪个挂载点；\n2) 逐层统计文件数找出小文件最多的目录；\n3) TiDB 场景常见是日志文件未轮转清理，先清理旧日志；\n4) 长期可调整日志保留策略或格式化时提高 inode 密度。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -2063,9 +2015,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "磁盘使用率超过 80%，继续增长会触发 PD 的空间保护并最终导致写入失败。",
-            "action": "1) 用 df -h 与 du -x --max-depth=1 定位占用最大的目录；2) TiDB 节点常见是日志与慢日志堆积，先清理；3) TiKV 数据盘满的需扩容或加节点，并确认 GC 正常运行；4) 用 lsof +L1 检查已删除但句柄未释放的文件。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 df -h 与 du -x --max-depth=1 定位占用最大的目录；\n2) TiDB 节点常见是日志与慢日志堆积，先清理；\n3) TiKV 数据盘满的需扩容或加节点，并确认 GC 正常运行；\n4) 用 lsof +L1 检查已删除但句柄未释放的文件。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -2146,9 +2096,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "网卡入方向出现丢包，TiKV/TiDB 之间的 raft 与 coprocessor 通信会重传，延迟抖动明显。",
-            "action": "1) 用 ip -s link show \u003c网卡\u003e 与 ethtool -S \u003c网卡\u003e 确认丢包计数与原因；2) 环形缓冲区不足的用 ethtool -G \u003c网卡\u003e rx 调大；3) 确认带宽是否打满——大规模 region 迁移会打满网卡；4) 必要时用 pd-ctl 调低调度并发（leader-schedule-limit、region-schedule-limit）。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 与 ethtool -S \u003c网卡\u003e 确认丢包计数与原因；\n2) 环形缓冲区不足的用 ethtool -G \u003c网卡\u003e rx 调大；\n3) 确认带宽是否打满——大规模 region 迁移会打满网卡；\n4) 必要时用 pd-ctl 调低调度并发（leader-schedule-limit、region-schedule-limit）。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -2229,9 +2177,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "网卡出方向出现丢包，节点间通信重传增多，集群整体延迟上升。",
-            "action": "1) 用 ip -s link show \u003c网卡\u003e 与 ethtool -S \u003c网卡\u003e 确认发送侧丢包；2) 调大 txqueuelen 与发送队列；3) 确认是否跑满带宽，必要时降低 PD 调度并发；4) 排查网卡驱动与对端交换机端口状态。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 ip -s link show \u003c网卡\u003e 与 ethtool -S \u003c网卡\u003e 确认发送侧丢包；\n2) 调大 txqueuelen 与发送队列；\n3) 确认是否跑满带宽，必要时降低 PD 调度并发；\n4) 排查网卡驱动与对端交换机端口状态。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -2312,9 +2258,7 @@
         "runbook_url": "",
         "append_tags": [],
         "annotations": {
-            "summary": "PD 报告有 TiKV store 处于 down 状态，集群冗余下降，PD 会开始把副本迁到其他节点，期间性能受影响。",
-            "action": "1) 用 pd-ctl store 确认是哪个 store、down 了多久；2) 到该节点确认 tikv 进程与磁盘状态；3) 短时间内能恢复的尽快拉起，避免 PD 触发大规模副本补充造成额外负载；4) 确实无法恢复的用 pd-ctl store delete \u003cid\u003e 优雅下线，让数据有序迁走。",
-            "runbook_url": "https://docs.pingcap.com/tidb/stable/tidb-cluster-troubleshooting/"
+            "action": "1) 用 pd-ctl store 确认是哪个 store、down 了多久；\n2) 到该节点确认 tikv 进程与磁盘状态；\n3) 短时间内能恢复的尽快拉起，避免 PD 触发大规模副本补充造成额外负载；\n4) 确实无法恢复的用 pd-ctl store delete \u003cid\u003e 优雅下线，让数据有序迁走。"
         },
         "extra_config": null,
         "create_at": 0,

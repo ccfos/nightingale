@@ -142,6 +142,18 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
 
+	// 生效时段非法是纯输入错误，先整体校验再逐条入库，避免前面几条已写库、后面一条才报错的半截结果。
+	// 一次收齐所有不合法的规则再报，批量提交时调用方才知道是哪几条出了问题。
+	var invalidTimes []string
+	for i := 0; i < count; i++ {
+		if err := lst[i].ValidateEffectiveTimes(); err != nil {
+			invalidTimes = append(invalidTimes, fmt.Sprintf("%s: %s", lst[i].Name, err.Error()))
+		}
+	}
+	if len(invalidTimes) > 0 {
+		ginx.Bomb(http.StatusBadRequest, "%s", strings.Join(invalidTimes, "; "))
+	}
+
 	bgid := ginx.UrlParamInt64(c, "id")
 	reterr := rt.alertRuleAdd(c, lst, username, bgid, c.GetHeader("X-Language"))
 
@@ -482,6 +494,7 @@ func (rt *Router) alertRulePutByService(c *gin.Context) {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
 		return
 	}
+
 	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f))
 }
 

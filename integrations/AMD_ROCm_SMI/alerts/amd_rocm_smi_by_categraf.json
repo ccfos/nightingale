@@ -75,9 +75,7 @@
             "alertname=AmdGpuMemoryHigh"
         ],
         "annotations": {
-            "summary": "AMD GPU 显存使用率超过 90%，再增长会触发显存分配失败，训练或推理任务会直接报 OOM 退出。",
-            "action": "1) 从告警标签取 gpu_id 与 name，执行 rocm-smi --showmemuse --showpids 确认是哪些进程占用显存；2) 有已退出但显存未释放的僵尸进程时，确认无人使用后 kill 掉释放；3) 训练任务本身需要这么多显存的，调小 batch size 或启用梯度累积、混合精度；4) 多任务共用一张卡的，改用显存隔离或排队调度，避免互相挤占导致全部失败。",
-            "runbook_url": "https://rocm.docs.amd.com/projects/amdsmi/en/latest/"
+            "action": "1) 从告警标签取 gpu_id 与 name，执行 rocm-smi --showmemuse --showpids 确认是哪些进程占用显存；\n2) 有已退出但显存未释放的僵尸进程时，确认无人使用后 kill 掉释放；\n3) 训练任务本身需要这么多显存的，调小 batch size 或启用梯度累积、混合精度；\n4) 多任务共用一张卡的，改用显存隔离或排队调度，避免互相挤占导致全部失败。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -162,9 +160,7 @@
             "alertname=AmdGpuJunctionTempHigh"
         ],
         "annotations": {
-            "summary": "AMD GPU 结温（junction，芯片内部最热点）超过 95℃，已接近降频与保护性关断的门限，持续高温会缩短硬件寿命。",
-            "action": "1) 从告警标签取 gpu_id，执行 rocm-smi --showtemp --showfan --showpower 确认温度、风扇转速与功耗；2) 风扇转速偏低的检查风扇是否故障或积灰，必要时停机清理；3) 风扇已满速仍高温的，检查机箱风道与机房进风温度，确认相邻卡槽是否过密导致散热不良；4) 短期可用 rocm-smi --setpoweroverdrive 降低功耗上限限制发热，但必须尽快解决散热问题。",
-            "runbook_url": "https://rocm.docs.amd.com/projects/amdsmi/en/latest/"
+            "action": "1) 从告警标签取 gpu_id，执行 rocm-smi --showtemp --showfan --showpower 确认温度、风扇转速与功耗；\n2) 风扇转速偏低的检查风扇是否故障或积灰，必要时停机清理；\n3) 风扇已满速仍高温的，检查机箱风道与机房进风温度，确认相邻卡槽是否过密导致散热不良；\n4) 短期可用 rocm-smi --setpoweroverdrive 降低功耗上限限制发热，但必须尽快解决散热问题。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -249,9 +245,7 @@
             "alertname=AmdGpuEdgeTempHigh"
         ],
         "annotations": {
-            "summary": "AMD GPU 边缘温度超过 85℃，说明整卡散热已经吃紧，通常伴随核心频率下降，计算任务的吞吐会明显降低。",
-            "action": "1) 从告警标签取 gpu_id，执行 rocm-smi --showtemp --showclocks 对比温度与当前频率，确认是否已经降频；2) 检查同机上其他 GPU 的温度，普遍偏高说明是机房或机箱级散热问题；3) 单卡偏高的检查该卡的风扇、散热硅脂与安装位置；4) 处理散热的同时评估是否需要降低该卡的任务并发，避免长期在降频状态下跑任务。",
-            "runbook_url": "https://rocm.docs.amd.com/projects/amdsmi/en/latest/"
+            "action": "1) 从告警标签取 gpu_id，执行 rocm-smi --showtemp --showclocks 对比温度与当前频率，确认是否已经降频；\n2) 检查同机上其他 GPU 的温度，普遍偏高说明是机房或机箱级散热问题；\n3) 单卡偏高的检查该卡的风扇、散热硅脂与安装位置；\n4) 处理散热的同时评估是否需要降低该卡的任务并发，避免长期在降频状态下跑任务。"
         },
         "extra_config": null,
         "create_at": 0,
@@ -336,9 +330,7 @@
             "alertname=AmdGpuMemoryTempHigh"
         ],
         "annotations": {
-            "summary": "AMD GPU 显存温度超过 95℃，HBM/GDDR 高温会触发显存降频，严重时出现 ECC 错误导致计算结果异常。",
-            "action": "1) 从告警标签取 gpu_id，执行 rocm-smi --showtemp 确认显存温度与结温的差值；2) 显存温度显著高于结温的，通常是显存侧散热片接触不良，需要停机检查；3) 检查是否有长期跑大显存带宽的任务（如大模型推理），可通过降低并发缓解；4) 同时执行 rocm-smi --showretiredpages 检查是否已出现坏页，坏页增长说明显存正在劣化，需安排更换。",
-            "runbook_url": "https://rocm.docs.amd.com/projects/amdsmi/en/latest/"
+            "action": "1) 从告警标签取 gpu_id，执行 rocm-smi --showtemp 确认显存温度与结温的差值；\n2) 显存温度显著高于结温的，通常是显存侧散热片接触不良，需要停机检查；\n3) 检查是否有长期跑大显存带宽的任务（如大模型推理），可通过降低并发缓解；\n4) 同时执行 rocm-smi --showretiredpages 检查是否已出现坏页，坏页增长说明显存正在劣化，需安排更换。"
         },
         "extra_config": null,
         "create_at": 0,

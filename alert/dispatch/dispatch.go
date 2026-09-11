@@ -210,7 +210,13 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 					continue
 				}
 
-				if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" && messageTemplate == nil {
+				// callback 媒介的 body 直接透传 $events（内置 Callback 是 {{ jsonMarshal $events }}），
+				// 不消费 $tpl；前端的通知配置也因此不展示「消息模板」选择器，template_id 恒为 0。
+				// 这里不放行就等于「界面上没处填模板，真实告警却被判缺模板整条丢弃」。
+				// TODO: 例外应按 request_config 是否引用 $tpl 判定，而不是按 ident 硬编码，
+				// 免得前后端两份例外清单再次漂移。
+				if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" &&
+					notifyChannel.Ident != "callback" && messageTemplate == nil {
 					logger.Warningf("notify_id: %d, channel_name: %v, event:%s, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, eventCopy.Hash, notifyRule.NotifyConfigs[i].TemplateID)
 					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, notifyChannel.Name, "", "", errors.New("message_template not found"))
 

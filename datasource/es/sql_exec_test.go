@@ -461,3 +461,77 @@ func TestXPackSQL_ErrorResponse(t *testing.T) {
 		t.Fatal("expected error for bad SQL, got nil")
 	}
 }
+
+// TestXPackSQL_BasicAuth verifies that the SQL path authenticates the same way
+// the DSL path does. dscache-synced datasources (esN9eToDatasourceInfo) carry
+// username/password with BasicAuth.Enable left false; the SQL client must
+// still send credentials, otherwise security-enabled clusters reject /_sql
+// with 401 "missing authentication credentials" while DSL queries succeed.
+func TestXPackSQL_BasicAuth(t *testing.T) {
+	const (
+		authUser = "elastic"
+		authPass = "changeme"
+	)
+	newSecuredServer := func(t *testing.T) *httptest.Server {
+		t.Helper()
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-Elastic-Product", "Elasticsearch")
+			switch {
+			case r.Method == http.MethodGet && r.URL.Path == "/":
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"version": map[string]interface{}{"number": "8.15.0"},
+				})
+			case r.Method == http.MethodPost && r.URL.Path == "/_sql":
+				user, pass, ok := r.BasicAuth()
+				if !ok || user != authUser || pass != authPass {
+					w.Header().Set("WWW-Authenticate", `Basic realm="security" charset="UTF-8", ApiKey`)
+					w.WriteHeader(http.StatusUnauthorized)
+					w.Write([]byte(`{"error":{"root_cause":[{"type":"security_exception","reason":"missing authentication credentials for REST request [/_sql]"}],"type":"security_exception","reason":"missing authentication credentials for REST request [/_sql]"},"status":401}`))
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.Write([]byte(`{"columns":[{"name":"cnt","type":"long"}],"rows":[[202]]}`))
+			}
+		}))
+	}
+
+	cases := []struct {
+		name    string
+		basic   BasicAuth
+		wantErr bool
+	}{
+		// dscache/esN9eToDatasourceInfo shape: credentials set, Enable false.
+		{"username_without_enable_flag", BasicAuth{Username: authUser, Password: authPass}, false},
+		{"enable_flag_set", BasicAuth{Enable: true, Username: authUser, Password: authPass}, false},
+		// No credentials configured: the 401 is the expected cluster response.
+		{"no_credentials", BasicAuth{}, true},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := newSecuredServer(t)
+			defer srv.Close()
+
+			clientCache = syncMapNew()
+			escli := newTestElasticsearch("8.15.0", []string{srv.URL})
+			escli.Basic = tt.basic
+
+			resp, err := XPackSQL(context.Background(), escli, XPackSQLRequest{
+				Query: `SELECT COUNT("status.keyword") AS cnt FROM "log*"`,
+			})
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected 401 error without credentials, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("XPackSQL() with configured credentials error: %v", err)
+			}
+			if len(resp.Rows) != 1 || resp.Rows[0][0] != float64(202) {
+				t.Errorf("unexpected response: %+v", resp)
+			}
+		})
+	}
+}

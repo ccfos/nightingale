@@ -1,79 +1,79 @@
-[夜莺监控](https://github.com/ccfos/nightingale "夜莺监控")是一款开源云原生监控系统，由滴滴设计开发，2020 年 3 月份开源之后，凭借其优秀的产品设计、灵活性架构和明确清晰的定位，夜莺监控快速发展为国内最活跃的企业级云原生监控方案。[截止当前](具体指2022年8月 "截止当前")，在 [Github](https://github.com/ccfos/nightingale "Github") 上已经迭代发布了 **70** 多个版本，获得了 **5K** 多个 Star，**80** 多位代码贡献者。快速的迭代，也让夜莺监控的用户群越来越大，涉及各行各业。
+[Nightingale](https://github.com/ccfos/nightingale "Nightingale") is an open-source cloud-native monitoring system, originally designed and developed at DiDi. Since it was open-sourced in March 2020, its solid product design, flexible architecture, and clear positioning have made it the most active enterprise-grade cloud-native monitoring solution in China. As of August 2022, more than **70** releases have shipped on [GitHub](https://github.com/ccfos/nightingale "GitHub"), earning over **5K** stars and attracting more than **80** code contributors. That rapid pace has grown the Nightingale user base steadily, across a wide range of industries.
 
-更进一步，夜莺监控于 2022 年 5 月 11 日，正式捐赠予中国计算机学会开源发展委员会 [CCF ODC](https://www.ccf.org.cn/kyfzwyh/ "CCF ODC")，为 CCF ODC 成立后接受捐赠的第一个开源项目。
+Going a step further, on May 11, 2022 Nightingale was formally donated to the Open Source Development Committee of the China Computer Federation, [CCF ODC](https://www.ccf.org.cn/kyfzwyh/ "CCF ODC") — the first open-source project accepted as a donation after CCF ODC was founded.
 
-开源项目要更有生命力，离不开开放的治理架构和源源不断的开发者共同参与。夜莺监控项目加入 CCF 开源大家庭后，能在计算机学会的支持和带动下，进一步结合云原生、可观测、国产化等多个技术发展的需求，建立开放、中立的开源治理架构，打造更专业、有活力的开发者社区。
+An open-source project only stays alive through an open governance structure and a steady stream of participating developers. Joining the CCF open-source family lets Nightingale, with the support and momentum of the Federation, build an open and neutral governance structure around the needs of cloud-native, observability, and domestic-technology adoption, and grow a more professional and energetic developer community.
 
-**今天，我们郑重发布夜莺监控开源社区治理架构，并公示相关的任命和社区荣誉，期待开源的道路上，一起同行。**
+**Today we formally publish the governance structure of the Nightingale open-source community, along with the related appointments and community honors. We look forward to walking the open-source road together.**
 
-# 夜莺监控开源社区架构
+# Nightingale Open Source Community Structure
 
-### User|用户
+### User
 
-> 欢迎任何个人、公司以及组织，使用夜莺监控，并积极的反馈 bug、提交功能需求、以及相互帮助，我们推荐使用 [Github Issue](https://github.com/ccfos/nightingale/issues "Github Issue") 来跟踪 bug 和管理需求。
+> Any individual, company, or organization is welcome to use Nightingale, to actively report bugs, submit feature requests, and help each other out. We recommend using [GitHub Issues](https://github.com/ccfos/nightingale/issues "GitHub Issues") to track bugs and manage requirements.
 
-社区用户，可以通过在 **[Who is Using Nightingale](https://github.com/ccfos/nightingale/issues/897 "Who is Using Nightingale")** 登记您的使用情况，并分享您使用夜莺监控的经验，将会自动进入 **[END USERS](https://github.com/ccfos/nightingale/blob/main/doc/end-users.md "END USERS")** 文件列表，并获得社区的 **VIP Support**。
+Community users can register how they use Nightingale under **[Who is Using Nightingale](https://github.com/ccfos/nightingale/issues/897 "Who is Using Nightingale")** and share their experience. Doing so automatically adds them to the **[END USERS](https://github.com/ccfos/nightingale/blob/main/doc/end-users.md "END USERS")** list and earns them **VIP Support** from the community.
 
-### Contributor|贡献者
+### Contributor
 
-> 欢迎每一位用户，包括但不限于以下方式参与到夜莺开源社区并做出贡献：
+> Every user is welcome to take part in the Nightingale open-source community and contribute, including but not limited to:
 
-1. 在 [Github Issue](https://github.com/ccfos/nightingale/issues "Github Issue") 中积极参与讨论，参与社区活动；
-1. 提交代码补丁；
-1. 翻译、修订、补充和完善[文档](https://n9e.github.io "文档")；
-1. 分享夜莺监控的使用经验，积极布道；
-1. 提交建议 / 批评；
+1. Joining discussions in [GitHub Issues](https://github.com/ccfos/nightingale/issues "GitHub Issues") and taking part in community activities;
+1. Submitting code patches;
+1. Translating, revising, extending, and improving the [documentation](https://n9e.github.io "documentation");
+1. Sharing your experience with Nightingale and evangelizing the project;
+1. Submitting suggestions and criticism;
 
-年度累计向 [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE") 提交 **5** 个PR（被合并），或者因为其他贡献被**项目管委会**一致认可，将会自动进入到 **[ACTIVE CONTRIBUTORS](https://github.com/ccfos/nightingale/blob/main/doc/active-contributors.md "ACTIVE CONTRIBUTORS")** 列表，并获得夜莺开源社区颁发的证书，享有夜莺开源社区一定的权益和福利。
+Anyone who gets **5** PRs merged into [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE") over the course of a year, or whose other contributions are unanimously recognized by the **PMC**, is automatically added to the **[ACTIVE CONTRIBUTORS](https://github.com/ccfos/nightingale/blob/main/doc/active-contributors.md "ACTIVE CONTRIBUTORS")** list, receives a certificate from the Nightingale open-source community, and enjoys certain community benefits.
 
-所有向 [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE") 提交过PR（被合并），或者做出过重要贡献的 Contributor，都会被永久记载于 [CONTRIBUTORS](https://github.com/ccfos/nightingale/blob/main/doc/contributors.md "CONTRIBUTORS") 列表。
+Every Contributor who has had a PR merged into [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE"), or who has made a significant contribution, is permanently recorded in the [CONTRIBUTORS](https://github.com/ccfos/nightingale/blob/main/doc/contributors.md "CONTRIBUTORS") list.
 
-### Committer|提交者
+### Committer
 
-> Committer 是指拥有 [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE") 代码仓库写操作权限的贡献者。原则上 Committer 能够自主决策某个代码补丁是否可以合入到夜莺代码仓库，但是项目管委会拥有最终的决策权。
+> A Committer is a contributor with write access to the [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE") repository. In principle a Committer can decide on their own whether a patch may be merged into the Nightingale repository, but the PMC holds the final say.
 
-Committer 承担以下一个或多个职责：
-- 积极回应 Issues；
-- Review PRs；
-- 参加开发者例行会议，积极讨论项目规划和技术方案；
-- 代表夜莺开源社区出席相关技术会议并做演讲；
+A Committer takes on one or more of the following responsibilities:
+- Responding actively to Issues;
+- Reviewing PRs;
+- Attending the regular developer meetings and taking part in discussions on project planning and technical designs;
+- Representing the Nightingale open-source community at relevant technical conferences and giving talks;
 
-Committer 记录并公示于 **[COMMITTERS](https://github.com/ccfos/nightingale/blob/main/doc/committers.md "COMMITTERS")** 列表，并获得夜莺开源社区颁发的证书，以及享有夜莺开源社区的各种权益和福利。
-
-
-### PMC|项目管委会
-
-> PMC（项目管委会）作为一个实体，来管理和领导夜莺项目，为整个项目的发展全权负责。项目管委会相关内容记录并公示于文件[PMC](https://github.com/ccfos/nightingale/blob/main/doc/pmc.md "PMC").
-
-- 项目管委会成员(PMC Member)，从 Contributor 或者 Committer 中选举产生，他们拥有 [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE") 代码仓库的写操作权限，拥有 Nightingale 社区相关事务的投票权、以及提名 Committer 候选人的权利。
-- 项目管委会主席(PMC Chair)，从项目管委会成员中投票产生。管委会主席是 **[CCF ODC](https://www.ccf.org.cn/kyfzwyh/ "CCF ODC")** 和项目管委会之间的沟通桥梁，履行特定的项目管理职责。
-
-## Communication|沟通机制
-1. 我们推荐使用邮件列表来反馈建议（待发布）；
-2. 我们推荐使用 [Github Issue](https://github.com/ccfos/nightingale/issues "Github Issue") 跟踪 bug 和管理需求；
-3. 我们推荐使用 [Github Milestone](https://github.com/ccfos/nightingale/milestones "Github Milestone") 来管理项目进度和规划；
-4. 我们推荐使用腾讯会议来定期召开项目例会（会议 ID 待发布）；
-
-## Documentation|文档
-1. 我们推荐使用 [Github Pages](https://n9e.github.io "Github Pages") 来沉淀文档；
-2. 我们推荐使用 [Gitlink Wiki](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq "Gitlink Wiki") 来沉淀 FAQ；
+Committers are recorded and published in the **[COMMITTERS](https://github.com/ccfos/nightingale/blob/main/doc/committers.md "COMMITTERS")** list, receive a certificate from the Nightingale open-source community, and enjoy the various community benefits.
 
 
-## Operation|运营机制
+### PMC (Project Management Committee)
 
-1. 我们定期组织用户、贡献者、项目管委会成员之间的沟通会议，讨论项目开发的目标、方案、进度，以及讨论相关需求的合理性、优先级等议题；
-2. 我们定期组织 meetup （线上&线下），创造良好的用户交流分享环境，并沉淀相关内容到文档站点；
-3. 我们定期组织夜莺开发者大会，分享 [best user story](https://n9e.github.io/docs/prologue/share/ "best user story")、同步年度开发目标和计划、讨论新技术方向等；
+> The PMC is the entity that manages and leads the Nightingale project and is fully responsible for its development. PMC matters are recorded and published in the [PMC](https://github.com/ccfos/nightingale/blob/main/doc/pmc.md "PMC") file.
 
-## Philosophy|社区指导原则
+- PMC Members are elected from among Contributors or Committers. They have write access to the [CCFOS/NIGHTINGALE](https://github.com/ccfos/nightingale "CCFOS/NIGHTINGALE") repository, the right to vote on Nightingale community matters, and the right to nominate Committer candidates.
+- The PMC Chair is elected by vote from among the PMC Members. The Chair is the bridge between **[CCF ODC](https://www.ccf.org.cn/kyfzwyh/ "CCF ODC")** and the PMC, and carries out specific project management duties.
 
->尊重、认可和记录每一位贡献者的工作。
+## Communication
+1. We recommend using the mailing list for feedback and suggestions (to be announced);
+2. We recommend using [GitHub Issues](https://github.com/ccfos/nightingale/issues "GitHub Issues") to track bugs and manage requirements;
+3. We recommend using [GitHub Milestones](https://github.com/ccfos/nightingale/milestones "GitHub Milestones") to manage project progress and planning;
+4. We recommend using Tencent Meeting for the regular project meetings (meeting ID to be announced);
 
-## 关于提问的原则
+## Documentation
+1. We recommend using [GitHub Pages](https://n9e.github.io "GitHub Pages") as the home for documentation;
+2. We recommend using the [Gitlink Wiki](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq "Gitlink Wiki") as the home for the FAQ;
 
-按照**尊重、认可、记录每一位贡献者的工作**原则，我们提倡**高效的提问**，这既是对开发者时间的尊重，也是对整个社区的知识沉淀的贡献：
 
-1. 提问之前请先查阅 [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq "FAQ") ；
-2. 提问之前请先搜索 [Github Issues](https://github.com/ccfos/nightingale/issues "Github Issue")；
-3. 我们优先推荐通过提交 [Github Issue](https://github.com/ccfos/nightingale/issues "Github Issue") 来提问，如果[有问题点击这里](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&template=bug_report.yml "有问题点击这里") | [有需求建议点击这里](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md "有需求建议点击这里")；
+## Operations
+
+1. We hold regular meetings between users, contributors, and PMC members to discuss development goals, designs, and progress, as well as the soundness and priority of incoming requirements;
+2. We hold regular meetups (online and offline) to create a healthy environment for users to exchange and share, and we publish the resulting material on the documentation site;
+3. We hold a regular Nightingale developer conference to share the [best user story](https://n9e.github.io/docs/prologue/share/ "best user story"), align on the annual development goals and plans, and discuss new technical directions;
+
+## Philosophy
+
+> Respect, recognize, and record the work of every contributor.
+
+## Principles for Asking Questions
+
+Following the principle of **respecting, recognizing, and recording the work of every contributor**, we encourage **asking questions efficiently**. This respects developers' time and contributes to the community's shared knowledge:
+
+1. Check the [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq "FAQ") before asking;
+2. Search the [GitHub Issues](https://github.com/ccfos/nightingale/issues "GitHub Issues") before asking;
+3. We prefer that questions be asked by opening a [GitHub Issue](https://github.com/ccfos/nightingale/issues "GitHub Issue"): [click here to report a problem](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&template=bug_report.yml "click here to report a problem") | [click here to request a feature](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md "click here to request a feature");
 
