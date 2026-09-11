@@ -1,11 +1,6 @@
 package tools
 
-import (
-	"fmt"
-	"testing"
-
-	"github.com/VictoriaMetrics/metricsql"
-)
+import "testing"
 
 func TestRebuildBakedPromQL(t *testing.T) {
 	cases := []struct {
@@ -162,94 +157,6 @@ func TestApplyRuleConfigSeverity(t *testing.T) {
 	applyRuleConfigSeverity(map[string]interface{}{}, 1)
 }
 
-func TestValidateBakedPromQL(t *testing.T) {
-	cases := []struct {
-		name    string
-		baked   string
-		wantErr bool
-	}{
-		{name: "simple threshold", baked: `kafka_messages_in_per_sec{topic="abc"} < 20000`},
-		{name: "different operator", baked: "cpu_usage_active > 80"},
-		{name: ">= operator", baked: "mem >= 90"},
-		{name: "wrapped base stays valid", baked: "(a / b) > 0.5"},
-		{name: "function base stays valid", baked: "rate(counter[5m]) > 10"},
-		{name: "new complex base wrapped", baked: "(a/b) > 5"},
-		// Only reachable for input stripBakedThreshold could not reduce, i.e. an
-		// operator like and/or/unless on top. Such an expression re-baked as a
-		// base does chain comparisons, and and/or pushes the extra operator off
-		// the left spine, so the whole tree has to be counted here.
-		{name: "set operator rebaked as base", baked: "node_load1 > 5 and node_load5 > 3 > 42", wantErr: true},
-		{name: "leading guard rebaked as base", baked: "redis_maxmemory > 0 and (redis_used_memory / redis_maxmemory) > 0.85 > 42", wantErr: true},
-		// Regression: the model passed the full baked expression as prom_ql, so
-		// rebuildBakedPromQL appended the current operator+threshold onto it.
-		{name: "nested comparison rejected", baked: `kafka_messages_in_per_sec{topic="abc"} < 20000 < 40000`, wantErr: true},
-		{name: "three-way comparison rejected", baked: "x < 1 < 2 < 3", wantErr: true},
-		// Not rejected: a bake always appends an operator, so a comparison-free
-		// result is unreachable from the guarded branch. Rejecting it would only
-		// trade a miss for a false positive, which this path deliberately avoids.
-		{name: "no comparison passes", baked: "plain_metric"},
-		{name: "empty rejected", baked: "", wantErr: true},
-		{name: "garbage rejected", baked: "garbage !!! <<<", wantErr: true},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			err := validateBakedPromQL(c.baked)
-			if c.wantErr && err == nil {
-				t.Fatalf("validateBakedPromQL(%q) = nil, want error", c.baked)
-			}
-			if !c.wantErr && err != nil {
-				t.Fatalf("validateBakedPromQL(%q) = %v, want nil", c.baked, err)
-			}
-		})
-	}
-}
-
-func TestCountCompareOps(t *testing.T) {
-	cases := []struct {
-		expr string
-		want int
-	}{
-		{expr: `kafka_messages_in_per_sec{topic="abc"} < 20000`, want: 1},
-		{expr: `kafka_messages_in_per_sec{topic="abc"} < 20000 < 40000`, want: 2},
-		{expr: "(a / b) > 0.5", want: 1},
-		{expr: "rate(counter[5m]) > 10", want: 1},
-		{expr: "plain_metric", want: 0},
-	}
-	for _, c := range cases {
-		expr, err := metricsql.Parse(c.expr)
-		if err != nil {
-			t.Fatalf("metricsql.Parse(%q): %v", c.expr, err)
-		}
-		if got := countCompareOps(expr); got != c.want {
-			t.Fatalf("countCompareOps(%q) = %d, want %d", c.expr, got, c.want)
-		}
-	}
-}
-
-func TestCountLeftSpineCompareOps(t *testing.T) {
-	cases := []struct {
-		expr string
-		want int
-	}{
-		{expr: `kafka_messages_in_per_sec{topic="abc"} < 20000`, want: 1},
-		{expr: `kafka_messages_in_per_sec{topic="abc"} < 20000 < 40000`, want: 2},
-		{expr: "x < 1 < 2 < 3", want: 3},
-		// Guards live in the right operand, so they stay out of the count.
-		{expr: "emqx_node_connections / (emqx_node_max_fds > 0) * 100 > 80", want: 1},
-		{expr: "sum(rate(x[5m]) > 0) > 5", want: 1},
-		{expr: "plain_metric", want: 0},
-	}
-	for _, c := range cases {
-		expr, err := metricsql.Parse(c.expr)
-		if err != nil {
-			t.Fatalf("metricsql.Parse(%q): %v", c.expr, err)
-		}
-		if got := countLeftSpineCompareOps(expr); got != c.want {
-			t.Fatalf("countLeftSpineCompareOps(%q) = %d, want %d", c.expr, got, c.want)
-		}
-	}
-}
-
 func TestStripBakedThreshold(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -320,10 +227,13 @@ func TestEchoedBackPromQLBakesLikeAPlainThresholdChange(t *testing.T) {
 			if !ok {
 				t.Fatalf("stripBakedThreshold(%q) = not ok, want the expression to be recognised as baked", current)
 			}
-			if err := rejectChainedBase(base, current); err != nil {
-				t.Fatalf("rejectChainedBase(%q): %v", base, err)
+			if err := validateSimpleThresholdBase(base); err != nil {
+				t.Fatalf("validateSimpleThresholdBase(%q): %v", base, err)
 			}
-			got := fmt.Sprintf("%s %s %v", base, bakedOp, 42.0)
+			got, err := bakeSimpleThreshold(base, bakedOp, 42)
+			if err != nil {
+				t.Fatalf("bakeSimpleThreshold(%q): %v", base, err)
+			}
 
 			if got != want {
 				t.Fatalf("echoed-back bake = %q, want %q", got, want)
@@ -332,16 +242,63 @@ func TestEchoedBackPromQLBakesLikeAPlainThresholdChange(t *testing.T) {
 	}
 }
 
-func TestRejectChainedBase(t *testing.T) {
-	if err := rejectChainedBase("a < 1", "a < 1 < 2"); err == nil {
-		t.Fatal("rejectChainedBase(\"a < 1\") = nil, want error")
+func TestValidateSimpleThresholdBase(t *testing.T) {
+	cases := []struct {
+		name    string
+		base    string
+		wantErr bool
+	}{
+		{name: "bare metric", base: "cpu_usage_active"},
+		{name: "selector", base: `kafka_messages_in_per_sec{topic="abc"}`},
+		{name: "function", base: "rate(counter[5m])"},
+		{name: "aggregation", base: "sum by (instance) (rate(x[5m]))"},
+		{name: "arithmetic on top", base: "(a / b) * 100"},
+		// Divide-by-zero guards keep a comparison inside a right operand or a
+		// function argument. Standard PromQL, ~40 builtin templates use it.
+		{name: "divide by zero guard", base: "emqx_node_connections / (emqx_node_max_fds > 0) * 100"},
+		{name: "guard in the middle", base: "(tomcat_jvm_memory_total - tomcat_jvm_memory_free) / (tomcat_jvm_memory_max > 0) * 100"},
+		{name: "filter inside aggregation", base: "sum(rate(x[5m]) > 0)"},
+		{name: "count of a comparison", base: "count(up == 0)"},
+		// Comparison on top: baking would chain a second one.
+		{name: "comparison against number", base: "a < 1", wantErr: true},
+		{name: "comparison against series", base: "a > b", wantErr: true},
+		// Set operators bind looser than comparison, so baking would attach the
+		// threshold to the right half only.
+		{name: "and on top", base: "node_load1 > 5 and node_load5 > 3", wantErr: true},
+		{name: "or on top", base: "a or b", wantErr: true},
+		{name: "unless on top", base: "rate(errors[5m]) unless up", wantErr: true},
+		{name: "empty", base: "", wantErr: true},
+		{name: "unparseable", base: "garbage !!! <<<", wantErr: true},
 	}
-	// A guard in the right operand is legitimate and must survive.
-	if err := rejectChainedBase("emqx_node_connections / (emqx_node_max_fds > 0) * 100",
-		"emqx_node_connections / (emqx_node_max_fds > 0) * 100 > 80"); err != nil {
-		t.Fatalf("rejectChainedBase(guarded base) = %v, want nil", err)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := validateSimpleThresholdBase(c.base)
+			if c.wantErr && err == nil {
+				t.Fatalf("validateSimpleThresholdBase(%q) = nil, want error", c.base)
+			}
+			if !c.wantErr && err != nil {
+				t.Fatalf("validateSimpleThresholdBase(%q) = %v, want nil", c.base, err)
+			}
+		})
 	}
-	if err := rejectChainedBase("cpu_usage_active", "cpu_usage_active > 80"); err != nil {
-		t.Fatalf("rejectChainedBase(bare metric) = %v, want nil", err)
+}
+
+func TestBakeSimpleThreshold(t *testing.T) {
+	got, err := bakeSimpleThreshold("cpu_usage_active", ">", 80)
+	if err != nil {
+		t.Fatalf("bakeSimpleThreshold: %v", err)
+	}
+	if want := "cpu_usage_active > 80"; got != want {
+		t.Fatalf("bakeSimpleThreshold = %q, want %q", got, want)
+	}
+
+	// Regression: the stripped branch bypasses rebuildBakedPromQL, which used to
+	// be the only place the operator was checked. An unchecked operator would be
+	// concatenated straight into the expression and stored.
+	if _, err := bakeSimpleThreshold(`metric{a="b"}`, "bogus", 42); err == nil {
+		t.Fatal("bakeSimpleThreshold with an invalid operator = nil, want error")
+	}
+	if _, err := bakeSimpleThreshold("", ">", 1); err == nil {
+		t.Fatal("bakeSimpleThreshold with an empty base = nil, want error")
 	}
 }
