@@ -480,6 +480,12 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		if !hasThreshold {
 			return "", fmt.Errorf("threshold is required when cate=prometheus and rule_config_json is empty")
 		}
+		// opProvided must be captured BEFORE the ">" default is applied: when the
+		// caller passes a fully baked expression we adopt the operator carried in
+		// it, and that is only correct if the caller did not ask for one. Reading
+		// op after the default would silently turn `metric < 20000` into
+		// `metric > <threshold>` — inverted, with no error.
+		opProvided := getArgString(args, "operator") != ""
 		op := getArgString(args, "operator")
 		if op == "" {
 			op = ">"
@@ -488,16 +494,34 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 			return "", fmt.Errorf("invalid operator %q (allowed: > >= < <= == !=)", op)
 		}
 
+		var bakedPromQL string
+		if base, bakedOp, _, ok := stripBakedThreshold(promQL); ok {
+			// The caller handed back an already baked expression (the shape
+			// read_alert_rule returns) instead of the bare metric expression.
+			// Recover the base instead of appending a second comparison.
+			if err := rejectChainedBase(base, promQL); err != nil {
+				return "", err
+			}
+			if !opProvided {
+				op = bakedOp
+			}
+			// base came out of an expression that was baked once already, so it
+			// is bracketed exactly as it needs to be — re-wrapping would only add
+			// redundant parens to what the user sees.
+			promQL = base
+			bakedPromQL = fmt.Sprintf("%s %s %v", base, op, threshold)
+		} else {
+			// Wrap the PromQL in parentheses when it contains operators, so e.g.
+			// `a/b > 0.5` parses as `(a/b) > 0.5`, not `a/(b > 0.5)`.
+			bakedPromQL = fmt.Sprintf("%s %s %v", wrapIfComplex(promQL), op, threshold)
+			if err := validateBakedPromQL(bakedPromQL); err != nil {
+				return "", err
+			}
+		}
+
 		simplePromQL = promQL
 		simpleOp = op
 		simpleThreshold = threshold
-
-		// Wrap the PromQL in parentheses when it contains operators, so e.g.
-		// `a/b > 0.5` parses as `(a/b) > 0.5`, not `a/(b > 0.5)`.
-		bakedPromQL := fmt.Sprintf("%s %s %v", wrapIfComplex(promQL), op, threshold)
-		if err := validateBakedPromQL(bakedPromQL); err != nil {
-			return "", err
-		}
 		ruleConfig = map[string]interface{}{
 			"queries": []map[string]interface{}{
 				{
@@ -622,14 +646,65 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 // in the alternation so ">=" wins over ">".
 var promThresholdRe = regexp.MustCompile(`^(.*?)\s*(>=|<=|==|!=|>|<)\s*(-?\d+(?:\.\d+)?)\s*$`)
 
-// validateBakedPromQL 出口硬防线：烘焙后的简单阈值 PromQL 在写库前必须通过
-// metricsql.Parse 语法校验，且顶层只允许一个比较操作符。
+// stripBakedThreshold 把「已经烘焙过的完整表达式」还原成裸 base。
 //
-// 背景：模型误把完整表达式（如 `metric{...} < 20000`）当作 prom_ql 传入时，
-// rebuildBakedPromQL 会把整条表达式当 base 再拼当前操作符/阈值，产出形如
-// `metric{...} < 20000 < 40000` 的嵌套比较——PromQL 非法，评估引擎无法正确
-// 触发。语法解析虽能拦住部分畸形输入，但 `a < b < c` 这类链式比较在语法层
-// 合法（左结合成 (a<b)<c），必须从 AST 层数比较符数量拦截。
+// 背景：read/list 类工具返回给调用方的是 rule_config.queries[i].prom_ql，也就是
+// 烘焙后**带阈值**的表达式；而 create/update 的 prom_ql 入参要的是**不带阈值**的
+// 裸查询。两者同名不同义，调用方（尤其是 LLM）把读到的值原样回填是最自然的行为，
+// 回填后就会被再拼一次操作符/阈值，产出 `metric{...} < 20000 < 40000` 这类链式
+// 比较——语法合法（左结合成 (a<b)<c）所以 Parse 拦不住，落库后规则永不触发。
+//
+// 与其拒绝，不如把这种输入还原回来：顶层是比较操作符、且右操作数是数字字面量时，
+// 判定为「已烘焙」，剥掉尾部的 `<op> <number>`。判定走 AST 保证准确，切分仍用
+// promThresholdRe 在原字符串上做，以保留调用方书写的原始格式。
+//
+// 剥离出的 op/threshold 供调用方在自己没有显式传值时沿用。
+func stripBakedThreshold(promQL string) (base, op string, threshold float64, ok bool) {
+	expr, err := metricsql.Parse(promQL)
+	if err != nil {
+		return "", "", 0, false
+	}
+	bop, isBinary := expr.(*metricsql.BinaryOpExpr)
+	if !isBinary || !isValidOperator(bop.Op) {
+		return "", "", 0, false
+	}
+	if _, isNumber := bop.Right.(*metricsql.NumberExpr); !isNumber {
+		return "", "", 0, false
+	}
+	m := promThresholdRe.FindStringSubmatch(strings.TrimSpace(promQL))
+	if m == nil {
+		return "", "", 0, false
+	}
+	v, err := strconv.ParseFloat(m[3], 64)
+	if err != nil {
+		return "", "", 0, false
+	}
+	return strings.TrimSpace(m[1]), m[2], v, true
+}
+
+// rejectChainedBase 拦住「剥了一层阈值之后 base 本身仍是链式比较」的输入，
+// 例如 `a < 1 < 2`——剥出的 base 是 `a < 1`，再拼阈值仍然是链式。
+//
+// 这里只沿左操作数链数比较符：链式比较是左结合的（`a<b<c` → `(a<b)<c`），多余的
+// 比较符必然落在左链上；而 `A / (B > 0)` 这类防除零守卫的比较符必然在右操作数或
+// 括号内子式里，是合法且常见的写法（内置集成模板中大量使用），不能计入。
+func rejectChainedBase(base, original string) error {
+	expr, err := metricsql.Parse(base)
+	if err != nil {
+		return nil // 交给后续烘焙结果的整体校验处理
+	}
+	if countLeftSpineCompareOps(expr) > 0 {
+		return fmt.Errorf("invalid prom_ql %q: it chains more than one comparison; pass prom_ql as the bare metric expression with operator/threshold separately, or pass rule_config_json to replace the whole config", original)
+	}
+	return nil
+}
+
+// validateBakedPromQL 兜底校验：只用于 prom_ql 剥不掉尾部阈值的情形（顶层是
+// and/or/unless 等，例如 `x > 5 and y > 3`）。这类表达式一旦被当作 base 再拼一次
+// 阈值就会变成链式比较，且多余的比较符会被 and/or 挤出左链，必须数全树才能发现。
+//
+// 只在调用方显式传了 prom_ql 时调用：未传 prom_ql 时 base 由库内表达式原样保留、
+// 只替换尾部数字，不可能新增比较符，再校验只会误伤存量的合法复合表达式。
 func validateBakedPromQL(baked string) error {
 	if strings.TrimSpace(baked) == "" {
 		return fmt.Errorf("empty promql after baking")
@@ -638,15 +713,13 @@ func validateBakedPromQL(baked string) error {
 	if err != nil {
 		return fmt.Errorf("invalid promql %q: %v", baked, err)
 	}
-	if n := countCompareOps(expr); n != 1 {
-		return fmt.Errorf("invalid promql %q: expected exactly one comparison operator, got %d; pass prom_ql as the bare metric expression and operator/threshold separately", baked, n)
+	if n := countCompareOps(expr); n >= 2 {
+		return fmt.Errorf("invalid promql %q: it chains %d comparison operators; pass prom_ql as the bare metric expression with operator/threshold separately, or pass rule_config_json to replace the whole config", baked, n)
 	}
 	return nil
 }
 
-// countCompareOps 深度统计表达式里比较操作符（> >= < <= == !=）的个数。
-// 简单阈值规则必须是 `metric <op> number` 的单层比较；大于 1 说明出现了
-// `... < 20000 < 40000` 这类嵌套比较，需要拒绝。
+// countCompareOps 统计整棵表达式树里比较操作符（> >= < <= == !=）的个数。
 func countCompareOps(e metricsql.Expr) int {
 	bop, ok := e.(*metricsql.BinaryOpExpr)
 	if !ok {
@@ -657,6 +730,20 @@ func countCompareOps(e metricsql.Expr) int {
 		n = 1
 	}
 	return n + countCompareOps(bop.Left) + countCompareOps(bop.Right)
+}
+
+// countLeftSpineCompareOps 只沿左操作数链统计比较操作符，右操作数与括号内的
+// 子式不计入——见 rejectChainedBase 对两种口径分工的说明。
+func countLeftSpineCompareOps(e metricsql.Expr) int {
+	bop, ok := e.(*metricsql.BinaryOpExpr)
+	if !ok {
+		return 0
+	}
+	n := 0
+	if isValidOperator(bop.Op) {
+		n = 1
+	}
+	return n + countLeftSpineCompareOps(bop.Left)
 }
 
 // rebuildBakedPromQL recomputes the baked "<base> <op> <num>" expression used
@@ -869,16 +956,51 @@ func updateAlertRule(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 			current = existing.PromQl // legacy rules store the expression at top level
 		}
 		thr, hasThr := getArgFloat(args, "threshold")
-		baked, err := rebuildBakedPromQL(current, getArgString(args, "prom_ql"), getArgString(args, "operator"), thr, hasThr)
-		if err != nil {
-			return "", err
+		newBase := getArgString(args, "prom_ql")
+		newOp := getArgString(args, "operator")
+
+		// The caller may hand back the baked expression it read from the rule
+		// instead of the bare metric expression; recover the base rather than
+		// appending a second comparison onto it.
+		var stripped bool
+		if base, bakedOp, bakedThr, ok := stripBakedThreshold(newBase); ok {
+			if err := rejectChainedBase(base, newBase); err != nil {
+				return "", err
+			}
+			stripped = true
+			if newOp == "" {
+				newOp = bakedOp
+			}
+			if !hasThr {
+				thr, hasThr = bakedThr, true
+			}
+			newBase = base
+		}
+
+		var baked string
+		var err error
+		if stripped {
+			// base was already bracketed when the expression was first baked, so
+			// keep it verbatim — rebuildBakedPromQL would re-wrap it and leave the
+			// user staring at redundant parens after a plain threshold change.
+			baked = fmt.Sprintf("%s %s %v", newBase, newOp, thr)
+		} else {
+			baked, err = rebuildBakedPromQL(current, newBase, newOp, thr, hasThr)
+			if err != nil {
+				return "", err
+			}
 		}
 		qs, ok := promQueries(updated.RuleConfigJson)
 		if !ok {
 			return "", fmt.Errorf("this rule's config is not a simple prometheus threshold rule; pass rule_config_json to replace the whole config instead")
 		}
-		if err := validateBakedPromQL(baked); err != nil {
-			return "", err
+		// Only guard the branch that can actually introduce a comparison: when
+		// prom_ql is absent the base is carried over from the stored expression
+		// with just its trailing number replaced.
+		if promQLProvided && !stripped {
+			if err := validateBakedPromQL(baked); err != nil {
+				return "", err
+			}
 		}
 		qs[0]["prom_ql"] = baked
 		updated.PromQl = ""
