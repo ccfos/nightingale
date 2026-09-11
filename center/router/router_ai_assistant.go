@@ -468,11 +468,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	inputs := buildAgentInputs(chatReq, userId, msg.ChatID, msg.SeqID)
 
 	// 孤儿确认注入（resumeOrphanInject）：用户明确回复确认意图，但上一条消息没有
-	// 待确认的提案——上一轮模型可能伪造了确认文案而未真正调用 update_* 工具，或
-	// 上一轮就是确认腿的回执轮。此时不能静默进入 agent 流程让模型自由发挥（它可
-	// 能谎报"已确认生效"），而是注入明确约束：没有待确认的提案，不得声称任何改动
-	// 已生效。判定口径见 shouldInjectOrphanResume——这里只认显式确认词，裸词应答
-	// 不算（普通对话轮没有确认上下文兜着）。
+	// 待确认的提案——上一轮模型可能伪造了确认文案而未真正调用写工具，或上一轮就是
+	// 确认腿的回执轮。此时不能静默进入 agent 流程让模型自由发挥（它可能谎报"已确认
+	// 生效"），而是把"无提案"这个事实喂给它，底线是不得声称任何改动已生效。
+	// 判定口径见 shouldInjectOrphanResume——这里只认显式确认词，裸词应答不算
+	// （普通对话轮没有确认上下文兜着）。注入是提示词层的 best-effort，不是确定性
+	// 拦截，文案为何分两支见 orphanResumeDirective。
 	// 透传字段 inputs["orphan_resume"] 让 aiagent 层/工具层可见该场景。
 	if shouldInjectOrphanResume(msg.SeqID, prevPending, msg.Query.Content, msg.Query.Action.Param) {
 		userPrompt += orphanResumeDirective(lang)

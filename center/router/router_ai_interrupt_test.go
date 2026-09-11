@@ -206,6 +206,27 @@ func TestOrphanResumeDirective(t *testing.T) {
 	}
 }
 
+// TestOrphanResumeDirectiveBranches：文案必须给模型留出"这是在确认我上一轮请他
+// 挑的选项"这一支并让它继续执行——命中注入的确认词同样是正常选项确认的应答词，
+// 一口咬定"没有待确认的修改"会把内置技能的候选确认流程（create-alert-rule
+// SKILL.md 的"ask the user to confirm"）打断。同时不得写死 update_*：误判时用户
+// 可能正在确认一次 create_*。
+func TestOrphanResumeDirectiveBranches(t *testing.T) {
+	zh := orphanResumeDirective("")
+	if !strings.Contains(zh, "请他选择/拍板") || !strings.Contains(zh, "直接调用对应的工具完成操作") {
+		t.Fatalf("zh directive must keep the choice-confirmation branch, got %q", zh)
+	}
+	en := orphanResumeDirective("en_US")
+	if !strings.Contains(en, "a choice you asked the user to make") || !strings.Contains(en, "call the appropriate tool to carry it out") {
+		t.Fatalf("en directive must keep the choice-confirmation branch, got %q", en)
+	}
+	for _, d := range []string{zh, en} {
+		if strings.Contains(d, "update_*") {
+			t.Fatalf("directive must not name a specific tool family, got %q", d)
+		}
+	}
+}
+
 // TestShouldInjectOrphanResume：孤儿确认判定只认显式确认词。approveExact 里的
 // 裸词（好/嗯/ok/yes…）在没有待确认提案的普通对话轮上是接受 GuidedFollowup
 // 建议或对回执的应答，按它们注入会把主路径打断成"当前没有待确认的修改"。

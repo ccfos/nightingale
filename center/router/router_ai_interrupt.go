@@ -354,14 +354,31 @@ func shouldInjectOrphanResume(seqID int64, prevPending *models.PendingInterrupt,
 	return orphanApproveExact[normalizeApprovalText(content)]
 }
 
-// orphanResumeDirective 生成"孤儿确认"注入文案：用户明确回复确认意图，但
-// 上一条消息没有待确认的提案（模型伪造提案文案而未调用工具、或提案已过期/
-// 被消费）。注入到 agent 的 userPrompt，强制模型不得在无提案时声称改动已
-// 生效——这是服务端硬防线，闭合 propose 腿，不依赖模型自觉。
+// orphanResumeDirective 生成"孤儿确认"注入文案：用户明确回复确认意图，但上一条
+// 消息没有待确认的提案（模型伪造提案文案而未调用工具、或提案已过期/被消费）。
+//
+// 这是**提示词层的 best-effort 约束**，不是确定性拦截：模型可以不遵守。真正不
+// 依赖模型自觉的门在工具侧——提案的 TTL / 单次消费 / 基线哈希（见
+// aiagent/tools/update_proposal.go 的 confirmUpdateGate），重放不会双写。这里只
+// 是把"无提案"这个事实喂给模型，压低它编造成功回执的概率。
+//
+// 文案分两支而不是一口咬定"没有待确认的修改"：命中本注入的词
+// （确认/同意/confirm…）同时也是正常对话里请用户拍板时的应答词——内置技能明确
+// 要求模型在候选不唯一时"list them in your reply and ask the user to confirm"
+// （create-alert-rule/SKILL.md），GuidedFollowup 又要求每轮结尾追问下一步，这些
+// 轮次都不产生 PendingInterrupt。词表无法区分"伪造的暂存"和"正常的选项确认"，
+// 所以把判别权交给看得见上文的模型，只把"不得声称已生效"设成两支共同的硬底线。
+// 同理不写死 update_*：误判时用户可能正在确认一次 create_*，指名工具族会误导。
 func orphanResumeDirective(lang string) string {
 	return resumeText(lang,
-		"\n\n【系统提示】用户回复了确认，但当前没有待确认的修改提案（上一轮可能只输出了确认文案而实际未调用修改工具，或提案已失效/已被处理）。请如实告知用户当前没有待确认的修改，不要声称任何改动已生效；如果用户仍要修改，请重新调用对应的 update_* 工具提交新提案。",
-		"\n\n[SYSTEM] The user replied with a confirmation, but there is no pending change proposal right now (the previous turn may only have printed the confirmation copy without actually calling the update tool, or the proposal expired / was already consumed). Tell the user honestly that there is no pending change; do NOT claim anything was applied. If a change is still wanted, call the update_* tool again to submit a fresh proposal.")
+		"\n\n【系统提示】用户回复了确认，但当前没有待确认的修改提案。请按以下口径处理：\n"+
+			"- 如果用户确认的是你上一轮请他选择/拍板的内容（业务组、数据源、库表、方案等），据此继续，直接调用对应的工具完成操作；\n"+
+			"- 如果用户确认的是你上一轮声称\"已暂存、待确认\"的改动，请如实告知用户当前没有待确认的修改（上一轮可能只输出了确认文案而实际未调用工具，或提案已失效/已被处理），并重新调用对应的工具提交新提案。\n"+
+			"无论哪种情况，都不要声称任何改动已生效——除非本轮的工具调用确实返回了成功结果。",
+		"\n\n[SYSTEM] The user replied with a confirmation, but there is no pending change proposal right now. Handle it as follows:\n"+
+			"- If the confirmation refers to a choice you asked the user to make in the previous turn (business group, datasource, database/table, a proposed plan), go ahead and call the appropriate tool to carry it out.\n"+
+			"- If the confirmation refers to a change you claimed was staged and awaiting approval, tell the user honestly that there is no pending change (the previous turn may only have printed the confirmation copy without actually calling the tool, or the proposal expired / was already consumed), then call the appropriate tool again to submit a fresh proposal.\n"+
+			"Either way, do NOT claim anything was applied unless a tool call in THIS turn actually returned success.")
 }
 
 // formatResumeResult 把工具 apply 腿的 JSON 结果渲染成给用户看的 markdown；
