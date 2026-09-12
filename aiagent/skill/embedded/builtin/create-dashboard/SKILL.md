@@ -79,7 +79,7 @@ When the same component often has both categraf and exporter templates, **prefer
 
 Use `create_dashboard`. **You only need to provide the panel title, type, and PromQL**; the tool automatically generates the full configuration (layout, datasource variables, styling, units, etc., are all handled automatically).
 
-> create_dashboard accepts the following set of **simplified fields**. Any field beyond these (thresholds, overrides, value mappings, heatmap/hexbin/tableNG/iframe, etc.) is **not supported** — they will be ignored even if written. When you need such rich configuration, switch to path A and import a template.
+> create_dashboard accepts the following set of **simplified fields**. Any field beyond these (overrides, value mappings, heatmap/hexbin/iframe, etc.) is **not supported** — they will be ignored even if written. When you need such rich configuration, switch to path A and import a template.
 
 ### Call example
 
@@ -112,7 +112,7 @@ Each panel requires 3 fields:
 | `stack` | Whether to stack (timeseries only) | false |
 | `description` | Panel description | none |
 
-Query field `instant`: for single-value panels such as stat/gauge/barGauge/pie/table, it is recommended to set `"instant": true` (instant query).
+Query field `instant`: for single-value panels such as stat/gauge/barGauge/pie, it is recommended to set `"instant": true` (instant query). tableNG always uses instant queries automatically.
 
 ### Supported panel types (only these 8)
 
@@ -123,7 +123,7 @@ Query field `instant`: for single-value panels such as stat/gauge/barGauge/pie/t
 | `gauge` | Gauge | 6×6 |
 | `barGauge` | Horizontal bar ranking | 8×8 |
 | `pie` | Pie chart | 6×6 |
-| `table` | Table | 12×10 |
+| `tableNG` | Table | 12×10 |
 | `text` | Text note (uses description as content) | 6×4 |
 | `row` | Grouping row (automatically full width) | 24×1 |
 
