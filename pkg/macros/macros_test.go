@@ -96,7 +96,7 @@ func TestExpandTimeFilter(t *testing.T) {
 func TestExpandTimeFilterLeavesUnknownDialectsAlone(t *testing.T) {
 	sql := "SELECT count(*) FROM t WHERE $__timeFilter(ts)"
 
-	for _, dsType := range []string{"elasticsearch", "pgsql", "ck", "iotdb", ""} {
+	for _, dsType := range []string{"elasticsearch", "pgsql", "ck", ""} {
 		got, err := ExpandTimeFilter(sql, 1784300000, 1784300060, dsType)
 		assert.NoError(t, err)
 		assert.Equal(t, sql, got, "datasource type %q", dsType)
@@ -108,6 +108,18 @@ func TestExpandTimeFilterLeavesUnknownDialectsAlone(t *testing.T) {
 	assert.Equal(t,
 		"SELECT count(*) FROM t WHERE (ts >= FROM_UNIXTIME(1784300000) AND ts < FROM_UNIXTIME(1784300060))",
 		got)
+}
+
+func TestExpandTimeFilterIoTDB(t *testing.T) {
+	sql := "SELECT time, metric_value FROM table1 WHERE $__timeFilter(time)"
+	got, err := ExpandTimeFilter(sql, 1784300000, 1784300060, "iotdb")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "SELECT time, metric_value FROM table1 WHERE (time >= 1784300000000 AND time < 1784300060000)"
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
 }
 
 // A caller that never resolved a time window would otherwise get a predicate

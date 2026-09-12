@@ -13,8 +13,10 @@ import (
 	"strings"
 	"time"
 
+	iotdbdatasource "github.com/ccfos/nightingale/v6/datasource/iotdb"
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
 	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
+	iotdbkit "github.com/ccfos/nightingale/v6/dskit/iotdb"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
@@ -388,7 +390,48 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 }
 
 func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
-	if ds.PluginType == models.PROMETHEUS || ds.PluginType == models.LOKI || ds.PluginType == models.TDENGINE || ds.PluginType == models.IOTDB {
+	if ds.PluginType == models.IOTDB {
+		settings := make(map[string]interface{}, len(ds.SettingsJson)+8)
+		for k, v := range ds.SettingsJson {
+			settings[k] = v
+		}
+		if strings.TrimSpace(ds.HTTPJson.Url) != "" {
+			settings["iotdb.addr"] = ds.HTTPJson.Url
+		}
+		if _, ok := settings["iotdb.timeout"]; !ok {
+			settings["iotdb.timeout"] = ds.HTTPJson.Timeout
+		}
+		if _, ok := settings["iotdb.dial_timeout"]; !ok {
+			settings["iotdb.dial_timeout"] = ds.HTTPJson.DialTimeout
+		}
+		if _, ok := settings["iotdb.max_idle_conns_per_host"]; !ok {
+			settings["iotdb.max_idle_conns_per_host"] = ds.HTTPJson.MaxIdleConnsPerHost
+		}
+		if _, ok := settings["iotdb.headers"]; !ok {
+			settings["iotdb.headers"] = ds.HTTPJson.Headers
+		}
+		if _, ok := settings["iotdb.skip_tls_verify"]; !ok {
+			settings["iotdb.skip_tls_verify"] = ds.HTTPJson.TLS.SkipTlsVerify
+		}
+		settings["iotdb.basic"] = iotdbkit.IotdbBasicAuth{
+			User: ds.AuthJson.BasicAuthUser, Password: ds.AuthJson.BasicAuthPassword,
+		}
+		plug, err := new(iotdbdatasource.IoTDB).Init(settings)
+		if err != nil {
+			return fmt.Errorf("invalid IoTDB configuration: %w", err)
+		}
+		iot := plug.(*iotdbdatasource.IoTDB)
+		if err := iot.Validate(c.Request.Context()); err != nil {
+			return err
+		}
+		if err := iot.InitClient(); err != nil {
+			return err
+		}
+		defer iot.Close()
+		return iot.TestRPC(c.Request.Context())
+	}
+
+	if ds.PluginType == models.PROMETHEUS || ds.PluginType == models.LOKI || ds.PluginType == models.TDENGINE {
 		if ds.HTTPJson.Url == "" {
 			return fmt.Errorf("url is empty")
 		}
