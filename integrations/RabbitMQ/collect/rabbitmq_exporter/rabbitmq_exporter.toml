@@ -1,0 +1,65 @@
+# rabbitmq_exporter 插件，在 categraf 内部集成了 kbudde/rabbitmq_exporter 的采集逻辑，
+# 走 RabbitMQ Management API（默认 15672 端口），指标名与 kbudde 版 exporter 保持兼容，
+# 适合原来就在用独立 rabbitmq_exporter 进程、希望看板和告警规则不改的场景。
+#
+# 前置条件：RabbitMQ 开启 management 插件
+#   rabbitmq-plugins enable rabbitmq_management
+#
+# rabbit_url 是必填项，保持注释状态时该插件不会启用，填上地址才开始采集。
+
+# # 采集间隔，不配置则沿用 categraf 全局 interval
+# interval = 15
+
+[[instances]]
+  ## RabbitMQ Management API 地址，必填
+  # rabbit_url = "http://127.0.0.1:15672"
+
+  ## Management API 的账号密码，不填默认 guest/guest
+  # rabbit_user = "guest"
+  # rabbit_pass = "guest"
+
+  ## 连接模式：direct 直连节点，loadbalancer 走负载均衡（前面挂了 LB 时用）
+  # rabbit_connection = "direct"
+
+  ## 启用哪些 exporter，默认 exchange、node、overview、queue
+  ## 可选：exchange、node、overview、queue、connections、federation、shovel、memory、aliveness
+  ## connections、memory、shovel 基数较高，生产环境按需开启
+  # enabled_exporters = ["exchange", "node", "overview", "queue"]
+
+  ## 请求超时时间，单位秒，默认 30
+  # timeout = 30
+
+  ## 正则过滤，控制采集哪些 exchange / queue / vhost
+  # skip_exchanges = "^$"
+  # include_exchanges = ".*"
+  # skip_queues = "^$"
+  # include_queues = ".*"
+  # skip_vhost = "^$"
+  # include_vhost = ".*"
+
+  ## 队列数超过这个值就跳过队列采集，0 表示不限制，队列特别多时用来兜底
+  # max_queues = 0
+
+  ## 排除上游的指标字段，例如 ["messages_ready", "mem_used"]
+  # exclude_metrics = []
+
+  ## 请求能力声明，除非确认 RabbitMQ 只接受 JSON，否则保持默认
+  # rabbit_capabilities = "no_sort,bert"
+
+  ## aliveness exporter 探测哪个 vhost
+  # aliveness_vhost = "/"
+
+  ## Management API 是 https 时按需配置
+  # use_tls = false
+  # tls_min_version = "1.2"
+  # tls_ca = "/etc/categraf/ca.pem"
+  # tls_cert = "/etc/categraf/cert.pem"
+  # tls_key = "/etc/categraf/key.pem"
+  ## 跳过证书链和域名校验
+  # insecure_skip_verify = false
+
+  ## 采集间隔 = 全局 interval * interval_times
+  # interval_times = 1
+
+  ## 附加标签，多实例时建议用 instance 区分
+  # labels = { instance = "rabbitmq-001" }
