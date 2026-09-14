@@ -211,6 +211,16 @@ func (rt *Router) refreshPost(c *gin.Context) {
 			return
 		}
 
+		// 账号已被禁用：顺手把这条会话从 redis 里清掉，并让刷新失败。
+		// 不然前端拿到接口 401 会来刷 token、刷成功又整页重载、再 401，
+		// 页面就一直白屏转圈，等不到登录页
+		if u.IsDisabled() {
+			rt.deleteAuth(c.Request.Context(), refreshUuid)
+			rt.deleteAuth(c.Request.Context(), strings.Split(refreshUuid, "++")[0])
+			ginx.NewRender(c, http.StatusUnauthorized).Message(models.ErrUserDisabled)
+			return
+		}
+
 		// Delete the previous Refresh Token
 		err = rt.deleteAuth(c.Request.Context(), refreshUuid)
 		if err != nil {
