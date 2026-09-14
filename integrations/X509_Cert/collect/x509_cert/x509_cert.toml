@@ -1,0 +1,45 @@
+# x509_cert 插件，探测证书的有效期与校验状态
+# 下面的配置项默认都是注释状态，按需打开并填写自己的目标
+
+## 采集间隔，不配置则沿用 categraf 全局 interval
+# interval = 15
+
+[[instances]]
+  ## 探测目标，支持这几种写法：
+  ##   tcp://host:port    直接与端口握手取证书，最通用
+  ##   https://host       HTTPS 站点，端口默认 443
+  ##   smtp://host:port   SMTP STARTTLS
+  ##   udp://host:port    DTLS
+  ##   本地证书文件路径，支持通配符；相对路径要加 file:// 前缀
+  # targets = ["tcp://example.org:443", "https://www.baidu.com",
+  #           "smtp://smtp.qq.com:25", "udp://127.0.0.1:4433",
+  #           "/etc/ssl/certs/example.pem", "/usr/local/openresty/nginx/conf/ssl/*.pem",
+  #           "file:///path/to/*.pem"]
+
+  ## 建立 SSL 连接的超时时间，默认 5s
+  # timeout = "5s"
+
+  ## SNI，即握手时向服务端声明的域名，一个 IP 上放多个域名证书时需要指定
+  ## 与下面的 tls_server_name 作用相同，二者只能配置一个
+  # server_name = "myhost.example.org"
+
+  ## 只上报叶子证书，忽略中间证书和根证书
+  # exclude_root_certs = false
+
+  ## 采集间隔 = 全局 interval * interval_times
+  # interval_times = 1
+
+  ## 附加标签，便于在告警规则和大盘里筛选
+  # labels = { env = "prod" }
+
+  ## 目标开启了双向认证、需要 categraf 出示客户端证书时才配置
+  # use_tls = false
+  # tls_ca = "/etc/categraf/ca.pem"
+  # tls_cert = "/etc/categraf/cert.pem"
+  # tls_key = "/etc/categraf/key.pem"
+  # tls_server_name = "myhost.example.org"
+  ## 跳过证书链和域名校验，自签证书场景下打开
+  # insecure_skip_verify = false
+
+  ## 通过代理访问目标，不配置则沿用系统代理设置
+  # http_proxy = "http://localhost:8888"
