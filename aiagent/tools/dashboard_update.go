@@ -596,7 +596,7 @@ func applyPanelPatches(lang string, configs map[string]interface{}, patches []pa
 // custom.content, so converting a query panel to/from either would strand its
 // config rather than re-render it.
 var updatablePanelTypes = map[string]bool{
-	"timeseries": true, "stat": true, "gauge": true, "barGauge": true, "pie": true, "table": true,
+	"timeseries": true, "stat": true, "gauge": true, "barGauge": true, "pie": true, "table": true, "tableNG": true,
 }
 
 // effectivePanelType is the type the FE actually renders a panel as. A panel
@@ -620,14 +620,14 @@ func checkPanelTypeChange(pm map[string]interface{}, label, newType string) erro
 	cur := effectivePanelType(pm)
 	switch {
 	case !updatablePanelTypes[newType]:
-		return fmt.Errorf("cannot change panel %q to type %q: supported chart types are timeseries / stat / gauge / barGauge / pie / table", label, newType)
+		return fmt.Errorf("cannot change panel %q to type %q: supported chart types are timeseries / stat / gauge / barGauge / pie / table / tableNG", label, newType)
 	case cur == "row":
 		return fmt.Errorf("cannot change type of %q: it is a layout row, not a chart", label)
 	case !updatablePanelTypes[cur]:
 		// changePanelType wholesale-replaces `custom`: on a text panel that
 		// would destroy custom.content (the authored markdown) with no way
 		// back, since non-chart types are not valid conversion targets.
-		return fmt.Errorf("cannot change type of %q: it is a %q panel whose config (e.g. a text panel's content) would be destroyed by the conversion; only chart panels (timeseries / stat / gauge / barGauge / pie / table) can switch types", label, cur)
+		return fmt.Errorf("cannot change type of %q: it is a %q panel whose config (e.g. a text panel's content) would be destroyed by the conversion; only chart panels (timeseries / stat / gauge / barGauge / pie / table / tableNG) can switch types", label, cur)
 	}
 	// Same stance as the queries path above: the defaults changePanelType
 	// writes (buildCustom/typeOptions) are designed and tested for Prometheus
@@ -654,9 +654,7 @@ func changePanelType(pm map[string]interface{}, newType string) {
 	}
 	delete(opts, "legend")
 	delete(opts, "tooltip")
-	for k, v := range typeOptions(newType) {
-		opts[k] = v
-	}
+	applyPanelTypeOptions(opts, newType)
 	pm["options"] = opts
 }
 
@@ -674,6 +672,21 @@ func clearTargetsInstant(pm map[string]interface{}) {
 	for _, t := range targets {
 		if tm, ok := t.(map[string]interface{}); ok {
 			delete(tm, "instant")
+		}
+	}
+}
+
+// forceTargetsInstant makes tableNG safe for large dashboard time ranges: its
+// renderer produces one row per data point, so range queries can explode into
+// an unusable number of rows.
+func forceTargetsInstant(pm map[string]interface{}) {
+	targets, ok := pm["targets"].([]interface{})
+	if !ok {
+		return
+	}
+	for _, t := range targets {
+		if tm, ok := t.(map[string]interface{}); ok {
+			tm["instant"] = true
 		}
 	}
 }
@@ -711,6 +724,9 @@ func applyPanelFields(lang string, pm map[string]interface{}, p panelPatch) []st
 	// targets are settled — not inside changePanelType.
 	if p.Type != nil && *p.Type == "timeseries" {
 		clearTargetsInstant(pm)
+	}
+	if p.Type != nil && *p.Type == "tableNG" {
+		forceTargetsInstant(pm)
 	}
 	return parts
 }
@@ -860,18 +876,11 @@ func cloneTarget(t map[string]interface{}) map[string]interface{} {
 	return out
 }
 
-// nextRefId returns the first refId not in used, preferring single letters
-// A..Z and falling back to Q0, Q1, ... once the alphabet is exhausted. The
+// nextRefId returns the first frontend-compatible refId not in used. The
 // caller is responsible for marking the returned id used.
 func nextRefId(used map[string]bool) string {
-	for i := 0; i < 26; i++ {
-		r := string(rune('A' + i))
-		if !used[r] {
-			return r
-		}
-	}
 	for i := 0; ; i++ {
-		r := fmt.Sprintf("Q%d", i)
+		r := refIDAt(i)
 		if !used[r] {
 			return r
 		}
