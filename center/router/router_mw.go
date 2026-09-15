@@ -242,11 +242,9 @@ func (rt *Router) User() gin.HandlerFunc {
 
 func (rt *Router) user() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 按认证得到的 userid 取账号，而不是按用户名：账号被删除后若重建了同名账号，
-		// 旧 token 里的用户名会指到新账号上
-		userid := c.MustGet("userid").(int64)
+		username := c.MustGet("username").(string)
 
-		user, err := models.UserGetById(rt.Ctx, userid)
+		user, err := models.UserGetByUsername(rt.Ctx, username)
 		if err != nil {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		}
