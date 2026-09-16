@@ -13,9 +13,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-// tsQueryParam detects whether a queryParam carries SQL + keys for timeseries.
-// The presence of both "sql" and a non-empty "valueKey" distinguishes
-// a timeseries SQL request from a DSL request or a log SQL request.
+// tsQueryParam is a ds-query timeseries request expressed as SQL; "sql" is what
+// tells it apart from a DSL request.
 type tsQueryParam struct {
 	Ref  string          `json:"ref" mapstructure:"ref"`
 	SQL  string          `json:"sql" mapstructure:"sql"`
@@ -24,18 +23,32 @@ type tsQueryParam struct {
 	To   int64           `json:"to" mapstructure:"to"`
 }
 
-// extractTSRequest checks if queryParam represents a SQL timeseries request.
-// It returns the parsed params and true only when both "sql" and "keys.valueKey"
-// are present, which is how ds-query callers signal a timeseries SQL query.
-func extractTSRequest(queryParam interface{}) (*tsQueryParam, bool) {
+// extractTSRequest parses queryParam as a SQL timeseries request. A non-empty
+// "sql" is the agreed marker for SQL mode; a payload without one is a DSL query
+// and comes back nil.
+//
+// A payload that does carry SQL but cannot be parsed is an error. Routing it to
+// the DSL path instead would run an altogether different query and report "no
+// data" — the caller would see an empty chart rather than its own mistake.
+func extractTSRequest(queryParam interface{}) (*tsQueryParam, error) {
+	var probe struct {
+		SQL string `mapstructure:"sql"`
+	}
+	if err := mapstructure.Decode(queryParam, &probe); err != nil {
+		return nil, fmt.Errorf("invalid ES query: %w", err)
+	}
+	if strings.TrimSpace(probe.SQL) == "" {
+		return nil, nil
+	}
+
 	var p tsQueryParam
 	if err := mapstructure.Decode(queryParam, &p); err != nil {
-		return nil, false
+		return nil, fmt.Errorf("invalid ES SQL timeseries query: %w", err)
 	}
-	if p.SQL == "" || strings.TrimSpace(p.Keys.ValueKey) == "" {
-		return nil, false
+	if strings.TrimSpace(p.Keys.ValueKey) == "" {
+		return nil, fmt.Errorf("ES SQL timeseries query needs keys.valueKey to name the value column")
 	}
-	return &p, true
+	return &p, nil
 }
 
 // queryDataViaSQL executes an ES SQL query and converts the flat result rows

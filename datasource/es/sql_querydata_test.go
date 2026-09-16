@@ -13,98 +13,85 @@ import (
 )
 
 func TestExtractTSRequest(t *testing.T) {
+	const sql = "SELECT COUNT(*) AS cnt, HISTOGRAM(\"@timestamp\", INTERVAL 1 MINUTE) AS t FROM \"logs\" GROUP BY t"
+
 	tests := []struct {
 		name    string
 		input   interface{}
-		wantOK  bool
+		wantErr string // substring; empty means no error
+		wantDSL bool   // routed to the DSL path
 		wantRef string
-		wantSQL string
 	}{
 		{
 			name: "valid timeseries request",
 			input: map[string]interface{}{
-				"ref": "A",
-				"sql": "SELECT COUNT(*) AS cnt, HISTOGRAM(\"@timestamp\", INTERVAL 1 MINUTE) AS t FROM \"logs\" GROUP BY t",
-				"keys": map[string]interface{}{
-					"valueKey": "cnt",
-					"labelKey": "",
-					"timeKey":  "t",
-				},
+				"ref":  "A",
+				"sql":  sql,
+				"keys": map[string]interface{}{"valueKey": "cnt", "timeKey": "t"},
 				"from": int64(1700000000),
 				"to":   int64(1700003600),
 			},
-			wantOK:  true,
 			wantRef: "A",
-			wantSQL: "SELECT COUNT(*) AS cnt, HISTOGRAM(\"@timestamp\", INTERVAL 1 MINUTE) AS t FROM \"logs\" GROUP BY t",
 		},
 		{
-			name: "missing sql",
+			name:    "DSL request has no sql",
+			input:   map[string]interface{}{"index": "logs-*", "date_field": "@timestamp"},
+			wantDSL: true,
+		},
+		{
+			name:    "blank sql is a DSL request",
+			input:   map[string]interface{}{"index": "logs-*", "sql": "   "},
+			wantDSL: true,
+		},
+		{
+			name:    "nil input",
+			input:   nil,
+			wantDSL: true,
+		},
+		{
+			name: "missing valueKey is reported, not routed to DSL",
 			input: map[string]interface{}{
-				"ref": "B",
-				"keys": map[string]interface{}{
-					"valueKey": "cnt",
-				},
+				"sql":  sql,
+				"keys": map[string]interface{}{"valueKey": "  "},
 			},
-			wantOK: false,
+			wantErr: "keys.valueKey",
 		},
 		{
-			name: "empty valueKey",
+			name: "unreadable time range is reported, not routed to DSL",
 			input: map[string]interface{}{
-				"sql": "SELECT 1",
-				"keys": map[string]interface{}{
-					"valueKey": "  ",
-					"labelKey": "",
-				},
+				"sql":  sql,
+				"keys": map[string]interface{}{"valueKey": "cnt"},
+				"from": "2026-09-16T00:00:00Z",
 			},
-			wantOK: false,
+			wantErr: "invalid ES SQL timeseries query",
 		},
 		{
-			name: "DSL request (no sql field)",
-			input: map[string]interface{}{
-				"index": "logs-*",
-				"filter": map[string]interface{}{
-					"match_all": map[string]interface{}{},
-				},
-			},
-			wantOK: false,
-		},
-		{
-			name:   "nil input",
-			input:  nil,
-			wantOK: false,
-		},
-		{
-			name:   "non-map input",
-			input:  "hello",
-			wantOK: false,
-		},
-		{
-			name: "valid without ref",
-			input: map[string]interface{}{
-				"sql": "SELECT AVG(duration) AS avg_dur FROM \"traces\"",
-				"keys": map[string]interface{}{
-					"valueKey": "avg_dur",
-					"labelKey": "service",
-					"timeKey":  "",
-				},
-				"from": int64(1700000000),
-				"to":   int64(1700003600),
-			},
-			wantOK:  true,
-			wantRef: "",
-			wantSQL: "SELECT AVG(duration) AS avg_dur FROM \"traces\"",
+			name:    "non-string sql is reported",
+			input:   map[string]interface{}{"sql": 123},
+			wantErr: "invalid ES query",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, ok := extractTSRequest(tc.input)
-			assert.Equal(t, tc.wantOK, ok)
-			if tc.wantOK {
-				require.NotNil(t, got)
-				assert.Equal(t, tc.wantRef, got.Ref)
-				assert.Equal(t, tc.wantSQL, got.SQL)
+			got, err := extractTSRequest(tc.input)
+
+			if tc.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantErr)
+				assert.Nil(t, got)
+				return
 			}
+
+			require.NoError(t, err)
+			if tc.wantDSL {
+				assert.Nil(t, got)
+				return
+			}
+
+			require.NotNil(t, got)
+			assert.Equal(t, sql, got.SQL)
+			assert.Equal(t, tc.wantRef, got.Ref)
 		})
 	}
 }
