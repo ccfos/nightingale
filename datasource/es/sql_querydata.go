@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
@@ -16,11 +17,38 @@ import (
 // tsQueryParam is a ds-query timeseries request expressed as SQL; "sql" is what
 // tells it apart from a DSL request.
 type tsQueryParam struct {
-	Ref  string          `json:"ref" mapstructure:"ref"`
-	SQL  string          `json:"sql" mapstructure:"sql"`
-	Keys datasource.Keys `json:"keys" mapstructure:"keys"`
-	From int64           `json:"from" mapstructure:"from"`
-	To   int64           `json:"to" mapstructure:"to"`
+	Ref      string          `json:"ref" mapstructure:"ref"`
+	SQL      string          `json:"sql" mapstructure:"sql"`
+	Keys     datasource.Keys `json:"keys" mapstructure:"keys"`
+	Interval int64           `json:"interval" mapstructure:"interval"`
+	From     int64           `json:"from" mapstructure:"from"`
+	To       int64           `json:"to" mapstructure:"to"`
+}
+
+const defaultIntervalSeconds = 60
+
+// resolveWindow returns the [from, to] the SQL macros expand against.
+//
+// Recording and alert rules send only interval, so a missing window falls back
+// to [now-interval, now] (minus the evaluator's delay) like Doris and the ES DSL
+// path do — otherwise $__timeFilter expands to a zero-width 1970 range and the
+// query silently returns no rows. An explicit window is passed through as-is,
+// unit included: only rule evaluators set delay, and they never send one.
+func (p *tsQueryParam) resolveWindow(ctx context.Context) (from, to int64) {
+	if p.From > 0 && p.To > 0 {
+		return p.From, p.To
+	}
+
+	interval := p.Interval
+	if interval <= 0 {
+		interval = defaultIntervalSeconds
+	}
+
+	to = time.Now().Unix()
+	if delay, ok := ctx.Value("delay").(int64); ok && delay > 0 {
+		to -= delay
+	}
+	return to - interval, to
 }
 
 // extractTSRequest parses queryParam as a SQL timeseries request. A non-empty
@@ -55,10 +83,11 @@ func extractTSRequest(queryParam interface{}) (*tsQueryParam, error) {
 // into the standard []models.DataResp timeseries format using
 // sqlbase.FormatMetricValues — the same path used by Doris, MySQL, etc.
 func (e *Elasticsearch) queryDataViaSQL(ctx context.Context, p *tsQueryParam) ([]models.DataResp, error) {
+	from, to := p.resolveWindow(ctx)
 	req := XPackSQLRequest{
 		Query:                   p.SQL,
-		From:                    p.From,
-		To:                      p.To,
+		From:                    from,
+		To:                      to,
 		FieldMultiValueLeniency: true,
 	}
 

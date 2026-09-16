@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,11 +18,12 @@ func TestExtractTSRequest(t *testing.T) {
 	const sql = "SELECT COUNT(*) AS cnt, HISTOGRAM(\"@timestamp\", INTERVAL 1 MINUTE) AS t FROM \"logs\" GROUP BY t"
 
 	tests := []struct {
-		name    string
-		input   interface{}
-		wantErr string // substring; empty means no error
-		wantDSL bool   // routed to the DSL path
-		wantRef string
+		name         string
+		input        interface{}
+		wantErr      string // substring; empty means no error
+		wantDSL      bool   // routed to the DSL path
+		wantRef      string
+		wantInterval int64
 	}{
 		{
 			name: "valid timeseries request",
@@ -32,6 +35,15 @@ func TestExtractTSRequest(t *testing.T) {
 				"to":   int64(1700003600),
 			},
 			wantRef: "A",
+		},
+		{
+			name: "rule query carries interval instead of from/to",
+			input: map[string]interface{}{
+				"sql":      sql,
+				"keys":     map[string]interface{}{"valueKey": "cnt"},
+				"interval": 600,
+			},
+			wantInterval: 600,
 		},
 		{
 			name:    "DSL request has no sql",
@@ -55,6 +67,15 @@ func TestExtractTSRequest(t *testing.T) {
 				"keys": map[string]interface{}{"valueKey": "  "},
 			},
 			wantErr: "keys.valueKey",
+		},
+		{
+			name: "unreadable interval is reported, not swallowed",
+			input: map[string]interface{}{
+				"sql":      sql,
+				"keys":     map[string]interface{}{"valueKey": "cnt"},
+				"interval": "1m",
+			},
+			wantErr: "invalid ES SQL timeseries query",
 		},
 		{
 			name: "unreadable time range is reported, not routed to DSL",
@@ -92,6 +113,7 @@ func TestExtractTSRequest(t *testing.T) {
 			require.NotNil(t, got)
 			assert.Equal(t, sql, got.SQL)
 			assert.Equal(t, tc.wantRef, got.Ref)
+			assert.Equal(t, tc.wantInterval, got.Interval)
 		})
 	}
 }
@@ -214,4 +236,112 @@ func TestQueryDataViaSQL_ESError(t *testing.T) {
 	_, err := escli.queryDataViaSQL(context.Background(), p)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "ES SQL query failed")
+}
+
+func TestResolveWindow(t *testing.T) {
+	now := time.Now().Unix()
+
+	tests := []struct {
+		name     string
+		param    tsQueryParam
+		delay    int64
+		wantFrom int64
+		wantTo   int64
+	}{
+		{
+			name:     "explicit window passes through",
+			param:    tsQueryParam{From: 1704067200, To: 1704070800},
+			wantFrom: 1704067200,
+			wantTo:   1704070800,
+		},
+		{
+			name:     "explicit millisecond window keeps its unit",
+			param:    tsQueryParam{From: 1704067200000, To: 1704070800000},
+			wantFrom: 1704067200000,
+			wantTo:   1704070800000,
+		},
+		{
+			name:     "no window falls back to interval",
+			param:    tsQueryParam{Interval: 600},
+			wantFrom: now - 600,
+			wantTo:   now,
+		},
+		{
+			name:     "no interval falls back to default",
+			param:    tsQueryParam{},
+			wantFrom: now - defaultIntervalSeconds,
+			wantTo:   now,
+		},
+		{
+			name:     "half window is treated as missing",
+			param:    tsQueryParam{From: 1704067200, Interval: 300},
+			wantFrom: now - 300,
+			wantTo:   now,
+		},
+		{
+			name:     "delay shifts the fallback window back",
+			param:    tsQueryParam{Interval: 600},
+			delay:    120,
+			wantFrom: now - 720,
+			wantTo:   now - 120,
+		},
+		{
+			name:     "delay leaves an explicit window alone",
+			param:    tsQueryParam{From: 1704067200, To: 1704070800},
+			delay:    120,
+			wantFrom: 1704067200,
+			wantTo:   1704070800,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			if tc.delay != 0 {
+				ctx = context.WithValue(ctx, "delay", tc.delay)
+			}
+
+			from, to := tc.param.resolveWindow(ctx)
+			assert.InDelta(t, tc.wantFrom, from, 5)
+			assert.InDelta(t, tc.wantTo, to, 5)
+		})
+	}
+}
+
+// Recording and alert rules send no from/to: the window must resolve to "now"
+// rather than the zero value, which $__timeFilter expands into an empty 1970
+// range that returns no rows and no error.
+func TestQueryDataViaSQL_RuleQueryGetsLiveWindow(t *testing.T) {
+	origMacro := macros.Macro
+	defer func() { macros.Macro = origMacro }()
+
+	var gotFrom, gotTo int64
+	macros.Macro = func(sql string, from, to int64, _ string) (string, error) {
+		gotFrom, gotTo = from, to
+		return sql, nil
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Elastic-Product", "Elasticsearch")
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"columns": []map[string]interface{}{{"name": "t", "type": "datetime"}, {"name": "cnt", "type": "long"}},
+			"rows":    [][]interface{}{},
+		})
+	}))
+	defer ts.Close()
+
+	escli := &Elasticsearch{Nodes: []string{ts.URL}, Version: "8.12.0"}
+	p := &tsQueryParam{
+		Ref:      "A",
+		SQL:      `SELECT HISTOGRAM("@timestamp", INTERVAL 1 MINUTE) AS t, COUNT(*) AS cnt FROM logs WHERE $__timeFilter("@timestamp") GROUP BY t`,
+		Keys:     datasource.Keys{ValueKey: "cnt", TimeKey: "t"},
+		Interval: 600,
+	}
+
+	_, err := escli.queryDataViaSQL(context.Background(), p)
+	require.NoError(t, err)
+
+	assert.InDelta(t, time.Now().Unix(), gotTo, 5)
+	assert.Equal(t, int64(600), gotTo-gotFrom)
 }
