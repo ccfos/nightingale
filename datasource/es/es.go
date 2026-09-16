@@ -225,7 +225,11 @@ func (e *Elasticsearch) MakeTSQuery(ctx context.Context, query interface{}, even
 }
 
 func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
-	if tsReq, ok := extractTSRequest(queryParam); ok {
+	tsReq, err := extractTSRequest(queryParam)
+	if err != nil {
+		return nil, err
+	}
+	if tsReq != nil {
 		return e.queryDataViaSQL(ctx, tsReq)
 	}
 
