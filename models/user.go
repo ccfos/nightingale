@@ -25,6 +25,7 @@ import (
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const (
@@ -66,6 +67,12 @@ const (
 	TelegramDomain   = "api.telegram.org"
 	IbexDomain       = "ibex"
 	DefaultDomain    = "default"
+
+	UserEnabled  = 0
+	UserDisabled = 1
+
+	// ErrUserDisabled 是账号被禁用时统一的登录/鉴权失败提示，前端据此提示用户联系管理员
+	ErrUserDisabled = "user is disabled, please contact the administrator"
 )
 
 var (
@@ -86,6 +93,7 @@ type User struct {
 	TeamsLst       []int64         `json:"-" gorm:"-"`     // 这个字段方便映射团队，前端和数据库都不用到
 	Contacts       ormx.JSONObj    `json:"contacts"`       // 内容为 map[string]string 结构
 	Maintainer     int             `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
+	Disabled       int             `json:"disabled"`       // 0:enabled 1:disabled
 	CreateAt       int64           `json:"create_at"`
 	CreateBy       string          `json:"create_by"`
 	UpdateAt       int64           `json:"update_at"`
@@ -127,6 +135,95 @@ func (u *User) IsAdmin() bool {
 		}
 	}
 	return false
+}
+
+// IsDisabled 账号被管理员冻结，禁止登录，也禁止用已签发的凭证访问接口
+func (u *User) IsDisabled() bool {
+	return u.Disabled == UserDisabled
+}
+
+// UpdateDisabled 只更新禁用状态，不碰角色、团队等其他字段，保证禁用可逆且无损。
+// 显式带上 id 条件：map 形式的 Updates 只从主键推导 where，收到零值 Id 会退化成
+// 全表更新，把所有人一起锁在门外
+func (u *User) UpdateDisabled(ctx *ctx.Context, disabled int, updateBy string) error {
+	if u.Id == 0 {
+		return errors.New("user id is required")
+	}
+
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		if disabled == UserDisabled {
+			if err := ensureEnabledAdminRemains(tx, u.Id, "disable"); err != nil {
+				return err
+			}
+		}
+
+		return tx.Model(&User{}).Where("id = ?", u.Id).Updates(map[string]interface{}{
+			"disabled":  disabled,
+			"update_at": time.Now().Unix(),
+			"update_by": updateBy,
+		}).Error
+	})
+}
+
+// ensureEnabledAdminRemains 拦住「把最后一个还能登录的管理员禁用/删除」——真发生了
+// 就没人进得了管理面，只能直接改库自救。
+// 禁用与删除共用这一套协议：先锁住全部管理员行，再在事务内重新读取目标状态并计数。
+// 少了这把锁，「禁用 alice」和「删除 root」并发执行时两边都会读到还剩 2 个可用管理员，
+// 各自提交后一个可用管理员都不剩。
+func ensureEnabledAdminRemains(tx *gorm.DB, id int64, action string) error {
+	if err := lockAdminUsers(tx); err != nil {
+		return err
+	}
+
+	var lst []*User
+	if err := tx.Where("id = ?", id).Find(&lst).Error; err != nil {
+		return err
+	}
+
+	if len(lst) == 0 {
+		// 目标已经不在了，交给后续语句处理
+		return nil
+	}
+
+	target := lst[0]
+	target.RolesLst = strings.Fields(target.Roles)
+
+	// 已被禁用的管理员本来就不算「可用管理员」，删掉它不会让谁失去管理入口
+	if !target.IsAdmin() || target.IsDisabled() {
+		return nil
+	}
+
+	count, err := countEnabledAdminsExcept(tx, id)
+	if err != nil {
+		return err
+	}
+
+	if count < 1 {
+		return fmt.Errorf("cannot %s the last enabled admin user", action)
+	}
+
+	return nil
+}
+
+// lockAdminUsers 在事务里锁住所有管理员行，使上面两条路径互相排队。
+// SQLite 的写事务本身就是排他的，也不认识 FOR UPDATE，跳过即可
+func lockAdminUsers(tx *gorm.DB) error {
+	if tx.Dialector.Name() == "sqlite" {
+		return nil
+	}
+
+	var ids []int64
+	return tx.Model(&User{}).Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("roles LIKE ?", "%"+AdminRole+"%").Pluck("id", &ids).Error
+}
+
+// countEnabledAdminsExcept 统计除 excludeId 外还有几个能登录的管理员，
+// 也就是「这次禁用/删除做完之后还剩几个人进得来」
+func countEnabledAdminsExcept(tx *gorm.DB, excludeId int64) (int64, error) {
+	var count int64
+	err := tx.Model(&User{}).Where("roles LIKE ?", "%"+AdminRole+"%").
+		Where("disabled = ?", UserEnabled).Where("id <> ?", excludeId).Count(&count).Error
+	return count, err
 }
 
 // has group permission
@@ -306,7 +403,9 @@ func (u *User) UpdateAllFields(ctx *ctx.Context) error {
 	}
 
 	u.UpdateAt = time.Now().Unix()
-	return DB(ctx).Model(u).Select("*").Updates(u).Error
+	// 禁用状态只由 UpdateDisabled 维护：资料表单是先读后写的，读到的是禁用前的快照，
+	// 中间管理员完成禁用的话，这里的整表写回会把 disabled 又刷成 0
+	return DB(ctx).Model(u).Select("*").Omit("disabled").Updates(u).Error
 }
 
 func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error {
@@ -338,6 +437,10 @@ func UpdateUserLastActiveTime(ctx *ctx.Context, userId int64, lastActiveTime int
 
 func (u *User) Del(ctx *ctx.Context) error {
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := ensureEnabledAdminRemains(tx, u.Id, "delete"); err != nil {
+			return err
+		}
+
 		if err := tx.Where("user_id=?", u.Id).Delete(&UserGroupMember{}).Error; err != nil {
 			return err
 		}
@@ -506,10 +609,21 @@ func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
 	return UserGet(ctx, "id=?", id)
 }
 
-func CountAdminUsers(ctx *ctx.Context) (int64, error) {
-	var count int64
-	err := DB(ctx).Model(&User{}).Where("roles LIKE ?", "%"+AdminRole+"%").Count(&count).Error
-	return count, err
+// UserStatusById 按认证得到的用户 id 取账号状态，供每个请求的鉴权环节做权威判断。
+// 账号不存在也要报出来：删号并不会清掉 Redis 里的会话，旧 token 还能用一段时间，
+// 期间若有人重建同名账号，放行就等于把旧凭证接到了新账号上
+func UserStatusById(ctx *ctx.Context, id int64) (exists bool, disabled bool, err error) {
+	var lst []int
+	err = DB(ctx).Model(&User{}).Where("id = ?", id).Pluck("disabled", &lst).Error
+	if err != nil {
+		return false, false, err
+	}
+
+	if len(lst) == 0 {
+		return false, false, nil
+	}
+
+	return true, lst[0] == UserDisabled, nil
 }
 
 func UsersGetByGroupIds(ctx *ctx.Context, groupIds []int64) ([]User, error) {
@@ -687,14 +801,22 @@ func PassLogin(ctx *ctx.Context, redis storage.Redis, username, pass string) (*U
 		return nil, fmt.Errorf("Username or password invalid")
 	}
 
+	if user.IsDisabled() {
+		return nil, errors.New(ErrUserDisabled)
+	}
+
 	return user, nil
 }
 
-func UserTotal(ctx *ctx.Context, query string, stime, etime int64) (num int64, err error) {
+func UserTotal(ctx *ctx.Context, query string, stime, etime int64, disabled *int) (num int64, err error) {
 	db := DB(ctx).Model(&User{})
 
 	if stime != 0 && etime != 0 {
 		db = db.Where("last_active_time between ? and ?", stime, etime)
+	}
+
+	if disabled != nil {
+		db = db.Where("disabled = ?", *disabled)
 	}
 
 	if query != "" {
@@ -753,12 +875,16 @@ func validateOrderField(order string, defaultField string) string {
 }
 
 func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime int64,
-	order string, desc bool, usernames, phones, emails []string) ([]User, error) {
+	order string, desc bool, usernames, phones, emails []string, disabled *int) ([]User, error) {
 
 	session := DB(ctx)
 
 	if stime != 0 && etime != 0 {
 		session = session.Where("last_active_time between ? and ?", stime, etime)
+	}
+
+	if disabled != nil {
+		session = session.Where("disabled = ?", *disabled)
 	}
 
 	order = validateOrderField(order, "username")
