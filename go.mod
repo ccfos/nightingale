@@ -14,6 +14,7 @@ require (
 	github.com/alibabacloud-go/openapi-util v0.1.1
 	github.com/alibabacloud-go/tea v1.3.13
 	github.com/alibabacloud-go/tea-utils/v2 v2.0.7
+	github.com/apache/iotdb-client-go/v2 v2.0.8
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -106,6 +107,7 @@ require (
 	github.com/alibabacloud-go/debug v1.0.1 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/aliyun/credentials-go v1.4.6 // indirect
+	github.com/apache/thrift v0.24.0 // indirect
 	github.com/aws/aws-sdk-go v1.48.14 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
@@ -230,5 +232,7 @@ require (
 )
 
 replace github.com/olivere/elastic/v7 => github.com/n9e/elastic/v7 v7.0.33-0.20251031061708-f480a2dfcfa7
+
+replace github.com/apache/iotdb-client-go/v2 => /Users/zxq/develop/iotdb-client-go
 
 // replace github.com/flashcatcloud/ibex => ../github.com/flashcatcloud/ibex
