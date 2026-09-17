@@ -314,6 +314,22 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 	}
 
+	if req.PluginType == models.MYSQL {
+		// Connectivity test: parse mysql.shards, open a real connection
+		// (NewConn pings internally) and run SHOW DATABASES to make sure the
+		// account can log in and query. A failure blocks the save, like the
+		// prometheus/clickhouse checks; force_save is unaffected (skipped in runCheck).
+		if runCheck("query", func() error {
+			if checkErr := checkMysqlDatasource(req.SettingsJson); checkErr != nil {
+				logger.Warningf("mysql connection failed: %v", checkErr)
+				return checkErr
+			}
+			return nil
+		}) {
+			return
+		}
+	}
+
 	if req.PluginType == models.ELASTICSEARCH {
 		skipAuto := false
 		// 若用户输入了version（version字符串存在且不为空），则不自动获取
