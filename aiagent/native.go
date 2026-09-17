@@ -33,7 +33,7 @@ func (a *Agent) executeNative(ctx context.Context, req *AgentRequest, rc *runCtx
 		return &AgentResponse{Error: fmt.Sprintf("failed to build user message: %v", err)}
 	}
 
-	systemPrompt := a.buildNativeSystemPrompt(rc)
+	systemPrompt := a.buildNativeSystemPrompt(rc) + pageActionSystemPrompt(req.PageActions)
 
 	// 历史投影：canonical transcript 不变，喂模型的是截断/收窗后的投影
 	// （见 context_manager.go）。
@@ -51,11 +51,16 @@ func (a *Agent) executeNative(ctx context.Context, req *AgentRequest, rc *runCtx
 	logger.Infof("[Agent] native starting: messages=%d, system_len=%d, user_len=%d, history=%d, tools=%d, streaming=%v",
 		len(messages), len(systemPrompt), len(userMessage), len(req.History), len(rc.tools), req.StreamChan != nil)
 
-	return a.runNativeLoop(ctx, req, messages, buildNativeToolDefs(rc.tools), &ToolLoopConfig{
+	tools := append([]AgentTool(nil), rc.tools...)
+	if len(req.PageActions) > 0 {
+		tools = appendToolIfAbsent(tools, pageActionTool(req.PageActions))
+	}
+
+	return a.runNativeLoop(ctx, req, messages, buildNativeToolDefs(tools), &ToolLoopConfig{
 		MaxIterations:        a.maxIterationsForSkills(rc),
 		TimeoutMessage:       "agent execution timeout",
 		LogPrefix:            "AI Agent(native)",
-		Tools:                rc.tools,
+		Tools:                tools,
 		StreamChan:           req.StreamChan,
 		RequestID:            requestID,
 		ExtractPartialResult: true,
@@ -126,7 +131,10 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 		for _, tc := range calls {
 			step := ToolStep{Thought: content, Action: tc.Name, ActionInput: tc.Arguments}
 
-			if streaming {
+			// page_action belongs to the browser. Unlike server-side tools it has
+			// no tool-progress card; the router renders its terminal response as a
+			// page_action block instead.
+			if streaming && tc.Name != pageActionToolName {
 				config.StreamChan <- &StreamChunk{
 					Type:      StreamTypeToolCall,
 					Content:   tc.Name,
@@ -134,6 +142,29 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 					RequestID: config.RequestID,
 					Timestamp: time.Now().UnixMilli(),
 				}
+			}
+
+			// page_action is the only tool whose execution belongs to the
+			// browser. Validate the chosen action and arguments. On success, emit
+			// a terminal command and deliberately omit it from the transcript so a
+			// later turn cannot replay a stale page operation. A failed call stays
+			// in the transcript as normal tool error evidence for the next retry.
+			if tc.Name == pageActionToolName {
+				call, err := resolvePageActionCall(req.PageActions, tc.ID, tc.Arguments)
+				if err != nil {
+					observation := "Error: " + err.Error()
+					messages = append(messages, ChatMessage{Role: llm.RoleTool, ToolCallID: tc.ID, ToolName: tc.Name, Content: observation})
+					turn = append(turn, ChatMessage{Role: llm.RoleTool, ToolCallID: tc.ID, ToolName: tc.Name, Content: observation})
+					// This browser-owned call has no matching tool-progress frame.
+					// Keep its error in the model transcript for a retry, but do not
+					// publish an orphan tool-result frame to stream consumers.
+					continue
+				}
+				emitPageAction(config, call)
+				resp.Content = ""
+				resp.Iterations = iteration + 1
+				resp.Success = true
+				return resp
 			}
 
 			var observation string
@@ -318,6 +349,10 @@ func applyFinishReason(content string, calls []llm.ToolCall, reason, lang string
 func buildNativeToolDefs(tools []AgentTool) []llm.ToolDefinition {
 	defs := make([]llm.ToolDefinition, 0, len(tools))
 	for _, t := range tools {
+		if t.InputSchema != nil {
+			defs = append(defs, llm.ToolDefinition{Name: t.Name, Description: t.Description, Parameters: t.InputSchema})
+			continue
+		}
 		props := map[string]interface{}{}
 		var required []string
 		for _, p := range t.Parameters {
