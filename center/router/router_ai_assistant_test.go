@@ -1,6 +1,51 @@
 package router
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+
+	"github.com/ccfos/nightingale/v6/models"
+)
+
+func TestPageActionResponseAndPageContext(t *testing.T) {
+	context := map[string]interface{}{}
+	mergePageContext(context, models.AssistantPageInfo{
+		Page:  "explorer",
+		URL:   "/metric/explorer",
+		Param: json.RawMessage(`{"page":"frontend-value","datasource_type":"prometheus","datasource_id":849,"query":"up","start":"now-1h","end":"now"}`),
+	})
+	if context["datasource_id"] != float64(849) || context["query"] != "up" || context["page_url"] != "/metric/explorer" || context["page"] != "frontend-value" {
+		t.Fatalf("page context = %#v", context)
+	}
+	resp := pageActionResponse(&models.AssistantPageActionCall{
+		CallID: "call-1", Name: "set_metric_query", Description: "Fill query.", Args: map[string]interface{}{"promql": "up"},
+	})
+	if resp.ContentType != models.ContentTypePageAction || !resp.IsFinish || !resp.IsFromAI {
+		t.Fatalf("response = %+v", resp)
+	}
+	call, ok := resp.Param.(*models.AssistantPageActionCall)
+	if !ok || call.CallID != "call-1" || call.Args["promql"] != "up" {
+		t.Fatalf("response param = %#v", resp.Param)
+	}
+}
+
+func TestHasExplorerQueryReference(t *testing.T) {
+	if !hasExplorerQueryReference(models.AssistantMessageQuery{References: []models.AssistantMessageReference{{Type: "skill", Skill: models.AssistantSkillReference{Name: "explorer-query"}}}}) {
+		t.Fatal("explorer-query reference was not found")
+	}
+	if hasExplorerQueryReference(models.AssistantMessageQuery{References: []models.AssistantMessageReference{{Type: "skill", Skill: models.AssistantSkillReference{Name: "other"}}}}) {
+		t.Fatal("unrelated reference was treated as explorer-query")
+	}
+}
+
+func TestPageActionTerminalContent(t *testing.T) {
+	if got := pageActionTerminalContent(nil, "模型前言"); got != "模型前言" {
+		t.Fatalf("non-page-action content = %q", got)
+	}
+	if got := pageActionTerminalContent(&models.AssistantPageActionCall{}, "模型前言"); got != "" {
+		t.Fatalf("page-action terminal content = %q, want empty", got)
+	}
+}
 
 func TestParseChatIDFromStreamID(t *testing.T) {
 	cases := []struct {
