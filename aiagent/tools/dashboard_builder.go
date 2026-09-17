@@ -114,7 +114,7 @@ const datasourceVarRef = "${" + datasourceVarName + "}"
 // to it — users can switch datasources from the header after opening.
 func buildConfigs(datasourceId int64, variables []VariableSpec, panels []PanelSpec) (string, error) {
 	configs := map[string]interface{}{
-		"version":      "3.4.0",
+		"version":      n9eVersion,
 		"graphTooltip": "sharedCrosshair",
 		"graphZoom":    "default",
 		"links":        []interface{}{},
@@ -122,7 +122,11 @@ func buildConfigs(datasourceId int64, variables []VariableSpec, panels []PanelSp
 
 	// 构建变量：datasource 变量置顶，后跟用户声明的 query 变量
 	vars := make([]interface{}, 0, len(variables)+1)
-	vars = append(vars, buildDatasourceVariable())
+	datasourceVar := buildDatasourceVariable()
+	if datasourceId > 0 {
+		datasourceVar["defaultValue"] = datasourceId
+	}
+	vars = append(vars, datasourceVar)
 	for _, v := range variables {
 		vars = append(vars, buildVariable(v))
 	}
@@ -132,6 +136,7 @@ func buildConfigs(datasourceId int64, variables []VariableSpec, panels []PanelSp
 	builtPanels := make([]interface{}, 0, len(panels))
 	x, y, rowMaxH := 0, 0, 0
 	for i, spec := range panels {
+		spec.Type = canonicalPanelType(spec.Type)
 		w, h := defaultSize(spec.Type, spec.W, spec.H)
 
 		// row 类型固定全宽
@@ -162,11 +167,6 @@ func buildConfigs(datasourceId int64, variables []VariableSpec, panels []PanelSp
 		}
 	}
 	configs["panels"] = builtPanels
-
-	// datasourceId is intentionally unused in the marshalled payload —
-	// panels reference ${prom} instead. Touch it to keep the parameter
-	// surface stable for future wiring (e.g. defaultValue).
-	_ = datasourceId
 
 	result, err := json.Marshal(configs)
 	if err != nil {
@@ -224,21 +224,20 @@ func buildPanel(spec PanelSpec, index, x, y, w, h int) map[string]interface{} {
 	// datasourceValue uses the "${prom}" template variable so panels
 	// inherit whichever datasource the user picks in the header dropdown.
 	panel := map[string]interface{}{
-		"version":           "3.4.0",
-		"id":                panelId,
-		"type":              spec.Type,
-		"name":              spec.Name,
-		"datasourceCate":    "prometheus",
-		"datasourceValue":   datasourceVarRef,
-		"layout":            map[string]interface{}{"x": x, "y": y, "w": w, "h": h, "i": panelId, "isResizable": true},
-		"targets":           buildTargets(spec.Queries),
-		"options":           buildOptions(spec),
-		"custom":            buildCustom(spec),
-		"overrides":         []interface{}{},
-		"transformationsNG": []interface{}{},
+		"version":         n9eVersion,
+		"id":              panelId,
+		"type":            spec.Type,
+		"name":            spec.Name,
+		"datasourceCate":  "prometheus",
+		"datasourceValue": datasourceVarRef,
+		"layout":          map[string]interface{}{"x": x, "y": y, "w": w, "h": h, "i": panelId},
+		"targets":         buildTargets(spec.Queries, spec.Type == "tableNG"),
+		"options":         buildOptions(spec),
+		"custom":          buildCustom(spec),
+		"overrides":       []interface{}{},
 	}
 
-	if spec.Desc != "" {
+	if spec.Type != "text" {
 		panel["description"] = spec.Desc
 	}
 
@@ -248,11 +247,11 @@ func buildPanel(spec PanelSpec, index, x, y, w, h int) map[string]interface{} {
 func buildRowPanel(spec PanelSpec, index, y int) map[string]interface{} {
 	panelId := fmt.Sprintf("panel-%d", index)
 	return map[string]interface{}{
-		"version":   "3.4.0",
+		"version":   n9eVersion,
 		"id":        panelId,
 		"type":      "row",
 		"name":      spec.Name,
-		"layout":    map[string]interface{}{"x": 0, "y": y, "w": 24, "h": 1, "i": panelId, "isResizable": false},
+		"layout":    map[string]interface{}{"x": 0, "y": y, "w": 24, "h": 1, "i": panelId},
 		"targets":   []interface{}{},
 		"options":   map[string]interface{}{},
 		"custom":    map[string]interface{}{},
@@ -260,11 +259,11 @@ func buildRowPanel(spec PanelSpec, index, y int) map[string]interface{} {
 	}
 }
 
-func buildTargets(queries []QuerySpec) []interface{} {
+func buildTargets(queries []QuerySpec, forceInstant bool) []interface{} {
 	targets := make([]interface{}, 0, len(queries))
 	for i, q := range queries {
 		t := map[string]interface{}{
-			"refId": string(rune('A' + i)),
+			"refId": refIDAt(i),
 			"expr":  q.PromQL,
 		}
 		if q.Legend != "" {
@@ -275,7 +274,9 @@ func buildTargets(queries []QuerySpec) []interface{} {
 			// the read side (which still tolerates historical legendFormat).
 			t["legend"] = q.Legend
 		}
-		if q.Instant != nil {
+		if forceInstant {
+			t["instant"] = true
+		} else if q.Instant != nil {
 			t["instant"] = *q.Instant
 		}
 		if q.Step != nil {
@@ -290,20 +291,15 @@ func buildTargets(queries []QuerySpec) []interface{} {
 }
 
 func buildOptions(spec PanelSpec) map[string]interface{} {
-	opts := map[string]interface{}{}
-
 	// standardOptions. Panels are emitted at schema version 3.4.0, and the FE
 	// renderer/editor reads the unit from "unit" (the legacy "util" key is only
 	// migrated to "unit" for panels older than 3.3.0), so we must write "unit".
+	standardOptions := map[string]interface{}{}
 	if spec.Unit != "" {
-		opts["standardOptions"] = map[string]interface{}{"unit": spec.Unit}
-	} else {
-		opts["standardOptions"] = map[string]interface{}{}
+		standardOptions["unit"] = spec.Unit
 	}
-
-	for k, v := range typeOptions(spec.Type) {
-		opts[k] = v
-	}
+	opts := map[string]interface{}{"standardOptions": standardOptions}
+	applyPanelTypeOptions(opts, spec.Type)
 
 	return opts
 }
@@ -318,17 +314,64 @@ func typeOptions(panelType string) map[string]interface{} {
 			"legend":  map[string]interface{}{"displayMode": "table", "placement": "bottom"},
 			"tooltip": map[string]interface{}{"mode": "all", "sort": "desc"},
 		}
-	case "stat":
-		return map[string]interface{}{
-			"legend":  map[string]interface{}{"displayMode": "hidden"},
-			"tooltip": map[string]interface{}{"mode": "single"},
-		}
-	case "gauge", "barGauge":
-		return map[string]interface{}{
-			"legend": map[string]interface{}{"displayMode": "hidden"},
-		}
 	}
 	return map[string]interface{}{}
+}
+
+func canonicalPanelType(panelType string) string {
+	if panelType == "table" {
+		return "tableNG"
+	}
+	return panelType
+}
+
+func baseThresholds() map[string]interface{} {
+	return map[string]interface{}{
+		"mode": "absolute",
+		"steps": []interface{}{map[string]interface{}{
+			"color": "rgb(44, 157, 61)", "value": nil, "type": "base",
+		}},
+	}
+}
+
+func gaugeThresholds() map[string]interface{} {
+	return map[string]interface{}{
+		"mode": "absolute",
+		"steps": []interface{}{
+			map[string]interface{}{"color": "#3FC453", "value": nil, "type": "base"},
+			map[string]interface{}{"color": "#FF9919", "value": 60},
+			map[string]interface{}{"color": "#FF656B", "value": 80},
+		},
+	}
+}
+
+// applyPanelTypeOptions writes the rendering defaults shared by creation and
+// visualization changes while preserving type-agnostic standard options (unit,
+// decimals, mappings, and so on) already authored on a panel.
+func applyPanelTypeOptions(opts map[string]interface{}, panelType string) {
+	if panelType == "gauge" {
+		opts["thresholds"] = gaugeThresholds()
+	} else {
+		opts["thresholds"] = baseThresholds()
+	}
+	opts["thresholdsStyle"] = map[string]interface{}{"mode": "dashed"}
+
+	standardOptions, _ := opts["standardOptions"].(map[string]interface{})
+	if standardOptions == nil {
+		standardOptions = map[string]interface{}{}
+		opts["standardOptions"] = standardOptions
+	}
+	if panelType == "gauge" {
+		standardOptions["min"] = 0
+		standardOptions["max"] = 100
+	} else {
+		delete(standardOptions, "min")
+		delete(standardOptions, "max")
+	}
+
+	for k, v := range typeOptions(panelType) {
+		opts[k] = v
+	}
 }
 
 func buildCustom(spec PanelSpec) map[string]interface{} {
@@ -338,9 +381,12 @@ func buildCustom(spec PanelSpec) map[string]interface{} {
 			"drawStyle":         "lines",
 			"lineInterpolation": "smooth",
 			"lineWidth":         2,
-			"fillOpacity":       0.2,
+			"fillOpacity":       0.01,
 			"gradientMode":      "none",
 			"showPoints":        "none",
+			"pointSize":         5,
+			"barAlignment":      0,
+			"barWidthFactor":    0.6,
 			"scaleDistribution": map[string]interface{}{"type": "linear"},
 		}
 		if spec.Stack {
@@ -351,34 +397,42 @@ func buildCustom(spec PanelSpec) map[string]interface{} {
 		return c
 	case "stat":
 		return map[string]interface{}{
-			"textMode":  "valueAndName",
-			"colorMode": "value",
-			"calc":      "lastNotNull",
-			"colSpan":   1,
-			"textSize":  map[string]interface{}{},
+			"textMode":    "valueAndName",
+			"colorMode":   "value",
+			"calc":        "lastNotNull",
+			"colSpan":     0,
+			"textSize":    map[string]interface{}{},
+			"valueField":  "Value",
+			"orientation": "auto",
 		}
 	case "gauge":
 		return map[string]interface{}{
-			"calc":     "lastNotNull",
-			"min":      0,
-			"max":      100,
-			"textSize": map[string]interface{}{},
+			"calc":       "lastNotNull",
+			"textMode":   "valueAndName",
+			"valueField": "Value",
 		}
 	case "barGauge":
 		return map[string]interface{}{
-			"calc":        "lastNotNull",
-			"displayMode": "basic",
-			"orientation": "horizontal",
-			"textSize":    map[string]interface{}{},
+			"calc":          "lastNotNull",
+			"displayMode":   "basic",
+			"valueField":    "Value",
+			"sortOrder":     "desc",
+			"otherPosition": "none",
+			"valueMode":     "color",
 		}
 	case "pie":
 		return map[string]interface{}{
-			"calc": "lastNotNull",
+			"calc":      "lastNotNull",
+			"textMode":  "valueAndName",
+			"colorMode": "value",
+			"textSize":  map[string]interface{}{},
 			// FE reads custom.legengPosition (note the spelling — types.ts /
 			// Renderer/Pie/index.tsx); "legentPosition" silently dropped the
-			// intended bottom placement on both created and type-converted pies.
-			"legengPosition": "bottom",
+			// configured placement on both created and type-converted pies.
+			"legengPosition": "right",
 			"detailUrl":      "",
+			"valueField":     "Value",
+			"detailName":     "",
 		}
 	case "table":
 		return map[string]interface{}{
@@ -386,10 +440,24 @@ func buildCustom(spec PanelSpec) map[string]interface{} {
 			"showHeader":  true,
 			"calc":        "lastNotNull",
 			"colorMode":   "value",
+			"tableLayout": "auto",
+			"nowrap":      true,
+		}
+	case "tableNG":
+		return map[string]interface{}{
+			"showHeader":  true,
+			"filterable":  false,
+			"cellOptions": map[string]interface{}{"type": "none"},
 		}
 	case "text":
 		return map[string]interface{}{
-			"content": spec.Desc,
+			"content":        spec.Desc,
+			"textSize":       12,
+			"textColor":      "#000000",
+			"textDarkColor":  "#FFFFFF",
+			"bgColor":        "rgba(0, 0, 0, 0)",
+			"justifyContent": "center",
+			"alignItems":     "center",
 		}
 	default:
 		return map[string]interface{}{}
@@ -407,15 +475,22 @@ func defaultSize(panelType string, specW, specH int) (int, int) {
 	case "stat":
 		w, h = 6, 4
 	case "gauge":
-		w, h = 6, 6
+		// Keep the first-row 12+6+6 composition aligned. ReactGridLayout
+		// vertically compacts panels on load; a shorter gauge would otherwise
+		// let a later half-width panel slide up and break the intended row.
+		w, h = 6, 8
 	case "barGauge":
-		w, h = 8, 8
+		// Pair barGauge and pie as two equal half-width panels. Besides being
+		// easier to scan, this leaves no horizontal hole for the next panel to
+		// be vertically compacted into by the frontend grid.
+		w, h = 12, 8
 	case "pie":
-		w, h = 6, 6
-	case "table":
+		w, h = 12, 8
+	case "table", "tableNG":
 		w, h = 12, 10
 	case "text":
-		w, h = 6, 4
+		// Text commonly accompanies a table or another half-width panel.
+		w, h = 12, 4
 	case "row":
 		w, h = 24, 1
 	}
