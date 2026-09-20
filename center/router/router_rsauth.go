@@ -286,10 +286,17 @@ func (rt *Router) authByIdPAccessToken(ctx context.Context, rawToken string) (*m
 		return nil, err
 	}
 
+	joinedTeams := make([]int64, 0, len(defaultTeams))
 	for _, gid := range defaultTeams {
 		if err := models.UserGroupMemberAdd(rt.Ctx, gid, user.Id); err != nil {
 			logger.Warningf("[RS] add user %s to group %d failed: %v", user.Username, gid, err)
+			continue
 		}
+		joinedTeams = append(joinedTeams, gid)
+	}
+
+	if err := models.UserGroupTouch(rt.Ctx, joinedTeams...); err != nil {
+		logger.Warningf("[RS] touch user groups %v failed: %v", joinedTeams, err)
 	}
 
 	return user, nil
