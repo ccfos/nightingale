@@ -24,7 +24,7 @@ This mechanism sits **alongside** the existing `X-User-Token` (PAT) and self-sig
   4. the **expiry** `exp`.
   (What the `oauth2` provider validates, and whether it checks `aud` at all, depends on `RSVerifyMethod` — see 2.4.)
 - **User mapping**: the username claim is taken from the IdP response (reusing `Attributes.Username` from the corresponding login configuration; `sub` by default, and it can be changed to `preferred_username`) and mapped to a local user.
-- **Just-in-time user creation (JIT)**: when no such user exists, one is created following the same rules as the corresponding login configuration. For `oidc`: `Belong=oidc`, roles from the OIDC `DefaultRoles`, teams from the OIDC `DefaultTeams`. For `oauth2`: `Belong=oauth2`, roles from the OAuth2 `DefaultRoles` (the OAuth2 configuration has no default teams). Existing users are never created twice.
+- **Just-in-time user creation (JIT)**: when no such user exists, one is created following the same rules as the corresponding login configuration. For `oidc`: `Belong=oidc`, roles from the OIDC `DefaultRoles`, teams from the OIDC `DefaultTeams`. For `oauth2`: `Belong=oauth2`, roles from the OAuth2 `DefaultRoles`, teams from the OAuth2 `DefaultTeams`. Existing users are never created twice.
 - **Permissions**: the user's own roles inside n9e apply. This release does not add any extra authorization based on OAuth scopes.
 
 ## 2. Configuration (in two places)
@@ -104,7 +104,8 @@ SsoAddr = 'https://sso.example.com/oauth2/authorize'   # advertised as authoriza
 UserInfoAddr = 'https://api.example.com/api/v1/user/info'
 ClientId = '<client-id>'
 ClientSecret = '<client-secret>'                       # used for Basic Auth against the introspection endpoint
-DefaultRoles = ['Standard']                            # default roles for JIT-created users (OAuth2 has no default teams)
+DefaultRoles = ['Standard']                            # default roles for JIT-created users
+DefaultTeams = [2]                                     # default team IDs a JIT-created user joins (may be empty)
 # Validation method: empty (default) / userinfo, or introspect
 RSVerifyMethod = ''
 IntrospectAddr = ''                                    # required when RSVerifyMethod=introspect (RFC 7662 introspection endpoint)
@@ -184,7 +185,7 @@ To reduce manual configuration on the caller's side, when RS is enabled (`rsAuth
 | Every OAuth token gets a 401 | `RSAuth.Enable=false` / `Audience` is empty / the corresponding provider is not enabled (OIDC or OAuth2 `Enable=false`) / `oauth2`+`introspect` is missing `IntrospectAddr` / `oauth2`+`userinfo` is missing `UserInfoAddr`. The startup log prints a matching warning |
 | A valid token still gets a 401 | (oidc) `aud` does not contain `Audience`, `iss` does not match the `SsoAddr` issuer, the token is expired, or the JWKS cannot be fetched; (oauth2 introspect) `active=false`, `aud` does not contain `Audience`, the introspection endpoint is unreachable, or Basic Auth failed; (oauth2 userinfo) UserInfo returned a non-200 |
 | A user is created but with the wrong username | `Attributes.Username` in the corresponding login configuration points at the wrong claim (for example `sub` was configured where `preferred_username` was needed) |
-| No user is created automatically, or the user joins no team | `DefaultRoles` / `DefaultTeams` are not configured (OAuth2 has no default teams) |
+| No user is created automatically, or the user joins no team | `DefaultRoles` / `DefaultTeams` are not configured |
 
 Enabling debug logs shows the reason for a validation failure: `[RS] verify access token failed: <err>`.
 

@@ -417,15 +417,24 @@ func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error
 }
 
 func (u *User) AddToUserGroups(ctx *ctx.Context, userGroupIds []int64) error {
+	var addErr error
 
-	count := len(userGroupIds)
-	for i := 0; i < count; i++ {
-		err := UserGroupMemberAdd(ctx, userGroupIds[i], u.Id)
-		if err != nil {
-			return err
+	joined := make([]int64, 0, len(userGroupIds))
+	for _, gid := range userGroupIds {
+		if err := UserGroupMemberAdd(ctx, gid, u.Id); err != nil {
+			addErr = err
+			break
 		}
+		joined = append(joined, gid)
 	}
-	return nil
+
+	// Touch whatever was joined, including on a partial failure, so the cache
+	// does not keep serving a stale member list for those groups.
+	if err := UserGroupTouch(ctx, joined...); err != nil && addErr == nil {
+		addErr = err
+	}
+
+	return addErr
 }
 
 func UpdateUserLastActiveTime(ctx *ctx.Context, userId int64, lastActiveTime int64) error {

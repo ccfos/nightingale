@@ -42,6 +42,9 @@ type SsoClient struct {
 	UserinfoIsArray bool
 	UserinfoPrefix  string
 	DefaultRoles    []string
+	// DefaultTeams lists the user group ids a user created by OAuth2 login is
+	// added to on first login.
+	DefaultTeams []int64
 	// RSVerifyMethod selects how this provider verifies a2a/mcp Resource Server
 	// access tokens: "" (default) or "userinfo" validates the token via the
 	// UserInfo endpoint and does NOT bind audience (any valid token from this
@@ -93,6 +96,7 @@ type Config struct {
 		Email    string
 	}
 	DefaultRoles           []string
+	DefaultTeams           []int64
 	UserinfoIsArray        bool
 	UserinfoPrefix         string
 	Scopes                 []string
@@ -133,6 +137,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.UserinfoIsArray = cf.UserinfoIsArray
 	s.UserinfoPrefix = cf.UserinfoPrefix
 	s.DefaultRoles = cf.DefaultRoles
+	s.DefaultTeams = cf.DefaultTeams
 	s.RSVerifyMethod = cf.RSVerifyMethod
 	s.IntrospectAddr = cf.IntrospectAddr
 	s.IntrospectCacheSeconds = cf.IntrospectCacheSeconds
@@ -169,6 +174,18 @@ func (s *SsoClient) GetDisplayName() string {
 	}
 
 	return s.DisplayName
+}
+
+// GetDefaultTeams returns the user group ids newly created users are added to.
+// Reload rewrites the field every few seconds, so read it under the lock.
+func (s *SsoClient) GetDefaultTeams() []int64 {
+	s.RLock()
+	defer s.RUnlock()
+	if !s.Enable {
+		return nil
+	}
+
+	return s.DefaultTeams
 }
 
 func (s *SsoClient) GetSsoLogoutAddr() string {
