@@ -255,6 +255,7 @@ func (rt *Router) authByIdPAccessToken(ctx context.Context, rawToken string) (*m
 		username, nickname, phone, email = out.Username, out.Nickname, out.Phone, out.Email
 		source = "oauth2"
 		defaultRoles = rt.Sso.OAuth2.DefaultRoles
+		defaultTeams = rt.Sso.OAuth2.GetDefaultTeams()
 	default:
 		out, err := rt.Sso.OIDC.VerifyAccessToken(ctx, rawToken, rt.HTTP.RSAuth.Audience)
 		if err != nil {

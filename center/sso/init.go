@@ -55,6 +55,8 @@ CoverRoles = false
 TLS = false
 StartTLS = true
 DefaultRoles = ['Standard']
+# team (user group) ids assigned by default, e.g. [1, 2]
+DefaultTeams = []
 
 [Attributes]
 Username = 'uid'
@@ -76,6 +78,8 @@ ClientId = ''
 ClientSecret = ''
 CoverAttributes = true
 DefaultRoles = ['Standard']
+# team (user group) ids assigned by default, e.g. [1, 2]
+DefaultTeams = []
 UserinfoIsArray = false
 UserinfoPrefix = 'data'
 Scopes = ['profile', 'email', 'phone']
@@ -125,6 +129,8 @@ ClientId = ''
 ClientSecret = ''
 CoverAttributes = true
 DefaultRoles = ['Standard']
+# team (user group) ids assigned by default, e.g. [1, 2]
+DefaultTeams = []
 Scopes = ['openid', 'profile', 'email', 'phone']
 
 [Attributes]

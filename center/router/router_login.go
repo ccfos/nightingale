@@ -680,8 +680,14 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 	} else {
 		user = new(models.User)
 		user.FullSsoFields("oauth2", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.OAuth2.DefaultRoles)
-		// create user from oidc
+		// create user from oauth2
 		ginx.Dangerous(user.Add(rt.Ctx))
+
+		for _, gid := range rt.Sso.OAuth2.GetDefaultTeams() {
+			if err := models.UserGroupMemberAdd(rt.Ctx, gid, user.Id); err != nil {
+				logx.Errorf(rctx, "user:%v UserGroupMemberAdd: %s", user, err)
+			}
+		}
 	}
 
 	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
