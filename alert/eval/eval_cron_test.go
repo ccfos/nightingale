@@ -10,7 +10,7 @@ import (
 // An unschedulable cron pattern used to leave a zero cron.Entry behind, and
 // getPromEvalInterval then called Next on its nil Schedule, crashing the engine.
 func TestNewAlertRuleWorkerInvalidCron(t *testing.T) {
-	for _, pattern := range []string{"*/5 * * * *", "not a cron"} {
+	for _, pattern := range []string{"*/5 * * * *", "not a cron", "TZ=UTC"} {
 		rule := &models.AlertRule{Id: 1, CronPattern: pattern}
 		p := &process.Processor{}
 		arw := NewAlertRuleWorker(rule, 1, p, nil, nil)

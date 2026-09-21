@@ -861,9 +861,18 @@ var cronPatternParser = cron.NewParser(
 
 // ValidateCronPattern rejects patterns the engine cannot schedule,
 // e.g. the 5-field form without seconds.
-func ValidateCronPattern(pattern string) error {
-	if _, err := cronPatternParser.Parse(pattern); err != nil {
-		return fmt.Errorf("invalid cron pattern: %s, error: %v", pattern, err)
+//
+// robfig/cron v3.0.1 panics instead of returning an error on a "TZ=xxx" spec
+// without a space (slice bounds out of range), so the parse is guarded.
+func ValidateCronPattern(pattern string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("invalid cron pattern: %s, error: %v", pattern, r)
+		}
+	}()
+
+	if _, perr := cronPatternParser.Parse(pattern); perr != nil {
+		return fmt.Errorf("invalid cron pattern: %s, error: %v", pattern, perr)
 	}
 	return nil
 }

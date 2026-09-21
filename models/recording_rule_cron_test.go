@@ -16,6 +16,9 @@ func TestRecordingRuleVerifyCronPattern(t *testing.T) {
 		{pattern: "*/5 * * * *", wantErr: true},
 		{pattern: "not a cron", wantErr: true},
 		{pattern: "@every abc", wantErr: true},
+		// robfig/cron panics on these instead of returning an error
+		{pattern: "TZ=UTC", wantErr: true},
+		{pattern: "CRON_TZ=Asia/Shanghai", wantErr: true},
 	}
 
 	for _, c := range cases {

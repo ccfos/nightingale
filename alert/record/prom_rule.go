@@ -47,6 +47,13 @@ func NewRecordRuleContext(rule *models.RecordingRule, datasourceId int64, promCl
 	}
 
 	rrc.scheduler = cron.New(cron.WithSeconds(), cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger)))
+
+	// Validate first: AddFunc can panic (not just fail) on some malformed patterns.
+	if err := models.ValidateCronPattern(rule.CronPattern); err != nil {
+		logger.Errorf("record rule_id:%d datasource_id:%d %v, rule will not run", rule.Id, datasourceId, err)
+		return rrc
+	}
+
 	_, err := rrc.scheduler.AddFunc(rule.CronPattern, func() {
 		rrc.Eval()
 	})
