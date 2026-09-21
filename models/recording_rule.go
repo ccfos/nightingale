@@ -11,8 +11,24 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/common/model"
+	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
 )
+
+// recordingRuleCronParser must stay in sync with the scheduler the engine builds
+// for recording rules: cron.New(cron.WithSeconds()).
+var recordingRuleCronParser = cron.NewParser(
+	cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+)
+
+// ValidateRecordingRuleCronPattern rejects patterns the engine cannot schedule,
+// e.g. the 5-field form without seconds.
+func ValidateRecordingRuleCronPattern(pattern string) error {
+	if _, err := recordingRuleCronParser.Parse(pattern); err != nil {
+		return fmt.Errorf("invalid cron pattern: %s, error: %v", pattern, err)
+	}
+	return nil
+}
 
 // A RecordingRule records its vector expression into new timeseries.
 type RecordingRule struct {
@@ -156,8 +172,13 @@ func (re *RecordingRule) Verify() error {
 		re.PromEvalInterval = 60
 	}
 
+	re.CronPattern = strings.TrimSpace(re.CronPattern)
 	if re.CronPattern == "" {
 		re.CronPattern = "@every 60s"
+	}
+
+	if err := ValidateRecordingRuleCronPattern(re.CronPattern); err != nil {
+		return err
 	}
 
 	re.AppendTags = strings.TrimSpace(re.AppendTags)
