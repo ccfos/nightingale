@@ -37,7 +37,7 @@ type NotifyChannelConfig struct {
     Enable      bool
 
     ParamConfig   *NotifyParamConfig   // user parameters: contact_key + custom params
-    RequestType   string               // http | smtp | script | flashduty | pagerduty
+    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira
     RequestConfig *RequestConfig       // pick the matching sub-struct by ident/request_type
 
     Weight int
@@ -56,6 +56,7 @@ type NotifyChannelConfig struct {
 | `DingtalkAppRequestConfig` | `dingtalkapp` (DingTalk app, currently not registered, see `provider/init.go`) |
 | `FeishuAppRequestConfig` | `feishuapp` |
 | `WecomAppRequestConfig` | `wecomapp` |
+| `JiraRequestConfig` | `jira` (native Jira issue channel, `request_type=jira`) |
 
 ---
 
@@ -75,7 +76,8 @@ type NotifyChannelConfig struct {
 | `discord` | simpleHTTPProvider | HTTP | Discord webhook |
 | `slackbot` / `slackwebhook` | simpleHTTPProvider | HTTP | Slack |
 | `mattermostbot` / `mattermostwebhook` | simpleHTTPProvider | HTTP | Mattermost |
-| `jira` / `jsm_alert` | simpleHTTPProvider | HTTP | Jira / JSM ticket-type |
+| `jira` (`request_type=jira`) | JiraProvider | HTTP | Jira issues: create on trigger, comment and close on recovery |
+| `jira` (legacy `request_type=http`) / `jsm_alert` | callback / simpleHTTPProvider | HTTP | legacy Jira / JSM webhook configs |
 | `email` | EmailProvider | SMTP | Email |
 | `tx-sms` | TencentSmsProvider | HTTP | Tencent Cloud SMS |
 | `tx-voice` | TencentVoiceProvider | HTTP | Tencent Cloud voice |
@@ -223,6 +225,14 @@ Below is the minimal usable configuration for each channel—when the user asks 
 - `PagerDutyRequestConfig`: `Proxy`, `ApiKey` (account-level API Key, not a routing key), `Timeout`, `RetryTimes`, `RetrySleep`.
 - Uses the PagerDuty Events API v2. **Don't mistakenly fill the ApiKey with an Integration Key** (a common pitfall).
 
+### 9b) Jira `jira` (request_type=jira)
+
+- `JiraRequestConfig` holds only the site and the account: `deployment_type` (`cloud`), `site_url` (e.g. `https://your-domain.atlassian.net`, no `/rest/api`), `token_type` (`scoped` = scoped API token or service-account token, sent through `api.atlassian.com/ex/jira/{cloudId}`; `classic` = classic API token, sent to the site URL), `email`, `api_token`, `cloud_id` (optional, fetched from `{site_url}/_edge/tenant_info` when empty), plus `proxy` / `timeout` / `retry_times` / `retry_sleep` / `insecure_skip_verify`.
+- The project and issue type live in the **notify rule** params, see notify-rule-copilot. One Jira channel serves every project.
+- Behaviour: issues are deduplicated by the label `eventHash=<event hash>`; repeated notifications do not create new issues; on recovery the issue gets a comment and is transitioned to a status in the Done category (the transition is picked automatically unless `resolve_transition` is set).
+- `POST /api/n9e/notify-channel-config/check` checks the credentials and permissions of an unsaved config item by item.
+- A legacy `ident=jira` channel with `request_type=http` (hand-made HTTP webhook) keeps working unchanged through the callback fallback.
+
 ### 10) Flashduty `flashduty`
 
 - `FlashDutyRequestConfig`: `IntegrationUrl` (one URL per integration), `Proxy`, `Timeout`, `RetryTimes`, `RetrySleep`.
@@ -318,7 +328,7 @@ Steps:
 | Email `tls: handshake failure` | the SMTP server certificate verification failed | `InsecureSkipVerify: true` or change the port (587 STARTTLS / 465 SSL) |
 | `connect: i/o timeout` | the network is unreachable or a proxy is needed | fill `HTTPRequestConfig.Proxy` with the proxy address, and confirm the machine can resolve the webhook domain |
 | SMS "template variable is missing a corresponding parameter value" | the count of `${1}` in the Alibaba Cloud/Tencent Cloud SMS template doesn't match the params array in n9e | compare against the template content in the provider console and fill in the missing ones in order |
-| Saving a custom ident shows `unsupported channel` | the ident is not registered and request_type is not in the fallback table | `RequestType` must be one of `http/script/smtp/flashduty/pagerduty` |
+| Saving a custom ident shows `unsupported channel` | the ident is not registered and request_type is not in the fallback table | `RequestType` must be one of `http/script/smtp/flashduty/pagerduty`; native types such as `jira` require the ident to equal the request_type |
 | A channel tests OK but real alerts don't go out | sendtos is empty for real alerts (the recipient's contact_info is missing the field) / the notify_rule didn't select this channel | see the dedicated "Test works but real alerts don't go out" section below |
 
 ### Test works but real alerts don't go out

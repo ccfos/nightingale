@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -61,6 +62,7 @@ type RequestConfig struct {
 	DingtalkAppRequestConfig *DingtalkAppRequestConfig `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
 	FeishuAppRequestConfig   *FeishuAppRequestConfig   `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
 	WecomAppRequestConfig    *WecomAppRequestConfig    `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
+	JiraRequestConfig        *JiraRequestConfig        `json:"jira_request_config,omitempty" gorm:"serializer:json"`
 	// 兼容旧版本
 	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
 	FeishuRequestConfig   *FeishuRequestConfig   `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
@@ -97,6 +99,75 @@ type PagerDutyRequestConfig struct {
 	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
 	RetryTimes int    `json:"retry_times"` // 重试次数
 	RetrySleep int    `json:"retry_sleep"` // 重试等待时间（毫秒）
+}
+
+// 原生对接的海外媒介：request_type 与 ident 同名，provider 自己组包、自管重试与成功判定。
+// 旧版同名 ident 的 request_type=http 记录不受影响：新 provider 的 Check 要求 request_type
+// 与 ident 一致，校验不过时 Registry.Resolve 按 request_type 兜底到 callback。
+const (
+	RequestTypeJira = "jira"
+)
+
+var nativeRequestTypes = map[string]struct{}{
+	RequestTypeJira: {},
+}
+
+// IsNativeRequestType 表示该媒介类型是否为原生对接：这类媒介的 provider 用 json.Marshal
+// 组包，消息模板必须按纯文本渲染（RenderEventPlain），不能做通用 HTTP 那层 JSON 转义。
+func IsNativeRequestType(requestType string) bool {
+	_, ok := nativeRequestTypes[requestType]
+	return ok
+}
+
+// NativeNetworkConfig 原生媒介共用的网络设置，内嵌进各自的 *RequestConfig，JSON 平铺。
+type NativeNetworkConfig struct {
+	Proxy              string `json:"proxy"`
+	Timeout            int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes         int    `json:"retry_times"` // 重试次数（不含首次请求）
+	RetrySleep         int    `json:"retry_sleep"` // 重试等待时间（毫秒），对方返回 Retry-After 时以对方为准
+	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
+}
+
+const (
+	JiraDeploymentCloud      = "cloud"
+	JiraDeploymentDataCenter = "datacenter"
+
+	// JiraTokenScoped 带权限范围的令牌（含服务账号的令牌），必须经 api.atlassian.com 网关访问；
+	// JiraTokenClassic 普通令牌，直接访问站点地址
+	JiraTokenScoped  = "scoped"
+	JiraTokenClassic = "classic"
+
+	JiraAuthPAT   = "pat"
+	JiraAuthBasic = "basic"
+)
+
+// JiraRequestConfig Jira 工单媒介：只放站点和账号，项目、工作类型等「发到哪」的配置在通知规则里
+type JiraRequestConfig struct {
+	DeploymentType string `json:"deployment_type"` // cloud | datacenter，空按 cloud
+	SiteURL        string `json:"site_url"`        // 浏览器里打开 Jira 的地址，不带 /rest/api
+	TokenType      string `json:"token_type"`      // cloud：scoped | classic，空按 scoped
+	Email          string `json:"email"`           // cloud：令牌所属账号（或服务账号）的邮箱
+	APIToken       string `json:"api_token"`       // cloud
+	CloudID        string `json:"cloud_id"`        // cloud + scoped：选填，留空按站点地址自动获取
+	AuthType       string `json:"auth_type"`       // datacenter：pat | basic
+	PersonalToken  string `json:"personal_token"`  // datacenter + pat
+	Username       string `json:"username"`        // datacenter + basic
+	Password       string `json:"password"`        // datacenter + basic
+	NativeNetworkConfig
+}
+
+// NativeNetwork 返回原生媒介的网络设置；非原生媒介或未配置时返回 nil，调用方按默认值处理。
+func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig {
+	if rc == nil {
+		return nil
+	}
+	switch requestType {
+	case RequestTypeJira:
+		if rc.JiraRequestConfig != nil {
+			return &rc.JiraRequestConfig.NativeNetworkConfig
+		}
+	}
+	return nil
 }
 
 // ParamItem 自定义参数项
@@ -276,11 +347,16 @@ func NotifyChannelIdentsGet(ctx *ctx.Context, ids []int64) (map[int64]string, er
 }
 
 func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
-	if nc.RequestConfig == nil {
-		return nil, fmt.Errorf("%+v request config not found", nc)
+	rc := nc.RequestConfig
+	if rc == nil {
+		// 原生媒介的配置可能整体为空（如 Webhook 类媒介什么都不用填，前端会剔掉空壳），按全默认处理
+		if !IsNativeRequestType(nc.RequestType) {
+			return nil, fmt.Errorf("%+v request config not found", nc)
+		}
+		rc = &RequestConfig{}
 	}
 
-	httpConfig := nc.RequestConfig.HTTPRequestConfig
+	httpConfig := rc.HTTPRequestConfig
 	if httpConfig == nil {
 		httpConfig = &HTTPRequestConfig{
 			Timeout:       10000,
@@ -294,19 +370,19 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	proxy := httpConfig.Proxy
 	// 对于 FlashDuty 类型，优先使用 FlashDuty 配置中的超时时间
 	timeout := httpConfig.Timeout
-	if nc.RequestType == "flashduty" && nc.RequestConfig.FlashDutyRequestConfig != nil {
-		flashDutyTimeout := nc.RequestConfig.FlashDutyRequestConfig.Timeout
+	if nc.RequestType == "flashduty" && rc.FlashDutyRequestConfig != nil {
+		flashDutyTimeout := rc.FlashDutyRequestConfig.Timeout
 		if flashDutyTimeout > 0 {
 			timeout = flashDutyTimeout
 		}
-		if nc.RequestConfig.FlashDutyRequestConfig.Proxy != "" {
-			proxy = nc.RequestConfig.FlashDutyRequestConfig.Proxy
+		if rc.FlashDutyRequestConfig.Proxy != "" {
+			proxy = rc.FlashDutyRequestConfig.Proxy
 		}
 	}
 
 	// 对于 PagerDuty 类型，优先使用 PagerDuty 配置中的代理
-	if nc.RequestType == "pagerduty" && nc.RequestConfig.PagerDutyRequestConfig != nil && nc.RequestConfig.PagerDutyRequestConfig.Proxy != "" {
-		proxy = nc.RequestConfig.PagerDutyRequestConfig.Proxy
+	if nc.RequestType == "pagerduty" && rc.PagerDutyRequestConfig != nil && rc.PagerDutyRequestConfig.Proxy != "" {
+		proxy = rc.PagerDutyRequestConfig.Proxy
 	}
 	// TODO(dingtalkapp): 钉钉应用本次不上线，DingtalkApp 超时/代理合并分支先注释；上线时恢复。
 	// if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil {
@@ -319,25 +395,37 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	// 	}
 	// }
 	// 对于 FeishuApp 类型，优先使用 FeishuApp 配置中的超时时间和代理
-	if nc.RequestType == "feishuapp" && nc.RequestConfig.FeishuAppRequestConfig != nil {
-		feishuAppTimeout := nc.RequestConfig.FeishuAppRequestConfig.Timeout
+	if nc.RequestType == "feishuapp" && rc.FeishuAppRequestConfig != nil {
+		feishuAppTimeout := rc.FeishuAppRequestConfig.Timeout
 		if feishuAppTimeout > 0 {
 			timeout = feishuAppTimeout
 		}
-		if nc.RequestConfig.FeishuAppRequestConfig.Proxy != "" {
-			proxy = nc.RequestConfig.FeishuAppRequestConfig.Proxy
+		if rc.FeishuAppRequestConfig.Proxy != "" {
+			proxy = rc.FeishuAppRequestConfig.Proxy
 		}
 	}
 
 	// 对于 WecomApp 类型，优先使用 WecomApp 配置中的超时时间和代理
-	if nc.RequestType == "wecomapp" && nc.RequestConfig.WecomAppRequestConfig != nil {
-		wecomAppTimeout := nc.RequestConfig.WecomAppRequestConfig.Timeout
+	if nc.RequestType == "wecomapp" && rc.WecomAppRequestConfig != nil {
+		wecomAppTimeout := rc.WecomAppRequestConfig.Timeout
 		if wecomAppTimeout > 0 {
 			timeout = wecomAppTimeout
 		}
-		if nc.RequestConfig.WecomAppRequestConfig.Proxy != "" {
-			proxy = nc.RequestConfig.WecomAppRequestConfig.Proxy
+		if rc.WecomAppRequestConfig.Proxy != "" {
+			proxy = rc.WecomAppRequestConfig.Proxy
 		}
+	}
+
+	insecureSkipVerify := httpConfig.TLS != nil && httpConfig.TLS.SkipVerify
+	// 原生媒介（Jira 等）优先使用自己配置里的超时、代理与证书校验开关
+	if n := rc.NativeNetwork(nc.RequestType); n != nil {
+		if n.Timeout > 0 {
+			timeout = n.Timeout
+		}
+		if n.Proxy != "" {
+			proxy = n.Proxy
+		}
+		insecureSkipVerify = insecureSkipVerify || n.InsecureSkipVerify
 	}
 
 	if timeout == 0 {
@@ -364,7 +452,7 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	}
 
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: httpConfig.TLS != nil && httpConfig.TLS.SkipVerify,
+		InsecureSkipVerify: insecureSkipVerify,
 	}
 
 	transport := &http.Transport{
@@ -404,8 +492,9 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		ncc.RequestType != "pagerduty" &&
 		// ncc.RequestType != "dingtalkapp" &&
 		ncc.RequestType != "feishuapp" &&
-		ncc.RequestType != "wecomapp" {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp'")
+		ncc.RequestType != "wecomapp" &&
+		!IsNativeRequestType(ncc.RequestType) {
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira'")
 	}
 
 	if ncc.ParamConfig != nil {
@@ -495,6 +584,44 @@ func (ncc *NotifyChannelConfig) ValidateFlashDutyRequestConfig() error {
 func (ncc *NotifyChannelConfig) ValidatePagerDutyRequestConfig() error {
 	if ncc.RequestConfig.PagerDutyRequestConfig == nil {
 		return errors.New("pagerduty request config cannot be nil")
+	}
+	return nil
+}
+
+func (ncc *NotifyChannelConfig) ValidateJiraRequestConfig() error {
+	if ncc.RequestConfig == nil || ncc.RequestConfig.JiraRequestConfig == nil {
+		return errors.New("jira request config cannot be nil")
+	}
+	return ncc.RequestConfig.JiraRequestConfig.Verify()
+}
+
+// Verify 只做本地格式校验（每次发送前 provider.Check 都会调用，不能发请求）。
+// 含 {{ 的值是变量配置引用，发送时才展开，这里跳过格式校验。
+func (c *JiraRequestConfig) Verify() error {
+	site := strings.TrimSpace(c.SiteURL)
+	if site == "" {
+		return errors.New("jira site url cannot be empty")
+	}
+	if !strings.Contains(site, "{{") {
+		u, err := url.Parse(site)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return errors.New("jira site url must be like https://your-domain.atlassian.net")
+		}
+	}
+
+	switch c.DeploymentType {
+	case "", JiraDeploymentCloud:
+		if c.TokenType != "" && c.TokenType != JiraTokenScoped && c.TokenType != JiraTokenClassic {
+			return fmt.Errorf("jira token type must be %s or %s", JiraTokenScoped, JiraTokenClassic)
+		}
+		if strings.TrimSpace(c.Email) == "" {
+			return errors.New("jira email cannot be empty")
+		}
+		if strings.TrimSpace(c.APIToken) == "" {
+			return errors.New("jira api token cannot be empty")
+		}
+	default:
+		return fmt.Errorf("jira deployment type must be %s", JiraDeploymentCloud)
 	}
 	return nil
 }

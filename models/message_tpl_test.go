@@ -504,3 +504,51 @@ func TestNewTplMapParse(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderEventForChannelPlainForNativeTypes(t *testing.T) {
+	tpl := &MessageTemplate{
+		NotifyChannelIdent: Jira,
+		Content:            map[string]string{"content": "rule: {{$event.RuleName}}\nnote: \"{{$event.RuleNote}}\""},
+	}
+	events := []*AlertCurEvent{{RuleName: `cpu <high> & "hot"`, RuleNote: "a&b"}}
+
+	plain := tpl.RenderEventForChannel(RequestTypeJira, events, "http://n9e")
+	got, ok := plain["content"].(string)
+	if !ok {
+		t.Fatalf("native channels must get plain strings, got %T", plain["content"])
+	}
+	want := "rule: cpu <high> & \"hot\"\nnote: \"a&b\""
+	if got != want {
+		t.Fatalf("plain render must not escape:\n got %q\nwant %q", got, want)
+	}
+
+	// 旧版通用 HTTP 媒介共用同一行模板，仍走原有的 JSON 转义分支
+	legacy := tpl.RenderEventForChannel("http", events, "http://n9e")
+	if legacy["content"] == got {
+		t.Fatalf("legacy http channels must keep the escaped rendering")
+	}
+	if fmt.Sprint(legacy["content"]) != fmt.Sprint(tpl.RenderEvent(events, "http://n9e")["content"]) {
+		t.Fatalf("RenderEventForChannel(http) must equal RenderEvent")
+	}
+
+	strict, err := tpl.RenderEventStrictForChannel(RequestTypeJira, events, "http://n9e")
+	if err != nil || strict["content"] != want {
+		t.Fatalf("strict plain render: %v %q", err, strict["content"])
+	}
+}
+
+func TestJiraSeedHasTitleAndRealNewlines(t *testing.T) {
+	for _, tpl := range MsgTplMap {
+		if tpl.Ident != Jira {
+			continue
+		}
+		if tpl.Content["title"] == "" {
+			t.Fatal("jira seed must carry a title for the issue summary")
+		}
+		if strings.Contains(tpl.Content["content"], `\n`) {
+			t.Fatal("jira seed must use real newlines: plain rendering would print a literal \\n")
+		}
+		return
+	}
+	t.Fatal("jira seed not found")
+}
