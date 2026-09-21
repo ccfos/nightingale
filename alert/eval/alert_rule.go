@@ -3,6 +3,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -83,6 +84,13 @@ func (s *Scheduler) LoopSyncRules(ctx context.Context) {
 }
 
 func (s *Scheduler) syncAlertRules() {
+	// One broken rule must not take the whole process down; retry on the next tick.
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Errorf("sync alert rules panic: %v\n%s", r, debug.Stack())
+		}
+	}()
+
 	ids := s.alertRuleCache.GetRuleIds()
 	alertRuleWorkers := make(map[string]*AlertRuleWorker)
 	externalRuleWorkers := make(map[string]*process.Processor)

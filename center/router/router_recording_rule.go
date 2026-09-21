@@ -162,7 +162,7 @@ func (rt *Router) recordingRulePutFields(c *gin.Context) {
 		if !isStr {
 			ginx.Bomb(http.StatusBadRequest, "cron_pattern must be a string")
 		}
-		if err := models.ValidateRecordingRuleCronPattern(pattern); err != nil {
+		if err := models.ValidateCronPattern(pattern); err != nil {
 			ginx.Bomb(http.StatusBadRequest, "%s", err.Error())
 		}
 	}

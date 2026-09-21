@@ -115,7 +115,12 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 	})
 
 	if err != nil {
-		logger.Errorf("alert_eval_%d datasource_%d add cron pattern error: %v", arw.Rule.Id, arw.DatasourceId, err)
+		logger.Errorf("alert_eval_%d datasource_%d add cron pattern:%q error: %v, fallback to @every 60s", arw.Rule.Id, arw.DatasourceId, rule.CronPattern, err)
+
+		// Keep the rule evaluating instead of leaving a zero Entry (nil Schedule) behind.
+		entryID, _ = arw.Scheduler.AddFunc("@every 60s", func() {
+			arw.Eval()
+		})
 	}
 
 	Processor.ScheduleEntry = arw.Scheduler.Entry(entryID)
@@ -125,6 +130,10 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 }
 
 func getPromEvalInterval(schedule cron.Schedule) int {
+	if schedule == nil {
+		return 0
+	}
+
 	now := time.Now()
 	next1 := schedule.Next(now)
 	next2 := schedule.Next(next1)

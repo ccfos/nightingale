@@ -850,15 +850,21 @@ func (ar *AlertRule) validateCronPattern() error {
 		return nil
 	}
 
-	// 创建一个临时的 cron scheduler 来验证表达式
-	scheduler := cron.New(cron.WithSeconds())
+	return ValidateCronPattern(ar.CronPattern)
+}
 
-	// 尝试添加一个空函数来验证 cron 表达式
-	_, err := scheduler.AddFunc(ar.CronPattern, func() {})
-	if err != nil {
-		return fmt.Errorf("invalid cron pattern: %s, error: %v", ar.CronPattern, err)
+// cronPatternParser must stay in sync with the schedulers the engine builds for
+// alert rules and recording rules: cron.New(cron.WithSeconds()).
+var cronPatternParser = cron.NewParser(
+	cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+)
+
+// ValidateCronPattern rejects patterns the engine cannot schedule,
+// e.g. the 5-field form without seconds.
+func ValidateCronPattern(pattern string) error {
+	if _, err := cronPatternParser.Parse(pattern); err != nil {
+		return fmt.Errorf("invalid cron pattern: %s, error: %v", pattern, err)
 	}
-
 	return nil
 }
 
