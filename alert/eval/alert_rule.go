@@ -13,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/datasource/commons/eslike"
 	"github.com/ccfos/nightingale/v6/memsto"
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/toolkits/pkg/logger"
@@ -84,7 +85,7 @@ func (s *Scheduler) LoopSyncRules(ctx context.Context) {
 }
 
 func (s *Scheduler) syncAlertRules() {
-	// One broken rule must not take the whole process down; retry on the next tick.
+	// Last resort; per-rule panics are already contained by guardRule.
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Errorf("sync alert rules panic: %v\n%s", r, debug.Stack())
@@ -100,90 +101,118 @@ func (s *Scheduler) syncAlertRules() {
 			continue
 		}
 
-		ruleType := rule.GetRuleType()
-		if rule.IsPrometheusRule() || rule.IsInnerRule() {
-			datasourceIds := s.datasourceCache.GetIDsByDsCateAndQueries(rule.Cate, rule.DatasourceQueries)
-			for _, dsId := range datasourceIds {
-				if !naming.DatasourceHashRing.IsHit(strconv.FormatInt(dsId, 10), fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
-					continue
-				}
-				ds := s.datasourceCache.GetById(dsId)
-				if ds == nil {
-					logger.Debugf("alert_eval_%d datasource %d not found", rule.Id, dsId)
-					continue
-				}
-
-				if ds.PluginType != ruleType {
-					logger.Debugf("alert_eval_%d datasource %d category is %s not %s", rule.Id, dsId, ds.PluginType, ruleType)
-					continue
-				}
-
-				if ds.Status != "enabled" {
-					logger.Debugf("alert_eval_%d datasource %d status is %s", rule.Id, dsId, ds.Status)
-					continue
-				}
-				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
-
-				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
-				alertRuleWorkers[alertRule.Hash()] = alertRule
-			}
-		} else if rule.IsHostRule() {
-			// all host rule will be processed by center instance
-			if !naming.DatasourceHashRing.IsHit(s.aconf.Heartbeat.EngineName, strconv.FormatInt(rule.Id, 10), s.aconf.Heartbeat.Endpoint) {
-				continue
-			}
-			processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, 0, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
-			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.ctx)
-			alertRuleWorkers[alertRule.Hash()] = alertRule
-		} else {
-			// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
-			// if rule is not processed by prometheus engine, create it as externalRule
-			dsIds := s.datasourceCache.GetIDsByDsCateAndQueries(rule.Cate, rule.DatasourceQueries)
-			for _, dsId := range dsIds {
-				ds := s.datasourceCache.GetById(dsId)
-				if ds == nil {
-					logger.Debugf("alert_eval_%d datasource %d not found", rule.Id, dsId)
-					continue
-				}
-
-				if ds.Status != "enabled" {
-					logger.Debugf("alert_eval_%d datasource %d status is %s", rule.Id, dsId, ds.Status)
-					continue
-				}
-				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
-				externalRuleWorkers[processor.Key()] = processor
-			}
-		}
+		guardRule(fmt.Sprintf("alert_eval_%d build", rule.Id), func() {
+			s.buildRuleWorkers(rule, alertRuleWorkers, externalRuleWorkers)
+		})
 	}
 
 	for hash, rule := range alertRuleWorkers {
 		if _, has := s.alertRules[hash]; !has {
-			rule.Prepare()
-			time.Sleep(time.Duration(20) * time.Millisecond)
-			rule.Start()
-			s.alertRules[hash] = rule
+			guardRule(rule.Key()+" start", func() {
+				rule.Prepare()
+				time.Sleep(time.Duration(20) * time.Millisecond)
+				rule.Start()
+				s.alertRules[hash] = rule
+			})
 		}
 	}
 
 	for hash, rule := range s.alertRules {
 		if _, has := alertRuleWorkers[hash]; !has {
-			rule.Stop()
+			guardRule(rule.Key()+" stop", rule.Stop)
 			delete(s.alertRules, hash)
 		}
 	}
 
-	s.ExternalProcessors.ExternalLock.Lock()
-	for key, processor := range externalRuleWorkers {
-		if curProcessor, has := s.ExternalProcessors.Processors[key]; has {
-			// rule存在,且hash一致,认为没有变更,这里可以根据需求单独实现一个关联数据更多的hash函数
-			if processor.Hash() == curProcessor.Hash() {
+	s.syncExternalProcessors(externalRuleWorkers)
+}
+
+// guardRule recovers from a panic in fn, so that a broken rule only skips itself
+// instead of aborting the whole sync (which would leave other rules unstarted or unstopped).
+func guardRule(what string, fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Errorf("%s panic: %v\n%s", what, r, debug.Stack())
+		}
+	}()
+	fn()
+}
+
+func (s *Scheduler) buildRuleWorkers(rule *models.AlertRule, alertRuleWorkers map[string]*AlertRuleWorker, externalRuleWorkers map[string]*process.Processor) {
+	ruleType := rule.GetRuleType()
+	if rule.IsPrometheusRule() || rule.IsInnerRule() {
+		datasourceIds := s.datasourceCache.GetIDsByDsCateAndQueries(rule.Cate, rule.DatasourceQueries)
+		for _, dsId := range datasourceIds {
+			if !naming.DatasourceHashRing.IsHit(strconv.FormatInt(dsId, 10), fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
 				continue
 			}
-		}
+			ds := s.datasourceCache.GetById(dsId)
+			if ds == nil {
+				logger.Debugf("alert_eval_%d datasource %d not found", rule.Id, dsId)
+				continue
+			}
 
-		// 现有规则中没有rule以及有rule但hash不一致的场景，需要触发rule的update
-		processor.RecoverAlertCurEventFromDb()
-		s.ExternalProcessors.Processors[key] = processor
+			if ds.PluginType != ruleType {
+				logger.Debugf("alert_eval_%d datasource %d category is %s not %s", rule.Id, dsId, ds.PluginType, ruleType)
+				continue
+			}
+
+			if ds.Status != "enabled" {
+				logger.Debugf("alert_eval_%d datasource %d status is %s", rule.Id, dsId, ds.Status)
+				continue
+			}
+			processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
+
+			alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
+			alertRuleWorkers[alertRule.Hash()] = alertRule
+		}
+	} else if rule.IsHostRule() {
+		// all host rule will be processed by center instance
+		if !naming.DatasourceHashRing.IsHit(s.aconf.Heartbeat.EngineName, strconv.FormatInt(rule.Id, 10), s.aconf.Heartbeat.Endpoint) {
+			return
+		}
+		processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, 0, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
+		alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.ctx)
+		alertRuleWorkers[alertRule.Hash()] = alertRule
+	} else {
+		// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
+		// if rule is not processed by prometheus engine, create it as externalRule
+		dsIds := s.datasourceCache.GetIDsByDsCateAndQueries(rule.Cate, rule.DatasourceQueries)
+		for _, dsId := range dsIds {
+			ds := s.datasourceCache.GetById(dsId)
+			if ds == nil {
+				logger.Debugf("alert_eval_%d datasource %d not found", rule.Id, dsId)
+				continue
+			}
+
+			if ds.Status != "enabled" {
+				logger.Debugf("alert_eval_%d datasource %d status is %s", rule.Id, dsId, ds.Status)
+				continue
+			}
+			processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
+			externalRuleWorkers[processor.Key()] = processor
+		}
+	}
+}
+
+func (s *Scheduler) syncExternalProcessors(externalRuleWorkers map[string]*process.Processor) {
+	// Unlock via defer: syncAlertRules recovers from panics, a lock left held would hang every later sync.
+	s.ExternalProcessors.ExternalLock.Lock()
+	defer s.ExternalProcessors.ExternalLock.Unlock()
+
+	for key, processor := range externalRuleWorkers {
+		guardRule(key+" sync external processor", func() {
+			if curProcessor, has := s.ExternalProcessors.Processors[key]; has {
+				// rule存在,且hash一致,认为没有变更,这里可以根据需求单独实现一个关联数据更多的hash函数
+				if processor.Hash() == curProcessor.Hash() {
+					return
+				}
+			}
+
+			// 现有规则中没有rule以及有rule但hash不一致的场景，需要触发rule的update
+			processor.RecoverAlertCurEventFromDb()
+			s.ExternalProcessors.Processors[key] = processor
+		})
 	}
 
 	for key := range s.ExternalProcessors.Processors {
@@ -191,5 +220,4 @@ func (s *Scheduler) syncAlertRules() {
 			delete(s.ExternalProcessors.Processors, key)
 		}
 	}
-	s.ExternalProcessors.ExternalLock.Unlock()
 }

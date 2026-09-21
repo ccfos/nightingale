@@ -32,3 +32,27 @@ func TestGetPromEvalIntervalNilSchedule(t *testing.T) {
 		t.Errorf("got %d, want 0", got)
 	}
 }
+
+func TestGuardRuleRecovers(t *testing.T) {
+	ran := false
+	guardRule("alert_eval_1 build", func() { panic("boom") })
+	guardRule("alert_eval_2 build", func() { ran = true })
+	if !ran {
+		t.Error("a panic in one rule must not stop the following ones")
+	}
+}
+
+// syncAlertRules recovers from panics, so the lock must be released on every path,
+// otherwise the next sync blocks on it forever.
+func TestSyncExternalProcessorsReleasesLock(t *testing.T) {
+	s := &Scheduler{ExternalProcessors: process.NewExternalProcessors()}
+	s.ExternalProcessors.Processors["k"] = &process.Processor{}
+
+	// Hash() on a zero Processor dereferences its nil rule and panics.
+	s.syncExternalProcessors(map[string]*process.Processor{"k": {}, "k2": {}})
+
+	if !s.ExternalProcessors.ExternalLock.TryLock() {
+		t.Fatal("ExternalLock is still held after a panic")
+	}
+	s.ExternalProcessors.ExternalLock.Unlock()
+}
