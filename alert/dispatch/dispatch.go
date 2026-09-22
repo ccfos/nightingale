@@ -1030,20 +1030,9 @@ func mapKeys(m map[int64]struct{}) []int64 {
 }
 
 func getSendTarget(customParams map[string]string, sendtos []string) string {
-	if len(customParams) == 0 {
-		return strings.Join(sendtos, ",")
+	// 有规则参数时用参数生成目标：优先机器人名称，凭证只留后 4 位
+	if target := provider.NotifyTargetFromParams(customParams); target != "" {
+		return target
 	}
-
-	values := make([]string, 0)
-	for _, value := range customParams {
-		runes := []rune(value)
-		if len(runes) <= 4 {
-			values = append(values, value)
-		} else {
-			maskedValue := string(runes[:len(runes)-4]) + "****"
-			values = append(values, maskedValue)
-		}
-	}
-
-	return strings.Join(values, ",")
+	return strings.Join(sendtos, ",")
 }
