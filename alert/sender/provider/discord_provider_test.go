@@ -145,6 +145,18 @@ func TestDiscordTerminalErrorWithHint(t *testing.T) {
 	}
 }
 
+func TestDiscordUnknownThreadHint(t *testing.T) {
+	// 真实 Discord 对不存在的线程 ID 回 400 + 10003 Unknown Channel
+	_, srv := newDiscordServer(t, http.StatusBadRequest, `{"message":"Unknown Channel","code":10003}`)
+	res := (&DiscordProvider{}).Notify(context.Background(), discordReq(nil, map[string]string{
+		"webhook_url": srv.URL + "/api/webhooks/1/tok", "target": "thread", "thread_id": "1",
+	}))
+	var he *HintError
+	if !errors.As(res.Err, &he) || !strings.Contains(he.Hint, "thread does not exist") {
+		t.Fatalf("an unknown thread id should point at the thread ID: %v", res.Err)
+	}
+}
+
 func TestDiscordRejectsBadParams(t *testing.T) {
 	p := &DiscordProvider{}
 	for _, params := range []map[string]string{

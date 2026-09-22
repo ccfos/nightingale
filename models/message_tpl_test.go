@@ -552,3 +552,14 @@ func TestJiraSeedHasTitleAndRealNewlines(t *testing.T) {
 	}
 	t.Fatal("jira seed not found")
 }
+
+func TestDiscordTemplateKeepsDoubleUnderscoreLabels(t *testing.T) {
+	tpl := &MessageTemplate{NotifyChannelIdent: Discord, Content: map[string]string{"content": NewTplMap[Discord]}}
+	events := []*AlertCurEvent{{RuleName: "disk full", Severity: 2, TagsJSON: []string{"__name__=disk_used_percent", "path=/data"}}}
+
+	got, _ := tpl.RenderEventForChannel(RequestTypeDiscord, events, "http://n9e")["content"].(string)
+	// Discord 的 Markdown 会把 __name__ 渲染成下划线，标签必须放在行内代码里才能原样显示
+	if !strings.Contains(got, "**Metrics**: `[__name__=disk_used_percent path=/data]`") {
+		t.Fatalf("metrics must be inline code in the Discord template, got:\n%s", got)
+	}
+}

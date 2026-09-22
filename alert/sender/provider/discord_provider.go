@@ -256,6 +256,7 @@ var discordHints = map[string]string{
 	"220001": "This is a forum channel: choose New forum post or Existing thread as the target",
 	"220003": "This is not a forum channel: New forum post cannot be used",
 	"160005": "The thread is locked",
+	"10003":  "The thread does not exist: check the thread ID, it must be a thread or forum post in the webhook's channel",
 }
 
 func discordHint(err error, resp *nativeResponse) string {

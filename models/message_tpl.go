@@ -694,7 +694,7 @@ var NewTplMap = map[string]string{
 **Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
 **Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
 **Monitor Target**: {{$event.TargetIdent}}{{end}}   
-**Metrics**: {{$event.TagsJSON}}{{if not $event.IsRecovered}}   
+**Metrics**: ` + "`{{$event.TagsJSON}}`" + `{{if not $event.IsRecovered}}   
 **Trigger Value**: {{$event.TriggerValue}}{{end}}   
 {{if $event.IsRecovered}}**Recovery Time**: {{timeformat $event.LastEvalTime}}{{else}}**First Trigger Time**: {{timeformat $event.FirstTriggerTime}}{{end}}   
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Time Since First Alert**: {{humanizeDurationInterface $time_duration}}
