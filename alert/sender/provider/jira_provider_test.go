@@ -703,3 +703,48 @@ func TestJiraCredentialCheckSuggestsTokenType(t *testing.T) {
 		t.Fatalf("unexpected check items: %+v", items)
 	}
 }
+
+func TestJiraDropdownsReturnEmptyArrays(t *testing.T) {
+	resetJiraCaches()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/rest/api/3/project/search":
+			w.Write([]byte(`{"values":[],"isLast":true}`))
+		case r.URL.Path == "/rest/api/3/priority":
+			w.Write([]byte(`null`))
+		case r.URL.Path == "/rest/api/3/mypermissions":
+			w.Write([]byte(`{"permissions":{"BROWSE_PROJECTS":{"havePermission":true},"CREATE_ISSUES":{"havePermission":true},"ADD_COMMENTS":{"havePermission":true},"TRANSITION_ISSUES":{"havePermission":true}}}`))
+		case r.URL.Path == "/rest/api/3/issue/createmeta/OPS/issuetypes":
+			w.Write([]byte(`{"issueTypes":[{"id":"10","name":"Task","subtask":false}],"total":1}`))
+		case r.URL.Path == "/rest/api/3/issue/createmeta/OPS/issuetypes/10":
+			w.Write([]byte(`{"fields":[{"fieldId":"summary","name":"Summary","required":true}],"total":1}`))
+		case r.URL.Path == "/rest/api/3/issue/createmeta/EMPTY/issuetypes":
+			w.Write([]byte(`{"issueTypes":[],"total":0}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+	api, err := NewJiraClientForChannel(context.Background(), jiraTestChannel(1, srv.URL, models.JiraTokenClassic))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	asJSON := func(v interface{}) string { b, _ := json.Marshal(v); return string(b) }
+
+	projects, _ := api.Projects(ctx)
+	priorities, _ := api.Priorities(ctx)
+	types, _ := api.IssueTypes(ctx, "EMPTY")
+	chk, err := api.IssueTypeCheck(ctx, "OPS", "Task")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, got := range map[string]string{
+		"projects": asJSON(projects), "priorities": asJSON(priorities), "issue types": asJSON(types),
+		"required fields": asJSON(chk.RequiredFields), "missing permissions": asJSON(chk.MissingPermissions),
+	} {
+		if got != "[]" {
+			t.Errorf("%s should serialize as [], got %s", name, got)
+		}
+	}
+}

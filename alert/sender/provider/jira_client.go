@@ -349,8 +349,9 @@ type JiraProject struct {
 	Name string `json:"name"`
 }
 
+// listProjects 等下拉查询在没有结果时返回 [] 而不是 nil，接口给前端的是数组而不是 null
 func (c *jiraClient) listProjects(ctx context.Context) ([]JiraProject, error) {
-	var all []JiraProject
+	all := []JiraProject{}
 	for startAt := 0; ; {
 		var page struct {
 			Values []JiraProject `json:"values"`
@@ -378,7 +379,7 @@ type JiraIssueType struct {
 
 // listIssueTypes 取项目可建单的工作类型（createmeta）。Cloud 返回 issueTypes，Data Center 返回 values，这里都认。
 func (c *jiraClient) listIssueTypes(ctx context.Context, projectKey string) ([]JiraIssueType, error) {
-	var all []JiraIssueType
+	all := []JiraIssueType{}
 	for startAt := 0; ; {
 		var page struct {
 			IssueTypes []JiraIssueType `json:"issueTypes"`
@@ -416,7 +417,7 @@ type JiraField struct {
 
 // listRequiredFields 返回该工作类型建单时必填、且夜莺不会自动填的字段
 func (c *jiraClient) listRequiredFields(ctx context.Context, projectKey, issueTypeID string) ([]JiraField, error) {
-	var out []JiraField
+	out := []JiraField{}
 	for startAt := 0; ; {
 		var page struct {
 			Fields []JiraField `json:"fields"`
@@ -457,9 +458,12 @@ type JiraPriority struct {
 }
 
 func (c *jiraClient) listPriorities(ctx context.Context) ([]JiraPriority, error) {
-	var out []JiraPriority
+	out := []JiraPriority{}
 	if _, err := c.do(ctx, http.MethodGet, "/priority", nil, nil, &out); err != nil {
 		return nil, err
+	}
+	if out == nil { // 响应体是 null
+		out = []JiraPriority{}
 	}
 	return out, nil
 }
