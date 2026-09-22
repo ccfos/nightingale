@@ -3810,6 +3810,8 @@ func isSlackIdent(ident string) bool {
 //
 // plain 为 true 时（原生对接的媒介，见 RenderEventPlain）无论 ident 是什么都走 text/template
 // 且不转义：这类媒介的 provider 自己用 json.Marshal 组包，再做一层 JSON 转义会把换行变成字面量 \n。
+var legacySlackFuncs = template.FuncMap{"slackEscape": func(v interface{}) interface{} { return v }}
+
 func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]interface{}, plain bool) (interface{}, error) {
 	text := strings.Join(append(GetDefs(renderData), msgTpl), "")
 
@@ -3825,7 +3827,9 @@ func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]
 		return body.String(), nil
 	}
 
-	tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+	// 旧版通用 HTTP 媒介和原生 Slack 共用同一份模板：这条路径靠 html/template 转义、再把 &lt; 还原，
+	// slackEscape 在这里原样输出，否则 > 和 & 会被转义两次，Slack 上显示成字面的 &gt; 和 &amp;
+	tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Funcs(legacySlackFuncs).Parse(text)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template: %v", err)
 	}

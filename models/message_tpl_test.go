@@ -563,3 +563,18 @@ func TestDiscordTemplateKeepsDoubleUnderscoreLabels(t *testing.T) {
 		t.Fatalf("metrics must be inline code in the Discord template, got:\n%s", got)
 	}
 }
+
+// 旧版通用 HTTP 的 Slack 媒介与原生 Slack 共用模板：老路径已经做了 html 转义，slackEscape 不能再转一次
+func TestSlackTemplateOnLegacyHTTPPathIsNotDoubleEscaped(t *testing.T) {
+	tpl := &MessageTemplate{NotifyChannelIdent: SlackWebhook, Content: map[string]string{"content": NewTplMap[SlackWebhook]}}
+	events := []*AlertCurEvent{{RuleName: "cpu", RuleNote: "p99 > 1s & rising", Severity: 2}}
+
+	legacy := fmt.Sprint(tpl.RenderEventForChannel("http", events, "http://n9e")["content"])
+	if strings.Contains(legacy, "&amp;gt;") || strings.Contains(legacy, "&amp;amp;") || !strings.Contains(legacy, "p99 &gt; 1s &amp; rising") {
+		t.Fatalf("legacy http rendering must escape once, got:\n%s", legacy)
+	}
+	native, _ := tpl.RenderEventForChannel(RequestTypeSlackWebhook, events, "http://n9e")["content"].(string)
+	if !strings.Contains(native, "p99 &gt; 1s &amp; rising") {
+		t.Fatalf("native slack rendering must still escape, got:\n%s", native)
+	}
+}
