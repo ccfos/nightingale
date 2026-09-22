@@ -1,6 +1,6 @@
 # Native notification channels (Jira, ...)
 
-Native channels are notification channels whose `request_type` equals their `ident` and whose provider builds the request itself (instead of the generic HTTP URL + body template): **Jira** (`request_type=jira`) and **Discord** (`request_type=discord`). Slack and Mattermost follow the same pattern.
+Native channels are notification channels whose `request_type` equals their `ident` and whose provider builds the request itself (instead of the generic HTTP URL + body template): **Jira** (`request_type=jira`), **Discord** (`request_type=discord`) and **JSM Alert** (`request_type=jsm_alert`). Slack and Mattermost follow the same pattern.
 
 Differences from `request_type=http` channels:
 
@@ -62,6 +62,22 @@ Notify rule params:
 | `mentions` | no | Space separated `<@user_id>` / `<@&role_id>`; only these are allowed to ping, `@everyone` in the alert text does not |
 
 The message is one embed: title (template field `title`, or `[S2] Triggered: <rule>`), the rendered `content` as the description, severity color, event detail link and timestamp. The notification record shows the rule's `bot_name` or the webhook URL with its token masked, never the full URL.
+
+## JSM Alert channel
+
+Creates and closes alerts in Jira Service Management Operations (formerly Opsgenie) through the integration API `{api_url}/jsm/ops/integration/v2/alerts` with `Authorization: GenieKey <key>`. The key belongs to an **API integration** of a JSM team (team → Integrations → Add integration → API), so it decides which team gets the alert and is filled in each notify rule, like a webhook URL. A built-in `JSM Alert` channel (`ident=jsm_alert`, `request_type=jsm_alert`) is seeded on startup.
+
+`request_config.jsm_alert_request_config` (optional): `api_url` (default `https://api.atlassian.com`), plus `proxy` / `timeout` / `retry_times` / `retry_sleep`.
+
+Notify rule params:
+
+| Key | Required | Description |
+|---|---|---|
+| `api_key` | yes | Key of the JSM API integration; supports `{{.variable_name}}`. Same key as the legacy built-in `JSM Alert` HTTP channel |
+| `bot_name` | no | A name for this key (e.g. the team name); shown as the notification target and used to reuse the key in other rules |
+| `priority_map` | no | JSON from severity to priority, e.g. `{"1":"P1","2":"P3","3":"P5"}`; default S1→P1, S2→P2, S3→P3 |
+
+Behaviour: the alias is the event hash, so repeated notifications are deduplicated by JSM (the alert count goes up); recovery closes the alert by alias with the rendered recovery content as the note. `message` comes from the template field `title` (max 130), `description` from `content`; tags are the event labels, details carry labels and annotations, `entity` is the target ident and `source` is `Nightingale`. The API answers `202` and processes asynchronously; test sends wait for the processing result and report the alert id. The notification record shows `bot_name` or the key masked to its last 4 characters.
 
 ## Endpoints
 

@@ -64,6 +64,7 @@ type RequestConfig struct {
 	WecomAppRequestConfig    *WecomAppRequestConfig    `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
 	JiraRequestConfig        *JiraRequestConfig        `json:"jira_request_config,omitempty" gorm:"serializer:json"`
 	DiscordRequestConfig     *DiscordRequestConfig     `json:"discord_request_config,omitempty" gorm:"serializer:json"`
+	JSMAlertRequestConfig    *JSMAlertRequestConfig    `json:"jsm_alert_request_config,omitempty" gorm:"serializer:json"`
 	// 兼容旧版本
 	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
 	FeishuRequestConfig   *FeishuRequestConfig   `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
@@ -106,13 +107,15 @@ type PagerDutyRequestConfig struct {
 // 旧版同名 ident 的 request_type=http 记录不受影响：新 provider 的 Check 要求 request_type
 // 与 ident 一致，校验不过时 Registry.Resolve 按 request_type 兜底到 callback。
 const (
-	RequestTypeJira    = "jira"
-	RequestTypeDiscord = "discord"
+	RequestTypeJira     = "jira"
+	RequestTypeDiscord  = "discord"
+	RequestTypeJSMAlert = "jsm_alert"
 )
 
 var nativeRequestTypes = map[string]struct{}{
-	RequestTypeJira:    {},
-	RequestTypeDiscord: {},
+	RequestTypeJira:     {},
+	RequestTypeDiscord:  {},
+	RequestTypeJSMAlert: {},
 }
 
 // IsNativeRequestType 表示该媒介类型是否为原生对接：这类媒介的 provider 用 json.Marshal
@@ -168,6 +171,13 @@ type DiscordRequestConfig struct {
 	NativeNetworkConfig
 }
 
+// JSMAlertRequestConfig JSM（Jira Service Management）告警媒介：API 集成的 key 决定告警归哪个团队，
+// 所以跟 Discord 的 Webhook 地址一样填在通知规则里；媒介里只有接口地址和网络设置，整个配置可以为空。
+type JSMAlertRequestConfig struct {
+	APIURL string `json:"api_url"` // 空按 https://api.atlassian.com
+	NativeNetworkConfig
+}
+
 // NativeNetwork 返回原生媒介的网络设置；非原生媒介或未配置时返回 nil，调用方按默认值处理。
 func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig {
 	if rc == nil {
@@ -181,6 +191,10 @@ func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig 
 	case RequestTypeDiscord:
 		if rc.DiscordRequestConfig != nil {
 			return &rc.DiscordRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeJSMAlert:
+		if rc.JSMAlertRequestConfig != nil {
+			return &rc.JSMAlertRequestConfig.NativeNetworkConfig
 		}
 	}
 	return nil
@@ -510,7 +524,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		ncc.RequestType != "feishuapp" &&
 		ncc.RequestType != "wecomapp" &&
 		!IsNativeRequestType(ncc.RequestType) {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord'")
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert'")
 	}
 
 	if ncc.ParamConfig != nil {
@@ -650,6 +664,18 @@ func (ncc *NotifyChannelConfig) ValidateDiscordRequestConfig() error {
 	avatar := strings.TrimSpace(ncc.RequestConfig.DiscordRequestConfig.AvatarURL)
 	if avatar != "" && !strings.Contains(avatar, "{{") && !strings.HasPrefix(avatar, "http://") && !strings.HasPrefix(avatar, "https://") {
 		return errors.New("discord avatar url must start with http:// or https://")
+	}
+	return nil
+}
+
+// ValidateJSMAlertRequestConfig JSM 告警媒介的配置可以为空（接口地址用默认值），填了地址只校验协议
+func (ncc *NotifyChannelConfig) ValidateJSMAlertRequestConfig() error {
+	if ncc.RequestConfig == nil || ncc.RequestConfig.JSMAlertRequestConfig == nil {
+		return nil
+	}
+	u := strings.TrimSpace(ncc.RequestConfig.JSMAlertRequestConfig.APIURL)
+	if u != "" && !strings.Contains(u, "{{") && !strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://") {
+		return errors.New("jsm alert api url must start with http:// or https://")
 	}
 	return nil
 }
@@ -863,6 +889,29 @@ var NotiChMap = []*NotifyChannelConfig{
 			},
 		},
 	},
+	{
+		// 原生 JSM 告警：API 集成的 key 在通知规则里填，内置一条开箱即用。名称沿用 #3136 之前
+		// 内置的「JSM Alert」，老环境里没被用户改过的那条会原地升级（种子按名称 upsert）。
+		Name: "JSM Alert", Ident: JSMAlert, RequestType: RequestTypeJSMAlert, Weight: 7, Enable: true,
+		RequestConfig: &RequestConfig{
+			JSMAlertRequestConfig: &JSMAlertRequestConfig{
+				NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: JSMAlertRuleParams,
+			},
+		},
+	},
+}
+
+// JSMAlertRuleParams 是 JSM 告警通知配置在规则里的参数。api_key 与 #3136 之前内置的
+// 「JSM Alert」通用 HTTP 媒介同名，老环境里没被改过的那条原地升级后，已有规则照常可用。
+var JSMAlertRuleParams = []ParamItem{
+	{Key: "api_key", CName: "API Key", Type: "string"},
+	{Key: "bot_name", CName: "Name", Type: "string"},
+	{Key: "priority_map", CName: "Priority", Type: "string"},
 }
 
 // DiscordRuleParams 是 Discord 通知配置在规则里的参数（历史参数复用按这些 key 回显）

@@ -22,7 +22,9 @@ import (
 //	  "JiraProjectKey": "OPS",
 //	  "JiraIssueType": "Task",            // 选填，默认取项目里第一个非子任务类型
 //	  "DiscordWebhookURL": "https://discord.com/api/webhooks/<id>/<token>",
-//	  "DiscordForumWebhookURL": "..."     // 选填，论坛频道的 Webhook
+//	  "DiscordForumWebhookURL": "...",    // 选填，论坛频道的 Webhook
+//	  "JSMAPIKey": "...",                 // JSM 团队里 API 集成的 key
+//	  "JSMAPIURL": "https://api.atlassian.com" // 选填
 //	}
 //
 // 访问外网需要代理时设置 HTTPS_PROXY 环境变量。
@@ -242,5 +244,45 @@ func TestDiscordLive(t *testing.T) {
 		} else {
 			t.Logf("forum without thread: %v", res.Err)
 		}
+	}
+}
+
+func TestJSMAlertLive(t *testing.T) {
+	env := liveEnv(t, "JSMAPIKey")
+	ctx := context.Background()
+	p := &JSMAlertProvider{}
+	ch := &models.NotifyChannelConfig{Name: "JSM Alert", Ident: models.JSMAlert, RequestType: models.RequestTypeJSMAlert,
+		RequestConfig: &models.RequestConfig{JSMAlertRequestConfig: &models.JSMAlertRequestConfig{APIURL: env["JSMAPIURL"]}}}
+	hash := fmt.Sprintf("n9e-live-%d", time.Now().UnixNano())
+	send := func(params map[string]string, recovered bool) *NotifyResult {
+		return p.Notify(ctx, &NotifyRequest{
+			Config:       ch,
+			Events:       []*models.AlertCurEvent{liveEvent(hash, recovered)},
+			TplContent:   map[string]interface{}{"title": "[S2] n9e live test " + hash, "content": "Created by the nightingale provider live test.\nSafe to ignore."},
+			CustomParams: params,
+			HttpClient:   liveHTTPClient(),
+		})
+	}
+	// 带上测试 nonce 走「等处理完再返回」的路径，拿到 JSM 异步处理的真实结果
+	params := map[string]string{"api_key": env["JSMAPIKey"], "bot_name": "live", TestNonceParam: "live"}
+	for _, recovered := range []bool{false, true} {
+		res := send(params, recovered)
+		if res.Err != nil {
+			t.Fatalf("recovered=%v: %v", recovered, res.Err)
+		}
+		t.Logf("recovered=%v: %s", recovered, res.Response)
+	}
+	// 生产路径（不带 nonce）只拿到 202
+	plain := map[string]string{"api_key": env["JSMAPIKey"]}
+	if res := send(plain, false); res.Err != nil || !strings.Contains(res.Response, "accepted") {
+		t.Fatalf("production create: %+v", res)
+	}
+	if res := send(plain, true); res.Err != nil {
+		t.Fatalf("production close: %v", res.Err)
+	}
+	if res := send(map[string]string{"api_key": "00000000-0000-0000-0000-000000000000"}, false); res.Err == nil {
+		t.Errorf("a wrong api key should fail")
+	} else {
+		t.Logf("wrong key: %v", res.Err)
 	}
 }

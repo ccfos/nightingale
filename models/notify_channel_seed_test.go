@@ -80,3 +80,36 @@ func TestInitNotifyChannelSeedsDiscordOnFreshDB(t *testing.T) {
 		t.Fatalf("fresh db should get an enabled native discord channel, got %+v", ch)
 	}
 }
+
+// #3136 之前内置的「JSM Alert」是默认启用的通用 HTTP 媒介，规则参数同为 api_key：
+// 没被改过的原地升级成原生 JSM 告警，改过的不动。
+func TestInitNotifyChannelUpgradesLegacyJSMAlert(t *testing.T) {
+	for _, tc := range []struct {
+		updateBy string
+		want     string
+	}{{"system", models.RequestTypeJSMAlert}, {"root", "http"}} {
+		c := seedTestDB(t)
+		legacy := &models.NotifyChannelConfig{
+			Name: "JSM Alert", Ident: models.JSMAlert, RequestType: "http", Enable: true, UpdateBy: tc.updateBy, CreateBy: "system",
+			RequestConfig: &models.RequestConfig{HTTPRequestConfig: &models.HTTPRequestConfig{
+				URL: "https://api.atlassian.com/jsm/ops/integration/v2/alerts", Method: "POST", Timeout: 10000,
+				Headers: map[string]string{"Authorization": "GenieKey {{$params.api_key}}"},
+			}},
+			ParamConfig: &models.NotifyParamConfig{Custom: models.Params{Params: []models.ParamItem{{Key: "api_key", CName: "API Key", Type: "string"}}}},
+		}
+		if err := models.Insert(c, legacy); err != nil {
+			t.Fatal(err)
+		}
+		models.InitNotifyChannel(c)
+		lst, err := models.NotifyChannelsGet(c, "ident = ?", models.JSMAlert)
+		if err != nil || len(lst) != 1 {
+			t.Fatalf("expected exactly one jsm_alert channel, got %d (err=%v)", len(lst), err)
+		}
+		if lst[0].RequestType != tc.want {
+			t.Fatalf("update_by=%s: request_type=%s, want %s", tc.updateBy, lst[0].RequestType, tc.want)
+		}
+		if tc.want == models.RequestTypeJSMAlert && lst[0].ParamConfig.Custom.Params[0].Key != "api_key" {
+			t.Fatalf("rule param api_key must stay first for existing rules: %+v", lst[0].ParamConfig)
+		}
+	}
+}

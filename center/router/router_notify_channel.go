@@ -691,7 +691,7 @@ func (rt *Router) notifyChannelConfigTest(c *gin.Context) {
 	ginx.NewRender(c).Data(notifyChannelTestResult{Success: true, Detail: strings.Join(details, "\n")}, nil)
 }
 
-// withTestNonce 给测试发送的通知参数加一个一次性随机串。只有 Jira 用它拼去重键
+// withTestNonce 给测试发送的通知参数加一个一次性随机串。Jira 用它拼去重键、JSM 用它拼 alias
 // （见 provider.TestNonceParam）：每次测试建一张新单，「同时测试恢复」的两次发送对上同一张单。
 // 模拟事件的 Hash 保持固定，PagerDuty 等按 Hash 去重的媒介行为不变。
 func withTestNonce(params map[string]interface{}) map[string]interface{} {

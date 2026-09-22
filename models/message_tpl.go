@@ -742,7 +742,7 @@ Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 // Weight 用于页面元素排序，weight 越大 排序越靠后
 var MsgTplMap = []MessageTemplate{
 	{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3530,7 +3530,7 @@ Silenciar por 1 hora: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 // ident 追加 -en 后缀与中文版在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapEn = []MessageTemplate{
 	{Name: "Jira", Ident: Jira + "-en", NotifyChannelIdent: Jira, Lang: MsgTplLangEn, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-en", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEn, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-en", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEn, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-en", NotifyChannelIdent: "callback", Lang: MsgTplLangEn, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-en", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangEn, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-en", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangEn, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3555,7 +3555,7 @@ var MsgTplMapEn = []MessageTemplate{
 // ident 追加 -ja 后缀与中英文版在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapJa = []MessageTemplate{
 	{Name: "Jira", Ident: Jira + "-ja", NotifyChannelIdent: Jira, Lang: MsgTplLangJa, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-ja", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangJa, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-ja", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangJa, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ja", NotifyChannelIdent: "callback", Lang: MsgTplLangJa, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-ja", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangJa, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-ja", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangJa, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3580,7 +3580,7 @@ var MsgTplMapJa = []MessageTemplate{
 // ident 追加 -ru 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapRu = []MessageTemplate{
 	{Name: "Jira", Ident: Jira + "-ru", NotifyChannelIdent: Jira, Lang: MsgTplLangRu, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-ru", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangRu, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-ru", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangRu, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ru", NotifyChannelIdent: "callback", Lang: MsgTplLangRu, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-ru", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangRu, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-ru", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangRu, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3605,7 +3605,7 @@ var MsgTplMapRu = []MessageTemplate{
 // ident 追加 -fr 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapFr = []MessageTemplate{
 	{Name: "Jira", Ident: Jira + "-fr", NotifyChannelIdent: Jira, Lang: MsgTplLangFr, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-fr", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangFr, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-fr", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangFr, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-fr", NotifyChannelIdent: "callback", Lang: MsgTplLangFr, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-fr", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangFr, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-fr", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangFr, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3630,7 +3630,7 @@ var MsgTplMapFr = []MessageTemplate{
 // ident 追加 -ko 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapKo = []MessageTemplate{
 	{Name: "Jira", Ident: Jira + "-ko", NotifyChannelIdent: Jira, Lang: MsgTplLangKo, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-ko", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangKo, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-ko", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangKo, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ko", NotifyChannelIdent: "callback", Lang: MsgTplLangKo, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-ko", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangKo, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-ko", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangKo, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3655,7 +3655,7 @@ var MsgTplMapKo = []MessageTemplate{
 // ident 追加 -id 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapId = []MessageTemplate{
 	{Name: "Jira", Ident: Jira + "-id", NotifyChannelIdent: Jira, Lang: MsgTplLangId, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-id", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangId, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-id", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangId, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-id", NotifyChannelIdent: "callback", Lang: MsgTplLangId, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-id", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangId, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-id", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangId, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3680,7 +3680,7 @@ var MsgTplMapId = []MessageTemplate{
 // ident 追加 -es 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapEs = []MessageTemplate{
 	{Name: "Jira", Ident: Jira + "-es", NotifyChannelIdent: Jira, Lang: MsgTplLangEs, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-es", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEs, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-es", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEs, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-es", NotifyChannelIdent: "callback", Lang: MsgTplLangEs, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-es", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangEs, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-es", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangEs, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3705,7 +3705,7 @@ var MsgTplMapEs = []MessageTemplate{
 // ident 追加 -pt 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapPt = []MessageTemplate{
 	{Name: "Jira", Ident: Jira + "-pt", NotifyChannelIdent: Jira, Lang: MsgTplLangPt, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-pt", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangPt, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-pt", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangPt, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-pt", NotifyChannelIdent: "callback", Lang: MsgTplLangPt, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-pt", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangPt, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-pt", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangPt, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
