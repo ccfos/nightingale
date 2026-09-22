@@ -677,12 +677,14 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 [事件详情]({{.domain}}/share/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
-	// Slack 会把超过 5 行的附件正文折叠成「Show more」：级别和规则名已经在标题里，正文压成 4～5 行，链接也能直接看到
-	SlackWebhook: `{{if $event.TargetIdent}}*Monitor Target*: {{slackEscape $event.TargetIdent}} · {{end}}{{if $event.IsRecovered}}*Recovery Time*: {{timeformat $event.LastEvalTime}}{{else}}*Trigger Value*: {{slackEscape $event.TriggerValue}}{{end}}
-*Metrics*: ` + "`{{slackEscape $event.TagsJSON}}`" + `{{if $event.RuleNote}}
-*Rule Note*: {{slackEscape $event.RuleNote}}{{end}}
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}*First Trigger Time*: {{timeformat $event.FirstTriggerTime}} · *Time Since First Alert*: {{humanizeDurationInterface $time_duration}}
-<{{.domain}}/share/alert-his-events/{{$event.Id}}|Event Details> | <{{.domain}}/alert-mutes/add?__event_id={{$event.Id}}|Silence 1h> | <{{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph|View Graph>`,
+	// Slack 默认正文：统一「*标签*  值」的写法，最后一行是链接。级别和规则名已经在标题里；标签去掉与标题、监控对象重复的
+	// rulename、ident，指标名只写值；时间用 Slack 的 <!date> 按查看者时区显示，「多久前」会实时更新。
+	// Slack 会把超过 5 行的附件正文折叠成「Show more」：触发值和监控对象都短，合成一行，带告警描述时正文也只有 5 行。
+	SlackWebhook: `{{if $event.IsRecovered}}*Duration*  {{humanizeDurationInterface (sub $event.LastEvalTime $event.FirstTriggerTime)}}{{else if $event.TriggerValue}}*Value*  {{slackEscape $event.TriggerValue}}{{end}}{{if $event.TargetIdent}}{{if or $event.IsRecovered $event.TriggerValue}}      {{end}}*Target*  {{slackEscape $event.TargetIdent}}{{end}}{{if or $event.IsRecovered $event.TriggerValue $event.TargetIdent}}
+{{end}}{{$first := true}}{{range $k, $v := $labels}}{{if and (ne $k "rulename") (or (ne $k "ident") (not $event.TargetIdent))}}{{if $first}}*Labels*  {{else}}, {{end}}{{$first = false}}{{if eq $k "__name__"}}{{slackEscape $v}}{{else}}{{slackEscape $k}}={{slackEscape $v}}{{end}}{{end}}{{end}}{{if not $first}}
+{{end}}*Started*  {{if $event.IsRecovered}}<!date^{{$event.FirstTriggerTime}}^{date_short_pretty} at {time}|{{timeformat $event.FirstTriggerTime}}>{{else}}<!date^{{$event.FirstTriggerTime}}^{ago}|{{humanizeDurationInterface (sub now.Unix $event.FirstTriggerTime)}} ago> (<!date^{{$event.FirstTriggerTime}}^{date_short_pretty} at {time}|{{timeformat $event.FirstTriggerTime}}>){{end}}{{if and $event.RuleNote (not $event.IsRecovered)}}
+*Note*  {{slackEscape $event.RuleNote}}{{end}}
+<{{.domain}}/share/alert-his-events/{{$event.Id}}|Event details>{{if not $event.IsRecovered}}   <{{.domain}}/alert-mutes/add?__event_id={{$event.Id}}|Silence 1h>{{end}}   <{{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph|View graph>`,
 	Discord: markdownAlertContent,
 
 	MattermostWebhook: markdownAlertContent,

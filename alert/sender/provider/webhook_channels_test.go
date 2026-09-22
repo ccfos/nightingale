@@ -146,22 +146,49 @@ func TestSlackWebhookErrorsAndRetry(t *testing.T) {
 
 func TestSlackTemplateEscapesAlertFields(t *testing.T) {
 	tpl := &models.MessageTemplate{NotifyChannelIdent: models.SlackWebhook, Content: map[string]string{"content": models.NewTplMap[models.SlackWebhook]}}
-	events := []*models.AlertCurEvent{{RuleName: "latency > 1s & <p99>", Severity: 2, TagsJSON: []string{"__name__=http_latency", "path=/a&b"}}}
-	got, _ := tpl.RenderEventForChannel(models.RequestTypeSlackWebhook, events, "http://n9e")["content"].(string)
-	events[0].RuleNote = "p99 > 1s & rising"
-	got, _ = tpl.RenderEventForChannel(models.RequestTypeSlackWebhook, events, "http://n9e")["content"].(string)
-	if !strings.Contains(got, "*Rule Note*: p99 &gt; 1s &amp; rising") {
-		t.Fatalf("alert fields must be escaped for Slack mrkdwn, got:\n%s", got)
+	event := &models.AlertCurEvent{Id: 7, RuleName: "latency > 1s", RuleNote: "p99 > 1s & rising", Severity: 2, TargetIdent: "web-01",
+		TriggerValue: "1.8", FirstTriggerTime: 1700000000, TriggerTime: 1700000060,
+		TagsMap: map[string]string{"__name__": "http_latency", "ident": "web-01", "path": "/a&b", "rulename": "latency > 1s"}}
+	render := func() string {
+		got, _ := tpl.RenderEventForChannel(models.RequestTypeSlackWebhook, []*models.AlertCurEvent{event}, "http://n9e")["content"].(string)
+		return got
 	}
-	// 正文不超过 5 行，Slack 才不会折叠成 Show more
+
+	got := render()
+	for _, want := range []string{
+		"*Value*  1.8      *Target*  web-01\n",    // 触发值和监控对象都短，合成一行
+		"*Labels*  http_latency, path=/a&amp;b\n", // 指标名只写值，& 已转义
+		"*Note*  p99 &gt; 1s &amp; rising\n",
+		"*Started*  <!date^1700000000^{ago}|", // 时间交给 Slack 按查看者时区显示
+		"<http://n9e/share/alert-his-events/7|Event details>",
+		"|Silence 1h>",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("missing %q in:\n%s", want, got)
+		}
+	}
+	// 与标题、监控对象重复的标签不再出现
+	for _, dup := range []string{"__name__", "ident=", "rulename="} {
+		if strings.Contains(got, dup) {
+			t.Fatalf("%q duplicates the title or target and should be dropped:\n%s", dup, got)
+		}
+	}
+	// 带告警描述时正文也不超过 5 行，Slack 才不会把链接折叠进 Show more
 	if n := strings.Count(got, "\n") + 1; n > 5 {
 		t.Fatalf("the Slack body should stay within 5 lines, got %d:\n%s", n, got)
 	}
-	if !strings.Contains(got, "*Metrics*: `[__name__=http_latency path=/a&amp;b]`") {
-		t.Fatalf("metrics must be escaped inline code, got:\n%s", got)
+
+	event.IsRecovered, event.LastEvalTime = true, 1700000090
+	got = render()
+	if !strings.HasPrefix(got, "*Duration*  1m 30s      *Target*  web-01\n") || strings.Contains(got, "Silence 1h") || strings.Contains(got, "*Note*") {
+		t.Fatalf("recovery should lead with the duration and drop the note and silence link:\n%s", got)
 	}
-	if !strings.Contains(got, "<http://n9e/share/alert-his-events/0|Event Details>") {
-		t.Fatalf("links must keep Slack's <url|text> syntax, got:\n%s", got)
+
+	// 没有触发值和监控对象时不留空行，ident 退回到标签里
+	event.IsRecovered, event.TriggerValue, event.TargetIdent = false, "", ""
+	got = render()
+	if !strings.HasPrefix(got, "*Labels*  http_latency, ident=web-01, path=/a&amp;b\n*Started*  ") {
+		t.Fatalf("empty value and target should not leave a blank first line:\n%s", got)
 	}
 }
 
