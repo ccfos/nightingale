@@ -244,8 +244,8 @@ Below is the minimal usable configuration for each channel—when the user asks 
 
 ### 9d) JSM Alert `jsm_alert` (request_type=jsm_alert)
 
-- A built-in `JSM Alert` channel exists out of the box. `JSMAlertRequestConfig` is optional: `api_url` (default `https://api.atlassian.com`), network settings.
-- The key of a JSM team's **API integration** is filled per notify rule (`api_key`, plus `bot_name`, optional `priority_map`), because the key decides which team gets the alert. One key = one team; add more notify configs for more teams.
+- A built-in `JSM Alert` channel exists out of the box. `JSMAlertRequestConfig` is optional: `api_url` (default `https://api.atlassian.com`), `priority_map` (severity → P1–P5, default S1→P1, S2→P2, S3→P3), network settings.
+- The key of a JSM team's **API integration** is filled per notify rule (`api_key`, plus `bot_name`), because the key decides which team gets the alert. One key = one team; add more notify configs for more teams.
 - Alerts use the event hash as alias: JSM deduplicates repeats, recovery closes the alert by alias. Success is 2xx (the API answers 202 and processes asynchronously). A legacy `ident=jsm_alert` channel with `request_type=http` that a user edited keeps working through the callback fallback; the untouched built-in one is upgraded in place.
 
 ### 10) Flashduty `flashduty`

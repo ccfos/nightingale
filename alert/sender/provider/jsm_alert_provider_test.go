@@ -189,7 +189,9 @@ func TestJSMAlertPriorityMapAndLimits(t *testing.T) {
 	for i := 0; i < 30; i++ {
 		ev.TagsJSON = append(ev.TagsJSON, "k"+strings.Repeat("x", 60)+"=v")
 	}
-	req := jsmReq(srv.URL, map[string]string{"api_key": "k", "priority_map": `{"2":"p4"}`}, ev)
+	req := jsmReq(srv.URL, map[string]string{"api_key": "k"}, ev)
+	// 优先级映射在媒介里配；小写也认
+	req.Config.RequestConfig.JSMAlertRequestConfig.PriorityMap = map[string]string{"2": "p4"}
 	req.TplContent["title"] = strings.Repeat("长", 200)
 	if res := (&JSMAlertProvider{}).Notify(context.Background(), req); res.Err != nil {
 		t.Fatalf("notify: %v", res.Err)
@@ -211,8 +213,17 @@ func TestJSMAlertPriorityMapAndLimits(t *testing.T) {
 		}
 	}
 
-	if _, err := parseJSMParams(map[string]string{"api_key": "k", "priority_map": `{"2":"urgent"}`}); err == nil {
-		t.Fatal("invalid priority should be rejected")
+	for _, bad := range []map[string]string{{"2": "urgent"}, {"4": "P1"}} {
+		nc := &models.NotifyChannelConfig{Ident: models.JSMAlert, RequestType: models.RequestTypeJSMAlert,
+			RequestConfig: &models.RequestConfig{JSMAlertRequestConfig: &models.JSMAlertRequestConfig{PriorityMap: bad}}}
+		if err := (&JSMAlertProvider{}).Check(nc); err == nil {
+			t.Fatalf("invalid priority map %v should be rejected when saving the channel", bad)
+		}
+	}
+	// 没配映射时按默认 S1→P1、S2→P2、S3→P3
+	var empty *models.JSMAlertRequestConfig
+	if empty.Priority(1) != "P1" || empty.Priority(3) != "P3" {
+		t.Fatal("default priorities")
 	}
 	if _, err := parseJSMParams(map[string]string{}); err == nil {
 		t.Fatal("missing api_key should be rejected")

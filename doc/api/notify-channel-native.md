@@ -65,7 +65,7 @@ The message is one embed: title (template field `title`, or `[S2] Triggered: <ru
 
 Creates and closes alerts in Jira Service Management Operations (formerly Opsgenie) through the integration API `{api_url}/jsm/ops/integration/v2/alerts` with `Authorization: GenieKey <key>`. The key belongs to an **API integration** of a JSM team (team → Integrations → Add integration → API), so it decides which team gets the alert and is filled in each notify rule, like a webhook URL. A built-in `JSM Alert` channel (`ident=jsm_alert`, `request_type=jsm_alert`) is seeded on startup.
 
-`request_config.jsm_alert_request_config` (optional): `api_url` (default `https://api.atlassian.com`), plus `proxy` / `timeout` / `retry_times` / `retry_sleep`.
+`request_config.jsm_alert_request_config` (optional): `api_url` (default `https://api.atlassian.com`), `priority_map` (severity → JSM priority, e.g. `{"1":"P1","2":"P3","3":"P5"}`; missing severities default to S1→P1, S2→P2, S3→P3 — JSM priorities are the same site-wide, so this is an organization-level setting on the media type, not per rule), plus `proxy` / `timeout` / `retry_times` / `retry_sleep`.
 
 Notify rule params:
 
@@ -73,7 +73,6 @@ Notify rule params:
 |---|---|---|
 | `api_key` | yes | Key of the JSM API integration; supports `{{.variable_name}}`. Same key as the legacy built-in `JSM Alert` HTTP channel |
 | `bot_name` | no | A name for this key (e.g. the team name); shown as the notification target and used to reuse the key in other rules |
-| `priority_map` | no | JSON from severity to priority, e.g. `{"1":"P1","2":"P3","3":"P5"}`; default S1→P1, S2→P2, S3→P3 |
 
 Behaviour: the alias is the event hash, so repeated notifications are deduplicated by JSM (the alert count goes up); recovery closes the alert by alias with the rendered recovery content as the note. `message` comes from the template field `title` (max 130), `description` from `content`; tags are the event labels, details carry labels and annotations, `entity` is the target ident and `source` is `Nightingale`. The API answers `202` and processes asynchronously (a turned-off integration still answers `202`), so every send polls the request status: up to 3s in production and 10s for test sends. A processing failure is a send failure with a hint; a request not processed in time is recorded as accepted; closing an alert that is no longer open is not a failure. The notification record shows `bot_name` or the key masked to its last 4 characters.
 

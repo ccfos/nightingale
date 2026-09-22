@@ -41,9 +41,6 @@ const (
 	jsmSource = "Nightingale"
 )
 
-// jsmDefaultPriority 与旧版通用 HTTP 媒介的 P{{$event.Severity}} 一致：S1→P1、S2→P2、S3→P3
-var jsmDefaultPriority = map[int]string{1: "P1", 2: "P2", 3: "P3"}
-
 type JSMAlertProvider struct{}
 
 func (p *JSMAlertProvider) Ident() string { return models.RequestTypeJSMAlert }
@@ -73,9 +70,8 @@ type jsmCloseAlert struct {
 }
 
 type jsmParams struct {
-	APIKey   string
-	Name     string
-	Priority map[int]string
+	APIKey string
+	Name   string
 }
 
 func parseJSMParams(p map[string]string) (*jsmParams, error) {
@@ -86,31 +82,7 @@ func parseJSMParams(p map[string]string) (*jsmParams, error) {
 	if key == "" {
 		return nil, errors.New("jsm alert api_key is required in the notify rule")
 	}
-	jp := &jsmParams{APIKey: key, Name: strings.TrimSpace(p["bot_name"]), Priority: map[int]string{}}
-	for k, v := range jsmDefaultPriority {
-		jp.Priority[k] = v
-	}
-	if raw := strings.TrimSpace(p["priority_map"]); raw != "" {
-		var m map[string]string
-		if err := json.Unmarshal([]byte(raw), &m); err != nil {
-			return nil, fmt.Errorf("invalid jsm alert priority_map: %v", err)
-		}
-		for sev, pr := range m {
-			var s int
-			if _, err := fmt.Sscanf(sev, "%d", &s); err != nil || s < 1 || s > 3 {
-				return nil, fmt.Errorf("invalid severity %q in jsm alert priority_map, must be 1, 2 or 3", sev)
-			}
-			pr = strings.ToUpper(strings.TrimSpace(pr))
-			switch pr {
-			case "":
-				delete(jp.Priority, s)
-			case "P1", "P2", "P3", "P4", "P5":
-				jp.Priority[s] = pr
-			default:
-				return nil, fmt.Errorf("invalid priority %q in jsm alert priority_map, must be P1 to P5", pr)
-			}
-		}
-	}
+	jp := &jsmParams{APIKey: key, Name: strings.TrimSpace(p["bot_name"])}
 	return jp, nil
 }
 
@@ -183,7 +155,7 @@ func (p *JSMAlertProvider) notifyEvent(ctx context.Context, req *NotifyRequest, 
 		action = "close"
 	} else {
 		u = endpoint
-		body = buildJSMCreate(req, params, event, alias)
+		body = buildJSMCreate(req, cfg, event, alias)
 		action = "create"
 	}
 	payload, err := json.Marshal(body)
@@ -239,7 +211,7 @@ func (p *JSMAlertProvider) notifyEvent(ctx context.Context, req *NotifyRequest, 
 	return "alert closed, id " + st.AlertID, nil
 }
 
-func buildJSMCreate(req *NotifyRequest, params *jsmParams, event *models.AlertCurEvent, alias string) *jsmCreateAlert {
+func buildJSMCreate(req *NotifyRequest, cfg *models.JSMAlertRequestConfig, event *models.AlertCurEvent, alias string) *jsmCreateAlert {
 	title := tplString(req.TplContent, "title")
 	if title == "" {
 		title = eventTitle(event)
@@ -267,7 +239,7 @@ func buildJSMCreate(req *NotifyRequest, params *jsmParams, event *models.AlertCu
 		Details:     jsmDetails(event),
 		Entity:      entity,
 		Source:      jsmSource,
-		Priority:    params.Priority[event.Severity],
+		Priority:    cfg.Priority(event.Severity),
 	}
 }
 

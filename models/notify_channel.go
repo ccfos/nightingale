@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -175,7 +176,23 @@ type DiscordRequestConfig struct {
 // 所以跟 Discord 的 Webhook 地址一样填在通知规则里；媒介里只有接口地址和网络设置，整个配置可以为空。
 type JSMAlertRequestConfig struct {
 	APIURL string `json:"api_url"` // 空按 https://api.atlassian.com
+	// PriorityMap 夜莺告警级别（"1"/"2"/"3"）对应的 JSM 优先级（P1–P5）。JSM 的优先级全站固定，
+	// 这是组织级约定，所以放在媒介里而不是每条规则各配一遍；缺某个级别时按 S1→P1、S2→P2、S3→P3
+	PriorityMap map[string]string `json:"priority_map"`
 	NativeNetworkConfig
+}
+
+// jsmDefaultPriority 与旧版通用 HTTP 媒介的 P{{$event.Severity}} 一致
+var jsmDefaultPriority = map[int]string{1: "P1", 2: "P2", 3: "P3"}
+
+// Priority 返回告警级别对应的 JSM 优先级
+func (c *JSMAlertRequestConfig) Priority(severity int) string {
+	if c != nil {
+		if v := strings.ToUpper(strings.TrimSpace(c.PriorityMap[strconv.Itoa(severity)])); v != "" {
+			return v
+		}
+	}
+	return jsmDefaultPriority[severity]
 }
 
 // NativeNetwork 返回原生媒介的网络设置；非原生媒介或未配置时返回 nil，调用方按默认值处理。
@@ -673,9 +690,20 @@ func (ncc *NotifyChannelConfig) ValidateJSMAlertRequestConfig() error {
 	if ncc.RequestConfig == nil || ncc.RequestConfig.JSMAlertRequestConfig == nil {
 		return nil
 	}
-	u := strings.TrimSpace(ncc.RequestConfig.JSMAlertRequestConfig.APIURL)
+	cfg := ncc.RequestConfig.JSMAlertRequestConfig
+	u := strings.TrimSpace(cfg.APIURL)
 	if u != "" && !strings.Contains(u, "{{") && !strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://") {
 		return errors.New("jsm alert api url must start with http:// or https://")
+	}
+	for sev, pr := range cfg.PriorityMap {
+		if sev != "1" && sev != "2" && sev != "3" {
+			return fmt.Errorf("invalid severity %q in jsm alert priority_map, must be 1, 2 or 3", sev)
+		}
+		switch strings.ToUpper(strings.TrimSpace(pr)) {
+		case "", "P1", "P2", "P3", "P4", "P5":
+		default:
+			return fmt.Errorf("invalid priority %q in jsm alert priority_map, must be P1 to P5", pr)
+		}
 	}
 	return nil
 }
@@ -895,6 +923,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		Name: "JSM Alert", Ident: JSMAlert, RequestType: RequestTypeJSMAlert, Weight: 7, Enable: true,
 		RequestConfig: &RequestConfig{
 			JSMAlertRequestConfig: &JSMAlertRequestConfig{
+				PriorityMap:         map[string]string{"1": "P1", "2": "P2", "3": "P3"},
 				NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
 			},
 		},
@@ -911,7 +940,6 @@ var NotiChMap = []*NotifyChannelConfig{
 var JSMAlertRuleParams = []ParamItem{
 	{Key: "api_key", CName: "API Key", Type: "string"},
 	{Key: "bot_name", CName: "Name", Type: "string"},
-	{Key: "priority_map", CName: "Priority", Type: "string"},
 }
 
 // DiscordRuleParams 是 Discord 通知配置在规则里的参数（历史参数复用按这些 key 回显）
