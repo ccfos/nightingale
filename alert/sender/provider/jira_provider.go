@@ -32,7 +32,6 @@ const (
 	jiraMaxDescriptionRunes = 32000 // Jira 上限 32767，留出余量
 	jiraMaxLabelRunes       = 255
 	jiraMaxTagLabels        = 20
-	jiraDefaultReopenMins   = 1440
 	jiraDedupLabelPrefix    = "eventHash="
 
 	jiraOnResolveClose   = "close"
@@ -84,9 +83,6 @@ type jiraParams struct {
 	OnResolve         string
 	ResolveTransition string
 	OnRepeat          string
-	ReopenTransition  string
-	ReopenDuration    time.Duration
-	WontFixResolution string
 	PriorityMap       map[string]string
 	Labels            []string
 	TagsAsLabels      bool
@@ -101,8 +97,6 @@ func parseJiraParams(p map[string]string) (*jiraParams, error) {
 		OnResolve:         strings.TrimSpace(p["on_resolve"]),
 		ResolveTransition: strings.TrimSpace(p["resolve_transition"]),
 		OnRepeat:          strings.TrimSpace(p["on_repeat"]),
-		ReopenTransition:  strings.TrimSpace(p["reopen_transition"]),
-		WontFixResolution: strings.TrimSpace(p["wont_fix_resolution"]),
 		TagsAsLabels:      p["tags_as_labels"] == "true",
 		TestNonce:         p[TestNonceParam],
 	}
@@ -119,16 +113,6 @@ func parseJiraParams(p map[string]string) (*jiraParams, error) {
 	default:
 		return nil, fmt.Errorf("invalid on_resolve %q, must be close, comment or none", jp.OnResolve)
 	}
-
-	mins := jiraDefaultReopenMins
-	if v := strings.TrimSpace(p["reopen_duration"]); v != "" {
-		n, err := strconv.Atoi(v)
-		if err != nil || n <= 0 {
-			return nil, fmt.Errorf("invalid reopen_duration %q, must be minutes", v)
-		}
-		mins = n
-	}
-	jp.ReopenDuration = time.Duration(mins) * time.Minute
 
 	if err := unmarshalParam(p, "priority_map", &jp.PriorityMap); err != nil {
 		return nil, err
@@ -220,7 +204,7 @@ func (p *JiraProvider) handleEvent(ctx context.Context, c *jiraClient, req *Noti
 }
 
 func (p *JiraProvider) handleFiring(ctx context.Context, c *jiraClient, req *NotifyRequest, jp *jiraParams, event *models.AlertCurEvent, cacheKey, dedupKey string) (string, string, error) {
-	issue, err := p.lookup(ctx, c, jp, cacheKey, dedupKey, true)
+	issue, err := p.lookup(ctx, c, jp, cacheKey, dedupKey)
 	if err != nil {
 		return "", "", err
 	}
@@ -243,33 +227,13 @@ func (p *JiraProvider) handleFiring(ctx context.Context, c *jiraClient, req *Not
 		return issue.Key, fmt.Sprintf("exists, not created again %s %s", issue.Key, c.browseURL(issue.Key)), nil
 	}
 
-	// 工单已关闭：在重开时间窗内且解决结果不是被忽略的那个时重开，否则建新单
-	if p.canReopen(jp, issue) {
-		if _, err := p.transitionByName(ctx, c, issue.Key, jp.ReopenTransition, nil); err != nil {
-			return issue.Key, "", err
-		}
-		jiraIssueCache.Set(cacheKey, cachedJiraIssue{Key: issue.Key}, gocache.DefaultExpiration)
-		return issue.Key, fmt.Sprintf("reopened %s %s", issue.Key, c.browseURL(issue.Key)), nil
-	}
+	// 缓存里记着的单已经关闭（恢复时关的，或被人手动关了）：同一告警再次触发就建新单。
+	// 不做「时间窗内重开旧单」：那需要跨工单生命周期记关闭时间和解决结果，状态和分支都多一层
 	return p.create(ctx, c, req, jp, event, cacheKey, dedupKey)
 }
 
-func (p *JiraProvider) canReopen(jp *jiraParams, issue *jiraIssue) bool {
-	if jp.ReopenTransition == "" {
-		return false
-	}
-	if jp.WontFixResolution != "" && strings.EqualFold(issue.resolution(), jp.WontFixResolution) {
-		return false
-	}
-	t, ok := issue.resolvedAt()
-	if !ok {
-		return true
-	}
-	return time.Since(t) <= jp.ReopenDuration
-}
-
 func (p *JiraProvider) handleRecovered(ctx context.Context, c *jiraClient, req *NotifyRequest, jp *jiraParams, event *models.AlertCurEvent, cacheKey, dedupKey string) (string, string, error) {
-	issue, err := p.lookup(ctx, c, jp, cacheKey, dedupKey, false)
+	issue, err := p.lookup(ctx, c, jp, cacheKey, dedupKey)
 	if err != nil {
 		return "", "", err
 	}
@@ -304,9 +268,9 @@ func (p *JiraProvider) handleRecovered(ctx context.Context, c *jiraClient, req *
 	return issue.Key, fmt.Sprintf("commented and closed via %q %s %s", name, issue.Key, c.browseURL(issue.Key)), nil
 }
 
-// lookup 找到该告警对应的工单：先查缓存（命中时按 key 取实时状态，不依赖搜索），再按 JQL 搜索。
-// firing 为 true 且配置了重开时，会找回时间窗内已关闭的单；其余只找未关闭的单。
-func (p *JiraProvider) lookup(ctx context.Context, c *jiraClient, jp *jiraParams, cacheKey, dedupKey string, firing bool) (*jiraIssue, error) {
+// lookup 找到该告警对应的工单：先查缓存（命中时按 key 取实时状态，不依赖搜索；可能是已关闭的单），
+// 再按 JQL 搜索未关闭的单。
+func (p *JiraProvider) lookup(ctx context.Context, c *jiraClient, jp *jiraParams, cacheKey, dedupKey string) (*jiraIssue, error) {
 	if v, ok := jiraIssueCache.Get(cacheKey); ok {
 		cached := v.(cachedJiraIssue)
 		issue, err := c.getIssue(ctx, cached.Key)
@@ -321,7 +285,7 @@ func (p *JiraProvider) lookup(ctx context.Context, c *jiraClient, jp *jiraParams
 		jiraIssueCache.Delete(cacheKey)
 	}
 
-	issue, err := c.searchIssue(ctx, buildJiraJQL(jp, dedupKey, firing))
+	issue, err := c.searchIssue(ctx, buildJiraJQL(jp, dedupKey))
 	if err != nil {
 		return nil, err
 	}
@@ -331,21 +295,13 @@ func (p *JiraProvider) lookup(ctx context.Context, c *jiraClient, jp *jiraParams
 	return issue, nil
 }
 
-// buildJiraJQL 移植自 Alertmanager notify/jira/jira.go 的 searchExistingIssue（含 v0.33 对忽略解决结果的修正）
-func buildJiraJQL(jp *jiraParams, dedupKey string, firing bool) string {
-	var parts []string
-	if jp.WontFixResolution != "" {
-		parts = append(parts, fmt.Sprintf("(resolution is EMPTY OR resolution != %s)", jqlQuote(jp.WontFixResolution)))
-	}
-	if firing && jp.ReopenTransition != "" {
-		parts = append(parts, fmt.Sprintf("(resolutiondate is EMPTY OR resolutiondate >= -%dm)", int(jp.ReopenDuration.Minutes())))
-	} else {
-		parts = append(parts, "statusCategory != Done")
-	}
-	parts = append(parts,
-		"project = "+jqlQuote(jp.ProjectKey),
-		"labels = "+jqlQuote(jiraDedupLabelPrefix+dedupKey))
-	return strings.Join(parts, " AND ") + " ORDER BY status ASC, resolutiondate DESC"
+// buildJiraJQL 按去重标签找该告警未关闭的单，取自 Alertmanager notify/jira/jira.go 的 searchExistingIssue
+func buildJiraJQL(jp *jiraParams, dedupKey string) string {
+	return strings.Join([]string{
+		"statusCategory != Done",
+		"project = " + jqlQuote(jp.ProjectKey),
+		"labels = " + jqlQuote(jiraDedupLabelPrefix+dedupKey),
+	}, " AND ") + " ORDER BY created DESC"
 }
 
 func jqlQuote(s string) string {

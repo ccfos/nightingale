@@ -32,9 +32,7 @@ Differences from `request_type=http` channels:
 | `issue_type` | yes | Issue type name, e.g. `Bug` |
 | `on_resolve` | no | `close` (default: comment and transition to a Done status), `comment`, `none` |
 | `resolve_transition` | no | Transition name or id used to close; empty = pick a transition to the Done category automatically |
-| `on_repeat` | no | `none` (default) or `comment`: what to do when the alert fires again while the issue is open |
-| `reopen_transition` / `reopen_duration` | no | Reopen a closed issue with this transition when the alert fires again within `reopen_duration` minutes (default 1440); otherwise a new issue is created |
-| `wont_fix_resolution` | no | Issues closed with this resolution are never reopened |
+| `on_repeat` | no | `none` (default) or `comment`: what to do when the alert fires again while the issue is open. Once the issue is closed, the same alert firing again creates a new issue (closed issues are never reopened) |
 | `priority_map` | no | JSON, severity → priority name, e.g. `{"1":"Highest","2":"High"}` |
 | `labels` | no | JSON array of extra labels |
 | `tags_as_labels` | no | `true` to add alert tags as labels (spaces become `_`, at most 20) |

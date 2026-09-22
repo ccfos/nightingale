@@ -510,38 +510,15 @@ func TestJiraRecoveryWithoutIssueIsNotAFailure(t *testing.T) {
 	}
 }
 
-func TestJiraReopenWithinWindow(t *testing.T) {
-	fj, ch := setupJira(t)
-	p := &JiraProvider{}
-	params := withParams(map[string]string{"reopen_transition": "reopen", "reopen_duration": "60"})
-	p.Notify(context.Background(), jiraReq(ch, params, firingEvent("h1", 100)))
-	p.Notify(context.Background(), jiraReq(ch, params, recoveredEvent("h1", 200)))
-	res := p.Notify(context.Background(), jiraReq(ch, params, firingEvent("h1", 300)))
-	if res.Err != nil || fj.createCount != 1 || fj.issues["OPS-1"].Category != "new" || !strings.Contains(res.Response, "reopened") {
-		t.Fatalf("firing within the reopen window should reopen: %+v creates=%d category=%s", res, fj.createCount, fj.issues["OPS-1"].Category)
-	}
-}
-
-func TestJiraClosedWithoutReopenCreatesNew(t *testing.T) {
+// 单关了之后同一告警再触发：建新单（不做时间窗内重开）
+func TestJiraClosedIssueCreatesNew(t *testing.T) {
 	fj, ch := setupJira(t)
 	p := &JiraProvider{}
 	p.Notify(context.Background(), jiraReq(ch, baseParams, firingEvent("h1", 100)))
 	p.Notify(context.Background(), jiraReq(ch, baseParams, recoveredEvent("h1", 200)))
 	res := p.Notify(context.Background(), jiraReq(ch, baseParams, firingEvent("h1", 300)))
 	if res.Err != nil || fj.createCount != 2 || res.Target != "OPS-2" {
-		t.Fatalf("firing after close without reopen should create a new issue: %+v creates=%d", res, fj.createCount)
-	}
-}
-
-func TestJiraWontFixIsNotReopened(t *testing.T) {
-	fj, ch := setupJira(t)
-	p := &JiraProvider{}
-	params := withParams(map[string]string{"reopen_transition": "Reopen", "wont_fix_resolution": "Done"})
-	p.Notify(context.Background(), jiraReq(ch, params, firingEvent("h1", 100)))
-	p.Notify(context.Background(), jiraReq(ch, params, recoveredEvent("h1", 200)))
-	res := p.Notify(context.Background(), jiraReq(ch, params, firingEvent("h1", 300)))
-	if res.Err != nil || fj.createCount != 2 {
-		t.Fatalf("issue resolved as the ignored resolution should not be reopened: %+v creates=%d", res, fj.createCount)
+		t.Fatalf("firing after the issue was closed should create a new issue: %+v creates=%d", res, fj.createCount)
 	}
 }
 
@@ -612,17 +589,9 @@ func TestJiraSummaryFallbackAndTruncate(t *testing.T) {
 }
 
 func TestJiraJQL(t *testing.T) {
-	jp := &jiraParams{ProjectKey: "OPS", ReopenDuration: time.Hour}
-	if got := buildJiraJQL(jp, "h1", true); got != `statusCategory != Done AND project = "OPS" AND labels = "eventHash=h1" ORDER BY status ASC, resolutiondate DESC` {
-		t.Fatalf("firing jql: %s", got)
-	}
-	jp.ReopenTransition, jp.WontFixResolution = "Reopen", `Won't "Fix"`
-	got := buildJiraJQL(jp, "h1", true)
-	if !strings.HasPrefix(got, `(resolution is EMPTY OR resolution != "Won't \"Fix\"") AND (resolutiondate is EMPTY OR resolutiondate >= -60m)`) {
-		t.Fatalf("reopen jql: %s", got)
-	}
-	if got := buildJiraJQL(jp, "h1", false); !strings.Contains(got, "statusCategory != Done") {
-		t.Fatalf("recovery jql must look for open issues only: %s", got)
+	jp := &jiraParams{ProjectKey: `O"PS`}
+	if got := buildJiraJQL(jp, "h1"); got != `statusCategory != Done AND project = "O\"PS" AND labels = "eventHash=h1" ORDER BY created DESC` {
+		t.Fatalf("jql: %s", got)
 	}
 }
 

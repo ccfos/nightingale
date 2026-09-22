@@ -231,10 +231,6 @@ type jiraIssue struct {
 				Key string `json:"key"`
 			} `json:"statusCategory"`
 		} `json:"status"`
-		Resolution *struct {
-			Name string `json:"name"`
-		} `json:"resolution"`
-		ResolutionDate string `json:"resolutiondate"`
 	} `json:"fields"`
 }
 
@@ -242,27 +238,7 @@ func (i *jiraIssue) done() bool {
 	return i != nil && i.Fields.Status != nil && i.Fields.Status.StatusCategory.Key == "done"
 }
 
-func (i *jiraIssue) resolution() string {
-	if i == nil || i.Fields.Resolution == nil {
-		return ""
-	}
-	return i.Fields.Resolution.Name
-}
-
-// resolvedAt 解析 resolutiondate（Jira 的格式形如 2025-12-09T20:29:52.900+0800）
-func (i *jiraIssue) resolvedAt() (time.Time, bool) {
-	if i == nil || i.Fields.ResolutionDate == "" {
-		return time.Time{}, false
-	}
-	for _, layout := range []string{"2006-01-02T15:04:05.000-0700", time.RFC3339Nano, "2006-01-02T15:04:05-0700"} {
-		if t, err := time.Parse(layout, i.Fields.ResolutionDate); err == nil {
-			return t, true
-		}
-	}
-	return time.Time{}, false
-}
-
-var jiraIssueFields = []string{"status", "resolution", "resolutiondate"}
+var jiraIssueFields = []string{"status"}
 
 // searchIssue 按 JQL 查第一条（Cloud 的 /search/jql，最多取 2 条）
 func (c *jiraClient) searchIssue(ctx context.Context, jql string) (*jiraIssue, error) {

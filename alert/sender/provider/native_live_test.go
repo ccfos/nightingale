@@ -169,7 +169,7 @@ func TestJiraLive(t *testing.T) {
 			if i > 0 {
 				time.Sleep(2 * time.Second)
 			}
-			issue, err = p.lookup(ctx, c, jp, fmt.Sprintf("live-search|%s|%d", hash, i), hash, true)
+			issue, err = p.lookup(ctx, c, jp, fmt.Sprintf("live-search|%s|%d", hash, i), hash)
 			if err != nil {
 				t.Fatalf("lookup: %v", err)
 			}
