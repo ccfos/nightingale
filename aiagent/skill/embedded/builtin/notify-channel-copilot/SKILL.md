@@ -37,7 +37,7 @@ type NotifyChannelConfig struct {
     Enable      bool
 
     ParamConfig   *NotifyParamConfig   // user parameters: contact_key + custom params
-    RequestType   string               // http | smtp | script | flashduty | pagerduty
+    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira | discord | jsm_alert | slackwebhook | mattermostwebhook
     RequestConfig *RequestConfig       // pick the matching sub-struct by ident/request_type
 
     Weight int
@@ -48,7 +48,7 @@ type NotifyChannelConfig struct {
 
 | Field | Applicable ident |
 |---|---|
-| `HTTPRequestConfig` | all channels that use a pure HTTP webhook (dingtalk, feishu, wecom, telegram, slackwebhook, callback, …) |
+| `HTTPRequestConfig` | all channels that use a pure HTTP webhook (dingtalk, feishu, wecom, telegram, callback, …) |
 | `SMTPRequestConfig` | `email` |
 | `ScriptRequestConfig` | `script` |
 | `FlashDutyRequestConfig` | `flashduty` |
@@ -56,6 +56,10 @@ type NotifyChannelConfig struct {
 | `DingtalkAppRequestConfig` | `dingtalkapp` (DingTalk app, currently not registered, see `provider/init.go`) |
 | `FeishuAppRequestConfig` | `feishuapp` |
 | `WecomAppRequestConfig` | `wecomapp` |
+| `JiraRequestConfig` | `jira` (native Jira issue channel, `request_type=jira`) |
+| `DiscordRequestConfig` | `discord` (native Discord channel, `request_type=discord`; optional, the webhook URL is a rule param) |
+| `JSMAlertRequestConfig` | `jsm_alert` (native JSM alert channel, `request_type=jsm_alert`; optional `api_url`, the integration key is a rule param) |
+| `SlackWebhookRequestConfig` / `MattermostWebhookRequestConfig` | `slackwebhook` / `mattermostwebhook` (native webhook channels; optional, the webhook URL is a rule param) |
 
 ---
 
@@ -72,10 +76,13 @@ type NotifyChannelConfig struct {
 | `feishuapp` | FeishuAppProvider | HTTP (App) | Feishu app robot (DM/group) |
 | `wecomapp` | WecomAppProvider | HTTP (App) | WeCom self-built app |
 | `telegram` | simpleHTTPProvider | HTTP | Telegram Bot |
-| `discord` | simpleHTTPProvider | HTTP | Discord webhook |
-| `slackbot` / `slackwebhook` | simpleHTTPProvider | HTTP | Slack |
-| `mattermostbot` / `mattermostwebhook` | simpleHTTPProvider | HTTP | Mattermost |
-| `jira` / `jsm_alert` | simpleHTTPProvider | HTTP | Jira / JSM ticket-type |
+| `discord` (`request_type=discord`) | DiscordProvider | HTTP | Discord webhook (embed, forum posts) |
+| `slackwebhook` (`request_type=slackwebhook`) | SlackWebhookProvider | HTTP | Slack incoming webhook (attachment with severity color) |
+| `mattermostwebhook` (`request_type=mattermostwebhook`) | MattermostWebhookProvider | HTTP | Mattermost incoming webhook (attachment with severity color) |
+| `slackbot` / `mattermostbot` | simpleHTTPProvider | HTTP | legacy generic HTTP (Bot mode is not natively supported yet) |
+| `jira` (`request_type=jira`) | JiraProvider | HTTP | Jira issues: create on trigger, comment and close on recovery |
+| `jsm_alert` (`request_type=jsm_alert`) | JSMAlertProvider | HTTP | JSM Operations alerts: create on trigger, close on recovery |
+| `jira` / `discord` / `jsm_alert` / `slackwebhook` / `mattermostwebhook` (legacy `request_type=http`) | callback | HTTP | legacy hand-made webhook configs |
 | `email` | EmailProvider | SMTP | Email |
 | `tx-sms` | TencentSmsProvider | HTTP | Tencent Cloud SMS |
 | `tx-voice` | TencentVoiceProvider | HTTP | Tencent Cloud voice |
@@ -223,6 +230,32 @@ Below is the minimal usable configuration for each channel—when the user asks 
 - `PagerDutyRequestConfig`: `Proxy`, `ApiKey` (account-level API Key, not a routing key), `Timeout`, `RetryTimes`, `RetrySleep`.
 - Uses the PagerDuty Events API v2. **Don't mistakenly fill the ApiKey with an Integration Key** (a common pitfall).
 
+### 9b) Jira `jira` (request_type=jira)
+
+- `JiraRequestConfig` holds only the site and the account: `deployment_type` (`cloud`), `site_url` (e.g. `https://your-domain.atlassian.net`, no `/rest/api`), `token_type` (`scoped` = scoped API token or service-account token, sent through `api.atlassian.com/ex/jira/{cloudId}`; `classic` = classic API token, sent to the site URL), `email`, `api_token`, `cloud_id` (optional, fetched from `{site_url}/_edge/tenant_info` when empty), plus `proxy` / `timeout` / `retry_times` / `retry_sleep` / `insecure_skip_verify`.
+- The project and issue type live in the **notify rule** params, see notify-rule-copilot. One Jira channel serves every project.
+- Behaviour: issues are deduplicated by the label `eventHash=<event hash>`; repeated notifications do not create new issues; on recovery the issue gets a comment and is transitioned to a status in the Done category (the transition is picked automatically unless `resolve_transition` is set).
+- `POST /api/n9e/notify-channel-config/check` checks the credentials and permissions of an unsaved config item by item.
+- A legacy `ident=jira` channel with `request_type=http` (hand-made HTTP webhook) keeps working unchanged through the callback fallback.
+
+### 9c) Discord `discord` (request_type=discord)
+
+- A built-in `Discord` channel exists out of the box. `DiscordRequestConfig` is optional: `username`, `avatar_url`, `silent`, network settings.
+- The webhook URL is filled per notify rule (`webhook_url`, plus `bot_name`, `target`, `thread_name`, `thread_id`), like the DingTalk robot token. One webhook = one channel; add more notify configs for more channels.
+- Success is 200/204 (sent with `?wait=true`). A legacy `ident=discord` channel with `request_type=http` keeps working through the callback fallback.
+
+### 9c2) Slack Webhook `slackwebhook` / Mattermost Webhook `mattermostwebhook`
+
+- Built-in `SlackWebhook` / `MattermostWebhook` channels exist out of the box; their request configs are optional (Mattermost adds `username`, `icon`, `insecure_skip_verify`).
+- The webhook URL is filled per notify rule (`webhook_url`, plus `bot_name`), like the DingTalk robot token. One webhook = one channel; add more notify configs for more channels. Bot mode and @-mentions are not supported yet.
+- Slack success is 200 with the body `ok`; Mattermost success is 200. A legacy row with `request_type=http` keeps working through the callback fallback.
+
+### 9d) JSM Alert `jsm_alert` (request_type=jsm_alert)
+
+- A built-in `JSM Alert` channel exists out of the box. `JSMAlertRequestConfig` is optional: `api_url` (default `https://api.atlassian.com`), `priority_map` (severity → P1–P5, default S1→P1, S2→P2, S3→P3), network settings.
+- The key of a JSM team's **API integration** is filled per notify rule (`api_key`, plus `bot_name`), because the key decides which team gets the alert. One key = one team; add more notify configs for more teams.
+- Alerts use the event hash as alias: JSM deduplicates repeats, recovery closes the alert by alias. Success is 2xx (the API answers 202 and processes asynchronously). A legacy `ident=jsm_alert` channel with `request_type=http` that a user edited keeps working through the callback fallback; the untouched built-in one is upgraded in place.
+
 ### 10) Flashduty `flashduty`
 
 - `FlashDutyRequestConfig`: `IntegrationUrl` (one URL per integration), `Proxy`, `Timeout`, `RetryTimes`, `RetrySleep`.
@@ -318,7 +351,7 @@ Steps:
 | Email `tls: handshake failure` | the SMTP server certificate verification failed | `InsecureSkipVerify: true` or change the port (587 STARTTLS / 465 SSL) |
 | `connect: i/o timeout` | the network is unreachable or a proxy is needed | fill `HTTPRequestConfig.Proxy` with the proxy address, and confirm the machine can resolve the webhook domain |
 | SMS "template variable is missing a corresponding parameter value" | the count of `${1}` in the Alibaba Cloud/Tencent Cloud SMS template doesn't match the params array in n9e | compare against the template content in the provider console and fill in the missing ones in order |
-| Saving a custom ident shows `unsupported channel` | the ident is not registered and request_type is not in the fallback table | `RequestType` must be one of `http/script/smtp/flashduty/pagerduty` |
+| Saving a custom ident shows `unsupported channel` | the ident is not registered and request_type is not in the fallback table | `RequestType` must be one of `http/script/smtp/flashduty/pagerduty`; native types such as `jira` require the ident to equal the request_type |
 | A channel tests OK but real alerts don't go out | sendtos is empty for real alerts (the recipient's contact_info is missing the field) / the notify_rule didn't select this channel | see the dedicated "Test works but real alerts don't go out" section below |
 
 ### Test works but real alerts don't go out

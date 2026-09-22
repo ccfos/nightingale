@@ -22,18 +22,21 @@ func init() {
 	DefaultRegistry.Register(&FlashDutyProvider{})
 	DefaultRegistry.Register(&CallbackProvider{})
 
+	// 原生对接的海外媒介：request_type 与 ident 同名；旧版同名 ident 的 request_type=http 记录
+	// 在 Check 阶段被拒，按 request_type 兜底到 callback，发送行为不变
+	DefaultRegistry.Register(&JiraProvider{})
+	DefaultRegistry.Register(&DiscordProvider{})
+	DefaultRegistry.Register(&JSMAlertProvider{})
+	DefaultRegistry.Register(&SlackWebhookProvider{})
+	DefaultRegistry.Register(&MattermostWebhookProvider{})
+
 	// 纯 HTTP webhook 模板驱动 Provider：只差 ident，统一走 simpleHTTPProvider
 	for _, ident := range []string{
 		models.Feishu,
 		models.Lark,
 		models.Telegram,
-		models.Discord,
 		models.SlackBot,
-		models.SlackWebhook,
 		models.MattermostBot,
-		models.MattermostWebhook,
-		models.Jira,
-		models.JSMAlert,
 	} {
 		DefaultRegistry.Register(&simpleHTTPProvider{ident: ident})
 	}
