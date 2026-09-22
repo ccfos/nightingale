@@ -19,10 +19,16 @@ import (
 type fakeJSM struct {
 	mu        sync.Mutex
 	calls     []jsmCall
-	status    int  // 非 0 时所有写请求返回该状态码
-	tooMany   bool // 第一次写请求返回 429
-	failClose bool // 关闭请求处理失败（告警不存在）
+	status    int    // 非 0 时所有写请求返回该状态码
+	tooMany   bool   // 第一次写请求返回 429
+	failClose bool   // 关闭请求处理失败（告警不存在）
+	asyncFail string // 非空时建告警的异步处理失败，状态为该文本
 	polled    map[string]int
+}
+
+func init() {
+	// 模拟服务第二次查询就有结果，测试里不用真等 500ms
+	jsmPollGap = 10 * time.Millisecond
 }
 
 type jsmCall struct {
@@ -50,10 +56,14 @@ func (f *fakeJSM) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		ok := !(strings.HasPrefix(id, "close") && f.failClose)
 		status := "Created alert"
+		if strings.HasPrefix(id, "create") && f.asyncFail != "" {
+			ok, status = false, f.asyncFail
+		}
 		if strings.HasPrefix(id, "close") {
 			status = "Closed alert"
 			if !ok {
-				status = "Alert does not exist"
+				// JSM 对已关闭告警再关的真实状态文案
+				status = "There is no open alert with alias [h1-n1]."
 			}
 		}
 		json.NewEncoder(w).Encode(map[string]interface{}{"data": map[string]interface{}{"success": ok, "status": status, "alertId": "alert-1"}})
@@ -148,7 +158,8 @@ func TestJSMAlertCreatePayload(t *testing.T) {
 	if details["service"] != "api" || details["runbook"] != "https://wiki/cpu" {
 		t.Fatalf("details should carry labels and annotations: %+v", details)
 	}
-	if res.Target != "SRE team" || !strings.Contains(res.Response, "request id create-1") {
+	// 生产路径也查异步处理结果，记录里是真实结果
+	if res.Target != "SRE team" || res.Response != "alert created, id alert-1" {
 		t.Fatalf("unexpected result target=%s resp=%s", res.Target, res.Response)
 	}
 }
@@ -224,11 +235,34 @@ func TestJSMAlertTestSendWaitsForProcessing(t *testing.T) {
 		t.Fatalf("recovery of a test send should close the same alias: %+v %s", res, f.calls[1].Path)
 	}
 
+	// 恢复时告警已不存在是正常结局
 	f.failClose = true
 	f.polled = map[string]int{}
 	res = p.Notify(context.Background(), jsmReq(srv.URL, params, jsmEvent(true)))
-	if res.Err == nil || !strings.Contains(res.Err.Error(), "Alert does not exist") {
-		t.Fatalf("an asynchronous failure must surface in test sends: %+v", res)
+	if res.Err != nil || !strings.Contains(res.Response, "nothing to close") {
+		t.Fatalf("closing an alert that is gone should not fail: %+v", res)
+	}
+}
+
+// 集成被关闭时接口照样回 202，失败只在异步处理结果里：生产路径也必须报出来，不能记成成功
+func TestJSMAlertAsyncFailureSurfaces(t *testing.T) {
+	f, srv := newFakeJSM(t)
+	f.asyncFail = "Integration is disabled."
+	res := (&JSMAlertProvider{}).Notify(context.Background(), jsmReq(srv.URL, map[string]string{"api_key": "k"}, jsmEvent(false)))
+	var he *HintError
+	if res.Err == nil || !errors.As(res.Err, &he) || !strings.Contains(he.Hint, "turned off") {
+		t.Fatalf("a disabled integration must fail with a hint: %+v", res)
+	}
+}
+
+func TestJSMAlertProcessingTimeoutIsAccepted(t *testing.T) {
+	old := jsmProdWait
+	jsmProdWait = 0
+	t.Cleanup(func() { jsmProdWait = old })
+	_, srv := newFakeJSM(t)
+	res := (&JSMAlertProvider{}).Notify(context.Background(), jsmReq(srv.URL, map[string]string{"api_key": "k"}, jsmEvent(false)))
+	if res.Err != nil || !strings.Contains(res.Response, "create accepted, request id create-1") {
+		t.Fatalf("a request not processed in time is accepted, not failed: %+v", res)
 	}
 }
 

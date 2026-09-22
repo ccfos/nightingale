@@ -77,7 +77,7 @@ Notify rule params:
 | `bot_name` | no | A name for this key (e.g. the team name); shown as the notification target and used to reuse the key in other rules |
 | `priority_map` | no | JSON from severity to priority, e.g. `{"1":"P1","2":"P3","3":"P5"}`; default S1→P1, S2→P2, S3→P3 |
 
-Behaviour: the alias is the event hash, so repeated notifications are deduplicated by JSM (the alert count goes up); recovery closes the alert by alias with the rendered recovery content as the note. `message` comes from the template field `title` (max 130), `description` from `content`; tags are the event labels, details carry labels and annotations, `entity` is the target ident and `source` is `Nightingale`. The API answers `202` and processes asynchronously; test sends wait for the processing result and report the alert id. The notification record shows `bot_name` or the key masked to its last 4 characters.
+Behaviour: the alias is the event hash, so repeated notifications are deduplicated by JSM (the alert count goes up); recovery closes the alert by alias with the rendered recovery content as the note. `message` comes from the template field `title` (max 130), `description` from `content`; tags are the event labels, details carry labels and annotations, `entity` is the target ident and `source` is `Nightingale`. The API answers `202` and processes asynchronously (a turned-off integration still answers `202`), so every send polls the request status: up to 3s in production and 10s for test sends. A processing failure is a send failure with a hint; a request not processed in time is recorded as accepted; closing an alert that is no longer open is not a failure. The notification record shows `bot_name` or the key masked to its last 4 characters.
 
 ## Endpoints
 

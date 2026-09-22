@@ -272,13 +272,23 @@ func TestJSMAlertLive(t *testing.T) {
 		}
 		t.Logf("recovered=%v: %s", recovered, res.Response)
 	}
-	// 生产路径（不带 nonce）只拿到 202
+	// 生产路径（不带 nonce）同样查处理结果，只是等得短：处理完是 created / closed，没处理完是 accepted
 	plain := map[string]string{"api_key": env["JSMAPIKey"]}
-	if res := send(plain, false); res.Err != nil || !strings.Contains(res.Response, "accepted") {
+	if res := send(plain, false); res.Err != nil || !(strings.Contains(res.Response, "alert created") || strings.Contains(res.Response, "accepted")) {
 		t.Fatalf("production create: %+v", res)
+	} else {
+		t.Logf("production create: %s", res.Response)
 	}
 	if res := send(plain, true); res.Err != nil {
 		t.Fatalf("production close: %v", res.Err)
+	} else {
+		t.Logf("production close: %s", res.Response)
+	}
+	// 告警已关闭后再关一次：正常结局，不算失败
+	if res := send(plain, true); res.Err != nil {
+		t.Fatalf("closing an already closed alert should not fail: %v", res.Err)
+	} else {
+		t.Logf("close again: %s", res.Response)
 	}
 	if res := send(map[string]string{"api_key": "00000000-0000-0000-0000-000000000000"}, false); res.Err == nil {
 		t.Errorf("a wrong api key should fail")

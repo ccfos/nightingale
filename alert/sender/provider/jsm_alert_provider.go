@@ -208,23 +208,30 @@ func (p *JSMAlertProvider) notifyEvent(ctx context.Context, req *NotifyRequest, 
 		return "", withHint(errors.New(msg), jsmHint(err))
 	}
 
-	// 接口只回 202 + requestId，真正的处理是异步的；测试发送时等它处理完，把真实结果回给用户
+	// 接口只回 202 + requestId，真正的处理是异步的：集成被关闭、告警不存在等错误都要查处理结果才看得到
+	// （集成关闭时照样回 202，不查的话告警会悄悄丢失而记录显示成功）。测试发送多等一会儿，
+	// 生产路径等得短一些，超时只记「已受理」不算失败。
 	var accepted struct {
 		RequestID string `json:"requestId"`
 	}
 	_ = json.Unmarshal(resp.Body, &accepted)
-	if nonce == "" || accepted.RequestID == "" {
-		if accepted.RequestID == "" {
-			return action + " accepted", nil
-		}
-		return fmt.Sprintf("%s accepted, request id %s", action, accepted.RequestID), nil
+	if accepted.RequestID == "" {
+		return action + " accepted", nil
 	}
-	st, err := p.waitRequest(ctx, req.HttpClient, endpoint, params.APIKey, accepted.RequestID)
+	budget := jsmProdWait
+	if nonce != "" {
+		budget = jsmTestWait
+	}
+	st, err := p.waitRequest(ctx, req.HttpClient, endpoint, params.APIKey, accepted.RequestID, budget)
 	if err != nil {
-		return fmt.Sprintf("%s accepted, request id %s (status unknown: %v)", action, accepted.RequestID, err), nil
+		return fmt.Sprintf("%s accepted, request id %s (result not available: %v)", action, accepted.RequestID, err), nil
 	}
-	if !st.Success {
-		return "", withHint(fmt.Errorf("jsm alert %s failed: %s", action, st.Status), "")
+	if !st.ok() {
+		// 恢复时告警已不存在（从没建出来、或已在 JSM 里手动关闭）是正常结局，同 Jira 恢复时没找到工单
+		if action == "close" && jsmAlertGone(st.Status) {
+			return "alert not open in JSM, nothing to close (" + st.Status + ")", nil
+		}
+		return "", withHint(fmt.Errorf("jsm alert %s failed: %s", action, st.Status), jsmStatusHint(st.Status))
 	}
 	if action == "create" {
 		return "alert created, id " + st.AlertID, nil
@@ -304,18 +311,33 @@ func jsmTarget(name, key string) string {
 }
 
 type jsmRequestStatus struct {
-	Success bool   `json:"success"`
-	Action  string `json:"action"`
-	Status  string `json:"status"`
-	AlertID string `json:"alertId"`
-	Alias   string `json:"alias"`
+	Success   bool   `json:"success"`
+	IsSuccess bool   `json:"isSuccess"`
+	Action    string `json:"action"`
+	Status    string `json:"status"`
+	AlertID   string `json:"alertId"`
+	Alias     string `json:"alias"`
 }
 
-// waitRequest 轮询异步请求的处理结果，最多等 10 秒；处理前查询会返回 404
-func (p *JSMAlertProvider) waitRequest(ctx context.Context, client *http.Client, endpoint, key, requestID string) (*jsmRequestStatus, error) {
-	deadline := time.Now().Add(10 * time.Second)
+func (s *jsmRequestStatus) ok() bool { return s.Success || s.IsSuccess }
+
+// 等待异步处理结果的时长：测试发送要把真实结果回给用户；生产路径只多等一小会儿，JSM 通常 1 秒内处理完
+var (
+	jsmTestWait = 10 * time.Second
+	jsmProdWait = 3 * time.Second
+	jsmPollGap  = 500 * time.Millisecond
+)
+
+// waitRequest 轮询异步请求的处理结果；处理前查询会返回 404
+func (p *JSMAlertProvider) waitRequest(ctx context.Context, client *http.Client, endpoint, key, requestID string, budget time.Duration) (*jsmRequestStatus, error) {
+	deadline := time.Now().Add(budget)
 	u := endpoint + "/requests/" + url.PathEscape(requestID)
 	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(jsmPollGap):
+		}
 		r, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 		if err != nil {
 			return nil, err
@@ -330,21 +352,35 @@ func (p *JSMAlertProvider) waitRequest(ctx context.Context, client *http.Client,
 		}
 		decodeErr := json.NewDecoder(resp.Body).Decode(&out)
 		resp.Body.Close()
-		if resp.StatusCode == http.StatusOK && decodeErr == nil && (out.Data.Status != "" || out.Data.Success) {
+		if resp.StatusCode == http.StatusOK && decodeErr == nil && (out.Data.Status != "" || out.Data.ok()) {
 			return &out.Data, nil
 		}
 		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotFound {
 			return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
 		}
 		if time.Now().After(deadline) {
-			return nil, errors.New("request not processed within 10s")
-		}
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-time.After(500 * time.Millisecond):
+			return nil, fmt.Errorf("not processed within %s", budget)
 		}
 	}
+}
+
+// jsmAlertGone 表示关闭时告警已经不在打开状态。实测已关闭的告警再关，状态是
+// "There is no open alert with alias [...]"
+func jsmAlertGone(status string) bool {
+	s := strings.ToLower(status)
+	return strings.Contains(s, "no open alert") || strings.Contains(s, "does not exist") || strings.Contains(s, "already closed")
+}
+
+// jsmStatusHint 给异步处理失败的状态补提示
+func jsmStatusHint(status string) string {
+	s := strings.ToLower(status)
+	switch {
+	case strings.Contains(s, "integration is disabled"):
+		return "The JSM API integration is turned off; turn it on in the team's Integrations"
+	case strings.Contains(s, "responder"):
+		return "A responder in the alert does not exist in JSM"
+	}
+	return ""
 }
 
 // jsmErrorDetail 解析错误响应：{"message":"...","took":0.0,"requestId":"...","errors":{...}}
