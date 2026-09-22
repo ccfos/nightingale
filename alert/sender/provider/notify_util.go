@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"text/template"
@@ -283,4 +284,60 @@ func LocalizeCheckItems(items []CheckItem, translate func(string) string) []Chec
 		out[i] = it
 	}
 	return out
+}
+
+// maskWebhookURL 返回可写进通知记录和日志的 Webhook 地址：路径最后一段（凭证所在）换成 ***，
+// 查询串整个去掉。解析失败时返回占位符，不把疑似凭证的原串写出去。
+func maskWebhookURL(raw string) string {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || u.Host == "" {
+		return "(invalid webhook url)"
+	}
+	path := strings.TrimRight(u.EscapedPath(), "/")
+	if i := strings.LastIndex(path, "/"); i >= 0 && i < len(path)-1 {
+		path = path[:i+1] + redactedMark
+	}
+	// 手工拼接：url.URL.String() 会把 *** 转义成 %2A%2A%2A
+	return u.Scheme + "://" + u.Host + path
+}
+
+// webhookTarget 是 Webhook 类通知在通知记录里的目标：优先用规则里填的名称，没填时用掩码后的地址。
+// provider 自填的 Target 会原样落进 notification_record，而 Webhook 地址本身就是凭证。
+func webhookTarget(name, webhookURL string) string {
+	if name = strings.TrimSpace(name); name != "" {
+		return name
+	}
+	return maskWebhookURL(webhookURL)
+}
+
+// severityColor 是 Webhook 类消息卡片的级别色：S1 红 / S2 橙 / S3 黄 / 恢复绿
+func severityColor(severity int, recovered bool) int {
+	if recovered {
+		return 0x2EB67D
+	}
+	switch severity {
+	case 1:
+		return 0xE01E5A
+	case 2:
+		return 0xF2994A
+	default:
+		return 0xECB22E
+	}
+}
+
+// eventTitle 是卡片标题的兜底格式（模板没有 title 字段时用）
+func eventTitle(event *models.AlertCurEvent) string {
+	status := "Triggered"
+	if event.IsRecovered {
+		status = "Recovered"
+	}
+	return fmt.Sprintf("[S%d] %s: %s", event.Severity, status, event.RuleName)
+}
+
+// eventDetailURL 返回事件详情页链接，站点地址为空时返回空串
+func eventDetailURL(siteURL string, event *models.AlertCurEvent) string {
+	if siteURL == "" || event.Id == 0 {
+		return ""
+	}
+	return strings.TrimRight(siteURL, "/") + "/share/alert-his-events/" + strconv.FormatInt(event.Id, 10)
 }

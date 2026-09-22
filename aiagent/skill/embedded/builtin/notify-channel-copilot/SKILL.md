@@ -37,7 +37,7 @@ type NotifyChannelConfig struct {
     Enable      bool
 
     ParamConfig   *NotifyParamConfig   // user parameters: contact_key + custom params
-    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira
+    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira | discord
     RequestConfig *RequestConfig       // pick the matching sub-struct by ident/request_type
 
     Weight int
@@ -57,6 +57,7 @@ type NotifyChannelConfig struct {
 | `FeishuAppRequestConfig` | `feishuapp` |
 | `WecomAppRequestConfig` | `wecomapp` |
 | `JiraRequestConfig` | `jira` (native Jira issue channel, `request_type=jira`) |
+| `DiscordRequestConfig` | `discord` (native Discord channel, `request_type=discord`; optional, the webhook URL is a rule param) |
 
 ---
 
@@ -232,6 +233,12 @@ Below is the minimal usable configuration for each channel—when the user asks 
 - Behaviour: issues are deduplicated by the label `eventHash=<event hash>`; repeated notifications do not create new issues; on recovery the issue gets a comment and is transitioned to a status in the Done category (the transition is picked automatically unless `resolve_transition` is set).
 - `POST /api/n9e/notify-channel-config/check` checks the credentials and permissions of an unsaved config item by item.
 - A legacy `ident=jira` channel with `request_type=http` (hand-made HTTP webhook) keeps working unchanged through the callback fallback.
+
+### 9c) Discord `discord` (request_type=discord)
+
+- A built-in `Discord` channel exists out of the box. `DiscordRequestConfig` is optional: `username`, `avatar_url`, `silent`, network settings.
+- The webhook URL is filled per notify rule (`webhook_url`, plus `bot_name`, `target`, `thread_name`, `thread_id`, `mentions`), like the DingTalk robot token. One webhook = one channel; add more notify configs for more channels.
+- Success is 200/204 (sent with `?wait=true`). A legacy `ident=discord` channel with `request_type=http` keeps working through the callback fallback.
 
 ### 10) Flashduty `flashduty`
 

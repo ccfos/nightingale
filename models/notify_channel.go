@@ -63,6 +63,7 @@ type RequestConfig struct {
 	FeishuAppRequestConfig   *FeishuAppRequestConfig   `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
 	WecomAppRequestConfig    *WecomAppRequestConfig    `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
 	JiraRequestConfig        *JiraRequestConfig        `json:"jira_request_config,omitempty" gorm:"serializer:json"`
+	DiscordRequestConfig     *DiscordRequestConfig     `json:"discord_request_config,omitempty" gorm:"serializer:json"`
 	// 兼容旧版本
 	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
 	FeishuRequestConfig   *FeishuRequestConfig   `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
@@ -105,11 +106,13 @@ type PagerDutyRequestConfig struct {
 // 旧版同名 ident 的 request_type=http 记录不受影响：新 provider 的 Check 要求 request_type
 // 与 ident 一致，校验不过时 Registry.Resolve 按 request_type 兜底到 callback。
 const (
-	RequestTypeJira = "jira"
+	RequestTypeJira    = "jira"
+	RequestTypeDiscord = "discord"
 )
 
 var nativeRequestTypes = map[string]struct{}{
-	RequestTypeJira: {},
+	RequestTypeJira:    {},
+	RequestTypeDiscord: {},
 }
 
 // IsNativeRequestType 表示该媒介类型是否为原生对接：这类媒介的 provider 用 json.Marshal
@@ -156,6 +159,15 @@ type JiraRequestConfig struct {
 	NativeNetworkConfig
 }
 
+// DiscordRequestConfig Discord 媒介：Webhook 地址在通知规则里填（一个地址对应一个频道），
+// 媒介里只有所有规则共用的外观默认值和网络设置，整个配置可以为空。
+type DiscordRequestConfig struct {
+	Username  string `json:"username"`   // 覆盖 Webhook 显示的名字
+	AvatarURL string `json:"avatar_url"` // 覆盖 Webhook 的头像
+	Silent    bool   `json:"silent"`     // 静默推送：消息照发，但不触发推送和桌面通知
+	NativeNetworkConfig
+}
+
 // NativeNetwork 返回原生媒介的网络设置；非原生媒介或未配置时返回 nil，调用方按默认值处理。
 func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig {
 	if rc == nil {
@@ -165,6 +177,10 @@ func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig 
 	case RequestTypeJira:
 		if rc.JiraRequestConfig != nil {
 			return &rc.JiraRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeDiscord:
+		if rc.DiscordRequestConfig != nil {
+			return &rc.DiscordRequestConfig.NativeNetworkConfig
 		}
 	}
 	return nil
@@ -494,7 +510,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		ncc.RequestType != "feishuapp" &&
 		ncc.RequestType != "wecomapp" &&
 		!IsNativeRequestType(ncc.RequestType) {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira'")
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord'")
 	}
 
 	if ncc.ParamConfig != nil {
@@ -622,6 +638,18 @@ func (c *JiraRequestConfig) Verify() error {
 		}
 	default:
 		return fmt.Errorf("jira deployment type must be %s", JiraDeploymentCloud)
+	}
+	return nil
+}
+
+// ValidateDiscordRequestConfig Discord 媒介的配置可以为空（全部用默认值），只校验填了的外观字段
+func (ncc *NotifyChannelConfig) ValidateDiscordRequestConfig() error {
+	if ncc.RequestConfig == nil || ncc.RequestConfig.DiscordRequestConfig == nil {
+		return nil
+	}
+	avatar := strings.TrimSpace(ncc.RequestConfig.DiscordRequestConfig.AvatarURL)
+	if avatar != "" && !strings.Contains(avatar, "{{") && !strings.HasPrefix(avatar, "http://") && !strings.HasPrefix(avatar, "https://") {
+		return errors.New("discord avatar url must start with http:// or https://")
 	}
 	return nil
 }
@@ -820,6 +848,31 @@ var NotiChMap = []*NotifyChannelConfig{
 			},
 		},
 	},
+	{
+		// 原生 Discord：媒介里不需要凭证，Webhook 地址在通知规则里填，所以内置一条开箱即用。
+		// ParamConfig 里声明规则侧参数，规则页才能按「历史参数」复用填过的地址。
+		Name: "Discord", Ident: Discord, RequestType: RequestTypeDiscord, Weight: 6, Enable: true,
+		RequestConfig: &RequestConfig{
+			DiscordRequestConfig: &DiscordRequestConfig{
+				NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: DiscordRuleParams,
+			},
+		},
+	},
+}
+
+// DiscordRuleParams 是 Discord 通知配置在规则里的参数（历史参数复用按这些 key 回显）
+var DiscordRuleParams = []ParamItem{
+	{Key: "webhook_url", CName: "Webhook URL", Type: "string"},
+	{Key: "bot_name", CName: "Name", Type: "string"},
+	{Key: "target", CName: "Send to", Type: "string"},
+	{Key: "thread_name", CName: "Post title", Type: "string"},
+	{Key: "thread_id", CName: "Thread ID", Type: "string"},
+	{Key: "mentions", CName: "Mentions", Type: "string"},
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {

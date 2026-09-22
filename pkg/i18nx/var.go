@@ -2,6 +2,15 @@ package i18nx
 
 var I18N = `{
   "zh_CN": {
+    "The Discord webhook URL looks like https://discord.com/api/webhooks/<id>/<token>": "Discord Webhook 地址形如 https://discord.com/api/webhooks/<id>/<token>",
+    "The webhook was deleted in Discord, create a new one": "Webhook 已在 Discord 中被删除，请重新创建",
+    "The webhook URL is incomplete or the webhook token was reset": "Webhook 地址不完整或已重置",
+    "The message is too long or malformed; see the field path in the error": "消息内容超长或格式不合法，请查看报错中指出的字段路径",
+    "This is a forum channel: choose New forum post or Existing thread as the target": "这是论坛频道，「发送到」需要选择新建论坛帖子或已有线程",
+    "This is not a forum channel: New forum post cannot be used": "这不是论坛频道，不能新建帖子",
+    "The thread is locked": "线程已锁定",
+    "Nightingale cannot reach Discord; check the network or set a proxy in the media type": "夜莺无法访问 Discord，请检查网络，或在媒介的高级设置里配置代理",
+    "Rate limited by Discord, retried according to Retry-After": "触发 Discord 限速，已按 Retry-After 自动重试",
     "Cloud ID": "Cloud ID",
     "Credentials": "凭证",
     "Account": "账号",
@@ -250,6 +259,15 @@ var I18N = `{
     "---------zh_CN--------": "---------zh_CN--------"
   },
   "zh_HK": {
+    "The Discord webhook URL looks like https://discord.com/api/webhooks/<id>/<token>": "Discord Webhook 地址形如 https://discord.com/api/webhooks/<id>/<token>",
+    "The webhook was deleted in Discord, create a new one": "Webhook 已在 Discord 中被刪除，請重新建立",
+    "The webhook URL is incomplete or the webhook token was reset": "Webhook 地址不完整或已重設",
+    "The message is too long or malformed; see the field path in the error": "訊息內容超長或格式不合法，請查看報錯中指出的欄位路徑",
+    "This is a forum channel: choose New forum post or Existing thread as the target": "這是論壇頻道，「發送到」需要選擇新建論壇貼文或已有討論串",
+    "This is not a forum channel: New forum post cannot be used": "這不是論壇頻道，不能新建貼文",
+    "The thread is locked": "討論串已鎖定",
+    "Nightingale cannot reach Discord; check the network or set a proxy in the media type": "夜鶯無法存取 Discord，請檢查網路，或在媒介的進階設定裡配置代理",
+    "Rate limited by Discord, retried according to Retry-After": "觸發 Discord 限速，已按 Retry-After 自動重試",
     "Cloud ID": "Cloud ID",
     "Credentials": "憑證",
     "Account": "帳號",
@@ -500,6 +518,15 @@ var I18N = `{
     "---------zh_HK--------": "---------zh_HK--------"
   },
   "ja_JP": {
+    "The Discord webhook URL looks like https://discord.com/api/webhooks/<id>/<token>": "Discord の Webhook URL は https://discord.com/api/webhooks/<id>/<token> の形式です",
+    "The webhook was deleted in Discord, create a new one": "Webhook は Discord で削除されています。新しく作成してください",
+    "The webhook URL is incomplete or the webhook token was reset": "Webhook URL が不完全か、トークンがリセットされています",
+    "The message is too long or malformed; see the field path in the error": "メッセージが長すぎるか形式が不正です。エラー内のフィールドパスを確認してください",
+    "This is a forum channel: choose New forum post or Existing thread as the target": "これはフォーラムチャンネルです。送信先で新しいフォーラム投稿か既存のスレッドを選んでください",
+    "This is not a forum channel: New forum post cannot be used": "これはフォーラムチャンネルではないため、投稿を新規作成できません",
+    "The thread is locked": "スレッドはロックされています",
+    "Nightingale cannot reach Discord; check the network or set a proxy in the media type": "Nightingale から Discord に接続できません。ネットワークを確認するか、メディアの詳細設定でプロキシを設定してください",
+    "Rate limited by Discord, retried according to Retry-After": "Discord のレート制限に達したため、Retry-After に従って再試行しました",
     "Cloud ID": "Cloud ID",
     "Credentials": "認証情報",
     "Account": "アカウント",
@@ -747,6 +774,15 @@ var I18N = `{
     "---------ja_JP--------": "---------ja_JP--------"
   },
   "ru_RU": {
+    "The Discord webhook URL looks like https://discord.com/api/webhooks/<id>/<token>": "Адрес Discord Webhook имеет вид https://discord.com/api/webhooks/<id>/<token>",
+    "The webhook was deleted in Discord, create a new one": "Webhook удалён в Discord, создайте новый",
+    "The webhook URL is incomplete or the webhook token was reset": "Адрес Webhook неполный или токен был сброшен",
+    "The message is too long or malformed; see the field path in the error": "Сообщение слишком длинное или некорректно; смотрите путь поля в ошибке",
+    "This is a forum channel: choose New forum post or Existing thread as the target": "Это форум-канал: выберите «Новый пост форума» или «Существующая ветка»",
+    "This is not a forum channel: New forum post cannot be used": "Это не форум-канал: новый пост создать нельзя",
+    "The thread is locked": "Ветка заблокирована",
+    "Nightingale cannot reach Discord; check the network or set a proxy in the media type": "Nightingale не может подключиться к Discord: проверьте сеть или укажите прокси в настройках канала",
+    "Rate limited by Discord, retried according to Retry-After": "Превышен лимит запросов Discord, повтор выполнен согласно Retry-After",
     "Cloud ID": "Cloud ID",
     "Credentials": "Учётные данные",
     "Account": "Аккаунт",

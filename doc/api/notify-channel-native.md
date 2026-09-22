@@ -1,6 +1,6 @@
 # Native notification channels (Jira, ...)
 
-Native channels are notification channels whose `request_type` equals their `ident` and whose provider builds the request itself (instead of the generic HTTP URL + body template). The first one is **Jira** (`request_type=jira`). Discord, Slack and Mattermost follow the same pattern.
+Native channels are notification channels whose `request_type` equals their `ident` and whose provider builds the request itself (instead of the generic HTTP URL + body template): **Jira** (`request_type=jira`) and **Discord** (`request_type=discord`). Slack and Mattermost follow the same pattern.
 
 Differences from `request_type=http` channels:
 
@@ -43,6 +43,25 @@ Differences from `request_type=http` channels:
 Issues are deduplicated with the label `eventHash=<event hash>`: repeated notifications of the same alert never create a second open issue.
 
 The message template of a Jira channel has two fields: `title` (issue summary, max 255) and `content` (description; the rendering of the recovery event is used as the recovery comment).
+
+## Discord channel
+
+A built-in `Discord` channel (`ident=discord`, `request_type=discord`) is seeded on startup: the media type needs no credentials, the webhook URL is filled in each notify rule.
+
+`request_config.discord_request_config` (optional, defaults for every rule): `username`, `avatar_url`, `silent` (send without push / desktop notifications), plus `proxy` / `timeout` / `retry_times` / `retry_sleep`.
+
+Notify rule params:
+
+| Key | Required | Description |
+|---|---|---|
+| `webhook_url` | yes | `https://discord.com/api/webhooks/<id>/<token>`; supports `{{.variable_name}}` |
+| `bot_name` | no | A name for this webhook; shown as the notification target and used to reuse it in other rules |
+| `target` | no | `channel` (default), `forum_post` (create a forum post per notification) or `thread` (existing thread / forum post) |
+| `thread_name` | for `forum_post` | Post title, supports template variables such as `{{$event.RuleName}}` |
+| `thread_id` | for `thread` | Numeric thread ID |
+| `mentions` | no | Space separated `<@user_id>` / `<@&role_id>`; only these are allowed to ping, `@everyone` in the alert text does not |
+
+The message is one embed: title (template field `title`, or `[S2] Triggered: <rule>`), the rendered `content` as the description, severity color, event detail link and timestamp. The notification record shows the rule's `bot_name` or the webhook URL with its token masked, never the full URL.
 
 ## Endpoints
 
