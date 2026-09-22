@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"text/template"
@@ -303,6 +304,18 @@ func maskWebhookURL(raw string) string {
 
 // webhookTarget 是 Webhook 类通知在通知记录里的目标：优先用规则里填的名称，没填时用掩码后的地址。
 // provider 自填的 Target 会原样落进 notification_record，而 Webhook 地址本身就是凭证。
+// maskWebhookSecret 把报错文本里的 Webhook 凭证换成掩码：完整地址换成 maskWebhookURL 的结果，
+// 地址最后一段（token）单独出现时也换掉——Mattermost 的报错原文会带上 Webhook ID，而它本身就是凭证。
+func maskWebhookSecret(msg, webhookURL string) string {
+	msg = strings.ReplaceAll(msg, webhookURL, maskWebhookURL(webhookURL))
+	if u, err := url.Parse(webhookURL); err == nil {
+		if seg := path.Base(strings.TrimRight(u.Path, "/")); len(seg) >= 8 {
+			msg = strings.ReplaceAll(msg, seg, redactedMark)
+		}
+	}
+	return msg
+}
+
 func webhookTarget(name, webhookURL string) string {
 	if name = strings.TrimSpace(name); name != "" {
 		return name

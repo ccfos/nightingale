@@ -55,17 +55,19 @@ func (ncc *NotifyChannelConfig) TableName() string {
 }
 
 type RequestConfig struct {
-	HTTPRequestConfig        *HTTPRequestConfig        `json:"http_request_config,omitempty" gorm:"serializer:json"`
-	SMTPRequestConfig        *SMTPRequestConfig        `json:"smtp_request_config,omitempty" gorm:"serializer:json"`
-	ScriptRequestConfig      *ScriptRequestConfig      `json:"script_request_config,omitempty" gorm:"serializer:json"`
-	FlashDutyRequestConfig   *FlashDutyRequestConfig   `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
-	PagerDutyRequestConfig   *PagerDutyRequestConfig   `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
-	DingtalkAppRequestConfig *DingtalkAppRequestConfig `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
-	FeishuAppRequestConfig   *FeishuAppRequestConfig   `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
-	WecomAppRequestConfig    *WecomAppRequestConfig    `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
-	JiraRequestConfig        *JiraRequestConfig        `json:"jira_request_config,omitempty" gorm:"serializer:json"`
-	DiscordRequestConfig     *DiscordRequestConfig     `json:"discord_request_config,omitempty" gorm:"serializer:json"`
-	JSMAlertRequestConfig    *JSMAlertRequestConfig    `json:"jsm_alert_request_config,omitempty" gorm:"serializer:json"`
+	HTTPRequestConfig              *HTTPRequestConfig              `json:"http_request_config,omitempty" gorm:"serializer:json"`
+	SMTPRequestConfig              *SMTPRequestConfig              `json:"smtp_request_config,omitempty" gorm:"serializer:json"`
+	ScriptRequestConfig            *ScriptRequestConfig            `json:"script_request_config,omitempty" gorm:"serializer:json"`
+	FlashDutyRequestConfig         *FlashDutyRequestConfig         `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
+	PagerDutyRequestConfig         *PagerDutyRequestConfig         `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
+	DingtalkAppRequestConfig       *DingtalkAppRequestConfig       `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
+	FeishuAppRequestConfig         *FeishuAppRequestConfig         `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
+	WecomAppRequestConfig          *WecomAppRequestConfig          `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
+	JiraRequestConfig              *JiraRequestConfig              `json:"jira_request_config,omitempty" gorm:"serializer:json"`
+	DiscordRequestConfig           *DiscordRequestConfig           `json:"discord_request_config,omitempty" gorm:"serializer:json"`
+	JSMAlertRequestConfig          *JSMAlertRequestConfig          `json:"jsm_alert_request_config,omitempty" gorm:"serializer:json"`
+	SlackWebhookRequestConfig      *SlackWebhookRequestConfig      `json:"slackwebhook_request_config,omitempty" gorm:"serializer:json"`
+	MattermostWebhookRequestConfig *MattermostWebhookRequestConfig `json:"mattermostwebhook_request_config,omitempty" gorm:"serializer:json"`
 	// 兼容旧版本
 	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
 	FeishuRequestConfig   *FeishuRequestConfig   `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
@@ -108,15 +110,19 @@ type PagerDutyRequestConfig struct {
 // 旧版同名 ident 的 request_type=http 记录不受影响：新 provider 的 Check 要求 request_type
 // 与 ident 一致，校验不过时 Registry.Resolve 按 request_type 兜底到 callback。
 const (
-	RequestTypeJira     = "jira"
-	RequestTypeDiscord  = "discord"
-	RequestTypeJSMAlert = "jsm_alert"
+	RequestTypeJira              = "jira"
+	RequestTypeDiscord           = "discord"
+	RequestTypeJSMAlert          = "jsm_alert"
+	RequestTypeSlackWebhook      = "slackwebhook"
+	RequestTypeMattermostWebhook = "mattermostwebhook"
 )
 
 var nativeRequestTypes = map[string]struct{}{
-	RequestTypeJira:     {},
-	RequestTypeDiscord:  {},
-	RequestTypeJSMAlert: {},
+	RequestTypeJira:              {},
+	RequestTypeDiscord:           {},
+	RequestTypeJSMAlert:          {},
+	RequestTypeSlackWebhook:      {},
+	RequestTypeMattermostWebhook: {},
 }
 
 // IsNativeRequestType 表示该媒介类型是否为原生对接：这类媒介的 provider 用 json.Marshal
@@ -172,6 +178,20 @@ type DiscordRequestConfig struct {
 	NativeNetworkConfig
 }
 
+// SlackWebhookRequestConfig Slack Webhook 媒介：Webhook 地址在通知规则里填（一个地址对应一个频道），
+// 媒介里只有网络设置，整个配置可以为空。新版 Slack 应用的 Webhook 会忽略名称、图标和频道的覆盖，所以不提供外观设置。
+type SlackWebhookRequestConfig struct {
+	NativeNetworkConfig
+}
+
+// MattermostWebhookRequestConfig Mattermost Webhook 媒介：Webhook 地址在通知规则里填，
+// 媒介里只有所有规则共用的外观默认值和网络设置，整个配置可以为空。
+type MattermostWebhookRequestConfig struct {
+	Username string `json:"username"` // 覆盖发送者的名字，需要管理员开启 Enable integrations to override usernames
+	Icon     string `json:"icon"`     // 图片地址或 emoji 代码（如 :bell:），需要管理员开启 Enable integrations to override profile picture icons
+	NativeNetworkConfig
+}
+
 // JSMAlertRequestConfig JSM（Jira Service Management）告警媒介：API 集成的 key 决定告警归哪个团队，
 // 所以跟 Discord 的 Webhook 地址一样填在通知规则里；媒介里只有接口地址和网络设置，整个配置可以为空。
 type JSMAlertRequestConfig struct {
@@ -212,6 +232,14 @@ func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig 
 	case RequestTypeJSMAlert:
 		if rc.JSMAlertRequestConfig != nil {
 			return &rc.JSMAlertRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeSlackWebhook:
+		if rc.SlackWebhookRequestConfig != nil {
+			return &rc.SlackWebhookRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeMattermostWebhook:
+		if rc.MattermostWebhookRequestConfig != nil {
+			return &rc.MattermostWebhookRequestConfig.NativeNetworkConfig
 		}
 	}
 	return nil
@@ -541,7 +569,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		ncc.RequestType != "feishuapp" &&
 		ncc.RequestType != "wecomapp" &&
 		!IsNativeRequestType(ncc.RequestType) {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert'")
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert', 'slackwebhook', 'mattermostwebhook'")
 	}
 
 	if ncc.ParamConfig != nil {
@@ -681,6 +709,21 @@ func (ncc *NotifyChannelConfig) ValidateDiscordRequestConfig() error {
 	avatar := strings.TrimSpace(ncc.RequestConfig.DiscordRequestConfig.AvatarURL)
 	if avatar != "" && !strings.Contains(avatar, "{{") && !strings.HasPrefix(avatar, "http://") && !strings.HasPrefix(avatar, "https://") {
 		return errors.New("discord avatar url must start with http:// or https://")
+	}
+	return nil
+}
+
+// ValidateMattermostWebhookRequestConfig Mattermost Webhook 媒介的配置可以为空，只校验填了的图标
+func (ncc *NotifyChannelConfig) ValidateMattermostWebhookRequestConfig() error {
+	if ncc.RequestConfig == nil || ncc.RequestConfig.MattermostWebhookRequestConfig == nil {
+		return nil
+	}
+	icon := strings.TrimSpace(ncc.RequestConfig.MattermostWebhookRequestConfig.Icon)
+	if icon == "" || strings.Contains(icon, "{{") || strings.HasPrefix(icon, "http://") || strings.HasPrefix(icon, "https://") {
+		return nil
+	}
+	if !regexp.MustCompile(`^:[a-z0-9_+-]+:$`).MatchString(icon) {
+		return errors.New("mattermost icon must be an image url (http:// or https://) or an emoji code like :bell:")
 	}
 	return nil
 }
@@ -933,6 +976,47 @@ var NotiChMap = []*NotifyChannelConfig{
 			},
 		},
 	},
+	{
+		// 原生 Slack / Mattermost Webhook：媒介里不需要凭证，Webhook 地址在通知规则里填，内置开箱即用。
+		// 名称沿用 #3136 之前内置的「SlackWebhook」「MattermostWebhook」，老环境里没被用户改过的
+		// 那条会原地升级（种子按名称 upsert），改名会让老环境多出一条同 ident 的媒介。
+		Name: "SlackWebhook", Ident: SlackWebhook, RequestType: RequestTypeSlackWebhook, Weight: 8, Enable: true,
+		RequestConfig: &RequestConfig{
+			SlackWebhookRequestConfig: &SlackWebhookRequestConfig{
+				NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: SlackWebhookRuleParams,
+			},
+		},
+	},
+	{
+		Name: "MattermostWebhook", Ident: MattermostWebhook, RequestType: RequestTypeMattermostWebhook, Weight: 9, Enable: true,
+		RequestConfig: &RequestConfig{
+			MattermostWebhookRequestConfig: &MattermostWebhookRequestConfig{
+				NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: MattermostWebhookRuleParams,
+			},
+		},
+	},
+}
+
+// SlackWebhookRuleParams、MattermostWebhookRuleParams 是 Webhook 通知配置在规则里的参数，
+// 与 #3136 之前内置的同名通用 HTTP 媒介一致，老环境里没被改过的那条原地升级后，已有规则照常可用。
+var SlackWebhookRuleParams = []ParamItem{
+	{Key: "webhook_url", CName: "Webhook URL", Type: "string"},
+	{Key: "bot_name", CName: "Name", Type: "string"},
+}
+
+var MattermostWebhookRuleParams = []ParamItem{
+	{Key: "webhook_url", CName: "Webhook URL", Type: "string"},
+	{Key: "bot_name", CName: "Name", Type: "string"},
 }
 
 // JSMAlertRuleParams 是 JSM 告警通知配置在规则里的参数。api_key 与 #3136 之前内置的

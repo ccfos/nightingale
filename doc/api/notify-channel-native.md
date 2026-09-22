@@ -60,6 +60,22 @@ Notify rule params:
 
 The message is one embed: title (template field `title`, or `[S2] Triggered: <rule>`), the rendered `content` as the description, severity color, event detail link and timestamp. Nothing in it pings anyone: `@everyone` or `<@id>` in the alert text stays plain text. The notification record shows the rule's `bot_name` or the webhook URL with its token masked, never the full URL.
 
+## Slack Webhook and Mattermost Webhook channels
+
+Built-in `SlackWebhook` (`ident=slackwebhook`, `request_type=slackwebhook`) and `MattermostWebhook` (`ident=mattermostwebhook`, `request_type=mattermostwebhook`) channels are seeded on startup: the media type needs no credentials, the webhook URL is filled in each notify rule. An untouched legacy row with the same name (generic HTTP, seeded by older versions) is upgraded in place; user-edited rows are left alone.
+
+- `request_config.slackwebhook_request_config` (optional): `proxy` / `timeout` / `retry_times` / `retry_sleep`. Webhooks of new Slack apps ignore name and icon overrides, so there are none.
+- `request_config.mattermostwebhook_request_config` (optional): `username`, `icon` (an image URL or an emoji code such as `:bell:`; both need the matching override option turned on by a Mattermost admin), `insecure_skip_verify`, plus the network settings above.
+
+Notify rule params (both channels):
+
+| Key | Required | Description |
+|---|---|---|
+| `webhook_url` | yes | Slack: `https://hooks.slack.com/services/T.../B.../...`; Mattermost: `https://<server>/hooks/<id>`. Supports `{{.variable_name}}` |
+| `bot_name` | no | A name for this webhook; shown as the notification target and used to reuse it in other rules |
+
+The message is one attachment: severity color, a title linking to the event detail (`[S2] Triggered: <rule>`), the rendered `content` as the text, footer and time. Slack succeeds on 200 with the body `ok` (a 200 with any other body is a failure); errors come back as plain-text codes such as `invalid_token` or `no_service`. Mattermost errors are JSON with an `id` such as `web.incoming_webhook.invalid.app_error`. The default Slack template escapes `& < >` in alert fields with the `slackEscape` template function. The notification record shows the rule's `bot_name` or the webhook URL with its token masked.
+
 ## JSM Alert channel
 
 Creates and closes alerts in Jira Service Management Operations (formerly Opsgenie) through the integration API `{api_url}/jsm/ops/integration/v2/alerts` with `Authorization: GenieKey <key>`. The key belongs to an **API integration** of a JSM team (team → Integrations → Add integration → API), so it decides which team gets the alert and is filled in each notify rule, like a webhook URL. A built-in `JSM Alert` channel (`ident=jsm_alert`, `request_type=jsm_alert`) is seeded on startup.

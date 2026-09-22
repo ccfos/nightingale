@@ -113,3 +113,67 @@ func TestInitNotifyChannelUpgradesLegacyJSMAlert(t *testing.T) {
 		}
 	}
 }
+
+// legacyWebhookSeed 是 #3136 之前内置种子写入的 SlackWebhook / MattermostWebhook：通用 HTTP、默认禁用、
+// 规则侧参数 webhook_url + bot_name。
+func legacyWebhookSeed(name, ident, updateBy string) *models.NotifyChannelConfig {
+	return &models.NotifyChannelConfig{
+		Name: name, Ident: ident, RequestType: "http", Enable: false, UpdateBy: updateBy, CreateBy: "system",
+		RequestConfig: &models.RequestConfig{HTTPRequestConfig: &models.HTTPRequestConfig{
+			URL: "{{$params.webhook_url}}", Method: "POST", Timeout: 10000,
+			Request: models.RequestDetail{Body: `{"text":  "{{$tpl.content}}"}`},
+		}},
+		ParamConfig: &models.NotifyParamConfig{Custom: models.Params{Params: []models.ParamItem{
+			{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
+			{Key: "bot_name", CName: "Bot Name", Type: "string"},
+		}}},
+	}
+}
+
+func TestInitNotifyChannelUpgradesLegacySlackAndMattermostWebhooks(t *testing.T) {
+	cases := []struct{ name, ident, requestType string }{
+		{"SlackWebhook", models.SlackWebhook, models.RequestTypeSlackWebhook},
+		{"MattermostWebhook", models.MattermostWebhook, models.RequestTypeMattermostWebhook},
+	}
+	for _, tc := range cases {
+		row := func(c *ctx.Context) *models.NotifyChannelConfig {
+			lst, err := models.NotifyChannelsGet(c, "ident = ?", tc.ident)
+			if err != nil || len(lst) != 1 {
+				t.Fatalf("%s: expected exactly one channel, got %d (err=%v)", tc.ident, len(lst), err)
+			}
+			return lst[0]
+		}
+
+		// 没被改过的旧种子原地升级成原生媒介，规则参数键不变，已有规则照常可用
+		c := seedTestDB(t)
+		if err := models.Insert(c, legacyWebhookSeed(tc.name, tc.ident, "system")); err != nil {
+			t.Fatal(err)
+		}
+		models.InitNotifyChannel(c)
+		ch := row(c)
+		if ch.RequestType != tc.requestType || !ch.Enable {
+			t.Fatalf("%s: untouched system row should become an enabled native channel, got %s", tc.ident, ch.RequestType)
+		}
+		if ch.ParamConfig == nil || len(ch.ParamConfig.Custom.Params) != 2 || ch.ParamConfig.Custom.Params[0].Key != "webhook_url" ||
+			ch.ParamConfig.Custom.Params[1].Key != "bot_name" {
+			t.Fatalf("%s: rule params must stay webhook_url + bot_name: %+v", tc.ident, ch.ParamConfig)
+		}
+
+		// 用户改过的旧记录不碰
+		c = seedTestDB(t)
+		if err := models.Insert(c, legacyWebhookSeed(tc.name, tc.ident, "root")); err != nil {
+			t.Fatal(err)
+		}
+		models.InitNotifyChannel(c)
+		if ch := row(c); ch.RequestType != "http" {
+			t.Fatalf("%s: user-edited legacy row must be left alone, got %s", tc.ident, ch.RequestType)
+		}
+
+		// 新库直接种上
+		c = seedTestDB(t)
+		models.InitNotifyChannel(c)
+		if ch := row(c); ch.RequestType != tc.requestType || !ch.Enable {
+			t.Fatalf("%s: fresh db should get an enabled native channel, got %+v", tc.ident, ch)
+		}
+	}
+}

@@ -150,7 +150,7 @@ func (p *DiscordProvider) Notify(ctx context.Context, req *NotifyRequest) *Notif
 		func(r *nativeResponse) (bool, error) { return checkStatus(r, discordErrorDetail) })
 	if err != nil {
 		// 网络错误的文本会内嵌完整地址（含 token），落记录前换成掩码
-		msg := strings.ReplaceAll(err.Error(), endpoint, maskWebhookURL(params.WebhookURL))
+		msg := maskWebhookSecret(strings.ReplaceAll(err.Error(), endpoint, params.WebhookURL), params.WebhookURL)
 		return &NotifyResult{Target: target, Err: withHint(errors.New(msg), discordHint(err, resp))}
 	}
 

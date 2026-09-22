@@ -296,3 +296,64 @@ func TestJSMAlertLive(t *testing.T) {
 		t.Logf("wrong key: %v", res.Err)
 	}
 }
+
+// liveWebhookSend 用同一条模拟告警先发触发、再发恢复，返回两次结果
+func liveWebhookSend(t *testing.T, p NotifyChannelProvider, ch *models.NotifyChannelConfig, params map[string]string, hash string, recovered bool) *NotifyResult {
+	t.Helper()
+	status := "Triggered"
+	if recovered {
+		status = "Recovered"
+	}
+	return p.Notify(context.Background(), &NotifyRequest{
+		Config:       ch,
+		Events:       []*models.AlertCurEvent{liveEvent(hash, recovered)},
+		TplContent:   map[string]interface{}{"content": "*Status*: " + status + "\n*Rule*: n9e live test\nSafe to ignore."},
+		CustomParams: params,
+		HttpClient:   liveHTTPClient(),
+		SiteUrl:      "http://n9e.example.com",
+	})
+}
+
+func TestSlackWebhookLive(t *testing.T) {
+	env := liveEnv(t, "SlackWebhookURL")
+	p := &SlackWebhookProvider{}
+	ch := &models.NotifyChannelConfig{Name: "SlackWebhook", Ident: models.SlackWebhook, RequestType: models.RequestTypeSlackWebhook}
+	hash := fmt.Sprintf("n9e-live-%d", time.Now().UnixNano())
+	params := map[string]string{"webhook_url": env["SlackWebhookURL"], "bot_name": "live-channel"}
+	for _, recovered := range []bool{false, true} {
+		res := liveWebhookSend(t, p, ch, params, hash, recovered)
+		if res.Err != nil {
+			t.Fatalf("recovered=%v: %v", recovered, res.Err)
+		}
+		t.Logf("recovered=%v: %s -> %s", recovered, res.Target, res.Response)
+	}
+
+	bad := map[string]string{"webhook_url": strings.TrimRight(env["SlackWebhookURL"], "/") + "x"}
+	if res := liveWebhookSend(t, p, ch, bad, hash, false); res.Err == nil {
+		t.Errorf("a wrong webhook token should fail")
+	} else {
+		t.Logf("wrong token: %v", res.Err)
+	}
+}
+
+func TestMattermostWebhookLive(t *testing.T) {
+	env := liveEnv(t, "MattermostWebhookURL")
+	p := &MattermostWebhookProvider{}
+	ch := &models.NotifyChannelConfig{Name: "MattermostWebhook", Ident: models.MattermostWebhook, RequestType: models.RequestTypeMattermostWebhook}
+	hash := fmt.Sprintf("n9e-live-%d", time.Now().UnixNano())
+	params := map[string]string{"webhook_url": env["MattermostWebhookURL"], "bot_name": "live-channel"}
+	for _, recovered := range []bool{false, true} {
+		res := liveWebhookSend(t, p, ch, params, hash, recovered)
+		if res.Err != nil {
+			t.Fatalf("recovered=%v: %v", recovered, res.Err)
+		}
+		t.Logf("recovered=%v: %s -> %s", recovered, res.Target, res.Response)
+	}
+
+	bad := map[string]string{"webhook_url": strings.TrimRight(env["MattermostWebhookURL"], "/") + "x"}
+	if res := liveWebhookSend(t, p, ch, bad, hash, false); res.Err == nil {
+		t.Errorf("a wrong webhook id should fail")
+	} else {
+		t.Logf("wrong webhook: %v", res.Err)
+	}
+}

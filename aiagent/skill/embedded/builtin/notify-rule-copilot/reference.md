@@ -45,6 +45,7 @@ Data model `models/notify_rule.go`: `NotifyRule` + `NotifyConfig[]`.
 | `request_type=pagerduty` | See PagerDuty below | Pick the target Service (in the tool scenario, have the user provide the integration key) |
 | `request_type=discord` | `{"webhook_url": "https://discord.com/api/webhooks/...", "bot_name": "#prod-alerts"}` plus optional `target` / `thread_name` / `thread_id` | The Discord webhook URL of the target channel |
 | `request_type=jira` | `{"project_key": "OPS", "issue_type": "Bug"}` plus optional keys (see Jira below) | The Jira project key and the issue type name |
+| `request_type=slackwebhook` / `request_type=mattermostwebhook` | `{"webhook_url": "https://hooks.slack.com/services/...", "bot_name": "#ops-alerts"}` | The incoming webhook URL of the target channel |
 | `request_type=jsm_alert` | `{"api_key": "<JSM API integration key>", "bot_name": "SRE team"}` (the severity → priority mapping is on the media type) | The key of the JSM team's API integration |
 
 The first two rows are **not mutually exclusive**: a user's custom channel may have both `contact_key` and `custom_params` non-empty, in which case custom_params decides whether the message is sent (**required**), while `user_ids`/`user_group_ids` only decide who to @ in the group (optional) — don't miss the token by matching only on the first row.

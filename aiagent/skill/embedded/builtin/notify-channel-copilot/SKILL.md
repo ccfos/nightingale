@@ -37,7 +37,7 @@ type NotifyChannelConfig struct {
     Enable      bool
 
     ParamConfig   *NotifyParamConfig   // user parameters: contact_key + custom params
-    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira | discord | jsm_alert
+    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira | discord | jsm_alert | slackwebhook | mattermostwebhook
     RequestConfig *RequestConfig       // pick the matching sub-struct by ident/request_type
 
     Weight int
@@ -48,7 +48,7 @@ type NotifyChannelConfig struct {
 
 | Field | Applicable ident |
 |---|---|
-| `HTTPRequestConfig` | all channels that use a pure HTTP webhook (dingtalk, feishu, wecom, telegram, slackwebhook, callback, …) |
+| `HTTPRequestConfig` | all channels that use a pure HTTP webhook (dingtalk, feishu, wecom, telegram, callback, …) |
 | `SMTPRequestConfig` | `email` |
 | `ScriptRequestConfig` | `script` |
 | `FlashDutyRequestConfig` | `flashduty` |
@@ -59,6 +59,7 @@ type NotifyChannelConfig struct {
 | `JiraRequestConfig` | `jira` (native Jira issue channel, `request_type=jira`) |
 | `DiscordRequestConfig` | `discord` (native Discord channel, `request_type=discord`; optional, the webhook URL is a rule param) |
 | `JSMAlertRequestConfig` | `jsm_alert` (native JSM alert channel, `request_type=jsm_alert`; optional `api_url`, the integration key is a rule param) |
+| `SlackWebhookRequestConfig` / `MattermostWebhookRequestConfig` | `slackwebhook` / `mattermostwebhook` (native webhook channels; optional, the webhook URL is a rule param) |
 
 ---
 
@@ -76,11 +77,12 @@ type NotifyChannelConfig struct {
 | `wecomapp` | WecomAppProvider | HTTP (App) | WeCom self-built app |
 | `telegram` | simpleHTTPProvider | HTTP | Telegram Bot |
 | `discord` (`request_type=discord`) | DiscordProvider | HTTP | Discord webhook (embed, forum posts) |
-| `slackbot` / `slackwebhook` | simpleHTTPProvider | HTTP | Slack |
-| `mattermostbot` / `mattermostwebhook` | simpleHTTPProvider | HTTP | Mattermost |
+| `slackwebhook` (`request_type=slackwebhook`) | SlackWebhookProvider | HTTP | Slack incoming webhook (attachment with severity color) |
+| `mattermostwebhook` (`request_type=mattermostwebhook`) | MattermostWebhookProvider | HTTP | Mattermost incoming webhook (attachment with severity color) |
+| `slackbot` / `mattermostbot` | simpleHTTPProvider | HTTP | legacy generic HTTP (Bot mode is not natively supported yet) |
 | `jira` (`request_type=jira`) | JiraProvider | HTTP | Jira issues: create on trigger, comment and close on recovery |
 | `jsm_alert` (`request_type=jsm_alert`) | JSMAlertProvider | HTTP | JSM Operations alerts: create on trigger, close on recovery |
-| `jira` / `discord` / `jsm_alert` (legacy `request_type=http`) | callback | HTTP | legacy hand-made webhook configs |
+| `jira` / `discord` / `jsm_alert` / `slackwebhook` / `mattermostwebhook` (legacy `request_type=http`) | callback | HTTP | legacy hand-made webhook configs |
 | `email` | EmailProvider | SMTP | Email |
 | `tx-sms` | TencentSmsProvider | HTTP | Tencent Cloud SMS |
 | `tx-voice` | TencentVoiceProvider | HTTP | Tencent Cloud voice |
@@ -239,8 +241,14 @@ Below is the minimal usable configuration for each channel—when the user asks 
 ### 9c) Discord `discord` (request_type=discord)
 
 - A built-in `Discord` channel exists out of the box. `DiscordRequestConfig` is optional: `username`, `avatar_url`, `silent`, network settings.
-- The webhook URL is filled per notify rule (`webhook_url`, plus `bot_name`, `target`, `thread_name`, `thread_id`, `mentions`), like the DingTalk robot token. One webhook = one channel; add more notify configs for more channels.
+- The webhook URL is filled per notify rule (`webhook_url`, plus `bot_name`, `target`, `thread_name`, `thread_id`), like the DingTalk robot token. One webhook = one channel; add more notify configs for more channels.
 - Success is 200/204 (sent with `?wait=true`). A legacy `ident=discord` channel with `request_type=http` keeps working through the callback fallback.
+
+### 9c2) Slack Webhook `slackwebhook` / Mattermost Webhook `mattermostwebhook`
+
+- Built-in `SlackWebhook` / `MattermostWebhook` channels exist out of the box; their request configs are optional (Mattermost adds `username`, `icon`, `insecure_skip_verify`).
+- The webhook URL is filled per notify rule (`webhook_url`, plus `bot_name`), like the DingTalk robot token. One webhook = one channel; add more notify configs for more channels. Bot mode and @-mentions are not supported yet.
+- Slack success is 200 with the body `ok`; Mattermost success is 200. A legacy row with `request_type=http` keeps working through the callback fallback.
 
 ### 9d) JSM Alert `jsm_alert` (request_type=jsm_alert)
 

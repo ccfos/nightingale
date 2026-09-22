@@ -27,6 +27,8 @@ func init() {
 	DefaultRegistry.Register(&JiraProvider{})
 	DefaultRegistry.Register(&DiscordProvider{})
 	DefaultRegistry.Register(&JSMAlertProvider{})
+	DefaultRegistry.Register(&SlackWebhookProvider{})
+	DefaultRegistry.Register(&MattermostWebhookProvider{})
 
 	// 纯 HTTP webhook 模板驱动 Provider：只差 ident，统一走 simpleHTTPProvider
 	for _, ident := range []string{
@@ -34,9 +36,7 @@ func init() {
 		models.Lark,
 		models.Telegram,
 		models.SlackBot,
-		models.SlackWebhook,
 		models.MattermostBot,
-		models.MattermostWebhook,
 	} {
 		DefaultRegistry.Register(&simpleHTTPProvider{ident: ident})
 	}

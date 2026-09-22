@@ -312,6 +312,20 @@ const (
 	LarkCardTitle = `🔔 {{$event.RuleName}}`
 )
 
+// markdownAlertContent 是 Discord、Mattermost 共用的默认正文（标准 Markdown）。指标标签放在行内代码里：
+// 两边的 Markdown 都会把 __name__ 这类双下划线当成下划线或粗体吃掉。
+const markdownAlertContent = `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
+**Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
+**Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
+**Monitor Target**: {{$event.TargetIdent}}{{end}}   
+**Metrics**: ` + "`{{$event.TagsJSON}}`" + `{{if not $event.IsRecovered}}   
+**Trigger Value**: {{$event.TriggerValue}}{{end}}   
+{{if $event.IsRecovered}}**Recovery Time**: {{timeformat $event.LastEvalTime}}{{else}}**First Trigger Time**: {{timeformat $event.FirstTriggerTime}}{{end}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Time Since First Alert**: {{humanizeDurationInterface $time_duration}}
+**Send Time**: {{timestamp}}
+
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Silence 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}) | [View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`
+
 var NewTplMap = map[string]string{
 	"ali-voice": `{{$event.RuleName}}`,
 	"ali-sms":   `{{$event.RuleName}}`,
@@ -663,65 +677,15 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 [事件详情]({{.domain}}/share/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
-	SlackWebhook: `{{ if $event.IsRecovered }}
-{{- if ne $event.Cate "host"}}
-*Alarm cluster:* {{$event.Cluster}}{{end}}
-*Level Status:* S{{$event.Severity}} Recovered
-*Alarm name:* {{$event.RuleName}}
-*Recovery time:* {{timeformat $event.LastEvalTime}}
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}
-{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
-*Duration*: {{humanizeDurationInterface $time_duration}}
-*Alarm description:* *Service has been restored*
-{{- else }}
-{{- if ne $event.Cate "host"}}
-*Alarm cluster:* {{$event.Cluster}}{{end}}
-*Level Status:* S{{$event.Severity}} Triggered
-*Alarm name:* {{$event.RuleName}}
-*Trigger time:* {{timeformat $event.TriggerTime}}
-*Sending time:* {{timestamp}}
-*Trigger time value:* {{$event.TriggerValue}}
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}
-{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
-*Duration*: {{humanizeDurationInterface $time_duration}}
-{{if $event.RuleNote }}*Alarm description:* *{{$event.RuleNote}}*{{end}}
-{{- end -}}
+	// Slack 会把超过 5 行的附件正文折叠成「Show more」：级别和规则名已经在标题里，正文压成 4～5 行，链接也能直接看到
+	SlackWebhook: `{{if $event.TargetIdent}}*Monitor Target*: {{slackEscape $event.TargetIdent}} · {{end}}{{if $event.IsRecovered}}*Recovery Time*: {{timeformat $event.LastEvalTime}}{{else}}*Trigger Value*: {{slackEscape $event.TriggerValue}}{{end}}
+*Metrics*: ` + "`{{slackEscape $event.TagsJSON}}`" + `{{if $event.RuleNote}}
+*Rule Note*: {{slackEscape $event.RuleNote}}{{end}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}*First Trigger Time*: {{timeformat $event.FirstTriggerTime}} · *Time Since First Alert*: {{humanizeDurationInterface $time_duration}}
+<{{.domain}}/share/alert-his-events/{{$event.Id}}|Event Details> | <{{.domain}}/alert-mutes/add?__event_id={{$event.Id}}|Silence 1h> | <{{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph|View Graph>`,
+	Discord: markdownAlertContent,
 
-<{{.domain}}/share/alert-his-events/{{$event.Id}}|Event Details> 
-<{{.domain}}/alert-mutes/add?__event_id={{$event.Id}}|Block for 1 hour> 
-<{{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph|View Curve>`,
-	Discord: `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
-**Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
-**Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
-**Monitor Target**: {{$event.TargetIdent}}{{end}}   
-**Metrics**: ` + "`{{$event.TagsJSON}}`" + `{{if not $event.IsRecovered}}   
-**Trigger Value**: {{$event.TriggerValue}}{{end}}   
-{{if $event.IsRecovered}}**Recovery Time**: {{timeformat $event.LastEvalTime}}{{else}}**First Trigger Time**: {{timeformat $event.FirstTriggerTime}}{{end}}   
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Time Since First Alert**: {{humanizeDurationInterface $time_duration}}
-**Send Time**: {{timestamp}}
-
-[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Silence 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}) | [View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
-
-	MattermostWebhook: `{{ if $event.IsRecovered }}
-{{- if ne $event.Cate "host"}}
-**Alarm cluster:** {{$event.Cluster}}{{end}}   
-**Level Status:** S{{$event.Severity}} Recovered   
-**Alarm name:** {{$event.RuleName}}   
-**Recovery time:** {{timeformat $event.LastEvalTime}}   
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
-**Alarm description:** **Service has been restored**   
-{{- else }}
-{{- if ne $event.Cate "host"}}   
-**Alarm cluster:** {{$event.Cluster}}{{end}}   
-**Level Status:** S{{$event.Severity}} Triggered   
-**Alarm name:** {{$event.RuleName}}   
-**Trigger time:** {{timeformat $event.TriggerTime}}   
-**Sending time:** {{timestamp}}   
-**Trigger time value:** {{$event.TriggerValue}}
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
-{{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
-{{- end -}}
-[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
+	MattermostWebhook: markdownAlertContent,
 
 	// Jira and JSMAlert share the same template format
 	Jira: `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
