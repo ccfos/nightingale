@@ -57,9 +57,8 @@ Notify rule params:
 | `target` | no | `channel` (default), `forum_post` (create a forum post per notification) or `thread` (existing thread / forum post) |
 | `thread_name` | for `forum_post` | Post title, supports template variables such as `{{$event.RuleName}}` |
 | `thread_id` | for `thread` | Numeric thread ID |
-| `mentions` | no | Space separated `<@user_id>` / `<@&role_id>`; only these are allowed to ping, `@everyone` in the alert text does not |
 
-The message is one embed: title (template field `title`, or `[S2] Triggered: <rule>`), the rendered `content` as the description, severity color, event detail link and timestamp. The notification record shows the rule's `bot_name` or the webhook URL with its token masked, never the full URL.
+The message is one embed: title (template field `title`, or `[S2] Triggered: <rule>`), the rendered `content` as the description, severity color, event detail link and timestamp. Nothing in it pings anyone: `@everyone` or `<@id>` in the alert text stays plain text. The notification record shows the rule's `bot_name` or the webhook URL with its token masked, never the full URL.
 
 ## JSM Alert channel
 

@@ -23,7 +23,6 @@ import (
 const (
 	discordMaxTitleRunes       = 256
 	discordMaxDescriptionRunes = 4096
-	discordMaxContentRunes     = 2000
 	discordMaxEmbedRunes       = 6000
 	discordMaxThreadNameRunes  = 100
 	discordFlagSuppressNotify  = 1 << 12
@@ -33,10 +32,7 @@ const (
 	discordTargetThread    = "thread"
 )
 
-var (
-	discordMentionRe = regexp.MustCompile(`^<@(&?)(\d+)>$`)
-	discordThreadRe  = regexp.MustCompile(`^\d+$`)
-)
+var discordThreadRe = regexp.MustCompile(`^\d+$`)
 
 type DiscordProvider struct{}
 
@@ -51,7 +47,6 @@ func (p *DiscordProvider) Check(config *models.NotifyChannelConfig) error {
 }
 
 type discordWebhook struct {
-	Content         string                 `json:"content,omitempty"`
 	Username        string                 `json:"username,omitempty"`
 	AvatarURL       string                 `json:"avatar_url,omitempty"`
 	Embeds          []discordEmbed         `json:"embeds"`
@@ -68,12 +63,9 @@ type discordEmbed struct {
 	Timestamp   string `json:"timestamp,omitempty"`
 }
 
-// discordAllowedMentions 默认 parse 为空：告警内容里出现的 @everyone、<@id> 都不会触发提醒，
-// 只有规则里填的提醒对象才放进白名单
+// discordAllowedMentions 的 parse 恒为空：告警内容里出现的 @everyone、<@id> 都不会触发提醒
 type discordAllowedMentions struct {
 	Parse []string `json:"parse"`
-	Users []string `json:"users,omitempty"`
-	Roles []string `json:"roles,omitempty"`
 }
 
 type discordParams struct {
@@ -82,9 +74,6 @@ type discordParams struct {
 	Target     string
 	ThreadName string
 	ThreadID   string
-	Mentions   []string
-	Users      []string
-	Roles      []string
 }
 
 func parseDiscordParams(p map[string]string) (*discordParams, error) {
@@ -116,19 +105,6 @@ func parseDiscordParams(p map[string]string) (*discordParams, error) {
 	}
 	if dp.Target == discordTargetThread && !discordThreadRe.MatchString(dp.ThreadID) {
 		return nil, errors.New("discord thread_id must be a numeric ID when sending to an existing thread")
-	}
-
-	for _, m := range strings.Fields(p["mentions"]) {
-		sub := discordMentionRe.FindStringSubmatch(m)
-		if sub == nil {
-			return nil, fmt.Errorf("invalid discord mention %q, use <@user_id> or <@&role_id>", m)
-		}
-		dp.Mentions = append(dp.Mentions, m)
-		if sub[1] == "&" {
-			dp.Roles = append(dp.Roles, sub[2])
-		} else {
-			dp.Users = append(dp.Users, sub[2])
-		}
 	}
 	return dp, nil
 }
@@ -222,14 +198,11 @@ func buildDiscordPayload(req *NotifyRequest, cfg *models.DiscordRequestConfig, p
 	}
 
 	w := &discordWebhook{
-		// @ 放进 embed 不会触发提醒，必须放在 content 里
-		Content:         strings.Join(params.Mentions, " "),
 		Username:        strings.TrimSpace(cfg.Username),
 		AvatarURL:       strings.TrimSpace(cfg.AvatarURL),
 		Embeds:          []discordEmbed{embed},
-		AllowedMentions: discordAllowedMentions{Parse: []string{}, Users: params.Users, Roles: params.Roles},
+		AllowedMentions: discordAllowedMentions{Parse: []string{}},
 	}
-	w.Content, _ = truncateInRunes(w.Content, discordMaxContentRunes)
 	if cfg.Silent {
 		w.Flags = discordFlagSuppressNotify
 	}

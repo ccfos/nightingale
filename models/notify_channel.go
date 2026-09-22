@@ -949,7 +949,6 @@ var DiscordRuleParams = []ParamItem{
 	{Key: "target", CName: "Send to", Type: "string"},
 	{Key: "thread_name", CName: "Post title", Type: "string"},
 	{Key: "thread_id", CName: "Thread ID", Type: "string"},
-	{Key: "mentions", CName: "Mentions", Type: "string"},
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {

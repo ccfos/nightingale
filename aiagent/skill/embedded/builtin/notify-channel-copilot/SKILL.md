@@ -75,7 +75,7 @@ type NotifyChannelConfig struct {
 | `feishuapp` | FeishuAppProvider | HTTP (App) | Feishu app robot (DM/group) |
 | `wecomapp` | WecomAppProvider | HTTP (App) | WeCom self-built app |
 | `telegram` | simpleHTTPProvider | HTTP | Telegram Bot |
-| `discord` (`request_type=discord`) | DiscordProvider | HTTP | Discord webhook (embed, forum posts, mentions) |
+| `discord` (`request_type=discord`) | DiscordProvider | HTTP | Discord webhook (embed, forum posts) |
 | `slackbot` / `slackwebhook` | simpleHTTPProvider | HTTP | Slack |
 | `mattermostbot` / `mattermostwebhook` | simpleHTTPProvider | HTTP | Mattermost |
 | `jira` (`request_type=jira`) | JiraProvider | HTTP | Jira issues: create on trigger, comment and close on recovery |

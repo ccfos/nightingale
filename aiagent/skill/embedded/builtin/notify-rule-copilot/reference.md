@@ -43,7 +43,7 @@ Data model `models/notify_rule.go`: `NotifyRule` + `NotifyConfig[]`.
 | `custom_params` is non-empty (DingTalk/WeCom/Feishu group bots, callback, telegram, custom webhook…) | `{"<key>": "<value>"}` fill a string per key | The value of each key, e.g. the group bot's access_token |
 | `request_type=flashduty` | `{"ids": [<collaboration-space channel_id>]}` | The FlashDuty collaboration-space ID (if omitted, the integration's default space is used) |
 | `request_type=pagerduty` | See PagerDuty below | Pick the target Service (in the tool scenario, have the user provide the integration key) |
-| `request_type=discord` | `{"webhook_url": "https://discord.com/api/webhooks/...", "bot_name": "#prod-alerts"}` plus optional `target` / `thread_name` / `thread_id` / `mentions` | The Discord webhook URL of the target channel |
+| `request_type=discord` | `{"webhook_url": "https://discord.com/api/webhooks/...", "bot_name": "#prod-alerts"}` plus optional `target` / `thread_name` / `thread_id` | The Discord webhook URL of the target channel |
 | `request_type=jira` | `{"project_key": "OPS", "issue_type": "Bug"}` plus optional keys (see Jira below) | The Jira project key and the issue type name |
 | `request_type=jsm_alert` | `{"api_key": "<JSM API integration key>", "bot_name": "SRE team"}` (the severity → priority mapping is on the media type) | The key of the JSM team's API integration |
 

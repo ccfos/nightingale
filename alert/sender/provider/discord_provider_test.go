@@ -69,11 +69,10 @@ func TestDiscordCheckToleratesEmptyConfig(t *testing.T) {
 	}
 }
 
-func TestDiscordSendsEmbedAndMentions(t *testing.T) {
+func TestDiscordSendsEmbed(t *testing.T) {
 	c, srv := newDiscordServer(t, http.StatusOK, `{"id":"123"}`)
 	req := discordReq(&models.DiscordRequestConfig{Username: "n9e", Silent: true}, map[string]string{
 		"webhook_url": srv.URL + "/api/webhooks/1/secret-token",
-		"mentions":    "<@111> <@&222>",
 	})
 	res := (&DiscordProvider{}).Notify(context.Background(), req)
 	if res.Err != nil {
@@ -83,11 +82,11 @@ func TestDiscordSendsEmbedAndMentions(t *testing.T) {
 		t.Fatalf("must call with wait=true, got %q", c.query)
 	}
 	b := c.body
-	if b.Content != "<@111> <@&222>" || b.Username != "n9e" || b.Flags != discordFlagSuppressNotify {
+	if b.Username != "n9e" || b.Flags != discordFlagSuppressNotify {
 		t.Fatalf("unexpected payload %+v", b)
 	}
-	if len(b.AllowedMentions.Parse) != 0 || b.AllowedMentions.Users[0] != "111" || b.AllowedMentions.Roles[0] != "222" {
-		t.Fatalf("only configured mentions may be allowed: %+v", b.AllowedMentions)
+	if b.AllowedMentions.Parse == nil || len(b.AllowedMentions.Parse) != 0 {
+		t.Fatalf("@everyone in the alert text must never ping: %+v", b.AllowedMentions)
 	}
 	e := b.Embeds[0]
 	if e.Title != "[S1] Triggered: cpu high" || e.Color != severityColor(1, false) || e.URL != "http://n9e.example.com/share/alert-his-events/42" || e.Timestamp == "" {
@@ -151,7 +150,6 @@ func TestDiscordRejectsBadParams(t *testing.T) {
 	for _, params := range []map[string]string{
 		{},
 		{"webhook_url": "not a url"},
-		{"webhook_url": "https://discord.com/api/webhooks/1/t", "mentions": "@everyone"},
 		{"webhook_url": "https://discord.com/api/webhooks/1/t", "target": "dm"},
 	} {
 		if res := p.Notify(context.Background(), discordReq(nil, params)); res.Err == nil {
