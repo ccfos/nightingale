@@ -44,6 +44,9 @@ type QueryParam struct {
 	Keys     datasource.Keys `json:"keys" mapstructure:"keys"`
 	From     int64           `json:"from" mapstructure:"from"`
 	To       int64           `json:"to" mapstructure:"to"`
+	// 附加查询专用：前端只存相对窗口，执行时才换算成 from/to
+	Interval int64 `json:"interval" mapstructure:"interval"` // 查询时间跨度（秒）
+	Offset   int   `json:"offset" mapstructure:"offset"`     // 查询窗口整体往前挪的秒数
 }
 
 func (p *PostgreSQL) InitClient() error {
@@ -159,8 +162,23 @@ func (p *PostgreSQL) MakeTSQuery(ctx context.Context, query interface{}, eventTa
 	return nil, nil
 }
 
+// QueryMapData 支撑告警规则的「附加查询」：事件产生后按 SQL 查一批明细，附到事件上。
+// 附加查询只存 sql + interval + offset，查询窗口在这里补齐，再复用 QueryLog 的执行路径。
 func (p *PostgreSQL) QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error) {
-	return nil, nil
+	postgresqlQueryParam := new(QueryParam)
+	if err := mapstructure.Decode(query, postgresqlQueryParam); err != nil {
+		return nil, err
+	}
+
+	postgresqlQueryParam.From, postgresqlQueryParam.To = datasource.NormalizeEnrichTimeRange(
+		postgresqlQueryParam.From, postgresqlQueryParam.To, postgresqlQueryParam.Interval, postgresqlQueryParam.Offset)
+
+	items, _, err := p.queryLog(ctx, postgresqlQueryParam)
+	if err != nil {
+		return nil, err
+	}
+
+	return datasource.RowsToStringMaps(items), nil
 }
 
 func (p *PostgreSQL) QueryData(ctx context.Context, query interface{}) ([]models.DataResp, error) {
@@ -227,6 +245,11 @@ func (p *PostgreSQL) QueryLog(ctx context.Context, query interface{}) ([]interfa
 	if err := mapstructure.Decode(query, postgresqlQueryParam); err != nil {
 		return nil, 0, err
 	}
+
+	return p.queryLog(ctx, postgresqlQueryParam)
+}
+
+func (p *PostgreSQL) queryLog(ctx context.Context, postgresqlQueryParam *QueryParam) ([]interface{}, int64, error) {
 	if postgresqlQueryParam.Database != "" {
 		p.Shards[0].DB = postgresqlQueryParam.Database
 	} else {
