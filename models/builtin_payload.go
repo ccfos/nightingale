@@ -16,7 +16,8 @@ type BuiltinPayload struct {
 	Cate        string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
 	Name        string `json:"name" gorm:"type:varchar(191);not null;index:idx_buildinpayload_name,sort:asc;comment:'name of payload'"` //
 	Tags        string `json:"tags" gorm:"type:varchar(191);not null;default:'';comment:'tags of payload'"`                             // {"host":"
-	Content     string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
+	// Use text (not longtext) so GORM AutoMigrate works on PostgreSQL; MySQL accepts TEXT as well.
+	Content     string `json:"content" gorm:"type:text;not null;comment:'content of payload'"`
 	UUID        int64  `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
 	Note        string `json:"note" gorm:"type:varchar(1024);not null;default:'';comment:'note of payload'"`
 	CreatedAt   int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
