@@ -71,6 +71,26 @@ func (tc *TargetsOfAlertRuleCacheType) Get(engineName string, rid int64) ([]stri
 	return lst, has
 }
 
+// GetByEngine 返回某个引擎名下「规则 id -> 机器 ident 列表」的快照，供 center 的
+// /v1/n9e/targets-of-alert-rule 直接从内存应答 edge / alert 的回源请求，
+// 而不是每次请求都对全部 host 规则各扫一遍 target 表。
+// 返回的是拷贝：外层 map 与内层切片都不与缓存共享，调用方可以随意持有或改写。
+func (tc *TargetsOfAlertRuleCacheType) GetByEngine(engineName string) (map[int64][]string, bool) {
+	tc.RLock()
+	defer tc.RUnlock()
+
+	m, has := tc.targets[engineName]
+	if !has {
+		return nil, false
+	}
+
+	ret := make(map[int64][]string, len(m))
+	for rid, idents := range m {
+		ret[rid] = append([]string(nil), idents...)
+	}
+	return ret, true
+}
+
 func (tc *TargetsOfAlertRuleCacheType) SyncTargets() {
 	err := tc.syncTargets()
 	if err != nil {

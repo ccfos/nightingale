@@ -133,7 +133,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	macros.RegisterMacro(macros.ExpandTimeFilter)
 	dscache.Init(ctx, false, config.Alert.Heartbeat.EngineName)
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, configCvalCache)
+	targetsOfAlertRuleCache := alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, configCvalCache)
 
 	writers := writer.NewWriters(config.Pushgw)
 
@@ -197,6 +197,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	// categrafMeta 反查「机器指标写进了哪个数据源」要读 writer 地址；单独赋值而非
 	// 加进 New 的参数表，避免动到嵌入方（企业版）调用的函数签名。
 	centerRouter.Pushgw = config.Pushgw
+	// /v1/n9e/targets-of-alert-rule 改为从告警引擎已经维护着的内存缓存应答，
+	// 不再每个 edge 每轮回源都对全部 host 规则各扫一遍 target 表。同样单独赋值。
+	centerRouter.TargetsOfAlertRuleCache = targetsOfAlertRuleCache
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
