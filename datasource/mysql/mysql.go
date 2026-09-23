@@ -135,15 +135,16 @@ func (m *MySQL) MakeTSQuery(ctx context.Context, query interface{}, eventTags []
 }
 
 // QueryMapData 支撑告警规则的「附加查询」：事件产生后按 SQL 查一批明细，附到事件上。
-// 附加查询只存 sql + interval + offset，查询窗口在这里补齐，再复用 QueryLog 的执行路径。
+// 附加查询只存 sql + interval + offset，这里补上默认 interval，窗口由 queryLog 统一换算。
 func (m *MySQL) QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error) {
 	mysqlQueryParam := new(QueryParam)
 	if err := mapstructure.Decode(query, mysqlQueryParam); err != nil {
 		return nil, err
 	}
 
-	mysqlQueryParam.From, mysqlQueryParam.To = datasource.NormalizeEnrichTimeRange(
-		mysqlQueryParam.From, mysqlQueryParam.To, mysqlQueryParam.Interval, mysqlQueryParam.Offset)
+	if mysqlQueryParam.Interval <= 0 {
+		mysqlQueryParam.Interval = datasource.DefaultEnrichInterval
+	}
 
 	items, _, err := m.queryLog(ctx, mysqlQueryParam)
 	if err != nil {
@@ -214,6 +215,9 @@ func (m *MySQL) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 }
 
 func (m *MySQL) queryLog(ctx context.Context, mysqlQueryParam *QueryParam) ([]interface{}, int64, error) {
+	mysqlQueryParam.From, mysqlQueryParam.To = datasource.NormalizeQueryTimeRange(
+		mysqlQueryParam.From, mysqlQueryParam.To, mysqlQueryParam.Interval, mysqlQueryParam.Offset)
+
 	if strings.Contains(mysqlQueryParam.SQL, "$__") {
 		var err error
 		mysqlQueryParam.SQL, err = macros.Macro(mysqlQueryParam.SQL, mysqlQueryParam.From, mysqlQueryParam.To, MySQLType)

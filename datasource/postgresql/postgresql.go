@@ -163,15 +163,16 @@ func (p *PostgreSQL) MakeTSQuery(ctx context.Context, query interface{}, eventTa
 }
 
 // QueryMapData 支撑告警规则的「附加查询」：事件产生后按 SQL 查一批明细，附到事件上。
-// 附加查询只存 sql + interval + offset，查询窗口在这里补齐，再复用 QueryLog 的执行路径。
+// 附加查询只存 sql + interval + offset，这里补上默认 interval，窗口由 queryLog 统一换算。
 func (p *PostgreSQL) QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error) {
 	postgresqlQueryParam := new(QueryParam)
 	if err := mapstructure.Decode(query, postgresqlQueryParam); err != nil {
 		return nil, err
 	}
 
-	postgresqlQueryParam.From, postgresqlQueryParam.To = datasource.NormalizeEnrichTimeRange(
-		postgresqlQueryParam.From, postgresqlQueryParam.To, postgresqlQueryParam.Interval, postgresqlQueryParam.Offset)
+	if postgresqlQueryParam.Interval <= 0 {
+		postgresqlQueryParam.Interval = datasource.DefaultEnrichInterval
+	}
 
 	items, _, err := p.queryLog(ctx, postgresqlQueryParam)
 	if err != nil {
@@ -250,6 +251,9 @@ func (p *PostgreSQL) QueryLog(ctx context.Context, query interface{}) ([]interfa
 }
 
 func (p *PostgreSQL) queryLog(ctx context.Context, postgresqlQueryParam *QueryParam) ([]interface{}, int64, error) {
+	postgresqlQueryParam.From, postgresqlQueryParam.To = datasource.NormalizeQueryTimeRange(
+		postgresqlQueryParam.From, postgresqlQueryParam.To, postgresqlQueryParam.Interval, postgresqlQueryParam.Offset)
+
 	if postgresqlQueryParam.Database != "" {
 		p.Shards[0].DB = postgresqlQueryParam.Database
 	} else {

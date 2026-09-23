@@ -8,18 +8,17 @@ import (
 )
 
 // 告警规则的「附加查询」在前端只存 sql + interval + offset，不存 from/to，
-// 查询窗口由插件在执行时算出来（doris 的 QueryLog 就是这么做的）。
-// 不补窗口的话，SQL 里的 $__timeFilter 会按 1970 年展开，规则存得下但查不出数据。
-const defaultEnrichInterval int64 = 60
+// 查询窗口由插件在执行时算出来。不补窗口的话，SQL 里的 $__timeFilter 会按 1970 年展开，
+// 规则存得下但查不出数据。interval 没配（或配成 0）时按这个跨度查，单位秒。
+const DefaultEnrichInterval int64 = 60
 
-// NormalizeEnrichTimeRange 按 interval/offset 补齐附加查询的时间窗口。
+// NormalizeQueryTimeRange 按 interval/offset 补齐 SQL 数据源 QueryLog 的时间窗口，规则与 doris 的 QueryLog 一致：
+// 没传 from/to 且带了 interval 时补成 [now-interval, now]；offset 不为 0 时整个窗口往前挪。
 //
-// from/to 已经有值时（预览接口会直接传时间选择器的范围）只按 offset 整体前移。
-func NormalizeEnrichTimeRange(from, to, interval int64, offset int) (int64, int64) {
-	if from == 0 && to == 0 {
-		if interval <= 0 {
-			interval = defaultEnrichInterval
-		}
+// 放在 QueryLog 里而不是只放在 QueryMapData 里，是为了让附加查询的预览（传选择器的 from/to 加 offset）
+// 和告警时刻的执行应用同一个 offset。仪表盘、探索页的请求带 from/to、不带 offset，不受影响。
+func NormalizeQueryTimeRange(from, to, interval int64, offset int) (int64, int64) {
+	if from == 0 && to == 0 && interval > 0 {
 		to = time.Now().Unix()
 		from = to - interval
 	}

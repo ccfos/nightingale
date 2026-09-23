@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-func TestNormalizeEnrichTimeRange(t *testing.T) {
+func TestNormalizeQueryTimeRange(t *testing.T) {
 	t.Run("interval 推算窗口", func(t *testing.T) {
 		before := time.Now().Unix()
-		from, to := NormalizeEnrichTimeRange(0, 0, 300, 0)
+		from, to := NormalizeQueryTimeRange(0, 0, 300, 0)
 		after := time.Now().Unix()
 
 		if to < before || to > after {
@@ -19,17 +19,26 @@ func TestNormalizeEnrichTimeRange(t *testing.T) {
 		}
 	})
 
-	t.Run("interval 缺省按 60 秒", func(t *testing.T) {
-		from, to := NormalizeEnrichTimeRange(0, 0, 0, 0)
-		if to-from != 60 {
-			t.Fatalf("窗口跨度应为 60，实际 %d", to-from)
+	t.Run("没有 interval 也没有 from/to 时不补窗口", func(t *testing.T) {
+		// 与 doris 一致：不替调用方编一个窗口，$__timeFilter 仍按空窗口报错
+		from, to := NormalizeQueryTimeRange(0, 0, 0, 0)
+		if from != 0 || to != 0 {
+			t.Fatalf("期望 (0,0)，实际 (%d,%d)", from, to)
 		}
 	})
 
 	t.Run("已有 from/to 时只按 offset 前移", func(t *testing.T) {
-		from, to := NormalizeEnrichTimeRange(1000, 2000, 300, 100)
+		from, to := NormalizeQueryTimeRange(1000, 2000, 300, 100)
 		if from != 900 || to != 1900 {
 			t.Fatalf("期望 (900,1900)，实际 (%d,%d)", from, to)
+		}
+	})
+
+	t.Run("没有 offset 时 from/to 原样返回", func(t *testing.T) {
+		// 仪表盘、探索页走的就是这条路
+		from, to := NormalizeQueryTimeRange(1000, 2000, 0, 0)
+		if from != 1000 || to != 2000 {
+			t.Fatalf("期望 (1000,2000)，实际 (%d,%d)", from, to)
 		}
 	})
 }
