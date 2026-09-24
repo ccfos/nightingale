@@ -183,6 +183,14 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 				}
 			}
 		}
+		// 流结束前 flush 缓冲里的剩余 delta（LLM 停输出后不会再触发窗口到期），
+		// 否则最终正文/思考会丢尾巴。在 terminalState 之前：客户端更早拿到结尾正文。
+		bridge.Flush()
+		cd, ce, rd, re := bridge.coalesceStats()
+		if cd > ce || rd > re {
+			logx.Infof(ctx, "[A2A] bridge coalesce content_deltas=%d content_events=%d reason_deltas=%d reason_events=%d",
+				cd, ce, rd, re)
+		}
 		state, errMsg := e.terminalState(ctx, result.ChatID, result.SeqID)
 		// 人在环中断收尾：流里出现 input_required 帧且消息正常完结时，把终态升级
 		// 为 input-required 并携带确认问题文本（A2A 规范认可的流结束状态，SDK 在
