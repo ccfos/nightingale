@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -286,6 +287,11 @@ func (rt *Router) gitConfigForInstall(req aiSkillGitRequest) (skill.GitConfig, a
 	if err := cfg.Validate(authType == skill.GitAuthToken); err != nil {
 		return cfg, aiSkillGitFields{}, err
 	}
+	if normalized, ok, err := normalizeGitHubSkillURL(cfg); err != nil {
+		return cfg, aiSkillGitFields{}, err
+	} else if ok {
+		cfg = normalized
+	}
 	fields := aiSkillGitFields{
 		URL:      cfg.URL,
 		RefType:  cfg.RefType,
@@ -295,6 +301,53 @@ func (rt *Router) gitConfigForInstall(req aiSkillGitRequest) (skill.GitConfig, a
 		Subdir:   cfg.Subdir,
 	}
 	return cfg, fields, nil
+}
+
+func normalizeGitHubSkillURL(cfg skill.GitConfig) (skill.GitConfig, bool, error) {
+	u, err := url.Parse(strings.TrimSpace(cfg.URL))
+	if err != nil {
+		return cfg, false, nil
+	}
+	host := strings.ToLower(u.Hostname())
+	if host != "github.com" && host != "www.github.com" {
+		return cfg, false, nil
+	}
+	parts := splitGitHubURLPath(u.Path)
+	if len(parts) < 2 {
+		return cfg, false, nil
+	}
+	owner := parts[0]
+	repo := strings.TrimSuffix(parts[1], ".git")
+	if owner == "" || repo == "" {
+		return cfg, false, nil
+	}
+	normalized := cfg
+	normalized.URL = fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
+	if len(parts) >= 4 && parts[2] == "tree" {
+		if cfg.RefType != "" && cfg.RefType != skill.GitRefBranch {
+			return cfg, false, fmt.Errorf("github tree urls only support git_ref_type=branch")
+		}
+		if strings.TrimSpace(cfg.Ref) == "" {
+			normalized.RefType = skill.GitRefBranch
+			normalized.Ref = parts[3]
+		}
+		if strings.TrimSpace(cfg.Subdir) == "" && len(parts) > 4 {
+			normalized.Subdir = strings.Join(parts[4:], "/")
+		}
+	}
+	changed := normalized.URL != cfg.URL || normalized.RefType != cfg.RefType || normalized.Ref != cfg.Ref || normalized.Subdir != cfg.Subdir
+	return normalized, changed, nil
+}
+
+func splitGitHubURLPath(p string) []string {
+	parts := strings.Split(strings.Trim(strings.TrimSpace(p), "/"), "/")
+	ret := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part = strings.TrimSpace(part); part != "" {
+			ret = append(ret, part)
+		}
+	}
+	return ret
 }
 
 func (rt *Router) gitConfigForUpdate(current *models.AISkill, req aiSkillGitRequest, builtin bool) (skill.GitConfig, aiSkillGitFields, error) {
