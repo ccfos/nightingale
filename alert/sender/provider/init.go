@@ -16,6 +16,8 @@ func init() {
 	DefaultRegistry.Register(&TencentVoiceProvider{})
 	DefaultRegistry.Register(&AliyunSmsProvider{})
 	DefaultRegistry.Register(&AliyunVoiceProvider{})
+	DefaultRegistry.Register(&PlivoSmsProvider{})
+	DefaultRegistry.Register(&PlivoVoiceProvider{})
 	DefaultRegistry.Register(&PagerDutyProvider{})
 	DefaultRegistry.Register(&ScriptProvider{})
 	DefaultRegistry.Register(&EmailProvider{})
