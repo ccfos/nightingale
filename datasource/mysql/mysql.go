@@ -39,6 +39,9 @@ type QueryParam struct {
 	Keys     datasource.Keys `json:"keys" mapstructure:"keys"`
 	From     int64           `json:"from" mapstructure:"from"`
 	To       int64           `json:"to" mapstructure:"to"`
+	// 附加查询专用：前端只存相对窗口，执行时才换算成 from/to
+	Interval int64 `json:"interval" mapstructure:"interval"` // 查询时间跨度（秒）
+	Offset   int   `json:"offset" mapstructure:"offset"`     // 查询窗口整体往前挪的秒数
 }
 
 func (m *MySQL) InitClient() error {
@@ -131,8 +134,24 @@ func (m *MySQL) MakeTSQuery(ctx context.Context, query interface{}, eventTags []
 	return nil, nil
 }
 
+// QueryMapData 支撑告警规则的「附加查询」：事件产生后按 SQL 查一批明细，附到事件上。
+// 附加查询只存 sql + interval + offset，这里补上默认 interval，窗口由 queryLog 统一换算。
 func (m *MySQL) QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error) {
-	return nil, nil
+	mysqlQueryParam := new(QueryParam)
+	if err := mapstructure.Decode(query, mysqlQueryParam); err != nil {
+		return nil, err
+	}
+
+	if mysqlQueryParam.Interval <= 0 {
+		mysqlQueryParam.Interval = datasource.DefaultEnrichInterval
+	}
+
+	items, _, err := m.queryLog(ctx, mysqlQueryParam)
+	if err != nil {
+		return nil, err
+	}
+
+	return datasource.RowsToStringMaps(items), nil
 }
 
 func (m *MySQL) QueryData(ctx context.Context, query interface{}) ([]models.DataResp, error) {
@@ -191,6 +210,13 @@ func (m *MySQL) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 	if err := mapstructure.Decode(query, mysqlQueryParam); err != nil {
 		return nil, 0, err
 	}
+
+	return m.queryLog(ctx, mysqlQueryParam)
+}
+
+func (m *MySQL) queryLog(ctx context.Context, mysqlQueryParam *QueryParam) ([]interface{}, int64, error) {
+	mysqlQueryParam.From, mysqlQueryParam.To = datasource.NormalizeQueryTimeRange(
+		mysqlQueryParam.From, mysqlQueryParam.To, mysqlQueryParam.Interval, mysqlQueryParam.Offset)
 
 	if strings.Contains(mysqlQueryParam.SQL, "$__") {
 		var err error
