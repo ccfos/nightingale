@@ -185,7 +185,11 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 		}
 		// 流结束前 flush 缓冲里的剩余 delta（LLM 停输出后不会再触发窗口到期），
 		// 否则最终正文/思考会丢尾巴。在 terminalState 之前：客户端更早拿到结尾正文。
-		bridge.Flush()
+		// false 表示下游已取消：iter.Seq2 约定 yield 返回 false 后不得再调用，
+		// 必须直接返回，不能继续走 Finalize。
+		if !bridge.Flush() {
+			return
+		}
 		cd, ce, rd, re := bridge.coalesceStats()
 		if cd > ce || rd > re {
 			logx.Infof(ctx, "[A2A] bridge coalesce content_deltas=%d content_events=%d reason_deltas=%d reason_events=%d",
