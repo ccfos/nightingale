@@ -2,6 +2,8 @@ package a2a
 
 import (
 	"encoding/json"
+	"strings"
+	"time"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/a2aproject/a2a-go/v2/a2asrv"
@@ -24,6 +26,13 @@ const thoughtMetadataKey = "adk_thought"
 // clients see opaque JSON — degraded but not lost.
 const n9eContentTypeMetadataKey = "n9e_content_type"
 
+// bridgeFlushInterval 是 content/reason delta 的合并窗口。LLM 流式输出时每秒
+// 产生几十条 delta，逐条转发会让下游（SDK processor → store 全量写）背压拖死
+// executor（长输出轮次数千事件 × 全量 Task 写，可达数百秒）。窗口内累积、到点
+// 合并成一条 artifact update，事件量可降一个数量级。0 = 关闭节流（逐 delta
+// 转发），单测用。
+const bridgeFlushInterval = 200 * time.Millisecond
+
 // streamBridge translates aiagent.StreamMessage frames produced by the existing
 // agent pipeline into A2A events. It maintains separate "in-flight" artifact
 // IDs for the message body and the reasoning trace so updates accumulate into
@@ -41,10 +50,41 @@ type streamBridge struct {
 	// 高于 input-required，见 executor.Execute 尾部）。
 	inputRequired       bool
 	inputRequiredPrompt string
+
+	// flushInterval + 累积缓冲：content/reason delta 先写 buffer，到点/流结束
+	// 才合并转发（见 bridgeFlushInterval）。step/response 帧不过节流，立即转发。
+	flushInterval     time.Duration
+	contentBuf        strings.Builder
+	reasonBuf         strings.Builder
+	lastContentFlush  time.Time
+	lastReasonFlush   time.Time
+	contentDeltaCount int
+	contentEvents     int
+	reasonDeltaCount  int
+	reasonEvents      int
 }
 
 func newBridge(ec *a2asrv.ExecutorContext, yield func(a2a.Event, error) bool) *streamBridge {
-	return &streamBridge{execCtx: ec, yield: yield}
+	return &streamBridge{execCtx: ec, yield: yield, flushInterval: bridgeFlushInterval}
+}
+
+// Flush 兜底把流结束时还留在缓冲里的 delta 合并发出（LLM 停止输出后不会再
+// 有 Forward 触发窗口到期）。executor 在 stream 关闭后、Finalize 前调用。
+// 返回 false 表示下游已取消。
+func (b *streamBridge) Flush() bool {
+	ok := true
+	if b.contentBuf.Len() > 0 {
+		ok = b.flushContent() && ok
+	}
+	if b.reasonBuf.Len() > 0 {
+		ok = b.flushReason() && ok
+	}
+	return ok
+}
+
+// coalesceStats 返回 (delta 数, 实际事件数)——合并比，供可观测性/排查。
+func (b *streamBridge) coalesceStats() (contentDelta, contentEvents, reasonDelta, reasonEvents int) {
+	return b.contentDeltaCount, b.contentEvents, b.reasonDeltaCount, b.reasonEvents
 }
 
 // Forward emits A2A events for one StreamMessage. Returns false when the
@@ -70,10 +110,16 @@ func (b *streamBridge) Forward(msg aiagent.StreamMessage) bool {
 		//
 		// A step frame is also the natural boundary between two agent
 		// reasoning passes — the next "reason" delta after a tool call is a
-		// fresh thought, not a continuation. Reset reasoningArtifactID so
-		// forwardReason allocates a new artifact for it; otherwise multi-step
-		// thoughts would be appended to a single artifact and clients render
-		// them as one undelimited blob.
+		// fresh thought, not a continuation. Flush the buffered reasoning
+		// deltas first (so they land on the OLD artifact), then reset
+		// reasoningArtifactID so the next reason delta allocates a new
+		// artifact; otherwise coalescing would merge cross-step thoughts into
+		// one undelimited blob.
+		if b.reasonBuf.Len() > 0 {
+			if !b.flushReason() {
+				return false
+			}
+		}
 		b.reasoningArtifactID = ""
 		return b.yield(a2a.NewStatusUpdateEvent(b.execCtx, a2a.TaskStateWorking,
 			a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(msg.V))), nil)
@@ -83,6 +129,24 @@ func (b *streamBridge) Forward(msg aiagent.StreamMessage) bool {
 }
 
 func (b *streamBridge) forwardContent(delta string) bool {
+	b.contentDeltaCount++
+	b.contentBuf.WriteString(delta)
+	if b.flushInterval <= 0 || time.Since(b.lastContentFlush) >= b.flushInterval {
+		return b.flushContent()
+	}
+	return true
+}
+
+// flushContent 把累积的 content delta 合并成一条 artifact 事件发出。
+func (b *streamBridge) flushContent() bool {
+	if b.contentBuf.Len() == 0 {
+		b.lastContentFlush = time.Now()
+		return true
+	}
+	delta := b.contentBuf.String()
+	b.contentBuf.Reset()
+	b.lastContentFlush = time.Now()
+	b.contentEvents++
 	if b.contentArtifactID == "" {
 		ev := a2a.NewArtifactEvent(b.execCtx, a2a.NewTextPart(delta))
 		b.contentArtifactID = ev.Artifact.ID
@@ -121,6 +185,24 @@ func (b *streamBridge) InputRequiredPrompt() (string, bool) {
 }
 
 func (b *streamBridge) forwardReason(delta string) bool {
+	b.reasonDeltaCount++
+	b.reasonBuf.WriteString(delta)
+	if b.flushInterval <= 0 || time.Since(b.lastReasonFlush) >= b.flushInterval {
+		return b.flushReason()
+	}
+	return true
+}
+
+// flushReason 把累积的 reason delta 合并成一条带 thought 标记的 artifact 事件发出。
+func (b *streamBridge) flushReason() bool {
+	if b.reasonBuf.Len() == 0 {
+		b.lastReasonFlush = time.Now()
+		return true
+	}
+	delta := b.reasonBuf.String()
+	b.reasonBuf.Reset()
+	b.lastReasonFlush = time.Now()
+	b.reasonEvents++
 	part := a2a.NewTextPart(delta)
 	part.SetMeta(thoughtMetadataKey, true)
 	if b.reasoningArtifactID == "" {

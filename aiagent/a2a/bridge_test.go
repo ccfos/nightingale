@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/a2aproject/a2a-go/v2/a2asrv"
@@ -25,6 +26,8 @@ func collectBridge(t *testing.T) (*streamBridge, *[]a2a.Event) {
 		events = append(events, ev)
 		return true
 	})
+	// 单测关闭节流：逐 delta 转发，与合流行为对照（合并路径另测）。
+	b.flushInterval = 0
 	return b, &events
 }
 
@@ -147,6 +150,103 @@ func TestStepBoundaryStartsFreshReasoningArtifact(t *testing.T) {
 	}
 	if artifactIDs[0] == artifactIDs[1] {
 		t.Fatalf("iteration 2 reasoning must allocate a new artifact ID (both were %q)", artifactIDs[0])
+	}
+}
+
+// TestBridgeCoalescesDeltas verifies the production coalescing path: deltas
+// arriving inside one flush window are merged into a single artifact update,
+// and Flush() drains whatever is still buffered when the stream ends.
+// flushInterval is pinned to 1h and lastContentFlush pre-set to now so every
+// Forward lands inside the window — deterministic, no sleeps.
+func TestBridgeCoalescesDeltas(t *testing.T) {
+	b, events := collectBridge(t)
+	b.flushInterval = time.Hour
+	b.lastContentFlush = time.Now()
+	b.lastReasonFlush = time.Now()
+
+	for _, d := range []string{"a", "b", "c"} {
+		if !b.Forward(aiagent.StreamMessage{P: "content", V: d}) {
+			t.Fatal("Forward returned false unexpectedly")
+		}
+	}
+	if len(*events) != 0 {
+		t.Fatalf("deltas inside window must not emit events yet, got %d", len(*events))
+	}
+	if !b.Flush() {
+		t.Fatal("Flush returned false unexpectedly")
+	}
+	if len(*events) != 1 {
+		t.Fatalf("coalesced flush must emit 1 event, got %d", len(*events))
+	}
+	up := (*events)[0].(*a2a.TaskArtifactUpdateEvent)
+	if got := concatArtifactText(*events, up.Artifact.ID); got != "abc" {
+		t.Fatalf("coalesced body = %q, want %q", got, "abc")
+	}
+	cd, ce, _, _ := b.coalesceStats()
+	if cd != 3 || ce != 1 {
+		t.Fatalf("coalesce stats = (deltas=%d events=%d), want (3, 1)", cd, ce)
+	}
+}
+
+// TestCoalescedStepBoundarySplitsReasoning verifies that with coalescing on, a
+// step frame still forces the buffered reasoning deltas out BEFORE the
+// artifact-ID reset — otherwise cross-step thoughts merge into one blob.
+func TestCoalescedStepBoundarySplitsReasoning(t *testing.T) {
+	b, events := collectBridge(t)
+	b.flushInterval = time.Hour
+	b.lastContentFlush = time.Now()
+	b.lastReasonFlush = time.Now()
+
+	b.Forward(aiagent.StreamMessage{P: "reason", V: "Thought: one"})
+	if !b.Forward(aiagent.StreamMessage{P: "step", V: "tool_result:query"}) {
+		t.Fatal("Forward returned false unexpectedly")
+	}
+	b.Forward(aiagent.StreamMessage{P: "reason", V: "Thought: two"})
+	if !b.Flush() {
+		t.Fatal("Flush returned false unexpectedly")
+	}
+
+	var artifactIDs []a2a.ArtifactID
+	for _, ev := range *events {
+		if up, ok := ev.(*a2a.TaskArtifactUpdateEvent); ok {
+			artifactIDs = append(artifactIDs, up.Artifact.ID)
+		}
+	}
+	if len(artifactIDs) != 2 {
+		t.Fatalf("expected 2 reasoning artifacts across step boundary, got %d", len(artifactIDs))
+	}
+	if artifactIDs[0] == artifactIDs[1] {
+		t.Fatalf("cross-step reasoning must split artifacts (both %q)", artifactIDs[0])
+	}
+	if got := concatArtifactText(*events, artifactIDs[0]); got != "Thought: one" {
+		t.Fatalf("artifact[0] = %q, want %q", got, "Thought: one")
+	}
+	if got := concatArtifactText(*events, artifactIDs[1]); got != "Thought: two" {
+		t.Fatalf("artifact[1] = %q, want %q", got, "Thought: two")
+	}
+}
+
+// TestBridgeFlushesWhenWindowExpires covers the production main path: the window
+// has already elapsed when a delta arrives, so Forward flushes immediately
+// (this is the path real streaming takes at ~tens of deltas per second).
+func TestBridgeFlushesWhenWindowExpires(t *testing.T) {
+	b, events := collectBridge(t)
+	b.flushInterval = time.Hour
+	b.lastContentFlush = time.Now().Add(-time.Hour - time.Second) // 窗口已过期
+
+	if !b.Forward(aiagent.StreamMessage{P: "content", V: "a"}) {
+		t.Fatal("Forward returned false unexpectedly")
+	}
+	if len(*events) != 1 {
+		t.Fatalf("expired window must flush immediately, got %d events", len(*events))
+	}
+	up := (*events)[0].(*a2a.TaskArtifactUpdateEvent)
+	if got := concatArtifactText(*events, up.Artifact.ID); got != "a" {
+		t.Fatalf("flushed body = %q, want %q", got, "a")
+	}
+	cd, ce, _, _ := b.coalesceStats()
+	if cd != 1 || ce != 1 {
+		t.Fatalf("coalesce stats = (deltas=%d events=%d), want (1, 1)", cd, ce)
 	}
 }
 
