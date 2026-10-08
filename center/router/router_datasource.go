@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
 	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
@@ -314,19 +315,24 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 	}
 
-	if req.PluginType == models.MYSQL {
-		// Connectivity test: parse mysql.shards, open a real connection
-		// (NewConn pings internally) and run SHOW DATABASES to make sure the
-		// account can log in and query. A failure blocks the save, like the
-		// prometheus/clickhouse checks; force_save is unaffected (skipped in runCheck).
-		if runCheck("query", func() error {
-			if checkErr := checkMysqlDatasource(req.SettingsJson); checkErr != nil {
-				logger.Warningf("mysql connection failed: %v", checkErr)
-				return checkErr
+	// Plugins implementing datasource.HealthChecker get a real connectivity probe
+	// here; types not in the plugin registry (e.g. prometheus) are handled above.
+	if plug, err := datasource.GetDatasourceByType(req.PluginType, req.SettingsJson); err == nil {
+		if hc, ok := plug.(datasource.HealthChecker); ok {
+			if runCheck("query", func() error {
+				ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+				defer cancel()
+				if err := plug.Validate(ctx); err != nil {
+					return err
+				}
+				if err := hc.CheckHealth(ctx); err != nil {
+					logger.Warningf("datasource %s health check failed: %v", req.PluginType, err)
+					return err
+				}
+				return nil
+			}) {
+				return
 			}
-			return nil
-		}) {
-			return
 		}
 	}
 

@@ -114,6 +114,13 @@ type ReadAddrApplier interface {
 	ApplyReadAddr(isCenter bool) (usedLocal bool)
 }
 
+// HealthChecker is optional: datasources that can cheaply probe connectivity
+// implement this, and datasource upsert runs it on "test connectivity & save".
+// Implementations must honor ctx and must not populate shared connection caches.
+type HealthChecker interface {
+	CheckHealth(ctx context.Context) error
+}
+
 func RegisterDatasource(typ string, p Datasource) {
 	if _, found := datasourceRegister[typ]; found {
 		return

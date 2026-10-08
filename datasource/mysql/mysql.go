@@ -31,6 +31,8 @@ type MySQL struct {
 	mysql.MySQL `json:",inline" mapstructure:",squash"`
 }
 
+var _ datasource.HealthChecker = (*MySQL)(nil)
+
 type QueryParam struct {
 	Ref      string          `json:"ref" mapstructure:"ref"`
 	Database string          `json:"database" mapstructure:"database"`
