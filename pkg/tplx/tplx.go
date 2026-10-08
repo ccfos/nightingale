@@ -2,6 +2,7 @@ package tplx
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"net/url"
 	"regexp"
@@ -13,6 +14,7 @@ import (
 
 var TemplateFuncMap = template.FuncMap{
 	"escape":                        url.PathEscape,
+	"slackEscape":                   SlackEscape,
 	"unescaped":                     Unescaped,
 	"urlconvert":                    Urlconvert,
 	"timeformat":                    Timeformat,
@@ -142,4 +144,21 @@ func ReplaceTemplateUseText(name string, templateText string, templateData any) 
 		return templateText
 	}
 	return body.String()
+}
+
+var slackEscaper = strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;")
+
+// SlackEscape 转义 Slack mrkdwn 的三个控制字符 & < >，把告警字段放进 Slack 消息时用：
+// 不转义的话，规则名里的 < 会被当成 <链接|文字> 的开头，整段显示错乱。
+func SlackEscape(v interface{}) string {
+	var s string
+	switch t := v.(type) {
+	case string:
+		s = t
+	case []string:
+		s = "[" + strings.Join(t, " ") + "]"
+	default:
+		s = fmt.Sprint(v)
+	}
+	return slackEscaper.Replace(s)
 }

@@ -134,7 +134,7 @@ const redactedMark = "***"
 // 宁可多掩一个（日志里少一段可读信息）也不要把 token 落盘。
 var sensitiveKeyHints = []string{
 	"auth", "token", "secret", "password", "passwd",
-	"cookie", "key", "sign", "credential",
+	"cookie", "key", "sign", "credential", "webhook",
 }
 
 func isSensitiveKey(k string) bool {
@@ -286,4 +286,10 @@ func redactErrMsg(err error, rawURL, safeURL string) string {
 		msg = strings.ReplaceAll(msg, rawURL, safeURL)
 	}
 	return msg
+}
+
+// RedactParamsForLog 返回通知参数的可写日志副本：命中敏感 key（含 webhook_url 这类
+// 路径里带凭证的地址）的值替换成 ***，原 map 不动。
+func RedactParamsForLog(params map[string]string) map[string]string {
+	return redactKV(params)
 }

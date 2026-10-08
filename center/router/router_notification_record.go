@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/alert/sender"
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
@@ -122,10 +123,8 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificationRecord
 			usernames = append(usernames, k)
 		}
 
-		if !checkChannel(n.Channel) {
-			// Hide sensitive information
-			n.Target = replaceLastEightChars(n.Target)
-		}
+		// 通知目标原样展示，只遮像凭证的部分（机器人 token、回调地址里的密钥等）
+		n.Target = provider.MaskNotifyTarget(n.Target)
 		record := Record{
 			Target:       n.Target,
 			Status:       n.Status,
@@ -174,24 +173,6 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificationRecord
 	}
 
 	return response
-}
-
-// check channel is one of the following: tx-sms, tx-voice, ali-sms, ali-voice, email, script,
-// or the notify-muted pseudo channel (its target is a mute rule id, no need to mask)
-func checkChannel(channel string) bool {
-	switch channel {
-	case "tx-sms", "tx-voice", "ali-sms", "ali-voice", "email", "script", models.NotiChannelMuted:
-		return true
-	}
-	return false
-}
-
-func replaceLastEightChars(s string) string {
-	runes := []rune(s)
-	if len(runes) <= 8 {
-		return strings.Repeat("*", len(runes))
-	}
-	return string(runes[:len(runes)-8]) + strings.Repeat("*", 8)
 }
 
 func fillUserNames(ctx *ctx.Context, groupIdSet map[int64]struct{}) map[string]map[string]struct{} {

@@ -198,7 +198,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			for i := range notifyRule.NotifyConfigs {
 				err := NotifyRuleMatchCheck(&notifyRule.NotifyConfigs[i], eventCopy)
 				if err != nil {
-					logger.Errorf("notify_id: %d, event:%s, channel_id:%d, template_id: %d, notify_config:%+v, err:%v", notifyRuleId, eventCopy.Hash, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID, notifyRule.NotifyConfigs[i], err)
+					logger.Errorf("notify_id: %d, event:%s, channel_id:%d, template_id: %d, notify_config:%+v, err:%v", notifyRuleId, eventCopy.Hash, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID, notifyConfigForLog(&notifyRule.NotifyConfigs[i]), err)
 					continue
 				}
 
@@ -341,6 +341,21 @@ func PipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEv
 	return tagMatch && attributesMatch
 }
 
+// notifyConfigForLog 返回可写日志的通知配置副本：规则参数里有 Webhook 地址、机器人 token、API key 等凭证，
+// 值按 provider.RedactParamsForLog 的敏感 key 规则打成 ***，原配置不动
+func notifyConfigForLog(c *models.NotifyConfig) models.NotifyConfig {
+	cp := *c
+	params := make(map[string]string, len(c.Params))
+	for k, v := range c.Params {
+		params[k] = fmt.Sprint(v)
+	}
+	cp.Params = make(map[string]interface{}, len(params))
+	for k, v := range provider.RedactParamsForLog(params) {
+		cp.Params[k] = v
+	}
+	return cp
+}
+
 func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) error {
 	tm := time.Unix(event.TriggerTime, 0)
 	triggerTime := tm.Format("15:04")
@@ -421,7 +436,7 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 
 		tagFilters, err := models.ParseTagFilter(labelKeysCopy)
 		if err != nil {
-			logger.Errorf("notify send failed to parse tag filter: %v event:%s notify_config:%+v", err, event.Hash, notifyConfig)
+			logger.Errorf("notify send failed to parse tag filter: %v event:%s notify_config:%+v", err, event.Hash, notifyConfigForLog(notifyConfig))
 			return fmt.Errorf("failed to parse tag filter: %v", err)
 		}
 		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
@@ -439,7 +454,7 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 
 		tagFilters, err := models.ParseTagFilter(attributesCopy)
 		if err != nil {
-			logger.Errorf("notify send failed to parse tag filter: %v event:%s notify_config:%+v err:%v", tagFilters, event.Hash, notifyConfig, err)
+			logger.Errorf("notify send failed to parse tag filter: %v event:%s notify_config:%+v err:%v", tagFilters, event.Hash, notifyConfigForLog(notifyConfig), err)
 			return fmt.Errorf("failed to parse tag filter: %v", err)
 		}
 
@@ -450,7 +465,7 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 		return fmt.Errorf("event attributes not match attributes filter")
 	}
 
-	logger.Infof("notify send timeMatch:%v severityMatch:%v tagMatch:%v attributesMatch:%v event:%s notify_config:%+v", timeMatch, severityMatch, tagMatch, attributesMatch, event.Hash, notifyConfig)
+	logger.Infof("notify send timeMatch:%v severityMatch:%v tagMatch:%v attributesMatch:%v event:%s notify_config:%+v", timeMatch, severityMatch, tagMatch, attributesMatch, event.Hash, notifyConfigForLog(notifyConfig))
 	return nil
 }
 
@@ -621,7 +636,8 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 	// flashduty / pagerduty 直接从 event 字段构造 payload，不需要模板，
 	// 与 dispatch 入口处 messageTemplate 的可空判断保持一致，避免 nil 解引用。
 	if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" && messageTemplate != nil {
-		tplContent = messageTemplate.RenderEvent(events, siteInfo.SiteUrl)
+		// 原生对接的媒介按纯文本渲染，其余沿用各自的既有分支（见 RenderEventForChannel）
+		tplContent = messageTemplate.RenderEventForChannel(notifyChannel.RequestType, events, siteInfo.SiteUrl)
 	}
 
 	nc, err := BuildNotifyContext(ctx, userCache, userGroupCache, events, notifyRuleId,
@@ -1014,20 +1030,9 @@ func mapKeys(m map[int64]struct{}) []int64 {
 }
 
 func getSendTarget(customParams map[string]string, sendtos []string) string {
-	if len(customParams) == 0 {
-		return strings.Join(sendtos, ",")
+	// 有规则参数时用参数生成目标：优先机器人名称，凭证只留后 4 位
+	if target := provider.NotifyTargetFromParams(customParams); target != "" {
+		return target
 	}
-
-	values := make([]string, 0)
-	for _, value := range customParams {
-		runes := []rune(value)
-		if len(runes) <= 4 {
-			values = append(values, value)
-		} else {
-			maskedValue := string(runes[:len(runes)-4]) + "****"
-			values = append(values, maskedValue)
-		}
-	}
-
-	return strings.Join(values, ",")
+	return strings.Join(sendtos, ",")
 }

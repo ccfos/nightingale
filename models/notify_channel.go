@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -53,14 +55,19 @@ func (ncc *NotifyChannelConfig) TableName() string {
 }
 
 type RequestConfig struct {
-	HTTPRequestConfig        *HTTPRequestConfig        `json:"http_request_config,omitempty" gorm:"serializer:json"`
-	SMTPRequestConfig        *SMTPRequestConfig        `json:"smtp_request_config,omitempty" gorm:"serializer:json"`
-	ScriptRequestConfig      *ScriptRequestConfig      `json:"script_request_config,omitempty" gorm:"serializer:json"`
-	FlashDutyRequestConfig   *FlashDutyRequestConfig   `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
-	PagerDutyRequestConfig   *PagerDutyRequestConfig   `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
-	DingtalkAppRequestConfig *DingtalkAppRequestConfig `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
-	FeishuAppRequestConfig   *FeishuAppRequestConfig   `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
-	WecomAppRequestConfig    *WecomAppRequestConfig    `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
+	HTTPRequestConfig              *HTTPRequestConfig              `json:"http_request_config,omitempty" gorm:"serializer:json"`
+	SMTPRequestConfig              *SMTPRequestConfig              `json:"smtp_request_config,omitempty" gorm:"serializer:json"`
+	ScriptRequestConfig            *ScriptRequestConfig            `json:"script_request_config,omitempty" gorm:"serializer:json"`
+	FlashDutyRequestConfig         *FlashDutyRequestConfig         `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
+	PagerDutyRequestConfig         *PagerDutyRequestConfig         `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
+	DingtalkAppRequestConfig       *DingtalkAppRequestConfig       `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
+	FeishuAppRequestConfig         *FeishuAppRequestConfig         `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
+	WecomAppRequestConfig          *WecomAppRequestConfig          `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
+	JiraRequestConfig              *JiraRequestConfig              `json:"jira_request_config,omitempty" gorm:"serializer:json"`
+	DiscordRequestConfig           *DiscordRequestConfig           `json:"discord_request_config,omitempty" gorm:"serializer:json"`
+	JSMAlertRequestConfig          *JSMAlertRequestConfig          `json:"jsm_alert_request_config,omitempty" gorm:"serializer:json"`
+	SlackWebhookRequestConfig      *SlackWebhookRequestConfig      `json:"slackwebhook_request_config,omitempty" gorm:"serializer:json"`
+	MattermostWebhookRequestConfig *MattermostWebhookRequestConfig `json:"mattermostwebhook_request_config,omitempty" gorm:"serializer:json"`
 	// 兼容旧版本
 	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
 	FeishuRequestConfig   *FeishuRequestConfig   `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
@@ -97,6 +104,145 @@ type PagerDutyRequestConfig struct {
 	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
 	RetryTimes int    `json:"retry_times"` // 重试次数
 	RetrySleep int    `json:"retry_sleep"` // 重试等待时间（毫秒）
+}
+
+// 原生对接的海外媒介：request_type 与 ident 同名，provider 自己组包、自管重试与成功判定。
+// 旧版同名 ident 的 request_type=http 记录不受影响：新 provider 的 Check 要求 request_type
+// 与 ident 一致，校验不过时 Registry.Resolve 按 request_type 兜底到 callback。
+const (
+	RequestTypeJira              = "jira"
+	RequestTypeDiscord           = "discord"
+	RequestTypeJSMAlert          = "jsm_alert"
+	RequestTypeSlackWebhook      = "slackwebhook"
+	RequestTypeMattermostWebhook = "mattermostwebhook"
+)
+
+var nativeRequestTypes = map[string]struct{}{
+	RequestTypeJira:              {},
+	RequestTypeDiscord:           {},
+	RequestTypeJSMAlert:          {},
+	RequestTypeSlackWebhook:      {},
+	RequestTypeMattermostWebhook: {},
+}
+
+// IsNativeRequestType 表示该媒介类型是否为原生对接：这类媒介的 provider 用 json.Marshal
+// 组包，消息模板必须按纯文本渲染（RenderEventPlain），不能做通用 HTTP 那层 JSON 转义。
+func IsNativeRequestType(requestType string) bool {
+	_, ok := nativeRequestTypes[requestType]
+	return ok
+}
+
+// NativeNetworkConfig 原生媒介共用的网络设置，内嵌进各自的 *RequestConfig，JSON 平铺。
+type NativeNetworkConfig struct {
+	Proxy              string `json:"proxy"`
+	Timeout            int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes         int    `json:"retry_times"` // 重试次数（不含首次请求）
+	RetrySleep         int    `json:"retry_sleep"` // 重试等待时间（毫秒），对方返回 Retry-After 时以对方为准
+	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
+}
+
+const (
+	JiraDeploymentCloud      = "cloud"
+	JiraDeploymentDataCenter = "datacenter"
+
+	// JiraTokenScoped 带权限范围的令牌（含服务账号的令牌），必须经 api.atlassian.com 网关访问；
+	// JiraTokenClassic 普通令牌，直接访问站点地址
+	JiraTokenScoped  = "scoped"
+	JiraTokenClassic = "classic"
+
+	JiraAuthPAT   = "pat"
+	JiraAuthBasic = "basic"
+)
+
+// JiraRequestConfig Jira 工单媒介：只放站点和账号，项目、工作类型等「发到哪」的配置在通知规则里
+type JiraRequestConfig struct {
+	DeploymentType string `json:"deployment_type"` // cloud | datacenter，空按 cloud
+	SiteURL        string `json:"site_url"`        // 浏览器里打开 Jira 的地址，不带 /rest/api
+	TokenType      string `json:"token_type"`      // cloud：scoped | classic，空按 scoped
+	Email          string `json:"email"`           // cloud：令牌所属账号（或服务账号）的邮箱
+	APIToken       string `json:"api_token"`       // cloud
+	CloudID        string `json:"cloud_id"`        // cloud + scoped：选填，留空按站点地址自动获取
+	AuthType       string `json:"auth_type"`       // datacenter：pat | basic
+	PersonalToken  string `json:"personal_token"`  // datacenter + pat
+	Username       string `json:"username"`        // datacenter + basic
+	Password       string `json:"password"`        // datacenter + basic
+	NativeNetworkConfig
+}
+
+// DiscordRequestConfig Discord 媒介：Webhook 地址在通知规则里填（一个地址对应一个频道），
+// 媒介里只有所有规则共用的外观默认值和网络设置，整个配置可以为空。
+type DiscordRequestConfig struct {
+	Username  string `json:"username"`   // 覆盖 Webhook 显示的名字
+	AvatarURL string `json:"avatar_url"` // 覆盖 Webhook 的头像
+	Silent    bool   `json:"silent"`     // 静默推送：消息照发，但不触发推送和桌面通知
+	NativeNetworkConfig
+}
+
+// SlackWebhookRequestConfig Slack Webhook 媒介：Webhook 地址在通知规则里填（一个地址对应一个频道），
+// 媒介里只有网络设置，整个配置可以为空。新版 Slack 应用的 Webhook 会忽略名称、图标和频道的覆盖，所以不提供外观设置。
+type SlackWebhookRequestConfig struct {
+	NativeNetworkConfig
+}
+
+// MattermostWebhookRequestConfig Mattermost Webhook 媒介：Webhook 地址在通知规则里填，
+// 媒介里只有所有规则共用的外观默认值和网络设置，整个配置可以为空。
+type MattermostWebhookRequestConfig struct {
+	Username string `json:"username"` // 覆盖发送者的名字，需要管理员开启 Enable integrations to override usernames
+	Icon     string `json:"icon"`     // 图片地址或 emoji 代码（如 :bell:），需要管理员开启 Enable integrations to override profile picture icons
+	NativeNetworkConfig
+}
+
+// JSMAlertRequestConfig JSM（Jira Service Management）告警媒介：API 集成的 key 决定告警归哪个团队，
+// 所以跟 Discord 的 Webhook 地址一样填在通知规则里；媒介里只有接口地址和网络设置，整个配置可以为空。
+type JSMAlertRequestConfig struct {
+	APIURL string `json:"api_url"` // 空按 https://api.atlassian.com
+	// PriorityMap 夜莺告警级别（"1"/"2"/"3"）对应的 JSM 优先级（P1–P5）。JSM 的优先级全站固定，
+	// 这是组织级约定，所以放在媒介里而不是每条规则各配一遍；缺某个级别时按 S1→P1、S2→P2、S3→P3
+	PriorityMap map[string]string `json:"priority_map"`
+	NativeNetworkConfig
+}
+
+// jsmDefaultPriority 与旧版通用 HTTP 媒介的 P{{$event.Severity}} 一致
+var jsmDefaultPriority = map[int]string{1: "P1", 2: "P2", 3: "P3"}
+
+// Priority 返回告警级别对应的 JSM 优先级
+func (c *JSMAlertRequestConfig) Priority(severity int) string {
+	if c != nil {
+		if v := strings.ToUpper(strings.TrimSpace(c.PriorityMap[strconv.Itoa(severity)])); v != "" {
+			return v
+		}
+	}
+	return jsmDefaultPriority[severity]
+}
+
+// NativeNetwork 返回原生媒介的网络设置；非原生媒介或未配置时返回 nil，调用方按默认值处理。
+func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig {
+	if rc == nil {
+		return nil
+	}
+	switch requestType {
+	case RequestTypeJira:
+		if rc.JiraRequestConfig != nil {
+			return &rc.JiraRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeDiscord:
+		if rc.DiscordRequestConfig != nil {
+			return &rc.DiscordRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeJSMAlert:
+		if rc.JSMAlertRequestConfig != nil {
+			return &rc.JSMAlertRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeSlackWebhook:
+		if rc.SlackWebhookRequestConfig != nil {
+			return &rc.SlackWebhookRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeMattermostWebhook:
+		if rc.MattermostWebhookRequestConfig != nil {
+			return &rc.MattermostWebhookRequestConfig.NativeNetworkConfig
+		}
+	}
+	return nil
 }
 
 // ParamItem 自定义参数项
@@ -276,11 +422,16 @@ func NotifyChannelIdentsGet(ctx *ctx.Context, ids []int64) (map[int64]string, er
 }
 
 func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
-	if nc.RequestConfig == nil {
-		return nil, fmt.Errorf("%+v request config not found", nc)
+	rc := nc.RequestConfig
+	if rc == nil {
+		// 原生媒介的配置可能整体为空（如 Webhook 类媒介什么都不用填，前端会剔掉空壳），按全默认处理
+		if !IsNativeRequestType(nc.RequestType) {
+			return nil, fmt.Errorf("%+v request config not found", nc)
+		}
+		rc = &RequestConfig{}
 	}
 
-	httpConfig := nc.RequestConfig.HTTPRequestConfig
+	httpConfig := rc.HTTPRequestConfig
 	if httpConfig == nil {
 		httpConfig = &HTTPRequestConfig{
 			Timeout:       10000,
@@ -294,19 +445,19 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	proxy := httpConfig.Proxy
 	// 对于 FlashDuty 类型，优先使用 FlashDuty 配置中的超时时间
 	timeout := httpConfig.Timeout
-	if nc.RequestType == "flashduty" && nc.RequestConfig.FlashDutyRequestConfig != nil {
-		flashDutyTimeout := nc.RequestConfig.FlashDutyRequestConfig.Timeout
+	if nc.RequestType == "flashduty" && rc.FlashDutyRequestConfig != nil {
+		flashDutyTimeout := rc.FlashDutyRequestConfig.Timeout
 		if flashDutyTimeout > 0 {
 			timeout = flashDutyTimeout
 		}
-		if nc.RequestConfig.FlashDutyRequestConfig.Proxy != "" {
-			proxy = nc.RequestConfig.FlashDutyRequestConfig.Proxy
+		if rc.FlashDutyRequestConfig.Proxy != "" {
+			proxy = rc.FlashDutyRequestConfig.Proxy
 		}
 	}
 
 	// 对于 PagerDuty 类型，优先使用 PagerDuty 配置中的代理
-	if nc.RequestType == "pagerduty" && nc.RequestConfig.PagerDutyRequestConfig != nil && nc.RequestConfig.PagerDutyRequestConfig.Proxy != "" {
-		proxy = nc.RequestConfig.PagerDutyRequestConfig.Proxy
+	if nc.RequestType == "pagerduty" && rc.PagerDutyRequestConfig != nil && rc.PagerDutyRequestConfig.Proxy != "" {
+		proxy = rc.PagerDutyRequestConfig.Proxy
 	}
 	// TODO(dingtalkapp): 钉钉应用本次不上线，DingtalkApp 超时/代理合并分支先注释；上线时恢复。
 	// if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil {
@@ -319,25 +470,37 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	// 	}
 	// }
 	// 对于 FeishuApp 类型，优先使用 FeishuApp 配置中的超时时间和代理
-	if nc.RequestType == "feishuapp" && nc.RequestConfig.FeishuAppRequestConfig != nil {
-		feishuAppTimeout := nc.RequestConfig.FeishuAppRequestConfig.Timeout
+	if nc.RequestType == "feishuapp" && rc.FeishuAppRequestConfig != nil {
+		feishuAppTimeout := rc.FeishuAppRequestConfig.Timeout
 		if feishuAppTimeout > 0 {
 			timeout = feishuAppTimeout
 		}
-		if nc.RequestConfig.FeishuAppRequestConfig.Proxy != "" {
-			proxy = nc.RequestConfig.FeishuAppRequestConfig.Proxy
+		if rc.FeishuAppRequestConfig.Proxy != "" {
+			proxy = rc.FeishuAppRequestConfig.Proxy
 		}
 	}
 
 	// 对于 WecomApp 类型，优先使用 WecomApp 配置中的超时时间和代理
-	if nc.RequestType == "wecomapp" && nc.RequestConfig.WecomAppRequestConfig != nil {
-		wecomAppTimeout := nc.RequestConfig.WecomAppRequestConfig.Timeout
+	if nc.RequestType == "wecomapp" && rc.WecomAppRequestConfig != nil {
+		wecomAppTimeout := rc.WecomAppRequestConfig.Timeout
 		if wecomAppTimeout > 0 {
 			timeout = wecomAppTimeout
 		}
-		if nc.RequestConfig.WecomAppRequestConfig.Proxy != "" {
-			proxy = nc.RequestConfig.WecomAppRequestConfig.Proxy
+		if rc.WecomAppRequestConfig.Proxy != "" {
+			proxy = rc.WecomAppRequestConfig.Proxy
 		}
+	}
+
+	insecureSkipVerify := httpConfig.TLS != nil && httpConfig.TLS.SkipVerify
+	// 原生媒介（Jira 等）优先使用自己配置里的超时、代理与证书校验开关
+	if n := rc.NativeNetwork(nc.RequestType); n != nil {
+		if n.Timeout > 0 {
+			timeout = n.Timeout
+		}
+		if n.Proxy != "" {
+			proxy = n.Proxy
+		}
+		insecureSkipVerify = insecureSkipVerify || n.InsecureSkipVerify
 	}
 
 	if timeout == 0 {
@@ -364,7 +527,7 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	}
 
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: httpConfig.TLS != nil && httpConfig.TLS.SkipVerify,
+		InsecureSkipVerify: insecureSkipVerify,
 	}
 
 	transport := &http.Transport{
@@ -404,8 +567,9 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		ncc.RequestType != "pagerduty" &&
 		// ncc.RequestType != "dingtalkapp" &&
 		ncc.RequestType != "feishuapp" &&
-		ncc.RequestType != "wecomapp" {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp'")
+		ncc.RequestType != "wecomapp" &&
+		!IsNativeRequestType(ncc.RequestType) {
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert', 'slackwebhook', 'mattermostwebhook'")
 	}
 
 	if ncc.ParamConfig != nil {
@@ -495,6 +659,94 @@ func (ncc *NotifyChannelConfig) ValidateFlashDutyRequestConfig() error {
 func (ncc *NotifyChannelConfig) ValidatePagerDutyRequestConfig() error {
 	if ncc.RequestConfig.PagerDutyRequestConfig == nil {
 		return errors.New("pagerduty request config cannot be nil")
+	}
+	return nil
+}
+
+func (ncc *NotifyChannelConfig) ValidateJiraRequestConfig() error {
+	if ncc.RequestConfig == nil || ncc.RequestConfig.JiraRequestConfig == nil {
+		return errors.New("jira request config cannot be nil")
+	}
+	return ncc.RequestConfig.JiraRequestConfig.Verify()
+}
+
+// Verify 只做本地格式校验（每次发送前 provider.Check 都会调用，不能发请求）。
+// 含 {{ 的值是变量配置引用，发送时才展开，这里跳过格式校验。
+func (c *JiraRequestConfig) Verify() error {
+	site := strings.TrimSpace(c.SiteURL)
+	if site == "" {
+		return errors.New("jira site url cannot be empty")
+	}
+	if !strings.Contains(site, "{{") {
+		u, err := url.Parse(site)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return errors.New("jira site url must be like https://your-domain.atlassian.net")
+		}
+	}
+
+	switch c.DeploymentType {
+	case "", JiraDeploymentCloud:
+		if c.TokenType != "" && c.TokenType != JiraTokenScoped && c.TokenType != JiraTokenClassic {
+			return fmt.Errorf("jira token type must be %s or %s", JiraTokenScoped, JiraTokenClassic)
+		}
+		if strings.TrimSpace(c.Email) == "" {
+			return errors.New("jira email cannot be empty")
+		}
+		if strings.TrimSpace(c.APIToken) == "" {
+			return errors.New("jira api token cannot be empty")
+		}
+	default:
+		return fmt.Errorf("jira deployment type must be %s", JiraDeploymentCloud)
+	}
+	return nil
+}
+
+// ValidateDiscordRequestConfig Discord 媒介的配置可以为空（全部用默认值），只校验填了的外观字段
+func (ncc *NotifyChannelConfig) ValidateDiscordRequestConfig() error {
+	if ncc.RequestConfig == nil || ncc.RequestConfig.DiscordRequestConfig == nil {
+		return nil
+	}
+	avatar := strings.TrimSpace(ncc.RequestConfig.DiscordRequestConfig.AvatarURL)
+	if avatar != "" && !strings.Contains(avatar, "{{") && !strings.HasPrefix(avatar, "http://") && !strings.HasPrefix(avatar, "https://") {
+		return errors.New("discord avatar url must start with http:// or https://")
+	}
+	return nil
+}
+
+// ValidateMattermostWebhookRequestConfig Mattermost Webhook 媒介的配置可以为空，只校验填了的图标
+func (ncc *NotifyChannelConfig) ValidateMattermostWebhookRequestConfig() error {
+	if ncc.RequestConfig == nil || ncc.RequestConfig.MattermostWebhookRequestConfig == nil {
+		return nil
+	}
+	icon := strings.TrimSpace(ncc.RequestConfig.MattermostWebhookRequestConfig.Icon)
+	if icon == "" || strings.Contains(icon, "{{") || strings.HasPrefix(icon, "http://") || strings.HasPrefix(icon, "https://") {
+		return nil
+	}
+	if !regexp.MustCompile(`^:[a-z0-9_+-]+:$`).MatchString(icon) {
+		return errors.New("mattermost icon must be an image url (http:// or https://) or an emoji code like :bell:")
+	}
+	return nil
+}
+
+// ValidateJSMAlertRequestConfig JSM 告警媒介的配置可以为空（接口地址用默认值），填了地址只校验协议
+func (ncc *NotifyChannelConfig) ValidateJSMAlertRequestConfig() error {
+	if ncc.RequestConfig == nil || ncc.RequestConfig.JSMAlertRequestConfig == nil {
+		return nil
+	}
+	cfg := ncc.RequestConfig.JSMAlertRequestConfig
+	u := strings.TrimSpace(cfg.APIURL)
+	if u != "" && !strings.Contains(u, "{{") && !strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://") {
+		return errors.New("jsm alert api url must start with http:// or https://")
+	}
+	for sev, pr := range cfg.PriorityMap {
+		if sev != "1" && sev != "2" && sev != "3" {
+			return fmt.Errorf("invalid severity %q in jsm alert priority_map, must be 1, 2 or 3", sev)
+		}
+		switch strings.ToUpper(strings.TrimSpace(pr)) {
+		case "", "P1", "P2", "P3", "P4", "P5":
+		default:
+			return fmt.Errorf("invalid priority %q in jsm alert priority_map, must be P1 to P5", pr)
+		}
 	}
 	return nil
 }
@@ -693,6 +945,94 @@ var NotiChMap = []*NotifyChannelConfig{
 			},
 		},
 	},
+	{
+		// 原生 Discord：媒介里不需要凭证，Webhook 地址在通知规则里填，所以内置一条开箱即用。
+		// ParamConfig 里声明规则侧参数，规则页才能按「历史参数」复用填过的地址。
+		Name: "Discord", Ident: Discord, RequestType: RequestTypeDiscord, Weight: 6, Enable: true,
+		RequestConfig: &RequestConfig{
+			DiscordRequestConfig: &DiscordRequestConfig{
+				NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: DiscordRuleParams,
+			},
+		},
+	},
+	{
+		// 原生 JSM 告警：API 集成的 key 在通知规则里填，内置一条开箱即用。名称沿用 #3136 之前
+		// 内置的「JSM Alert」，老环境里没被用户改过的那条会原地升级（种子按名称 upsert）。
+		Name: "JSM Alert", Ident: JSMAlert, RequestType: RequestTypeJSMAlert, Weight: 7, Enable: true,
+		RequestConfig: &RequestConfig{
+			JSMAlertRequestConfig: &JSMAlertRequestConfig{
+				PriorityMap:         map[string]string{"1": "P1", "2": "P2", "3": "P3"},
+				NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: JSMAlertRuleParams,
+			},
+		},
+	},
+	{
+		// 原生 Slack / Mattermost Webhook：媒介里不需要凭证，Webhook 地址在通知规则里填，内置开箱即用。
+		// 名称沿用 #3136 之前内置的「SlackWebhook」「MattermostWebhook」，老环境里没被用户改过的
+		// 那条会原地升级（种子按名称 upsert），改名会让老环境多出一条同 ident 的媒介。
+		Name: "SlackWebhook", Ident: SlackWebhook, RequestType: RequestTypeSlackWebhook, Weight: 8, Enable: true,
+		RequestConfig: &RequestConfig{
+			SlackWebhookRequestConfig: &SlackWebhookRequestConfig{
+				NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: SlackWebhookRuleParams,
+			},
+		},
+	},
+	{
+		Name: "MattermostWebhook", Ident: MattermostWebhook, RequestType: RequestTypeMattermostWebhook, Weight: 9, Enable: true,
+		RequestConfig: &RequestConfig{
+			MattermostWebhookRequestConfig: &MattermostWebhookRequestConfig{
+				NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: MattermostWebhookRuleParams,
+			},
+		},
+	},
+}
+
+// SlackWebhookRuleParams、MattermostWebhookRuleParams 是 Webhook 通知配置在规则里的参数，
+// 与 #3136 之前内置的同名通用 HTTP 媒介一致，老环境里没被改过的那条原地升级后，已有规则照常可用。
+var SlackWebhookRuleParams = []ParamItem{
+	{Key: "webhook_url", CName: "Webhook URL", Type: "string"},
+	{Key: "bot_name", CName: "Name", Type: "string"},
+}
+
+var MattermostWebhookRuleParams = []ParamItem{
+	{Key: "webhook_url", CName: "Webhook URL", Type: "string"},
+	{Key: "bot_name", CName: "Name", Type: "string"},
+}
+
+// JSMAlertRuleParams 是 JSM 告警通知配置在规则里的参数。api_key 与 #3136 之前内置的
+// 「JSM Alert」通用 HTTP 媒介同名，老环境里没被改过的那条原地升级后，已有规则照常可用。
+var JSMAlertRuleParams = []ParamItem{
+	{Key: "api_key", CName: "API Key", Type: "string"},
+	{Key: "bot_name", CName: "Name", Type: "string"},
+}
+
+// DiscordRuleParams 是 Discord 通知配置在规则里的参数（历史参数复用按这些 key 回显）
+var DiscordRuleParams = []ParamItem{
+	{Key: "webhook_url", CName: "Webhook URL", Type: "string"},
+	{Key: "bot_name", CName: "Name", Type: "string"},
+	{Key: "target", CName: "Send to", Type: "string"},
+	{Key: "thread_name", CName: "Post title", Type: "string"},
+	{Key: "thread_id", CName: "Thread ID", Type: "string"},
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {
