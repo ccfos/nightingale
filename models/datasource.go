@@ -567,13 +567,21 @@ func (ds *Datasource) ClearPlaintext() {
 }
 
 // RedactSecrets 抹掉所有可能携带密钥 / 口令 / 令牌的字段，用于把数据源对象
-// 返回给非管理员用户。HTTPJson.Url/Urls 等非敏感连接信息保留，方便前端展示。
+// 返回给非管理员用户。连接地址移除 URL userinfo 后保留，方便前端展示。
 func (ds *Datasource) RedactSecrets() {
 	ds.Settings = ""
 	ds.SettingsJson = nil
 	ds.SettingsEncoded = ""
 
 	ds.HTTP = ""
+	ds.HTTPJson.Url = redactDatasourceURL(ds.HTTPJson.Url)
+	if ds.HTTPJson.Urls != nil {
+		urls := make([]string, len(ds.HTTPJson.Urls))
+		for i, raw := range ds.HTTPJson.Urls {
+			urls[i] = redactDatasourceURL(raw)
+		}
+		ds.HTTPJson.Urls = urls
+	}
 	ds.HTTPJson.Headers = nil
 	// mTLS 客户端私钥及其口令属于密钥材料，必须抹掉；
 	// CA / 客户端证书不算口令，但也没有展示需求，一并清空。
@@ -585,6 +593,21 @@ func (ds *Datasource) RedactSecrets() {
 	ds.Auth = ""
 	ds.AuthJson = Auth{}
 	ds.AuthEncoded = ""
+}
+
+// redactDatasourceURL removes the entire userinfo, which may contain a token
+// even without a password. Unparseable or non-HTTP endpoints are hidden rather
+// than returned verbatim, since their credential boundaries cannot be trusted.
+func redactDatasourceURL(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.Opaque != "" {
+		return ""
+	}
+	u.User = nil
+	return u.String()
 }
 
 func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
