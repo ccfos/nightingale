@@ -135,7 +135,7 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 
 	if bid, ok := boardTokenBid(c); ok {
 		// 分享 token 请求：只暴露板内引用的数据源，不泄露全站清单；且抹掉连接地址等
-		// 网络拓扑信息（RedactSecrets 不清 HTTPJson.Url/Urls，上面又把 write_addr/
+		// 网络拓扑信息（RedactSecrets 保留脱敏后的 HTTPJson.Url/Urls，上面又把 write_addr/
 		// internal_addr/prometheus.* 填回 SettingsJson），匿名调用方只需 id/name/
 		// plugin_type/identifier/cluster_name 把 datasourceValue 映射成名字。
 		// 这些 item 来自本次 GetDatasourcesGetsBy 查询结果，非缓存共享指针，就地改写安全。
