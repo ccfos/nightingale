@@ -437,6 +437,13 @@ func TestRenderEventBranchDependsOnNotifyChannelIdent(t *testing.T) {
 			t.Fatalf("got %q", s)
 		}
 	})
+
+	t.Run("钉钉等 IM 渠道保留真实换行", func(t *testing.T) {
+		got := (&MessageTemplate{Content: content, NotifyChannelIdent: Dingtalk}).RenderEvent(events, "http://site")
+		if want := "line1\nsay \"hi\""; fmt.Sprint(got["content"]) != want {
+			t.Fatalf("got %q, want %q", fmt.Sprint(got["content"]), want)
+		}
+	})
 }
 
 // RenderEvent 把模板错误当正文返回（生产链路的既有行为，不改），

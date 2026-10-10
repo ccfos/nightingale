@@ -3802,6 +3802,19 @@ func isSlackIdent(ident string) bool {
 	return ident == "slackwebhook" || ident == "slackbot"
 }
 
+// preservesRenderedNewlines 为 true 时，renderField 不把换行转成字面量 \n。
+// 钉钉/企微/飞书等 HTTP 通知会把正文嵌进 JSON 请求体；若先转成字面量 \n，
+// 对端展示时就会看到反斜杠+n 而不是换行（见 #3371）。
+func preservesRenderedNewlines(ident string) bool {
+	switch ident {
+	case Dingtalk, Wecom, Feishu, FeishuCard, Lark, LarkCard, Telegram,
+		MattermostWebhook, MattermostBot, Discord, Mm:
+		return true
+	default:
+		return false
+	}
+}
+
 // renderField 渲染单个模板字段，按 NotifyChannelIdent 选择渲染分支：
 //   - email：text/template，且不做任何转义（邮件正文里的换行就是换行）
 //   - slackwebhook / slackbot：html/template + JSON 转义，并把 &lt; 还原成 <
@@ -3841,8 +3854,10 @@ func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]
 	}
 
 	escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
-	escaped = strings.ReplaceAll(escaped, "\n", "\\n")
-	escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+	if !preservesRenderedNewlines(t.NotifyChannelIdent) {
+		escaped = strings.ReplaceAll(escaped, "\n", "\\n")
+		escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+	}
 	if isSlackIdent(t.NotifyChannelIdent) {
 		escaped = strings.ReplaceAll(escaped, "&lt;", "<")
 	}
