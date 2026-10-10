@@ -172,6 +172,15 @@ I18NHeaderKey = "X-Language"
 PromQuerier = true
 AlertDetail = true
 
+# [Center.DemoLogin]
+# for public demo sites only. when enabled, anyone who opens
+# /api/n9e/auth/demo-login is signed in as Username without a password,
+# so Username must be a low-privilege account (Admin users are rejected)
+# Enable = false
+# Username = "demo"
+# in-site path to land on after sign-in
+# RedirectURL = "/"
+
 [EmbeddedTSDB]
 # built-in time series database. When enabled, metrics pushed by categraf are
 # stored locally, no external TSDB (Prometheus/VictoriaMetrics) is needed to
