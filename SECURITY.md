@@ -4,14 +4,14 @@ We take the security of Nightingale seriously. Thank you for helping keep Nighti
 
 ## Supported Versions
 
-Security fixes are released for the latest minor version of the current major release.
+The current major version (v9) is supported. Security fixes are shipped in the latest v9 release and are not backported to earlier minor or patch releases.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 9.1.x   | :white_check_mark: |
-| < 9.1   | :x:                |
+| 9.x     | :white_check_mark: |
+| < 9.0   | :x:                |
 
-If you are running an older version, please upgrade to the latest release before reporting an issue. Make sure the issue still reproduces there.
+If you are running an older release, please upgrade to the latest release before reporting an issue. Make sure the issue still reproduces there.
 
 ## Reporting a Vulnerability
 
