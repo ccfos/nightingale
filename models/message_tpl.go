@@ -973,13 +973,6 @@ var NewTplMapEn = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Too many alerts? Try <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> for alert aggregation, noise reduction and on-call scheduling!
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -1317,13 +1310,6 @@ var NewTplMapJa = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						アラートが多すぎませんか？アラートの集約・ノイズ削減・オンコール管理には <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> をお試しください。
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -1662,13 +1648,6 @@ var NewTplMapRu = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Слишком много оповещений? Попробуйте <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> — агрегация оповещений, снижение шума и дежурные расписания.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -2007,13 +1986,6 @@ var NewTplMapFr = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Trop d'alertes ? Essayez <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> pour les regrouper, réduire le bruit et organiser les astreintes.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -2352,13 +2324,6 @@ var NewTplMapKo = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						알림이 너무 많나요? <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a>로 알림을 묶고 잡음을 줄이고 당직 일정을 관리해 보세요.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -2697,13 +2662,6 @@ var NewTplMapId = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Terlalu banyak alert? Coba <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> untuk menggabungkan alert, mengurangi noise, dan mengatur jadwal jaga.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -3042,13 +3000,6 @@ var NewTplMapEs = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						¿Demasiadas alertas? Prueba <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> para agregar alertas, reducir el ruido y organizar las guardias.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -3387,13 +3338,6 @@ var NewTplMapPt = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Alertas demais? Experimente o <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> para agregar alertas, reduzir ruído e organizar plantões.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
