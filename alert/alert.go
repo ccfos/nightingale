@@ -105,7 +105,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, alertStats *astats.Stats, externalProcessors *process.ExternalProcessorsType, targetCache *memsto.TargetCacheType, busiGroupCache *memsto.BusiGroupCacheType,
 	alertMuteCache *memsto.AlertMuteCacheType, alertRuleCache *memsto.AlertRuleCacheType, notifyConfigCache *memsto.NotifyConfigCacheType, taskTplsCache *memsto.TaskTplCache, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context,
-	promClients *prom.PromClientMap, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyRuleCache *memsto.NotifyRuleCacheType, notifyChannelCache *memsto.NotifyChannelCacheType, messageTemplateCache *memsto.MessageTemplateCacheType, configCvalCache *memsto.CvalCache) {
+	promClients *prom.PromClientMap, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyRuleCache *memsto.NotifyRuleCacheType, notifyChannelCache *memsto.NotifyChannelCacheType, messageTemplateCache *memsto.MessageTemplateCacheType, configCvalCache *memsto.CvalCache) *memsto.TargetsOfAlertRuleCacheType {
 	alertSubscribeCache := memsto.NewAlertSubscribeCache(ctx, syncStats)
 	recordingRuleCache := memsto.NewRecordingRuleCache(ctx, syncStats)
 	targetsOfAlertRulesCache := memsto.NewTargetOfAlertRuleCache(ctx, alertc.Heartbeat.EngineName, syncStats)
@@ -158,4 +158,10 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	go queue.ReportQueueSize(alertStats)
 	go sender.ReportNotifyRecordQueueSize(alertStats)
 	go sender.InitEmailSender(ctx, notifyConfigCache)
+
+	// 把 host 规则 -> 机器 的缓存交还给调用方：center 用它直接从内存应答
+	// /v1/n9e/targets-of-alert-rule，避免每个 edge 每轮回源都触发全量 target 扫描。
+	// 以返回值而非新增参数暴露，是为了不动嵌入方（企业版）调用的参数表；
+	// 忽略返回值的既有调用方无需改动。
+	return targetsOfAlertRulesCache
 }

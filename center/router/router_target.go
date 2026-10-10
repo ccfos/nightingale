@@ -667,10 +667,32 @@ func CheckTargetPerm(ctx *ctx.Context, c *gin.Context, idents []string) {
 	}
 }
 
+// targetsOfAlertRule serves edge / standalone alert nodes the "host rule ->
+// target idents" map for their engine. The response shape is
+// {engine_name: {rule_id: [ident...]}} with at most the requested engine as key;
+// an engine with no bound targets gets an empty object.
+//
+// The center's own alert engine already keeps this map in memory
+// (memsto.TargetsOfAlertRuleCacheType, refreshed only when rules / group
+// bindings / targets change), so the handler answers from that cache. The old
+// path recomputed everything on each request: one target-table scan per host
+// rule, for every engine, and then threw away all but one engine — with many
+// rules and hosts that took longer than the edge's CenterApi timeout and the
+// edge crash-looped at startup. The DB path is kept only as a fallback for
+// embedders that never wired the cache.
 func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 	engineName := ginx.QueryStr(c, "engine_name", "")
-	m, err := models.GetTargetsOfHostAlertRule(rt.Ctx, engineName)
 	ret := make(map[string]map[int64][]string)
+
+	if rt.TargetsOfAlertRuleCache != nil {
+		if m, has := rt.TargetsOfAlertRuleCache.GetByEngine(engineName); has {
+			ret[engineName] = m
+		}
+		ginx.NewRender(c).Data(ret, nil)
+		return
+	}
+
+	m, err := models.GetTargetsOfHostAlertRule(rt.Ctx, engineName)
 	for en, v := range m {
 		if en != engineName {
 			continue
