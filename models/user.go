@@ -47,6 +47,8 @@ const (
 	Phone             = "phone"
 	Jira              = "jira"
 	JSMAlert          = "jsm_alert"
+	Teams             = "teams"
+	Twilio            = "twilio"
 
 	DingtalkKey  = "dingtalk_robot_token"
 	WecomKey     = "wecom_robot_token"

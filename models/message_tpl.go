@@ -326,6 +326,12 @@ const markdownAlertContent = `**Level Status**: {{if $event.IsRecovered}}S{{$eve
 
 [Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Silence 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}) | [View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`
 
+// Teams renders status, title, target, value/duration, time and actions in the
+// Adaptive Card shell. Keep the editable body focused on notes and extra labels.
+const teamsAlertContent = `{{if $event.RuleNote}}{{$event.RuleNote}}{{end}}{{$first := true}}{{range $k, $v := $labels}}{{if and (ne $k "rulename") (or (ne $k "ident") (not $event.TargetIdent))}}{{if $first}}{{if $event.RuleNote}}
+
+{{end}}**Labels**  {{else}} · {{end}}{{$first = false}}{{if eq $k "__name__"}}{{$v}}{{else}}{{$k}}={{$v}}{{end}}{{end}}{{end}}`
+
 var NewTplMap = map[string]string{
 	"ali-voice": `{{$event.RuleName}}`,
 	"ali-sms":   `{{$event.RuleName}}`,
@@ -686,6 +692,8 @@ var NewTplMap = map[string]string{
 *Note*  {{slackEscape $event.RuleNote}}{{end}}
 <{{.domain}}/share/alert-his-events/{{$event.Id}}|Event details>{{if not $event.IsRecovered}}   <{{.domain}}/alert-mutes/add?__event_id={{$event.Id}}|Silence 1h>{{end}}   <{{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph|View graph>`,
 	Discord: markdownAlertContent,
+	Teams:   teamsAlertContent,
+	Twilio:  `Nightingale: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}. {{$event.RuleName}}.{{if $event.TargetIdent}} Target: {{$event.TargetIdent}}.{{end}}{{if and $event.TriggerValue (not $event.IsRecovered)}} Value: {{$event.TriggerValue}}.{{end}}`,
 
 	MattermostWebhook: markdownAlertContent,
 
@@ -707,6 +715,8 @@ Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 
 // Weight 用于页面元素排序，weight 越大 排序越靠后
 var MsgTplMap = []MessageTemplate{
+	{Name: "Microsoft Teams", Ident: Teams, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
 	{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
@@ -3439,6 +3449,8 @@ Silenciar por 1 hora: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 // MsgTplMapEn 内置模板的英文版本，与 MsgTplMap 一一对应；
 // ident 追加 -en 后缀与中文版在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapEn = []MessageTemplate{
+	{Name: "Microsoft Teams", Ident: Teams + "-en", NotifyChannelIdent: Teams, Lang: MsgTplLangEn, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-en", NotifyChannelIdent: Twilio, Lang: MsgTplLangEn, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
 	{Name: "Jira", Ident: Jira + "-en", NotifyChannelIdent: Jira, Lang: MsgTplLangEn, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-en", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEn, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-en", NotifyChannelIdent: "callback", Lang: MsgTplLangEn, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3464,6 +3476,8 @@ var MsgTplMapEn = []MessageTemplate{
 // MsgTplMapJa 内置模板的日文版本，与 MsgTplMap 一一对应；
 // ident 追加 -ja 后缀与中英文版在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapJa = []MessageTemplate{
+	{Name: "Microsoft Teams", Ident: Teams + "-ja", NotifyChannelIdent: Teams, Lang: MsgTplLangJa, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-ja", NotifyChannelIdent: Twilio, Lang: MsgTplLangJa, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
 	{Name: "Jira", Ident: Jira + "-ja", NotifyChannelIdent: Jira, Lang: MsgTplLangJa, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-ja", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangJa, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ja", NotifyChannelIdent: "callback", Lang: MsgTplLangJa, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3489,6 +3503,8 @@ var MsgTplMapJa = []MessageTemplate{
 // MsgTplMapRu 内置模板的俄文版本，与 MsgTplMap 一一对应；
 // ident 追加 -ru 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapRu = []MessageTemplate{
+	{Name: "Microsoft Teams", Ident: Teams + "-ru", NotifyChannelIdent: Teams, Lang: MsgTplLangRu, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-ru", NotifyChannelIdent: Twilio, Lang: MsgTplLangRu, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
 	{Name: "Jira", Ident: Jira + "-ru", NotifyChannelIdent: Jira, Lang: MsgTplLangRu, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-ru", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangRu, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ru", NotifyChannelIdent: "callback", Lang: MsgTplLangRu, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3514,6 +3530,8 @@ var MsgTplMapRu = []MessageTemplate{
 // MsgTplMapFr 内置模板的fr_FR版本，与 MsgTplMap 一一对应；
 // ident 追加 -fr 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapFr = []MessageTemplate{
+	{Name: "Microsoft Teams", Ident: Teams + "-fr", NotifyChannelIdent: Teams, Lang: MsgTplLangFr, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-fr", NotifyChannelIdent: Twilio, Lang: MsgTplLangFr, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
 	{Name: "Jira", Ident: Jira + "-fr", NotifyChannelIdent: Jira, Lang: MsgTplLangFr, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-fr", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangFr, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-fr", NotifyChannelIdent: "callback", Lang: MsgTplLangFr, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3539,6 +3557,8 @@ var MsgTplMapFr = []MessageTemplate{
 // MsgTplMapKo 内置模板的ko_KR版本，与 MsgTplMap 一一对应；
 // ident 追加 -ko 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapKo = []MessageTemplate{
+	{Name: "Microsoft Teams", Ident: Teams + "-ko", NotifyChannelIdent: Teams, Lang: MsgTplLangKo, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-ko", NotifyChannelIdent: Twilio, Lang: MsgTplLangKo, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
 	{Name: "Jira", Ident: Jira + "-ko", NotifyChannelIdent: Jira, Lang: MsgTplLangKo, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-ko", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangKo, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ko", NotifyChannelIdent: "callback", Lang: MsgTplLangKo, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3564,6 +3584,8 @@ var MsgTplMapKo = []MessageTemplate{
 // MsgTplMapId 内置模板的id_ID版本，与 MsgTplMap 一一对应；
 // ident 追加 -id 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapId = []MessageTemplate{
+	{Name: "Microsoft Teams", Ident: Teams + "-id", NotifyChannelIdent: Teams, Lang: MsgTplLangId, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-id", NotifyChannelIdent: Twilio, Lang: MsgTplLangId, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
 	{Name: "Jira", Ident: Jira + "-id", NotifyChannelIdent: Jira, Lang: MsgTplLangId, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-id", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangId, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-id", NotifyChannelIdent: "callback", Lang: MsgTplLangId, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3589,6 +3611,8 @@ var MsgTplMapId = []MessageTemplate{
 // MsgTplMapEs 内置模板的es_ES版本，与 MsgTplMap 一一对应；
 // ident 追加 -es 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapEs = []MessageTemplate{
+	{Name: "Microsoft Teams", Ident: Teams + "-es", NotifyChannelIdent: Teams, Lang: MsgTplLangEs, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-es", NotifyChannelIdent: Twilio, Lang: MsgTplLangEs, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
 	{Name: "Jira", Ident: Jira + "-es", NotifyChannelIdent: Jira, Lang: MsgTplLangEs, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-es", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEs, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-es", NotifyChannelIdent: "callback", Lang: MsgTplLangEs, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3614,6 +3638,8 @@ var MsgTplMapEs = []MessageTemplate{
 // MsgTplMapPt 内置模板的葡萄牙文版本，与 MsgTplMap 一一对应；
 // ident 追加 -pt 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapPt = []MessageTemplate{
+	{Name: "Microsoft Teams", Ident: Teams + "-pt", NotifyChannelIdent: Teams, Lang: MsgTplLangPt, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-pt", NotifyChannelIdent: Twilio, Lang: MsgTplLangPt, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
 	{Name: "Jira", Ident: Jira + "-pt", NotifyChannelIdent: Jira, Lang: MsgTplLangPt, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-pt", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangPt, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-pt", NotifyChannelIdent: "callback", Lang: MsgTplLangPt, Weight: 16, Content: map[string]string{"content": ""}},

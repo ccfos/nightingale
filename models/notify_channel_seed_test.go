@@ -177,3 +177,28 @@ func TestInitNotifyChannelUpgradesLegacySlackAndMattermostWebhooks(t *testing.T)
 		}
 	}
 }
+
+func TestTeamsSeedIsIdempotentAndPreservesUserEdits(t *testing.T) {
+	c := seedTestDB(t)
+	models.InitNotifyChannel(c)
+	models.InitNotifyChannel(c)
+	rows, err := models.NotifyChannelsGet(c, "ident = ?", models.Teams)
+	if err != nil || len(rows) != 1 {
+		t.Fatalf("expected one Teams seed: %v, %v", rows, err)
+	}
+	row := rows[0]
+	if row.RequestType != models.RequestTypeTeams || !row.Enable || row.RequestConfig.TeamsRequestConfig == nil || row.ParamConfig.Custom.Params[0].Key != "webhook_url" {
+		t.Fatalf("invalid Teams seed: %+v", row)
+	}
+	edited := *row
+	edited.UpdateBy = "root"
+	edited.RequestConfig = &models.RequestConfig{TeamsRequestConfig: &models.TeamsRequestConfig{NativeNetworkConfig: models.NativeNetworkConfig{Timeout: 4567}}}
+	if err := row.Update(c, edited); err != nil {
+		t.Fatal(err)
+	}
+	models.InitNotifyChannel(c)
+	row, err = models.NotifyChannelGet(c, "ident = ?", models.Teams)
+	if err != nil || row.RequestConfig.TeamsRequestConfig.Timeout != 4567 {
+		t.Fatalf("user settings overwritten: %+v, %v", row, err)
+	}
+}

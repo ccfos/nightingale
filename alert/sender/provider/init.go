@@ -29,6 +29,8 @@ func init() {
 	DefaultRegistry.Register(&JSMAlertProvider{})
 	DefaultRegistry.Register(&SlackWebhookProvider{})
 	DefaultRegistry.Register(&MattermostWebhookProvider{})
+	DefaultRegistry.Register(&TeamsProvider{})
+	DefaultRegistry.Register(&TwilioProvider{})
 
 	// 纯 HTTP webhook 模板驱动 Provider：只差 ident，统一走 simpleHTTPProvider
 	for _, ident := range []string{
