@@ -37,6 +37,9 @@ const (
 	// 文案，Metadata 携带 kind/tool/resume_args，路由层据此持久化 Pending 并结束
 	// 本轮。同样是 agent→router 内部带外通道，不进 stream bus / A2A。
 	StreamTypeInterrupt = "interrupt"
+	// StreamTypePageAction carries a validated page-owned command. It is not a
+	// tool result: the browser, rather than this process, performs the action.
+	StreamTypePageAction = "page_action"
 
 	// 注：Agent 运行期默认值、HTTP 状态码上界等调优参数见 defaults.go。
 )
@@ -113,6 +116,10 @@ type AgentRequest struct {
 	// 元数据（request_id 等）
 	Metadata map[string]string `json:"metadata,omitempty"`
 
+	// PageActions are supplied by the active browser page for this one request.
+	// They are never persisted as callable tools in the conversation transcript.
+	PageActions []models.AssistantPageAction `json:"-"`
+
 	// 多轮对话历史
 	History []ChatMessage `json:"history,omitempty"`
 
@@ -153,6 +160,9 @@ type StreamChunk struct {
 	Done      bool                   `json:"done,omitempty"`
 	Error     string                 `json:"error,omitempty"`
 
+	// PageAction is set only for StreamTypePageAction.
+	PageAction *models.AssistantPageActionCall `json:"page_action,omitempty"`
+
 	// Transcript 仅在 Type==StreamTypeTranscript 时设置：本轮新追加的规范消息
 	// （按 wire 顺序，如 assistant 工具调用轮 + tool 结果轮）。
 	Transcript []ChatMessage `json:"transcript,omitempty"`
@@ -165,6 +175,9 @@ type AgentTool struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Type        string `json:"type"`
+	// InputSchema overrides the flat Parameters projection for dynamic tools.
+	// It is used by the page_action bridge, whose args schema is page-specific.
+	InputSchema map[string]interface{} `json:"input_schema,omitempty"`
 
 	// HTTP 工具配置
 	URL           string            `json:"url,omitempty"`
