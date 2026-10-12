@@ -465,15 +465,14 @@ func formatNone(value float64, decimals int) FormattedValue {
 // formatFixed renders value with at least `decimals` fractional digits and
 // returns the text together with the number it displays.
 //
-// Rounding to a fixed number of decimals can collapse a value onto a "rounder"
-// number and hide the very deviation an alert fired on: an SLA of 99.9996
-// evaluated against `< 99.9998` would be shown as "100.00", and an error ratio
-// of 0.004 as "0.00". When that happens the precision is extended, one digit at
-// a time up to maxAdaptiveDecimals, until the last digit is non-zero. Values
-// whose rounded text already carries the requested number of significant
-// fractional digits (37.126 -> "37.13") are left untouched, so ordinary
-// readings do not become noisier, and float noise below the cap
-// (37.10000001 -> "37.10") is still rounded away.
+// Rounding to a fixed number of decimals can collapse a value onto an integer
+// and hide the very deviation an alert fired on: an SLA of 99.9996 evaluated
+// against `< 99.9998` would be shown as "100.00", and an error ratio of 0.004
+// as "0.00". When that happens the precision is extended, one digit at a time
+// up to maxAdaptiveDecimals, until the last digit is non-zero. Values that keep
+// any non-zero fractional digit (37.126 -> "37.13", 37.104 -> "37.10") are left
+// untouched, so ordinary readings do not become noisier, and float noise below
+// the cap (37.00000001 -> "37.00") is still rounded away.
 func formatFixed(value float64, decimals int) (string, float64) {
 	if decimals < 0 {
 		decimals = 0
@@ -494,13 +493,14 @@ func formatFixed(value float64, decimals int) (string, float64) {
 }
 
 // collapsedByRounding reports whether text, produced with `decimals` fractional
-// digits, ends in trailing zeros, i.e. rounding landed on a coarser number than
-// the requested precision can express.
+// digits, has an all-zero fractional part, i.e. rounding landed on an integer.
+// A single trailing zero is not enough: 85.2034 -> "85.20" loses no more than
+// 85.2134 -> "85.21" does, and extending it would make ~1 in 10 readings noisier.
 func collapsedByRounding(text string, decimals int) bool {
 	if decimals == 0 {
 		return false
 	}
-	return strings.HasSuffix(text, "0")
+	return strings.Trim(text[len(text)-decimals:], "0") == ""
 }
 
 // formatDateTime 处理时间戳格式化
