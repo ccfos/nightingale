@@ -223,6 +223,10 @@ BasicAuthPass = ""
 # DatasourceUrl = ""
 
 [Pushgw]
+# append user-defined target tags to incoming series
+EnableTargetTagAppend = true
+# append heartbeat-reported target host tags to incoming series
+EnableTargetHostTagAppend = true
 # use target labels in database instead of in series
 LabelRewrite = true
 ForceUseServerTS = true
