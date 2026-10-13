@@ -29,7 +29,7 @@ Nightingale brings alert rules, event processing, and notification routing into 
 
 **Self-hosted · Apache-2.0 · Built-in AI agent · MCP server**
 
-![Nightingale queries Prometheus, VictoriaMetrics, Elasticsearch, Loki, ClickHouse, and PostgreSQL, evaluates alert rules, processes events, and routes notifications to Slack, PagerDuty, Discord, Email, Telegram, and Jira. The engine includes an AI agent and MCP server.](doc/img/readme/architecture-overseas.png)
+![Nightingale queries Prometheus, VictoriaMetrics, Elasticsearch, Loki, ClickHouse, and PostgreSQL, evaluates alert rules, processes events, and routes notifications to Slack, PagerDuty, Discord, Email, Telegram, and Jira. The engine includes an AI agent and MCP server.](doc/img/readme/architecture-overseas.svg)
 
 ## Why Nightingale?
 
