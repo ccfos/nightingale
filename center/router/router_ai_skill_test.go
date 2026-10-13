@@ -143,3 +143,62 @@ func TestDoSkillImportUpdatePersistsAuthForGitSkill(t *testing.T) {
 		t.Fatalf("git skill auth not persisted: private=%d teams=%v", got.Private, got.UserGroupIds)
 	}
 }
+
+func TestNormalizeGitHubSkillURL(t *testing.T) {
+	tests := []struct {
+		name    string
+		cfg     skill.GitConfig
+		want    skill.GitConfig
+		wantOK  bool
+		wantErr string
+	}{
+		{
+			name:   "tree url fills repo ref and subdir",
+			cfg:    skill.GitConfig{URL: "https://github.com/openclaw/agent-skills/tree/main/skills/demo", AuthType: skill.GitAuthNone},
+			want:   skill.GitConfig{URL: "https://github.com/openclaw/agent-skills.git", RefType: skill.GitRefBranch, Ref: "main", AuthType: skill.GitAuthNone, Subdir: "skills/demo"},
+			wantOK: true,
+		},
+		{
+			name:   "repo url normalizes git suffix only",
+			cfg:    skill.GitConfig{URL: "https://github.com/openclaw/agent-skills", RefType: skill.GitRefBranch, Ref: "main", AuthType: skill.GitAuthNone},
+			want:   skill.GitConfig{URL: "https://github.com/openclaw/agent-skills.git", RefType: skill.GitRefBranch, Ref: "main", AuthType: skill.GitAuthNone},
+			wantOK: true,
+		},
+		{
+			name:   "explicit ref wins over tree branch",
+			cfg:    skill.GitConfig{URL: "https://github.com/openclaw/agent-skills/tree/main/skills/demo", RefType: skill.GitRefBranch, Ref: "release", AuthType: skill.GitAuthNone},
+			want:   skill.GitConfig{URL: "https://github.com/openclaw/agent-skills.git", RefType: skill.GitRefBranch, Ref: "release", AuthType: skill.GitAuthNone, Subdir: "skills/demo"},
+			wantOK: true,
+		},
+		{
+			name:    "tree url rejects non branch ref type",
+			cfg:     skill.GitConfig{URL: "https://github.com/openclaw/agent-skills/tree/main/skills/demo", RefType: skill.GitRefTag, Ref: "v1.0.0", AuthType: skill.GitAuthNone},
+			wantErr: "github tree urls only support git_ref_type=branch",
+		},
+		{
+			name:   "non github url ignored",
+			cfg:    skill.GitConfig{URL: "https://gitlab.example.com/team/skills.git", RefType: skill.GitRefBranch, Ref: "main", AuthType: skill.GitAuthNone},
+			want:   skill.GitConfig{URL: "https://gitlab.example.com/team/skills.git", RefType: skill.GitRefBranch, Ref: "main", AuthType: skill.GitAuthNone},
+			wantOK: false,
+		},
+	}
+
+	for _, tt := range tests {
+		got, ok, err := normalizeGitHubSkillURL(tt.cfg)
+		if tt.wantErr != "" {
+			if err == nil || err.Error() != tt.wantErr {
+				t.Fatalf("%s: err=%v want %q", tt.name, err, tt.wantErr)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatalf("%s: unexpected err: %v", tt.name, err)
+		}
+		if ok != tt.wantOK {
+			t.Fatalf("%s: ok=%v want %v", tt.name, ok, tt.wantOK)
+		}
+		if got != tt.want {
+			t.Fatalf("%s: got=%+v want=%+v", tt.name, got, tt.want)
+		}
+	}
+}
