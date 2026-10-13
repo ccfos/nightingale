@@ -119,3 +119,36 @@ func TestEventMuteStrategy_ClockOverride(t *testing.T) {
 		t.Fatalf("clock out of window: got hit=true, want hit=false")
 	}
 }
+
+// 「只在本业务组生效」：ident 查不到机器（如机器已删除）与未归组、归属其他业务组一样要过滤，
+// 只有确认属于规则所在业务组的机器才放行；不带 ident 的事件、未开启开关的规则不受影响。
+func TestBgNotMatchMuteStrategy(t *testing.T) {
+	cache := &memsto.TargetCacheType{}
+	cache.Set(map[string]*models.Target{
+		"in-bg":     {Ident: "in-bg", GroupIds: []int64{1, 2}},
+		"other-bg":  {Ident: "other-bg", GroupIds: []int64{3}},
+		"ungrouped": {Ident: "ungrouped"},
+	}, 3, 0)
+
+	cases := []struct {
+		name       string
+		enableInBG int
+		tags       map[string]string
+		want       bool
+	}{
+		{"target in rule busi group", 1, map[string]string{"ident": "in-bg"}, false},
+		{"target in other busi group", 1, map[string]string{"ident": "other-bg"}, true},
+		{"ungrouped target", 1, map[string]string{"ident": "ungrouped"}, true},
+		{"deleted target", 1, map[string]string{"ident": "deleted"}, true},
+		{"event without ident", 1, map[string]string{"instance": "10.0.0.1:9100"}, false},
+		{"switch off, deleted target", 0, map[string]string{"ident": "deleted"}, false},
+	}
+
+	for _, c := range cases {
+		rule := &models.AlertRule{GroupId: 1, EnableInBG: c.enableInBG}
+		event := &models.AlertCurEvent{TagsMap: c.tags}
+		if got := BgNotMatchMuteStrategy(rule, event, cache); got != c.want {
+			t.Errorf("%s: got %v, want %v", c.name, got, c.want)
+		}
+	}
+}
