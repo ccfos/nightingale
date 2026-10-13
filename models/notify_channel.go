@@ -68,6 +68,8 @@ type RequestConfig struct {
 	JSMAlertRequestConfig          *JSMAlertRequestConfig          `json:"jsm_alert_request_config,omitempty" gorm:"serializer:json"`
 	SlackWebhookRequestConfig      *SlackWebhookRequestConfig      `json:"slackwebhook_request_config,omitempty" gorm:"serializer:json"`
 	MattermostWebhookRequestConfig *MattermostWebhookRequestConfig `json:"mattermostwebhook_request_config,omitempty" gorm:"serializer:json"`
+	TeamsRequestConfig             *TeamsRequestConfig             `json:"teams_request_config,omitempty" gorm:"serializer:json"`
+	TwilioRequestConfig            *TwilioRequestConfig            `json:"twilio_request_config,omitempty" gorm:"serializer:json"`
 	// 兼容旧版本
 	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
 	FeishuRequestConfig   *FeishuRequestConfig   `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
@@ -115,6 +117,8 @@ const (
 	RequestTypeJSMAlert          = "jsm_alert"
 	RequestTypeSlackWebhook      = "slackwebhook"
 	RequestTypeMattermostWebhook = "mattermostwebhook"
+	RequestTypeTeams             = "teams"
+	RequestTypeTwilio            = "twilio"
 )
 
 var nativeRequestTypes = map[string]struct{}{
@@ -123,6 +127,8 @@ var nativeRequestTypes = map[string]struct{}{
 	RequestTypeJSMAlert:          {},
 	RequestTypeSlackWebhook:      {},
 	RequestTypeMattermostWebhook: {},
+	RequestTypeTeams:             {},
+	RequestTypeTwilio:            {},
 }
 
 // IsNativeRequestType 表示该媒介类型是否为原生对接：这类媒介的 provider 用 json.Marshal
@@ -184,6 +190,23 @@ type SlackWebhookRequestConfig struct {
 	NativeNetworkConfig
 }
 
+// Teams Workflows webhook URLs belong to notification rules.
+type TeamsRequestConfig struct {
+	NativeNetworkConfig
+}
+
+// Twilio credentials and sender are shared by the recipients selected in each rule.
+type TwilioRequestConfig struct {
+	AccountSID          string `json:"account_sid"`
+	AuthToken           string `json:"auth_token"`
+	Mode                string `json:"mode"` // sms (default) | voice
+	From                string `json:"from"`
+	MessagingServiceSID string `json:"messaging_service_sid"` // SMS only, alternative to From
+	Voice               string `json:"voice"`                 // default woman
+	Language            string `json:"language"`              // default en-US
+	NativeNetworkConfig
+}
+
 // MattermostWebhookRequestConfig Mattermost Webhook 媒介：Webhook 地址在通知规则里填，
 // 媒介里只有所有规则共用的外观默认值和网络设置，整个配置可以为空。
 type MattermostWebhookRequestConfig struct {
@@ -221,6 +244,14 @@ func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig 
 		return nil
 	}
 	switch requestType {
+	case RequestTypeTeams:
+		if rc.TeamsRequestConfig != nil {
+			return &rc.TeamsRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeTwilio:
+		if rc.TwilioRequestConfig != nil {
+			return &rc.TwilioRequestConfig.NativeNetworkConfig
+		}
 	case RequestTypeJira:
 		if rc.JiraRequestConfig != nil {
 			return &rc.JiraRequestConfig.NativeNetworkConfig
@@ -569,7 +600,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		ncc.RequestType != "feishuapp" &&
 		ncc.RequestType != "wecomapp" &&
 		!IsNativeRequestType(ncc.RequestType) {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert', 'slackwebhook', 'mattermostwebhook'")
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert', 'slackwebhook', 'mattermostwebhook', 'teams', 'twilio'")
 	}
 
 	if ncc.ParamConfig != nil {
@@ -825,6 +856,16 @@ func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context) error {
 
 // Weight 用于页面元素排序，weight 越大 排序越靠后
 var NotiChMap = []*NotifyChannelConfig{
+	{
+		Name: "Microsoft Teams", Ident: Teams, RequestType: RequestTypeTeams, Weight: 10, Enable: true,
+		RequestConfig: &RequestConfig{TeamsRequestConfig: &TeamsRequestConfig{
+			NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+		}},
+		ParamConfig: &NotifyParamConfig{Custom: Params{Params: []ParamItem{
+			{Key: "webhook_url", CName: "Webhook URL", Type: "string"},
+			{Key: "bot_name", CName: "Name", Type: "string"},
+		}}},
+	},
 	{
 		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty", Weight: 1, Enable: true,
 		RequestConfig: &RequestConfig{

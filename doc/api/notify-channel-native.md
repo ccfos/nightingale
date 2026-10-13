@@ -132,3 +132,52 @@ Permission: logged-in user (same as the PagerDuty service list).
 Both `POST /api/n9e/notify-channel-config/test` and `POST /api/n9e/notify-rule/test` accept `"with_recovery": true`: the events are sent once as firing and then once as recovered, which verifies the recovery flow (for Jira: comment and close).
 
 For native channels the channel test response carries `detail` with the provider's action summary, e.g. `created OPS-12 https://x.atlassian.net/browse/OPS-12`. Each test send uses a one-off nonce in the Jira dedup key, so every test creates its own issue.
+
+## Microsoft Teams
+
+`ident=teams`, `request_type=teams`. A built-in Microsoft Teams channel is seeded on startup. `request_config.teams_request_config` contains the shared network settings. Each rule supplies `webhook_url` and optional `bot_name`; variable references are supported in the URL.
+
+Use a Teams Workflows **When a Teams webhook request is received** trigger with **Anyone** access and a card-posting action. Copy the full signed URL, including query parameters. Nightingale sends an Adaptive Card 1.2 with a tinted status header, a separate rule title, target/value columns (duration on recovery), editable Markdown content, localized time and action buttons. The default `content` template contains notes and extra labels; status, title, target, value, time and links are rendered by the card, avoiding duplication. Custom `content` remains intact. View alert requires a valid site URL; Silence 1h appears only while firing, and View graph only for Prometheus events. A successful webhook response acknowledges submission; workflow run history provides the downstream delivery result. Entra bearer-token authentication is not implemented.
+
+The title is capped at 256 characters and content at 4000; the complete serialized payload must not exceed 28 KB. Empty 2xx responses or `1` are successful. HTTP 429/5xx and legacy connector HTTP-200 throttling responses are retried. Notification targets and errors redact both query signatures and legacy URL credentials.
+
+Sources: [Teams Workflows](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook), [Adaptive Card envelope](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using).
+
+### Teams card previews
+
+The following cards were delivered to a dedicated Teams test channel using the provider and built-in template. The example site URL demonstrates button rendering; it is not a live event destination.
+
+![Triggered Teams notification](assets/teams-triggered.png)
+
+![Recovered Teams notification](assets/teams-recovered.png)
+
+### Teams setup and live verification
+
+The Teams channel menu offers **Workflows → Send webhook alerts to a channel**. This template binds the selected team/channel, accepts requests from anyone holding the signed URL, and posts Adaptive Cards. Name the workflow, sign in to its Teams connection if prompted, save, then use **Copy webhook link**.
+
+For a new Power Automate user, the embedded Workflows app can stay at a disabled Sign in/Save button while `prepareFlowOperations` or `onBehalfOfTokenBundle` returns `UserConsentMissing`. Open [Power Automate](https://make.powerautomate.com), finish the first-use **Get started** step, then reopen the workflow template in Teams.
+
+`TestTeamsLive` is an opt-in smoke test. Set `NIGHTINGALE_TEAMS_WEBHOOK_URL` through the process environment and run `go test ./alert/sender/provider -run '^TestTeamsLive$' -v -count=1`. It posts one firing and one recovered notification using the built-in template. Optional variables are `NIGHTINGALE_TEAMS_PROXY` and `NIGHTINGALE_TEST_SITE_URL`. The test does not print the signed URL. Verify both cards in Teams and the two workflow runs; API acceptance alone does not prove delivery. Ordinary tests skip this test when the webhook variable is absent.
+
+## Twilio SMS and voice
+
+`ident=twilio`, `request_type=twilio`. Create a media type with `request_config.twilio_request_config`:
+
+| Field | Description |
+|---|---|
+| `account_sid`, `auth_token` | Twilio account credentials; support variable references |
+| `mode` | `sms` (default) or `voice`; create two media types to send both |
+| `from` | SMS sender number / alphanumeric ID; voice requires a Twilio E.164 number |
+| `messaging_service_sid` | SMS-only alternative to `from`; may also be used with a sender in that service |
+| `voice`, `language` | Voice-only `<Say>` attributes; defaults `woman`, `en-US` |
+| `proxy`, `timeout`, `retry_times`, `retry_sleep` | Shared network fields; only explicit 429 rejections are retried, zero retries disables retries |
+
+Set `param_config.user_info.contact_key=phone`; rules select `user_ids` / `user_group_ids`. Recipients must use E.164 format, e.g. `+14155552671`; a number in any other format is reported as a failed recipient while the remaining recipients are still sent, and duplicate numbers are sent once. The frontend's Twilio preset supplies this contact mapping. Credential-bearing Twilio channels are created by the user, not seeded with placeholder credentials.
+
+The `content` template is rendered as plain text, then URL-encoded for the Twilio API. Voice content is XML-escaped into inline TwiML `<Response><Say>...</Say></Response>`. Content must be 1–1600 characters; serialized voice TwiML must fit in 4000 characters. SMS uses `POST /2010-04-01/Accounts/{AccountSid}/Messages.json`; voice uses `Calls.json`. Both use HTTP Basic auth and form encoding.
+
+A valid 201 response records **accepted**, the Message/Call SID and initial status. This is not final delivery or call completion; consult Twilio logs. A failed recipient does not prevent attempts to other recipients, and the result retains accepted submissions alongside the errors. Network failures, 5xx responses and invalid creation responses are not retried automatically because a request may already have created a billable SMS/call.
+
+Sources: [Messages](https://www.twilio.com/docs/messaging/api/message-resource), [Calls](https://www.twilio.com/docs/voice/api/call-resource), [TwiML Say](https://www.twilio.com/docs/voice/twiml/say).
+
+For new Twilio trials, custom SMS bodies can be restricted to Twilio-provided examples. Full alert-text testing requires an account that permits custom SMS content. Trial Voice supports `<Say>` with trial restrictions; verify the account's allowed destinations and API parameters before live testing. See [Twilio trial restrictions](https://www.twilio.com/docs/usage/trials) and [SMS trial API](https://www.twilio.com/docs/usage/trials/try-out-sms).
