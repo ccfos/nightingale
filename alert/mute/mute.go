@@ -30,7 +30,7 @@ func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *m
 	}
 
 	if BgNotMatchMuteStrategy(rule, event, targetCache) {
-		return true, "ident not match busigroup, was muted", 0, models.MuteTypeAll
+		return true, "ident not found or not match busigroup, was muted", 0, models.MuteTypeAll
 	}
 
 	hit, muteId, muteType := EventMuteStrategy(event, alertMuteCache)
@@ -147,10 +147,17 @@ func BgNotMatchMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent,
 	}
 
 	target, exists := targetCache.Get(ident)
+	// ident 查不到对应机器(比如机器已被删除)时无法确认归属,同样过滤:
+	// 未归组的机器本来就会被过滤,已删除的机器更不属于本BG,不能反而放行
+	if !exists {
+		logger.Debugf("alert_eval_%d [BgNotMatchMuteStrategy] mute: cluster:%s ident:%s not found in targets", rule.Id, event.Cluster, ident)
+		return true
+	}
+
 	// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 	// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
-	if exists && !target.MatchGroupId(rule.GroupId) {
-		logger.Debugf("alert_eval_%d [BgNotMatchMuteStrategy] mute: cluster:%s", rule.Id, event.Cluster)
+	if !target.MatchGroupId(rule.GroupId) {
+		logger.Debugf("alert_eval_%d [BgNotMatchMuteStrategy] mute: cluster:%s ident:%s", rule.Id, event.Cluster, ident)
 		return true
 	}
 	return false
