@@ -96,6 +96,11 @@ func TestTeamsErrorsAndSecretMasking(t *testing.T) {
 			t.Fatalf("leaked %s: %s", secret, masked)
 		}
 	}
+	raw = "https://x.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/abcdef0123456789/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=abc"
+	plain := "unexpected status code 401: workflows /triggers/manual/run not authorized at 2026-10-13T11:01:10.0Z"
+	if masked := maskTeamsError(plain+" abcdef0123456789 sig=abc", raw); masked != plain+" *** sig=***" {
+		t.Fatalf("only credentials should be redacted: %s", masked)
+	}
 	for _, raw := range []string{"", "invalid", "ftp://example.com/path", "https://user:pass@example.com/path"} {
 		req.CustomParams["webhook_url"] = raw
 		if r := (&TeamsProvider{}).Notify(context.Background(), req); r.Err == nil {
@@ -218,10 +223,16 @@ func TestTwilioPreflightAndPartialFailures(t *testing.T) {
 	if res.Err == nil || !strings.Contains(res.Err.Error(), "21211") || !strings.Contains(res.Response, "+14155552672: accepted") || calls != 2 {
 		t.Fatalf("lost partial results: %+v calls=%d", res, calls)
 	}
+	calls = 1
+	req.Sendtos = []string{"13800138000", "+14155552671", " "}
+	res = (&TwilioProvider{}).Notify(context.Background(), req)
+	if res.Err == nil || !strings.Contains(res.Err.Error(), "13800138000") || !strings.Contains(res.Response, "+14155552671: accepted") || calls != 2 || res.Target != "13800138000,+14155552671" {
+		t.Fatalf("a malformed recipient must not block valid ones: %+v calls=%d", res, calls)
+	}
 	calls = 0
-	req.Sendtos = []string{"+14155552671", "13800138000"}
-	if res := (&TwilioProvider{}).Notify(context.Background(), req); res.Err == nil || calls != 0 {
-		t.Fatalf("must validate all recipients before sending: %+v", res)
+	req.Sendtos = []string{"13800138000"}
+	if res := (&TwilioProvider{}).Notify(context.Background(), req); res.Err == nil || calls != 0 || res.Target != "13800138000" {
+		t.Fatalf("no valid recipient must fail without sending: %+v", res)
 	}
 	req.Sendtos = nil
 	if res := (&TwilioProvider{}).Notify(context.Background(), req); res.Err == nil {

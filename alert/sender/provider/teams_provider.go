@@ -92,6 +92,14 @@ func checkTeamsResponse(r *nativeResponse) (bool, error) {
 	return checkStatus(r, nil)
 }
 
+// URL parts that are structure rather than credentials; redacting them would
+// only garble the provider's error text.
+var teamsURLWords = map[string]bool{
+	"webhookb2": true, "incomingwebhook": true, "workflows": true, "triggers": true,
+	"powerautomate": true, "automations": true,
+}
+var teamsPublicQueryKeys = map[string]bool{"api-version": true, "sp": true, "sv": true}
+
 func maskTeamsError(msg, raw string) string {
 	u, err := url.Parse(raw)
 	if err != nil {
@@ -100,16 +108,21 @@ func maskTeamsError(msg, raw string) string {
 	msg = strings.ReplaceAll(msg, raw, u.Scheme+"://"+u.Host+"/***")
 	// Workflows credentials are in the query; legacy webhook credentials can span multiple path segments.
 	for _, part := range strings.Split(u.Path, "/") {
-		if len(part) >= 8 {
+		if len(part) >= 8 && !teamsURLWords[strings.ToLower(part)] {
 			msg = strings.ReplaceAll(msg, part, redactedMark)
 		}
 	}
-	for _, values := range u.Query() {
+	for key, values := range u.Query() {
+		if teamsPublicQueryKeys[strings.ToLower(key)] {
+			continue
+		}
 		for _, value := range values {
-			if value != "" {
-				msg = strings.ReplaceAll(msg, url.QueryEscape(value), redactedMark)
-				msg = strings.ReplaceAll(msg, value, redactedMark)
+			// Short values of unknown keys would match unrelated text such as status codes.
+			if value == "" || (len(value) < 8 && !strings.EqualFold(key, "sig")) {
+				continue
 			}
+			msg = strings.ReplaceAll(msg, url.QueryEscape(value), redactedMark)
+			msg = strings.ReplaceAll(msg, value, redactedMark)
 		}
 	}
 	return msg

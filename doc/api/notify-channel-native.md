@@ -172,7 +172,7 @@ For a new Power Automate user, the embedded Workflows app can stay at a disabled
 | `voice`, `language` | Voice-only `<Say>` attributes; defaults `woman`, `en-US` |
 | `proxy`, `timeout`, `retry_times`, `retry_sleep` | Shared network fields; only explicit 429 rejections are retried, zero retries disables retries |
 
-Set `param_config.user_info.contact_key=phone`; rules select `user_ids` / `user_group_ids`. All recipients must use E.164 format, e.g. `+14155552671`, and duplicate numbers are sent once. The frontend's Twilio preset supplies this contact mapping. Credential-bearing Twilio channels are created by the user, not seeded with placeholder credentials.
+Set `param_config.user_info.contact_key=phone`; rules select `user_ids` / `user_group_ids`. Recipients must use E.164 format, e.g. `+14155552671`; a number in any other format is reported as a failed recipient while the remaining recipients are still sent, and duplicate numbers are sent once. The frontend's Twilio preset supplies this contact mapping. Credential-bearing Twilio channels are created by the user, not seeded with placeholder credentials.
 
 The `content` template is rendered as plain text, then URL-encoded for the Twilio API. Voice content is XML-escaped into inline TwiML `<Response><Say>...</Say></Response>`. Content must be 1–1600 characters; serialized voice TwiML must fit in 4000 characters. SMS uses `POST /2010-04-01/Accounts/{AccountSid}/Messages.json`; voice uses `Calls.json`. Both use HTTP Basic auth and form encoding.
 

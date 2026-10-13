@@ -110,22 +110,28 @@ func (p *TwilioProvider) Notify(ctx context.Context, req *NotifyRequest) *Notify
 	if err != nil {
 		return &NotifyResult{Err: err}
 	}
-	var recipients []string
+	// One malformed contact must not block the rest of the team from being paged.
+	var recipients, targets []string
+	var failures []error
 	seen := map[string]bool{}
 	for _, raw := range req.Sendtos {
 		phone := strings.TrimSpace(raw)
+		if phone == "" || seen[phone] {
+			continue
+		}
+		seen[phone] = true
+		targets = append(targets, phone)
 		if !twilioPhone.MatchString(phone) {
-			return &NotifyResult{Err: errors.New("Twilio recipients must have phone numbers in E.164 format, for example +14155552671")}
+			failures = append(failures, fmt.Errorf("%s: phone number must be in E.164 format, for example +14155552671", phone))
+			continue
 		}
-		if !seen[phone] {
-			seen[phone] = true
-			recipients = append(recipients, phone)
-		}
+		recipients = append(recipients, phone)
 	}
+	target := strings.Join(targets, ",")
 	if len(recipients) == 0 {
-		return &NotifyResult{Err: errors.New("Twilio requires at least one recipient with a phone number")}
+		failures = append(failures, errors.New("Twilio requires at least one recipient with a phone number in E.164 format"))
+		return &NotifyResult{Target: target, Err: errors.Join(failures...)}
 	}
-	target := strings.Join(recipients, ",")
 	content := strings.TrimSpace(tplString(req.TplContent, "content"))
 	if content == "" || utf8.RuneCountInString(content) > 1600 {
 		return &NotifyResult{Target: target, Err: errors.New("Twilio message content must contain between 1 and 1600 characters")}
@@ -162,7 +168,6 @@ func (p *TwilioProvider) Notify(ctx context.Context, req *NotifyRequest) *Notify
 	}
 	endpoint := "https://api.twilio.com/2010-04-01/Accounts/" + cfg.AccountSID + "/" + resource + ".json"
 	var results []string
-	var failures []error
 	for _, phone := range recipients {
 		if ctx != nil && ctx.Err() != nil {
 			failures = append(failures, ctx.Err())
