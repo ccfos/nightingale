@@ -37,7 +37,7 @@ type NotifyChannelConfig struct {
     Enable      bool
 
     ParamConfig   *NotifyParamConfig   // user parameters: contact_key + custom params
-    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira | discord | jsm_alert | slackwebhook | mattermostwebhook
+    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira | discord | jsm_alert | slackwebhook | mattermostwebhook | teams | twilio | pushover | ntfy | splunk_oncall | line
     RequestConfig *RequestConfig       // pick the matching sub-struct by ident/request_type
 
     Weight int
@@ -60,6 +60,10 @@ type NotifyChannelConfig struct {
 | `DiscordRequestConfig` | `discord` (native Discord channel, `request_type=discord`; optional, the webhook URL is a rule param) |
 | `JSMAlertRequestConfig` | `jsm_alert` (native JSM alert channel, `request_type=jsm_alert`; optional `api_url`, the integration key is a rule param) |
 | `SlackWebhookRequestConfig` / `MattermostWebhookRequestConfig` | `slackwebhook` / `mattermostwebhook` (native webhook channels; optional, the webhook URL is a rule param) |
+| `PushoverRequestConfig` | `pushover` (required `token` = application API token; optional `priority_map` severity → -2..2, `retry` / `expire` for emergency priority, `sound`; the user/group key is a rule param) |
+| `NtfyRequestConfig` | `ntfy` (all optional: `server_url` defaults to https://ntfy.sh, `token` or `username` + `password`, `priority_map` severity → 1..5; the topic is a rule param) |
+| `SplunkOnCallRequestConfig` | `splunk_oncall` (required `api_key` of the REST endpoint integration; optional `message_type_map` severity → CRITICAL / WARNING / INFO; the routing key is a rule param) |
+| `LineRequestConfig` | `line` (required `channel_access_token` of the Messaging API channel; the recipient ID is a rule param) |
 
 ---
 
@@ -82,6 +86,10 @@ type NotifyChannelConfig struct {
 | `slackbot` / `mattermostbot` | simpleHTTPProvider | HTTP | legacy generic HTTP (Bot mode is not natively supported yet) |
 | `jira` (`request_type=jira`) | JiraProvider | HTTP | Jira issues: create on trigger, comment and close on recovery |
 | `jsm_alert` (`request_type=jsm_alert`) | JSMAlertProvider | HTTP | JSM Operations alerts: create on trigger, close on recovery |
+| `pushover` (`request_type=pushover`) | PushoverProvider | HTTP | Pushover push; emergency priority repeats until acknowledged and is canceled on recovery |
+| `ntfy` (`request_type=ntfy`) | NtfyProvider | HTTP | ntfy push (public ntfy.sh or self-hosted); built-in |
+| `splunk_oncall` (`request_type=splunk_oncall`) | SplunkOnCallProvider | HTTP | Splunk On-Call (VictorOps) REST endpoint: incident on trigger, RECOVERY on recovery |
+| `line` (`request_type=line`) | LineProvider | HTTP | LINE Messaging API push from an official account |
 | `jira` / `discord` / `jsm_alert` / `slackwebhook` / `mattermostwebhook` (legacy `request_type=http`) | callback | HTTP | legacy hand-made webhook configs |
 | `email` | EmailProvider | SMTP | Email |
 | `tx-sms` | TencentSmsProvider | HTTP | Tencent Cloud SMS |

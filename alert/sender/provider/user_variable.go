@@ -291,5 +291,11 @@ func redactErrMsg(err error, rawURL, safeURL string) string {
 // RedactParamsForLog 返回通知参数的可写日志副本：命中敏感 key（含 webhook_url 这类
 // 路径里带凭证的地址）的值替换成 ***，原 map 不动。
 func RedactParamsForLog(params map[string]string) map[string]string {
-	return redactKV(params)
+	out := redactKV(params)
+	// ntfy 的 topic 在公共服务上等同于密码（知道 topic 就能订阅），日志里同样打掩码。
+	// 只在这里处理而不加进 sensitiveKeyHints：那份列表还管着请求头和查询参数的脱敏
+	if out["topic"] != "" {
+		out["topic"] = redactedMark
+	}
+	return out
 }

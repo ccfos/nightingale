@@ -49,6 +49,10 @@ const (
 	JSMAlert          = "jsm_alert"
 	Teams             = "teams"
 	Twilio            = "twilio"
+	Pushover          = "pushover"
+	Ntfy              = "ntfy"
+	SplunkOnCall      = "splunk_oncall"
+	Line              = "line"
 
 	DingtalkKey  = "dingtalk_robot_token"
 	WecomKey     = "wecom_robot_token"
