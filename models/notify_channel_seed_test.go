@@ -202,3 +202,43 @@ func TestTeamsSeedIsIdempotentAndPreservesUserEdits(t *testing.T) {
 		t.Fatalf("user settings overwritten: %+v, %v", row, err)
 	}
 }
+
+// ntfy 不需要凭证，随启动内置；重复初始化不能多出一条，用户改过的设置不能被覆盖
+func TestNtfySeedIsIdempotentAndPreservesUserEdits(t *testing.T) {
+	c := seedTestDB(t)
+	models.InitNotifyChannel(c)
+	models.InitNotifyChannel(c)
+	for ident, paramKey := range map[string]string{models.Ntfy: "topic"} {
+		rows, err := models.NotifyChannelsGet(c, "ident = ?", ident)
+		if err != nil || len(rows) != 1 {
+			t.Fatalf("expected one %s seed: %v, %v", ident, rows, err)
+		}
+		row := rows[0]
+		if row.RequestType != ident || !row.Enable || row.ParamConfig.Custom.Params[0].Key != paramKey || row.ParamConfig.Custom.Params[1].Key != "bot_name" {
+			t.Fatalf("invalid %s seed: %+v", ident, row)
+		}
+		if n := row.RequestConfig.NativeNetwork(ident); n == nil || n.Timeout != 10000 {
+			t.Fatalf("%s seed should carry default network settings: %+v", ident, row.RequestConfig)
+		}
+	}
+
+	row, _ := models.NotifyChannelGet(c, "ident = ?", models.Ntfy)
+	edited := *row
+	edited.UpdateBy = "root"
+	edited.RequestConfig = &models.RequestConfig{NtfyRequestConfig: &models.NtfyRequestConfig{ServerURL: "https://ntfy.example.com", Token: "tk_x"}}
+	if err := row.Update(c, edited); err != nil {
+		t.Fatal(err)
+	}
+	models.InitNotifyChannel(c)
+	row, err := models.NotifyChannelGet(c, "ident = ?", models.Ntfy)
+	if err != nil || row.RequestConfig.NtfyRequestConfig.ServerURL != "https://ntfy.example.com" {
+		t.Fatalf("user settings overwritten: %+v, %v", row, err)
+	}
+
+	// 需要凭证的媒介不内置：带占位凭证的种子一发就失败
+	for _, ident := range []string{models.Pushover, models.SplunkOnCall, models.Line} {
+		if rows, _ := models.NotifyChannelsGet(c, "ident = ?", ident); len(rows) != 0 {
+			t.Fatalf("%s must not be seeded", ident)
+		}
+	}
+}

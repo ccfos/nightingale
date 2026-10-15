@@ -578,3 +578,44 @@ func TestSlackTemplateOnLegacyHTTPPathIsNotDoubleEscaped(t *testing.T) {
 		t.Fatalf("native slack rendering must still escape, got:\n%s", native)
 	}
 }
+
+// Pushover / ntfy / LINE 共用的纯文本模板：不做任何转义，引号、& 和换行原样输出
+func TestPlainAlertContentIsNotEscaped(t *testing.T) {
+	for _, ident := range []string{Pushover, Ntfy, Line} {
+		tpl := &MessageTemplate{NotifyChannelIdent: ident, Content: map[string]string{"content": NewTplMap[ident]}}
+		event := &AlertCurEvent{RuleName: "cpu", RuleNote: `load > 90% & "hot"`, Severity: 2, TriggerValue: "92", TriggerTime: 1700000000, TagsJSON: []string{"env=prod"}}
+		got, _ := tpl.RenderEventForChannel(ident, []*AlertCurEvent{event}, "http://n9e")["content"].(string)
+		want := "Value: 92\nLabels: [env=prod]\nNote: load > 90% & \"hot\"\nTriggered at: "
+		if !strings.HasPrefix(got, want) {
+			t.Fatalf("%s: unexpected content:\n%s", ident, got)
+		}
+		if len([]rune(got)) > 200 {
+			t.Fatalf("%s: default content should stay short for push previews, got %d chars", ident, len([]rune(got)))
+		}
+	}
+}
+
+// 新增媒介在每张语言表里都要有对应的内置模板，否则非中文环境下建通知规则时选不到模板
+func TestMoreChannelsHaveTemplatesInEveryLanguage(t *testing.T) {
+	tables := map[string][]MessageTemplate{"": MsgTplMap, "-en": MsgTplMapEn, "-ja": MsgTplMapJa, "-ru": MsgTplMapRu,
+		"-fr": MsgTplMapFr, "-ko": MsgTplMapKo, "-id": MsgTplMapId, "-es": MsgTplMapEs, "-pt": MsgTplMapPt}
+	for suffix, table := range tables {
+		for _, ident := range []string{Pushover, Ntfy, SplunkOnCall, Line} {
+			found := false
+			for _, tpl := range table {
+				if tpl.Ident == ident+suffix {
+					found = true
+					if tpl.Content["content"] == "" {
+						t.Fatalf("%s%s has an empty content template", ident, suffix)
+					}
+					if suffix != "" && tpl.NotifyChannelIdent != ident {
+						t.Fatalf("%s%s must point at channel ident %s", ident, suffix, ident)
+					}
+				}
+			}
+			if !found {
+				t.Fatalf("missing built-in template %s%s", ident, suffix)
+			}
+		}
+	}
+}
