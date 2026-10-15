@@ -189,19 +189,17 @@ For new Twilio trials, custom SMS bodies can be restricted to Twilio-provided ex
 | Field | Description |
 |---|---|
 | `token` | API token of the Pushover application (30 letters or digits); supports variable references |
-| `priority_map` | Severity (`"1"`/`"2"`/`"3"`) to Pushover priority (`-2`..`2`). Defaults: S1→1 (high), S2→0, S3→0 |
-| `retry`, `expire` | Emergency priority (2) only: seconds between repeats (default 60, minimum 30) and how long to keep repeating (default 3600, maximum 10800) |
 | `sound` | Optional notification sound; empty uses the recipient's default |
 | `api_url` | Optional, defaults to `https://api.pushover.net` |
 | `proxy`, `timeout`, `retry_times`, `retry_sleep` | Shared network fields |
 
 Each rule supplies `user_key` (a user key or delivery group key, up to 50 comma-separated) and an optional `bot_name`.
 
-The message is posted as a form to `/1/messages.json` with the credentials in the body, never in the URL. `title` is `[S1] Triggered: <rule>` (250 characters), `message` is the rendered `content` template as plain text (1024 characters), `timestamp` is the trigger or recovery time, and `url` links to the event. Recovery notifications always use priority 0. For a severity mapped to emergency priority the message carries the tag `n9e-<event hash>`; when that alert recovers Nightingale first calls `/1/receipts/cancel_by_tag/<tag>.json` so the repeats stop, then sends the recovery message.
+The message is posted as a form to `/1/messages.json` with the credentials in the body, never in the URL. `title` is `[S1] Triggered: <rule>` (250 characters), `message` is the rendered `content` template as plain text (1024 characters), `timestamp` is the trigger or recovery time, and `url` links to the event. Priorities are fixed in the provider: S1→High (1), S2/S3→Normal (0), and recovery→Normal (0). There is no configurable severity mapping or Emergency repeat mode.
 
 Success requires HTTP 200 with `"status":1`. As Pushover requires, 4xx responses are never retried (429 means the application's monthly limit is used up, and repeated bad requests get the IP blocked); 5xx responses are retried after at least 5 seconds.
 
-Sources: [Pushover Message API](https://pushover.net/api), [Receipts and cancellation](https://pushover.net/api/receipts).
+Source: [Pushover Message API](https://pushover.net/api).
 
 ## ntfy
 
@@ -212,12 +210,11 @@ Sources: [Pushover Message API](https://pushover.net/api), [Receipts and cancell
 | `server_url` | Root address of the ntfy server; empty means `https://ntfy.sh` |
 | `token` | Access token (`tk_...`), sent as a Bearer token |
 | `username`, `password` | Basic authentication, alternative to `token` |
-| `priority_map` | Severity to ntfy priority (`1`..`5`). Defaults: S1→5, S2→4, S3→3; recovery always uses 3 |
 | `proxy`, `timeout`, `retry_times`, `retry_sleep`, `insecure_skip_verify` | Shared network fields |
 
 Each rule supplies `topic` (1–64 letters, digits, `_` or `-`; the name only, not a URL) and an optional `bot_name`. On a public server the topic acts as a password, so notification records show the name or only the last 4 characters of the topic.
 
-Nightingale publishes JSON to the server root: `title`, `message` (the rendered `content` template, plain text), `priority`, `tags` (an emoji shortcode plus the severity), `click` and `view` actions linking to the event (and Silence 1h while firing). The message is cut to 4096 **bytes** on a character boundary, because longer messages are turned into attachments by the server. HTTP 429 and 5xx are retried, except error code 42908 (daily message quota reached).
+Nightingale publishes JSON to the server root: `title`, `message` (the rendered `content` template, plain text), `priority`, `tags` (an emoji shortcode plus the severity), `click` and `view` actions linking to the event (and Silence 1h while firing). Priorities are fixed in the provider: S1→Max (5), S2→High (4), S3→Default (3), and recovery→Default (3). The message is cut to 4096 **bytes** on a character boundary, because longer messages are turned into attachments by the server. HTTP 429 and 5xx are retried, except error code 42908 (daily message quota reached).
 
 Sources: [ntfy publishing](https://docs.ntfy.sh/publish/), [error codes](https://github.com/binwiederhier/ntfy/blob/main/server/errors.go).
 
@@ -228,13 +225,12 @@ Sources: [ntfy publishing](https://docs.ntfy.sh/publish/), [error codes](https:/
 | Field | Description |
 |---|---|
 | `api_key` | Key of the REST endpoint integration (Integrations > REST - Generic); supports variable references |
-| `message_type_map` | Severity to `message_type` (`CRITICAL`, `WARNING` or `INFO`). Defaults: S1→CRITICAL, S2→WARNING, S3→WARNING |
 | `api_url` | Optional, defaults to `https://alert.victorops.com/integrations/generic/20131114/alert`. The full URL copied from the integration page (ending in `/<key>/$routing_key`) is accepted and trimmed |
 | `proxy`, `timeout`, `retry_times`, `retry_sleep` | Shared network fields |
 
 Each rule supplies `routing_key` (which team's escalation policy receives the alert) and an optional `bot_name`.
 
-Every event is posted to `{api_url}/{api_key}/{routing_key}` with `entity_id` = event hash, `entity_display_name` = rendered `title`, `state_message` = rendered `content`, `host_name`, `monitoring_tool=Nightingale` and a `vo_annotate.u.Event details` link. A recovered event sends `message_type=RECOVERY` with the same `entity_id`, which resolves the incident. Test sends append a one-off nonce to `entity_id`, and `with_recovery` is supported.
+Every event is posted to `{api_url}/{api_key}/{routing_key}` with `entity_id` = event hash, `entity_display_name` = rendered `title`, `state_message` = rendered `content`, `host_name`, `monitoring_tool=Nightingale` and a `vo_annotate.u.Event details` link. Message types are fixed in the provider: S1→CRITICAL and S2/S3→WARNING. Whether WARNING creates an incident depends on the Splunk On-Call integration settings. A recovered event sends `message_type=RECOVERY` with the same `entity_id`, which resolves the incident. Test sends append a one-off nonce to `entity_id`, and `with_recovery` is supported.
 
 A 2xx response whose body says `"result":"failure"` is treated as a failure. HTTP 429 and 5xx are retried. Errors redact the API key, which is part of the request URL.
 

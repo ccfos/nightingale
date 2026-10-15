@@ -177,43 +177,42 @@ func TestPushoverSendsFormMessage(t *testing.T) {
 	}
 }
 
-func TestPushoverEmergencyAndRecoveryCancel(t *testing.T) {
-	srv, got := newCaptureServer(t, always(200, `{"status":1,"request":"r1","receipt":"rcpt1"}`))
+func TestPushoverFixedPrioritiesAndRecovery(t *testing.T) {
+	srv, got := newCaptureServer(t, always(200, `{"status":1,"request":"r1"}`))
 	req := pushoverReq(srv.URL, func(c *models.PushoverRequestConfig) {
-		c.PriorityMap = map[string]int{"1": 2}
 		c.Sound = "siren"
 	})
-	req.Events[0].Hash = "abc,123"
-	res := (&PushoverProvider{}).Notify(context.Background(), req)
-	if res.Err != nil || !strings.Contains(res.Response, "receipt rcpt1") {
-		t.Fatalf("unexpected result: %+v", res)
-	}
-	f := got()[0].form(t)
-	if f.Get("priority") != "2" || f.Get("retry") != "60" || f.Get("expire") != "3600" || f.Get("tags") != "n9e-abc_123" || f.Get("sound") != "siren" {
-		t.Fatalf("unexpected emergency form: %v", f)
-	}
-
-	// 恢复：先按 tag 取消重复提醒，再发一条普通优先级的恢复消息
-	req.Events[0].IsRecovered = true
 	req.Events[0].LastEvalTime = 1700000600
-	res = (&PushoverProvider{}).Notify(context.Background(), req)
-	if res.Err != nil || !strings.Contains(res.Response, "emergency retries canceled") {
-		t.Fatalf("unexpected recovery result: %+v", res)
-	}
-	calls := got()
-	if len(calls) != 3 || calls[1].Path != "/1/receipts/cancel_by_tag/n9e-abc_123.json" || calls[1].form(t).Get("token") != testPushoverToken {
-		t.Fatalf("recovery must cancel by tag first: %+v", calls)
-	}
-	f = calls[2].form(t)
-	if f.Get("priority") != "0" || f.Has("retry") || f.Get("timestamp") != "1700000600" || f.Get("title") != "[S1] Recovered: cpu <high> & hot" {
-		t.Fatalf("unexpected recovery form: %v", f)
-	}
-
-	// S2 没映射到紧急优先级：恢复时不调取消接口
-	req.Events[0].Severity = 2
-	(&PushoverProvider{}).Notify(context.Background(), req)
-	if n := len(got()); n != 4 {
-		t.Fatalf("no cancel call expected for a non-emergency severity, calls=%d", n)
+	for severity, want := range map[int]string{1: "1", 2: "0", 3: "0"} {
+		req.Events[0].Severity = severity
+		for _, recovered := range []bool{false, true} {
+			req.Events[0].IsRecovered = recovered
+			before := len(got())
+			res := (&PushoverProvider{}).Notify(context.Background(), req)
+			if res.Err != nil {
+				t.Fatalf("S%d recovered=%t: %v", severity, recovered, res.Err)
+			}
+			calls := got()
+			if len(calls) != before+1 || calls[before].Path != "/1/messages.json" {
+				t.Fatalf("each notification must only send a message: %+v", calls[before:])
+			}
+			f := calls[before].form(t)
+			priority := want
+			if recovered {
+				priority = "0"
+				if f.Get("timestamp") != "1700000600" || !strings.Contains(f.Get("title"), "Recovered:") {
+					t.Fatalf("unexpected recovery form: %v", f)
+				}
+			}
+			if f.Get("priority") != priority || f.Get("sound") != "siren" {
+				t.Fatalf("S%d recovered=%t: unexpected form: %v", severity, recovered, f)
+			}
+			for _, key := range []string{"retry", "expire", "tags"} {
+				if f.Has(key) {
+					t.Fatalf("fixed priorities must not send emergency field %s: %v", key, f)
+				}
+			}
+		}
 	}
 }
 
@@ -264,10 +263,6 @@ func TestPushoverValidation(t *testing.T) {
 		func(c *models.PushoverRequestConfig) { c.Token = "" },
 		func(c *models.PushoverRequestConfig) { c.Token = "short" },
 		func(c *models.PushoverRequestConfig) { c.APIURL = "api.pushover.net" },
-		func(c *models.PushoverRequestConfig) { c.PriorityMap = map[string]int{"1": 3} },
-		func(c *models.PushoverRequestConfig) { c.PriorityMap = map[string]int{"4": 1} },
-		func(c *models.PushoverRequestConfig) { c.Retry = 10 },
-		func(c *models.PushoverRequestConfig) { c.Expire = 20000 },
 		func(c *models.PushoverRequestConfig) { c.RetryTimes = -1 },
 	}
 	for i, m := range bad {
@@ -320,10 +315,9 @@ func TestNtfyPublishesJSON(t *testing.T) {
 		t.Fatalf("unexpected actions: %+v", m.Actions)
 	}
 
-	// 恢复：默认优先级、对勾图标、没有屏蔽按钮；用户名密码走 Basic 认证；级别映射可改
+	// 恢复：默认优先级、对勾图标、没有屏蔽按钮；用户名密码走 Basic 认证。
 	req = ntfyReq(srv.URL, func(c *models.NtfyRequestConfig) {
 		c.Username, c.Password = "n9e", "pass-word-123"
-		c.PriorityMap = map[string]int{"2": 2}
 	})
 	req.Events[0].IsRecovered = true
 	if res := (&NtfyProvider{}).Notify(context.Background(), req); res.Err != nil {
@@ -337,11 +331,19 @@ func TestNtfyPublishesJSON(t *testing.T) {
 	if m.Priority != 3 || m.Tags[0] != "white_check_mark" || len(m.Actions) != 1 {
 		t.Fatalf("unexpected recovery message: %s", r.Body)
 	}
-	req.Events[0].IsRecovered, req.Events[0].Severity = false, 2
-	(&NtfyProvider{}).Notify(context.Background(), req)
-	json.Unmarshal(got()[2].Body, &m)
-	if m.Priority != 2 || m.Tags[0] != "warning" {
-		t.Fatalf("priority map not applied: %+v", m)
+	req.Events[0].IsRecovered = false
+	for severity, want := range map[int]int{2: 4, 3: 3} {
+		req.Events[0].Severity = severity
+		if res := (&NtfyProvider{}).Notify(context.Background(), req); res.Err != nil {
+			t.Fatal(res.Err)
+		}
+		calls := got()
+		if err := json.Unmarshal(calls[len(calls)-1].Body, &m); err != nil {
+			t.Fatal(err)
+		}
+		if m.Priority != want || m.Tags[0] != "warning" {
+			t.Fatalf("S%d must use fixed priority %d: %+v", severity, want, m)
+		}
 	}
 }
 
@@ -405,7 +407,6 @@ func TestNtfyErrorsAndValidation(t *testing.T) {
 		func(c *models.NtfyRequestConfig) { c.ServerURL = "ntfy.sh" },
 		func(c *models.NtfyRequestConfig) { c.Token, c.Username, c.Password = "tk_x", "u", "p" },
 		func(c *models.NtfyRequestConfig) { c.Username = "only-user" },
-		func(c *models.NtfyRequestConfig) { c.PriorityMap = map[string]int{"1": 6} },
 	}
 	for i, m := range bad {
 		if err := p.Check(ntfyReq("", m).Config); err == nil {
@@ -468,10 +469,10 @@ func TestSplunkOnCallTriggerAndRecovery(t *testing.T) {
 	}
 }
 
-func TestSplunkOnCallMessageTypeMapAndFailures(t *testing.T) {
+func TestSplunkOnCallFixedMessageTypesAndFailures(t *testing.T) {
 	srv, got := newCaptureServer(t, always(200, `{"result":"success"}`))
-	req := splunkReq(srv.URL, func(c *models.SplunkOnCallRequestConfig) { c.MessageTypeMap = map[string]string{"3": "info"} })
-	for sev, want := range map[int]string{1: "CRITICAL", 2: "WARNING", 3: "INFO"} {
+	req := splunkReq(srv.URL, nil)
+	for sev, want := range map[int]string{1: "CRITICAL", 2: "WARNING", 3: "WARNING"} {
 		req.Events[0].Severity = sev
 		if res := (&SplunkOnCallProvider{}).Notify(context.Background(), req); res.Err != nil {
 			t.Fatal(res.Err)
@@ -511,8 +512,6 @@ func TestSplunkOnCallMessageTypeMapAndFailures(t *testing.T) {
 	bad := []func(*models.SplunkOnCallRequestConfig){
 		func(c *models.SplunkOnCallRequestConfig) { c.APIKey = " " },
 		func(c *models.SplunkOnCallRequestConfig) { c.APIURL = "alert.victorops.com" },
-		func(c *models.SplunkOnCallRequestConfig) { c.MessageTypeMap = map[string]string{"1": "RECOVERY"} },
-		func(c *models.SplunkOnCallRequestConfig) { c.MessageTypeMap = map[string]string{"9": "INFO"} },
 	}
 	for i, m := range bad {
 		if err := p.Check(splunkReq("", m).Config); err == nil {

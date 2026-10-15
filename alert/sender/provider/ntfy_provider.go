@@ -35,7 +35,7 @@ const (
 
 var ntfyTopicRe = regexp.MustCompile(`^[-_A-Za-z0-9]{1,64}$`)
 
-// ntfyDefaultPriority：S1 最高（5，持续响铃），S2 高（4），S3 默认（3）
+// ntfyDefaultPriority：固定为 S1 最高（5）、S2 高（4）、S3 默认（3）。
 var ntfyDefaultPriority = map[int]int{1: 5, 2: 4, 3: 3}
 
 type NtfyProvider struct{}
@@ -60,14 +60,6 @@ func (p *NtfyProvider) Check(config *models.NotifyChannelConfig) error {
 	if (strings.TrimSpace(c.Username) == "") != (strings.TrimSpace(c.Password) == "") {
 		return errors.New("ntfy username and password must be set together")
 	}
-	if err := checkSeverityKeys("ntfy", c.PriorityMap); err != nil {
-		return err
-	}
-	for _, pr := range c.PriorityMap {
-		if pr < 1 || pr > 5 {
-			return fmt.Errorf("invalid ntfy priority %d, must be between 1 and 5", pr)
-		}
-	}
 	return checkNativeRetry("ntfy", &c.NativeNetworkConfig)
 }
 
@@ -87,14 +79,14 @@ type ntfyAction struct {
 	URL    string `json:"url"`
 }
 
-func ntfyPriority(c *models.NtfyRequestConfig, event *models.AlertCurEvent) int {
+func ntfyPriority(event *models.AlertCurEvent) int {
 	if event.IsRecovered {
 		return ntfyDefaultRecoveredPriority
 	}
-	if v, ok := c.PriorityMap[strconv.Itoa(event.Severity)]; ok {
+	if v, ok := ntfyDefaultPriority[event.Severity]; ok {
 		return v
 	}
-	return ntfyDefaultPriority[event.Severity]
+	return ntfyDefaultRecoveredPriority
 }
 
 // ntfyTags 的第一项是 ntfy 认识的 emoji 短码（显示成标题前的图标），第二项原样显示成标签
@@ -152,7 +144,7 @@ func (p *NtfyProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyRe
 	secrets := []string{cfg.Token, cfg.Password, topic}
 
 	event := req.Events[0]
-	body, err := json.Marshal(buildNtfyMessage(req, &cfg, event, topic))
+	body, err := json.Marshal(buildNtfyMessage(req, event, topic))
 	if err != nil {
 		return &NotifyResult{Target: target, Err: err}
 	}
@@ -189,7 +181,7 @@ func (p *NtfyProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyRe
 	return &NotifyResult{Target: target, Response: response}
 }
 
-func buildNtfyMessage(req *NotifyRequest, cfg *models.NtfyRequestConfig, event *models.AlertCurEvent, topic string) *ntfyMessage {
+func buildNtfyMessage(req *NotifyRequest, event *models.AlertCurEvent, topic string) *ntfyMessage {
 	title := firstEventTitle(req, event, ntfyMaxTitleRunes)
 	message, _ := truncateInBytes(tplString(req.TplContent, "content"), ntfyMaxMessageBytes)
 	if message == "" {
@@ -200,7 +192,7 @@ func buildNtfyMessage(req *NotifyRequest, cfg *models.NtfyRequestConfig, event *
 		Topic:    topic,
 		Title:    title,
 		Message:  message,
-		Priority: ntfyPriority(cfg, event),
+		Priority: ntfyPriority(event),
 		Tags:     ntfyTags(event),
 	}
 	detail, silence := eventActionURLs(req.SiteUrl, event)

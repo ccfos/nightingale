@@ -4,14 +4,13 @@ package provider
 //
 // 接口见 https://pushover.net/api ：表单 POST /1/messages.json，成功时回 200 和 {"status":1}。
 // 4xx（含 429，表示当月额度用完）重发也不会成功，官方要求不要重试，否则会被封 IP；5xx 至少等 5 秒再试。
-// 紧急优先级（2）会重复提醒直到有人确认：发送时带上 tag，告警恢复时按 tag 取消（/1/receipts/cancel_by_tag）。
+// 优先级固定为 S1→High（1）、S2/S3→Normal（0），恢复通知使用 Normal，不使用 Emergency。
 // 字段与长度上限参考 Prometheus Alertmanager notify/pushover/pushover.go（Apache License 2.0）。
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -29,21 +28,12 @@ const (
 	pushoverMaxMessageRunes = 1024
 	pushoverMaxURLRunes     = 512
 	pushoverMaxUserKeys     = 50
-
-	pushoverPriorityEmergency = 2
-	pushoverDefaultRetry      = 60
-	pushoverMinRetry          = 30
-	pushoverDefaultExpire     = 3600
-	pushoverMaxExpire         = 10800
 )
 
 // pushoverMinRetryWait 是 5xx 重试前至少等待的时间（官方要求不少于 5 秒），单测里会调小
 var pushoverMinRetryWait = 5 * time.Second
 
-var (
-	pushoverKeyRe = regexp.MustCompile(`^[A-Za-z0-9]{30}$`)
-	pushoverTagRe = regexp.MustCompile(`[^A-Za-z0-9_-]`)
-)
+var pushoverKeyRe = regexp.MustCompile(`^[A-Za-z0-9]{30}$`)
 
 // pushoverDefaultPriority：S1 用高优先级（绕过免打扰时段），其余用普通优先级
 var pushoverDefaultPriority = map[int]int{1: 1, 2: 0, 3: 0}
@@ -74,29 +64,7 @@ func validatePushoverConfig(c *models.PushoverRequestConfig, allowVars bool) err
 	if err := checkAPIURL("pushover api", c.APIURL); err != nil {
 		return err
 	}
-	if err := checkSeverityKeys("pushover", c.PriorityMap); err != nil {
-		return err
-	}
-	for _, pr := range c.PriorityMap {
-		if pr < -2 || pr > 2 {
-			return fmt.Errorf("invalid pushover priority %d, must be between -2 and 2", pr)
-		}
-	}
-	if c.Retry != 0 && c.Retry < pushoverMinRetry {
-		return errors.New("pushover retry must be at least 30 seconds")
-	}
-	if c.Expire < 0 || c.Expire > pushoverMaxExpire {
-		return errors.New("pushover expire must be between 1 and 10800 seconds")
-	}
 	return checkNativeRetry("pushover", &c.NativeNetworkConfig)
-}
-
-// pushoverPriority 返回告警级别对应的优先级
-func pushoverPriority(c *models.PushoverRequestConfig, severity int) int {
-	if v, ok := c.PriorityMap[strconv.Itoa(severity)]; ok {
-		return v
-	}
-	return pushoverDefaultPriority[severity]
 }
 
 // parsePushoverUserKeys 解析规则里的 User Key / Group Key：逗号分隔，最多 50 个
@@ -140,15 +108,6 @@ func pushoverTarget(name, rawKeys string) string {
 	return strings.Join(masked, ",")
 }
 
-// pushoverTag 是紧急消息的标签，恢复时按它取消重复提醒；标签以逗号分隔，所以只留安全字符
-func pushoverTag(event *models.AlertCurEvent, nonce string) string {
-	tag := "n9e-" + event.Hash
-	if nonce != "" {
-		tag += "-" + nonce
-	}
-	return pushoverTagRe.ReplaceAllString(tag, "_")
-}
-
 func (p *PushoverProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyResult {
 	target := pushoverTarget(req.CustomParams["bot_name"], req.CustomParams["user_key"])
 	if req.Config == nil {
@@ -183,23 +142,12 @@ func (p *PushoverProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 		base = pushoverDefaultAPIURL
 	}
 	event := req.Events[0]
-	tag := pushoverTag(event, req.CustomParams[TestNonceParam])
 
-	var notes []string
-	if event.IsRecovered && pushoverPriority(&cfg, event.Severity) == pushoverPriorityEmergency {
-		// 这条告警触发时发的是紧急消息：恢复了就不用再重复提醒。取消失败不影响恢复通知本身
-		if err := p.cancelByTag(ctx, req.HttpClient, &cfg, base, tag); err != nil {
-			notes = append(notes, "failed to cancel emergency retries: "+redactSecrets(err.Error(), secrets...))
-		} else {
-			notes = append(notes, "emergency retries canceled")
-		}
-	}
-
-	form := buildPushoverForm(req, &cfg, event, keys, tag)
+	form := buildPushoverForm(req, &cfg, event, keys)
 	body := form.Encode()
 	resp, err := p.post(ctx, req.HttpClient, &cfg, base+"/1/messages.json", body)
 	if err != nil {
-		return &NotifyResult{Target: target, Response: strings.Join(notes, "; "),
+		return &NotifyResult{Target: target,
 			Err: withHint(errors.New(redactSecrets(err.Error(), secrets...)), pushoverHint(err, resp))}
 	}
 
@@ -209,13 +157,10 @@ func (p *PushoverProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 	if ok.Request != "" {
 		sent += ", request " + ok.Request
 	}
-	if ok.Receipt != "" {
-		sent += ", receipt " + ok.Receipt
-	}
-	return &NotifyResult{Target: target, Response: strings.Join(append([]string{sent}, notes...), "; ")}
+	return &NotifyResult{Target: target, Response: sent}
 }
 
-func buildPushoverForm(req *NotifyRequest, cfg *models.PushoverRequestConfig, event *models.AlertCurEvent, keys []string, tag string) url.Values {
+func buildPushoverForm(req *NotifyRequest, cfg *models.PushoverRequestConfig, event *models.AlertCurEvent, keys []string) url.Values {
 	title := firstEventTitle(req, event, pushoverMaxTitleRunes)
 	message, _ := truncateInRunes(tplString(req.TplContent, "content"), pushoverMaxMessageRunes)
 	if message == "" {
@@ -239,31 +184,18 @@ func buildPushoverForm(req *NotifyRequest, cfg *models.PushoverRequestConfig, ev
 		form.Set("sound", cfg.Sound)
 	}
 
-	// 恢复通知固定用普通优先级：没有人需要被恢复消息反复叫醒
+	// 级别映射固定在后端，恢复通知使用普通优先级。
 	priority := 0
 	if !event.IsRecovered {
-		priority = pushoverPriority(cfg, event.Severity)
+		priority = pushoverDefaultPriority[event.Severity]
 	}
 	form.Set("priority", strconv.Itoa(priority))
-	if priority == pushoverPriorityEmergency {
-		retry, expire := cfg.Retry, cfg.Expire
-		if retry == 0 {
-			retry = pushoverDefaultRetry
-		}
-		if expire == 0 {
-			expire = pushoverDefaultExpire
-		}
-		form.Set("retry", strconv.Itoa(retry))
-		form.Set("expire", strconv.Itoa(expire))
-		form.Set("tags", tag)
-	}
 	return form
 }
 
 type pushoverResponse struct {
 	Status  int      `json:"status"`
 	Request string   `json:"request"`
-	Receipt string   `json:"receipt"`
 	Errors  []string `json:"errors"`
 }
 
@@ -296,13 +228,6 @@ func (p *PushoverProvider) post(ctx context.Context, client *http.Client, cfg *m
 			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			return r, nil
 		}, checkPushover)
-}
-
-func (p *PushoverProvider) cancelByTag(ctx context.Context, client *http.Client, cfg *models.PushoverRequestConfig, base, tag string) error {
-	form := url.Values{}
-	form.Set("token", cfg.Token)
-	_, err := p.post(ctx, client, cfg, base+"/1/receipts/cancel_by_tag/"+url.PathEscape(tag)+".json", form.Encode())
-	return err
 }
 
 func pushoverHint(err error, resp *nativeResponse) string {

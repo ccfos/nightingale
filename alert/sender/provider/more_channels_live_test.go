@@ -78,8 +78,7 @@ func moreLiveEnv(t *testing.T, keys ...string) []string {
 
 func TestPushoverLive(t *testing.T) {
 	v := moreLiveEnv(t, "NIGHTINGALE_PUSHOVER_TOKEN", "NIGHTINGALE_PUSHOVER_USER_KEY")
-	// S1 mapped to emergency: the recovery round must cancel the repeats by tag
-	rc := &models.RequestConfig{PushoverRequestConfig: &models.PushoverRequestConfig{Token: v[0], PriorityMap: map[string]int{"1": 2}, Retry: 30, Expire: 300}}
+	rc := &models.RequestConfig{PushoverRequestConfig: &models.PushoverRequestConfig{Token: v[0]}}
 	runLive(t, &PushoverProvider{}, models.Pushover, rc, map[string]string{"user_key": v[1]}, 1, v[0], v[1])
 }
 

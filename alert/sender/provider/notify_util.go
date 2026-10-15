@@ -438,16 +438,6 @@ func checkAPIURL(product, raw string) error {
 	return nil
 }
 
-// checkSeverityKeys 校验「告警级别 → 对方的级别」映射的键：只能是 1、2、3
-func checkSeverityKeys[V any](product string, m map[string]V) error {
-	for sev := range m {
-		if sev != "1" && sev != "2" && sev != "3" {
-			return fmt.Errorf("invalid severity %q in %s severity mapping, must be 1, 2 or 3", sev, product)
-		}
-	}
-	return nil
-}
-
 // checkNativeRetry 重试次数和间隔不能是负数
 func checkNativeRetry(product string, n *models.NativeNetworkConfig) error {
 	if n != nil && (n.RetryTimes < 0 || n.RetrySleep < 0) {

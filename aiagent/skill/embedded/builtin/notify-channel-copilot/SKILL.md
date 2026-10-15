@@ -60,9 +60,9 @@ type NotifyChannelConfig struct {
 | `DiscordRequestConfig` | `discord` (native Discord channel, `request_type=discord`; optional, the webhook URL is a rule param) |
 | `JSMAlertRequestConfig` | `jsm_alert` (native JSM alert channel, `request_type=jsm_alert`; optional `api_url`, the integration key is a rule param) |
 | `SlackWebhookRequestConfig` / `MattermostWebhookRequestConfig` | `slackwebhook` / `mattermostwebhook` (native webhook channels; optional, the webhook URL is a rule param) |
-| `PushoverRequestConfig` | `pushover` (required `token` = application API token; optional `priority_map` severity → -2..2, `retry` / `expire` for emergency priority, `sound`; the user/group key is a rule param) |
-| `NtfyRequestConfig` | `ntfy` (all optional: `server_url` defaults to https://ntfy.sh, `token` or `username` + `password`, `priority_map` severity → 1..5; the topic is a rule param) |
-| `SplunkOnCallRequestConfig` | `splunk_oncall` (required `api_key` of the REST endpoint integration; optional `message_type_map` severity → CRITICAL / WARNING / INFO; the routing key is a rule param) |
+| `PushoverRequestConfig` | `pushover` (required `token` = application API token; optional `sound`; priorities are fixed: S1→High (1), S2/S3 and recovery→Normal (0), no Emergency mode; the user/group key is a rule param) |
+| `NtfyRequestConfig` | `ntfy` (all optional: `server_url` defaults to https://ntfy.sh, `token` or `username` + `password`; priorities are fixed: S1→5, S2→4, S3 and recovery→3; the topic is a rule param) |
+| `SplunkOnCallRequestConfig` | `splunk_oncall` (required `api_key` of the REST endpoint integration; message types are fixed: S1→CRITICAL, S2/S3→WARNING, recovery→RECOVERY; the routing key is a rule param) |
 | `LineRequestConfig` | `line` (required `channel_access_token` of the Messaging API channel; the recipient ID is a rule param) |
 
 ---

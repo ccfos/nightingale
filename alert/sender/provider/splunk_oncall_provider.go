@@ -4,7 +4,7 @@ package provider
 // {api_url}/{api_key}/{routing_key}（https://help.splunk.com/en/splunk-observability-cloud/splunk-on-call/integrations-with-splunk-on-call/rest-endpoint-integration-for-splunk-on-call）。
 // API Key 属于整个组织的 REST 集成，放在媒介里；Routing Key 决定告警归哪个团队，填在通知规则里。
 //
-// 告警以事件哈希作 entity_id：触发时按级别发 CRITICAL / WARNING / INFO，恢复时用同一个 entity_id 发 RECOVERY，
+// 告警以事件哈希作 entity_id：S1 固定发 CRITICAL、S2/S3 发 WARNING，恢复时用同一个 entity_id 发 RECOVERY，
 // Splunk On-Call 据此把两次请求对到同一个事件上。成功判定要看响应体里的 result：字段缺失时接口回
 // {"result":"failure","message":"..."}。字段与截断参考 Prometheus Alertmanager notify/victorops/victorops.go
 // （Apache License 2.0）。
@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -56,25 +55,13 @@ func (p *SplunkOnCallProvider) Check(config *models.NotifyChannelConfig) error {
 	if err := checkAPIURL("splunk on-call api", c.APIURL); err != nil {
 		return err
 	}
-	if err := checkSeverityKeys("splunk on-call", c.MessageTypeMap); err != nil {
-		return err
-	}
-	for _, mt := range c.MessageTypeMap {
-		switch strings.ToUpper(strings.TrimSpace(mt)) {
-		case "", "CRITICAL", "WARNING", "INFO":
-		default:
-			return fmt.Errorf("invalid splunk on-call message type %q, must be CRITICAL, WARNING or INFO", mt)
-		}
-	}
 	return checkNativeRetry("splunk on-call", &c.NativeNetworkConfig)
 }
 
-func splunkOnCallMessageType(c *models.SplunkOnCallRequestConfig, event *models.AlertCurEvent) string {
+// 级别映射固定在后端；恢复必须使用同一事件的 RECOVERY 消息。
+func splunkOnCallMessageType(event *models.AlertCurEvent) string {
 	if event.IsRecovered {
 		return splunkOnCallRecovery
-	}
-	if v := strings.ToUpper(strings.TrimSpace(c.MessageTypeMap[strconv.Itoa(event.Severity)])); v != "" {
-		return v
 	}
 	if v, ok := splunkOnCallDefaultMessageType[event.Severity]; ok {
 		return v
@@ -142,7 +129,7 @@ func (p *SplunkOnCallProvider) Notify(ctx context.Context, req *NotifyRequest) *
 
 func (p *SplunkOnCallProvider) notifyEvent(ctx context.Context, req *NotifyRequest, cfg *models.SplunkOnCallRequestConfig,
 	endpoint string, event *models.AlertCurEvent, nonce string) (string, error) {
-	payload := buildSplunkOnCallPayload(req, cfg, event, nonce)
+	payload := buildSplunkOnCallPayload(req, event, nonce)
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return "", err
@@ -167,7 +154,7 @@ func (p *SplunkOnCallProvider) notifyEvent(ctx context.Context, req *NotifyReque
 	return fmt.Sprintf("%s alert sent, entity_id %s", payload["message_type"], payload["entity_id"]), nil
 }
 
-func buildSplunkOnCallPayload(req *NotifyRequest, cfg *models.SplunkOnCallRequestConfig, event *models.AlertCurEvent, nonce string) map[string]string {
+func buildSplunkOnCallPayload(req *NotifyRequest, event *models.AlertCurEvent, nonce string) map[string]string {
 	entityID := event.Hash
 	if nonce != "" {
 		// 测试发送用每次唯一的 entity_id，免得和上一次测试建的事件合并；with_recovery 两次共用同一个
@@ -181,7 +168,7 @@ func buildSplunkOnCallPayload(req *NotifyRequest, cfg *models.SplunkOnCallReques
 	message, _ := truncateInRunes(tplString(req.TplContent, "content"), splunkOnCallMaxMessageRunes)
 
 	msg := map[string]string{
-		"message_type":        splunkOnCallMessageType(cfg, event),
+		"message_type":        splunkOnCallMessageType(event),
 		"entity_id":           entityID,
 		"entity_display_name": title,
 		"state_message":       message,

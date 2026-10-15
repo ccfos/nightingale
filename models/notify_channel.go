@@ -224,11 +224,7 @@ type TwilioRequestConfig struct {
 type PushoverRequestConfig struct {
 	APIURL string `json:"api_url"` // 空按 https://api.pushover.net
 	Token  string `json:"token"`   // 应用的 API Token
-	// PriorityMap 夜莺告警级别（"1"/"2"/"3"）对应的 Pushover 优先级（-2 到 2），缺省 S1→1、S2→0、S3→0
-	PriorityMap map[string]int `json:"priority_map"`
-	Retry       int            `json:"retry"`  // 紧急优先级（2）的重复提醒间隔（秒），空按 60，不小于 30
-	Expire      int            `json:"expire"` // 紧急优先级（2）的重复提醒时长（秒），空按 3600，不大于 10800
-	Sound       string         `json:"sound"`  // 提示音，空用接收人自己的默认设置
+	Sound  string `json:"sound"`   // 提示音，空用接收人自己的默认设置
 	NativeNetworkConfig
 }
 
@@ -239,8 +235,6 @@ type NtfyRequestConfig struct {
 	Token     string `json:"token"`      // Access Token（tk_ 开头），与用户名密码二选一
 	Username  string `json:"username"`
 	Password  string `json:"password"`
-	// PriorityMap 夜莺告警级别（"1"/"2"/"3"）对应的 ntfy 优先级（1 到 5），缺省 S1→5、S2→4、S3→3
-	PriorityMap map[string]int `json:"priority_map"`
 	NativeNetworkConfig
 }
 
@@ -249,9 +243,6 @@ type NtfyRequestConfig struct {
 type SplunkOnCallRequestConfig struct {
 	APIURL string `json:"api_url"` // 空按 https://alert.victorops.com/integrations/generic/20131114/alert
 	APIKey string `json:"api_key"`
-	// MessageTypeMap 夜莺告警级别（"1"/"2"/"3"）对应的 message_type（CRITICAL / WARNING / INFO），
-	// 缺省 S1→CRITICAL、S2→WARNING、S3→WARNING；恢复固定为 RECOVERY
-	MessageTypeMap map[string]string `json:"message_type_map"`
 	NativeNetworkConfig
 }
 
