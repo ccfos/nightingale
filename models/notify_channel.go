@@ -70,6 +70,10 @@ type RequestConfig struct {
 	MattermostWebhookRequestConfig *MattermostWebhookRequestConfig `json:"mattermostwebhook_request_config,omitempty" gorm:"serializer:json"`
 	TeamsRequestConfig             *TeamsRequestConfig             `json:"teams_request_config,omitempty" gorm:"serializer:json"`
 	TwilioRequestConfig            *TwilioRequestConfig            `json:"twilio_request_config,omitempty" gorm:"serializer:json"`
+	PushoverRequestConfig          *PushoverRequestConfig          `json:"pushover_request_config,omitempty" gorm:"serializer:json"`
+	NtfyRequestConfig              *NtfyRequestConfig              `json:"ntfy_request_config,omitempty" gorm:"serializer:json"`
+	SplunkOnCallRequestConfig      *SplunkOnCallRequestConfig      `json:"splunk_oncall_request_config,omitempty" gorm:"serializer:json"`
+	LineRequestConfig              *LineRequestConfig              `json:"line_request_config,omitempty" gorm:"serializer:json"`
 	// 兼容旧版本
 	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
 	FeishuRequestConfig   *FeishuRequestConfig   `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
@@ -119,6 +123,10 @@ const (
 	RequestTypeMattermostWebhook = "mattermostwebhook"
 	RequestTypeTeams             = "teams"
 	RequestTypeTwilio            = "twilio"
+	RequestTypePushover          = "pushover"
+	RequestTypeNtfy              = "ntfy"
+	RequestTypeSplunkOnCall      = "splunk_oncall"
+	RequestTypeLine              = "line"
 )
 
 var nativeRequestTypes = map[string]struct{}{
@@ -129,6 +137,10 @@ var nativeRequestTypes = map[string]struct{}{
 	RequestTypeMattermostWebhook: {},
 	RequestTypeTeams:             {},
 	RequestTypeTwilio:            {},
+	RequestTypePushover:          {},
+	RequestTypeNtfy:              {},
+	RequestTypeSplunkOnCall:      {},
+	RequestTypeLine:              {},
 }
 
 // IsNativeRequestType 表示该媒介类型是否为原生对接：这类媒介的 provider 用 json.Marshal
@@ -207,6 +219,41 @@ type TwilioRequestConfig struct {
 	NativeNetworkConfig
 }
 
+// PushoverRequestConfig Pushover 媒介：应用的 API Token 是组织级的，放在媒介里；
+// 收消息的 User Key / Group Key 在通知规则里填。
+type PushoverRequestConfig struct {
+	APIURL string `json:"api_url"` // 空按 https://api.pushover.net
+	Token  string `json:"token"`   // 应用的 API Token
+	Sound  string `json:"sound"`   // 提示音，空用接收人自己的默认设置
+	NativeNetworkConfig
+}
+
+// NtfyRequestConfig ntfy 媒介：服务地址与认证放在媒介里，Topic 在通知规则里填。
+// 整个配置可以为空：按公共服务 https://ntfy.sh、不带认证处理。
+type NtfyRequestConfig struct {
+	ServerURL string `json:"server_url"` // 空按 https://ntfy.sh
+	Token     string `json:"token"`      // Access Token（tk_ 开头），与用户名密码二选一
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	NativeNetworkConfig
+}
+
+// SplunkOnCallRequestConfig Splunk On-Call（原 VictorOps）媒介：REST 集成的 API Key 是组织级的，放在媒介里；
+// Routing Key 决定告警归哪个团队，在通知规则里填。
+type SplunkOnCallRequestConfig struct {
+	APIURL string `json:"api_url"` // 空按 https://alert.victorops.com/integrations/generic/20131114/alert
+	APIKey string `json:"api_key"`
+	NativeNetworkConfig
+}
+
+// LineRequestConfig LINE 媒介（Messaging API）：官方账号的 Channel Access Token 放在媒介里，
+// 接收方（用户 / 群组 / 多人聊天的 ID）在通知规则里填。
+type LineRequestConfig struct {
+	APIURL             string `json:"api_url"` // 空按 https://api.line.me
+	ChannelAccessToken string `json:"channel_access_token"`
+	NativeNetworkConfig
+}
+
 // MattermostWebhookRequestConfig Mattermost Webhook 媒介：Webhook 地址在通知规则里填，
 // 媒介里只有所有规则共用的外观默认值和网络设置，整个配置可以为空。
 type MattermostWebhookRequestConfig struct {
@@ -251,6 +298,22 @@ func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig 
 	case RequestTypeTwilio:
 		if rc.TwilioRequestConfig != nil {
 			return &rc.TwilioRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypePushover:
+		if rc.PushoverRequestConfig != nil {
+			return &rc.PushoverRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeNtfy:
+		if rc.NtfyRequestConfig != nil {
+			return &rc.NtfyRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeSplunkOnCall:
+		if rc.SplunkOnCallRequestConfig != nil {
+			return &rc.SplunkOnCallRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeLine:
+		if rc.LineRequestConfig != nil {
+			return &rc.LineRequestConfig.NativeNetworkConfig
 		}
 	case RequestTypeJira:
 		if rc.JiraRequestConfig != nil {
@@ -600,7 +663,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		ncc.RequestType != "feishuapp" &&
 		ncc.RequestType != "wecomapp" &&
 		!IsNativeRequestType(ncc.RequestType) {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert', 'slackwebhook', 'mattermostwebhook', 'teams', 'twilio'")
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert', 'slackwebhook', 'mattermostwebhook', 'teams', 'twilio', 'pushover', 'ntfy', 'splunk_oncall', 'line'")
 	}
 
 	if ncc.ParamConfig != nil {
@@ -863,6 +926,17 @@ var NotiChMap = []*NotifyChannelConfig{
 		}},
 		ParamConfig: &NotifyParamConfig{Custom: Params{Params: []ParamItem{
 			{Key: "webhook_url", CName: "Webhook URL", Type: "string"},
+			{Key: "bot_name", CName: "Name", Type: "string"},
+		}}},
+	},
+	{
+		// 空的服务地址按公共服务 ntfy.sh 处理，自建服务在媒介里改地址和认证
+		Name: "ntfy", Ident: Ntfy, RequestType: RequestTypeNtfy, Weight: 12, Enable: true,
+		RequestConfig: &RequestConfig{NtfyRequestConfig: &NtfyRequestConfig{
+			NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+		}},
+		ParamConfig: &NotifyParamConfig{Custom: Params{Params: []ParamItem{
+			{Key: "topic", CName: "Topic", Type: "string"},
 			{Key: "bot_name", CName: "Name", Type: "string"},
 		}}},
 	},

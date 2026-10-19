@@ -332,6 +332,14 @@ const teamsAlertContent = `{{if $event.RuleNote}}{{$event.RuleNote}}{{end}}{{$fi
 
 {{end}}**Labels**  {{else}} · {{end}}{{$first = false}}{{if eq $k "__name__"}}{{$v}}{{else}}{{$k}}={{$v}}{{end}}{{end}}{{end}}`
 
+// plainAlertContent 是 Pushover、ntfy、LINE 共用的默认正文（纯文本）。级别、状态和规则名由各媒介放进通知标题，
+// 事件详情链接也由媒介带上；正文保持简短，手机推送的预览只有几行。
+const plainAlertContent = `{{if $event.TargetIdent}}Target: {{$event.TargetIdent}}
+{{end}}{{if not $event.IsRecovered}}Value: {{$event.TriggerValue}}
+{{end}}Labels: {{$event.TagsJSON}}{{if $event.RuleNote}}
+Note: {{$event.RuleNote}}{{end}}
+{{if $event.IsRecovered}}Recovered at: {{timeformat $event.LastEvalTime}}{{else}}Triggered at: {{timeformat $event.TriggerTime}}{{end}}`
+
 var NewTplMap = map[string]string{
 	"ali-voice": `{{$event.RuleName}}`,
 	"ali-sms":   `{{$event.RuleName}}`,
@@ -695,6 +703,10 @@ var NewTplMap = map[string]string{
 	Teams:   teamsAlertContent,
 	Twilio:  `Nightingale: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}. {{$event.RuleName}}.{{if $event.TargetIdent}} Target: {{$event.TargetIdent}}.{{end}}{{if and $event.TriggerValue (not $event.IsRecovered)}} Value: {{$event.TriggerValue}}.{{end}}`,
 
+	Pushover: plainAlertContent,
+	Ntfy:     plainAlertContent,
+	Line:     plainAlertContent,
+
 	MattermostWebhook: markdownAlertContent,
 
 	// Jira and JSMAlert share the same template format
@@ -717,6 +729,10 @@ Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 var MsgTplMap = []MessageTemplate{
 	{Name: "Microsoft Teams", Ident: Teams, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
 	{Name: "Twilio", Ident: Twilio, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
 	{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
@@ -3451,6 +3467,10 @@ Silenciar por 1 hora: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 var MsgTplMapEn = []MessageTemplate{
 	{Name: "Microsoft Teams", Ident: Teams + "-en", NotifyChannelIdent: Teams, Lang: MsgTplLangEn, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
 	{Name: "Twilio", Ident: Twilio + "-en", NotifyChannelIdent: Twilio, Lang: MsgTplLangEn, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-en", NotifyChannelIdent: Pushover, Lang: MsgTplLangEn, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-en", NotifyChannelIdent: Ntfy, Lang: MsgTplLangEn, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-en", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangEn, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-en", NotifyChannelIdent: Line, Lang: MsgTplLangEn, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
 	{Name: "Jira", Ident: Jira + "-en", NotifyChannelIdent: Jira, Lang: MsgTplLangEn, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-en", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEn, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-en", NotifyChannelIdent: "callback", Lang: MsgTplLangEn, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3478,6 +3498,10 @@ var MsgTplMapEn = []MessageTemplate{
 var MsgTplMapJa = []MessageTemplate{
 	{Name: "Microsoft Teams", Ident: Teams + "-ja", NotifyChannelIdent: Teams, Lang: MsgTplLangJa, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
 	{Name: "Twilio", Ident: Twilio + "-ja", NotifyChannelIdent: Twilio, Lang: MsgTplLangJa, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-ja", NotifyChannelIdent: Pushover, Lang: MsgTplLangJa, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-ja", NotifyChannelIdent: Ntfy, Lang: MsgTplLangJa, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-ja", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangJa, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-ja", NotifyChannelIdent: Line, Lang: MsgTplLangJa, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
 	{Name: "Jira", Ident: Jira + "-ja", NotifyChannelIdent: Jira, Lang: MsgTplLangJa, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-ja", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangJa, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ja", NotifyChannelIdent: "callback", Lang: MsgTplLangJa, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3505,6 +3529,10 @@ var MsgTplMapJa = []MessageTemplate{
 var MsgTplMapRu = []MessageTemplate{
 	{Name: "Microsoft Teams", Ident: Teams + "-ru", NotifyChannelIdent: Teams, Lang: MsgTplLangRu, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
 	{Name: "Twilio", Ident: Twilio + "-ru", NotifyChannelIdent: Twilio, Lang: MsgTplLangRu, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-ru", NotifyChannelIdent: Pushover, Lang: MsgTplLangRu, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-ru", NotifyChannelIdent: Ntfy, Lang: MsgTplLangRu, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-ru", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangRu, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-ru", NotifyChannelIdent: Line, Lang: MsgTplLangRu, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
 	{Name: "Jira", Ident: Jira + "-ru", NotifyChannelIdent: Jira, Lang: MsgTplLangRu, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-ru", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangRu, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ru", NotifyChannelIdent: "callback", Lang: MsgTplLangRu, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3532,6 +3560,10 @@ var MsgTplMapRu = []MessageTemplate{
 var MsgTplMapFr = []MessageTemplate{
 	{Name: "Microsoft Teams", Ident: Teams + "-fr", NotifyChannelIdent: Teams, Lang: MsgTplLangFr, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
 	{Name: "Twilio", Ident: Twilio + "-fr", NotifyChannelIdent: Twilio, Lang: MsgTplLangFr, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-fr", NotifyChannelIdent: Pushover, Lang: MsgTplLangFr, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-fr", NotifyChannelIdent: Ntfy, Lang: MsgTplLangFr, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-fr", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangFr, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-fr", NotifyChannelIdent: Line, Lang: MsgTplLangFr, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
 	{Name: "Jira", Ident: Jira + "-fr", NotifyChannelIdent: Jira, Lang: MsgTplLangFr, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-fr", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangFr, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-fr", NotifyChannelIdent: "callback", Lang: MsgTplLangFr, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3559,6 +3591,10 @@ var MsgTplMapFr = []MessageTemplate{
 var MsgTplMapKo = []MessageTemplate{
 	{Name: "Microsoft Teams", Ident: Teams + "-ko", NotifyChannelIdent: Teams, Lang: MsgTplLangKo, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
 	{Name: "Twilio", Ident: Twilio + "-ko", NotifyChannelIdent: Twilio, Lang: MsgTplLangKo, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-ko", NotifyChannelIdent: Pushover, Lang: MsgTplLangKo, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-ko", NotifyChannelIdent: Ntfy, Lang: MsgTplLangKo, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-ko", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangKo, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-ko", NotifyChannelIdent: Line, Lang: MsgTplLangKo, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
 	{Name: "Jira", Ident: Jira + "-ko", NotifyChannelIdent: Jira, Lang: MsgTplLangKo, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-ko", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangKo, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ko", NotifyChannelIdent: "callback", Lang: MsgTplLangKo, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3586,6 +3622,10 @@ var MsgTplMapKo = []MessageTemplate{
 var MsgTplMapId = []MessageTemplate{
 	{Name: "Microsoft Teams", Ident: Teams + "-id", NotifyChannelIdent: Teams, Lang: MsgTplLangId, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
 	{Name: "Twilio", Ident: Twilio + "-id", NotifyChannelIdent: Twilio, Lang: MsgTplLangId, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-id", NotifyChannelIdent: Pushover, Lang: MsgTplLangId, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-id", NotifyChannelIdent: Ntfy, Lang: MsgTplLangId, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-id", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangId, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-id", NotifyChannelIdent: Line, Lang: MsgTplLangId, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
 	{Name: "Jira", Ident: Jira + "-id", NotifyChannelIdent: Jira, Lang: MsgTplLangId, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-id", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangId, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-id", NotifyChannelIdent: "callback", Lang: MsgTplLangId, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3613,6 +3653,10 @@ var MsgTplMapId = []MessageTemplate{
 var MsgTplMapEs = []MessageTemplate{
 	{Name: "Microsoft Teams", Ident: Teams + "-es", NotifyChannelIdent: Teams, Lang: MsgTplLangEs, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
 	{Name: "Twilio", Ident: Twilio + "-es", NotifyChannelIdent: Twilio, Lang: MsgTplLangEs, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-es", NotifyChannelIdent: Pushover, Lang: MsgTplLangEs, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-es", NotifyChannelIdent: Ntfy, Lang: MsgTplLangEs, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-es", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangEs, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-es", NotifyChannelIdent: Line, Lang: MsgTplLangEs, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
 	{Name: "Jira", Ident: Jira + "-es", NotifyChannelIdent: Jira, Lang: MsgTplLangEs, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-es", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEs, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-es", NotifyChannelIdent: "callback", Lang: MsgTplLangEs, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3640,6 +3684,10 @@ var MsgTplMapEs = []MessageTemplate{
 var MsgTplMapPt = []MessageTemplate{
 	{Name: "Microsoft Teams", Ident: Teams + "-pt", NotifyChannelIdent: Teams, Lang: MsgTplLangPt, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
 	{Name: "Twilio", Ident: Twilio + "-pt", NotifyChannelIdent: Twilio, Lang: MsgTplLangPt, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-pt", NotifyChannelIdent: Pushover, Lang: MsgTplLangPt, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-pt", NotifyChannelIdent: Ntfy, Lang: MsgTplLangPt, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-pt", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangPt, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-pt", NotifyChannelIdent: Line, Lang: MsgTplLangPt, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
 	{Name: "Jira", Ident: Jira + "-pt", NotifyChannelIdent: Jira, Lang: MsgTplLangPt, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-pt", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangPt, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-pt", NotifyChannelIdent: "callback", Lang: MsgTplLangPt, Weight: 16, Content: map[string]string{"content": ""}},

@@ -47,6 +47,10 @@ Data model `models/notify_rule.go`: `NotifyRule` + `NotifyConfig[]`.
 | `request_type=jira` | `{"project_key": "OPS", "issue_type": "Bug"}` plus optional keys (see Jira below) | The Jira project key and the issue type name |
 | `request_type=slackwebhook` / `request_type=mattermostwebhook` | `{"webhook_url": "https://hooks.slack.com/services/...", "bot_name": "#ops-alerts"}` | The incoming webhook URL of the target channel |
 | `request_type=jsm_alert` | `{"api_key": "<JSM API integration key>", "bot_name": "SRE team"}` (the severity → priority mapping is on the media type) | The key of the JSM team's API integration |
+| `request_type=pushover` | `{"user_key": "<30-char user or group key>", "bot_name": "On-call group"}` (several keys comma-separated; the app token and severity → priority mapping are on the media type) | The Pushover user key or delivery group key that receives the push |
+| `request_type=ntfy` | `{"topic": "ops-alerts-x7Kq2", "bot_name": "Ops phones"}` (topic name only, not a URL; server and auth are on the media type) | The ntfy topic recipients subscribe to |
+| `request_type=splunk_oncall` | `{"routing_key": "database", "bot_name": "DB team"}` (the REST API key is on the media type) | The Splunk On-Call routing key, i.e. which team is paged |
+| `request_type=line` | `{"to": "U<32 hex> / C<32 hex> / R<32 hex>", "bot_name": "Ops group"}` (the channel access token is on the media type) | The LINE user, group or multi-person chat ID |
 
 The first two rows are **not mutually exclusive**: a user's custom channel may have both `contact_key` and `custom_params` non-empty, in which case custom_params decides whether the message is sent (**required**), while `user_ids`/`user_group_ids` only decide who to @ in the group (optional) — don't miss the token by matching only on the first row.
 

@@ -181,3 +181,73 @@ A valid 201 response records **accepted**, the Message/Call SID and initial stat
 Sources: [Messages](https://www.twilio.com/docs/messaging/api/message-resource), [Calls](https://www.twilio.com/docs/voice/api/call-resource), [TwiML Say](https://www.twilio.com/docs/voice/twiml/say).
 
 For new Twilio trials, custom SMS bodies can be restricted to Twilio-provided examples. Full alert-text testing requires an account that permits custom SMS content. Trial Voice supports `<Say>` with trial restrictions; verify the account's allowed destinations and API parameters before live testing. See [Twilio trial restrictions](https://www.twilio.com/docs/usage/trials) and [SMS trial API](https://www.twilio.com/docs/usage/trials/try-out-sms).
+
+## Pushover
+
+`ident=pushover`, `request_type=pushover`. Create a media type with `request_config.pushover_request_config`:
+
+| Field | Description |
+|---|---|
+| `token` | API token of the Pushover application (30 letters or digits); supports variable references |
+| `sound` | Optional notification sound; empty uses the recipient's default |
+| `api_url` | Optional, defaults to `https://api.pushover.net` |
+| `proxy`, `timeout`, `retry_times`, `retry_sleep` | Shared network fields |
+
+Each rule supplies `user_key` (a user key or delivery group key, up to 50 comma-separated) and an optional `bot_name`.
+
+The message is posted as a form to `/1/messages.json` with the credentials in the body, never in the URL. `title` is `[S1] Triggered: <rule>` (250 characters), `message` is the rendered `content` template as plain text (1024 characters), `timestamp` is the trigger or recovery time, and `url` links to the event. Priorities are fixed in the provider: S1→High (1), S2/S3→Normal (0), and recovery→Normal (0). There is no configurable severity mapping or Emergency repeat mode.
+
+Success requires HTTP 200 with `"status":1`. As Pushover requires, 4xx responses are never retried (429 means the application's monthly limit is used up, and repeated bad requests get the IP blocked); 5xx responses are retried after at least 5 seconds.
+
+Source: [Pushover Message API](https://pushover.net/api).
+
+## ntfy
+
+`ident=ntfy`, `request_type=ntfy`. A built-in ntfy channel is seeded on startup; with an empty config it publishes to the public `https://ntfy.sh` without authentication.
+
+| Field (`request_config.ntfy_request_config`) | Description |
+|---|---|
+| `server_url` | Root address of the ntfy server; empty means `https://ntfy.sh` |
+| `token` | Access token (`tk_...`), sent as a Bearer token |
+| `username`, `password` | Basic authentication, alternative to `token` |
+| `proxy`, `timeout`, `retry_times`, `retry_sleep`, `insecure_skip_verify` | Shared network fields |
+
+Each rule supplies `topic` (1–64 letters, digits, `_` or `-`; the name only, not a URL) and an optional `bot_name`. On a public server the topic acts as a password, so notification records show the name or only the last 4 characters of the topic.
+
+Nightingale publishes JSON to the server root: `title`, `message` (the rendered `content` template, plain text), `priority`, `tags` (an emoji shortcode plus the severity), `click` and `view` actions linking to the event (and Silence 1h while firing). Priorities are fixed in the provider: S1→Max (5), S2→High (4), S3→Default (3), and recovery→Default (3). The message is cut to 4096 **bytes** on a character boundary, because longer messages are turned into attachments by the server. HTTP 429 and 5xx are retried, except error code 42908 (daily message quota reached).
+
+Sources: [ntfy publishing](https://docs.ntfy.sh/publish/), [error codes](https://github.com/binwiederhier/ntfy/blob/main/server/errors.go).
+
+## Splunk On-Call (VictorOps)
+
+`ident=splunk_oncall`, `request_type=splunk_oncall`. Create a media type with `request_config.splunk_oncall_request_config`:
+
+| Field | Description |
+|---|---|
+| `api_key` | Key of the REST endpoint integration (Integrations > REST - Generic); supports variable references |
+| `api_url` | Optional, defaults to `https://alert.victorops.com/integrations/generic/20131114/alert`. The full URL copied from the integration page (ending in `/<key>/$routing_key`) is accepted and trimmed |
+| `proxy`, `timeout`, `retry_times`, `retry_sleep` | Shared network fields |
+
+Each rule supplies `routing_key` (which team's escalation policy receives the alert) and an optional `bot_name`.
+
+Every event is posted to `{api_url}/{api_key}/{routing_key}` with `entity_id` = event hash, `entity_display_name` = rendered `title`, `state_message` = rendered `content`, `host_name`, `monitoring_tool=Nightingale` and a `vo_annotate.u.Event details` link. Message types are fixed in the provider: S1→CRITICAL and S2/S3→WARNING. Whether WARNING creates an incident depends on the Splunk On-Call integration settings. A recovered event sends `message_type=RECOVERY` with the same `entity_id`, which resolves the incident. Test sends append a one-off nonce to `entity_id`, and `with_recovery` is supported.
+
+A 2xx response whose body says `"result":"failure"` is treated as a failure. HTTP 429 and 5xx are retried. Errors redact the API key, which is part of the request URL.
+
+Sources: [REST endpoint integration](https://help.splunk.com/en/splunk-observability-cloud/splunk-on-call/integrations-with-splunk-on-call/rest-endpoint-integration-for-splunk-on-call).
+
+## LINE
+
+`ident=line`, `request_type=line`. Uses the Messaging API of a LINE Official Account (LINE Notify was shut down in March 2025). Create a media type with `request_config.line_request_config`:
+
+| Field | Description |
+|---|---|
+| `channel_access_token` | Channel access token of the Messaging API channel; supports variable references |
+| `api_url` | Optional, defaults to `https://api.line.me` |
+| `proxy`, `timeout`, `retry_times`, `retry_sleep` | Shared network fields |
+
+Each rule supplies `to` — a user ID (`U...`), group ID (`C...`) or multi-person chat ID (`R...`), each followed by 32 hexadecimal characters — and an optional `bot_name`. The user must have added the official account as a friend, or the account must be a member of the group.
+
+Nightingale calls `POST /v2/bot/message/push` with one text message: a status symbol and title, the rendered `content` template and the event link, cut to 5000 UTF-16 code units without cutting the link. Every notification carries its own `X-Line-Retry-Key`, reused across retries, so a retry after a timeout or 5xx cannot deliver twice; a 409 response means an earlier attempt was accepted and counts as success. HTTP 429 is retried unless the body says the monthly limit is reached.
+
+Sources: [Send push message](https://developers.line.biz/en/reference/messaging-api/#send-push-message), [Retrying an API request](https://developers.line.biz/en/docs/messaging-api/retrying-api-request/).

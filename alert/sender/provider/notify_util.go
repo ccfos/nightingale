@@ -354,3 +354,137 @@ func eventDetailURL(siteURL string, event *models.AlertCurEvent) string {
 	}
 	return strings.TrimRight(siteURL, "/") + "/share/alert-his-events/" + strconv.FormatInt(event.Id, 10)
 }
+
+// truncateInBytes 按字节数截断并保证不截在一个字符中间，截断时以省略号结尾。
+// ntfy 这类按字节计长度的接口用它：一个中文字符占 3 个字节，按字符数截会超限。
+func truncateInBytes(s string, n int) (string, bool) {
+	if len(s) <= n {
+		return s, false
+	}
+	const ellipsis = "…"
+	limit := n - len(ellipsis)
+	if limit < 0 {
+		return "", true
+	}
+	cut := 0
+	for i := range s {
+		if i > limit {
+			break
+		}
+		cut = i
+	}
+	return s[:cut] + ellipsis, true
+}
+
+// truncateInUTF16 按 UTF-16 码元数截断（LINE 的文本长度按 UTF-16 计，一个 emoji 占 2 个码元）
+func truncateInUTF16(s string, n int) (string, bool) {
+	total := 0
+	for _, r := range s {
+		total++
+		if r > 0xFFFF {
+			total++
+		}
+	}
+	if total <= n {
+		return s, false
+	}
+	units := 0
+	for i, r := range s {
+		w := 1
+		if r > 0xFFFF {
+			w = 2
+		}
+		// 留一个码元给省略号
+		if units+w > n-1 {
+			return s[:i] + "…", true
+		}
+		units += w
+	}
+	return s, false
+}
+
+// redactSecrets 把报错文本里出现的凭证换成掩码，原文、查询串转义和路径转义三种写法都换。
+// 网络错误的文本会内嵌完整的请求地址，第三方的报错原文也可能回显凭证。太短的值不换：会误伤无关的文本。
+func redactSecrets(msg string, secrets ...string) string {
+	for _, s := range secrets {
+		if len(s) < 6 {
+			continue
+		}
+		for _, form := range []string{s, url.QueryEscape(s), url.PathEscape(s)} {
+			msg = strings.ReplaceAll(msg, form, redactedMark)
+		}
+	}
+	return msg
+}
+
+// namedTarget 是凭证类目标在通知记录里的写法：优先用规则里填的名称，没填时只留凭证的后 4 位
+func namedTarget(name, secret string) string {
+	if name = strings.TrimSpace(name); name != "" {
+		return name
+	}
+	return maskAPIKey(secret)
+}
+
+// checkAPIURL 校验媒介里可选的接口地址：空（用默认值）或变量引用直接放行，其余必须是 http(s) 地址
+func checkAPIURL(product, raw string) error {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || strings.Contains(raw, "{{") {
+		return nil
+	}
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return fmt.Errorf("%s url must start with http:// or https://", product)
+	}
+	return nil
+}
+
+// checkNativeRetry 重试次数和间隔不能是负数
+func checkNativeRetry(product string, n *models.NativeNetworkConfig) error {
+	if n != nil && (n.RetryTimes < 0 || n.RetrySleep < 0) {
+		return fmt.Errorf("%s retry settings must not be negative", product)
+	}
+	return nil
+}
+
+// eventActionURLs 返回事件详情页与「屏蔽 1 小时」的链接；站点地址为空或事件没有 ID 时都返回空串，
+// 恢复事件不给屏蔽链接
+func eventActionURLs(siteURL string, event *models.AlertCurEvent) (detail, silence string) {
+	detail = eventDetailURL(siteURL, event)
+	if detail == "" || event.IsRecovered {
+		return detail, ""
+	}
+	return detail, strings.TrimRight(siteURL, "/") + "/alert-mutes/add?__event_id=" + strconv.FormatInt(event.Id, 10)
+}
+
+// eventTime 是通知里展示的事件时间：触发时间，恢复事件用恢复时间
+func eventTime(event *models.AlertCurEvent) int64 {
+	if event.IsRecovered && event.LastEvalTime > 0 {
+		return event.LastEvalTime
+	}
+	return event.TriggerTime
+}
+
+// severityEmoji 是没有色条可用的媒介（LINE 文本）用来区分级别的符号
+func severityEmoji(severity int, recovered bool) string {
+	if recovered {
+		return "✅"
+	}
+	switch severity {
+	case 1:
+		return "🔴"
+	case 2:
+		return "🟠"
+	default:
+		return "🟡"
+	}
+}
+
+// firstEventTitle 取模板渲染出的标题，模板没有 title 字段时用兜底格式；压成一行并截到 max 个字符
+func firstEventTitle(req *NotifyRequest, event *models.AlertCurEvent, max int) string {
+	title := tplString(req.TplContent, "title")
+	if title == "" && event != nil {
+		title = eventTitle(event)
+	}
+	title, _ = truncateInRunes(strings.Join(strings.Fields(title), " "), max)
+	return title
+}
