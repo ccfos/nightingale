@@ -3780,8 +3780,8 @@ func isSlackIdent(ident string) bool {
 // 与 RenderEvent 的唯一区别是错误处理：这里把错误交给调用方，由调用方决定是继续
 // 投递（RenderEvent：把错误文本当正文，保持既有行为）还是中止（RenderEventStrict）。
 //
-// plain 为 true 时（原生对接的媒介，见 RenderEventPlain）无论 ident 是什么都走 text/template
-// 且不转义：这类媒介的 provider 自己用 json.Marshal 组包，再做一层 JSON 转义会把换行变成字面量 \n。
+// plain 为 true 时（见 rendersPlain）无论 ident 是什么都走 text/template
+// 且不转义：这类媒介的 provider 自己组包，再做一层 JSON 转义会把换行变成字面量 \n。
 var legacySlackFuncs = template.FuncMap{"slackEscape": func(v interface{}) interface{} { return v }}
 
 func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]interface{}, plain bool) (interface{}, error) {
@@ -3831,9 +3831,20 @@ func (t *MessageTemplate) RenderEventPlain(events []*AlertCurEvent, siteUrl stri
 	return t.renderEvent(events, siteUrl, true)
 }
 
+// rendersPlain reports whether the provider for requestType builds its own payload from the
+// rendered text (json.Marshal, or the smtp mail body), so the HTTP body escaping must be skipped.
+func rendersPlain(requestType string) bool {
+	switch requestType {
+	// TODO(dingtalkapp): add "dingtalkapp" here when DingtalkAppProvider is registered again.
+	case "smtp", "script", "wecomapp", "feishuapp":
+		return true
+	}
+	return IsNativeRequestType(requestType)
+}
+
 // RenderEventForChannel 按媒介的 request_type 选择渲染方式，dispatch 与各测试接口共用。
 func (t *MessageTemplate) RenderEventForChannel(requestType string, events []*AlertCurEvent, siteUrl string) map[string]interface{} {
-	return t.renderEvent(events, siteUrl, IsNativeRequestType(requestType))
+	return t.renderEvent(events, siteUrl, rendersPlain(requestType))
 }
 
 func (t *MessageTemplate) renderEvent(events []*AlertCurEvent, siteUrl string, plain bool) map[string]interface{} {
@@ -3874,7 +3885,7 @@ func (t *MessageTemplate) RenderEventStrict(events []*AlertCurEvent, siteUrl str
 
 // RenderEventStrictForChannel 是 RenderEventStrict 的按媒介版本，渲染方式同 RenderEventForChannel。
 func (t *MessageTemplate) RenderEventStrictForChannel(requestType string, events []*AlertCurEvent, siteUrl string) (map[string]interface{}, error) {
-	return t.renderEventStrict(events, siteUrl, IsNativeRequestType(requestType))
+	return t.renderEventStrict(events, siteUrl, rendersPlain(requestType))
 }
 
 func (t *MessageTemplate) renderEventStrict(events []*AlertCurEvent, siteUrl string, plain bool) (map[string]interface{}, error) {
