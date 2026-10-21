@@ -203,7 +203,7 @@ var I18N = `{
     "Dashboard - Add": "仪表盘 - 新增",
     "Dashboard - Modify": "仪表盘 - 修改",
     "Dashboard - Delete": "仪表盘 - 删除",
-    "Dashboard - View Public": "仪表盘 - 查看公开仪表盘",
+    "Dashboard - Public Filter (requires Dashboard - View)": "仪表盘 - 公开仪表盘筛选（需同时勾选「仪表盘 - 查看」）",
 
     "Alerting": "告警",
     "Alerting Rule - View": "告警规则 - 查看",
@@ -513,7 +513,7 @@ var I18N = `{
     "Dashboard - Add": "儀表板 - 新增",
     "Dashboard - Modify": "儀表板 - 修改",
     "Dashboard - Delete": "儀表板 - 删除",
-    "Dashboard - View Public": "儀表板 - 查看公開儀表板",
+    "Dashboard - Public Filter (requires Dashboard - View)": "儀表板 - 公開儀表板篩選（需同時勾選「儀表板 - 查看」）",
 
     "Alerting": "告警",
     "Alerting Rule - View": "告警規則 - 查看",
@@ -820,7 +820,7 @@ var I18N = `{
     "Dashboard - Add": "ダッシュボード - 追加",
     "Dashboard - Modify": "ダッシュボード - 修正",
     "Dashboard - Delete": "ダッシュボード - 削除",
-    "Dashboard - View Public": "ダッシュボード - 公開されたダッシュボードを見る",
+    "Dashboard - Public Filter (requires Dashboard - View)": "ダッシュボード - 公開ダッシュボードフィルター（「ダッシュボード - 閲覧」も必要）",
 
     "Alerting": "アラート",
     "Alerting Rule - View": "アラートルール - 閲覧",
@@ -1127,7 +1127,7 @@ var I18N = `{
     "Dashboard - Add": "Панель мониторинга - Добавить",
     "Dashboard - Modify": "Панель мониторинга - Изменить",
     "Dashboard - Delete": "Панель мониторинга - Удалить",
-    "Dashboard - View Public": "Панель мониторинга - Просмотр публичных панелей",
+    "Dashboard - Public Filter (requires Dashboard - View)": "Панель мониторинга - Фильтр публичных панелей (требуется «Панель мониторинга - Просмотр»)",
 
     "Alerting": "Оповещения",
     "Alerting Rule - View": "Правила оповещений - Просмотр",
