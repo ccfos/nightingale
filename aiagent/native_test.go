@@ -2,6 +2,10 @@ package aiagent
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -13,11 +17,13 @@ import (
 type scriptedNativeLLM struct {
 	rounds [][]llm.StreamChunk
 	call   int
+	reqs   []*llm.GenerateRequest // 每轮收到的请求，供断言回填内容
 }
 
 func (s *scriptedNativeLLM) Name() string { return "scripted-native" }
 
-func (s *scriptedNativeLLM) take() []llm.StreamChunk {
+func (s *scriptedNativeLLM) take(req *llm.GenerateRequest) []llm.StreamChunk {
+	s.reqs = append(s.reqs, req)
 	var chunks []llm.StreamChunk
 	if s.call < len(s.rounds) {
 		chunks = s.rounds[s.call]
@@ -28,8 +34,9 @@ func (s *scriptedNativeLLM) take() []llm.StreamChunk {
 
 func (s *scriptedNativeLLM) Generate(ctx context.Context, req *llm.GenerateRequest) (*llm.GenerateResponse, error) {
 	resp := &llm.GenerateResponse{}
-	for _, c := range s.take() {
+	for _, c := range s.take(req) {
 		resp.Content += c.Content
+		resp.ReasoningContent += c.Reasoning
 		resp.ToolCalls = append(resp.ToolCalls, c.ToolCalls...)
 		if c.FinishReason != "" {
 			resp.FinishReason = c.FinishReason
@@ -39,7 +46,7 @@ func (s *scriptedNativeLLM) Generate(ctx context.Context, req *llm.GenerateReque
 }
 
 func (s *scriptedNativeLLM) GenerateStream(ctx context.Context, req *llm.GenerateRequest) (<-chan llm.StreamChunk, error) {
-	chunks := s.take()
+	chunks := s.take(req)
 	out := make(chan llm.StreamChunk, len(chunks)+1)
 	for _, c := range chunks {
 		out <- c
@@ -180,6 +187,60 @@ func TestRunNativeLoop_ThinkingBlocksPersist(t *testing.T) {
 	tb := transcript[0].ThinkingBlocks
 	if len(tb) != 1 || tb[0].Signature != "sig-1" || tb[0].Thinking != "先读配置" {
 		t.Fatalf("thinking blocks must persist on the assistant turn with signature: %+v", tb)
+	}
+}
+
+// TestRunNativeLoop_ReasoningPassback 推理文本（OpenAI 兼容端点）随 assistant
+// 工具调用轮回填到本回合下一次请求，但不随 transcript 持久化（issue #3440）。
+// 流式与非流式两条路径都覆盖。
+func TestRunNativeLoop_ReasoningPassback(t *testing.T) {
+	for _, streaming := range []bool{true, false} {
+		fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+			{
+				{Reasoning: "需要先查 "},
+				{Reasoning: "CPU 指标"},
+				{ToolCalls: []llm.ToolCall{{ID: "c1", Name: "noop_lookup", Arguments: `{}`}}},
+			},
+			{{Content: "done"}},
+		}}
+		a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: fake}
+
+		var streamChan chan *StreamChunk
+		if streaming {
+			streamChan = make(chan *StreamChunk, 100)
+		}
+		resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "分析大盘"}}, nil, &ToolLoopConfig{
+			MaxIterations:  5,
+			StreamChan:     streamChan,
+			EmitTranscript: true,
+		})
+		if !resp.Success || len(fake.reqs) != 2 {
+			t.Fatalf("streaming=%v resp=%+v reqs=%d", streaming, resp, len(fake.reqs))
+		}
+		second := fake.reqs[1].Messages
+		var asst *llm.Message
+		for i := range second {
+			if second[i].Role == llm.RoleAssistant && len(second[i].ToolCalls) > 0 {
+				asst = &second[i]
+			}
+		}
+		if asst == nil || asst.ReasoningContent != "需要先查 CPU 指标" {
+			t.Fatalf("streaming=%v: tool-call turn must carry reasoning into the next request: %+v", streaming, asst)
+		}
+
+		if !streaming {
+			continue
+		}
+		close(streamChan)
+		for ch := range streamChan {
+			if ch.Type != StreamTypeTranscript {
+				continue
+			}
+			raw, _ := json.Marshal(ch.Transcript)
+			if strings.Contains(string(raw), "CPU 指标") {
+				t.Fatalf("reasoning must not be persisted in transcript: %s", raw)
+			}
+		}
 	}
 }
 
@@ -504,5 +565,53 @@ func TestRunNativeLoop_InterruptAfterExecutedWrite(t *testing.T) {
 	}
 	if toolTurn.Role != llm.RoleTool || toolTurn.ToolCallID != "c1" {
 		t.Fatalf("tool turn = %+v, want paired result for the executed call", toolTurn)
+	}
+}
+
+// TestRunNativeLoop_VLLMReasoningRoundTrip 真实 OpenAI 客户端对接模拟的 vLLM
+// SSE 端点（推理走 delta.reasoning）：工具续轮的请求体里推理以 reasoning 回填，
+// 不发 reasoning_content——vLLM Python 前端只读 reasoning（issue #3440）。
+func TestRunNativeLoop_VLLMReasoningRoundTrip(t *testing.T) {
+	var bodies []map[string]any
+	round := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		bodies = append(bodies, body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		if round == 0 {
+			fmt.Fprint(w, `data: {"choices":[{"delta":{"reasoning":"check cpu first"}}]}`+"\n\n"+
+				`data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"c1","type":"function","function":{"name":"noop_lookup","arguments":"{}"}}]},"finish_reason":"tool_calls"}]}`+"\n\n"+
+				"data: [DONE]\n\n")
+		} else {
+			fmt.Fprint(w, `data: {"choices":[{"delta":{"content":"done"},"finish_reason":"stop"}]}`+"\n\ndata: [DONE]\n\n")
+		}
+		round++
+	}))
+	defer srv.Close()
+
+	client, err := llm.NewOpenAI(&llm.Config{Model: "deepseek-v41", BaseURL: srv.URL + "/v1/chat/completions"}, srv.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: client}
+	streamChan := make(chan *StreamChunk, 100)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "q"}}, nil, &ToolLoopConfig{
+		MaxIterations: 5,
+		StreamChan:    streamChan,
+	})
+	close(streamChan)
+	if !resp.Success || len(bodies) != 2 {
+		t.Fatalf("resp=%+v requests=%d", resp, len(bodies))
+	}
+	msgs, _ := bodies[1]["messages"].([]any)
+	var asst map[string]any
+	for _, m := range msgs {
+		if mm, _ := m.(map[string]any); mm["role"] == "assistant" {
+			asst = mm
+		}
+	}
+	if asst["reasoning"] != "check cpu first" || asst["reasoning_content"] != nil {
+		t.Fatalf("assistant tool turn on the wire = %v", asst)
 	}
 }

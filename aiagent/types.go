@@ -343,4 +343,10 @@ type ChatMessage struct {
 	// transcript 持久化，回放时由 provider 适配层回填——开启 thinking 后工具
 	// 续轮的协议硬性要求（语义见 llm.ThinkingBlock）。
 	ThinkingBlocks []llm.ThinkingBlock `json:"thinking_blocks,omitempty"`
+
+	// ReasoningContent 仅 assistant 工具调用轮：OpenAI 兼容端点的推理文本，只在
+	// 本回合工具循环内回填给模型（语义见 llm.Message）。json:"-" 刻意不随
+	// transcript 持久化——DeepSeek 等要求新用户回合丢弃历史推理，也避免历史膨胀。
+	ReasoningContent string `json:"-"`
+	ReasoningField   string `json:"-"` // 端点所用推理字段名，回填时沿用（见 llm.Message）
 }

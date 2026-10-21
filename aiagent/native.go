@@ -17,7 +17,7 @@ import (
 //
 // 流式通道约定（与路由层抽卡/A2A 的既有契约严格一致；字段独占路由：
 // 思考与正文互斥，绝不双发）：
-//   - 推理增量（reasoning_content / 思考块）→ StreamTypeThinking（thinking 面板）。
+//   - 推理增量（reasoning_content / reasoning / 思考块）→ StreamTypeThinking（thinking 面板）。
 //   - 模型正文增量 → StreamTypeContent 实时流，直接落 content 通道。中间轮的
 //     pre-tool-call 评论同样进 content（轮间补段落分隔）。最终答案因此已逐
 //     token 下发——executeNativeWithDone 的 Done chunk 据 contentStreamed 打标，
@@ -80,7 +80,8 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 		default:
 		}
 
-		content, calls, thinking, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID, req.Params["lang"])
+		out, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID, req.Params["lang"])
+		content, calls := out.Content, out.ToolCalls
 		if err != nil {
 			resp.Error = fmt.Sprintf("LLM call failed at iteration %d: %v", iteration, err)
 			resp.Iterations = iteration
@@ -118,8 +119,9 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 		}
 
 		// ThinkingBlocks 随 assistant 轮进入上下文与 transcript：Anthropic 系开启
-		// thinking 后，续轮回填这些块（带签名）是 API 硬性要求。
-		asstTurn := ChatMessage{Role: "assistant", Content: content, ToolCalls: calls, ThinkingBlocks: thinking}
+		// thinking 后，续轮回填这些块（带签名）是 API 硬性要求。ReasoningContent
+		// （OpenAI 兼容端点）只进本回合上下文，不随 transcript 持久化。
+		asstTurn := ChatMessage{Role: "assistant", Content: content, ToolCalls: calls, ThinkingBlocks: out.ThinkingBlocks, ReasoningContent: out.Reasoning, ReasoningField: out.ReasoningField}
 		messages = append(messages, asstTurn)
 		turn := []ChatMessage{asstTurn}
 
@@ -215,17 +217,27 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 	return resp
 }
 
+// nativeLLMResult 是单次原生 LLM 调用聚合后的结果。
+type nativeLLMResult struct {
+	Content        string
+	ToolCalls      []llm.ToolCall
+	ThinkingBlocks []llm.ThinkingBlock // Anthropic 系：带签名，续轮回填
+	Reasoning      string              // OpenAI 兼容端点的推理文本，本回合工具续轮回填
+	ReasoningField string              // 推理所用字段名，回填时沿用
+	FinishReason   string
+}
+
 // callLLMNative 以原生 tools 参数调用 LLM 并聚合单次调用的结果（正文、
-// 工具调用、思考块）。
+// 工具调用、思考块、推理文本）。
 //
 // 流式时按字段独占路由（杜绝"思考面板 ≡ 回答"的双发）：推理增量走
 // StreamTypeThinking，正文增量走 StreamTypeContent，互斥。
 // 工具调用由各 provider 在流内聚合完整后整块抛出（OpenAI 按 index 归槽、
 // Claude 在 content_block_stop 收尾），这里直接累积即可；
 // Anthropic 系的完整思考块（含签名）在块收尾时整块到达，累积后随 assistant 轮回填。
-func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolDefs []llm.ToolDefinition, streamChan chan *StreamChunk, requestID, lang string) (string, []llm.ToolCall, []llm.ThinkingBlock, error) {
+func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolDefs []llm.ToolDefinition, streamChan chan *StreamChunk, requestID, lang string) (nativeLLMResult, error) {
 	if err := a.checkLLMClient(); err != nil {
-		return "", nil, nil, err
+		return nativeLLMResult{}, err
 	}
 
 	llmReq := buildLLMRequest(messages)
@@ -234,22 +246,27 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 	if streamChan == nil {
 		genResp, err := a.llmClient.Generate(ctx, llmReq)
 		if err != nil {
-			return "", nil, nil, err
+			return nativeLLMResult{}, err
 		}
 		content, err := applyFinishReason(genResp.Content, genResp.ToolCalls, genResp.FinishReason, lang, nil)
-		return content, genResp.ToolCalls, genResp.ThinkingBlocks, err
+		return nativeLLMResult{
+			Content:        content,
+			ToolCalls:      genResp.ToolCalls,
+			ThinkingBlocks: genResp.ThinkingBlocks,
+			Reasoning:      genResp.ReasoningContent,
+			ReasoningField: genResp.ReasoningField,
+			FinishReason:   genResp.FinishReason,
+		}, err
 	}
 
 	stream, err := a.llmClient.GenerateStream(ctx, llmReq)
 	if err != nil {
 		logger.Errorf("[Agent] GenerateStream(native) failed provider=%s: %v", a.llmClient.Name(), err)
-		return "", nil, nil, fmt.Errorf("LLM stream error: %w", err)
+		return nativeLLMResult{}, fmt.Errorf("LLM stream error: %w", err)
 	}
 
-	var content strings.Builder
-	var calls []llm.ToolCall
-	var thinking []llm.ThinkingBlock
-	var finishReason string
+	var content, reasoning strings.Builder
+	var out nativeLLMResult
 	emit := func(chunkType, delta string) {
 		streamChan <- &StreamChunk{
 			Type:      chunkType,
@@ -262,30 +279,36 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 	for chunk := range stream {
 		if chunk.Error != nil {
 			go drainStream(stream)
-			return content.String(), calls, thinking, fmt.Errorf("stream error: %w", chunk.Error)
+			out.Content, out.Reasoning = content.String(), reasoning.String()
+			return out, fmt.Errorf("stream error: %w", chunk.Error)
 		}
 		if chunk.Reasoning != "" {
+			reasoning.WriteString(chunk.Reasoning)
+			if out.ReasoningField == "" {
+				out.ReasoningField = chunk.ReasoningField
+			}
 			emit(StreamTypeThinking, chunk.Reasoning)
 		}
 		if chunk.ThinkingBlock != nil {
-			thinking = append(thinking, *chunk.ThinkingBlock)
+			out.ThinkingBlocks = append(out.ThinkingBlocks, *chunk.ThinkingBlock)
 		}
 		if chunk.Content != "" {
 			content.WriteString(chunk.Content)
 			emit(StreamTypeContent, chunk.Content)
 		}
 		if chunk.FinishReason != "" {
-			finishReason = chunk.FinishReason
+			out.FinishReason = chunk.FinishReason
 		}
-		calls = append(calls, chunk.ToolCalls...)
+		out.ToolCalls = append(out.ToolCalls, chunk.ToolCalls...)
 		if chunk.Done {
 			break
 		}
 	}
 
-	finalContent, err := applyFinishReason(content.String(), calls, finishReason, lang,
+	out.Reasoning = reasoning.String()
+	out.Content, err = applyFinishReason(content.String(), out.ToolCalls, out.FinishReason, lang,
 		func(note string) { emit(StreamTypeContent, note) })
-	return finalContent, calls, thinking, err
+	return out, err
 }
 
 // applyFinishReason 把 provider 上报的异常结束原因转成显式信号：拦截类
