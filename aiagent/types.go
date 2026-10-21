@@ -136,6 +136,10 @@ type AgentResponse struct {
 	Success    bool       `json:"success"`         // 是否成功
 	Error      string     `json:"error,omitempty"` // 错误信息
 
+	// Incomplete 工具循环因迭代预算用尽而结束：Content 是收尾总结或进度摘要，
+	// 不是完整回答。调用方据此区分"完成"与"部分完成"。
+	Incomplete bool `json:"incomplete,omitempty"`
+
 	// contentStreamed（仅包内）：流式模式下正文已逐 token 经 StreamTypeContent
 	// 下发。executeNativeWithDone 据此给 Done chunk 打标，路由层只把 Done.Content
 	// 当作解析/持久化用的权威正文，不再二次推流（防思考/回答整段重复）。
