@@ -210,7 +210,7 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 			messages = append(messages, capObservation(toolTurn, LiveObservationCapBytes))
 			// 读类工具同名同参重复调用：只在喂模型的投影里提示复用结果，不进
 			// steps/ToolResult/transcript（下一轮回放时"本轮"已不成立）。
-			appendToLastMessage(messages, repeatedCallNote(callCounts[callKey], lang))
+			appendToLastMessage(messages, repeatedCallNote(tc.Name, callCounts[callKey], lang))
 			turn = append(turn, toolTurn)
 		}
 

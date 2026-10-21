@@ -557,11 +557,11 @@ func TestRunNativeLoop_BudgetWarningAndRepeatNote(t *testing.T) {
 	if len(resp.Steps) != 4 {
 		t.Fatalf("read tool repeats must still execute: steps=%d", len(resp.Steps))
 	}
-	// 重复调用提示只进喂模型的上下文：第 2 次调用后的请求里最后一条观测带
-	// 提示，第 1 次之后的不带；steps（→ ToolResult/transcript）里永远不带。
+	// 重复调用提示只进喂模型的上下文：第 3 次调用后的请求里最后一条观测带
+	// 提示，第 2 次之后的不带；steps（→ ToolResult/transcript）里永远不带。
 	lastObs := func(req *llm.GenerateRequest) string { return req.Messages[len(req.Messages)-1].Content }
-	if strings.Contains(lastObs(fake.reqs[1]), "完全相同的参数") || !strings.Contains(lastObs(fake.reqs[2]), "调用该工具 2 次") {
-		t.Fatalf("repeat note: after 1st=%q after 2nd=%q", lastObs(fake.reqs[1]), lastObs(fake.reqs[2]))
+	if strings.Contains(lastObs(fake.reqs[2]), "完全相同的参数") || !strings.Contains(lastObs(fake.reqs[3]), "调用该工具 3 次") {
+		t.Fatalf("repeat note: after 2nd=%q after 3rd=%q", lastObs(fake.reqs[2]), lastObs(fake.reqs[3]))
 	}
 	for i, st := range resp.Steps {
 		if strings.Contains(st.Observation, "完全相同的参数") {
@@ -575,6 +575,33 @@ func TestRunNativeLoop_BudgetWarningAndRepeatNote(t *testing.T) {
 	}
 	if warned(fake.reqs[2]) || !warned(fake.reqs[3]) || strings.Contains(resp.Steps[2].Observation, "工具调用预算仅剩") {
 		t.Fatalf("budget warning must hit exactly the request after iteration 2 and stay out of steps")
+	}
+}
+
+// TestRunNativeLoop_RepeatNoteSkipsPollingAndWriteTools 轮询类工具同参重复是
+// 正常轮询、写类工具已由 dedup 提示，二者调用多少次都不追加重复调用提醒。
+func TestRunNativeLoop_RepeatNoteSkipsPollingAndWriteTools(t *testing.T) {
+	for _, name := range []string{"get_task_status", "create_noop_rule"} {
+		t.Run(name, func(t *testing.T) {
+			rounds := [][]llm.StreamChunk{}
+			for i := 0; i < 4; i++ {
+				tc := llm.ToolCall{ID: "c" + string(rune('a'+i)), Name: name, Arguments: `{"task_id":1}`}
+				rounds = append(rounds, []llm.StreamChunk{{ToolCalls: []llm.ToolCall{tc}}})
+			}
+			rounds = append(rounds, []llm.StreamChunk{{Content: "done"}})
+			fake := &scriptedNativeLLM{rounds: rounds}
+			a := &Agent{cfg: &AgentConfig{MaxIterations: 10, Timeout: 30000}, llmClient: fake}
+
+			resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "q"}}, nil, &ToolLoopConfig{MaxIterations: 10})
+			if !resp.Success {
+				t.Fatalf("resp = %+v", resp)
+			}
+			for i, req := range fake.reqs {
+				if last := req.Messages[len(req.Messages)-1].Content; strings.Contains(last, "完全相同的参数") {
+					t.Fatalf("request %d must not carry repeat note: %q", i, last)
+				}
+			}
+		})
 	}
 }
 

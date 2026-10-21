@@ -43,16 +43,29 @@ func appendToLastMessage(messages []ChatMessage, note string) {
 	messages[len(messages)-1].Content += note
 }
 
-// repeatedCallNote 同一工具循环内第 n 次（n>1）以完全相同参数调用读类工具时
-// 附在观测尾部的提醒。读类工具仍真实执行（轮询类工具需要重复读），只提示
-// 模型复用已有结果，打断"同一查询反复下钻"的空转。
-func repeatedCallNote(n int, lang string) string {
-	if n <= 1 {
+// repeatNoteThreshold 同名同参调用达到该次数才提醒：第 2 次多是正常复核，
+// 业界（Roo Code 3、OpenHands 4、Gemini CLI 5）也都不在第 2 次干预。
+const repeatNoteThreshold = 3
+
+// pollingTools 读实时状态、靠重复调用等待变化的工具：同参重复是正常轮询，
+// 不提醒。新增此类工具时加入这里。
+var pollingTools = map[string]bool{
+	"get_task_status":             true,
+	"probe_target_onboard_status": true,
+	"get_target_realtime_status":  true,
+}
+
+// repeatedCallNote 同一工具循环内第 n 次以完全相同参数调用读类工具时附在观测
+// 尾部的提醒，打断"同一查询反复下钻"的空转。工具仍真实执行。文案是条件式的：
+// 查询多用相对时间窗，同参结果未必相同，不能断言"结果不会变化"。写类工具
+// 由 dedup 复用首次结果并自带提示，轮询类工具本就需要重复，都不提醒。
+func repeatedCallNote(tool string, n int, lang string) string {
+	if n < repeatNoteThreshold || isWriteTool(tool) || pollingTools[tool] {
 		return ""
 	}
 	return LangText(lang,
-		fmt.Sprintf("\n\n(本轮已用完全相同的参数调用该工具 %d 次，结果不会变化，请直接基于已有结果推进)", n),
-		fmt.Sprintf("\n\n(This tool has been called %d times with identical arguments in this turn; the result will not change, proceed with what you have.)", n))
+		fmt.Sprintf("\n\n(本轮已用完全相同的参数调用该工具 %d 次。若结果与之前一致，请直接基于已有结果推进，不要再重复调用)", n),
+		fmt.Sprintf("\n\n(This tool has been called %d times with identical arguments in this turn. If the result matches what you already have, proceed with it instead of calling again.)", n))
 }
 
 // exhaustedHeader 预算用尽收尾时置于正文开头的确定性提示，保证无论模型
