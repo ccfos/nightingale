@@ -422,13 +422,13 @@ func TestRunNativeLoop_ContentStreamsWithToolsOffered(t *testing.T) {
 }
 
 // TestExecuteNativeWithDone_MaxIterationPartialGoesDone：max-iteration 截断且
-// 带部分产出时走 Done 而非 Error——路由层把 Done.Content 当唯一正文推流并
-// 持久化，用户能看到已有分析。
+// 带部分产出时走 Done 而非 Error，并打 incomplete 标。收尾调用拿不到正文时
+// 退化为确定性进度摘要（含最后一段非空评论），不再出现空白 "Last thought:"。
 func TestExecuteNativeWithDone_MaxIterationPartialGoesDone(t *testing.T) {
-	// 每轮都发工具调用，永不收敛 → 必然打到 MaxIterations
+	// 每轮都发工具调用，永不收敛 → 必然打到 MaxIterations；收尾轮无输出
 	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
 		{{Content: "查一下", ToolCalls: []llm.ToolCall{{ID: "c1", Name: "noop_lookup", Arguments: `{}`}}}},
-		{{Content: "再查", ToolCalls: []llm.ToolCall{{ID: "c2", Name: "noop_lookup", Arguments: `{}`}}}},
+		{{ToolCalls: []llm.ToolCall{{ID: "c2", Name: "noop_lookup", Arguments: `{}`}}}},
 	}}
 	a := &Agent{
 		cfg:       &AgentConfig{MaxIterations: 2, Timeout: 30000, UserPromptRendered: "排查问题"},
@@ -440,19 +440,141 @@ func TestExecuteNativeWithDone_MaxIterationPartialGoesDone(t *testing.T) {
 	close(streamChan)
 
 	var doneChunk *StreamChunk
+	var streamed strings.Builder
 	for ch := range streamChan {
 		switch ch.Type {
 		case StreamTypeError:
 			t.Fatalf("max-iteration partial must not surface as Error chunk: %+v", ch)
+		case StreamTypeContent:
+			streamed.WriteString(ch.Delta)
 		case StreamTypeDone:
 			doneChunk = ch
 		}
 	}
-	if doneChunk == nil || !strings.Contains(doneChunk.Content, "Analysis incomplete") {
-		t.Fatalf("Done chunk = %+v, want partial content from ExtractPartialResult", doneChunk)
+	if doneChunk == nil {
+		t.Fatal("missing Done chunk")
 	}
-	if streamed, _ := doneChunk.Metadata["content_streamed"].(bool); streamed {
-		t.Fatalf("partial body never streamed as final answer, content_streamed must be unset")
+	for _, want := range []string{"分析未完成", "未能生成最终结论", "noop_lookup×2", "查一下"} {
+		if !strings.Contains(doneChunk.Content, want) {
+			t.Fatalf("Done content missing %q: %q", want, doneChunk.Content)
+		}
+	}
+	if strings.Contains(doneChunk.Content, "Last thought:") {
+		t.Fatalf("blank Last thought must be gone: %q", doneChunk.Content)
+	}
+	if inc, _ := doneChunk.Metadata["incomplete"].(bool); !inc {
+		t.Fatalf("Done must carry incomplete=true: %+v", doneChunk.Metadata)
+	}
+	// header 与兜底摘要都已经推流：Done 打 content_streamed，路由层不再二次推流
+	if s, _ := doneChunk.Metadata["content_streamed"].(bool); !s {
+		t.Fatalf("finalize body is streamed, content_streamed must be set: %+v", doneChunk.Metadata)
+	}
+	if !strings.Contains(streamed.String(), "未能生成最终结论") {
+		t.Fatalf("fallback summary must be streamed: %q", streamed.String())
+	}
+	if len(fake.reqs) != 3 {
+		t.Fatalf("expected 2 loop rounds + 1 finalize call, got %d", len(fake.reqs))
+	}
+}
+
+// TestRunNativeLoop_FinalizeAfterMaxIterations 预算用尽后的收尾调用：最后一条
+// 观测尾部带收尾指令（不新开 user 轮），模型的收尾正文成为答案并前置
+// 确定性的未完成提示；收尾轮里的工具调用被忽略，transcript 不含收尾指令。
+func TestRunNativeLoop_FinalizeAfterMaxIterations(t *testing.T) {
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+		{{ToolCalls: []llm.ToolCall{{ID: "c1", Name: "noop_lookup", Arguments: `{"id":1}`}}}},
+		{{ToolCalls: []llm.ToolCall{{ID: "c2", Name: "noop_lookup", Arguments: `{"id":2}`}}}},
+		{{Reasoning: "汇总已有观测"}, {Content: "CPU 正常；内存待确认", ToolCalls: []llm.ToolCall{{ID: "c3", Name: "noop_lookup", Arguments: `{}`}}}},
+	}}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 2, Timeout: 30000}, llmClient: fake}
+
+	streamChan := make(chan *StreamChunk, 100)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{Params: map[string]string{"lang": "en_US"}}, []ChatMessage{{Role: "user", Content: "analyze"}}, nil, &ToolLoopConfig{
+		MaxIterations:        2,
+		StreamChan:           streamChan,
+		ExtractPartialResult: true,
+		EmitTranscript:       true,
+	})
+	close(streamChan)
+
+	if !resp.Incomplete || resp.Success || resp.Error == "" {
+		t.Fatalf("exhausted loop must be incomplete with error: %+v", resp)
+	}
+	if !strings.HasPrefix(resp.Content, "> ⚠️ Analysis incomplete") || !strings.HasSuffix(resp.Content, "CPU 正常；内存待确认") {
+		t.Fatalf("content = %q", resp.Content)
+	}
+	if len(resp.Steps) != 2 {
+		t.Fatalf("finalize-round tool calls must not execute: steps=%d", len(resp.Steps))
+	}
+	finalReq := fake.reqs[2].Messages
+	last := finalReq[len(finalReq)-1]
+	if last.Role != llm.RoleTool || !strings.Contains(last.Content, "budget is exhausted") {
+		t.Fatalf("finalize instruction must ride on the last tool observation: %+v", last)
+	}
+	// 下发顺序：收尾轮思考 → header → 收尾正文。header 必须与正文相邻（同一
+	// 正文段），否则路由层会把它切成独立段、与权威正文里的 header 重复展示。
+	var order []string
+	for ch := range streamChan {
+		switch ch.Type {
+		case StreamTypeThinking:
+			order = append(order, "thinking")
+		case StreamTypeContent:
+			if strings.Contains(ch.Delta, "Analysis incomplete") {
+				order = append(order, "header")
+			} else {
+				order = append(order, "content")
+			}
+		case StreamTypeTranscript:
+			raw, _ := json.Marshal(ch.Transcript)
+			if strings.Contains(string(raw), "budget is exhausted") {
+				t.Fatalf("finalize instruction must not be persisted: %s", raw)
+			}
+		}
+	}
+	if got := strings.Join(order, ","); got != "thinking,header,content" {
+		t.Fatalf("stream order = %s, want thinking,header,content", got)
+	}
+}
+
+// TestRunNativeLoop_BudgetWarningAndRepeatNote 剩余预算降到阈值时在观测尾部
+// 提醒收敛；读类工具同名同参重复调用仍执行，但观测尾部提示复用结果。
+func TestRunNativeLoop_BudgetWarningAndRepeatNote(t *testing.T) {
+	same := llm.ToolCall{Name: "noop_lookup", Arguments: `{"id":7}`}
+	rounds := [][]llm.StreamChunk{}
+	for i := 0; i < 4; i++ {
+		tc := same
+		tc.ID = "c" + string(rune('a'+i))
+		rounds = append(rounds, []llm.StreamChunk{{ToolCalls: []llm.ToolCall{tc}}})
+	}
+	rounds = append(rounds, []llm.StreamChunk{{Content: "done"}})
+	fake := &scriptedNativeLLM{rounds: rounds}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: fake}
+
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "q"}}, nil, &ToolLoopConfig{MaxIterations: 5})
+	if !resp.Success || resp.Incomplete {
+		t.Fatalf("resp = %+v", resp)
+	}
+	if len(resp.Steps) != 4 {
+		t.Fatalf("read tool repeats must still execute: steps=%d", len(resp.Steps))
+	}
+	// 重复调用提示只进喂模型的上下文：第 2 次调用后的请求里最后一条观测带
+	// 提示，第 1 次之后的不带；steps（→ ToolResult/transcript）里永远不带。
+	lastObs := func(req *llm.GenerateRequest) string { return req.Messages[len(req.Messages)-1].Content }
+	if strings.Contains(lastObs(fake.reqs[1]), "完全相同的参数") || !strings.Contains(lastObs(fake.reqs[2]), "调用该工具 2 次") {
+		t.Fatalf("repeat note: after 1st=%q after 2nd=%q", lastObs(fake.reqs[1]), lastObs(fake.reqs[2]))
+	}
+	for i, st := range resp.Steps {
+		if strings.Contains(st.Observation, "完全相同的参数") {
+			t.Fatalf("step %d observation must stay clean: %q", i, st.Observation)
+		}
+	}
+	// 第 3 轮（iteration=2）执行完后剩 2 轮 → 第 4 次请求的最后一条观测带提醒
+	warned := func(req *llm.GenerateRequest) bool {
+		m := req.Messages[len(req.Messages)-1]
+		return strings.Contains(m.Content, "工具调用预算仅剩")
+	}
+	if warned(fake.reqs[2]) || !warned(fake.reqs[3]) || strings.Contains(resp.Steps[2].Observation, "工具调用预算仅剩") {
+		t.Fatalf("budget warning must hit exactly the request after iteration 2 and stay out of steps")
 	}
 }
 

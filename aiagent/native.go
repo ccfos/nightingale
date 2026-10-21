@@ -70,6 +70,9 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 	resp := &AgentResponse{Steps: []ToolStep{}}
 	streaming := config.StreamChan != nil
 	dedup := newTurnWriteDeduper() // 写类工具幂等：整个循环（跨迭代）内同名同参只执行一次
+	callCounts := map[string]int{} // 同名同参调用计数（读类工具重复调用时提醒模型复用结果）
+	lang := req.Params["lang"]
+	trace := loopTraceID(config.RequestID, req.Params)
 
 	for iteration := 0; iteration < config.MaxIterations; iteration++ {
 		select {
@@ -80,7 +83,7 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 		default:
 		}
 
-		out, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID, req.Params["lang"])
+		out, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID, lang)
 		content, calls := out.Content, out.ToolCalls
 		if err != nil {
 			resp.Error = fmt.Sprintf("LLM call failed at iteration %d: %v", iteration, err)
@@ -88,7 +91,7 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 			return resp
 		}
 
-		logger.Debugf("%s iteration %d: content_len=%d, tool_calls=%d", config.LogPrefix, iteration, len(content), len(calls))
+		logLLMRound(config, trace, iteration, out)
 
 		// 无工具调用 = 最终答案（原生协议的天然完成信号）。
 		if len(calls) == 0 {
@@ -138,6 +141,10 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 				}
 			}
 
+			callKey := tc.Name + "\x00" + tc.Arguments
+			callCounts[callKey]++
+			toolStart := time.Now()
+
 			var observation string
 			if cached, hit := dedup.lookup(tc.Name, tc.Arguments); hit {
 				// 同轮同名同参的写工具重复调用：复用首次结果，不重复落库。
@@ -167,6 +174,7 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 				}
 				dedup.record(tc.Name, tc.Arguments, observation)
 			}
+			logToolCall(config, trace, iteration, tc, observation, callCounts[callKey], time.Since(toolStart))
 
 			// 工具渐进披露：load_skill 成功后把该
 			// 技能声明的 builtin_tools 注入工具表并重建 toolDefs，下一迭代原生
@@ -200,19 +208,26 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 			// 重复送进请求（跨轮的 projectHistory 此时还够不着它）。turn 进
 			// canonical transcript，永远收原文。
 			messages = append(messages, capObservation(toolTurn, LiveObservationCapBytes))
+			// 读类工具同名同参重复调用：只在喂模型的投影里提示复用结果，不进
+			// steps/ToolResult/transcript（下一轮回放时"本轮"已不成立）。
+			appendToLastMessage(messages, repeatedCallNote(callCounts[callKey], lang))
 			turn = append(turn, toolTurn)
 		}
 
 		// 结构化 transcript：assistant(tool_calls) + tool 结果轮成组持久化，
 		// 工具产物（如 proposal_id）下一轮直接以原生形态回放。
 		emitTranscript(config, turn...)
+
+		// 预算将尽：只在喂模型的 messages 里提醒收敛，transcript 不带。
+		appendToLastMessage(messages, budgetWarningNote(iteration, config.MaxIterations, lang))
 	}
 
 	resp.Error = fmt.Sprintf("reached maximum iterations (%d)", config.MaxIterations)
 	resp.Iterations = config.MaxIterations
+	resp.Incomplete = true
+	logger.Warningf("%s reached max iterations: trace=%s max=%d tool_calls=%d", config.LogPrefix, trace, config.MaxIterations, len(resp.Steps))
 	if config.ExtractPartialResult && len(resp.Steps) > 0 {
-		last := resp.Steps[len(resp.Steps)-1]
-		resp.Content = fmt.Sprintf("Analysis incomplete (max iterations reached). Last thought: %s", last.Thought)
+		a.finalizeExhaustedLoop(ctx, req, messages, toolDefs, config, resp)
 	}
 	return resp
 }
@@ -449,10 +464,9 @@ func (a *Agent) executeNativeWithDone(ctx context.Context, req *AgentRequest, rc
 	resp := a.executeNative(ctx, req, rc)
 
 	// 纯失败（LLM 错误/超时，无任何可展示产出）才走 Error chunk。带部分产出的
-	// max-iteration 截断（ExtractPartialResult 拼好的 "Analysis incomplete..."）
-	// 落到下面的 Done 分支：路由层把这类非流式正文当唯一拷贝推流并持久化
-	// （见 router 消费侧 "max-iteration partials" 注释），用户能看到已有分析
-	// 而非一句超时错误。
+	// max-iteration 截断（finalizeExhaustedLoop 的收尾总结/进度摘要）落到下面的
+	// Done 分支并打 incomplete 标：用户能看到已有分析而非一句超时错误，路由层
+	// 据标记把消息记为未完成，不与正常完成的回答混淆。
 	if resp.Error != "" && !resp.Success && resp.Content == "" {
 		streamChan <- &StreamChunk{
 			Type:      StreamTypeError,
@@ -476,6 +490,12 @@ func (a *Agent) executeNativeWithDone(ctx context.Context, req *AgentRequest, rc
 		// 把 Done.Content 仅当作解析/持久化用的权威正文（= 最终轮正文，不含中间轮
 		// 评论），不再二次推流——否则回答整段重复。
 		done.Metadata = map[string]interface{}{"content_streamed": true}
+	}
+	if resp.Incomplete {
+		if done.Metadata == nil {
+			done.Metadata = map[string]interface{}{}
+		}
+		done.Metadata["incomplete"] = true
 	}
 	streamChan <- done
 }
