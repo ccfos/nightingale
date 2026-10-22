@@ -152,6 +152,10 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "query.content is required")
 		return
 	}
+	// Page actions are advisory declarations from the active browser page.
+	// Keep usable entries and let an invalid declaration fall back to ordinary
+	// chat, matching fc-model-server's behavior.
+	req.Query.PageActions = models.ValidPageActions(req.Query.PageActions)
 
 	chat, err := models.AssistantChatCheckOwner(rt.Ctx, req.ChatID, me.Id)
 	ginx.Dangerous(err)
@@ -377,6 +381,21 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		SeqID:     msg.SeqID,
 	}
 
+	// An explicit explorer-query reference is enough to select this flow; the
+	// page type is optional in the query-dock payload. Keep page params out of
+	// creation preflight and unrelated actions.
+	useExplorerQuery := shouldUseExplorerQuery(actionKey, msg.Query)
+	if useExplorerQuery {
+		mergePageContext(chatReq.Context, msg.Query.PageFrom)
+	}
+	if len(msg.Query.References) > 0 {
+		// Preserve every client-selected reference in runtime context. Skill
+		// references additionally take the explicit preload path below; other
+		// reference types remain available to the prompt without inventing any
+		// automatic reference resolution behavior.
+		chatReq.Context["references"] = msg.Query.References
+	}
+
 	// Merge action.param into context — handlers consume Context as a generic
 	// map[string]interface{} (see ctxInt64 in aiagent/chat/actions.go), so
 	// param flows through verbatim. Adding a new param requires no router
@@ -488,6 +507,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 预载——系统提示词常驻技能目录，模型经 load_skill 自取。action handler 若
 	// 声明了 RequiredSkills，则覆盖上述两者——见 resolveSkillConfig。
 	skillCfg := rt.resolveSkillConfig(handler, chatReq, agent)
+	if useExplorerQuery {
+		// The query dock explicitly selects this one built-in skill. Keep this
+		// exception local so other actions retain their existing skill priority.
+		skillCfg = &aiagent.SkillConfig{SkillNames: []string{"explorer-query"}}
+	}
 	// 私有 skill 仅对授权团队可见：把当前用户在 AI 对话里看不到的私有 skill
 	// 从常驻技能目录里过滤掉（与运行时加载层同一份名单，见上 hiddenSkills）。
 	// denySkills 为 fail-closed 兜底：无法算出名单时目录留空 + 拒绝所有预载/注入。
@@ -515,10 +539,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	streamChan := make(chan *aiagent.StreamChunk, 100)
 	agentReq := &aiagent.AgentRequest{
-		Params:     inputs,
-		History:    history,
-		StreamChan: streamChan,
-		ParentCtx:  parentCtx,
+		Params:      inputs,
+		History:     history,
+		PageActions: msg.Query.PageActions,
+		StreamChan:  streamChan,
+		ParentCtx:   parentCtx,
 	}
 
 	_, processErr := agentRunner.Run(parentCtx, agentReq)
@@ -536,7 +561,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	var turnMsgs []aiagent.ChatMessage    // 本轮工具调用轮 + 结果轮，用于持久化结构化 transcript
 	var incomplete bool                   // 工具循环因迭代预算用尽而收尾（Done.Metadata["incomplete"]）
 	var pendingI *models.PendingInterrupt // 非空 = 本轮以人在环中断收尾（Step 4）
-	var interruptForm string              // input 类中断附带的 form_select 载荷（与 preflight 同契约）
+	var pageAction *models.AssistantPageActionCall
+	var interruptForm string // input 类中断附带的 form_select 载荷（与 preflight 同契约）
 	executedTools := false
 	firstTokenSeen := false
 	markFirstToken := func(kind string) {
@@ -655,6 +681,10 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				SeqID:              msg.SeqID,
 				ResumeAfterConfirm: resumeAfter,
 			}
+		case aiagent.StreamTypePageAction:
+			// The agent has selected a validated browser-owned action. It is
+			// terminal for this turn; this process never executes or replays it.
+			pageAction = chunk.PageAction
 		case aiagent.StreamTypeError:
 			errMsg := chunk.Error
 			if errMsg == "" {
@@ -707,7 +737,6 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			logger.Warningf("[Assistant] PublishResponse dashboard card chat=%s stream=%s: %v", msg.ChatID, streamID, err)
 		}
 	}
-
 	// 人在环中断收尾：在 finish 前压一个 input_required 帧（V=确认问题文本）。
 	// A2A bridge 据此把任务终态标成 TaskStateInputRequired，上游 agent 客户端
 	// （fc-model-server 等）会把确认问题转给真人回答——否则确认请求被当成普通
@@ -738,6 +767,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 兜底。终态写入和 finishMessage 保持一致用 Background。
 	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
 
+	// A page action replaces this turn's terminal text in persisted responses
+	// and history. Content chunks may already have been streamed before the
+	// tool call was observed, but they are not an authoritative final answer.
+	fullContent = pageActionTerminalContent(pageAction, fullContent)
+
 	// Build the authoritative final-answer markdown (the terminal block of the
 	// response list).
 	// Defensive: some models wrap a markdown final answer in a JSON envelope
@@ -761,6 +795,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 终答块。块结构与流式视图同构（前端/A2A 按 P:"step" 帧切段），历史回放不再
 	// 把多轮思考塌成单块、也不再丢失中间轮过渡语。
 	responses := assembleSegmentResponses(segAcc.segments, markdown, streamID, finalBodyStreamed)
+	if pageAction != nil {
+		responses = []models.AssistantMessageResponse{pageActionResponse(pageAction)}
+	}
 
 	// Append structured alert_rule cards for each successful create_alert_rule invocation.
 	for _, ruleJSON := range createdAlertRules {
@@ -822,9 +859,13 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	// Persist the full structured transcript (not just the final answer): prior
 	// history + the user query + this turn's tool-call/observation messages + a
-	// single terminal assistant message holding the cleaned final answer. Tool
+	// terminal assistant answer or non-replayable page-action summary. Tool
 	// products (e.g. proposal_id) thus survive into the next turn's replay.
-	newHistory := assembleTurnHistory(history, msg.Query.Content, turnMsgs, fullContent)
+	historyContent := fullContent
+	if pageAction != nil {
+		historyContent = pageActionHistoryContent(pageAction)
+	}
+	newHistory := assembleTurnHistory(history, msg.Query.Content, turnMsgs, historyContent)
 	env := aiagent.TranscriptEnvelope{SchemaVersion: aiagent.TranscriptSchemaVersion, Messages: newHistory}
 	msg.Extra.HistoryMessages, _ = json.Marshal(env)
 
