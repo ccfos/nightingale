@@ -307,8 +307,38 @@ func (t MsgTplList) IfUsed(nr *NotifyRule) bool {
 const (
 	DingtalkTitle   = `{{if $event.IsRecovered}} Recovered {{else}}Triggered{{end}}: {{$event.RuleName}}`
 	FeishuCardTitle = `🔔 {{$event.RuleName}}`
-	LarkCardTitle   = `🔔 {{$event.RuleName}}`
+	// JiraTitle 是 Jira 工单标题（summary）的默认模板，各语言共用：标题会进 Jira 的搜索和列表，保持英文
+	JiraTitle     = `[S{{$event.Severity}}] {{$event.RuleName}}{{if $event.TargetIdent}} · {{$event.TargetIdent}}{{end}}`
+	LarkCardTitle = `🔔 {{$event.RuleName}}`
 )
+
+// markdownAlertContent 是 Discord、Mattermost 共用的默认正文（标准 Markdown）。指标标签放在行内代码里：
+// 两边的 Markdown 都会把 __name__ 这类双下划线当成下划线或粗体吃掉。
+const markdownAlertContent = `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
+**Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
+**Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
+**Monitor Target**: {{$event.TargetIdent}}{{end}}   
+**Metrics**: ` + "`{{$event.TagsJSON}}`" + `{{if not $event.IsRecovered}}   
+**Trigger Value**: {{$event.TriggerValue}}{{end}}   
+{{if $event.IsRecovered}}**Recovery Time**: {{timeformat $event.LastEvalTime}}{{else}}**First Trigger Time**: {{timeformat $event.FirstTriggerTime}}{{end}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Time Since First Alert**: {{humanizeDurationInterface $time_duration}}
+**Send Time**: {{timestamp}}
+
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Silence 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}) | [View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`
+
+// Teams renders status, title, target, value/duration, time and actions in the
+// Adaptive Card shell. Keep the editable body focused on notes and extra labels.
+const teamsAlertContent = `{{if $event.RuleNote}}{{$event.RuleNote}}{{end}}{{$first := true}}{{range $k, $v := $labels}}{{if and (ne $k "rulename") (or (ne $k "ident") (not $event.TargetIdent))}}{{if $first}}{{if $event.RuleNote}}
+
+{{end}}**Labels**  {{else}} · {{end}}{{$first = false}}{{if eq $k "__name__"}}{{$v}}{{else}}{{$k}}={{$v}}{{end}}{{end}}{{end}}`
+
+// plainAlertContent 是 Pushover、ntfy、LINE 共用的默认正文（纯文本）。级别、状态和规则名由各媒介放进通知标题，
+// 事件详情链接也由媒介带上；正文保持简短，手机推送的预览只有几行。
+const plainAlertContent = `{{if $event.TargetIdent}}Target: {{$event.TargetIdent}}
+{{end}}{{if not $event.IsRecovered}}Value: {{$event.TriggerValue}}
+{{end}}Labels: {{$event.TagsJSON}}{{if $event.RuleNote}}
+Note: {{$event.RuleNote}}{{end}}
+{{if $event.IsRecovered}}Recovered at: {{timeformat $event.LastEvalTime}}{{else}}Triggered at: {{timeformat $event.TriggerTime}}{{end}}`
 
 var NewTplMap = map[string]string{
 	"ali-voice": `{{$event.RuleName}}`,
@@ -661,65 +691,23 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 [事件详情]({{.domain}}/share/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
-	SlackWebhook: `{{ if $event.IsRecovered }}
-{{- if ne $event.Cate "host"}}
-*Alarm cluster:* {{$event.Cluster}}{{end}}
-*Level Status:* S{{$event.Severity}} Recovered
-*Alarm name:* {{$event.RuleName}}
-*Recovery time:* {{timeformat $event.LastEvalTime}}
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}
-{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
-*Duration*: {{humanizeDurationInterface $time_duration}}
-*Alarm description:* *Service has been restored*
-{{- else }}
-{{- if ne $event.Cate "host"}}
-*Alarm cluster:* {{$event.Cluster}}{{end}}
-*Level Status:* S{{$event.Severity}} Triggered
-*Alarm name:* {{$event.RuleName}}
-*Trigger time:* {{timeformat $event.TriggerTime}}
-*Sending time:* {{timestamp}}
-*Trigger time value:* {{$event.TriggerValue}}
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}
-{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
-*Duration*: {{humanizeDurationInterface $time_duration}}
-{{if $event.RuleNote }}*Alarm description:* *{{$event.RuleNote}}*{{end}}
-{{- end -}}
+	// Slack 默认正文：统一「*标签*  值」的写法，最后一行是链接。级别和规则名已经在标题里；标签去掉与标题、监控对象重复的
+	// rulename、ident，指标名只写值；时间用 Slack 的 <!date> 按查看者时区显示，「多久前」会实时更新。
+	// Slack 会把超过 5 行的附件正文折叠成「Show more」：触发值和监控对象都短，合成一行，带告警描述时正文也只有 5 行。
+	SlackWebhook: `{{if $event.IsRecovered}}*Duration*  {{humanizeDurationInterface (sub $event.LastEvalTime $event.FirstTriggerTime)}}{{else if $event.TriggerValue}}*Value*  {{slackEscape $event.TriggerValue}}{{end}}{{if $event.TargetIdent}}{{if or $event.IsRecovered $event.TriggerValue}}      {{end}}*Target*  {{slackEscape $event.TargetIdent}}{{end}}{{if or $event.IsRecovered $event.TriggerValue $event.TargetIdent}}
+{{end}}{{$first := true}}{{range $k, $v := $labels}}{{if and (ne $k "rulename") (or (ne $k "ident") (not $event.TargetIdent))}}{{if $first}}*Labels*  {{else}}, {{end}}{{$first = false}}{{if eq $k "__name__"}}{{slackEscape $v}}{{else}}{{slackEscape $k}}={{slackEscape $v}}{{end}}{{end}}{{end}}{{if not $first}}
+{{end}}*Started*  {{if $event.IsRecovered}}<!date^{{$event.FirstTriggerTime}}^{date_short_pretty} at {time}|{{timeformat $event.FirstTriggerTime}}>{{else}}<!date^{{$event.FirstTriggerTime}}^{ago}|{{humanizeDurationInterface (sub now.Unix $event.FirstTriggerTime)}} ago> (<!date^{{$event.FirstTriggerTime}}^{date_short_pretty} at {time}|{{timeformat $event.FirstTriggerTime}}>){{end}}{{if and $event.RuleNote (not $event.IsRecovered)}}
+*Note*  {{slackEscape $event.RuleNote}}{{end}}
+<{{.domain}}/share/alert-his-events/{{$event.Id}}|Event details>{{if not $event.IsRecovered}}   <{{.domain}}/alert-mutes/add?__event_id={{$event.Id}}|Silence 1h>{{end}}   <{{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph|View graph>`,
+	Discord: markdownAlertContent,
+	Teams:   teamsAlertContent,
+	Twilio:  `Nightingale: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}. {{$event.RuleName}}.{{if $event.TargetIdent}} Target: {{$event.TargetIdent}}.{{end}}{{if and $event.TriggerValue (not $event.IsRecovered)}} Value: {{$event.TriggerValue}}.{{end}}`,
 
-<{{.domain}}/share/alert-his-events/{{$event.Id}}|Event Details> 
-<{{.domain}}/alert-mutes/add?__event_id={{$event.Id}}|Block for 1 hour> 
-<{{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph|View Curve>`,
-	Discord: `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
-**Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
-**Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
-**Monitor Target**: {{$event.TargetIdent}}{{end}}   
-**Metrics**: {{$event.TagsJSON}}{{if not $event.IsRecovered}}   
-**Trigger Value**: {{$event.TriggerValue}}{{end}}   
-{{if $event.IsRecovered}}**Recovery Time**: {{timeformat $event.LastEvalTime}}{{else}}**First Trigger Time**: {{timeformat $event.FirstTriggerTime}}{{end}}   
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Time Since First Alert**: {{humanizeDurationInterface $time_duration}}
-**Send Time**: {{timestamp}}
+	Pushover: plainAlertContent,
+	Ntfy:     plainAlertContent,
+	Line:     plainAlertContent,
 
-[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Silence 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}) | [View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
-
-	MattermostWebhook: `{{ if $event.IsRecovered }}
-{{- if ne $event.Cate "host"}}
-**Alarm cluster:** {{$event.Cluster}}{{end}}   
-**Level Status:** S{{$event.Severity}} Recovered   
-**Alarm name:** {{$event.RuleName}}   
-**Recovery time:** {{timeformat $event.LastEvalTime}}   
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
-**Alarm description:** **Service has been restored**   
-{{- else }}
-{{- if ne $event.Cate "host"}}   
-**Alarm cluster:** {{$event.Cluster}}{{end}}   
-**Level Status:** S{{$event.Severity}} Triggered   
-**Alarm name:** {{$event.RuleName}}   
-**Trigger time:** {{timeformat $event.TriggerTime}}   
-**Sending time:** {{timestamp}}   
-**Trigger time value:** {{$event.TriggerValue}}
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
-{{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
-{{- end -}}
-[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
+	MattermostWebhook: markdownAlertContent,
 
 	// Jira and JSMAlert share the same template format
 	Jira: `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
@@ -729,7 +717,8 @@ Metrics: {{$event.TagsJSON}}
 Annotations:
 {{- range $key, $val := $event.AnnotationsJSON}}
 {{$key}}: {{$val}}
-{{- end}}\n{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
+{{- end}}
+{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
 Trigger Value: {{$event.TriggerValue}}{{end}}
 Send Time: {{timestamp}}
 Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
@@ -738,8 +727,14 @@ Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 
 // Weight 用于页面元素排序，weight 越大 排序越靠后
 var MsgTplMap = []MessageTemplate{
-	{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Microsoft Teams", Ident: Teams, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -1004,13 +999,6 @@ var NewTplMapEn = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Too many alerts? Try <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> for alert aggregation, noise reduction and on-call scheduling!
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -1348,13 +1336,6 @@ var NewTplMapJa = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						アラートが多すぎませんか？アラートの集約・ノイズ削減・オンコール管理には <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> をお試しください。
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -1693,13 +1674,6 @@ var NewTplMapRu = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Слишком много оповещений? Попробуйте <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> — агрегация оповещений, снижение шума и дежурные расписания.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -2038,13 +2012,6 @@ var NewTplMapFr = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Trop d'alertes ? Essayez <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> pour les regrouper, réduire le bruit et organiser les astreintes.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -2383,13 +2350,6 @@ var NewTplMapKo = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						알림이 너무 많나요? <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a>로 알림을 묶고 잡음을 줄이고 당직 일정을 관리해 보세요.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -2728,13 +2688,6 @@ var NewTplMapId = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Terlalu banyak alert? Coba <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> untuk menggabungkan alert, mengurangi noise, dan mengatur jadwal jaga.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -3073,13 +3026,6 @@ var NewTplMapEs = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						¿Demasiadas alertas? Prueba <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> para agregar alertas, reducir el ruido y organizar las guardias.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -3418,13 +3364,6 @@ var NewTplMapPt = map[string]string{
 					</tbody>
 				</table>
 	
-				<hr>
-	
-				<footer>
-					<div class="copyright" style="font-style: italic">
-						Alertas demais? Experimente o <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> para agregar alertas, reduzir ruído e organizar plantões.
-					</div>
-				</footer>
 			</div>
 		</div>
 	</div>
@@ -3526,8 +3465,14 @@ Silenciar por 1 hora: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 // MsgTplMapEn 内置模板的英文版本，与 MsgTplMap 一一对应；
 // ident 追加 -en 后缀与中文版在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapEn = []MessageTemplate{
-	{Name: "Jira", Ident: Jira + "-en", NotifyChannelIdent: Jira, Lang: MsgTplLangEn, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-en", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEn, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Microsoft Teams", Ident: Teams + "-en", NotifyChannelIdent: Teams, Lang: MsgTplLangEn, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-en", NotifyChannelIdent: Twilio, Lang: MsgTplLangEn, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-en", NotifyChannelIdent: Pushover, Lang: MsgTplLangEn, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-en", NotifyChannelIdent: Ntfy, Lang: MsgTplLangEn, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-en", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangEn, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-en", NotifyChannelIdent: Line, Lang: MsgTplLangEn, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Jira", Ident: Jira + "-en", NotifyChannelIdent: Jira, Lang: MsgTplLangEn, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-en", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEn, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-en", NotifyChannelIdent: "callback", Lang: MsgTplLangEn, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-en", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangEn, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-en", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangEn, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3551,8 +3496,14 @@ var MsgTplMapEn = []MessageTemplate{
 // MsgTplMapJa 内置模板的日文版本，与 MsgTplMap 一一对应；
 // ident 追加 -ja 后缀与中英文版在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapJa = []MessageTemplate{
-	{Name: "Jira", Ident: Jira + "-ja", NotifyChannelIdent: Jira, Lang: MsgTplLangJa, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-ja", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangJa, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Microsoft Teams", Ident: Teams + "-ja", NotifyChannelIdent: Teams, Lang: MsgTplLangJa, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-ja", NotifyChannelIdent: Twilio, Lang: MsgTplLangJa, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-ja", NotifyChannelIdent: Pushover, Lang: MsgTplLangJa, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-ja", NotifyChannelIdent: Ntfy, Lang: MsgTplLangJa, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-ja", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangJa, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-ja", NotifyChannelIdent: Line, Lang: MsgTplLangJa, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Jira", Ident: Jira + "-ja", NotifyChannelIdent: Jira, Lang: MsgTplLangJa, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-ja", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangJa, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ja", NotifyChannelIdent: "callback", Lang: MsgTplLangJa, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-ja", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangJa, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-ja", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangJa, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3576,8 +3527,14 @@ var MsgTplMapJa = []MessageTemplate{
 // MsgTplMapRu 内置模板的俄文版本，与 MsgTplMap 一一对应；
 // ident 追加 -ru 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapRu = []MessageTemplate{
-	{Name: "Jira", Ident: Jira + "-ru", NotifyChannelIdent: Jira, Lang: MsgTplLangRu, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-ru", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangRu, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Microsoft Teams", Ident: Teams + "-ru", NotifyChannelIdent: Teams, Lang: MsgTplLangRu, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-ru", NotifyChannelIdent: Twilio, Lang: MsgTplLangRu, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-ru", NotifyChannelIdent: Pushover, Lang: MsgTplLangRu, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-ru", NotifyChannelIdent: Ntfy, Lang: MsgTplLangRu, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-ru", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangRu, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-ru", NotifyChannelIdent: Line, Lang: MsgTplLangRu, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Jira", Ident: Jira + "-ru", NotifyChannelIdent: Jira, Lang: MsgTplLangRu, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-ru", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangRu, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ru", NotifyChannelIdent: "callback", Lang: MsgTplLangRu, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-ru", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangRu, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-ru", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangRu, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3601,8 +3558,14 @@ var MsgTplMapRu = []MessageTemplate{
 // MsgTplMapFr 内置模板的fr_FR版本，与 MsgTplMap 一一对应；
 // ident 追加 -fr 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapFr = []MessageTemplate{
-	{Name: "Jira", Ident: Jira + "-fr", NotifyChannelIdent: Jira, Lang: MsgTplLangFr, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-fr", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangFr, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Microsoft Teams", Ident: Teams + "-fr", NotifyChannelIdent: Teams, Lang: MsgTplLangFr, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-fr", NotifyChannelIdent: Twilio, Lang: MsgTplLangFr, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-fr", NotifyChannelIdent: Pushover, Lang: MsgTplLangFr, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-fr", NotifyChannelIdent: Ntfy, Lang: MsgTplLangFr, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-fr", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangFr, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-fr", NotifyChannelIdent: Line, Lang: MsgTplLangFr, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Jira", Ident: Jira + "-fr", NotifyChannelIdent: Jira, Lang: MsgTplLangFr, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-fr", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangFr, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-fr", NotifyChannelIdent: "callback", Lang: MsgTplLangFr, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-fr", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangFr, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-fr", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangFr, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3626,8 +3589,14 @@ var MsgTplMapFr = []MessageTemplate{
 // MsgTplMapKo 内置模板的ko_KR版本，与 MsgTplMap 一一对应；
 // ident 追加 -ko 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapKo = []MessageTemplate{
-	{Name: "Jira", Ident: Jira + "-ko", NotifyChannelIdent: Jira, Lang: MsgTplLangKo, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-ko", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangKo, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Microsoft Teams", Ident: Teams + "-ko", NotifyChannelIdent: Teams, Lang: MsgTplLangKo, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-ko", NotifyChannelIdent: Twilio, Lang: MsgTplLangKo, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-ko", NotifyChannelIdent: Pushover, Lang: MsgTplLangKo, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-ko", NotifyChannelIdent: Ntfy, Lang: MsgTplLangKo, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-ko", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangKo, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-ko", NotifyChannelIdent: Line, Lang: MsgTplLangKo, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Jira", Ident: Jira + "-ko", NotifyChannelIdent: Jira, Lang: MsgTplLangKo, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-ko", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangKo, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ko", NotifyChannelIdent: "callback", Lang: MsgTplLangKo, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-ko", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangKo, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-ko", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangKo, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3651,8 +3620,14 @@ var MsgTplMapKo = []MessageTemplate{
 // MsgTplMapId 内置模板的id_ID版本，与 MsgTplMap 一一对应；
 // ident 追加 -id 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapId = []MessageTemplate{
-	{Name: "Jira", Ident: Jira + "-id", NotifyChannelIdent: Jira, Lang: MsgTplLangId, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-id", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangId, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Microsoft Teams", Ident: Teams + "-id", NotifyChannelIdent: Teams, Lang: MsgTplLangId, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-id", NotifyChannelIdent: Twilio, Lang: MsgTplLangId, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-id", NotifyChannelIdent: Pushover, Lang: MsgTplLangId, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-id", NotifyChannelIdent: Ntfy, Lang: MsgTplLangId, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-id", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangId, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-id", NotifyChannelIdent: Line, Lang: MsgTplLangId, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Jira", Ident: Jira + "-id", NotifyChannelIdent: Jira, Lang: MsgTplLangId, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-id", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangId, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-id", NotifyChannelIdent: "callback", Lang: MsgTplLangId, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-id", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangId, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-id", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangId, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3676,8 +3651,14 @@ var MsgTplMapId = []MessageTemplate{
 // MsgTplMapEs 内置模板的es_ES版本，与 MsgTplMap 一一对应；
 // ident 追加 -es 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapEs = []MessageTemplate{
-	{Name: "Jira", Ident: Jira + "-es", NotifyChannelIdent: Jira, Lang: MsgTplLangEs, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-es", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEs, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Microsoft Teams", Ident: Teams + "-es", NotifyChannelIdent: Teams, Lang: MsgTplLangEs, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-es", NotifyChannelIdent: Twilio, Lang: MsgTplLangEs, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-es", NotifyChannelIdent: Pushover, Lang: MsgTplLangEs, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-es", NotifyChannelIdent: Ntfy, Lang: MsgTplLangEs, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-es", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangEs, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-es", NotifyChannelIdent: Line, Lang: MsgTplLangEs, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Jira", Ident: Jira + "-es", NotifyChannelIdent: Jira, Lang: MsgTplLangEs, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-es", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEs, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-es", NotifyChannelIdent: "callback", Lang: MsgTplLangEs, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-es", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangEs, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-es", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangEs, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3701,8 +3682,14 @@ var MsgTplMapEs = []MessageTemplate{
 // MsgTplMapPt 内置模板的葡萄牙文版本，与 MsgTplMap 一一对应；
 // ident 追加 -pt 后缀与其他语言版本在 message_template 表中共存，NotifyChannelIdent 仍为渠道 ident
 var MsgTplMapPt = []MessageTemplate{
-	{Name: "Jira", Ident: Jira + "-pt", NotifyChannelIdent: Jira, Lang: MsgTplLangPt, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert + "-pt", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangPt, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "Microsoft Teams", Ident: Teams + "-pt", NotifyChannelIdent: Teams, Lang: MsgTplLangPt, Weight: 19, Content: map[string]string{"content": NewTplMap[Teams]}},
+	{Name: "Twilio", Ident: Twilio + "-pt", NotifyChannelIdent: Twilio, Lang: MsgTplLangPt, Weight: 20, Content: map[string]string{"content": NewTplMap[Twilio]}},
+	{Name: "Pushover", Ident: Pushover + "-pt", NotifyChannelIdent: Pushover, Lang: MsgTplLangPt, Weight: 22, Content: map[string]string{"content": NewTplMap[Pushover]}},
+	{Name: "ntfy", Ident: Ntfy + "-pt", NotifyChannelIdent: Ntfy, Lang: MsgTplLangPt, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
+	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-pt", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangPt, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "LINE", Ident: Line + "-pt", NotifyChannelIdent: Line, Lang: MsgTplLangPt, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Jira", Ident: Jira + "-pt", NotifyChannelIdent: Jira, Lang: MsgTplLangPt, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert + "-pt", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangPt, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-pt", NotifyChannelIdent: "callback", Lang: MsgTplLangPt, Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook + "-pt", NotifyChannelIdent: MattermostWebhook, Lang: MsgTplLangPt, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot + "-pt", NotifyChannelIdent: MattermostBot, Lang: MsgTplLangPt, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -3840,10 +3827,15 @@ func isSlackIdent(ident string) bool {
 //
 // 与 RenderEvent 的唯一区别是错误处理：这里把错误交给调用方，由调用方决定是继续
 // 投递（RenderEvent：把错误文本当正文，保持既有行为）还是中止（RenderEventStrict）。
-func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]interface{}) (interface{}, error) {
+//
+// plain 为 true 时（原生对接的媒介，见 RenderEventPlain）无论 ident 是什么都走 text/template
+// 且不转义：这类媒介的 provider 自己用 json.Marshal 组包，再做一层 JSON 转义会把换行变成字面量 \n。
+var legacySlackFuncs = template.FuncMap{"slackEscape": func(v interface{}) interface{} { return v }}
+
+func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]interface{}, plain bool) (interface{}, error) {
 	text := strings.Join(append(GetDefs(renderData), msgTpl), "")
 
-	if t.NotifyChannelIdent == "email" {
+	if plain || t.NotifyChannelIdent == "email" {
 		tpl, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse template: %v", err)
@@ -3855,7 +3847,9 @@ func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]
 		return body.String(), nil
 	}
 
-	tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+	// 旧版通用 HTTP 媒介和原生 Slack 共用同一份模板：这条路径靠 html/template 转义、再把 &lt; 还原，
+	// slackEscape 在这里原样输出，否则 > 和 & 会被转义两次，Slack 上显示成字面的 &gt; 和 &amp;
+	tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Funcs(legacySlackFuncs).Parse(text)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template: %v", err)
 	}
@@ -3874,6 +3868,23 @@ func (t *MessageTemplate) renderField(key, msgTpl string, renderData map[string]
 }
 
 func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent, siteUrl string) map[string]interface{} {
+	return t.renderEvent(events, siteUrl, false)
+}
+
+// RenderEventPlain 按纯文本渲染（text/template，不做 JSON 转义，字段值为 string），
+// 供原生对接的媒介（models.IsNativeRequestType）使用。旧版通用 HTTP 媒介与新版原生媒介
+// 共用同一批模板行（按 notify_channel_ident 取），所以渲染方式只能由调用方按媒介决定，
+// 不能看模板的 ident。
+func (t *MessageTemplate) RenderEventPlain(events []*AlertCurEvent, siteUrl string) map[string]interface{} {
+	return t.renderEvent(events, siteUrl, true)
+}
+
+// RenderEventForChannel 按媒介的 request_type 选择渲染方式，dispatch 与各测试接口共用。
+func (t *MessageTemplate) RenderEventForChannel(requestType string, events []*AlertCurEvent, siteUrl string) map[string]interface{} {
+	return t.renderEvent(events, siteUrl, IsNativeRequestType(requestType))
+}
+
+func (t *MessageTemplate) renderEvent(events []*AlertCurEvent, siteUrl string, plain bool) map[string]interface{} {
 	if t == nil {
 		return nil
 	}
@@ -3883,13 +3894,13 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent, siteUrl string) m
 	// event 内容渲染到 messageTemplate
 	tplContent := make(map[string]interface{})
 	for key, msgTpl := range t.Content {
-		val, err := t.renderField(key, msgTpl, renderData)
+		val, err := t.renderField(key, msgTpl, renderData, plain)
 		if err != nil {
 			logger.Errorf("failed to render template field %s: %v events: %v", key, err, events)
 			// slack 分支历来是把出错的字段整个丢掉（下游按缺字段处理），其余分支把错误
 			// 文本当正文发出去。这个差异是既有行为，这里只是显式化，没有改变它。
 			// 需要如实报错的场景请用 RenderEventStrict。
-			if !isSlackIdent(t.NotifyChannelIdent) {
+			if plain || !isSlackIdent(t.NotifyChannelIdent) {
 				tplContent[key] = err.Error()
 			}
 			continue
@@ -3906,6 +3917,15 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent, siteUrl string) m
 // 会让模板写错时接口仍报成功，而第三方群里收到的是一段 "failed to parse template: ..."，
 // 错误只在真实消息里才看得见。
 func (t *MessageTemplate) RenderEventStrict(events []*AlertCurEvent, siteUrl string) (map[string]interface{}, error) {
+	return t.renderEventStrict(events, siteUrl, false)
+}
+
+// RenderEventStrictForChannel 是 RenderEventStrict 的按媒介版本，渲染方式同 RenderEventForChannel。
+func (t *MessageTemplate) RenderEventStrictForChannel(requestType string, events []*AlertCurEvent, siteUrl string) (map[string]interface{}, error) {
+	return t.renderEventStrict(events, siteUrl, IsNativeRequestType(requestType))
+}
+
+func (t *MessageTemplate) renderEventStrict(events []*AlertCurEvent, siteUrl string, plain bool) (map[string]interface{}, error) {
 	if t == nil {
 		return nil, nil
 	}
@@ -3922,7 +3942,7 @@ func (t *MessageTemplate) RenderEventStrict(events []*AlertCurEvent, siteUrl str
 
 	tplContent := make(map[string]interface{}, len(keys))
 	for _, key := range keys {
-		val, err := t.renderField(key, t.Content[key], renderData)
+		val, err := t.renderField(key, t.Content[key], renderData, plain)
 		if err != nil {
 			return nil, fmt.Errorf("template field %q: %v", key, err)
 		}

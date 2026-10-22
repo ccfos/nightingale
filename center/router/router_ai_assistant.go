@@ -555,6 +555,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	var createdAlertRules []string
 	var createdDashboards []string
 	var turnMsgs []aiagent.ChatMessage    // 本轮工具调用轮 + 结果轮，用于持久化结构化 transcript
+	var incomplete bool                   // 工具循环因迭代预算用尽而收尾（Done.Metadata["incomplete"]）
 	var pendingI *models.PendingInterrupt // 非空 = 本轮以人在环中断收尾（Step 4）
 	var pageAction *models.AssistantPageActionCall
 	var interruptForm string // input 类中断附带的 form_select 载荷（与 preflight 同契约）
@@ -688,6 +689,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			rt.finishMessage(state, streamID, 500, errMsg)
 			return
 		case aiagent.StreamTypeDone:
+			// Budget-exhausted partial (finalize summary): still rendered as a
+			// normal answer, but flagged so clients can tell it from a complete one.
+			if inc, _ := chunk.Metadata["incomplete"].(bool); inc {
+				incomplete = true
+			}
 			// Streamed path (Metadata.content_streamed): the body already
 			// streamed through StreamTypeContent frame by frame, possibly
 			// preceded by intermediate-round commentary. Done.Content is the
@@ -845,6 +851,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	msg.IsFinish = true
 	msg.CurStep = ""
 	msg.ExecutedTools = executedTools
+	msg.Incomplete = incomplete
 
 	// Persist the full structured transcript (not just the final answer): prior
 	// history + the user query + this turn's tool-call/observation messages + a

@@ -58,7 +58,8 @@ type AssistantMessage struct {
 	ErrTitle        string                     `json:"err_title"`
 	ErrMsg          string                     `json:"err_msg"`
 	ExecutedTools   bool                       `json:"executed_tools"`
-	Extra           AssistantMessageExtra      `json:"-"` // internal, not exposed to frontend
+	Incomplete      bool                       `json:"incomplete,omitempty"` // tool loop hit its iteration budget: Response is a partial conclusion (ErrCode stays 0 so it still renders)
+	Extra           AssistantMessageExtra      `json:"-"`                    // internal, not exposed to frontend
 }
 
 type AssistantMessageExtra struct {

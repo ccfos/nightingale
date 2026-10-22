@@ -369,7 +369,17 @@ func (m *AlertMute) Update(ctx *ctx.Context, arm AlertMute) error {
 	return DB(ctx).Model(m).Select("*").Updates(arm).Error
 }
 
+func (m *AlertMute) normalizeEmptyTags() {
+	// Omitted or null tags mean no tag filtering. Keep the API field an array,
+	// including for legacy rows, so clients can safely iterate over it.
+	if len(m.Tags) == 0 || strings.TrimSpace(string(m.Tags)) == "null" {
+		m.Tags = ormx.JSONArr("[]")
+	}
+}
+
 func (m *AlertMute) FE2DB() error {
+	m.normalizeEmptyTags()
+
 	idsBytes, err := json.Marshal(m.DatasourceIdsJson)
 	if err != nil {
 		return err
@@ -394,6 +404,8 @@ func (m *AlertMute) FE2DB() error {
 }
 
 func (m *AlertMute) DB2FE() error {
+	m.normalizeEmptyTags()
+
 	err := json.Unmarshal([]byte(m.DatasourceIds), &m.DatasourceIdsJson)
 	if err != nil {
 		return err

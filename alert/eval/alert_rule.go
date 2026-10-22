@@ -3,6 +3,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -83,6 +84,13 @@ func (s *Scheduler) LoopSyncRules(ctx context.Context) {
 }
 
 func (s *Scheduler) syncAlertRules() {
+	// Last resort: a panic here must not take the whole engine down; the next tick retries.
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Errorf("sync alert rules panic: %v\n%s", r, debug.Stack())
+		}
+	}()
+
 	ids := s.alertRuleCache.GetRuleIds()
 	alertRuleWorkers := make(map[string]*AlertRuleWorker)
 	externalRuleWorkers := make(map[string]*process.Processor)
@@ -150,10 +158,12 @@ func (s *Scheduler) syncAlertRules() {
 
 	for hash, rule := range alertRuleWorkers {
 		if _, has := s.alertRules[hash]; !has {
-			rule.Prepare()
-			time.Sleep(time.Duration(20) * time.Millisecond)
-			rule.Start()
-			s.alertRules[hash] = rule
+			guardRule(rule.Key()+" start", func() {
+				rule.Prepare()
+				time.Sleep(time.Duration(20) * time.Millisecond)
+				rule.Start()
+				s.alertRules[hash] = rule
+			})
 		}
 	}
 
@@ -164,7 +174,25 @@ func (s *Scheduler) syncAlertRules() {
 		}
 	}
 
+	s.syncExternalProcessors(externalRuleWorkers)
+}
+
+// guardRule recovers from a panic in fn, so that a rule failing to start only skips itself
+// instead of aborting the whole sync.
+func guardRule(what string, fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Errorf("%s panic: %v\n%s", what, r, debug.Stack())
+		}
+	}()
+	fn()
+}
+
+func (s *Scheduler) syncExternalProcessors(externalRuleWorkers map[string]*process.Processor) {
+	// Unlock via defer: syncAlertRules recovers from panics, a lock left held would hang every later sync.
 	s.ExternalProcessors.ExternalLock.Lock()
+	defer s.ExternalProcessors.ExternalLock.Unlock()
+
 	for key, processor := range externalRuleWorkers {
 		if curProcessor, has := s.ExternalProcessors.Processors[key]; has {
 			// rule存在,且hash一致,认为没有变更,这里可以根据需求单独实现一个关联数据更多的hash函数
@@ -183,5 +211,4 @@ func (s *Scheduler) syncAlertRules() {
 			delete(s.ExternalProcessors.Processors, key)
 		}
 	}
-	s.ExternalProcessors.ExternalLock.Unlock()
 }
