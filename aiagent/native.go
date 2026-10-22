@@ -169,6 +169,14 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 					// publish an orphan tool-result frame to stream consumers.
 					continue
 				}
+				// Preserve only completed tool calls before the terminal page action.
+				// The page action itself stays out of the replayable transcript.
+				if len(turn) > 1 {
+					completed := turn[1:]
+					asst := turn[0]
+					asst.ToolCalls = asst.ToolCalls[:len(completed)]
+					emitTranscript(config, append([]ChatMessage{asst}, completed...)...)
+				}
 				emitPageAction(config, call)
 				resp.Content = ""
 				resp.Iterations = iteration + 1

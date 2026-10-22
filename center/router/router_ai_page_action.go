@@ -26,6 +26,15 @@ func mergePageContext(dst map[string]interface{}, page models.AssistantPageInfo)
 	}
 }
 
+// shouldUseExplorerQuery reports whether this turn belongs to the query-dock
+// flow: the default chat path plus an explicit explorer-query skill reference.
+// The page type is deliberately not part of the decision — the query dock sends
+// only page_from.url and page_from.param (no page field), so requiring it would
+// silently disable the whole flow.
+func shouldUseExplorerQuery(actionKey string, query models.AssistantMessageQuery) bool {
+	return actionKey == string(models.ActionKeyGeneralChat) && hasExplorerQueryReference(query)
+}
+
 func hasExplorerQueryReference(query models.AssistantMessageQuery) bool {
 	for _, name := range query.ExplicitSkillNames() {
 		if name == "explorer-query" {
@@ -53,4 +62,17 @@ func pageActionTerminalContent(call *models.AssistantPageActionCall, content str
 		return ""
 	}
 	return content
+}
+
+// pageActionHistoryContent keeps the requested operation in later turns
+// without recording a replayable browser tool call or claiming it executed.
+func pageActionHistoryContent(call *models.AssistantPageActionCall) string {
+	if call == nil {
+		return ""
+	}
+	args, err := json.Marshal(map[string]interface{}{"name": call.Name, "args": call.Args})
+	if err != nil {
+		return "A page action was requested; its browser execution result is unavailable."
+	}
+	return "Requested page action (browser execution result unavailable): " + string(args)
 }

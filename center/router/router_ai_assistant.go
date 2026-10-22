@@ -381,9 +381,13 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		SeqID:     msg.SeqID,
 	}
 
-	// page_from.param is the authoritative snapshot of the current page. Keep
-	// its datasource, expression and time window available to the prompt.
-	mergePageContext(chatReq.Context, msg.Query.PageFrom)
+	// An explicit explorer-query reference is enough to select this flow; the
+	// page type is optional in the query-dock payload. Keep page params out of
+	// creation preflight and unrelated actions.
+	useExplorerQuery := shouldUseExplorerQuery(actionKey, msg.Query)
+	if useExplorerQuery {
+		mergePageContext(chatReq.Context, msg.Query.PageFrom)
+	}
 	if len(msg.Query.References) > 0 {
 		// Preserve every client-selected reference in runtime context. Skill
 		// references additionally take the explicit preload path below; other
@@ -503,7 +507,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 预载——系统提示词常驻技能目录，模型经 load_skill 自取。action handler 若
 	// 声明了 RequiredSkills，则覆盖上述两者——见 resolveSkillConfig。
 	skillCfg := rt.resolveSkillConfig(handler, chatReq, agent)
-	if actionKey == string(models.ActionKeyGeneralChat) && msg.Query.PageFrom.Page == models.PageTypeExplorer && hasExplorerQueryReference(msg.Query) {
+	if useExplorerQuery {
 		// The query dock explicitly selects this one built-in skill. Keep this
 		// exception local so other actions retain their existing skill priority.
 		skillCfg = &aiagent.SkillConfig{SkillNames: []string{"explorer-query"}}
@@ -855,9 +859,13 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	// Persist the full structured transcript (not just the final answer): prior
 	// history + the user query + this turn's tool-call/observation messages + a
-	// single terminal assistant message holding the cleaned final answer. Tool
+	// terminal assistant answer or non-replayable page-action summary. Tool
 	// products (e.g. proposal_id) thus survive into the next turn's replay.
-	newHistory := assembleTurnHistory(history, msg.Query.Content, turnMsgs, fullContent)
+	historyContent := fullContent
+	if pageAction != nil {
+		historyContent = pageActionHistoryContent(pageAction)
+	}
+	newHistory := assembleTurnHistory(history, msg.Query.Content, turnMsgs, historyContent)
 	env := aiagent.TranscriptEnvelope{SchemaVersion: aiagent.TranscriptSchemaVersion, Messages: newHistory}
 	msg.Extra.HistoryMessages, _ = json.Marshal(env)
 

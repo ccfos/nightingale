@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -35,6 +36,71 @@ func TestHasExplorerQueryReference(t *testing.T) {
 	}
 	if hasExplorerQueryReference(models.AssistantMessageQuery{References: []models.AssistantMessageReference{{Type: "skill", Skill: models.AssistantSkillReference{Name: "other"}}}}) {
 		t.Fatal("unrelated reference was treated as explorer-query")
+	}
+}
+
+// TestShouldUseExplorerQuery_RealQueryDockPayload decodes the request body from
+// doc/api/ai-query-dock-page-action.md §2.1 verbatim: page_from carries only url
+// and param, with no page field. The frontend builds the same shape, so the flow
+// must be selected without a page type; creation routing must not inherit it.
+func TestShouldUseExplorerQuery_RealQueryDockPayload(t *testing.T) {
+	const body = `{
+		"chat_id": "f994e541-c52b-4900-8b29-49f8c49d3de7",
+		"query": {
+			"content": "<@explorer-query> 帮我生成一个查询主机 CPU 使用率的语句",
+			"references": [
+				{"id": "explorer-query", "name": "explorer-query", "type": "skill", "skill": {"name": "explorer-query"}}
+			],
+			"action": {},
+			"page_from": {
+				"url": "/metric/explorer",
+				"param": {"datasource_type": "prometheus", "datasource_id": 849, "query": "", "start": "1789565434", "end": "1789569034"}
+			},
+			"page_actions": [
+				{"name": "set_metric_query", "description": "Fill and run a PromQL expression in the current query panel.", "inputSchema": {"type": "object", "properties": {"promql": {"type": "string"}}, "required": ["promql"]}}
+			]
+		}
+	}`
+	var req models.AssistantSendRequest
+	if err := json.Unmarshal([]byte(body), &req); err != nil {
+		t.Fatalf("decode documented payload: %v", err)
+	}
+	// Guard the fixture itself: the frontend never sends a page field.
+	if req.Query.PageFrom.Page != "" {
+		t.Fatalf("fixture must mirror the query-dock payload; page = %q", req.Query.PageFrom.Page)
+	}
+	if !shouldUseExplorerQuery(string(models.ActionKeyGeneralChat), req.Query) {
+		t.Fatal("general chat with the documented explorer-query reference did not select the explorer-query flow")
+	}
+	if shouldUseExplorerQuery(string(models.ActionKeyCreation), req.Query) {
+		t.Fatal("creation must not preload explorer-query or merge the page snapshot")
+	}
+}
+
+// TestPageActionHistoryContent locks the persisted-history shape: a plain
+// assistant summary carrying the requested action and args, with no call id or
+// tool-call fields that replay could turn back into a browser operation.
+func TestPageActionHistoryContent(t *testing.T) {
+	if got := pageActionHistoryContent(nil); got != "" {
+		t.Fatalf("nil call content = %q, want empty", got)
+	}
+	call := &models.AssistantPageActionCall{
+		CallID: "call-1", Name: "set_metric_query", Args: map[string]interface{}{"promql": "up"},
+	}
+	content := pageActionHistoryContent(call)
+	if !strings.Contains(content, "set_metric_query") || !strings.Contains(content, `"promql":"up"`) {
+		t.Fatalf("history content = %q, want action name and args", content)
+	}
+	if strings.Contains(content, "call-1") {
+		t.Fatalf("history content leaks the tool call id: %q", content)
+	}
+	history := assembleTurnHistory(nil, "生成查询", nil, content)
+	if len(history) != 2 {
+		t.Fatalf("history = %+v, want user turn + assistant summary", history)
+	}
+	last := history[1]
+	if last.Role != "assistant" || last.Content != content || len(last.ToolCalls) != 0 {
+		t.Fatalf("terminal turn = %+v, want non-replayable assistant summary", last)
 	}
 }
 
