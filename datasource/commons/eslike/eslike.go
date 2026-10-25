@@ -54,6 +54,11 @@ type Query struct {
 	MaxShard int `json:"max_shard" mapstructure:"max_shard"`
 
 	SearchAfter *SearchAfter `json:"search_after" mapstructure:"search_after"`
+
+	// PitID 非空时按 point in time 搜索，SearchFunc 收到的 indices 为空，不能再带 index 和 indices options。
+	// 搜索响应里的新 id 会写回调用方传入的 *Query。
+	PitID        string `json:"-" mapstructure:"-"`
+	PitKeepAlive string `json:"-" mapstructure:"-"`
 }
 
 type SortField struct {
@@ -62,7 +67,9 @@ type SortField struct {
 }
 
 type SearchAfter struct {
-	SortFields  []SortField   `json:"sort_fields" mapstructure:"sort_fields"`   // 指定排序字段, 一般是timestamp:desc, _index:asc, _id:asc 三者组合，构成唯一的排序字段
+	// SortFields 为空时默认按 timestamp, _index, _id 排序。
+	// 对 _id 排序会加载 fielddata，大结果集可能触发 circuit breaker，深分页应在 point in time 下用 _shard_doc。
+	SortFields  []SortField   `json:"sort_fields" mapstructure:"sort_fields"`
 	SearchAfter []interface{} `json:"search_after" mapstructure:"search_after"` // 指定排序字段的搜索值，搜索值必须和sort_fields的顺序一致，为上一次查询的最后一条日志的值
 }
 
@@ -722,8 +729,10 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 		param.MaxShard = maxShard
 	}
 	// from+size 分页方式获取日志，受es 的max_result_window参数限制，默认最多返回1w条日志, 可以使用search_after方式获取更多日志
+	// point in time 下结果集固定，总数只需在第一页统计，后续页返回的 total 为 0。
+	trackTotalHits := param.PitID == "" || param.SearchAfter == nil || len(param.SearchAfter.SearchAfter) == 0
 	source := elastic.NewSearchSource().
-		TrackTotalHits(true).
+		TrackTotalHits(trackTotalHits).
 		Query(queryString).
 		Size(param.Limit)
 	// 是否使用search_after方式
@@ -742,11 +751,20 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	} else {
 		source = source.From(param.P).Sort(param.DateField, param.Ascending)
 	}
+	searchIndices := indexArr
+	if param.PitID != "" {
+		source = source.PointInTime(elastic.NewPointInTimeWithKeepAlive(param.PitID, param.PitKeepAlive))
+		searchIndices = nil
+	}
 	sourceBytes, _ := json.Marshal(source)
-	result, err := search(ctx, indexArr, source, param.Timeout, param.MaxShard)
+	result, err := search(ctx, searchIndices, source, param.Timeout, param.MaxShard)
 	if err != nil {
 		logx.Warningf(ctx, "query_log source:%s error:%v", string(sourceBytes), err)
 		return nil, 0, err
+	}
+	// 每次搜索都可能换新的 pit id，后续请求和关闭都要用最新的。
+	if q, ok := queryParam.(*Query); ok && result.PitId != "" {
+		q.PitID = result.PitId
 	}
 
 	// 检查是否有 shard failures，有部分数据时仅记录警告继续处理
