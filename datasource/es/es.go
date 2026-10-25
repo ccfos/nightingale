@@ -330,17 +330,20 @@ func (e *Elasticsearch) QueryLog(ctx context.Context, queryParam interface{}) ([
 		return e.queryLogViaSQL(ctx, sqlReq)
 	}
 
-	searchFunc := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
-		return e.Client.Search().
-			Index(indices...).
-			IgnoreUnavailable(true).
-			MaxConcurrentShardRequests(maxShard).
-			Source(source).
-			Timeout(fmt.Sprintf("%ds", timeout)).
-			Do(ctx)
-	}
+	return eslike.QueryLog(ctx, queryParam, e.Timeout, e.Version, e.MaxShard, e.searchLog)
+}
 
-	return eslike.QueryLog(ctx, queryParam, e.Timeout, e.Version, e.MaxShard, searchFunc)
+// searchLog 执行日志查询。indices 为空表示按 point in time 搜索，
+// 此时 index 和 indices options 已在打开 point in time 时指定，请求里不能再带。
+func (e *Elasticsearch) searchLog(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
+	svc := e.Client.Search().
+		MaxConcurrentShardRequests(maxShard).
+		Source(source).
+		Timeout(fmt.Sprintf("%ds", timeout))
+	if len(indices) > 0 {
+		svc = svc.Index(indices...).IgnoreUnavailable(true)
+	}
+	return svc.Do(ctx)
 }
 
 func (e *Elasticsearch) QueryFieldValue(indexes []string, field string, query string) ([]string, error) {
