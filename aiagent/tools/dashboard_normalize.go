@@ -3,12 +3,9 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/toolkits/pkg/logger"
 )
-
-const n9eVersion = "3.4.0"
 
 // defaultTimeseriesCustom timeseries 面板的默认 custom 配置
 var defaultTimeseriesCustom = map[string]interface{}{
@@ -25,12 +22,12 @@ var defaultTimeseriesCustom = map[string]interface{}{
 
 // defaultStatCustom stat 面板的默认 custom 配置
 var defaultStatCustom = map[string]interface{}{
-	"version":    n9eVersion,
-	"textMode":   "valueAndName",
-	"colorMode":  "value",
-	"calc":       "lastNotNull",
-	"colSpan":    1,
-	"textSize":   map[string]interface{}{},
+	"version":     n9eVersion,
+	"textMode":    "valueAndName",
+	"colorMode":   "value",
+	"calc":        "lastNotNull",
+	"colSpan":     1,
+	"textSize":    map[string]interface{}{},
 	"orientation": "",
 }
 
@@ -284,7 +281,7 @@ func normalizeTarget(t map[string]interface{}, index int) int {
 			delete(t, "ref")
 			fixed++
 		} else {
-			t["refId"] = string(rune('A' + index))
+			t["refId"] = refIDAt(index)
 			fixed++
 		}
 	}
@@ -299,16 +296,6 @@ func normalizeTarget(t map[string]interface{}, index int) int {
 }
 
 // --- helpers ---
-
-func stringVal(m map[string]interface{}, key string) string {
-	switch v := m[key].(type) {
-	case string:
-		return v
-	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	}
-	return ""
-}
 
 func setDefault(m map[string]interface{}, key string, val interface{}) {
 	if _, ok := m[key]; !ok {

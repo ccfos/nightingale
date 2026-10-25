@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	"github.com/ccfos/nightingale/v6/models"
 )
 
 // scriptedNativeLLM is a fake llm.LLM scripted per round with raw stream chunks,
@@ -13,6 +14,95 @@ import (
 type scriptedNativeLLM struct {
 	rounds [][]llm.StreamChunk
 	call   int
+}
+
+func TestRunNativeLoop_PageActionEndsWithoutTranscript(t *testing.T) {
+	action := models.AssistantPageAction{
+		Name:        "set_metric_query",
+		Description: "Fill a PromQL expression.",
+		InputSchema: []byte(`{"type":"object","properties":{"promql":{"type":"string"}},"required":["promql"]}`),
+	}
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{{
+		{ToolCalls: []llm.ToolCall{{ID: "call-page", Name: pageActionToolName, Arguments: `{"name":"set_metric_query","args":{"promql":"up"}}`}}},
+	}}}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
+	streamChan := make(chan *StreamChunk, 10)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{PageActions: []models.AssistantPageAction{action}},
+		[]ChatMessage{{Role: "user", Content: "生成查询"}}, buildNativeToolDefs([]AgentTool{pageActionTool([]models.AssistantPageAction{action})}),
+		&ToolLoopConfig{MaxIterations: 3, StreamChan: streamChan, EmitTranscript: true, Tools: []AgentTool{pageActionTool([]models.AssistantPageAction{action})}})
+	close(streamChan)
+	if !resp.Success || resp.Content != "" || fake.call != 1 {
+		t.Fatalf("response = %+v, calls=%d", resp, fake.call)
+	}
+	var got *models.AssistantPageActionCall
+	for chunk := range streamChan {
+		if chunk.Type == StreamTypeTranscript {
+			t.Fatalf("page action must not enter transcript: %+v", chunk.Transcript)
+		}
+		if chunk.Type == StreamTypeToolCall {
+			t.Fatalf("page action must not emit a server tool event: %+v", chunk)
+		}
+		if chunk.Type == StreamTypePageAction {
+			got = chunk.PageAction
+		}
+	}
+	if got == nil || got.CallID != "call-page" || got.Name != "set_metric_query" || got.Args["promql"] != "up" {
+		t.Fatalf("page action = %+v", got)
+	}
+}
+
+func TestRunNativeLoop_PageActionFailureEntersTranscript(t *testing.T) {
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+		{{ToolCalls: []llm.ToolCall{{ID: "call-page", Name: pageActionToolName, Arguments: `{"name":"undeclared"}`}}}},
+		{{Content: "请提供可执行的动作。"}},
+	}}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
+	streamChan := make(chan *StreamChunk, 10)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{PageActions: []models.AssistantPageAction{{Name: "set_metric_query"}}},
+		[]ChatMessage{{Role: "user", Content: "生成查询"}}, nil,
+		&ToolLoopConfig{MaxIterations: 3, StreamChan: streamChan, EmitTranscript: true})
+	close(streamChan)
+	if !resp.Success || resp.Content != "请提供可执行的动作。" {
+		t.Fatalf("response = %+v", resp)
+	}
+	var transcript []ChatMessage
+	for chunk := range streamChan {
+		if chunk.Type == StreamTypeTranscript {
+			transcript = chunk.Transcript
+		}
+		if chunk.Type == StreamTypeToolCall && chunk.Content == pageActionToolName {
+			t.Fatalf("failed page action must not emit a server tool event")
+		}
+		if chunk.Type == StreamTypeToolResult && chunk.Metadata["tool"] == pageActionToolName {
+			t.Fatalf("failed page action must not emit an orphan tool result: %+v", chunk)
+		}
+	}
+	if len(transcript) != 2 || len(transcript[0].ToolCalls) != 1 || transcript[0].ToolCalls[0].Name != pageActionToolName || transcript[1].ToolName != pageActionToolName || !strings.Contains(transcript[1].Content, "was not declared") {
+		t.Fatalf("transcript = %+v", transcript)
+	}
+}
+
+func TestPageActionSystemPromptUsesPageSchema(t *testing.T) {
+	actions := []models.AssistantPageAction{{
+		Name:        "set_metric_query",
+		Description: "Fill query.",
+		InputSchema: []byte(`{"type":"object","properties":{"promql":{"type":"string"}},"required":["promql"]}`),
+	}}
+	prompt := pageActionSystemPrompt(actions)
+	for _, want := range []string{"## Page actions", "set_metric_query: Fill query.", `"promql":{"type":"string"}`, "Do not claim that the page executed"} {
+		if !strings.Contains(prompt, want) {
+			t.Fatalf("page action prompt missing %q: %s", want, prompt)
+		}
+	}
+	tool := pageActionTool(actions)
+	required := tool.InputSchema["required"].([]string)
+	if len(required) != 1 || required[0] != "name" {
+		t.Fatalf("page action required = %#v", required)
+	}
+	call, err := resolvePageActionCall(actions, "call-1", `{"name":"set_metric_query"}`)
+	if err != nil || len(call.Args) != 0 {
+		t.Fatalf("optional args call = %#v, %v", call, err)
+	}
 }
 
 func (s *scriptedNativeLLM) Name() string { return "scripted-native" }
