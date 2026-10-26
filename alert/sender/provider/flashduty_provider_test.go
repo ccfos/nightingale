@@ -1,12 +1,12 @@
 package provider
 
 import (
-	"os"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"io"
-	
+	"os"
+
 	"time"
 
 	"net/http"
@@ -44,8 +44,8 @@ func TestFlashDutyUploadBeforeNotify(t *testing.T) {
 			return
 		}
 		sends++
-		if uploads != 1 {
-			t.Errorf("uploads before send: %d", uploads)
+		if uploads != sends {
+			t.Errorf("uploads before send: got %d, want %d", uploads, sends)
 		}
 		if r.URL.Path != "/event/push" || r.URL.Query().Get("channel_id") == "" {
 			t.Errorf("unexpected event URL: %s", r.URL)
@@ -83,7 +83,7 @@ func TestFlashDutyUploadBeforeNotify(t *testing.T) {
 	if result.Err != nil {
 		t.Fatal(result.Err)
 	}
-	if uploads != 1 || sends != 2 {
+	if uploads != 2 || sends != 2 {
 		t.Fatalf("uploads=%d sends=%d", uploads, sends)
 	}
 	if len(original.ShotImageBase64) != 1 || len(original.RuleConfigJson.(map[string]interface{})) != 1 {
@@ -221,7 +221,7 @@ func TestFlashDutyOptionalImageFailures(t *testing.T) {
 			if result.Err != nil || attempts != 3 || channels["1"] != 1 || channels["2"] != 1 {
 				t.Fatalf("result=%+v attempts=%d channels=%v", result, attempts, channels)
 			}
-			wantUploads := 1
+			wantUploads := 2
 			if failure == "non-object config" || failure == "malformed stored config" {
 				wantUploads = 0
 			}

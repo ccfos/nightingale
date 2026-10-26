@@ -38,10 +38,6 @@ func (p *FlashDutyProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	if req.Config.RequestConfig == nil || req.Config.RequestConfig.FlashDutyRequestConfig == nil {
 		return &NotifyResult{Target: "", Response: "", Err: errors.New("flashduty request config not found")}
 	}
-	events, err := prepareFlashDutyEvents(req.Config.RequestConfig.FlashDutyRequestConfig, req.Events, req.HttpClient)
-	if err != nil {
-		return &NotifyResult{Err: err}
-	}
 	channelIDs := req.FlashDutyChannelIDs
 	if len(channelIDs) == 0 {
 		channelIDs = []int64{0}
@@ -52,7 +48,7 @@ func (p *FlashDutyProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	for _, channelID := range channelIDs {
 		target := strconv.FormatInt(channelID, 10)
 		targets = append(targets, target)
-		resp, err := sendFlashDutyEvents(req.Config.RequestConfig.FlashDutyRequestConfig, events, channelID, req.HttpClient)
+		resp, err := SendFlashDuty(req.Config.RequestConfig.FlashDutyRequestConfig, req.Events, channelID, req.HttpClient)
 		if err != nil {
 			// 单个 channel 失败不要中断其他 channel 的发送
 			failedMsgs = append(failedMsgs, fmt.Sprintf("channel %s: %v", target, err))
@@ -66,14 +62,6 @@ func (p *FlashDutyProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 		aggErr = errors.New(strings.Join(failedMsgs, " | "))
 	}
 	return &NotifyResult{Target: strings.Join(targets, ","), Response: strings.Join(responses, "; "), Err: aggErr}
-}
-
-func SendFlashDuty(config *models.FlashDutyRequestConfig, events []*models.AlertCurEvent, flashDutyChannelID int64, client *http.Client) (string, error) {
-	events, err := prepareFlashDutyEvents(config, events, client)
-	if err != nil {
-		return "", err
-	}
-	return sendFlashDutyEvents(config, events, flashDutyChannelID, client)
 }
 
 // Prepare private event copies so other notification channels can still use the screenshots.
@@ -202,10 +190,10 @@ func uploadFlashDutyImage(integrationURL, imageBase64 string, client *http.Clien
 	return result.Data.ImageKey, nil
 }
 
-func sendFlashDutyEvents(config *models.FlashDutyRequestConfig, events []*models.AlertCurEvent, flashDutyChannelID int64, client *http.Client) (string, error) {
-	// todo 每一个 channel 批量发送事件
-	if client == nil {
-		return "", fmt.Errorf("http client not found")
+func SendFlashDuty(config *models.FlashDutyRequestConfig, events []*models.AlertCurEvent, flashDutyChannelID int64, client *http.Client) (string, error) {
+	events, err := prepareFlashDutyEvents(config, events, client)
+	if err != nil {
+		return "", err
 	}
 
 	body, err := json.Marshal(events)
