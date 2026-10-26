@@ -545,3 +545,47 @@ func compareFormattedValues(a, b FormattedValue) bool {
 	}
 	return true
 }
+
+// TestAdaptivePrecision 覆盖固定小数位会把真实值"抹平"的场景：
+// SLA 99.9996 命中 `< 99.9998` 时不能显示成 100.00，否则现场值与阈值自相矛盾。
+func TestAdaptivePrecision(t *testing.T) {
+	tests := []struct {
+		name     string
+		unit     string
+		decimals int
+		value    float64
+		want     string
+	}{
+		{"SLA 被 2 位小数抹成 100", "none", 2, 99.9996, "99.9996"},
+		{"百分比同样扩展精度", "percent", 2, 99.9996, "99.9996%"},
+		{"percentUnit 先乘 100 再扩展", "percentUnit", 2, 0.999996, "99.9996%"},
+		{"小错误率不能显示成 0.00", "none", 2, 0.004, "0.004"},
+		{"负数小值", "none", 2, -0.001, "-0.001"},
+		{"自定义单位", "req/s", 2, 0.0004, "0.0004 req/s"},
+		{"扩到上限仍为零则保持原精度", "none", 2, 37.00000001, "37.00"},
+		{"末位恰好为 0 不算抹平", "none", 2, 85.2034567, "85.20"},
+		{"末位恰好为 0 不算抹平（3 位有效小数）", "none", 2, 37.104, "37.10"},
+		{"末位为 0 时的浮点尾巴不放大", "none", 2, 37.100001, "37.10"},
+		{"百分比末位为 0 同样不扩展", "percent", 2, 85.2004567, "85.20%"},
+		{"抹成整数才扩展", "none", 2, 100.001, "100.001"},
+		{"1 位小数抹成整数", "none", 1, 99.96, "99.96"},
+		{"精确值不变", "none", 2, 100, "100.00"},
+		{"零不变", "none", 2, 0, "0.00"},
+		{"普通读数不多出小数", "none", 2, 37.126, "37.13"},
+		{"末位非零即使被四舍五入也不扩展", "none", 2, 99.994, "99.99"},
+		{"decimals 为 0 不扩展", "none", 0, 99.6, "100"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ValueFormatter(tt.unit, tt.decimals, tt.value)
+			if got.Text != tt.want {
+				t.Errorf("ValueFormatter(%q, %d, %v).Text = %q, want %q", tt.unit, tt.decimals, tt.value, got.Text, tt.want)
+			}
+		})
+	}
+
+	// Value 字段应与 Text 显示的数字一致，而不是按原始小数位四舍五入后的 100
+	if got := ValueFormatter("percent", 2, 99.9996); got.Value != 99.9996 {
+		t.Errorf("percent Value = %v, want 99.9996", got.Value)
+	}
+}

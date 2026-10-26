@@ -157,6 +157,16 @@ func (rt *Router) recordingRulePutFields(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "fields empty")
 	}
 
+	if v, ok := f.Fields["cron_pattern"]; ok {
+		pattern, isStr := v.(string)
+		if !isStr {
+			ginx.Bomb(http.StatusBadRequest, "cron_pattern must be a string")
+		}
+		if err := models.ValidateCronPattern(pattern); err != nil {
+			ginx.Bomb(http.StatusBadRequest, "%s", err.Error())
+		}
+	}
+
 	f.Fields["update_by"] = c.MustGet("username").(string)
 	f.Fields["update_at"] = time.Now().Unix()
 

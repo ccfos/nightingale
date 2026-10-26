@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/ccfos/nightingale/v6/center/cconf"
@@ -55,12 +54,15 @@ func (rt *Router) tdengineTables(c *gin.Context) {
 		return
 	}
 
-	database := fmt.Sprintf("%s.tables", f.Database)
+	var (
+		tables []string
+		err    error
+	)
 	if f.IsStable {
-		database = fmt.Sprintf("%s.stables", f.Database)
+		tables, err = datasource.(*tdengine.TDengine).ShowSTables(rt.Ctx.Ctx, f.Database)
+	} else {
+		tables, err = datasource.(*tdengine.TDengine).ShowTables(rt.Ctx.Ctx, f.Database)
 	}
-
-	tables, err := datasource.(*tdengine.TDengine).ShowTables(rt.Ctx.Ctx, database)
 	ginx.NewRender(c).Data(tables, err)
 }
 

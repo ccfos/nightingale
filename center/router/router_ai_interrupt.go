@@ -92,14 +92,20 @@ var (
 	}
 )
 
+// normalizeApprovalText 把用户回复归一成整串比对用的形态。两张确认词表
+// （approveExact / orphanApproveExact）共用它，避免各写一份 trim 集后漂移。
+// trim 集含反引号/引号：A2A 协议提示写的是 Reply exactly `approve`，上游
+// LLM 把 exactly 理解为连反引号照抄时回复是 "`approve`"——自己的协议提示
+// 必须自己接得住，否则白白多烧一次 LLM 分类调用。
+func normalizeApprovalText(text string) string {
+	t := strings.ToLower(strings.TrimSpace(text))
+	return strings.Trim(t, "。.!！~ `\"'“”‘’「」")
+}
+
 // classifyApprovalExact 整串精确匹配层。命不中返回 unclear，由调用方决定是否
 // 升级 LLM 分类。纯函数，可表测。reject 先查：两表撞词时拒绝优先。
 func classifyApprovalExact(text string) string {
-	t := strings.ToLower(strings.TrimSpace(text))
-	// trim 集含反引号/引号：A2A 协议提示写的是 Reply exactly `approve`，上游
-	// LLM 把 exactly 理解为连反引号照抄时回复是 "`approve`"——自己的协议提示
-	// 必须自己接得住，否则白白多烧一次 LLM 分类调用。
-	t = strings.Trim(t, "。.!！~ `\"'“”‘’「」")
+	t := normalizeApprovalText(text)
 	if t == "" {
 		return approvalUnclear
 	}
@@ -312,6 +318,67 @@ func toolContinuationText(lang, result string) string {
 // 生成。语言选取规则（zh 默认 / en 兜底）统一在 aiagent.LangText。
 func resumeText(lang, zh, en string) string {
 	return aiagent.LangText(lang, zh, en)
+}
+
+// orphanApproveExact 是"孤儿确认"判定专用的确认词表，只收无歧义的显式确认词。
+// 不复用 approveExact：那张表里的裸词（好/嗯/对/行/ok/yes/go…）只有在
+// prevPending != nil——上一轮刚问过"确不确认"——的强上下文里才等价于同意。孤儿
+// 判定发生在没有待确认提案的普通对话轮上，而 GuidedFollowup 要求每轮答案末尾
+// 都追问一句"下一步"（见 aiagent/prompts/guided_followup.md），用户回"好"是接受
+// 建议，不是确认写操作；确认腿成功后的回执轮同样不带 pending，用户回"好的"也会
+// 落到这里。按裸词注入会让这两条主路径都被"当前没有待确认的修改"打断。
+//
+// 收窄不损失真阳性：要拦的那条伪造路径本身就在教用户回"确认"——伪造文案抄的是
+// 工具的确认文案，A2A 提示是 Reply exactly `approve`，FE 按钮是 BuildApprovalForm
+// 的"确认执行"/"Apply"。真确认只会落在显式词上。
+var orphanApproveExact = map[string]bool{
+	"确认": true, "确认修改": true, "确认提交": true, "确认无误": true,
+	"同意": true, "就这么改": true,
+	"approve": true, "approved": true, "confirm": true, "confirmed": true,
+}
+
+// shouldInjectOrphanResume 判定本轮是否为"孤儿确认"：用户明确表达了确认，但上
+// 一条消息没有待确认的提案。纯函数，可表测。
+// seqID <= 1 直接否：首轮没有"上一轮"，此时的 confirm 不可能是在确认什么。
+// 结构化通道优先于文本，与 tryResumePending 的分层裁决保持同一口径。
+func shouldInjectOrphanResume(seqID int64, prevPending *models.PendingInterrupt, content string, param map[string]interface{}) bool {
+	if seqID <= 1 || prevPending != nil {
+		return false
+	}
+	switch approvalFromParam(param) {
+	case approvalYes:
+		return true
+	case approvalNo:
+		return false
+	}
+	return orphanApproveExact[normalizeApprovalText(content)]
+}
+
+// orphanResumeDirective 生成"孤儿确认"注入文案：用户明确回复确认意图，但上一条
+// 消息没有待确认的提案（模型伪造提案文案而未调用工具、或提案已过期/被消费）。
+//
+// 这是**提示词层的 best-effort 约束**，不是确定性拦截：模型可以不遵守。真正不
+// 依赖模型自觉的门在工具侧——提案的 TTL / 单次消费 / 基线哈希（见
+// aiagent/tools/update_proposal.go 的 confirmUpdateGate），重放不会双写。这里只
+// 是把"无提案"这个事实喂给模型，压低它编造成功回执的概率。
+//
+// 文案分两支而不是一口咬定"没有待确认的修改"：命中本注入的词
+// （确认/同意/confirm…）同时也是正常对话里请用户拍板时的应答词——内置技能明确
+// 要求模型在候选不唯一时"list them in your reply and ask the user to confirm"
+// （create-alert-rule/SKILL.md），GuidedFollowup 又要求每轮结尾追问下一步，这些
+// 轮次都不产生 PendingInterrupt。词表无法区分"伪造的暂存"和"正常的选项确认"，
+// 所以把判别权交给看得见上文的模型，只把"不得声称已生效"设成两支共同的硬底线。
+// 同理不写死 update_*：误判时用户可能正在确认一次 create_*，指名工具族会误导。
+func orphanResumeDirective(lang string) string {
+	return resumeText(lang,
+		"\n\n【系统提示】用户回复了确认，但当前没有待确认的修改提案。请按以下口径处理：\n"+
+			"- 如果用户确认的是你上一轮请他选择/拍板的内容（业务组、数据源、库表、方案等），据此继续，直接调用对应的工具完成操作；\n"+
+			"- 如果用户确认的是你上一轮声称\"已暂存、待确认\"的改动，请如实告知用户当前没有待确认的修改（上一轮可能只输出了确认文案而实际未调用工具，或提案已失效/已被处理），并重新调用对应的工具提交新提案。\n"+
+			"无论哪种情况，都不要声称任何改动已生效——除非本轮的工具调用确实返回了成功结果。",
+		"\n\n[SYSTEM] The user replied with a confirmation, but there is no pending change proposal right now. Handle it as follows:\n"+
+			"- If the confirmation refers to a choice you asked the user to make in the previous turn (business group, datasource, database/table, a proposed plan), go ahead and call the appropriate tool to carry it out.\n"+
+			"- If the confirmation refers to a change you claimed was staged and awaiting approval, tell the user honestly that there is no pending change (the previous turn may only have printed the confirmation copy without actually calling the tool, or the proposal expired / was already consumed), then call the appropriate tool again to submit a fresh proposal.\n"+
+			"Either way, do NOT claim anything was applied unless a tool call in THIS turn actually returned success.")
 }
 
 // formatResumeResult 把工具 apply 腿的 JSON 结果渲染成给用户看的 markdown；

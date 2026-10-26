@@ -91,3 +91,32 @@ func TestAlertMuteBatchDelete_NoMatch(t *testing.T) {
 	require.NoError(t, DB(c).Find(&remaining).Error)
 	assert.Equal(t, 2, len(remaining))
 }
+
+// Regression: a mute whose btime is still in the future must be returned by
+// AlertMuteGetsAll. The engine cache only re-syncs when count/max(update_at)
+// changes, and reaching btime changes neither, so excluding such a mute in SQL
+// meant it never entered the cache once its window opened.
+func TestAlertMuteGetsAll_IncludesFutureBtime(t *testing.T) {
+	c := newAlertMuteTestCtx(t)
+	now := time.Now().Unix()
+
+	// not yet active (btime 20 minutes in the future) -> MUST be returned
+	insertMute(t, c, &AlertMute{Id: 1, GroupId: 1, MuteTimeType: TimeRange, Btime: now + 1200, Etime: now + 3600})
+	// currently active -> returned
+	insertMute(t, c, &AlertMute{Id: 2, GroupId: 1, MuteTimeType: TimeRange, Btime: now - 600, Etime: now + 600})
+	// already expired -> NOT returned
+	insertMute(t, c, &AlertMute{Id: 3, GroupId: 1, MuteTimeType: TimeRange, Btime: now - 7200, Etime: now - 3600})
+	// disabled -> NOT returned
+	insertMute(t, c, &AlertMute{Id: 4, GroupId: 1, MuteTimeType: TimeRange, Btime: now - 600, Etime: now + 600, Disabled: 1})
+	// periodic -> returned regardless of btime/etime
+	insertMute(t, c, &AlertMute{Id: 5, GroupId: 1, MuteTimeType: Periodic, PeriodicMutes: "[]"})
+
+	lst, err := AlertMuteGetsAll(c)
+	require.NoError(t, err)
+
+	got := make([]int64, 0, len(lst))
+	for _, m := range lst {
+		got = append(got, m.Id)
+	}
+	assert.ElementsMatch(t, []int64{1, 2, 5}, got)
+}

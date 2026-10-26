@@ -15,6 +15,7 @@ CREATE TABLE `users` (
     `roles` varchar(255) not null comment 'Admin | Standard | Guest, split by space',
     `contacts` varchar(1024) comment 'json e.g. {wecom:xx, dingtalk_robot_token:yy}',
     `maintainer` tinyint(1) not null default 0,
+    `disabled` int not null default 0 comment '0:enabled 1:disabled',
     `belong` varchar(191) DEFAULT '' COMMENT 'belong',
     `last_active_time` bigint DEFAULT 0 COMMENT 'last_active_time',
     `create_at` bigint not null default 0,

@@ -34,12 +34,12 @@ func newHisEventCtx(t *testing.T) *ctx.Context {
 func seedHisEvents(t *testing.T, c *ctx.Context) {
 	t.Helper()
 	events := []models.AlertHisEvent{
-		{Id: 1, GroupId: 1, Severity: 2, IsRecovered: 0, RuleId: 11, RuleName: "cpu high", Tags: "host=a", TriggerTime: 100, LastEvalTime: 100},
-		{Id: 2, GroupId: 1, Severity: 1, IsRecovered: 0, RuleId: 12, RuleName: "mem high", Tags: "host=b", TriggerTime: 150, LastEvalTime: 200},
-		{Id: 3, GroupId: 1, Severity: 1, IsRecovered: 1, RuleId: 12, RuleName: "mem high", Tags: "host=b", TriggerTime: 90, LastEvalTime: 200},
-		{Id: 4, GroupId: 2, Severity: 3, IsRecovered: 0, RuleId: 13, RuleName: "disk full", Tags: "host=c", TriggerTime: 300, LastEvalTime: 300},
-		{Id: 5, GroupId: 2, Severity: 2, IsRecovered: 1, RuleId: 13, RuleName: "disk full", Tags: "host=c", TriggerTime: 240, LastEvalTime: 250},
-		{Id: 6, GroupId: 1, Severity: 2, IsRecovered: 0, RuleId: 11, RuleName: "cpu high", Tags: "host=a", TriggerTime: 400, LastEvalTime: 400},
+		{Id: 1, GroupId: 1, Severity: 2, IsRecovered: 0, RuleId: 11, RuleName: "cpu high", Tags: "host=a", Hash: "h-cpu-a", TriggerTime: 100, LastEvalTime: 100},
+		{Id: 2, GroupId: 1, Severity: 1, IsRecovered: 0, RuleId: 12, RuleName: "mem high", Tags: "host=b", Hash: "h-mem-b", TriggerTime: 150, LastEvalTime: 200},
+		{Id: 3, GroupId: 1, Severity: 1, IsRecovered: 1, RuleId: 12, RuleName: "mem high", Tags: "host=b", Hash: "h-mem-b", TriggerTime: 90, LastEvalTime: 200},
+		{Id: 4, GroupId: 2, Severity: 3, IsRecovered: 0, RuleId: 13, RuleName: "disk full", Tags: "host=c", Hash: "h-disk-c", TriggerTime: 300, LastEvalTime: 300},
+		{Id: 5, GroupId: 2, Severity: 2, IsRecovered: 1, RuleId: 13, RuleName: "disk full", Tags: "host=c", Hash: "h-disk-c2", TriggerTime: 240, LastEvalTime: 250},
+		{Id: 6, GroupId: 1, Severity: 2, IsRecovered: 0, RuleId: 11, RuleName: "cpu high", Tags: "host=a", Hash: "h-cpu-a2", TriggerTime: 400, LastEvalTime: 400},
 	}
 	for i := range events {
 		if err := events[i].Add(c); err != nil {
@@ -156,4 +156,76 @@ func TestAlertHisEventGetsByCursor(t *testing.T) {
 		t.Fatalf("first: %v", err)
 	}
 	assertIds(t, eventIdsOf(first), 6, 4)
+}
+
+func TestAlertHisEventHashScope(t *testing.T) {
+	c := newHisEventCtx(t)
+	seedHisEvents(t, c)
+
+	hashScope := models.AlertHisEventHashScope("h-mem-b")
+
+	// 列表与计数是两条独立路径，都要验证，否则按 hash 筛选后翻页的 total 可能不对
+	total, err := models.AlertHisEventTotal(c, nil, nil, 0, 1000, -1, -1, nil, nil, 0, "", nil, hashScope)
+	if err != nil {
+		t.Fatalf("total: %v", err)
+	}
+	if total != 2 {
+		t.Fatalf("total by hash = %d, want 2", total)
+	}
+
+	lst, err := models.AlertHisEventGets(c, nil, nil, 0, 1000, -1, -1, nil, nil, 0, "", 10, 0, nil, hashScope)
+	if err != nil {
+		t.Fatalf("gets: %v", err)
+	}
+	assertIds(t, eventIdsOf(lst), 3, 2)
+
+	// 精确匹配：前缀相同的 hash 不应命中
+	lst, err = models.AlertHisEventGets(c, nil, nil, 0, 1000, -1, -1, nil, nil, 0, "", 10, 0, nil,
+		models.AlertHisEventHashScope("h-mem"))
+	if err != nil {
+		t.Fatalf("gets by prefix hash: %v", err)
+	}
+	if len(lst) != 0 {
+		t.Fatalf("gets by prefix hash = %v, want empty", eventIdsOf(lst))
+	}
+
+	// hash 不存在时返回空列表且不报错
+	total, err = models.AlertHisEventTotal(c, nil, nil, 0, 1000, -1, -1, nil, nil, 0, "", nil,
+		models.AlertHisEventHashScope("h-not-exist"))
+	if err != nil {
+		t.Fatalf("total by absent hash: %v", err)
+	}
+	if total != 0 {
+		t.Fatalf("total by absent hash = %d, want 0", total)
+	}
+
+	// 与其他筛选条件叠加：hash 命中 2 条，其中未恢复的只有 id 2
+	lst, err = models.AlertHisEventGets(c, nil, []int64{1}, 0, 1000, 1, 0, nil, nil, 0, "mem", 10, 0, nil, hashScope)
+	if err != nil {
+		t.Fatalf("gets with filters: %v", err)
+	}
+	assertIds(t, eventIdsOf(lst), 2)
+
+	// 游标翻页同样要带上 scope，否则深翻页会返回没被 hash 过滤的行
+	page1, err := models.AlertHisEventGetsByCursor(c, nil, nil, 0, 1000, -1, -1, nil, nil, 0, "", 0, 0, 1, nil, hashScope)
+	if err != nil {
+		t.Fatalf("cursor page1: %v", err)
+	}
+	assertIds(t, eventIdsOf(page1), 3)
+
+	last := page1[len(page1)-1]
+	page2, err := models.AlertHisEventGetsByCursor(c, nil, nil, 0, 1000, -1, -1, nil, nil, 0, "", last.LastEvalTime, last.Id, 1, nil, hashScope)
+	if err != nil {
+		t.Fatalf("cursor page2: %v", err)
+	}
+	assertIds(t, eventIdsOf(page2), 2)
+
+	// 时间窗仍然生效：两条的 last_eval_time 都是 200，窗口 [0,150] 内一条都不该命中
+	total, err = models.AlertHisEventTotal(c, nil, nil, 0, 150, -1, -1, nil, nil, 0, "", nil, hashScope)
+	if err != nil {
+		t.Fatalf("total in window: %v", err)
+	}
+	if total != 0 {
+		t.Fatalf("total by hash in [0,150] = %d, want 0", total)
+	}
 }

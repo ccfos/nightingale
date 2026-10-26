@@ -88,6 +88,11 @@ func (rt *Router) loginPost(c *gin.Context) {
 		return
 	}
 
+	if user.IsDisabled() {
+		ginx.NewRender(c).Message(models.ErrUserDisabled)
+		return
+	}
+
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
@@ -206,6 +211,16 @@ func (rt *Router) refreshPost(c *gin.Context) {
 			return
 		}
 
+		// 账号已被禁用：顺手把这条会话从 redis 里清掉，并让刷新失败。
+		// 不然前端拿到接口 401 会来刷 token、刷成功又整页重载、再 401，
+		// 页面就一直白屏转圈，等不到登录页
+		if u.IsDisabled() {
+			rt.deleteAuth(c.Request.Context(), refreshUuid)
+			rt.deleteAuth(c.Request.Context(), strings.Split(refreshUuid, "++")[0])
+			ginx.NewRender(c, http.StatusUnauthorized).Message(models.ErrUserDisabled)
+			return
+		}
+
 		// Delete the previous Refresh Token
 		err = rt.deleteAuth(c.Request.Context(), refreshUuid)
 		if err != nil {
@@ -301,14 +316,24 @@ func (rt *Router) loginCallback(c *gin.Context) {
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
 
-		if len(rt.Sso.OIDC.DefaultTeams) > 0 {
-			for _, gid := range rt.Sso.OIDC.DefaultTeams {
-				err = models.UserGroupMemberAdd(rt.Ctx, gid, user.Id)
-				if err != nil {
-					logx.Errorf(rctx, "user:%v UserGroupMemberAdd: %s", user, err)
-				}
+		joinedTeams := make([]int64, 0, len(rt.Sso.OIDC.DefaultTeams))
+		for _, gid := range rt.Sso.OIDC.DefaultTeams {
+			if err := models.UserGroupMemberAdd(rt.Ctx, gid, user.Id); err != nil {
+				logx.Errorf(rctx, "user:%v UserGroupMemberAdd: %s", user, err)
+				continue
 			}
+			joinedTeams = append(joinedTeams, gid)
 		}
+
+		if err := models.UserGroupTouch(rt.Ctx, joinedTeams...); err != nil {
+			logx.Errorf(rctx, "user:%v UserGroupTouch: %s", user, err)
+		}
+	}
+
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
 	}
 
 	// set user login state
@@ -400,6 +425,12 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 		user.FullSsoFields("cas", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.CAS.DefaultRoles)
 		// create user from cas
 		ginx.Dangerous(user.Add(rt.Ctx))
+	}
+
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
 	}
 
 	// set user login state
@@ -508,6 +539,12 @@ func (rt *Router) loginCallbackDingTalk(c *gin.Context) {
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
 
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
+	}
+
 	// set user login state
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
@@ -598,6 +635,12 @@ func (rt *Router) loginCallbackFeiShu(c *gin.Context) {
 
 	}
 
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
+	}
+
 	// set user login state
 	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
@@ -641,8 +684,28 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 	} else {
 		user = new(models.User)
 		user.FullSsoFields("oauth2", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.OAuth2.DefaultRoles)
-		// create user from oidc
+		// create user from oauth2
 		ginx.Dangerous(user.Add(rt.Ctx))
+
+		defaultTeams := rt.Sso.OAuth2.GetDefaultTeams()
+		joinedTeams := make([]int64, 0, len(defaultTeams))
+		for _, gid := range defaultTeams {
+			if err := models.UserGroupMemberAdd(rt.Ctx, gid, user.Id); err != nil {
+				logx.Errorf(rctx, "user:%v UserGroupMemberAdd: %s", user, err)
+				continue
+			}
+			joinedTeams = append(joinedTeams, gid)
+		}
+
+		if err := models.UserGroupTouch(rt.Ctx, joinedTeams...); err != nil {
+			logx.Errorf(rctx, "user:%v UserGroupTouch: %s", user, err)
+		}
+	}
+
+	// 与本文件其余失败分支一致：回调统一返回 CallbackOutput + 错误，前端据此提示
+	if user.IsDisabled() {
+		ginx.NewRender(c).Data(CallbackOutput{}, errors.New(models.ErrUserDisabled))
+		return
 	}
 
 	// set user login state

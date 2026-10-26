@@ -36,6 +36,31 @@ const (
 	PermUsers                = "/users"
 )
 
+const n9eVersion = "3.4.0"
+
+func stringVal(m map[string]interface{}, key string) string {
+	switch v := m[key].(type) {
+	case string:
+		return v
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	}
+	return ""
+}
+
+// refIDAt returns the query reference used by the frontend: A..Z, AA..AZ,
+// BA...  The sequence is zero-based so refIDAt(0) is A.
+func refIDAt(index int) string {
+	refID := ""
+	for {
+		refID = string(rune('A'+index%26)) + refID
+		index = index/26 - 1
+		if index < 0 {
+			return refID
+		}
+	}
+}
+
 // =============================================================================
 // User & permission helpers
 // =============================================================================

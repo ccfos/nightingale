@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/sender/provider"
@@ -556,6 +558,9 @@ type NotifyChannelTestForm struct {
 	NotifyConfig models.NotifyConfig        `json:"notify_config"` // 只用其中的 params/severities，channel_id 与 template_id 被忽略
 	TplContent   map[string]string          `json:"tpl_content"`
 	EventIDs     []int64                    `json:"event_ids"`
+	// WithRecovery 为 true 时先按告警发一次、再按恢复发一次同一批事件，用来验证恢复闭环
+	// （如 Jira 恢复时评论并关单）
+	WithRecovery bool `json:"with_recovery"`
 	MockEventForm
 }
 
@@ -564,9 +569,12 @@ type NotifyChannelTestForm struct {
 // 不回显任何配置字段，是因为 Grafana 的同类接口（CVE-2025-12141）正是靠回显脱敏配置
 // 被用来提取第三方凭据。同理不回 sendtos/target：那是 user_ids/user_group_ids 经
 // GetNotifyConfigParams 解析出的真实邮箱与手机号，回传等于提供「传 ID 换联系方式」的读放大。
+//
+// Detail 只对原生对接的媒介回填 provider 的动作说明（如 Jira 工单链接），同样不含任何配置。
 type notifyChannelTestResult struct {
 	Success      bool   `json:"success"`
 	ErrorMessage string `json:"error_message"`
+	Detail       string `json:"detail,omitempty"`
 }
 
 // buildChannelTestMockEvent 构造用于媒介连通性测试的内置模拟事件，不落库。
@@ -609,7 +617,7 @@ func buildTestTplContent(nc *models.NotifyChannelConfig, tplSrc map[string]strin
 		return make(map[string]interface{}), nil
 	}
 	tpl := &models.MessageTemplate{Content: tplSrc, NotifyChannelIdent: nc.Ident}
-	return tpl.RenderEventStrict(events, siteUrl)
+	return tpl.RenderEventStrictForChannel(nc.RequestType, events, siteUrl)
 }
 
 func (rt *Router) notifyChannelConfigTest(c *gin.Context) {
@@ -651,22 +659,66 @@ func (rt *Router) notifyChannelConfigTest(c *gin.Context) {
 	}
 
 	siteUrl := resolveSiteUrl(rt.Ctx)
-
-	tplContent, rerr := buildTestTplContent(nc, f.TplContent, events, siteUrl)
-	if rerr != nil {
-		// 模板写错是业务结果，与投递失败同一个出口：200 + success=false，
-		// 前端在结果页展示报错原文
-		ginx.NewRender(c).Data(notifyChannelTestResult{Success: false, ErrorMessage: rerr.Error()}, nil)
-		return
+	if models.IsNativeRequestType(nc.RequestType) {
+		f.NotifyConfig.Params = withTestNonce(f.NotifyConfig.Params)
 	}
 
-	_, err := sendToNotifyChannel(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, nc, events, tplContent, siteUrl)
+	var details []string
+	for _, round := range testRounds(events, f.WithRecovery) {
+		tplContent, rerr := buildTestTplContent(nc, f.TplContent, round, siteUrl)
+		if rerr != nil {
+			// 模板写错是业务结果，与投递失败同一个出口：200 + success=false，
+			// 前端在结果页展示报错原文
+			ginx.NewRender(c).Data(notifyChannelTestResult{Success: false, ErrorMessage: rerr.Error()}, nil)
+			return
+		}
 
-	res := notifyChannelTestResult{Success: err == nil}
-	if err != nil {
-		res.ErrorMessage = err.Error()
+		resp, err := sendToNotifyChannel(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, nc, round, tplContent, siteUrl)
+		if models.IsNativeRequestType(nc.RequestType) && resp != "" {
+			details = append(details, resp)
+		}
+		if err != nil {
+			// 第二个参数恒为 nil：测试失败是业务结果而非接口错误，让前端拿 200 + success=false，
+			// 避免 ginx 的错误通道把第三方报错原文当成系统异常渲染。
+			ginx.NewRender(c).Data(notifyChannelTestResult{
+				Success:      false,
+				ErrorMessage: provider.LocalizeError(err, func(k string) string { return translate(c, k) }),
+				Detail:       strings.Join(details, "\n"),
+			}, nil)
+			return
+		}
 	}
-	// 第二个参数恒为 nil：测试失败是业务结果而非接口错误，让前端拿 200 + success=false，
-	// 避免 ginx 的错误通道把第三方报错原文当成系统异常渲染。
-	ginx.NewRender(c).Data(res, nil)
+	ginx.NewRender(c).Data(notifyChannelTestResult{Success: true, Detail: strings.Join(details, "\n")}, nil)
+}
+
+// withTestNonce 给测试发送的通知参数加一个一次性随机串。Jira 用它拼去重键、JSM 用它拼 alias
+// （见 provider.TestNonceParam）：每次测试建一张新单，「同时测试恢复」的两次发送对上同一张单。
+// 模拟事件的 Hash 保持固定，PagerDuty 等按 Hash 去重的媒介行为不变。
+func withTestNonce(params map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{}, len(params)+1)
+	for k, v := range params {
+		out[k] = v
+	}
+	out[provider.TestNonceParam] = strconv.FormatInt(time.Now().UnixNano(), 36)
+	return out
+}
+
+// testRounds 返回要依次发送的事件批次：不测恢复时原样发一次；测恢复时先按告警、再按恢复各发一次
+func testRounds(events []*models.AlertCurEvent, withRecovery bool) [][]*models.AlertCurEvent {
+	if !withRecovery {
+		return [][]*models.AlertCurEvent{events}
+	}
+	now := time.Now().Unix()
+	firing := make([]*models.AlertCurEvent, 0, len(events))
+	recovered := make([]*models.AlertCurEvent, 0, len(events))
+	for _, e := range events {
+		fe := *e
+		fe.IsRecovered = false
+		firing = append(firing, &fe)
+		re := *e
+		re.IsRecovered = true
+		re.LastEvalTime = now
+		recovered = append(recovered, &re)
+	}
+	return [][]*models.AlertCurEvent{firing, recovered}
 }

@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
@@ -134,9 +136,57 @@ func (tc *Tdengine) ShowDatabases(context.Context) ([]string, error) {
 	return databases, nil
 }
 
+// plainIdentifier matches names that TDengine accepts without escaping.
+// Database names are always restricted to this form.
+var plainIdentifier = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+
+const maxIdentifierLen = 192
+
+// validateDatabase rejects anything but a single bare database name, so the
+// value can never turn into another SHOW target (e.g. "users", "databases")
+// or reach into a different database via "db.xxx".
+func validateDatabase(name string) error {
+	if len(name) == 0 || len(name) > maxIdentifierLen || !plainIdentifier.MatchString(name) {
+		return fmt.Errorf("invalid database name: %q", name)
+	}
+	return nil
+}
+
+// quoteTable returns a table name that is safe to splice into SQL. Plain names
+// stay unquoted (compatible with TDengine 2.x); others are wrapped in
+// backticks, which is only safe once backticks, dots and control characters
+// have been ruled out.
+func quoteTable(name string) (string, error) {
+	if len(name) == 0 || len(name) > maxIdentifierLen {
+		return "", fmt.Errorf("invalid table name: %q", name)
+	}
+	if plainIdentifier.MatchString(name) {
+		return name, nil
+	}
+	for _, c := range name {
+		if c == '`' || c == '.' || unicode.IsControl(c) {
+			return "", fmt.Errorf("invalid table name: %q", name)
+		}
+	}
+	return "`" + name + "`", nil
+}
+
+// ShowTables lists normal and child tables of a single database.
 func (tc *Tdengine) ShowTables(ctx context.Context, database string) ([]string, error) {
+	return tc.showTables(database, "TABLES")
+}
+
+// ShowSTables lists super tables of a single database.
+func (tc *Tdengine) ShowSTables(ctx context.Context, database string) ([]string, error) {
+	return tc.showTables(database, "STABLES")
+}
+
+func (tc *Tdengine) showTables(database, kind string) ([]string, error) {
 	tables := make([]string, 0)
-	sql := fmt.Sprintf("show %s", database)
+	if err := validateDatabase(database); err != nil {
+		return tables, err
+	}
+	sql := fmt.Sprintf("SHOW %s.%s", database, kind)
 	data, err := tc.QueryTable(sql)
 	if err != nil {
 		return tables, err
@@ -154,7 +204,15 @@ func (tc *Tdengine) DescribeTable(ctx context.Context, query interface{}) ([]*ty
 	if !ok {
 		return nil, fmt.Errorf("invalid query")
 	}
-	sql := fmt.Sprintf("select * from %s.%s limit 1", queryMap["database"], queryMap["table"])
+	database := queryMap["database"]
+	if err := validateDatabase(database); err != nil {
+		return nil, err
+	}
+	table, err := quoteTable(queryMap["table"])
+	if err != nil {
+		return nil, err
+	}
+	sql := fmt.Sprintf("select * from %s.%s limit 1", database, table)
 	data, err := tc.QueryTable(sql)
 	if err != nil {
 		return columns, err

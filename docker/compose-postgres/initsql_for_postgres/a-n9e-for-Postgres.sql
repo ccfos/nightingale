@@ -9,6 +9,7 @@ CREATE TABLE users (
     roles varchar(255) not null,
     contacts varchar(1024),
     maintainer int not null default 0,
+    disabled int not null default 0,
     belong varchar(16) not null default '',
     last_active_time bigint not null default 0,
     create_at bigint not null default 0,

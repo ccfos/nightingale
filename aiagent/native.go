@@ -17,7 +17,7 @@ import (
 //
 // 流式通道约定（与路由层抽卡/A2A 的既有契约严格一致；字段独占路由：
 // 思考与正文互斥，绝不双发）：
-//   - 推理增量（reasoning_content / 思考块）→ StreamTypeThinking（thinking 面板）。
+//   - 推理增量（reasoning_content / reasoning / 思考块）→ StreamTypeThinking（thinking 面板）。
 //   - 模型正文增量 → StreamTypeContent 实时流，直接落 content 通道。中间轮的
 //     pre-tool-call 评论同样进 content（轮间补段落分隔）。最终答案因此已逐
 //     token 下发——executeNativeWithDone 的 Done chunk 据 contentStreamed 打标，
@@ -33,7 +33,7 @@ func (a *Agent) executeNative(ctx context.Context, req *AgentRequest, rc *runCtx
 		return &AgentResponse{Error: fmt.Sprintf("failed to build user message: %v", err)}
 	}
 
-	systemPrompt := a.buildNativeSystemPrompt(rc)
+	systemPrompt := a.buildNativeSystemPrompt(rc) + pageActionSystemPrompt(req.PageActions)
 
 	// 历史投影：canonical transcript 不变，喂模型的是截断/收窗后的投影
 	// （见 context_manager.go）。
@@ -51,11 +51,16 @@ func (a *Agent) executeNative(ctx context.Context, req *AgentRequest, rc *runCtx
 	logger.Infof("[Agent] native starting: messages=%d, system_len=%d, user_len=%d, history=%d, tools=%d, streaming=%v",
 		len(messages), len(systemPrompt), len(userMessage), len(req.History), len(rc.tools), req.StreamChan != nil)
 
-	return a.runNativeLoop(ctx, req, messages, buildNativeToolDefs(rc.tools), &ToolLoopConfig{
+	tools := append([]AgentTool(nil), rc.tools...)
+	if len(req.PageActions) > 0 {
+		tools = appendToolIfAbsent(tools, pageActionTool(req.PageActions))
+	}
+
+	return a.runNativeLoop(ctx, req, messages, buildNativeToolDefs(tools), &ToolLoopConfig{
 		MaxIterations:        a.maxIterationsForSkills(rc),
 		TimeoutMessage:       "agent execution timeout",
 		LogPrefix:            "AI Agent(native)",
-		Tools:                rc.tools,
+		Tools:                tools,
 		StreamChan:           req.StreamChan,
 		RequestID:            requestID,
 		ExtractPartialResult: true,
@@ -70,6 +75,9 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 	resp := &AgentResponse{Steps: []ToolStep{}}
 	streaming := config.StreamChan != nil
 	dedup := newTurnWriteDeduper() // 写类工具幂等：整个循环（跨迭代）内同名同参只执行一次
+	callCounts := map[string]int{} // 同名同参调用计数（读类工具重复调用时提醒模型复用结果）
+	lang := req.Params["lang"]
+	trace := loopTraceID(config.RequestID, req.Params)
 
 	for iteration := 0; iteration < config.MaxIterations; iteration++ {
 		select {
@@ -80,14 +88,15 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 		default:
 		}
 
-		content, calls, thinking, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID, req.Params["lang"])
+		out, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID, lang)
+		content, calls := out.Content, out.ToolCalls
 		if err != nil {
 			resp.Error = fmt.Sprintf("LLM call failed at iteration %d: %v", iteration, err)
 			resp.Iterations = iteration
 			return resp
 		}
 
-		logger.Debugf("%s iteration %d: content_len=%d, tool_calls=%d", config.LogPrefix, iteration, len(content), len(calls))
+		logLLMRound(config, trace, iteration, out)
 
 		// 无工具调用 = 最终答案（原生协议的天然完成信号）。
 		if len(calls) == 0 {
@@ -118,15 +127,19 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 		}
 
 		// ThinkingBlocks 随 assistant 轮进入上下文与 transcript：Anthropic 系开启
-		// thinking 后，续轮回填这些块（带签名）是 API 硬性要求。
-		asstTurn := ChatMessage{Role: "assistant", Content: content, ToolCalls: calls, ThinkingBlocks: thinking}
+		// thinking 后，续轮回填这些块（带签名）是 API 硬性要求。ReasoningContent
+		// （OpenAI 兼容端点）只进本回合上下文，不随 transcript 持久化。
+		asstTurn := ChatMessage{Role: "assistant", Content: content, ToolCalls: calls, ThinkingBlocks: out.ThinkingBlocks, ReasoningContent: out.Reasoning, ReasoningField: out.ReasoningField}
 		messages = append(messages, asstTurn)
 		turn := []ChatMessage{asstTurn}
 
 		for _, tc := range calls {
 			step := ToolStep{Thought: content, Action: tc.Name, ActionInput: tc.Arguments}
 
-			if streaming {
+			// page_action belongs to the browser. Unlike server-side tools it has
+			// no tool-progress card; the router renders its terminal response as a
+			// page_action block instead.
+			if streaming && tc.Name != pageActionToolName {
 				config.StreamChan <- &StreamChunk{
 					Type:      StreamTypeToolCall,
 					Content:   tc.Name,
@@ -134,6 +147,41 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 					RequestID: config.RequestID,
 					Timestamp: time.Now().UnixMilli(),
 				}
+			}
+
+			callKey := tc.Name + "\x00" + tc.Arguments
+			callCounts[callKey]++
+			toolStart := time.Now()
+
+			// page_action is the only tool whose execution belongs to the
+			// browser. Validate the chosen action and arguments. On success, emit
+			// a terminal command and deliberately omit it from the transcript so a
+			// later turn cannot replay a stale page operation. A failed call stays
+			// in the transcript as normal tool error evidence for the next retry.
+			if tc.Name == pageActionToolName {
+				call, err := resolvePageActionCall(req.PageActions, tc.ID, tc.Arguments)
+				if err != nil {
+					observation := "Error: " + err.Error()
+					messages = append(messages, ChatMessage{Role: llm.RoleTool, ToolCallID: tc.ID, ToolName: tc.Name, Content: observation})
+					turn = append(turn, ChatMessage{Role: llm.RoleTool, ToolCallID: tc.ID, ToolName: tc.Name, Content: observation})
+					// This browser-owned call has no matching tool-progress frame.
+					// Keep its error in the model transcript for a retry, but do not
+					// publish an orphan tool-result frame to stream consumers.
+					continue
+				}
+				// Preserve only completed tool calls before the terminal page action.
+				// The page action itself stays out of the replayable transcript.
+				if len(turn) > 1 {
+					completed := turn[1:]
+					asst := turn[0]
+					asst.ToolCalls = asst.ToolCalls[:len(completed)]
+					emitTranscript(config, append([]ChatMessage{asst}, completed...)...)
+				}
+				emitPageAction(config, call)
+				resp.Content = ""
+				resp.Iterations = iteration + 1
+				resp.Success = true
+				return resp
 			}
 
 			var observation string
@@ -165,6 +213,7 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 				}
 				dedup.record(tc.Name, tc.Arguments, observation)
 			}
+			logToolCall(config, trace, iteration, tc, observation, callCounts[callKey], time.Since(toolStart))
 
 			// 工具渐进披露：load_skill 成功后把该
 			// 技能声明的 builtin_tools 注入工具表并重建 toolDefs，下一迭代原生
@@ -198,34 +247,51 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 			// 重复送进请求（跨轮的 projectHistory 此时还够不着它）。turn 进
 			// canonical transcript，永远收原文。
 			messages = append(messages, capObservation(toolTurn, LiveObservationCapBytes))
+			// 读类工具同名同参重复调用：只在喂模型的投影里提示复用结果，不进
+			// steps/ToolResult/transcript（下一轮回放时"本轮"已不成立）。
+			appendToLastMessage(messages, repeatedCallNote(tc.Name, callCounts[callKey], lang))
 			turn = append(turn, toolTurn)
 		}
 
 		// 结构化 transcript：assistant(tool_calls) + tool 结果轮成组持久化，
 		// 工具产物（如 proposal_id）下一轮直接以原生形态回放。
 		emitTranscript(config, turn...)
+
+		// 预算将尽：只在喂模型的 messages 里提醒收敛，transcript 不带。
+		appendToLastMessage(messages, budgetWarningNote(iteration, config.MaxIterations, lang))
 	}
 
 	resp.Error = fmt.Sprintf("reached maximum iterations (%d)", config.MaxIterations)
 	resp.Iterations = config.MaxIterations
+	resp.Incomplete = true
+	logger.Warningf("%s reached max iterations: trace=%s max=%d tool_calls=%d", config.LogPrefix, trace, config.MaxIterations, len(resp.Steps))
 	if config.ExtractPartialResult && len(resp.Steps) > 0 {
-		last := resp.Steps[len(resp.Steps)-1]
-		resp.Content = fmt.Sprintf("Analysis incomplete (max iterations reached). Last thought: %s", last.Thought)
+		a.finalizeExhaustedLoop(ctx, req, messages, toolDefs, config, resp)
 	}
 	return resp
 }
 
+// nativeLLMResult 是单次原生 LLM 调用聚合后的结果。
+type nativeLLMResult struct {
+	Content        string
+	ToolCalls      []llm.ToolCall
+	ThinkingBlocks []llm.ThinkingBlock // Anthropic 系：带签名，续轮回填
+	Reasoning      string              // OpenAI 兼容端点的推理文本，本回合工具续轮回填
+	ReasoningField string              // 推理所用字段名，回填时沿用
+	FinishReason   string
+}
+
 // callLLMNative 以原生 tools 参数调用 LLM 并聚合单次调用的结果（正文、
-// 工具调用、思考块）。
+// 工具调用、思考块、推理文本）。
 //
 // 流式时按字段独占路由（杜绝"思考面板 ≡ 回答"的双发）：推理增量走
 // StreamTypeThinking，正文增量走 StreamTypeContent，互斥。
 // 工具调用由各 provider 在流内聚合完整后整块抛出（OpenAI 按 index 归槽、
 // Claude 在 content_block_stop 收尾），这里直接累积即可；
 // Anthropic 系的完整思考块（含签名）在块收尾时整块到达，累积后随 assistant 轮回填。
-func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolDefs []llm.ToolDefinition, streamChan chan *StreamChunk, requestID, lang string) (string, []llm.ToolCall, []llm.ThinkingBlock, error) {
+func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolDefs []llm.ToolDefinition, streamChan chan *StreamChunk, requestID, lang string) (nativeLLMResult, error) {
 	if err := a.checkLLMClient(); err != nil {
-		return "", nil, nil, err
+		return nativeLLMResult{}, err
 	}
 
 	llmReq := buildLLMRequest(messages)
@@ -234,22 +300,27 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 	if streamChan == nil {
 		genResp, err := a.llmClient.Generate(ctx, llmReq)
 		if err != nil {
-			return "", nil, nil, err
+			return nativeLLMResult{}, err
 		}
 		content, err := applyFinishReason(genResp.Content, genResp.ToolCalls, genResp.FinishReason, lang, nil)
-		return content, genResp.ToolCalls, genResp.ThinkingBlocks, err
+		return nativeLLMResult{
+			Content:        content,
+			ToolCalls:      genResp.ToolCalls,
+			ThinkingBlocks: genResp.ThinkingBlocks,
+			Reasoning:      genResp.ReasoningContent,
+			ReasoningField: genResp.ReasoningField,
+			FinishReason:   genResp.FinishReason,
+		}, err
 	}
 
 	stream, err := a.llmClient.GenerateStream(ctx, llmReq)
 	if err != nil {
 		logger.Errorf("[Agent] GenerateStream(native) failed provider=%s: %v", a.llmClient.Name(), err)
-		return "", nil, nil, fmt.Errorf("LLM stream error: %w", err)
+		return nativeLLMResult{}, fmt.Errorf("LLM stream error: %w", err)
 	}
 
-	var content strings.Builder
-	var calls []llm.ToolCall
-	var thinking []llm.ThinkingBlock
-	var finishReason string
+	var content, reasoning strings.Builder
+	var out nativeLLMResult
 	emit := func(chunkType, delta string) {
 		streamChan <- &StreamChunk{
 			Type:      chunkType,
@@ -262,30 +333,36 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 	for chunk := range stream {
 		if chunk.Error != nil {
 			go drainStream(stream)
-			return content.String(), calls, thinking, fmt.Errorf("stream error: %w", chunk.Error)
+			out.Content, out.Reasoning = content.String(), reasoning.String()
+			return out, fmt.Errorf("stream error: %w", chunk.Error)
 		}
 		if chunk.Reasoning != "" {
+			reasoning.WriteString(chunk.Reasoning)
+			if out.ReasoningField == "" {
+				out.ReasoningField = chunk.ReasoningField
+			}
 			emit(StreamTypeThinking, chunk.Reasoning)
 		}
 		if chunk.ThinkingBlock != nil {
-			thinking = append(thinking, *chunk.ThinkingBlock)
+			out.ThinkingBlocks = append(out.ThinkingBlocks, *chunk.ThinkingBlock)
 		}
 		if chunk.Content != "" {
 			content.WriteString(chunk.Content)
 			emit(StreamTypeContent, chunk.Content)
 		}
 		if chunk.FinishReason != "" {
-			finishReason = chunk.FinishReason
+			out.FinishReason = chunk.FinishReason
 		}
-		calls = append(calls, chunk.ToolCalls...)
+		out.ToolCalls = append(out.ToolCalls, chunk.ToolCalls...)
 		if chunk.Done {
 			break
 		}
 	}
 
-	finalContent, err := applyFinishReason(content.String(), calls, finishReason, lang,
+	out.Reasoning = reasoning.String()
+	out.Content, err = applyFinishReason(content.String(), out.ToolCalls, out.FinishReason, lang,
 		func(note string) { emit(StreamTypeContent, note) })
-	return finalContent, calls, thinking, err
+	return out, err
 }
 
 // applyFinishReason 把 provider 上报的异常结束原因转成显式信号：拦截类
@@ -318,6 +395,10 @@ func applyFinishReason(content string, calls []llm.ToolCall, reason, lang string
 func buildNativeToolDefs(tools []AgentTool) []llm.ToolDefinition {
 	defs := make([]llm.ToolDefinition, 0, len(tools))
 	for _, t := range tools {
+		if t.InputSchema != nil {
+			defs = append(defs, llm.ToolDefinition{Name: t.Name, Description: t.Description, Parameters: t.InputSchema})
+			continue
+		}
 		props := map[string]interface{}{}
 		var required []string
 		for _, p := range t.Parameters {
@@ -426,10 +507,9 @@ func (a *Agent) executeNativeWithDone(ctx context.Context, req *AgentRequest, rc
 	resp := a.executeNative(ctx, req, rc)
 
 	// 纯失败（LLM 错误/超时，无任何可展示产出）才走 Error chunk。带部分产出的
-	// max-iteration 截断（ExtractPartialResult 拼好的 "Analysis incomplete..."）
-	// 落到下面的 Done 分支：路由层把这类非流式正文当唯一拷贝推流并持久化
-	// （见 router 消费侧 "max-iteration partials" 注释），用户能看到已有分析
-	// 而非一句超时错误。
+	// max-iteration 截断（finalizeExhaustedLoop 的收尾总结/进度摘要）落到下面的
+	// Done 分支并打 incomplete 标：用户能看到已有分析而非一句超时错误，路由层
+	// 据标记把消息记为未完成，不与正常完成的回答混淆。
 	if resp.Error != "" && !resp.Success && resp.Content == "" {
 		streamChan <- &StreamChunk{
 			Type:      StreamTypeError,
@@ -453,6 +533,12 @@ func (a *Agent) executeNativeWithDone(ctx context.Context, req *AgentRequest, rc
 		// 把 Done.Content 仅当作解析/持久化用的权威正文（= 最终轮正文，不含中间轮
 		// 评论），不再二次推流——否则回答整段重复。
 		done.Metadata = map[string]interface{}{"content_streamed": true}
+	}
+	if resp.Incomplete {
+		if done.Metadata == nil {
+			done.Metadata = map[string]interface{}{}
+		}
+		done.Metadata["incomplete"] = true
 	}
 	streamChan <- done
 }
