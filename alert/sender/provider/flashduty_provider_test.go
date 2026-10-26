@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 
@@ -13,6 +14,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -88,6 +90,53 @@ func TestFlashDutyUploadBeforeNotify(t *testing.T) {
 	}
 	if len(original.ShotImageBase64) != 1 || len(original.RuleConfigJson.(map[string]interface{})) != 1 {
 		t.Fatal("original event was changed")
+	}
+}
+
+func TestFlashDutyConcurrentImageUploads(t *testing.T) {
+	var started atomic.Int32
+	allStarted := make(chan struct{})
+	client := &http.Client{Transport: flashDutyTestTransport(func(r *http.Request) (*http.Response, error) {
+		if started.Add(1) == 2 {
+			close(allStarted)
+		}
+		select {
+		case <-allStarted:
+		case <-time.After(5 * time.Second):
+			return nil, fmt.Errorf("image uploads did not run concurrently")
+		}
+		file, _, err := r.FormFile("image")
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		data, err := io.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
+		body := fmt.Sprintf(`{"data":{"image_key":"img_%s"}}`, data)
+		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
+	})}
+	events := []*models.AlertCurEvent{
+		{Id: 1, ShotImageBase64: map[string]string{"panel": base64.StdEncoding.EncodeToString([]byte("first"))}},
+		nil,
+		{Id: 2},
+		{Id: 3, ShotImageBase64: map[string]string{"panel": base64.StdEncoding.EncodeToString([]byte("last"))}},
+	}
+	prepared, err := prepareFlashDutyEvents(&models.FlashDutyRequestConfig{IntegrationUrl: "http://flashduty.test/push"}, events, client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if started.Load() != 2 || len(prepared) != len(events) || prepared[1] != nil || prepared[2].Id != 2 {
+		t.Fatalf("unexpected prepared events: %+v; uploads=%d", prepared, started.Load())
+	}
+	for i, wantKey := range map[int]string{0: "img_first", 3: "img_last"} {
+		if prepared[i].Id != events[i].Id || prepared[i].AnnotationsJSON["img_key"] != wantKey {
+			t.Errorf("event %d: unexpected prepared event: %+v", i, prepared[i])
+		}
+		if prepared[i].ShotImageBase64 != nil || len(events[i].ShotImageBase64) != 1 || events[i].AnnotationsJSON != nil {
+			t.Errorf("event %d: original changed or outgoing screenshot not cleared", i)
+		}
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -70,6 +71,9 @@ func prepareFlashDutyEvents(config *models.FlashDutyRequestConfig, events []*mod
 		return nil, errors.New("http client not found")
 	}
 	prepared := make([]*models.AlertCurEvent, len(events))
+	var uploads sync.WaitGroup
+	// Bound concurrent uploads to avoid excessive memory usage for large batches.
+	uploadSlots := make(chan struct{}, 5)
 	for i, event := range events {
 		if event == nil {
 			continue
@@ -107,23 +111,30 @@ func prepareFlashDutyEvents(config *models.FlashDutyRequestConfig, events []*mod
 			if ruleConfig == nil {
 				ruleConfig = make(map[string]json.RawMessage)
 			}
-			imageKey, err := uploadFlashDutyImage(config.IntegrationUrl, imageBase64, client)
-			if err != nil {
-				// Screenshots are optional: keep sending alerts even if uploading fails.
-				logger.Warningf("send_flashduty: upload image failed event_id=%d: %v", event.Id, err)
-				break
-			}
-			// Match NewNorthstarAlertEvent: annotations.img_key and a string snapshot_pic_url.
-			ruleConfig["snapshot_pic_url"], _ = json.Marshal(imageKey)
-			copied.RuleConfigJson = ruleConfig
-			copied.AnnotationsJSON = make(map[string]string, len(event.AnnotationsJSON)+1)
-			for name, value := range event.AnnotationsJSON {
-				copied.AnnotationsJSON[name] = value
-			}
-			copied.AnnotationsJSON["img_key"] = imageKey
+			uploadSlots <- struct{}{}
+			uploads.Add(1)
+			go func() {
+				defer uploads.Done()
+				defer func() { <-uploadSlots }()
+				imageKey, err := uploadFlashDutyImage(config.IntegrationUrl, imageBase64, client)
+				if err != nil {
+					// Screenshots are optional: keep sending alerts even if uploading fails.
+					logger.Warningf("send_flashduty: upload image failed event_id=%d: %v", event.Id, err)
+					return
+				}
+				// Match NewNorthstarAlertEvent: annotations.img_key and a string snapshot_pic_url.
+				ruleConfig["snapshot_pic_url"], _ = json.Marshal(imageKey)
+				copied.RuleConfigJson = ruleConfig
+				copied.AnnotationsJSON = make(map[string]string, len(event.AnnotationsJSON)+1)
+				for name, value := range event.AnnotationsJSON {
+					copied.AnnotationsJSON[name] = value
+				}
+				copied.AnnotationsJSON["img_key"] = imageKey
+			}()
 			break
 		}
 	}
+	uploads.Wait()
 	return prepared, nil
 }
 
