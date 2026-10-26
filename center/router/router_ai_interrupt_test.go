@@ -192,3 +192,83 @@ func TestToolContinuationText(t *testing.T) {
 		t.Fatalf("en continuation must use the en copy, got %q", en)
 	}
 }
+
+// TestOrphanResumeDirective：孤儿确认注入文案必须明确"没有待确认的提案、
+// 不得声称已生效"，并按语言选取 zh/en。
+func TestOrphanResumeDirective(t *testing.T) {
+	zh := orphanResumeDirective("")
+	if !strings.Contains(zh, "没有待确认的修改提案") || !strings.Contains(zh, "不要声称任何改动已生效") {
+		t.Fatalf("zh directive = %q", zh)
+	}
+	en := orphanResumeDirective("en_US")
+	if !strings.Contains(en, "no pending change proposal") || !strings.Contains(en, "do NOT claim anything was applied") {
+		t.Fatalf("en directive = %q", en)
+	}
+}
+
+// TestOrphanResumeDirectiveBranches：文案必须给模型留出"这是在确认我上一轮请他
+// 挑的选项"这一支并让它继续执行——命中注入的确认词同样是正常选项确认的应答词，
+// 一口咬定"没有待确认的修改"会把内置技能的候选确认流程（create-alert-rule
+// SKILL.md 的"ask the user to confirm"）打断。同时不得写死 update_*：误判时用户
+// 可能正在确认一次 create_*。
+func TestOrphanResumeDirectiveBranches(t *testing.T) {
+	zh := orphanResumeDirective("")
+	if !strings.Contains(zh, "请他选择/拍板") || !strings.Contains(zh, "直接调用对应的工具完成操作") {
+		t.Fatalf("zh directive must keep the choice-confirmation branch, got %q", zh)
+	}
+	en := orphanResumeDirective("en_US")
+	if !strings.Contains(en, "a choice you asked the user to make") || !strings.Contains(en, "call the appropriate tool to carry it out") {
+		t.Fatalf("en directive must keep the choice-confirmation branch, got %q", en)
+	}
+	for _, d := range []string{zh, en} {
+		if strings.Contains(d, "update_*") {
+			t.Fatalf("directive must not name a specific tool family, got %q", d)
+		}
+	}
+}
+
+// TestShouldInjectOrphanResume：孤儿确认判定只认显式确认词。approveExact 里的
+// 裸词（好/嗯/ok/yes…）在没有待确认提案的普通对话轮上是接受 GuidedFollowup
+// 建议或对回执的应答，按它们注入会把主路径打断成"当前没有待确认的修改"。
+func TestShouldInjectOrphanResume(t *testing.T) {
+	pending := &models.PendingInterrupt{Kind: aiagent.InterruptKindApproval, Tool: "update_alert_rule"}
+	cases := []struct {
+		name    string
+		seqID   int64
+		pending *models.PendingInterrupt
+		content string
+		param   map[string]interface{}
+		want    bool
+	}{
+		{"explicit zh", 2, nil, "确认", nil, true},
+		{"explicit zh with punctuation", 2, nil, "确认。", nil, true},
+		{"explicit en", 2, nil, "approve", nil, true},
+		{"explicit en backticked", 2, nil, "`approve`", nil, true},
+		{"explicit en confirm", 2, nil, "Confirm", nil, true},
+
+		// 裸词：approveExact 命中但这里必须不命中
+		{"bare ok", 2, nil, "好的", nil, false},
+		{"bare en ok", 2, nil, "ok", nil, false},
+		{"bare yes", 2, nil, "yes", nil, false},
+		{"bare hmm", 2, nil, "嗯", nil, false},
+		{"bare go", 2, nil, "go", nil, false},
+		{"bare keyi", 2, nil, "可以", nil, false},
+
+		{"has pending", 2, pending, "确认", nil, false},
+		{"first turn", 1, nil, "确认", nil, false},
+		{"reject", 2, nil, "取消", nil, false},
+		{"empty", 2, nil, "", nil, false},
+		{"free text", 2, nil, "确认一下这个规则现在的阈值是多少", nil, false},
+
+		{"structured approve", 2, nil, "", map[string]interface{}{aiagent.ApprovalParamKey: "approve"}, true},
+		{"structured reject beats text", 2, nil, "确认", map[string]interface{}{aiagent.ApprovalParamKey: "reject"}, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := shouldInjectOrphanResume(c.seqID, c.pending, c.content, c.param); got != c.want {
+				t.Fatalf("shouldInjectOrphanResume(%d, %v, %q, %v) = %v, want %v",
+					c.seqID, c.pending != nil, c.content, c.param, got, c.want)
+			}
+		})
+	}
+}

@@ -377,6 +377,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/auth/captcha", rt.jwtMock(), rt.generateCaptcha)
 		pages.POST("/auth/captcha-verify", rt.jwtMock(), rt.captchaVerify)
 		pages.GET("/auth/ifshowcaptcha", rt.ifShowCaptcha)
+		pages.GET("/auth/demo-login", rt.demoLogin)
 
 		pages.GET("/auth/sso-config", rt.ssoConfigNameGet)
 		pages.GET("/auth/rsa-config", rt.rsaConfigGet)
@@ -419,6 +420,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)
 		pages.PUT("/user/:id/profile", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userProfilePut)
 		pages.PUT("/user/:id/password", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userPasswordPut)
+		pages.PUT("/user/:id/disabled", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userDisabledPut)
 		pages.DELETE("/user/:id", rt.auth(), rt.user(), rt.perm("/users/del"), rt.userDel)
 
 		pages.GET("/metric-views", rt.auth(), rt.metricViewGets)
@@ -802,6 +804,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		// 复用 /notification-channels/add 权限而不新增权限串：权限只定义在 cconf.builtInOps，
 		// 未进任何 SQL seed，新增串会导致所有存量部署必须手工授权后功能才可用。
 		pages.POST("/notify-channel-config/test", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelConfigTest)
+		// 原生对接媒介：保存前校验凭证（同测试接口的权限），以及通知规则里 Jira 的下拉数据（同 pagerduty 列表接口的权限）
+		pages.POST("/notify-channel-config/check", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelConfigCheck)
+		pages.GET("/jira-project-list/:id", rt.auth(), rt.user(), rt.jiraProjectList)
+		pages.GET("/jira-issue-type-list/:id", rt.auth(), rt.user(), rt.jiraIssueTypeList)
+		pages.GET("/jira-issue-type-check/:id", rt.auth(), rt.user(), rt.jiraIssueTypeCheck)
+		pages.GET("/jira-priority-list/:id", rt.auth(), rt.user(), rt.jiraPriorityList)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)
 		pages.GET("/notify-channel-config/idents", rt.auth(), rt.user(), rt.notifyChannelIdentsGet)
 

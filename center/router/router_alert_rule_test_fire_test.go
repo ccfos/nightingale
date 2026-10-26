@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
@@ -267,6 +268,35 @@ func TestAlertRuleTestFire_EnableInBGWithoutTargetCache(t *testing.T) {
 	effective := stageByName(t, resp, "effective")
 	if effective.Data["bg_match"] != true {
 		t.Fatalf("bg_match should fall back to true without TargetCache, got %+v", effective)
+	}
+}
+
+// 规则开启「只在本业务组生效」且 TargetCache 可用：mock 样本的 ident 是虚构的，不做归属判定；
+// 真实样本的 ident 查不到机器（如机器已删除）时与引擎一致判为不匹配
+func TestAlertRuleTestFire_EnableInBGIdentNotFound(t *testing.T) {
+	rt, _, bgid := setupTestFire(t)
+	rt.TargetCache = &memsto.TargetCacheType{}
+	rt.TargetCache.Set(map[string]*models.Target{}, 0, 0)
+
+	cfg := models.AlertRule{Name: "cpu high", NotifyVersion: 1, EnableInBG: 1}
+
+	resp, _ := callTestFire(t, rt, bgid, AlertRuleTestFireForm{SkipSend: true, Config: cfg})
+	if effective := stageByName(t, resp, "effective"); effective.Data["bg_match"] != true {
+		t.Fatalf("mock sample should skip busi group check, got %+v", effective)
+	}
+
+	testFireMu.Lock()
+	testFireLastRun = map[string]time.Time{}
+	testFireMu.Unlock()
+
+	resp, _ = callTestFire(t, rt, bgid, AlertRuleTestFireForm{
+		SkipSend: true,
+		Config:   cfg,
+		Sample:   &TestFireSample{Labels: map[string]string{"ident": "deleted-host"}, Value: 91},
+	})
+	effective := stageByName(t, resp, "effective")
+	if effective.Data["bg_match"] != false || effective.Status != testFireStageWarn {
+		t.Fatalf("real sample with unknown ident should not match busi group, got %+v", effective)
 	}
 }
 

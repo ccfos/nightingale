@@ -161,6 +161,18 @@ func (ug *UserGroup) DelMembers(ctx *ctx.Context, userIds []int64) error {
 	return UserGroupMemberDel(ctx, ug.Id, userIds)
 }
 
+// UserGroupTouch bumps update_at on the given groups. Callers that only write
+// user_group_member must do this: memsto's user group cache re-reads members
+// solely when count(*)/max(update_at) over user_group changes, so a membership
+// change alone stays invisible to alert notification until the group row moves.
+func UserGroupTouch(ctx *ctx.Context, groupIds ...int64) error {
+	if len(groupIds) == 0 {
+		return nil
+	}
+
+	return DB(ctx).Model(&UserGroup{}).Where("id in ?", groupIds).Update("update_at", time.Now().Unix()).Error
+}
+
 func UserGroupStatistics(ctx *ctx.Context) (*Statistics, error) {
 	if !ctx.IsCenter {
 		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=user_group")

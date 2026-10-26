@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
@@ -24,6 +25,7 @@ import (
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/toolkits/pkg/logger"
 )
 
 // DefaultTTL caps how long a task survives in Redis. Matches the streamBus TTL
@@ -53,12 +55,22 @@ type Options struct {
 
 // RedisStore implements a2asrv/taskstore.Store on top of n9e's existing Redis.
 type RedisStore struct {
-	rds       storage.Redis
-	prefix    string
-	ttl       time.Duration
+	rds         storage.Redis
+	prefix      string
+	ttl         time.Duration
 	resolveUser UserResolver
-	now       func() time.Time
+	now         func() time.Time
+
+	// userCache 缓存 taskID→user。user 在 Create 时确定且生命周期内不变，
+	// Update 每次先 HGET 是纯浪费（长输出轮次 Update 数千次，每次多一次 Redis
+	// 往返）。带容量守卫（见 cacheUser），防长期运行无界增长。
+	userCache   map[string]string
+	userCacheMu sync.RWMutex
 }
+
+// userCacheMax 用户缓存容量上限；超出即整体重建（清空后重新缓存），只导致个别
+// HGET 回源，语义安全（taskID 是 UUID，user 在 Create 后不变）。
+const userCacheMax = 100000
 
 // Compile-time interface check.
 var _ a2astore.Store = (*RedisStore)(nil)
@@ -83,6 +95,7 @@ func NewRedisStore(rds storage.Redis, opts Options) *RedisStore {
 		ttl:         ttl,
 		resolveUser: opts.User,
 		now:         now,
+		userCache:   make(map[string]string, 1024),
 	}
 }
 
@@ -107,14 +120,17 @@ const (
 // fields atomically.
 //
 // KEYS:
-//   1: task hash key
+//
+//	1: task hash key
+//
 // ARGV:
-//   1: task JSON
-//   2: user
-//   3: contextID
-//   4: updated nano
-//   5: ttl seconds
-//   6: lua error tag for "already exists"
+//
+//	1: task JSON
+//	2: user
+//	3: contextID
+//	4: updated nano
+//	5: ttl seconds
+//	6: lua error tag for "already exists"
 var createScript = redis.NewScript(`
 if redis.call("EXISTS", KEYS[1]) == 1 then
   return redis.error_reply(ARGV[6])
@@ -133,16 +149,19 @@ return 1
 // and updates task JSON / timestamp.
 //
 // KEYS:
-//   1: task hash key
+//
+//	1: task hash key
+//
 // ARGV:
-//   1: prev version (0 = unchecked)
-//   2: task JSON
-//   3: user
-//   4: contextID
-//   5: updated nano
-//   6: ttl seconds
-//   7: lua error tag for "not found"
-//   8: lua error tag for "conflict"
+//
+//	1: prev version (0 = unchecked)
+//	2: task JSON
+//	3: user
+//	4: contextID
+//	5: updated nano
+//	6: ttl seconds
+//	7: lua error tag for "not found"
+//	8: lua error tag for "conflict"
 var updateScript = redis.NewScript(`
 if redis.call("EXISTS", KEYS[1]) == 0 then
   return redis.error_reply(ARGV[7])
@@ -195,6 +214,8 @@ func (s *RedisStore) Create(ctx context.Context, task *a2a.Task) (a2astore.TaskV
 		}
 		return a2astore.TaskVersionMissing, err
 	}
+	// Create 已知 user，预写缓存，避免第一次 Update 的 HGET 往返。
+	s.cacheUser(string(task.ID), user)
 	_ = res
 	return a2astore.TaskVersion(1), nil
 }
@@ -219,10 +240,17 @@ func (s *RedisStore) Update(ctx context.Context, req *a2astore.UpdateRequest) (a
 	ttlSeconds := int64(s.ttl.Seconds())
 
 	keys := []string{s.taskKey(req.Task.ID)}
+	start := time.Now()
 	res, err := updateScript.Run(ctx, s.rds, keys,
 		strconv.FormatInt(int64(req.PrevVersion), 10),
 		string(payload), user, req.Task.ContextID, updatedNano, ttlSeconds,
 		luaTagNotFound, luaTagConflict).Result()
+	// 单次 Update 耗时采样（>50ms 才记）：确认"每事件全量写 Redis"的瓶颈量级
+	// （长输出轮次数千事件 × 全量 Task 序列化+写放大，可达数百秒）。
+	if d := time.Since(start); d > 50*time.Millisecond {
+		logger.Warningf("[A2A] taskstore Update slow task=%s version=%d payload=%dB dur=%dms",
+			req.Task.ID, req.PrevVersion, len(payload), d.Milliseconds())
+	}
 	if err != nil {
 		if isLuaErr(err, luaTagNotFound) {
 			return a2astore.TaskVersionMissing, a2a.ErrTaskNotFound
@@ -244,8 +272,17 @@ func (s *RedisStore) Update(ctx context.Context, req *a2astore.UpdateRequest) (a
 // happens when the SDK calls Update on a task we never saw because the OCC
 // fast path bypassed Create — defensive).
 func (s *RedisStore) fetchUser(ctx context.Context, id a2a.TaskID) (string, error) {
+	key := string(id)
+	s.userCacheMu.RLock()
+	if u, ok := s.userCache[key]; ok {
+		s.userCacheMu.RUnlock()
+		return u, nil
+	}
+	s.userCacheMu.RUnlock()
+
 	user, err := s.rds.HGet(ctx, s.taskKey(id), "user").Result()
 	if err == nil {
+		s.cacheUser(key, user)
 		return user, nil
 	}
 	if !errors.Is(err, redis.Nil) {
@@ -255,6 +292,18 @@ func (s *RedisStore) fetchUser(ctx context.Context, id a2a.TaskID) (string, erro
 		return "", nil
 	}
 	return s.resolveUser(ctx)
+}
+
+// cacheUser 写入 taskID→user 缓存，带容量守卫：条目达到 userCacheMax 时整体重建
+// （清空后重新缓存），防止长期运行无界增长（taskID 只增不减、Redis TTL 过期不会
+// 回调到本缓存）。清空只导致个别 HGET 回源，语义安全（user 在 Create 后不变）。
+func (s *RedisStore) cacheUser(key, user string) {
+	s.userCacheMu.Lock()
+	defer s.userCacheMu.Unlock()
+	if len(s.userCache) >= userCacheMax {
+		s.userCache = make(map[string]string, 1024)
+	}
+	s.userCache[key] = user
 }
 
 // Get implements a2asrv/taskstore.Store.

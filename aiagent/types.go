@@ -37,6 +37,9 @@ const (
 	// 文案，Metadata 携带 kind/tool/resume_args，路由层据此持久化 Pending 并结束
 	// 本轮。同样是 agent→router 内部带外通道，不进 stream bus / A2A。
 	StreamTypeInterrupt = "interrupt"
+	// StreamTypePageAction carries a validated page-owned command. It is not a
+	// tool result: the browser, rather than this process, performs the action.
+	StreamTypePageAction = "page_action"
 
 	// 注：Agent 运行期默认值、HTTP 状态码上界等调优参数见 defaults.go。
 )
@@ -113,6 +116,10 @@ type AgentRequest struct {
 	// 元数据（request_id 等）
 	Metadata map[string]string `json:"metadata,omitempty"`
 
+	// PageActions are supplied by the active browser page for this one request.
+	// They are never persisted as callable tools in the conversation transcript.
+	PageActions []models.AssistantPageAction `json:"-"`
+
 	// 多轮对话历史
 	History []ChatMessage `json:"history,omitempty"`
 
@@ -136,6 +143,10 @@ type AgentResponse struct {
 	Success    bool       `json:"success"`         // 是否成功
 	Error      string     `json:"error,omitempty"` // 错误信息
 
+	// Incomplete 工具循环因迭代预算用尽而结束：Content 是收尾总结或进度摘要，
+	// 不是完整回答。调用方据此区分"完成"与"部分完成"。
+	Incomplete bool `json:"incomplete,omitempty"`
+
 	// contentStreamed（仅包内）：流式模式下正文已逐 token 经 StreamTypeContent
 	// 下发。executeNativeWithDone 据此给 Done chunk 打标，路由层只把 Done.Content
 	// 当作解析/持久化用的权威正文，不再二次推流（防思考/回答整段重复）。
@@ -153,6 +164,9 @@ type StreamChunk struct {
 	Done      bool                   `json:"done,omitempty"`
 	Error     string                 `json:"error,omitempty"`
 
+	// PageAction is set only for StreamTypePageAction.
+	PageAction *models.AssistantPageActionCall `json:"page_action,omitempty"`
+
 	// Transcript 仅在 Type==StreamTypeTranscript 时设置：本轮新追加的规范消息
 	// （按 wire 顺序，如 assistant 工具调用轮 + tool 结果轮）。
 	Transcript []ChatMessage `json:"transcript,omitempty"`
@@ -165,6 +179,9 @@ type AgentTool struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Type        string `json:"type"`
+	// InputSchema overrides the flat Parameters projection for dynamic tools.
+	// It is used by the page_action bridge, whose args schema is page-specific.
+	InputSchema map[string]interface{} `json:"input_schema,omitempty"`
 
 	// HTTP 工具配置
 	URL           string            `json:"url,omitempty"`
@@ -343,4 +360,10 @@ type ChatMessage struct {
 	// transcript 持久化，回放时由 provider 适配层回填——开启 thinking 后工具
 	// 续轮的协议硬性要求（语义见 llm.ThinkingBlock）。
 	ThinkingBlocks []llm.ThinkingBlock `json:"thinking_blocks,omitempty"`
+
+	// ReasoningContent 仅 assistant 工具调用轮：OpenAI 兼容端点的推理文本，只在
+	// 本回合工具循环内回填给模型（语义见 llm.Message）。json:"-" 刻意不随
+	// transcript 持久化——DeepSeek 等要求新用户回合丢弃历史推理，也避免历史膨胀。
+	ReasoningContent string `json:"-"`
+	ReasoningField   string `json:"-"` // 端点所用推理字段名，回填时沿用（见 llm.Message）
 }

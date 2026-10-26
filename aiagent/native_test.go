@@ -2,10 +2,15 @@ package aiagent
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	"github.com/ccfos/nightingale/v6/models"
 )
 
 // scriptedNativeLLM is a fake llm.LLM scripted per round with raw stream chunks,
@@ -13,11 +18,217 @@ import (
 type scriptedNativeLLM struct {
 	rounds [][]llm.StreamChunk
 	call   int
+	reqs   []*llm.GenerateRequest // 每轮收到的请求，供断言回填内容
+}
+
+func TestRunNativeLoop_PageActionEndsWithoutTranscript(t *testing.T) {
+	action := models.AssistantPageAction{
+		Name:        "set_metric_query",
+		Description: "Fill a PromQL expression.",
+		InputSchema: []byte(`{"type":"object","properties":{"promql":{"type":"string"}},"required":["promql"]}`),
+	}
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{{
+		{ToolCalls: []llm.ToolCall{{ID: "call-page", Name: pageActionToolName, Arguments: `{"name":"set_metric_query","args":{"promql":"up"}}`}}},
+	}}}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
+	streamChan := make(chan *StreamChunk, 10)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{PageActions: []models.AssistantPageAction{action}},
+		[]ChatMessage{{Role: "user", Content: "生成查询"}}, buildNativeToolDefs([]AgentTool{pageActionTool([]models.AssistantPageAction{action})}),
+		&ToolLoopConfig{MaxIterations: 3, StreamChan: streamChan, EmitTranscript: true, Tools: []AgentTool{pageActionTool([]models.AssistantPageAction{action})}})
+	close(streamChan)
+	if !resp.Success || resp.Content != "" || fake.call != 1 {
+		t.Fatalf("response = %+v, calls=%d", resp, fake.call)
+	}
+	var got *models.AssistantPageActionCall
+	for chunk := range streamChan {
+		if chunk.Type == StreamTypeTranscript {
+			t.Fatalf("page action must not enter transcript: %+v", chunk.Transcript)
+		}
+		if chunk.Type == StreamTypeToolCall {
+			t.Fatalf("page action must not emit a server tool event: %+v", chunk)
+		}
+		if chunk.Type == StreamTypePageAction {
+			got = chunk.PageAction
+		}
+	}
+	if got == nil || got.CallID != "call-page" || got.Name != "set_metric_query" || got.Args["promql"] != "up" {
+		t.Fatalf("page action = %+v", got)
+	}
+}
+
+// TestRunNativeLoop_PageActionKeepsCompletedSiblingTranscript covers the batch
+// where the model first runs a server tool and then requests the page action:
+// the executed tool call (and its result) must reach the transcript so a later
+// turn can see the side effect, while the page action itself must stay out.
+func TestRunNativeLoop_PageActionKeepsCompletedSiblingTranscript(t *testing.T) {
+	action := models.AssistantPageAction{
+		Name:        "set_metric_query",
+		Description: "Fill a PromQL expression.",
+		InputSchema: []byte(`{"type":"object","properties":{"promql":{"type":"string"}},"required":["promql"]}`),
+	}
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{{
+		{ToolCalls: []llm.ToolCall{
+			{ID: "call-write", Name: "noop_write", Arguments: `{"value":"p-1"}`},
+			{ID: "call-page", Name: pageActionToolName, Arguments: `{"name":"set_metric_query","args":{"promql":"up"}}`},
+		}},
+	}}}
+	writeTool := AgentTool{Name: "noop_write", Description: "write a proposal", Type: ToolTypeProcessor}
+	tools := []AgentTool{writeTool, pageActionTool([]models.AssistantPageAction{action})}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
+	a.SetExternalToolHandler(func(ctx context.Context, tool *AgentTool, args map[string]interface{}, req *AgentRequest) (string, error) {
+		return `{"proposal_id":"p-1"}`, nil
+	})
+	streamChan := make(chan *StreamChunk, 10)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{PageActions: []models.AssistantPageAction{action}},
+		[]ChatMessage{{Role: "user", Content: "生成查询"}}, buildNativeToolDefs(tools),
+		&ToolLoopConfig{MaxIterations: 3, StreamChan: streamChan, EmitTranscript: true, Tools: tools})
+	close(streamChan)
+	if !resp.Success || resp.Content != "" || fake.call != 1 {
+		t.Fatalf("response = %+v, calls=%d", resp, fake.call)
+	}
+
+	var transcripts [][]ChatMessage
+	var pageAction *models.AssistantPageActionCall
+	for chunk := range streamChan {
+		switch chunk.Type {
+		case StreamTypeTranscript:
+			transcripts = append(transcripts, chunk.Transcript)
+		case StreamTypePageAction:
+			pageAction = chunk.PageAction
+		}
+	}
+	if pageAction == nil || pageAction.CallID != "call-page" {
+		t.Fatalf("page action = %+v", pageAction)
+	}
+	if len(transcripts) != 1 || len(transcripts[0]) != 2 {
+		t.Fatalf("transcripts = %+v, want one assistant+tool pair", transcripts)
+	}
+	asst, tool := transcripts[0][0], transcripts[0][1]
+	if asst.Role != "assistant" || len(asst.ToolCalls) != 1 || asst.ToolCalls[0].ID != "call-write" {
+		t.Fatalf("assistant turn = %+v, want only the completed sibling call", asst)
+	}
+	if tool.Role != llm.RoleTool || tool.ToolCallID != "call-write" || !strings.Contains(tool.Content, "proposal_id") {
+		t.Fatalf("tool turn = %+v, want the sibling result paired with its call", tool)
+	}
+}
+
+// TestRunNativeLoop_PageActionTrimsOnlyUnfinishedCalls covers a failed page
+// action followed by an executed sibling and a successful page action: the two
+// completed calls stay paired, and the terminal (unexecuted) call is trimmed
+// from the assistant turn rather than left as an orphan tool_use.
+func TestRunNativeLoop_PageActionTrimsOnlyUnfinishedCalls(t *testing.T) {
+	action := models.AssistantPageAction{
+		Name:        "set_metric_query",
+		Description: "Fill a PromQL expression.",
+		InputSchema: []byte(`{"type":"object","properties":{"promql":{"type":"string"}},"required":["promql"]}`),
+	}
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{{
+		{ToolCalls: []llm.ToolCall{
+			{ID: "call-bad-page", Name: pageActionToolName, Arguments: `{"name":"undeclared"}`},
+			{ID: "call-write", Name: "noop_write", Arguments: `{"value":"p-1"}`},
+			{ID: "call-page", Name: pageActionToolName, Arguments: `{"name":"set_metric_query","args":{"promql":"up"}}`},
+		}},
+	}}}
+	writeTool := AgentTool{Name: "noop_write", Description: "write a proposal", Type: ToolTypeProcessor}
+	tools := []AgentTool{writeTool, pageActionTool([]models.AssistantPageAction{action})}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
+	a.SetExternalToolHandler(func(ctx context.Context, tool *AgentTool, args map[string]interface{}, req *AgentRequest) (string, error) {
+		return `{"proposal_id":"p-1"}`, nil
+	})
+	streamChan := make(chan *StreamChunk, 10)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{PageActions: []models.AssistantPageAction{action}},
+		[]ChatMessage{{Role: "user", Content: "生成查询"}}, buildNativeToolDefs(tools),
+		&ToolLoopConfig{MaxIterations: 3, StreamChan: streamChan, EmitTranscript: true, Tools: tools})
+	close(streamChan)
+	if !resp.Success {
+		t.Fatalf("response = %+v, want success", resp)
+	}
+
+	var transcript []ChatMessage
+	for chunk := range streamChan {
+		if chunk.Type == StreamTypeTranscript {
+			transcript = chunk.Transcript
+		}
+	}
+	if len(transcript) != 3 {
+		t.Fatalf("transcript = %+v, want assistant + two tool turns", transcript)
+	}
+	asst := transcript[0]
+	if asst.Role != "assistant" || len(asst.ToolCalls) != 2 ||
+		asst.ToolCalls[0].ID != "call-bad-page" || asst.ToolCalls[1].ID != "call-write" {
+		t.Fatalf("assistant turn = %+v, want the two completed calls only", asst)
+	}
+	for _, call := range asst.ToolCalls {
+		if call.ID == "call-page" {
+			t.Fatalf("terminal page action leaked into the transcript: %+v", asst.ToolCalls)
+		}
+	}
+	if transcript[1].ToolCallID != "call-bad-page" || !strings.Contains(transcript[1].Content, "was not declared") {
+		t.Fatalf("failed page action result = %+v, want its error evidence", transcript[1])
+	}
+	if transcript[2].ToolCallID != "call-write" || !strings.Contains(transcript[2].Content, "proposal_id") {
+		t.Fatalf("sibling result = %+v, want the write observation", transcript[2])
+	}
+}
+
+func TestRunNativeLoop_PageActionFailureEntersTranscript(t *testing.T) {
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+		{{ToolCalls: []llm.ToolCall{{ID: "call-page", Name: pageActionToolName, Arguments: `{"name":"undeclared"}`}}}},
+		{{Content: "请提供可执行的动作。"}},
+	}}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
+	streamChan := make(chan *StreamChunk, 10)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{PageActions: []models.AssistantPageAction{{Name: "set_metric_query"}}},
+		[]ChatMessage{{Role: "user", Content: "生成查询"}}, nil,
+		&ToolLoopConfig{MaxIterations: 3, StreamChan: streamChan, EmitTranscript: true})
+	close(streamChan)
+	if !resp.Success || resp.Content != "请提供可执行的动作。" {
+		t.Fatalf("response = %+v", resp)
+	}
+	var transcript []ChatMessage
+	for chunk := range streamChan {
+		if chunk.Type == StreamTypeTranscript {
+			transcript = chunk.Transcript
+		}
+		if chunk.Type == StreamTypeToolCall && chunk.Content == pageActionToolName {
+			t.Fatalf("failed page action must not emit a server tool event")
+		}
+		if chunk.Type == StreamTypeToolResult && chunk.Metadata["tool"] == pageActionToolName {
+			t.Fatalf("failed page action must not emit an orphan tool result: %+v", chunk)
+		}
+	}
+	if len(transcript) != 2 || len(transcript[0].ToolCalls) != 1 || transcript[0].ToolCalls[0].Name != pageActionToolName || transcript[1].ToolName != pageActionToolName || !strings.Contains(transcript[1].Content, "was not declared") {
+		t.Fatalf("transcript = %+v", transcript)
+	}
+}
+
+func TestPageActionSystemPromptUsesPageSchema(t *testing.T) {
+	actions := []models.AssistantPageAction{{
+		Name:        "set_metric_query",
+		Description: "Fill query.",
+		InputSchema: []byte(`{"type":"object","properties":{"promql":{"type":"string"}},"required":["promql"]}`),
+	}}
+	prompt := pageActionSystemPrompt(actions)
+	for _, want := range []string{"## Page actions", "set_metric_query: Fill query.", `"promql":{"type":"string"}`, "Do not claim that the page executed"} {
+		if !strings.Contains(prompt, want) {
+			t.Fatalf("page action prompt missing %q: %s", want, prompt)
+		}
+	}
+	tool := pageActionTool(actions)
+	required := tool.InputSchema["required"].([]string)
+	if len(required) != 1 || required[0] != "name" {
+		t.Fatalf("page action required = %#v", required)
+	}
+	call, err := resolvePageActionCall(actions, "call-1", `{"name":"set_metric_query"}`)
+	if err != nil || len(call.Args) != 0 {
+		t.Fatalf("optional args call = %#v, %v", call, err)
+	}
 }
 
 func (s *scriptedNativeLLM) Name() string { return "scripted-native" }
 
-func (s *scriptedNativeLLM) take() []llm.StreamChunk {
+func (s *scriptedNativeLLM) take(req *llm.GenerateRequest) []llm.StreamChunk {
+	s.reqs = append(s.reqs, req)
 	var chunks []llm.StreamChunk
 	if s.call < len(s.rounds) {
 		chunks = s.rounds[s.call]
@@ -28,8 +239,9 @@ func (s *scriptedNativeLLM) take() []llm.StreamChunk {
 
 func (s *scriptedNativeLLM) Generate(ctx context.Context, req *llm.GenerateRequest) (*llm.GenerateResponse, error) {
 	resp := &llm.GenerateResponse{}
-	for _, c := range s.take() {
+	for _, c := range s.take(req) {
 		resp.Content += c.Content
+		resp.ReasoningContent += c.Reasoning
 		resp.ToolCalls = append(resp.ToolCalls, c.ToolCalls...)
 		if c.FinishReason != "" {
 			resp.FinishReason = c.FinishReason
@@ -39,7 +251,7 @@ func (s *scriptedNativeLLM) Generate(ctx context.Context, req *llm.GenerateReque
 }
 
 func (s *scriptedNativeLLM) GenerateStream(ctx context.Context, req *llm.GenerateRequest) (<-chan llm.StreamChunk, error) {
-	chunks := s.take()
+	chunks := s.take(req)
 	out := make(chan llm.StreamChunk, len(chunks)+1)
 	for _, c := range chunks {
 		out <- c
@@ -180,6 +392,60 @@ func TestRunNativeLoop_ThinkingBlocksPersist(t *testing.T) {
 	tb := transcript[0].ThinkingBlocks
 	if len(tb) != 1 || tb[0].Signature != "sig-1" || tb[0].Thinking != "先读配置" {
 		t.Fatalf("thinking blocks must persist on the assistant turn with signature: %+v", tb)
+	}
+}
+
+// TestRunNativeLoop_ReasoningPassback 推理文本（OpenAI 兼容端点）随 assistant
+// 工具调用轮回填到本回合下一次请求，但不随 transcript 持久化（issue #3440）。
+// 流式与非流式两条路径都覆盖。
+func TestRunNativeLoop_ReasoningPassback(t *testing.T) {
+	for _, streaming := range []bool{true, false} {
+		fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+			{
+				{Reasoning: "需要先查 "},
+				{Reasoning: "CPU 指标"},
+				{ToolCalls: []llm.ToolCall{{ID: "c1", Name: "noop_lookup", Arguments: `{}`}}},
+			},
+			{{Content: "done"}},
+		}}
+		a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: fake}
+
+		var streamChan chan *StreamChunk
+		if streaming {
+			streamChan = make(chan *StreamChunk, 100)
+		}
+		resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "分析大盘"}}, nil, &ToolLoopConfig{
+			MaxIterations:  5,
+			StreamChan:     streamChan,
+			EmitTranscript: true,
+		})
+		if !resp.Success || len(fake.reqs) != 2 {
+			t.Fatalf("streaming=%v resp=%+v reqs=%d", streaming, resp, len(fake.reqs))
+		}
+		second := fake.reqs[1].Messages
+		var asst *llm.Message
+		for i := range second {
+			if second[i].Role == llm.RoleAssistant && len(second[i].ToolCalls) > 0 {
+				asst = &second[i]
+			}
+		}
+		if asst == nil || asst.ReasoningContent != "需要先查 CPU 指标" {
+			t.Fatalf("streaming=%v: tool-call turn must carry reasoning into the next request: %+v", streaming, asst)
+		}
+
+		if !streaming {
+			continue
+		}
+		close(streamChan)
+		for ch := range streamChan {
+			if ch.Type != StreamTypeTranscript {
+				continue
+			}
+			raw, _ := json.Marshal(ch.Transcript)
+			if strings.Contains(string(raw), "CPU 指标") {
+				t.Fatalf("reasoning must not be persisted in transcript: %s", raw)
+			}
+		}
 	}
 }
 
@@ -361,13 +627,13 @@ func TestRunNativeLoop_ContentStreamsWithToolsOffered(t *testing.T) {
 }
 
 // TestExecuteNativeWithDone_MaxIterationPartialGoesDone：max-iteration 截断且
-// 带部分产出时走 Done 而非 Error——路由层把 Done.Content 当唯一正文推流并
-// 持久化，用户能看到已有分析。
+// 带部分产出时走 Done 而非 Error，并打 incomplete 标。收尾调用拿不到正文时
+// 退化为确定性进度摘要（含最后一段非空评论），不再出现空白 "Last thought:"。
 func TestExecuteNativeWithDone_MaxIterationPartialGoesDone(t *testing.T) {
-	// 每轮都发工具调用，永不收敛 → 必然打到 MaxIterations
+	// 每轮都发工具调用，永不收敛 → 必然打到 MaxIterations；收尾轮无输出
 	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
 		{{Content: "查一下", ToolCalls: []llm.ToolCall{{ID: "c1", Name: "noop_lookup", Arguments: `{}`}}}},
-		{{Content: "再查", ToolCalls: []llm.ToolCall{{ID: "c2", Name: "noop_lookup", Arguments: `{}`}}}},
+		{{ToolCalls: []llm.ToolCall{{ID: "c2", Name: "noop_lookup", Arguments: `{}`}}}},
 	}}
 	a := &Agent{
 		cfg:       &AgentConfig{MaxIterations: 2, Timeout: 30000, UserPromptRendered: "排查问题"},
@@ -379,19 +645,168 @@ func TestExecuteNativeWithDone_MaxIterationPartialGoesDone(t *testing.T) {
 	close(streamChan)
 
 	var doneChunk *StreamChunk
+	var streamed strings.Builder
 	for ch := range streamChan {
 		switch ch.Type {
 		case StreamTypeError:
 			t.Fatalf("max-iteration partial must not surface as Error chunk: %+v", ch)
+		case StreamTypeContent:
+			streamed.WriteString(ch.Delta)
 		case StreamTypeDone:
 			doneChunk = ch
 		}
 	}
-	if doneChunk == nil || !strings.Contains(doneChunk.Content, "Analysis incomplete") {
-		t.Fatalf("Done chunk = %+v, want partial content from ExtractPartialResult", doneChunk)
+	if doneChunk == nil {
+		t.Fatal("missing Done chunk")
 	}
-	if streamed, _ := doneChunk.Metadata["content_streamed"].(bool); streamed {
-		t.Fatalf("partial body never streamed as final answer, content_streamed must be unset")
+	for _, want := range []string{"分析未完成", "未能生成最终结论", "noop_lookup×2", "查一下"} {
+		if !strings.Contains(doneChunk.Content, want) {
+			t.Fatalf("Done content missing %q: %q", want, doneChunk.Content)
+		}
+	}
+	if strings.Contains(doneChunk.Content, "Last thought:") {
+		t.Fatalf("blank Last thought must be gone: %q", doneChunk.Content)
+	}
+	if inc, _ := doneChunk.Metadata["incomplete"].(bool); !inc {
+		t.Fatalf("Done must carry incomplete=true: %+v", doneChunk.Metadata)
+	}
+	// header 与兜底摘要都已经推流：Done 打 content_streamed，路由层不再二次推流
+	if s, _ := doneChunk.Metadata["content_streamed"].(bool); !s {
+		t.Fatalf("finalize body is streamed, content_streamed must be set: %+v", doneChunk.Metadata)
+	}
+	if !strings.Contains(streamed.String(), "未能生成最终结论") {
+		t.Fatalf("fallback summary must be streamed: %q", streamed.String())
+	}
+	if len(fake.reqs) != 3 {
+		t.Fatalf("expected 2 loop rounds + 1 finalize call, got %d", len(fake.reqs))
+	}
+}
+
+// TestRunNativeLoop_FinalizeAfterMaxIterations 预算用尽后的收尾调用：最后一条
+// 观测尾部带收尾指令（不新开 user 轮），模型的收尾正文成为答案并前置
+// 确定性的未完成提示；收尾轮里的工具调用被忽略，transcript 不含收尾指令。
+func TestRunNativeLoop_FinalizeAfterMaxIterations(t *testing.T) {
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+		{{ToolCalls: []llm.ToolCall{{ID: "c1", Name: "noop_lookup", Arguments: `{"id":1}`}}}},
+		{{ToolCalls: []llm.ToolCall{{ID: "c2", Name: "noop_lookup", Arguments: `{"id":2}`}}}},
+		{{Reasoning: "汇总已有观测"}, {Content: "CPU 正常；内存待确认", ToolCalls: []llm.ToolCall{{ID: "c3", Name: "noop_lookup", Arguments: `{}`}}}},
+	}}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 2, Timeout: 30000}, llmClient: fake}
+
+	streamChan := make(chan *StreamChunk, 100)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{Params: map[string]string{"lang": "en_US"}}, []ChatMessage{{Role: "user", Content: "analyze"}}, nil, &ToolLoopConfig{
+		MaxIterations:        2,
+		StreamChan:           streamChan,
+		ExtractPartialResult: true,
+		EmitTranscript:       true,
+	})
+	close(streamChan)
+
+	if !resp.Incomplete || resp.Success || resp.Error == "" {
+		t.Fatalf("exhausted loop must be incomplete with error: %+v", resp)
+	}
+	if !strings.HasPrefix(resp.Content, "> ⚠️ Analysis incomplete") || !strings.HasSuffix(resp.Content, "CPU 正常；内存待确认") {
+		t.Fatalf("content = %q", resp.Content)
+	}
+	if len(resp.Steps) != 2 {
+		t.Fatalf("finalize-round tool calls must not execute: steps=%d", len(resp.Steps))
+	}
+	finalReq := fake.reqs[2].Messages
+	last := finalReq[len(finalReq)-1]
+	if last.Role != llm.RoleTool || !strings.Contains(last.Content, "budget is exhausted") {
+		t.Fatalf("finalize instruction must ride on the last tool observation: %+v", last)
+	}
+	// 下发顺序：收尾轮思考 → header → 收尾正文。header 必须与正文相邻（同一
+	// 正文段），否则路由层会把它切成独立段、与权威正文里的 header 重复展示。
+	var order []string
+	for ch := range streamChan {
+		switch ch.Type {
+		case StreamTypeThinking:
+			order = append(order, "thinking")
+		case StreamTypeContent:
+			if strings.Contains(ch.Delta, "Analysis incomplete") {
+				order = append(order, "header")
+			} else {
+				order = append(order, "content")
+			}
+		case StreamTypeTranscript:
+			raw, _ := json.Marshal(ch.Transcript)
+			if strings.Contains(string(raw), "budget is exhausted") {
+				t.Fatalf("finalize instruction must not be persisted: %s", raw)
+			}
+		}
+	}
+	if got := strings.Join(order, ","); got != "thinking,header,content" {
+		t.Fatalf("stream order = %s, want thinking,header,content", got)
+	}
+}
+
+// TestRunNativeLoop_BudgetWarningAndRepeatNote 剩余预算降到阈值时在观测尾部
+// 提醒收敛；读类工具同名同参重复调用仍执行，但观测尾部提示复用结果。
+func TestRunNativeLoop_BudgetWarningAndRepeatNote(t *testing.T) {
+	same := llm.ToolCall{Name: "noop_lookup", Arguments: `{"id":7}`}
+	rounds := [][]llm.StreamChunk{}
+	for i := 0; i < 4; i++ {
+		tc := same
+		tc.ID = "c" + string(rune('a'+i))
+		rounds = append(rounds, []llm.StreamChunk{{ToolCalls: []llm.ToolCall{tc}}})
+	}
+	rounds = append(rounds, []llm.StreamChunk{{Content: "done"}})
+	fake := &scriptedNativeLLM{rounds: rounds}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: fake}
+
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "q"}}, nil, &ToolLoopConfig{MaxIterations: 5})
+	if !resp.Success || resp.Incomplete {
+		t.Fatalf("resp = %+v", resp)
+	}
+	if len(resp.Steps) != 4 {
+		t.Fatalf("read tool repeats must still execute: steps=%d", len(resp.Steps))
+	}
+	// 重复调用提示只进喂模型的上下文：第 3 次调用后的请求里最后一条观测带
+	// 提示，第 2 次之后的不带；steps（→ ToolResult/transcript）里永远不带。
+	lastObs := func(req *llm.GenerateRequest) string { return req.Messages[len(req.Messages)-1].Content }
+	if strings.Contains(lastObs(fake.reqs[2]), "完全相同的参数") || !strings.Contains(lastObs(fake.reqs[3]), "调用该工具 3 次") {
+		t.Fatalf("repeat note: after 2nd=%q after 3rd=%q", lastObs(fake.reqs[2]), lastObs(fake.reqs[3]))
+	}
+	for i, st := range resp.Steps {
+		if strings.Contains(st.Observation, "完全相同的参数") {
+			t.Fatalf("step %d observation must stay clean: %q", i, st.Observation)
+		}
+	}
+	// 第 3 轮（iteration=2）执行完后剩 2 轮 → 第 4 次请求的最后一条观测带提醒
+	warned := func(req *llm.GenerateRequest) bool {
+		m := req.Messages[len(req.Messages)-1]
+		return strings.Contains(m.Content, "工具调用预算仅剩")
+	}
+	if warned(fake.reqs[2]) || !warned(fake.reqs[3]) || strings.Contains(resp.Steps[2].Observation, "工具调用预算仅剩") {
+		t.Fatalf("budget warning must hit exactly the request after iteration 2 and stay out of steps")
+	}
+}
+
+// TestRunNativeLoop_RepeatNoteSkipsPollingAndWriteTools 轮询类工具同参重复是
+// 正常轮询、写类工具已由 dedup 提示，二者调用多少次都不追加重复调用提醒。
+func TestRunNativeLoop_RepeatNoteSkipsPollingAndWriteTools(t *testing.T) {
+	for _, name := range []string{"get_task_status", "create_noop_rule"} {
+		t.Run(name, func(t *testing.T) {
+			rounds := [][]llm.StreamChunk{}
+			for i := 0; i < 4; i++ {
+				tc := llm.ToolCall{ID: "c" + string(rune('a'+i)), Name: name, Arguments: `{"task_id":1}`}
+				rounds = append(rounds, []llm.StreamChunk{{ToolCalls: []llm.ToolCall{tc}}})
+			}
+			rounds = append(rounds, []llm.StreamChunk{{Content: "done"}})
+			fake := &scriptedNativeLLM{rounds: rounds}
+			a := &Agent{cfg: &AgentConfig{MaxIterations: 10, Timeout: 30000}, llmClient: fake}
+
+			resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "q"}}, nil, &ToolLoopConfig{MaxIterations: 10})
+			if !resp.Success {
+				t.Fatalf("resp = %+v", resp)
+			}
+			for i, req := range fake.reqs {
+				if last := req.Messages[len(req.Messages)-1].Content; strings.Contains(last, "完全相同的参数") {
+					t.Fatalf("request %d must not carry repeat note: %q", i, last)
+				}
+			}
+		})
 	}
 }
 
@@ -504,5 +919,53 @@ func TestRunNativeLoop_InterruptAfterExecutedWrite(t *testing.T) {
 	}
 	if toolTurn.Role != llm.RoleTool || toolTurn.ToolCallID != "c1" {
 		t.Fatalf("tool turn = %+v, want paired result for the executed call", toolTurn)
+	}
+}
+
+// TestRunNativeLoop_VLLMReasoningRoundTrip 真实 OpenAI 客户端对接模拟的 vLLM
+// SSE 端点（推理走 delta.reasoning）：工具续轮的请求体里推理以 reasoning 回填，
+// 不发 reasoning_content——vLLM Python 前端只读 reasoning（issue #3440）。
+func TestRunNativeLoop_VLLMReasoningRoundTrip(t *testing.T) {
+	var bodies []map[string]any
+	round := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		bodies = append(bodies, body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		if round == 0 {
+			fmt.Fprint(w, `data: {"choices":[{"delta":{"reasoning":"check cpu first"}}]}`+"\n\n"+
+				`data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"c1","type":"function","function":{"name":"noop_lookup","arguments":"{}"}}]},"finish_reason":"tool_calls"}]}`+"\n\n"+
+				"data: [DONE]\n\n")
+		} else {
+			fmt.Fprint(w, `data: {"choices":[{"delta":{"content":"done"},"finish_reason":"stop"}]}`+"\n\ndata: [DONE]\n\n")
+		}
+		round++
+	}))
+	defer srv.Close()
+
+	client, err := llm.NewOpenAI(&llm.Config{Model: "deepseek-v41", BaseURL: srv.URL + "/v1/chat/completions"}, srv.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: client}
+	streamChan := make(chan *StreamChunk, 100)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "q"}}, nil, &ToolLoopConfig{
+		MaxIterations: 5,
+		StreamChan:    streamChan,
+	})
+	close(streamChan)
+	if !resp.Success || len(bodies) != 2 {
+		t.Fatalf("resp=%+v requests=%d", resp, len(bodies))
+	}
+	msgs, _ := bodies[1]["messages"].([]any)
+	var asst map[string]any
+	for _, m := range msgs {
+		if mm, _ := m.(map[string]any); mm["role"] == "assistant" {
+			asst = mm
+		}
+	}
+	if asst["reasoning"] != "check cpu first" || asst["reasoning_content"] != nil {
+		t.Fatalf("assistant tool turn on the wire = %v", asst)
 	}
 }

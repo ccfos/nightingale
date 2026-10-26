@@ -33,6 +33,7 @@ const (
 // while other pages may omit it entirely.
 type AssistantPageInfo struct {
 	Page  AssistantPageType `json:"page"`
+	URL   string            `json:"url,omitempty"`
 	Param json.RawMessage   `json:"param,omitempty"`
 }
 
@@ -57,7 +58,8 @@ type AssistantMessage struct {
 	ErrTitle        string                     `json:"err_title"`
 	ErrMsg          string                     `json:"err_msg"`
 	ExecutedTools   bool                       `json:"executed_tools"`
-	Extra           AssistantMessageExtra      `json:"-"` // internal, not exposed to frontend
+	Incomplete      bool                       `json:"incomplete,omitempty"` // tool loop hit its iteration budget: Response is a partial conclusion (ErrCode stays 0 so it still renders)
+	Extra           AssistantMessageExtra      `json:"-"`                    // internal, not exposed to frontend
 }
 
 type AssistantMessageExtra struct {
@@ -103,9 +105,11 @@ type ConversationRoute struct {
 // ==================== Message Query ====================
 
 type AssistantMessageQuery struct {
-	Content  string            `json:"content"`
-	Action   AssistantAction   `json:"action"`
-	PageFrom AssistantPageInfo `json:"page_from"`
+	Content     string                      `json:"content"`
+	References  []AssistantMessageReference `json:"references,omitempty"`
+	Action      AssistantAction             `json:"action"`
+	PageFrom    AssistantPageInfo           `json:"page_from"`
+	PageActions []AssistantPageAction       `json:"page_actions,omitempty"`
 }
 
 // ==================== Message Response ====================
@@ -119,6 +123,9 @@ const (
 	ContentTypeReasoning AssistantContentType = "reasoning"
 	ContentTypeAlertRule AssistantContentType = "alert_rule"
 	ContentTypeDashboard AssistantContentType = "dashboard"
+	// ContentTypePageAction tells the browser to perform one action declared by
+	// this request's page_actions. The agent never executes it server-side.
+	ContentTypePageAction AssistantContentType = "page_action"
 	// ContentTypeFormSelect carries a multi-field form the user must fill in
 	// before a halted creation flow can continue. Payload is a creationFormPayload
 	// JSON. Frontend renders fields progressively and submits all picks at once.
@@ -142,6 +149,7 @@ func (t AssistantContentType) IsStructuredPayload() bool {
 type AssistantMessageResponse struct {
 	ContentType AssistantContentType `json:"content_type"`
 	Content     string               `json:"content"`
+	Param       interface{}          `json:"param,omitempty"`
 	StreamID    string               `json:"stream_id,omitempty"`
 	IsFinish    bool                 `json:"is_finish"`
 	IsFromAI    bool                 `json:"is_from_ai"`

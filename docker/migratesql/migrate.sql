@@ -515,3 +515,10 @@ ALTER TABLE `source_token` ADD COLUMN `note` varchar(255) NOT NULL DEFAULT '' CO
    已有的 idx_source_type_id_token 跳过了中间列 source_id 用不上，会退化成扫全部
    source_type='board' 的行。该查询在鉴权之前、每个带 __token 的请求都要打一次 */
 ALTER TABLE `source_token` ADD KEY `idx_source_token_token` (`token`);
+
+/* v9 2026-09-08 users disabled: 账号禁用状态，0 正常 1 已禁用。转岗/休假期间冻结账号，
+   禁止登录与接口访问，回来后置 0 即可恢复，角色、团队、业务组权限都不受影响。
+   列类型取 int 而非 tinyint，MySQL 与 PostgreSQL 的列定义才一致；本文件是 MySQL 语法，
+   PostgreSQL 请执行：ALTER TABLE users ADD COLUMN disabled int NOT NULL DEFAULT 0;
+   通常不需要手工执行，程序启动时的 AutoMigrate 会补上这一列 */
+ALTER TABLE `users` ADD COLUMN `disabled` int NOT NULL DEFAULT 0 COMMENT '0:enabled 1:disabled';

@@ -369,7 +369,17 @@ func (m *AlertMute) Update(ctx *ctx.Context, arm AlertMute) error {
 	return DB(ctx).Model(m).Select("*").Updates(arm).Error
 }
 
+func (m *AlertMute) normalizeEmptyTags() {
+	// Omitted or null tags mean no tag filtering. Keep the API field an array,
+	// including for legacy rows, so clients can safely iterate over it.
+	if len(m.Tags) == 0 || strings.TrimSpace(string(m.Tags)) == "null" {
+		m.Tags = ormx.JSONArr("[]")
+	}
+}
+
 func (m *AlertMute) FE2DB() error {
+	m.normalizeEmptyTags()
+
 	idsBytes, err := json.Marshal(m.DatasourceIdsJson)
 	if err != nil {
 		return err
@@ -394,6 +404,8 @@ func (m *AlertMute) FE2DB() error {
 }
 
 func (m *AlertMute) DB2FE() error {
+	m.normalizeEmptyTags()
+
 	err := json.Unmarshal([]byte(m.DatasourceIds), &m.DatasourceIdsJson)
 	if err != nil {
 		return err
@@ -522,9 +534,11 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 
 	session := DB(ctx).Model(&AlertMute{}).Where("disabled = 0")
 
-	// 只筛选在生效时间内的屏蔽规则, 这里 btime < now+10 是为了避免同步期间有规则满足了生效时间条件
+	// Keep not-yet-active mutes: the cache only re-syncs on count/max(update_at)
+	// change, so a mute reaching its btime would never be picked up if filtered
+	// here. MatchMute checks the time window per event; only expired ones are dropped.
 	now := time.Now().Unix()
-	session = session.Where("(mute_time_type = ? AND btime <= ? AND etime >= ?) OR mute_time_type = ?", TimeRange, now+10, now, Periodic)
+	session = session.Where("(mute_time_type = ? AND etime >= ?) OR mute_time_type = ?", TimeRange, now, Periodic)
 
 	err := session.Find(&lst).Error
 	if err != nil {
