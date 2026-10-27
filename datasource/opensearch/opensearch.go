@@ -18,6 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/datasource/commons/eslike"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 
 	"github.com/mitchellh/mapstructure"
@@ -42,6 +43,12 @@ type OpenSearch struct {
 	MaxShard    int               `json:"os.max_shard" mapstructure:"os.max_shard"`
 	ClusterName string            `json:"os.cluster_name" mapstructure:"os.cluster_name"`
 	Client      *oscliv2.Client   `json:"os.client" mapstructure:"os.client"`
+	// Cloud auth (e.g. SigV4 for Amazon OpenSearch Service), set via SetAuth.
+	Auth dsauth.Config `json:"-" mapstructure:"-"`
+}
+
+func (os *OpenSearch) SetAuth(auth dsauth.Config) {
+	os.Auth = auth
 }
 
 type TLS struct {
@@ -94,19 +101,23 @@ func (os *OpenSearch) InitClient() error {
 		headers[k] = []string{v}
 	}
 
+	rt, err := dsauth.Wrap(transport, os.Auth)
+	if err != nil {
+		return err
+	}
+
 	options := oscliv2.Config{
 		Addresses: os.Nodes,
-		Transport: transport,
+		Transport: rt,
 		Header:    headers,
 	}
 
-	// 只要有用户名就添加认证，不依赖 Enable 字段
-	if os.Basic.Username != "" {
+	// 只要有用户名就添加认证，不依赖 Enable 字段；云鉴权（SigV4 等）时不再带 Basic
+	if os.Basic.Username != "" && !os.Auth.IsCloud() {
 		options.Username = os.Basic.Username
 		options.Password = os.Basic.Password
 	}
 
-	var err = error(nil)
 	os.Client, err = oscliv2.NewClient(options)
 
 	return err
@@ -149,6 +160,10 @@ func (os *OpenSearch) Equal(other datasource.Datasource) bool {
 	}
 
 	if os.MaxShard != other.(*OpenSearch).MaxShard {
+		return false
+	}
+
+	if !os.Auth.Equal(other.(*OpenSearch).Auth) {
 		return false
 	}
 

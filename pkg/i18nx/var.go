@@ -157,6 +157,10 @@ var I18N = `{
     "all users missing notify channel configurations: %v": "所有用户缺少通知渠道配置: %v",
     "event match subscribe and notify settings ok": "事件匹配订阅规则，通知设置正常",
     "/loki suffix is miss, please add /loki to the url: %s": "缺少/loki后缀，请在URL中添加/loki：%s",
+    "no cloud credentials found in the n9e process: %s. Use an access key / client secret, or bind an IAM role / managed identity to the n9e pod or host": "当前 n9e 进程没有可用的云凭据：%s。请改用 Access Key / Client Secret，或为 n9e 所在的 Pod 或主机绑定 IAM Role / 托管身份",
+    "failed to assume role: %s. Check the role trust policy and the external ID": "无法扮演 Role：%s。请检查该 Role 的信任策略和 External ID",
+    "failed to obtain access token: %s. Check the client ID, client secret and token URL": "获取访问令牌失败：%s。请检查 Client ID、Client Secret 和 Token URL",
+    "credentials were accepted but access is denied (HTTP %d), grant the identity query permission on the datasource, e.g. aps:QueryMetrics or Monitoring Data Reader: %s": "凭据有效，但访问被拒绝（HTTP %d），请为该身份授予数据源的查询权限，例如 aps:QueryMetrics 或 Monitoring Data Reader：%s",
 
     "event time not match time filter": "事件时间不匹配时间过滤器",
     "event severity not match severity filter": "事件等级不匹配等级过滤器",
@@ -468,6 +472,10 @@ var I18N = `{
     "all users missing notify channel configurations: %v": "所有用戶缺少通知渠道配置: %v",
     "event match subscribe and notify settings ok": "事件匹配訂閱規則，通知設置正常",
     "/loki suffix is miss, please add /loki to the url: %s": "缺少/loki後綴，請在URL中添加/loki：%s",
+    "no cloud credentials found in the n9e process: %s. Use an access key / client secret, or bind an IAM role / managed identity to the n9e pod or host": "目前 n9e 進程沒有可用的雲憑證：%s。請改用 Access Key / Client Secret，或為 n9e 所在的 Pod 或主機綁定 IAM Role / 受控識別",
+    "failed to assume role: %s. Check the role trust policy and the external ID": "無法扮演 Role：%s。請檢查該 Role 的信任策略和 External ID",
+    "failed to obtain access token: %s. Check the client ID, client secret and token URL": "取得存取權杖失敗：%s。請檢查 Client ID、Client Secret 和 Token URL",
+    "credentials were accepted but access is denied (HTTP %d), grant the identity query permission on the datasource, e.g. aps:QueryMetrics or Monitoring Data Reader: %s": "憑證有效，但存取被拒絕（HTTP %d），請為該身分授予資料來源的查詢權限，例如 aps:QueryMetrics 或 Monitoring Data Reader：%s",
 
     "event time not match time filter": "事件時間不匹配時間過濾器",
     "event severity not match severity filter": "事件等級不匹配等級過濾器",
@@ -775,6 +783,10 @@ var I18N = `{
     "all users missing notify channel configurations: %v": "すべてのユーザーに通知チャンネル設定がありません: %v",
     "event match subscribe and notify settings ok": "イベントがサブスクライブルールに一致し、通知設定が正常です",
     "/loki suffix is miss, please add /loki to the url: %s": "/lokiサフィックスがありません。URLに/lokiを追加してください: %s",
+    "no cloud credentials found in the n9e process: %s. Use an access key / client secret, or bind an IAM role / managed identity to the n9e pod or host": "n9e プロセスで利用可能なクラウド認証情報が見つかりません: %s。アクセスキー / クライアントシークレットを使用するか、n9e の Pod またはホストに IAM ロール / マネージド ID を割り当ててください",
+    "failed to assume role: %s. Check the role trust policy and the external ID": "ロールの引き受けに失敗しました: %s。ロールの信頼ポリシーと外部 ID を確認してください",
+    "failed to obtain access token: %s. Check the client ID, client secret and token URL": "アクセストークンの取得に失敗しました: %s。クライアント ID、クライアントシークレット、トークン URL を確認してください",
+    "credentials were accepted but access is denied (HTTP %d), grant the identity query permission on the datasource, e.g. aps:QueryMetrics or Monitoring Data Reader: %s": "認証情報は受け入れられましたがアクセスが拒否されました (HTTP %d)。この ID にデータソースのクエリ権限 (例: aps:QueryMetrics、Monitoring Data Reader) を付与してください: %s",
 
     "event time not match time filter": "イベント時間が時間フィルタと一致しません",
     "event severity not match severity filter": "イベント等級が等級フィルタと一致しません",
@@ -1082,6 +1094,10 @@ var I18N = `{
     "all users missing notify channel configurations: %v": "У всех пользователей отсутствуют настройки каналов уведомлений: %v",
     "event match subscribe and notify settings ok": "Событие соответствует правилу подписки, настройки уведомлений в порядке",
     "/loki suffix is miss, please add /loki to the url: %s": "Отсутствует суффикс /loki, пожалуйста, добавьте /loki к URL: %s",
+    "no cloud credentials found in the n9e process: %s. Use an access key / client secret, or bind an IAM role / managed identity to the n9e pod or host": "В процессе n9e не найдены облачные учётные данные: %s. Используйте ключ доступа / секрет клиента или назначьте IAM-роль / управляемое удостоверение поду или хосту n9e",
+    "failed to assume role: %s. Check the role trust policy and the external ID": "Не удалось принять роль: %s. Проверьте политику доверия роли и External ID",
+    "failed to obtain access token: %s. Check the client ID, client secret and token URL": "Не удалось получить токен доступа: %s. Проверьте Client ID, Client Secret и Token URL",
+    "credentials were accepted but access is denied (HTTP %d), grant the identity query permission on the datasource, e.g. aps:QueryMetrics or Monitoring Data Reader: %s": "Учётные данные приняты, но доступ запрещён (HTTP %d). Выдайте удостоверению право на запросы к источнику данных, например aps:QueryMetrics или Monitoring Data Reader: %s",
 
     "event time not match time filter": "Время события не соответствует временному фильтру",
     "event severity not match severity filter": "Уровень события не соответствует фильтру уровня",

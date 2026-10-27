@@ -614,6 +614,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
 		pages.POST("/datasource/plugin/list", rt.auth(), rt.pluginList)
 		pages.POST("/datasource/upsert", rt.auth(), rt.admin(), rt.datasourceUpsert)
+		pages.GET("/datasource/auth-policy", rt.auth(), rt.admin(), rt.datasourceAuthPolicyGet)
 		pages.POST("/datasource/grafana/fetch", rt.auth(), rt.admin(), rt.datasourceGrafanaFetch)
 		pages.POST("/datasource/grafana/import", rt.auth(), rt.admin(), rt.datasourceGrafanaImport)
 		pages.POST("/datasource/desc", rt.auth(), rt.admin(), rt.datasourceGet)

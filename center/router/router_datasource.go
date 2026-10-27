@@ -17,6 +17,7 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
 	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/i18n"
@@ -195,6 +196,14 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 
 	verif := datasourceVerification{State: "saved_unverified", Stage: "none"}
 
+	// OpenSearch keeps Basic Auth in settings (os.basic); the cloud auth is
+	// still in req.AuthJson. Validate before testing so a bad auth config is
+	// reported as such instead of as a connection failure.
+	if err := req.VerifyAuth(); err != nil {
+		Dangerous(c, err)
+		return
+	}
+
 	// runCheck 执行一次测试并记录结构化结果。
 	// 返回 true 表示已响应错误（失败且未选择强制保存），调用方需直接 return。
 	runCheck := func(stage string, fn func() error) (aborted bool) {
@@ -263,11 +272,12 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 			},
 		}
 
-		req.AuthJson = models.Auth{
-			BasicAuth:         os.Basic.Enable,
-			BasicAuthUser:     os.Basic.Username,
-			BasicAuthPassword: os.Basic.Password,
-		}
+		// Only the Basic part comes from settings; replacing the whole struct
+		// would drop the cloud auth (sigv4 for Amazon OpenSearch Service).
+		req.AuthJson.BasicAuth = os.Basic.Enable
+		req.AuthJson.BasicAuthUser = os.Basic.Username
+		req.AuthJson.BasicAuthPassword = os.Basic.Password
+		req.AuthJson = req.AuthJson.Normalize()
 	}
 
 	if req.PluginType == models.CLICKHOUSE {
@@ -318,6 +328,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	// Plugins implementing datasource.HealthChecker get a real connectivity probe
 	// here; types not in the plugin registry (e.g. prometheus) are handled above.
 	if plug, err := datasource.GetDatasourceByType(req.PluginType, req.SettingsJson); err == nil {
+		datasource.ApplyAuth(plug, req.AuthJson.Config)
 		if hc, ok := plug.(datasource.HealthChecker); ok {
 			if runCheck("query", func() error {
 				ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
@@ -392,7 +403,9 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	}
 
 	if err != nil {
-		Render(c, nil, err)
+		// Render(c, nil, err) would marshal the error value as {}, hiding
+		// validation messages (e.g. an auth conflict) from the user.
+		Dangerous(c, err)
 		return
 	}
 
@@ -426,12 +439,17 @@ func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
 		return fmt.Errorf("failed to create TLS config: %v", err)
 	}
 
+	transport, err := dsauth.Wrap(&http.Transport{
+		TLSClientConfig: tlsConfig,
+	}, ds.AuthJson.Config)
+	if err != nil {
+		return err
+	}
+
 	client := &http.Client{
 		// 必须有超时：不可达地址会一直挂住「测试连通性并保存」这个请求
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: tlsConfig,
-		},
+		Timeout:   10 * time.Second,
+		Transport: transport,
 	}
 
 	ds.HTTPJson.Url = strings.TrimRight(ds.HTTPJson.Url, "/")
@@ -502,11 +520,18 @@ func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
 	resp, err := client.Do(req)
 	if err != nil {
 		logger.Errorf("Error making request: %v\n", err)
+		if authErr := explainAuthError(c.GetHeader("X-Language"), err); authErr != nil {
+			return authErr
+		}
 		return fmt.Errorf("request url:%s failed: %v", fullURL, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
+		if dsauth.StatusCode(ds.AuthJson.Config, resp.StatusCode) == dsauth.CodeAccessDenied {
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+			return explainAccessDenied(c.GetHeader("X-Language"), resp.StatusCode, string(body))
+		}
 		logger.Errorf("Error making request: %v\n", resp.StatusCode)
 		if resp.StatusCode == 404 && ds.PluginType == models.LOKI && !strings.Contains(ds.HTTPJson.Url, "/loki") {
 			lang := c.GetHeader("X-Language")
@@ -601,13 +626,18 @@ func (rt *Router) datasourceQuery(c *gin.Context) {
 // getElasticsearchVersion 该函数尝试从提供的Elasticsearch数据源中获取版本号，遍历所有URL，
 // 直到成功获取版本号或所有URL均尝试失败为止。
 func getElasticsearchVersion(ds models.Datasource, timeout time.Duration) (string, error) {
-	client := &http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify,
-			},
+	transport, err := dsauth.Wrap(&http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify,
 		},
+	}, ds.AuthJson.Config)
+	if err != nil {
+		return "", err
+	}
+
+	client := &http.Client{
+		Timeout:   timeout,
+		Transport: transport,
 	}
 
 	urls := make([]string, 0)
