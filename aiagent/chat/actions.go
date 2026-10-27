@@ -181,7 +181,7 @@ Refusal template (use VERBATIM when search_n9e_docs is empty for a factual quest
 我在 n9e/categraf 官方文档里没有找到关于 <用户问题里的关键名词> 的明确描述，
 为避免给你错误信息，我不直接回答这个问题。建议:
 
-1. 📖 到 https://flashcat.cloud/docs/ 切换版本手动查
+1. 📖 到 https://n9e.github.io/zh/docs 手动查
 2. 🐛 到 https://github.com/ccfos/nightingale/issues 搜历史问答
 3. 💬 加夜莺社区群直接问研发
 

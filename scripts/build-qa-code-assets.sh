@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Produce the QA code corpus assets (filtered source snapshots of nightingale /
-# categraf / n9e-fe as tar.gz + manifest.json), so the center binary can be
-# built with `-tags qa_code_embed` and the doc-qa skill can grep real code via
-# the list_code / search_code / read_code builtin tools.
+# Produce the QA corpus assets (filtered source snapshots of nightingale /
+# categraf / n9e-fe as tar.gz + manifest.json, plus the docs site pages as
+# docs.tar.gz), so the center binary can be built with `-tags qa_code_embed`:
+# the doc-qa skill then greps real code via list_code / search_code /
+# read_code, and search_n9e_docs searches the docs without any network fetch.
 #
 # Usage:  scripts/build-qa-code-assets.sh
-# Output: aiagent/skill/embedded/codeassets/{n9e,categraf,fe}.tar.gz + manifest.json
+# Output: aiagent/skill/embedded/codeassets/{n9e,categraf,fe,docs}.tar.gz + manifest.json
 #
 # Source resolution:
 #   - n9e:      always the current checkout (git ls-files @ HEAD) — the corpus
@@ -15,6 +16,12 @@
 #   - fe:       $FE_LOCAL if set, else latest GitHub release tag ($FE_REF pins
 #               it). Note fe.sh downloads the *build artifact* of the same
 #               latest tag, so the corpus matches the embedded front-end UI.
+#   - docs:     $DOCS_LOCAL (a built n9e.github.io site, i.e. its build/ dir,
+#               or a gh-pages checkout) if set, else a sparse shallow clone of
+#               the n9e.github.io gh-pages branch ($DOCS_REF pins another
+#               branch). Only the rendered per-page Markdown copies under
+#               docs/ (en) and zh/docs/ (zh) are packed; a page's URL is its
+#               path minus ".md", so no slug logic is needed downstream.
 #
 # Filters (hard lines: fe src/plus is commercial code, n9e front/ is the 17MB
 # statik blob — neither may ever enter the corpus):
@@ -235,6 +242,35 @@ EOF
 pack "$FE_STAGE" "$OUT/fe.tar.gz"
 
 # ---------------------------------------------------------------------------
+# docs — rendered Markdown pages of https://n9e.github.io (gh-pages branch)
+# ---------------------------------------------------------------------------
+DOCS_STAGE="$WORK/docs"
+if [ -n "${DOCS_LOCAL:-}" ]; then
+  DOCS_SRC="$DOCS_LOCAL"
+  DOCS_COMMIT="$(git -C "$DOCS_SRC" rev-parse HEAD 2>/dev/null || echo unknown)"
+  DOCS_REF_RESOLVED="local"
+else
+  DOCS_REF_RESOLVED="${DOCS_REF:-gh-pages}"
+  DOCS_SRC="$WORK/docs-src"
+  echo ">> cloning n9e/n9e.github.io @ $DOCS_REF_RESOLVED (docs pages only)"
+  # gh-pages 整站带图片字体，sparse + blob:none 只拉 docs/ 和 zh/docs/ 两棵树
+  git clone -q --depth 1 --branch "$DOCS_REF_RESOLVED" --filter=blob:none --sparse \
+    https://github.com/n9e/n9e.github.io.git "$DOCS_SRC"
+  git -C "$DOCS_SRC" sparse-checkout set docs zh/docs
+  DOCS_COMMIT="$(git -C "$DOCS_SRC" rev-parse HEAD)"
+fi
+echo ">> staging docs from $DOCS_SRC @ $DOCS_REF_RESOLVED ($DOCS_COMMIT)"
+(cd "$DOCS_SRC" && find docs zh/docs -type f -name '*.md' 2>/dev/null | LC_ALL=C sort) \
+  | stage_files "$DOCS_SRC" "$DOCS_STAGE"
+# 站点有约 200 页 × 2 种语言；数量明显不对说明拿错了目录（例如源码树而不是构建产物）
+DOCS_FILES="$(count_files "$DOCS_STAGE")"
+if [ "$DOCS_FILES" -lt 100 ]; then
+  echo "only $DOCS_FILES docs pages found under $DOCS_SRC — expected the built site (docs/*.md + zh/docs/*.md)" >&2
+  exit 1
+fi
+pack "$DOCS_STAGE" "$OUT/docs.tar.gz"
+
+# ---------------------------------------------------------------------------
 # manifest
 # ---------------------------------------------------------------------------
 GENERATED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -247,4 +283,5 @@ cat > "$OUT/manifest.json" <<EOF
 EOF
 
 echo ">> done:"
+echo ">> docs: $DOCS_FILES pages @ $DOCS_REF_RESOLVED ($DOCS_COMMIT)"
 ls -la "$OUT"
