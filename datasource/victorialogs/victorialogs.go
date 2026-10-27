@@ -136,7 +136,8 @@ func (vl *VictoriaLogs) Equal(other datasource.Datasource) bool {
 		vl.MaxQueryRows == o.MaxQueryRows &&
 		vl.EnableWrite == o.EnableWrite &&
 		reflect.DeepEqual(vl.Headers, o.Headers) &&
-		reflect.DeepEqual(vl.WriteAddrs, o.WriteAddrs)
+		reflect.DeepEqual(vl.WriteAddrs, o.WriteAddrs) &&
+		vl.Auth.Equal(o.Auth)
 }
 
 // QueryLog 日志查询

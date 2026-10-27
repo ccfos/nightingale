@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 )
 
 type DatasourceType struct {
@@ -119,6 +120,21 @@ type ReadAddrApplier interface {
 // Implementations must honor ctx and must not populate shared connection caches.
 type HealthChecker interface {
 	CheckHealth(ctx context.Context) error
+}
+
+// AuthSetter is optional: HTTP datasources that support the pluggable cloud
+// auth (SigV4 / OAuth2 / Azure Entra) implement this. The auth lives in the
+// datasource's auth column rather than in settings, so it is handed over here
+// after Init and must take part in Equal so a change rebuilds the client.
+type AuthSetter interface {
+	SetAuth(auth dsauth.Config)
+}
+
+// ApplyAuth hands the cloud auth to ds if the plugin supports it.
+func ApplyAuth(ds Datasource, auth dsauth.Config) {
+	if s, ok := ds.(AuthSetter); ok {
+		s.SetAuth(auth.Normalize())
+	}
 }
 
 func RegisterDatasource(typ string, p Datasource) {
