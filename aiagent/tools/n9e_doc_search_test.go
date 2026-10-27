@@ -1,6 +1,9 @@
 package tools
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"strings"
@@ -104,21 +107,13 @@ func TestSearchN9eDocsRanking(t *testing.T) {
 	//
 	// SCORE_FLOOR=5 的过滤行为要求 /c 必须有 description 命中, 否则只 contents
 	// 单次命中 (+1 分) 会被丢弃, top_n=2 ranking 测不到。
-	docIndexMu.Lock()
-	docIndex = []docEntry{
+	setDocIndexForTest([]docEntry{
 		{Title: "告警规则模板", Permalink: "https://example/a", Description: "创建告警规则模板", Contents: "告警规则 promql 触发"},
 		{Title: "无关条目", Permalink: "https://example/b", Description: "data source", Contents: "随便写点"},
 		// /c: description +3, contents +3 (3 次命中, 封顶 3) = 6 分, 过 floor
 		{Title: "告警 入门", Permalink: "https://example/c", Description: "alerting basics 告警规则", Contents: "告警规则 部署 告警规则 告警规则"},
-	}
-	docIndexLoaded = true
-	docIndexMu.Unlock()
-	defer func() {
-		docIndexMu.Lock()
-		docIndex = nil
-		docIndexLoaded = false
-		docIndexMu.Unlock()
-	}()
+	})
+	defer setDocIndexForTest(nil)
 
 	out, err := searchN9eDocs(context.Background(), nil, map[string]interface{}{
 		"keywords": "告警规则",
@@ -163,45 +158,140 @@ func TestSearchN9eDocsRanking(t *testing.T) {
 	}
 }
 
-func TestSearchN9eDocsNotLoaded(t *testing.T) {
-	docIndexMu.Lock()
-	docIndex = nil
-	docIndexLoaded = false
-	docIndexMu.Unlock()
+func TestSearchN9eDocsUnavailable(t *testing.T) {
+	setDocIndexForTest(nil)
 
 	_, err := searchN9eDocs(context.Background(), nil, map[string]interface{}{"keywords": "x"}, nil)
-	if err == nil || !strings.Contains(err.Error(), "warming up") {
-		t.Errorf("expected warming-up error, got %v", err)
+	if err == nil || !strings.Contains(err.Error(), "not available in this build") {
+		t.Errorf("expected not-available error, got %v", err)
 	}
 }
 
-func TestIsOldNightingaleDoc(t *testing.T) {
-	cases := []struct {
-		permalink string
-		old       bool
-	}{
-		// V9 — 必须保留
-		{"https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v9/usecase/api/", false},
-		{"https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v9/usage/integrations/", false},
-		// V8/V7/V6 — 必须过滤
-		{"https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v8/usecase/api/", true},
-		{"https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v7/install/edge/", true},
-		{"https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v6/api/api/", true},
-		// V5 — 无版本号后缀路径，必须过滤
-		{"https://flashcat.cloud/docs/content/flashcat-monitor/nightingale/api/webapi/", true},
-		{"https://flashcat.cloud/docs/content/flashcat-monitor/nightingale/introduction/", true},
-		// 不分版本的辅助文档 — 必须保留
-		{"https://flashcat.cloud/docs/content/flashcat-monitor/categraf/2-installation/", false},
-		{"https://flashcat.cloud/docs/content/flashcat-partner/prometheus/quickstart/overview/", false},
-		{"https://flashcat.cloud/docs/content/flashcat/overview/", false},
-		// 边界：路径里碰巧含 nightingale 但不在 flashcat-monitor 下
-		{"https://example.com/nightingale-v6/whatever/", false},
-		{"", false},
+func TestSearchN9eDocsDedupsLanguages(t *testing.T) {
+	// 同一页的中英两份都命中时只返回得分高的一份；integrations 条目没有 pageKey，不参与去重
+	setDocIndexForTest([]docEntry{
+		{Title: "Metric rules", Permalink: "https://n9e.github.io/docs/alerting/metric-rules", Description: "PromQL threshold", Contents: "promql", pageKey: "docs/alerting/metric-rules"},
+		{Title: "指标规则 PromQL", Permalink: "https://n9e.github.io/zh/docs/alerting/metric-rules", Description: "PromQL 阈值", Contents: "promql", pageKey: "docs/alerting/metric-rules"},
+		{Title: "[integration-doc] PromQL", Permalink: "https://example/i1", Contents: "promql"},
+		{Title: "[integration-doc] PromQL 2", Permalink: "https://example/i2", Contents: "promql"},
+	})
+	defer setDocIndexForTest(nil)
+
+	out, err := searchN9eDocs(context.Background(), nil, map[string]interface{}{"keywords": "promql", "top_n": float64(10)}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	for _, c := range cases {
-		if got := isOldNightingaleDoc(c.permalink); got != c.old {
-			t.Errorf("isOldNightingaleDoc(%q) = %v, want %v", c.permalink, got, c.old)
+	var resp struct {
+		Items []struct {
+			Permalink string `json:"permalink"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal([]byte(out), &resp); err != nil {
+		t.Fatalf("json unmarshal: %v", err)
+	}
+	var got []string
+	for _, it := range resp.Items {
+		got = append(got, it.Permalink)
+	}
+	want := []string{
+		"https://n9e.github.io/zh/docs/alerting/metric-rules", // title 也命中, 分更高
+		"https://example/i1",
+		"https://example/i2",
+	}
+	if !equalStrSlice(got, want) {
+		t.Errorf("permalinks = %v, want %v", got, want)
+	}
+}
+
+func TestParseDocPage(t *testing.T) {
+	page := "# Metric rules\n\nMetric rules put the threshold inside the PromQL expression.\n\nLast reviewed 2026-10-10\n\n" +
+		"## The query list[\u200b](#the-query-list \"Direct link to The query list\")\n\nStep 3 holds a list.\n"
+	e, ok := parseDocPage("docs/alerting/metric-rules.md", page)
+	if !ok {
+		t.Fatal("page should parse")
+	}
+	if e.Title != "Metric rules" {
+		t.Errorf("title = %q", e.Title)
+	}
+	if e.Description != "Metric rules put the threshold inside the PromQL expression." {
+		t.Errorf("description = %q", e.Description)
+	}
+	if e.Permalink != "https://n9e.github.io/docs/alerting/metric-rules" {
+		t.Errorf("permalink = %q", e.Permalink)
+	}
+	if e.pageKey != "docs/alerting/metric-rules" {
+		t.Errorf("pageKey = %q", e.pageKey)
+	}
+	if strings.Contains(e.Contents, "Direct link") || !strings.Contains(e.Contents, "## The query list\n") {
+		t.Errorf("heading anchor not stripped: %q", e.Contents)
+	}
+	if strings.Contains(e.Contents, "threshold inside") {
+		t.Errorf("description should not be repeated in contents: %q", e.Contents)
+	}
+
+	zh, ok := parseDocPage("zh/docs/alerting/metric-rules.md", "# 指标规则\n\n指标规则把阈值写在 PromQL 里。\n\n正文")
+	if !ok || zh.Permalink != "https://n9e.github.io/zh/docs/alerting/metric-rules" || zh.pageKey != "docs/alerting/metric-rules" {
+		t.Errorf("zh page = %+v, ok=%v", zh, ok)
+	}
+
+	// 分类页标题上面有面包屑
+	cat, _ := parseDocPage("docs/concepts.md", "* [](https://n9e.github.io/index.md)\n* Architecture and concepts\n\n# Architecture and concepts\n\nThe mental model.\n\n## [System architecture](x)")
+	if cat.Title != "Architecture and concepts" || cat.Description != "The mental model." || strings.Contains(cat.Contents, "index.md") {
+		t.Errorf("breadcrumb not stripped: %+v", cat)
+	}
+	// 正文就是列表、后面没有标题时原样保留
+	if got := stripDocBreadcrumb("* a\n* b\n\ntext"); got != "* a\n* b\n\ntext" {
+		t.Errorf("non-breadcrumb list changed: %q", got)
+	}
+
+	// 站内 .md 链接改回 HTML 页地址，锚点保留
+	link, _ := parseDocPage("docs/x.md", "# X\n\nAbout.\n\nSee [A](https://n9e.github.io/docs/a.md) and [B](https://n9e.github.io/zh/docs/b.md#sec), not [C](https://example.com/c.md).")
+	if want := "See [A](https://n9e.github.io/docs/a) and [B](https://n9e.github.io/zh/docs/b#sec), not [C](https://example.com/c.md)."; link.Contents != want {
+		t.Errorf("links = %q, want %q", link.Contents, want)
+	}
+
+	// 首段是代码块时不当 description
+	code, _ := parseDocPage("docs/x.md", "# X\n\n```\nfoo\n```\n\nbar")
+	if code.Description != "" || !strings.HasPrefix(code.Contents, "```") {
+		t.Errorf("code block taken as description: %+v", code)
+	}
+
+	// 站点根页 docs.md -> /docs；docs/ 以外的路径（如集成页）不收
+	if root, ok := parseDocPage("docs.md", "# Docs\n\nAll docs."); !ok || root.Permalink != "https://n9e.github.io/docs" {
+		t.Errorf("root page = %+v, ok=%v", root, ok)
+	}
+	if _, ok := parseDocPage("integrations/Linux.md", "# Linux"); ok {
+		t.Error("non-docs page should be skipped")
+	}
+}
+
+func TestParseDocsTarball(t *testing.T) {
+	var buf bytes.Buffer
+	gz := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gz)
+	add := func(name, body string) {
+		if err := tw.WriteHeader(&tar.Header{Name: name, Mode: 0o644, Size: int64(len(body)), Typeflag: tar.TypeReg}); err != nil {
+			t.Fatal(err)
 		}
+		if _, err := tw.Write([]byte(body)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	add("docs/a.md", "# A\n\nAbout A.\n\nbody")
+	add("zh/docs/a.md", "# 甲\n\n关于甲。\n\n正文")
+	add("docs/img.png", "binary")
+	tw.Close()
+	gz.Close()
+
+	entries, err := parseDocsTarball(buf.Bytes())
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if len(entries) != 2 {
+		t.Fatalf("want 2 entries, got %d: %+v", len(entries), entries)
+	}
+	if entries[0].Permalink != "https://n9e.github.io/docs/a" || entries[1].Permalink != "https://n9e.github.io/zh/docs/a" {
+		t.Errorf("permalinks = %q, %q", entries[0].Permalink, entries[1].Permalink)
 	}
 }
 

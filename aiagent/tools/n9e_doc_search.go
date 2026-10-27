@@ -1,17 +1,20 @@
 package tools
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/skill/embedded"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/toolkits/pkg/logger"
 )
@@ -21,10 +24,13 @@ func init() {
 }
 
 const (
-	n9eDocIndexURL       = "https://flashcat.cloud/index.json"
-	n9eDocSyncInterval   = 24 * time.Hour
-	n9eDocSyncRetryDelay = 1 * time.Minute
-	n9eDocIndexMaxBytes  = 12 << 20 // 12 MiB — index is ~10 MB today, leave headroom
+	// 文档站。内嵌页面的 permalink = 站点地址 + 归档内路径去掉 ".md"
+	n9eDocSiteURL = "https://n9e.github.io"
+
+	// 内嵌文档的解析上限。现在约 400 页（中英各 ~200）、解压后 ~3 MB，留足余量；
+	// 只防构建脚本把错的目录打进来。
+	n9eDocMaxPages      = 5000
+	n9eDocMaxTotalBytes = 64 << 20
 
 	// 返回给 LLM 的单篇 contents 截断上限（rune）。
 	//
@@ -50,32 +56,34 @@ const (
 	n9eDocHighConfFloor = 20 // 大于此分视为 high
 )
 
-// docEntry mirrors the subset of fields we use from /index.json.
+// docEntry is one searchable document: a docs site page or an integrations/
+// sample (see integrations_loader.go).
 type docEntry struct {
-	Title       string `json:"title"`
-	Permalink   string `json:"permalink"`
-	Description string `json:"description"`
-	Contents    string `json:"contents"`
+	Title       string
+	Permalink   string
+	Description string
+	Contents    string
+
+	// pageKey identifies a docs page independent of language ("docs/x" for
+	// both docs/x.md and zh/docs/x.md), so search returns one language per
+	// page. Empty for integrations entries.
+	pageKey string
 }
 
 var (
-	docIndexMu     sync.RWMutex
-	docIndex       []docEntry
-	docIndexLoaded bool
-
-	docSyncOnce sync.Once
+	docIndexMu   sync.RWMutex
+	docIndex     []docEntry
+	docIndexOnce sync.Once
 )
 
 // searchN9eDocs scores entries against caller-supplied keywords and returns
-// top N {title, permalink, description, snippet}. Idea: the LLM hits this in
-// place of the JS-rendered flashcat search page, so the response shape mimics
-// what that page would show — title + URL + a contextual snippet.
+// top N {title, permalink, description, contents}. Idea: the LLM hits this in
+// place of the docs site's JS search page, so the response shape mimics what
+// that page would show — title + URL + the page text.
 //
 // Scoring is intentionally dumb (substring + weighted sum). Fancy BM25/TF-IDF
-// would barely help for a 960-doc corpus and would mean another dep.
+// would barely help for a ~400-page corpus and would mean another dep.
 func searchN9eDocs(ctx context.Context, _ *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
-	triggerDocIndexSync()
-
 	keywords := strings.TrimSpace(getArgString(args, "keywords"))
 	if keywords == "" {
 		return "", fmt.Errorf("keywords is required")
@@ -88,13 +96,14 @@ func searchN9eDocs(ctx context.Context, _ *aiagent.ToolDeps, args map[string]int
 		topN = 10
 	}
 
+	ensureDocIndex()
 	docIndexMu.RLock()
-	loaded := docIndexLoaded
 	entries := docIndex
 	docIndexMu.RUnlock()
 
-	if !loaded {
-		return "", fmt.Errorf("n9e doc index is still warming up, please retry in a few seconds")
+	if len(entries) == 0 {
+		// 不是暂时状态，重试也不会好：直接让调用方走代码通道或拒答
+		return "", fmt.Errorf("n9e docs are not available in this build (built without -tags qa_code_embed and no integrations/ directory)")
 	}
 
 	// keywords 上面已 TrimSpace 并校验非空, strings.Fields 一定能产出 >=1 个 token,
@@ -114,7 +123,21 @@ func searchN9eDocs(ctx context.Context, _ *aiagent.ToolDeps, args map[string]int
 			hits = append(hits, scored{i, s})
 		}
 	}
-	sort.Slice(hits, func(i, j int) bool { return hits[i].score > hits[j].score })
+	sort.SliceStable(hits, func(i, j int) bool { return hits[i].score > hits[j].score })
+	// 同一页的中英两份常同时命中（PromQL、配置项名等两种语言里写法一样），
+	// 只留得分高的那份，免得 top_n 被同一页占掉两个位置。
+	seen := make(map[string]struct{}, len(hits))
+	uniq := hits[:0]
+	for _, h := range hits {
+		if k := entries[h.idx].pageKey; k != "" {
+			if _, dup := seen[k]; dup {
+				continue
+			}
+			seen[k] = struct{}{}
+		}
+		uniq = append(uniq, h)
+	}
+	hits = uniq
 	if len(hits) > topN {
 		hits = hits[:topN]
 	}
@@ -199,7 +222,7 @@ func tokenizeKeywords(s string) []string {
 //
 // Plus: when the query carries "configuration intent" (mentions categraf /
 // 配置 / toml / instances / input 等), [integration-config] entries get a
-// flat +10 boost. Reason: README + flashcat 文档站 + 整篇 .toml 在 contents
+// flat +10 boost. Reason: README + 文档站 + 整篇 .toml 在 contents
 // 命中次数上很容易压过短小但权威的 toml 样例; 配置语法翻车 (q001/q046/q064
 // 的 [[inputs.xxx]]) 就是这种"被淹没"的产物. 用确定性加权把权威样本顶到前面.
 func scoreDocEntry(e *docEntry, terms []string) int {
@@ -271,142 +294,173 @@ func truncateRunes(s string, max int) string {
 	return string(r[:max]) + "…"
 }
 
-// triggerDocIndexSync spins up the sync loop on first tool invocation —
-// keeps the cost off deployments that never use this skill.
-func triggerDocIndexSync() {
-	docSyncOnce.Do(func() {
-		go docIndexSyncLoop()
+// ensureDocIndex builds the index on first tool invocation — keeps the
+// parse cost (~400 pages, a few hundred ms) off deployments that never use
+// this skill. The pages are embedded in the binary, so there is no network
+// fetch and nothing to refresh: the docs a build answers from are the docs
+// that existed when it was released.
+func ensureDocIndex() {
+	docIndexOnce.Do(func() {
+		var entries []docEntry
+		docCount := 0
+		if data := embedded.DocsTarball(); len(data) > 0 {
+			docs, err := parseDocsTarball(data)
+			if err != nil {
+				logger.Warningf("n9e docs: parse embedded pages failed: %v", err)
+			}
+			entries = append(entries, docs...)
+			docCount = len(docs)
+		} else {
+			logger.Warningf("n9e docs: no docs embedded in this build (built without -tags qa_code_embed); search_n9e_docs only covers integrations/")
+		}
+
+		// 合并 integrations/ 下的配置样例和 README。部署里没有 integrations/
+		// 目录时就只有内嵌文档撑底。
+		integrationCount := 0
+		if extras, err := loadIntegrationsEntries(); err != nil {
+			logger.Warningf("integrations: load failed, continuing with embedded docs only: %v", err)
+		} else {
+			entries = append(entries, extras...)
+			integrationCount = len(extras)
+		}
+
+		docIndexMu.Lock()
+		docIndex = entries
+		docIndexMu.Unlock()
+		logger.Infof("n9e doc index loaded: %d entries (docs %d, integrations %d)",
+			len(entries), docCount, integrationCount)
 	})
 }
 
-func docIndexSyncLoop() {
-	for {
-		if err := refreshDocIndex(); err != nil {
-			logger.Warningf("sync n9e doc index failed: %v", err)
-			if !isDocIndexLoaded() {
-				time.Sleep(n9eDocSyncRetryDelay)
-				continue
-			}
-		} else {
-			logger.Infof("sync n9e doc index ok, next refresh in %s", n9eDocSyncInterval)
-		}
-		time.Sleep(n9eDocSyncInterval)
-	}
-}
-
-func refreshDocIndex() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-	transport := &http.Transport{
-		DialContext:           safeDialContext,
-		TLSHandshakeTimeout:   5 * time.Second,
-		ResponseHeaderTimeout: 30 * time.Second,
-		DisableKeepAlives:     true,
-	}
-	client := &http.Client{Timeout: 60 * time.Second, Transport: transport}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, n9eDocIndexURL, nil)
-	if err != nil {
-		return fmt.Errorf("build request: %v", err)
-	}
-	req.Header.Set("User-Agent", "n9e-aiagent-doc-sync/1.0")
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("http fetch: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("status %d", resp.StatusCode)
-	}
-
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, n9eDocIndexMaxBytes+1))
-	if err != nil {
-		return fmt.Errorf("read body: %v", err)
-	}
-	if len(raw) > n9eDocIndexMaxBytes {
-		return fmt.Errorf("index exceeds %d bytes, bump n9eDocIndexMaxBytes", n9eDocIndexMaxBytes)
-	}
-
-	var all []docEntry
-	if err := json.Unmarshal(raw, &all); err != nil {
-		return fmt.Errorf("parse json: %v", err)
-	}
-
-	filtered := make([]docEntry, 0, len(all))
-	skippedOld := 0
-	for _, e := range all {
-		// 只保留文档；landing / blog / changelog 等非文档对'平台使用类问答'是噪音
-		if !strings.Contains(e.Permalink, "/docs/content/") {
-			continue
-		}
-		if e.Title == "" && e.Contents == "" {
-			continue
-		}
-		// 过滤旧版 nightingale 文档，只服务 V9 用户。
-		// 旧版文档里的 API/UI/字段经常和 V9 不一致，LLM 看了会幻觉外推（实测：
-		// 看到 V5 webapi 文档讲 JWT 认证后，给出"V9 Bearer Token"的瞎答）。
-		// 与其靠 prompt 让 LLM 守纪律，不如索引层面直接去掉，根除幻觉源。
-		if isOldNightingaleDoc(e.Permalink) {
-			skippedOld++
-			continue
-		}
-		filtered = append(filtered, e)
-	}
-
-	// 合并 integrations/ 下的配置样例和 README。失败不影响远程索引可用性 —
-	// 走部署里没 integrations/ 目录的场景就只有远程文档撑底。
-	integrationCount := 0
-	if extras, ierr := loadIntegrationsEntries(); ierr == nil && len(extras) > 0 {
-		filtered = append(filtered, extras...)
-		integrationCount = len(extras)
-	} else if ierr != nil {
-		logger.Warningf("integrations: load failed, continuing with remote index only: %v", ierr)
-	}
-
+// setDocIndexForTest replaces the index and marks it loaded, so tests never
+// fall through to the embedded pages.
+func setDocIndexForTest(entries []docEntry) {
+	docIndexOnce.Do(func() {})
 	docIndexMu.Lock()
-	docIndex = filtered
-	docIndexLoaded = true
+	docIndex = entries
 	docIndexMu.Unlock()
-	logger.Infof("n9e doc index loaded: %d entries (raw %d bytes, skipped %d old-version, integrations %d)",
-		len(filtered), len(raw), skippedOld, integrationCount)
-	return nil
 }
 
-// isOldNightingaleDoc 判断 permalink 是否指向旧版本 n9e 文档（V5/V6/V7/V8）。
-//
-// flashcat 文档站的路径约定：
-//
-//	/flashcat-monitor/nightingale-v6/...   → V6
-//	/flashcat-monitor/nightingale-v7/...   → V7
-//	/flashcat-monitor/nightingale-v8/...   → V8
-//	/flashcat-monitor/nightingale-v9/...   → V9 ⭐ 保留
-//	/flashcat-monitor/nightingale/...      → V5（注意：无 -vX 后缀就是 V5，
-//	                                           历史遗留命名，introduction 开头会明示）
-//	/flashcat-monitor/categraf/...         → 不分版本，保留
-//	/flashcat-partner/...                  → 不分版本，保留
-//
-// 这里只杀 nightingale 旧版本（V5-V8），categraf 等辅助文档不动 —— 它们不带版本
-// 漂移问题。如果将来 V10 来了，把 nightingale-v9 改成 nightingale-v10 即可，
-// 或扩展成扫描 nightingale-vN 提取数字、动态判断"非当前主版本"。
-func isOldNightingaleDoc(permalink string) bool {
-	if strings.Contains(permalink, "/flashcat-monitor/nightingale-v6/") ||
-		strings.Contains(permalink, "/flashcat-monitor/nightingale-v7/") ||
-		strings.Contains(permalink, "/flashcat-monitor/nightingale-v8/") {
-		return true
+// parseDocsTarball turns the embedded docs.tar.gz into one docEntry per page.
+// The archive holds the site's rendered Markdown copies: docs/<id>.md (en)
+// and zh/docs/<id>.md (zh), published next to each HTML page at the same path,
+// so the page URL is simply the file path minus ".md".
+func parseDocsTarball(data []byte) ([]docEntry, error) {
+	gz, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("open gzip: %w", err)
 	}
-	// V5 路径无版本号后缀：必须用前后双斜杠精确匹配，避免误杀 nightingale-v9。
-	// strings.Contains(p, "/nightingale/") 既匹配 .../nightingale/api/...（V5）
-	// 也不会匹配 .../nightingale-v9/...（中间是连字符）。
-	if strings.Contains(permalink, "/flashcat-monitor/nightingale/") {
-		return true
+	defer gz.Close()
+
+	tr := tar.NewReader(gz)
+	var entries []docEntry
+	var total int64
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			return entries, nil
+		}
+		if err != nil {
+			return entries, fmt.Errorf("read tar: %w", err)
+		}
+		if hdr.Typeflag != tar.TypeReg {
+			continue
+		}
+		name := strings.TrimPrefix(hdr.Name, "./")
+		if !strings.HasSuffix(name, ".md") {
+			continue
+		}
+		if len(entries) >= n9eDocMaxPages {
+			return entries, fmt.Errorf("more than %d pages, bump n9eDocMaxPages", n9eDocMaxPages)
+		}
+		total += hdr.Size
+		if total > n9eDocMaxTotalBytes {
+			return entries, fmt.Errorf("pages exceed %d bytes, bump n9eDocMaxTotalBytes", n9eDocMaxTotalBytes)
+		}
+		raw, err := io.ReadAll(tr)
+		if err != nil {
+			return entries, fmt.Errorf("read %s: %w", name, err)
+		}
+		if e, ok := parseDocPage(name, string(raw)); ok {
+			entries = append(entries, e)
+		}
 	}
-	return false
 }
 
-func isDocIndexLoaded() bool {
-	docIndexMu.RLock()
-	defer docIndexMu.RUnlock()
-	return docIndexLoaded
+// heading anchors the site appends to every heading, e.g.
+// `## Foo[\u200b](#foo "Direct link to Foo")` — pure noise for search and LLM.
+var docHeadingAnchorRe = regexp.MustCompile(`\[\x{200B}\]\(#[^)]*\)`)
+
+// in-page links point at the Markdown copies (https://n9e.github.io/docs/x.md);
+// rewritten to the HTML page so links the LLM passes on open normally.
+var docMarkdownLinkRe = regexp.MustCompile(`(https://n9e\.github\.io/[^\s()"#]*?)\.md\b`)
+
+// parseDocPage reads one rendered page. Its layout is fixed by the site build:
+//
+//	# <title>
+//
+//	<description paragraph>
+//
+//	<body…>
+//
+// Generated category pages (docs/concepts.md and friends) carry a breadcrumb
+// list above the title; stripDocBreadcrumb drops it first.
+//
+// name is the archive path ("docs/alerting/metric-rules.md" or
+// "zh/docs/alerting/metric-rules.md").
+func parseDocPage(name, raw string) (docEntry, bool) {
+	route := strings.TrimSuffix(name, ".md")
+	key := strings.TrimPrefix(route, "zh/")
+	if !strings.HasPrefix(key, "docs") {
+		return docEntry{}, false
+	}
+
+	text := strings.TrimSpace(strings.ReplaceAll(raw, "\r\n", "\n"))
+	text = docHeadingAnchorRe.ReplaceAllString(text, "")
+	text = stripDocBreadcrumb(text)
+	text = docMarkdownLinkRe.ReplaceAllString(text, "$1")
+
+	var title, desc string
+	if strings.HasPrefix(text, "# ") {
+		line, rest, _ := strings.Cut(text, "\n")
+		title = strings.TrimSpace(strings.TrimPrefix(line, "# "))
+		text = strings.TrimSpace(rest)
+		// 标题下第一段是 frontmatter 里的 description；代码块 / 小标题不是
+		if para, rest, _ := strings.Cut(text, "\n\n"); para != "" &&
+			!strings.HasPrefix(para, "#") && !strings.HasPrefix(para, "```") && !strings.Contains(para, "\n") {
+			desc = strings.TrimSpace(para)
+			text = strings.TrimSpace(rest)
+		}
+	}
+	if title == "" && text == "" {
+		return docEntry{}, false
+	}
+	return docEntry{
+		Title:       title,
+		Permalink:   n9eDocSiteURL + "/" + route,
+		Description: desc,
+		Contents:    text,
+		pageKey:     key,
+	}, true
+}
+
+// stripDocBreadcrumb drops a leading breadcrumb ("* [](…/index.md)\n* Section")
+// that the site puts above the "# title" of generated category pages. Only
+// list items may precede the title; anything else leaves the text untouched.
+func stripDocBreadcrumb(text string) string {
+	if !strings.HasPrefix(text, "* ") {
+		return text
+	}
+	rest := text
+	for strings.HasPrefix(rest, "* ") {
+		_, after, ok := strings.Cut(rest, "\n")
+		if !ok {
+			return text
+		}
+		rest = strings.TrimLeft(after, "\n")
+	}
+	if !strings.HasPrefix(rest, "# ") {
+		return text
+	}
+	return rest
 }

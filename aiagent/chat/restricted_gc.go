@@ -80,8 +80,8 @@ func BuildHallucinationStamp(lang string, hits []string) string {
 		sb.WriteString(aiagent.LangText(lang, "`）", "`)"))
 	}
 	sb.WriteString(aiagent.LangText(lang,
-		"，未经 n9e 官方文档验证，请到 [V9 文档](https://flashcat.cloud/docs/) 或 [GitHub Issues](https://github.com/ccfos/nightingale/issues) 核对。\n\n",
-		". It has not been verified against the official n9e docs — please double-check with the [V9 docs](https://flashcat.cloud/docs/) or [GitHub Issues](https://github.com/ccfos/nightingale/issues).\n\n"))
+		"，未经 n9e 官方文档验证，请到 [V9 文档](https://n9e.github.io/zh/docs) 或 [GitHub Issues](https://github.com/ccfos/nightingale/issues) 核对。\n\n",
+		". It has not been verified against the official n9e docs — please double-check with the [V9 docs](https://n9e.github.io/docs) or [GitHub Issues](https://github.com/ccfos/nightingale/issues).\n\n"))
 	sb.WriteString(aiagent.LangText(lang,
 		"**下一轮请勿基于上述具体标识符继续。**\n",
 		"**Do not build on the identifiers above in the next turn.**\n"))
