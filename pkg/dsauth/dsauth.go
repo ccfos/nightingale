@@ -160,8 +160,9 @@ func (c Config) Normalize() Config {
 	return n
 }
 
-// Policy is the process-level [DatasourceAuth] config section. Every process
-// that queries datasources (center, alert, edge) reads its own copy.
+// Policy defines optional process-wide restrictions in [DatasourceAuthPolicy].
+// Each datasource stores its authentication method and credentials in Config.
+// Every process that queries datasources (center, alert, edge) reads its own policy.
 type Policy struct {
 	// Forbid using the identity of the host the process runs on: AWS default
 	// credential chain, Azure Managed Identity / Workload Identity.
@@ -223,14 +224,14 @@ func validate(c Config, p Policy) error {
 			}
 		case AWSCredentialDefault:
 			if p.DisableAmbientCredentials {
-				return fmt.Errorf("sigv4 default credential chain is disabled by DatasourceAuth.DisableAmbientCredentials")
+				return fmt.Errorf("sigv4 default credential chain is disabled by DatasourceAuthPolicy.DisableAmbientCredentials")
 			}
 		default:
 			return fmt.Errorf("unknown sigv4 credential_type %q", s.CredentialType)
 		}
 		if s.RoleArn != "" {
 			if p.DisableAssumeRole {
-				return fmt.Errorf("sigv4 assume role is disabled by DatasourceAuth.DisableAssumeRole")
+				return fmt.Errorf("sigv4 assume role is disabled by DatasourceAuthPolicy.DisableAssumeRole")
 			}
 			if !strings.HasPrefix(s.RoleArn, "arn:") {
 				return fmt.Errorf("invalid role arn %q", s.RoleArn)
@@ -267,7 +268,7 @@ func validate(c Config, p Policy) error {
 			}
 		case AzureCredentialManagedIdentity, AzureCredentialWorkloadIdentity:
 			if p.DisableAmbientCredentials {
-				return fmt.Errorf("azure %s is disabled by DatasourceAuth.DisableAmbientCredentials", a.CredentialType)
+				return fmt.Errorf("azure %s is disabled by DatasourceAuthPolicy.DisableAmbientCredentials", a.CredentialType)
 			}
 		default:
 			return fmt.Errorf("unknown azure credential_type %q", a.CredentialType)

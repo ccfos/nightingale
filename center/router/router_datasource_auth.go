@@ -17,7 +17,7 @@ type datasourceAuthPolicy struct {
 
 // datasourceAuthPolicyGet tells the FE which cloud auth options this center
 // accepts, so disabled ones can be greyed out instead of failing on save.
-// Alert engines / edge read their own [DatasourceAuth] section and may differ.
+// Alert engines / edge read their own [DatasourceAuthPolicy] section and may differ.
 func (rt *Router) datasourceAuthPolicyGet(c *gin.Context) {
 	p := dsauth.GetPolicy()
 	Render(c, datasourceAuthPolicy{

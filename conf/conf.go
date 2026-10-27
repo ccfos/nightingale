@@ -33,8 +33,9 @@ type ConfigType struct {
 	Ibex         Ibex
 	EmbeddedTSDB tconf.EmbeddedTSDB
 
-	// Cloud auth switches for datasources (SigV4 / OAuth2 / Azure Entra)
-	DatasourceAuth dsauth.Policy
+	// Optional process-wide restrictions on datasource cloud authentication.
+	// Each datasource configures its own auth method and credentials in the UI.
+	DatasourceAuthPolicy dsauth.Policy
 }
 
 type CenterApi struct {
@@ -82,7 +83,7 @@ func initConfig(configDir, cryptoKey string, isCenter bool) (*ConfigType, error)
 
 	// Every process that queries datasources (center, alert, edge) applies its
 	// own copy, since ambient credentials resolve on the local host.
-	dsauth.SetPolicy(config.DatasourceAuth)
+	dsauth.SetPolicy(config.DatasourceAuthPolicy)
 
 	// 内置 tsdb 的 remote write 端点只有 center 会挂载（见 center.Initialize 里的
 	// tsdb/router），而 edge / alert / pushgw 默认也读 etc 目录、会读到同一份

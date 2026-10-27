@@ -3,11 +3,75 @@ package conf
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/tsdb/tconf"
 )
+
+func TestDatasourceAuthPolicyConfig(t *testing.T) {
+	previousPolicy := dsauth.GetPolicy()
+	t.Cleanup(func() { dsauth.SetPolicy(previousPolicy) })
+	for _, process := range []struct {
+		name string
+		init func(string, string) (*ConfigType, error)
+	}{
+		{"center", InitCenterConfig},
+		{"edge-alert", InitConfig},
+	} {
+		for _, restricted := range []bool{false, true} {
+			name := "default"
+			if restricted {
+				name = "restricted"
+			}
+			t.Run(process.name+"/"+name, func(t *testing.T) {
+				dir := t.TempDir()
+				content := "[Alert.Heartbeat]\nIP = \"127.0.0.1\"\n"
+				if restricted {
+					content += `
+[DatasourceAuthPolicy]
+DisableAmbientCredentials = true
+DisableAssumeRole = true
+SigV4AllowedServices = ["es"]
+`
+				}
+				if err := os.WriteFile(filepath.Join(dir, "config.toml"), []byte(content), 0o644); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := process.init(dir, ""); err != nil {
+					t.Fatal(err)
+				}
+
+				checks := []struct {
+					name string
+					cfg  dsauth.SigV4Config
+					want string
+				}{
+					{"ambient", dsauth.SigV4Config{Region: "us-east-1", Service: "es"}, "DatasourceAuthPolicy.DisableAmbientCredentials"},
+					{"assume-role", dsauth.SigV4Config{Region: "us-east-1", Service: "es", CredentialType: "keys", AccessKey: "key", SecretKey: "secret", RoleArn: "arn:aws:iam::123456789012:role/query"}, "DatasourceAuthPolicy.DisableAssumeRole"},
+					{"service", dsauth.SigV4Config{Region: "us-east-1", Service: "aoss", CredentialType: "keys", AccessKey: "key", SecretKey: "secret"}, "not allowed"},
+				}
+				for _, check := range checks {
+					err := dsauth.Validate(dsauth.Config{Type: dsauth.TypeSigV4, SigV4: &check.cfg})
+					if restricted {
+						if err == nil || !strings.Contains(err.Error(), check.want) {
+							t.Errorf("%s: expected restriction %q, got %v", check.name, check.want, err)
+						}
+					} else if err != nil {
+						t.Errorf("%s: policy should be optional, got %v", check.name, err)
+					}
+				}
+				if err := dsauth.Validate(dsauth.Config{Type: dsauth.TypeSigV4, SigV4: &dsauth.SigV4Config{
+					Region: "us-east-1", Service: "es", CredentialType: "keys", AccessKey: "key", SecretKey: "secret",
+				}}); err != nil {
+					t.Errorf("explicit credentials for an allowed service should remain usable: %v", err)
+				}
+			})
+		}
+	}
+}
 
 func TestEmbeddedTSDBWriter(t *testing.T) {
 	config := &ConfigType{

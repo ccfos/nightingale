@@ -23,6 +23,8 @@ Every one of these processes needs the identity. When the environments differ, u
 
 ## Request format
 
+Configure the authentication method and credentials separately for each datasource on its settings page. The optional `[DatasourceAuthPolicy]` section is only needed to impose additional deployment restrictions.
+
 The cloud auth lives in the `auth` object of `POST /api/n9e/datasource/upsert`, next to the existing Basic Auth fields. `type` selects the scheme; only the sub-object matching `type` is persisted. When `type` is `sigv4`, `oauth2` or `azure`, the Basic Auth fields are dropped, and a custom `Authorization` header is rejected.
 
 An empty or missing `type` keeps the legacy behaviour (Basic Auth when `basic_auth_user` is set). Existing datasources need no migration.
@@ -50,7 +52,7 @@ An empty or missing `type` keeps the legacy behaviour (Basic Auth when `basic_au
 | Field | Description |
 |------|------|
 | region | Required. |
-| service_name | `aps` (default), `es` or `aoss`. Limited by `DatasourceAuth.SigV4AllowedServices`. |
+| service_name | `aps` (default), `es` or `aoss`. Limited by `DatasourceAuthPolicy.SigV4AllowedServices`. |
 | credential_type | `default`: SDK default chain (env vars, IRSA, EKS Pod Identity, ECS task role, EC2 instance profile). `keys`: `access_key` + `secret_key`. |
 | role_arn / external_id | Optional AssumeRole on top of the credential source (cross-account). |
 | sts_endpoint | Optional STS endpoint override (VPC endpoint, FIPS). |
@@ -111,7 +113,9 @@ A failed connection test returns `{"error": "[<code>] <message>"}`. The code pre
 
 Use `force_save: true` to save without a connection test, e.g. when only the alert engines have the identity.
 
-## Auth policy
+## Optional deployment auth policy
+
+`DatasourceAuthPolicy` sets process-wide restrictions; it does not contain datasource credentials. Omit this section for normal deployments: ambient credentials and AssumeRole are allowed, and SigV4 services default to `aps`, `es` and `aoss`. Each datasource selects its own authentication method within these limits.
 
 ```
 GET /api/n9e/datasource/auth-policy
@@ -131,10 +135,10 @@ Admin only. Returns the switches of the center process so the UI can grey out di
 }
 ```
 
-Configured per process in `config.toml` / `edge.toml`:
+Deployment administrators can optionally restrict these capabilities per process in `config.toml` / `edge.toml`. A datasource cannot override a deployment restriction. For example:
 
 ```toml
-[DatasourceAuth]
+[DatasourceAuthPolicy]
 DisableAmbientCredentials = false
 DisableAssumeRole = false
 SigV4AllowedServices = ["aps", "es", "aoss"]
