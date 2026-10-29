@@ -103,6 +103,18 @@ type Config struct {
 	RSVerifyMethod         string
 	IntrospectAddr         string
 	IntrospectCacheSeconds int
+	// TokenAuthStyle selects how client credentials are sent to TokenAddr:
+	// "params" (client_id/client_secret in the form body), "header" (HTTP
+	// Basic), or empty to auto-detect. Auto-detect tries Basic first and
+	// retries in the body on any failure, which reuses the authorization code;
+	// IdPs that only accept body credentials and burn the code on the first
+	// attempt need "params".
+	TokenAuthStyle string
+	// TokenResponsePrefix unwraps a non-standard token response such as
+	// {"code":200,"data":{"access_token":...}} by lifting the object at this
+	// path (same lookup rules as UserinfoPrefix) to the top level before it is
+	// parsed. Empty means the token endpoint already follows RFC 6749 §5.1.
+	TokenResponsePrefix string
 }
 
 func New(cf Config) *SsoClient {
@@ -144,11 +156,16 @@ func (s *SsoClient) Reload(cf Config) {
 
 	s.Ctx = context.Background()
 
+	var transport http.RoundTripper
 	if cf.SkipTlsVerify {
-		transport := &http.Transport{
+		transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-
+	}
+	if cf.TokenResponsePrefix != "" {
+		transport = newTokenResponseTransport(transport, cf.TokenAddr, cf.TokenResponsePrefix)
+	}
+	if transport != nil {
 		// Create an HTTP client that uses our custom transport
 		client := &http.Client{Transport: transport}
 		s.Ctx = context.WithValue(s.Ctx, oauth2.HTTPClient, client)
@@ -158,8 +175,9 @@ func (s *SsoClient) Reload(cf Config) {
 		ClientID:     cf.ClientId,
 		ClientSecret: cf.ClientSecret,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  cf.SsoAddr,
-			TokenURL: cf.TokenAddr,
+			AuthURL:   cf.SsoAddr,
+			TokenURL:  cf.TokenAddr,
+			AuthStyle: parseAuthStyle(cf.TokenAuthStyle),
 		},
 		RedirectURL: cf.RedirectURL,
 		Scopes:      cf.Scopes,
@@ -267,13 +285,28 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 		return nil, fmt.Errorf("failed to get user info: %s", err)
 	}
 	logger.Debugf("get userInfo: %s", string(userInfo))
-	return &CallbackOutput{
-		AccessToken: oauth2Token.AccessToken,
-		Username:    getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Username),
-		Nickname:    getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Nickname),
-		Phone:       getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Phone),
-		Email:       getUserinfoField(userInfo, s.UserinfoIsArray, s.UserinfoPrefix, s.Attributes.Email),
-	}, nil
+	// Some IdPs report errors as HTTP 200 with a business code and no user
+	// payload; an empty username must fail here, otherwise the callback would
+	// create (and later log in as) a user with a blank username.
+	ret, err := s.userAttrs().parse(userInfo)
+	if err != nil {
+		logger.Errorf("failed to parse user info: %s, body: %s", err, truncate(userInfo, 512))
+		return nil, fmt.Errorf("failed to parse user info: %s", err)
+	}
+	ret.AccessToken = oauth2Token.AccessToken
+	return ret, nil
+}
+
+// parseAuthStyle maps the TokenAuthStyle config onto oauth2.AuthStyle.
+func parseAuthStyle(style string) oauth2.AuthStyle {
+	switch strings.ToLower(strings.TrimSpace(style)) {
+	case "params":
+		return oauth2.AuthStyleInParams
+	case "header":
+		return oauth2.AuthStyleInHeader
+	default:
+		return oauth2.AuthStyleAutoDetect
+	}
 }
 
 // buildUserInfoRequest builds the UserInfo request for the configured token
@@ -326,12 +359,25 @@ func (s *SsoClient) getUserInfo(ClientId, UserInfoAddr, accessToken string, Tran
 
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
-	return body, err
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("userinfo endpoint returned http %d: %s", resp.StatusCode, truncate(body, 512))
+	}
+	return body, nil
+}
+
+// truncate shortens an IdP response body for logs and error messages.
+func truncate(body []byte, n int) string {
+	if len(body) <= n {
+		return string(body)
+	}
+	return string(body[:n]) + "..."
 }
 
 // getUserinfoField extracts a field from JSON userinfo response.
-// prefix is first tried as a literal JSON key for backward compatibility (e.g. a key named "data.user").
-// If no match is found and the prefix contains dots, it falls back to dot-separated multi-level path navigation.
+// prefix is resolved by prefixNode.
 func getUserinfoField(input []byte, isArray bool, prefix, field string) string {
 	if prefix == "" {
 		if isArray {
@@ -340,31 +386,30 @@ func getUserinfoField(input []byte, isArray bool, prefix, field string) string {
 		return jsoniter.Get(input, field).ToString()
 	}
 
-	// Try prefix as a literal key first (backward compatible).
-	// Only check whether the literal prefix node itself exists — not the final field.
-	// This avoids falling through to the nested path when the literal key exists
-	// but the field is missing, the array is empty, or the value type doesn't match.
-	prefixNode := jsoniter.Get(input, prefix)
-	if prefixNode.ValueType() != jsoniter.InvalidValue {
-		if isArray {
-			return prefixNode.Get(0).Get(field).ToString()
-		}
-		return prefixNode.Get(field).ToString()
+	node := prefixNode(input, prefix)
+	if isArray {
+		node = node.Get(0)
 	}
+	return node.Get(field).ToString()
+}
 
-	// Fall back to dot-separated path only when literal prefix key is absent and prefix contains dots.
-	if !strings.Contains(prefix, ".") {
-		return ""
+// prefixNode resolves prefix in a JSON document. prefix is first tried as a
+// literal JSON key for backward compatibility (e.g. a key named "data.user").
+// Only the literal prefix node itself is checked — not any field below it — so
+// a present literal key never falls through to the nested path. If the literal
+// key is absent and prefix contains dots, it falls back to dot-separated
+// multi-level path navigation. An unresolved prefix yields an invalid node.
+func prefixNode(input []byte, prefix string) jsoniter.Any {
+	node := jsoniter.Get(input, prefix)
+	if node.ValueType() != jsoniter.InvalidValue || !strings.Contains(prefix, ".") {
+		return node
 	}
 
 	var path []interface{}
 	for _, seg := range strings.Split(prefix, ".") {
 		path = append(path, seg)
 	}
-	if isArray {
-		path = append(path, 0)
-	}
-	return jsoniter.Get(input, path...).Get(field).ToString()
+	return jsoniter.Get(input, path...)
 }
 
 // rsAttrs is the snapshot of attribute-mapping config used to project an IdP
@@ -378,9 +423,21 @@ type rsAttrs struct {
 	prefix   string
 }
 
+// userAttrs snapshots the attribute mapping; callers must hold s's lock.
+func (s *SsoClient) userAttrs() rsAttrs {
+	return rsAttrs{
+		username: s.Attributes.Username,
+		nickname: s.Attributes.Nickname,
+		phone:    s.Attributes.Phone,
+		email:    s.Attributes.Email,
+		isArray:  s.UserinfoIsArray,
+		prefix:   s.UserinfoPrefix,
+	}
+}
+
 func (a rsAttrs) parse(body []byte) (*CallbackOutput, error) {
 	username := getUserinfoField(body, a.isArray, a.prefix, a.username)
-	if username == "" {
+	if strings.TrimSpace(username) == "" {
 		return nil, fmt.Errorf("username claim %q is empty in IdP response", a.username)
 	}
 	return &CallbackOutput{
@@ -415,14 +472,7 @@ func (s *SsoClient) VerifyAccessToken(ctx context.Context, rawToken, audience st
 	tranTokenMethod := s.TranTokenMethod
 	clientID := s.Config.ClientID
 	clientSecret := s.Config.ClientSecret
-	attrs := rsAttrs{
-		username: s.Attributes.Username,
-		nickname: s.Attributes.Nickname,
-		phone:    s.Attributes.Phone,
-		email:    s.Attributes.Email,
-		isArray:  s.UserinfoIsArray,
-		prefix:   s.UserinfoPrefix,
-	}
+	attrs := s.userAttrs()
 	cacheSeconds := s.IntrospectCacheSeconds
 	httpClient := http.DefaultClient
 	if c := s.Ctx.Value(oauth2.HTTPClient); c != nil {

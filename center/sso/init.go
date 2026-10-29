@@ -72,6 +72,13 @@ RedirectURL = 'http://n9e.com/callback/oauth'
 SsoAddr = 'https://sso.example.com/oauth2/authorize'
 SsoLogoutAddr = 'https://sso.example.com/oauth2/authorize/session/end'
 TokenAddr = 'https://sso.example.com/oauth2/token'
+# token 接口的客户端认证方式：留空 = 自动探测（先用 HTTP Basic，失败再把 client_id/client_secret 放 body 重试，
+# 同一个 code 会被提交两次）；params = 只放 body；header = 只用 HTTP Basic。
+# IdP 只认 body 且首次失败就作废 code 时，配成 params。
+TokenAuthStyle = ''
+# token 接口返回非标准包装（如 {"code":200,"data":{"access_token":...}}）时，填 access_token 所在对象的路径（如 'data'），
+# 规则同 UserinfoPrefix；留空表示 token 接口符合 RFC 6749 标准格式。
+TokenResponsePrefix = ''
 UserInfoAddr = 'https://api.example.com/api/v1/user/info'
 TranTokenMethod = 'header'
 ClientId = ''
