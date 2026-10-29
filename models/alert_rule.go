@@ -1830,16 +1830,29 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 }
 
 func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]map[int64][]string, error) {
+	m, _, err := GetTargetsOfHostAlertRuleWithStatus(ctx, engineName)
+	return m, err
+}
+
+// GetTargetsOfHostAlertRuleWithStatus is GetTargetsOfHostAlertRule plus a
+// complete flag. complete is false when the target query of at least one host
+// rule failed, so m lacks that rule's targets; callers that cache the result
+// behind a change signature must not treat such a result as up to date.
+// Over HTTP (edge / alert) the center already did the computation, so complete
+// is always true there.
+func GetTargetsOfHostAlertRuleWithStatus(ctx *ctx.Context, engineName string) (map[string]map[int64][]string, bool, error) {
 	if !ctx.IsCenter {
 		m, err := poster.GetByUrls[map[string]map[int64][]string](ctx, "/v1/n9e/targets-of-alert-rule?engine_name="+engineName)
-		return m, err
+		return m, true, err
 	}
 
 	m := make(map[string]map[int64][]string)
 	hostAlertRules, err := AlertRulesGetsBy(ctx, []string{"host"}, "", "", "", []string{}, 0)
 	if err != nil {
-		return m, err
+		return m, false, err
 	}
+
+	complete := true
 
 	for i := 0; i < len(hostAlertRules); i++ {
 		var rule *HostRuleConfig
@@ -1859,6 +1872,7 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 		err := session.Find(&lst).Error
 		if err != nil {
 			logger.Errorf("failed to query targets: %v", err)
+			complete = false
 			continue
 		}
 
@@ -1876,7 +1890,7 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 		}
 	}
 
-	return m, nil
+	return m, complete, nil
 }
 
 // HostAlertRuleTargetsSig 计算 host 告警规则 -> target 映射的输入签名。

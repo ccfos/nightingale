@@ -129,7 +129,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 		}
 	}
 
-	m, err := models.GetTargetsOfHostAlertRule(tc.ctx, tc.engineName)
+	m, complete, err := models.GetTargetsOfHostAlertRuleWithStatus(tc.ctx, tc.engineName)
 	if err != nil {
 		return err
 	}
@@ -140,8 +140,11 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 
 	tc.Set(m, 0, 0)
 
-	// 仅在成功取到签名且同步成功后更新；取签名失败时 lastSig 不变，下轮继续尝试，避免漏同步
-	if sigOK {
+	// 仅在成功取到签名且同步成功后更新；取签名失败时 lastSig 不变，下轮继续尝试，避免漏同步。
+	// 有规则的 target 查询失败（complete=false）时同理：残缺结果先用着，但不记签名，
+	// 否则签名不变就会一直跳过重算，center 自身和经 /v1/n9e/targets-of-alert-rule
+	// 取数的所有 edge 都会长期缺失这些规则的机器而漏告警。
+	if sigOK && complete {
 		tc.lastSig = sig
 	}
 	return nil
