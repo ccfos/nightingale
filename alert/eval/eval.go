@@ -1736,6 +1736,12 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 						logger.Infof("alert_eval_%d datasource_%d origin series labels:%+v", rule.Id, dsId, series.Metric)
 					}
 
+					if len(m) == 0 {
+						// 该分组内没有表达式引用的曲线（如多个查询标签不同、分组里只有其他查询的曲线），
+						// 表达式必然因变量缺失而计算失败，直接跳过，避免无意义的错误日志
+						continue
+					}
+
 					isTriggered := parser.CalcWithRid(trigger.Exp, m, rule.Id)
 					//  此条日志很重要，是告警判断的现场值
 					logger.Infof("alert_eval_%d datasource_%d trigger:%+v exp:%s res:%v m:%v", rule.Id, dsId, trigger, trigger.Exp, isTriggered, m)
