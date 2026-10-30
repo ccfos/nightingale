@@ -322,7 +322,16 @@ func (tc *TargetCacheType) syncTargets() error {
 		m[lst[i].Ident] = lst[i]
 	}
 
-	tc.Set(m, stat.Total, stat.LastUpdated)
+	total, lastUpdated := stat.Total, stat.LastUpdated
+	if !tc.ctx.IsCenter {
+		// The stat and the list are two requests that may be answered by
+		// different centers, each serving its own TargetCache. Storing the
+		// list under the other center's stat could latch a stale list until
+		// the next target change, so derive the stat from the list itself:
+		// a list older than the centers' stat is then simply reloaded.
+		total, lastUpdated = targetsStat(lst)
+	}
+	tc.Set(m, total, lastUpdated)
 	tc.metaSyncCycle = 0 // 全量同步已包含 meta，重置计数器
 
 	ms := time.Since(start).Milliseconds()
@@ -331,6 +340,17 @@ func (tc *TargetCacheType) syncTargets() error {
 	dumper.PutSyncRecord("targets", start.Unix(), ms, len(lst), "success")
 
 	return nil
+}
+
+// targetsStat computes the (count(*), max(update_at)) statistic that
+// TargetStatistics would report for exactly these targets.
+func targetsStat(lst []*models.Target) (total, lastUpdated int64) {
+	for _, t := range lst {
+		if t.UpdateAt > lastUpdated {
+			lastUpdated = t.UpdateAt
+		}
+	}
+	return int64(len(lst)), lastUpdated
 }
 
 // get host update time
