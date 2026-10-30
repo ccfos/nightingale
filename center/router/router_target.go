@@ -234,9 +234,19 @@ func (rt *Router) targetExtendInfoByIdent(c *gin.Context) {
 	}, nil)
 }
 
+// targetGetsByService is polled by every edge/alert instance whenever the target
+// statistic changes. Serving it from the center's TargetCache keeps those full
+// reloads (target + target_busi_group full scans) off the DB; the cache holds the
+// same rows TargetGetsAll returns, refreshed on the same statistic.
 func (rt *Router) targetGetsByService(c *gin.Context) {
-	lst, err := models.TargetGetsAll(rt.Ctx)
-	ginx.NewRender(c).Data(lst, err)
+	if rt.TargetCache == nil {
+		lst, err := models.TargetGetsAll(rt.Ctx)
+		ginx.NewRender(c).Data(lst, err)
+		return
+	}
+
+	lst, _, _ := rt.TargetCache.Snapshot()
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 func (rt *Router) targetGetTags(c *gin.Context) {

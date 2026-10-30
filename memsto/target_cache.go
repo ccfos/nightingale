@@ -74,14 +74,38 @@ func (tc *TargetCacheType) Set(m map[string]*models.Target, total, lastUpdated i
 		idx[target.HostIp] = append(idx[target.HostIp], ident)
 	}
 
+	// stat is written under the lock together with targets so that Snapshot/Stat
+	// readers on other goroutines always see a matching (targets, stat) pair.
 	tc.Lock()
 	tc.targets = m
 	tc.targetsIndex = idx
-	tc.Unlock()
-
-	// only one goroutine used, so no need lock
 	tc.statTotal = total
 	tc.statLastUpdated = lastUpdated
+	tc.Unlock()
+}
+
+// Stat returns the (count, max(update_at)) of the target table as of the last
+// full load, i.e. the statistics the cached targets correspond to.
+func (tc *TargetCacheType) Stat() (total, lastUpdated int64) {
+	tc.RLock()
+	defer tc.RUnlock()
+	return tc.statTotal, tc.statLastUpdated
+}
+
+// Snapshot returns shallow copies of all cached targets together with the
+// statistics they were loaded at. Copies are taken under the read lock, so the
+// caller may read (e.g. JSON-encode) them while refreshBeatTime/refreshHostMetas
+// keep updating the cached objects. Slice and map fields are shared and must be
+// treated as read-only.
+func (tc *TargetCacheType) Snapshot() (lst []*models.Target, total, lastUpdated int64) {
+	tc.RLock()
+	defer tc.RUnlock()
+	lst = make([]*models.Target, 0, len(tc.targets))
+	for _, target := range tc.targets {
+		t := *target
+		lst = append(lst, &t)
+	}
+	return lst, tc.statTotal, tc.statLastUpdated
 }
 
 func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
