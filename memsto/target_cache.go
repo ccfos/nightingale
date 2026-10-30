@@ -74,14 +74,38 @@ func (tc *TargetCacheType) Set(m map[string]*models.Target, total, lastUpdated i
 		idx[target.HostIp] = append(idx[target.HostIp], ident)
 	}
 
+	// stat is written under the lock together with targets so that Snapshot/Stat
+	// readers on other goroutines always see a matching (targets, stat) pair.
 	tc.Lock()
 	tc.targets = m
 	tc.targetsIndex = idx
-	tc.Unlock()
-
-	// only one goroutine used, so no need lock
 	tc.statTotal = total
 	tc.statLastUpdated = lastUpdated
+	tc.Unlock()
+}
+
+// Stat returns the (count, max(update_at)) of the target table as of the last
+// full load, i.e. the statistics the cached targets correspond to.
+func (tc *TargetCacheType) Stat() (total, lastUpdated int64) {
+	tc.RLock()
+	defer tc.RUnlock()
+	return tc.statTotal, tc.statLastUpdated
+}
+
+// Snapshot returns shallow copies of all cached targets together with the
+// statistics they were loaded at. Copies are taken under the read lock, so the
+// caller may read (e.g. JSON-encode) them while refreshBeatTime/refreshHostMetas
+// keep updating the cached objects. Slice and map fields are shared and must be
+// treated as read-only.
+func (tc *TargetCacheType) Snapshot() (lst []*models.Target, total, lastUpdated int64) {
+	tc.RLock()
+	defer tc.RUnlock()
+	lst = make([]*models.Target, 0, len(tc.targets))
+	for _, target := range tc.targets {
+		t := *target
+		lst = append(lst, &t)
+	}
+	return lst, tc.statTotal, tc.statLastUpdated
 }
 
 func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
@@ -298,7 +322,16 @@ func (tc *TargetCacheType) syncTargets() error {
 		m[lst[i].Ident] = lst[i]
 	}
 
-	tc.Set(m, stat.Total, stat.LastUpdated)
+	total, lastUpdated := stat.Total, stat.LastUpdated
+	if !tc.ctx.IsCenter {
+		// The stat and the list are two requests that may be answered by
+		// different centers, each serving its own TargetCache. Storing the
+		// list under the other center's stat could latch a stale list until
+		// the next target change, so derive the stat from the list itself:
+		// a list older than the centers' stat is then simply reloaded.
+		total, lastUpdated = targetsStat(lst)
+	}
+	tc.Set(m, total, lastUpdated)
 	tc.metaSyncCycle = 0 // 全量同步已包含 meta，重置计数器
 
 	ms := time.Since(start).Milliseconds()
@@ -307,6 +340,17 @@ func (tc *TargetCacheType) syncTargets() error {
 	dumper.PutSyncRecord("targets", start.Unix(), ms, len(lst), "success")
 
 	return nil
+}
+
+// targetsStat computes the (count(*), max(update_at)) statistic that
+// TargetStatistics would report for exactly these targets.
+func targetsStat(lst []*models.Target) (total, lastUpdated int64) {
+	for _, t := range lst {
+		if t.UpdateAt > lastUpdated {
+			lastUpdated = t.UpdateAt
+		}
+	}
+	return int64(len(lst)), lastUpdated
 }
 
 // get host update time

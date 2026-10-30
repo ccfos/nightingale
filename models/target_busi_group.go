@@ -132,8 +132,9 @@ func TargetDeleteBgids(tx *gorm.DB, idents []string) error {
 func TargetOverrideBgids(ctx *ctx.Context, idents []string, bgids []int64, tags []string) error {
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		// 先删除旧的关联
-		if err := tx.Where("target_ident IN ?", idents).Delete(&TargetBusiGroup{}).Error; err != nil {
-			return err
+		del := tx.Where("target_ident IN ?", idents).Delete(&TargetBusiGroup{})
+		if del.Error != nil {
+			return del.Error
 		}
 
 		// 准备新的关联数据
@@ -151,7 +152,15 @@ func TargetOverrideBgids(ctx *ctx.Context, idents []string, bgids []int64, tags 
 		}
 
 		if len(lst) == 0 {
-			return nil
+			// Clearing all groups changes nothing in the target table itself, so
+			// bump update_at for syncTargets to refresh GroupIds. Only when rows
+			// were actually removed: heartbeats with overwrite_gids and an empty
+			// gid call this every time, and an unconditional bump would force a
+			// full target reload on every center and edge each cycle.
+			if del.RowsAffected == 0 {
+				return nil
+			}
+			return tx.Model(&Target{}).Where("ident IN ?", idents).Update("update_at", updateAt).Error
 		}
 
 		// 添加新的关联

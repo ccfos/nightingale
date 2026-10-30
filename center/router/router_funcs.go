@@ -31,6 +31,17 @@ func (rt *Router) statistic(c *gin.Context) {
 	case "recording_rule":
 		model = models.RecordingRule{}
 	case "target":
+		// Answer from the center's TargetCache rather than running
+		// count(*)/max(update_at) over the target table for every edge poll.
+		// It is only a change signal: with several centers the edge's next
+		// /v1/n9e/targets call may hit a center whose cache is at another
+		// stat, so the edge stores the stat derived from the list it actually
+		// received (see memsto TargetCacheType.syncTargets).
+		if rt.TargetCache != nil {
+			total, lastUpdated := rt.TargetCache.Stat()
+			ginx.NewRender(c).Data(&models.Statistics{Total: total, LastUpdated: lastUpdated}, nil)
+			return
+		}
 		model = models.Target{}
 	case "user":
 		model = models.User{}
