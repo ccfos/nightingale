@@ -103,7 +103,7 @@
             2
         ],
         "disabled": 1,
-        "prom_for_duration": 0,
+        "prom_for_duration": 600,
         "prom_ql": "",
         "rule_config": {
             "algo_params": null,

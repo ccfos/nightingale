@@ -1796,7 +1796,7 @@
         "severity": 2,
         "severities": null,
         "disabled": 0,
-        "prom_for_duration": 0,
+        "prom_for_duration": 300,
         "prom_ql": "(node_nf_conntrack_entries / node_nf_conntrack_entries_limit) \u003e 0.75\n",
         "rule_config": null,
         "prom_eval_interval": 15,
