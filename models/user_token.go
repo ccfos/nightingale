@@ -54,10 +54,14 @@ func UserTokenGetAll(ctx *ctx.Context) ([]*UserToken, error) {
 	return lst, err
 }
 
-func UserTokenTotal(ctx *ctx.Context) (int64, error) {
-	var total int64
-	err := DB(ctx).Model(&UserToken{}).Count(&total).Error
-	return total, err
+// GetUserToken 只返回属于 username 的 token，不存在或不属于该用户时返回 nil。
+func GetUserToken(ctx *ctx.Context, id int64, username string) (*UserToken, error) {
+	var lst []*UserToken
+	err := DB(ctx).Where("id = ? and username = ?", id, username).Find(&lst).Error
+	if err != nil || len(lst) == 0 {
+		return nil, err
+	}
+	return lst[0], nil
 }
 
 func UserTokenUpdateLastUsedTime(ctx *ctx.Context, token string, lastUsedTime int64) error {

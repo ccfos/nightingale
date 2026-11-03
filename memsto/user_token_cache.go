@@ -1,7 +1,10 @@
 package memsto
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -14,9 +17,11 @@ import (
 )
 
 type UserTokenCacheType struct {
-	statTotal int64
-	ctx       *ctx.Context
-	stats     *Stats
+	// statSig 是上次加载时 user_token 全表内容的签名。只比总数不够：
+	// 两次同步之间新增一个、删除一个，总数不变，缓存会一直不刷新（#3457）。
+	statSig string
+	ctx     *ctx.Context
+	stats   *Stats
 
 	sync.RWMutex
 	tokens         map[string]*models.User
@@ -25,7 +30,6 @@ type UserTokenCacheType struct {
 
 func NewUserTokenCache(ctx *ctx.Context, stats *Stats) *UserTokenCacheType {
 	utc := &UserTokenCacheType{
-		statTotal:      -1,
 		ctx:            ctx,
 		stats:          stats,
 		tokens:         make(map[string]*models.User),
@@ -45,28 +49,56 @@ func (utc *UserTokenCacheType) Inject(token string, user *models.User) {
 		return
 	}
 	utc.Lock()
+	if utc.tokens == nil {
+		utc.tokens = make(map[string]*models.User)
+	}
 	utc.tokens[token] = user
 	utc.Unlock()
 }
 
-func (utc *UserTokenCacheType) StatChanged(total int64) bool {
-	if utc.statTotal == total {
-		return false
+// Remove drops a token from the live cache immediately, so a deleted token stops
+// authenticating on this instance without waiting for the next sync.
+func (utc *UserTokenCacheType) Remove(token string) {
+	if token == "" {
+		return
 	}
-	return true
+	utc.Lock()
+	delete(utc.tokens, token)
+	utc.Unlock()
 }
 
-func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, total int64) {
+func (utc *UserTokenCacheType) StatChanged(sig string) bool {
+	return utc.statSig != sig
+}
+
+func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, sig string) {
 	utc.Lock()
 	utc.tokens = tokenUsers
 	utc.Unlock()
 
-	utc.statTotal = total
+	utc.statSig = sig
+}
+
+// userTokensSignature 按 id 排序后对 id/username/token 求哈希，任何新增、删除、
+// 修改都会改变签名，与记录总数无关。
+func userTokensSignature(lst []*models.UserToken) string {
+	sorted := make([]*models.UserToken, len(lst))
+	copy(sorted, lst)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Id < sorted[j].Id })
+
+	h := sha256.New()
+	for _, t := range sorted {
+		fmt.Fprintf(h, "%d\x00%s\x00%s\n", t.Id, t.Username, t.Token)
+	}
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (utc *UserTokenCacheType) GetByToken(token string) *models.User {
 	utc.Lock()
 	defer utc.Unlock()
+	if utc.tokensLastUsed == nil {
+		utc.tokensLastUsed = make(map[string]int64)
+	}
 	utc.tokensLastUsed[token] = time.Now().Unix()
 
 	return utc.tokens[token]
@@ -137,23 +169,19 @@ func (utc *UserTokenCacheType) updateUserTokenLastUsedTime() error {
 func (utc *UserTokenCacheType) syncUserTokens() error {
 	start := time.Now()
 
-	total, err := models.UserTokenTotal(utc.ctx)
-	if err != nil {
-		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
-		return errors.WithMessage(err, "failed to exec UserTokenStatistics")
-	}
-
-	if !utc.StatChanged(total) {
-		utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(0)
-		utc.stats.GaugeSyncNumber.WithLabelValues("sync_user_tokens").Set(0)
-		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "not changed")
-		return nil
-	}
-
+	// token 表很小，每轮都读全表并比较内容签名，而不是只比总数。
 	lst, err := models.UserTokenGetAll(utc.ctx)
 	if err != nil {
 		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to exec UserTokenGetAll")
+	}
+
+	sig := userTokensSignature(lst)
+	if !utc.StatChanged(sig) {
+		utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(0)
+		utc.stats.GaugeSyncNumber.WithLabelValues("sync_user_tokens").Set(0)
+		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "not changed")
+		return nil
 	}
 
 	users, err := models.UserGetAll(utc.ctx)
@@ -177,7 +205,7 @@ func (utc *UserTokenCacheType) syncUserTokens() error {
 		tokenUsers[token.Token] = user
 	}
 
-	utc.Set(tokenUsers, total)
+	utc.Set(tokenUsers, sig)
 
 	ms := time.Since(start).Milliseconds()
 	utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(float64(ms))
