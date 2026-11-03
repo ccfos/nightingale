@@ -37,7 +37,8 @@ func AddToken(ctx *ctx.Context, username, token, tokenName string) (*UserToken, 
 	return &newToken, err
 }
 
-// DeleteToken 只删除属于 username 的 token，返回是否删到了记录。
+// DeleteToken deletes the token only if it belongs to username and reports
+// whether a row was deleted.
 func DeleteToken(ctx *ctx.Context, id int64, username string) (bool, error) {
 	res := DB(ctx).Where("id = ? and username = ?", id, username).Delete(&UserToken{})
 	return res.RowsAffected > 0, res.Error
@@ -51,8 +52,22 @@ func GetTokensByUsername(ctx *ctx.Context, username string) ([]UserToken, error)
 
 func UserTokenGetAll(ctx *ctx.Context) ([]*UserToken, error) {
 	var lst []*UserToken
-	err := DB(ctx).Order("id").Find(&lst).Error
+	err := DB(ctx).Find(&lst).Error
 	return lst, err
+}
+
+// UserTokenStatistics returns the row count and max(id). Token rows never change
+// id/username/token after insert and ids are never reused, so any create or
+// delete between two calls changes at least one of them.
+func UserTokenStatistics(ctx *ctx.Context) (total, maxId int64, err error) {
+	var stat struct {
+		Total int64
+		MaxId int64
+	}
+	err = DB(ctx).Model(&UserToken{}).
+		Select("count(*) as total, coalesce(max(id), 0) as max_id").
+		Scan(&stat).Error
+	return stat.Total, stat.MaxId, err
 }
 
 func UserTokenUpdateLastUsedTime(ctx *ctx.Context, token string, lastUsedTime int64) error {

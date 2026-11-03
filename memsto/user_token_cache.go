@@ -1,8 +1,6 @@
 package memsto
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"sync"
 	"time"
@@ -16,11 +14,10 @@ import (
 )
 
 type UserTokenCacheType struct {
-	// statSig 是上次加载时 user_token 全表内容的签名。只比总数不够：
-	// 两次同步之间新增一个、删除一个，总数不变，缓存会一直不刷新（#3457）。
-	statSig string
-	ctx     *ctx.Context
-	stats   *Stats
+	statTotal int64
+	statMaxId int64
+	ctx       *ctx.Context
+	stats     *Stats
 
 	sync.RWMutex
 	tokens         map[string]*models.User
@@ -29,6 +26,7 @@ type UserTokenCacheType struct {
 
 func NewUserTokenCache(ctx *ctx.Context, stats *Stats) *UserTokenCacheType {
 	utc := &UserTokenCacheType{
+		statTotal:      -1,
 		ctx:            ctx,
 		stats:          stats,
 		tokens:         make(map[string]*models.User),
@@ -52,26 +50,19 @@ func (utc *UserTokenCacheType) Inject(token string, user *models.User) {
 	utc.Unlock()
 }
 
-func (utc *UserTokenCacheType) StatChanged(sig string) bool {
-	return utc.statSig != sig
+// StatChanged also compares max(id): creating one token and deleting another
+// between two syncs keeps the count but raises max(id) (#3457).
+func (utc *UserTokenCacheType) StatChanged(total, maxId int64) bool {
+	return utc.statTotal != total || utc.statMaxId != maxId
 }
 
-func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, sig string) {
+func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, total, maxId int64) {
 	utc.Lock()
 	utc.tokens = tokenUsers
 	utc.Unlock()
 
-	utc.statSig = sig
-}
-
-// userTokensSignature 对 id/username/token 求哈希，任何新增、删除、修改都会改变签名，
-// 与记录总数无关。lst 需按 id 有序（UserTokenGetAll 已保证）。
-func userTokensSignature(lst []*models.UserToken) string {
-	h := sha256.New()
-	for _, t := range lst {
-		fmt.Fprintf(h, "%d\x00%s\x00%s\n", t.Id, t.Username, t.Token)
-	}
-	return hex.EncodeToString(h.Sum(nil))
+	utc.statTotal = total
+	utc.statMaxId = maxId
 }
 
 func (utc *UserTokenCacheType) GetByToken(token string) *models.User {
@@ -147,19 +138,23 @@ func (utc *UserTokenCacheType) updateUserTokenLastUsedTime() error {
 func (utc *UserTokenCacheType) syncUserTokens() error {
 	start := time.Now()
 
-	// token 表很小，每轮都读全表并比较内容签名，而不是只比总数。
-	lst, err := models.UserTokenGetAll(utc.ctx)
+	total, maxId, err := models.UserTokenStatistics(utc.ctx)
 	if err != nil {
-		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "failed to query records: "+err.Error())
-		return errors.WithMessage(err, "failed to exec UserTokenGetAll")
+		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
+		return errors.WithMessage(err, "failed to exec UserTokenStatistics")
 	}
 
-	sig := userTokensSignature(lst)
-	if !utc.StatChanged(sig) {
+	if !utc.StatChanged(total, maxId) {
 		utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(0)
 		utc.stats.GaugeSyncNumber.WithLabelValues("sync_user_tokens").Set(0)
 		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "not changed")
 		return nil
+	}
+
+	lst, err := models.UserTokenGetAll(utc.ctx)
+	if err != nil {
+		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "failed to query records: "+err.Error())
+		return errors.WithMessage(err, "failed to exec UserTokenGetAll")
 	}
 
 	users, err := models.UserGetAll(utc.ctx)
@@ -183,7 +178,7 @@ func (utc *UserTokenCacheType) syncUserTokens() error {
 		tokenUsers[token.Token] = user
 	}
 
-	utc.Set(tokenUsers, sig)
+	utc.Set(tokenUsers, total, maxId)
 
 	ms := time.Since(start).Milliseconds()
 	utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(float64(ms))

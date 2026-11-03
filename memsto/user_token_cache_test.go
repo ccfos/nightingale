@@ -88,15 +88,15 @@ func TestUserTokenCacheSkipsReloadWhenUnchanged(t *testing.T) {
 	if err := utc.syncUserTokens(); err != nil {
 		t.Fatalf("first sync: %v", err)
 	}
-	sig := utc.statSig
+	total, maxId := utc.statTotal, utc.statMaxId
 
 	// 内容未变时应跳过重载：在缓存里塞一个标记，若被重载会被覆盖掉
 	utc.Inject("marker", &models.User{Username: "marker"})
 	if err := utc.syncUserTokens(); err != nil {
 		t.Fatalf("second sync: %v", err)
 	}
-	if utc.statSig != sig {
-		t.Fatalf("signature changed without data change")
+	if utc.statTotal != total || utc.statMaxId != maxId {
+		t.Fatalf("statistics changed without data change")
 	}
 	if utc.GetByToken("marker") == nil {
 		t.Fatalf("cache was reloaded although tokens did not change")
