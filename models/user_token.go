@@ -37,9 +37,10 @@ func AddToken(ctx *ctx.Context, username, token, tokenName string) (*UserToken, 
 	return &newToken, err
 }
 
-func DeleteToken(ctx *ctx.Context, id int64) error {
-	err := DB(ctx).Where("id = ?", id).Delete(&UserToken{}).Error
-	return err
+// DeleteToken 只删除属于 username 的 token，返回是否删到了记录。
+func DeleteToken(ctx *ctx.Context, id int64, username string) (bool, error) {
+	res := DB(ctx).Where("id = ? and username = ?", id, username).Delete(&UserToken{})
+	return res.RowsAffected > 0, res.Error
 }
 
 func GetTokensByUsername(ctx *ctx.Context, username string) ([]UserToken, error) {
@@ -50,18 +51,8 @@ func GetTokensByUsername(ctx *ctx.Context, username string) ([]UserToken, error)
 
 func UserTokenGetAll(ctx *ctx.Context) ([]*UserToken, error) {
 	var lst []*UserToken
-	err := DB(ctx).Find(&lst).Error
+	err := DB(ctx).Order("id").Find(&lst).Error
 	return lst, err
-}
-
-// GetUserToken 只返回属于 username 的 token，不存在或不属于该用户时返回 nil。
-func GetUserToken(ctx *ctx.Context, id int64, username string) (*UserToken, error) {
-	var lst []*UserToken
-	err := DB(ctx).Where("id = ? and username = ?", id, username).Find(&lst).Error
-	if err != nil || len(lst) == 0 {
-		return nil, err
-	}
-	return lst[0], nil
 }
 
 func UserTokenUpdateLastUsedTime(ctx *ctx.Context, token string, lastUsedTime int64) error {

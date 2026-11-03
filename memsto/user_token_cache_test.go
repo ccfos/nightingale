@@ -59,7 +59,7 @@ func TestUserTokenCacheRotationWithUnchangedCount(t *testing.T) {
 	if _, err := models.AddToken(c, "alice", "token-b", "b"); err != nil {
 		t.Fatalf("add token b: %v", err)
 	}
-	if err := models.DeleteToken(c, oldToken.Id); err != nil {
+	if _, err := models.DeleteToken(c, oldToken.Id, "alice"); err != nil {
 		t.Fatalf("delete token a: %v", err)
 	}
 	var total int64
@@ -100,14 +100,5 @@ func TestUserTokenCacheSkipsReloadWhenUnchanged(t *testing.T) {
 	}
 	if utc.GetByToken("marker") == nil {
 		t.Fatalf("cache was reloaded although tokens did not change")
-	}
-}
-
-func TestUserTokenCacheRemove(t *testing.T) {
-	utc, _ := newTestUserTokenCache(t)
-	utc.Inject("token-x", &models.User{Username: "alice"})
-	utc.Remove("token-x")
-	if utc.GetByToken("token-x") != nil {
-		t.Fatalf("removed token should not authenticate")
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"sort"
 	"sync"
 	"time"
 
@@ -49,21 +48,7 @@ func (utc *UserTokenCacheType) Inject(token string, user *models.User) {
 		return
 	}
 	utc.Lock()
-	if utc.tokens == nil {
-		utc.tokens = make(map[string]*models.User)
-	}
 	utc.tokens[token] = user
-	utc.Unlock()
-}
-
-// Remove drops a token from the live cache immediately, so a deleted token stops
-// authenticating on this instance without waiting for the next sync.
-func (utc *UserTokenCacheType) Remove(token string) {
-	if token == "" {
-		return
-	}
-	utc.Lock()
-	delete(utc.tokens, token)
 	utc.Unlock()
 }
 
@@ -79,15 +64,11 @@ func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, sig strin
 	utc.statSig = sig
 }
 
-// userTokensSignature 按 id 排序后对 id/username/token 求哈希，任何新增、删除、
-// 修改都会改变签名，与记录总数无关。
+// userTokensSignature 对 id/username/token 求哈希，任何新增、删除、修改都会改变签名，
+// 与记录总数无关。lst 需按 id 有序（UserTokenGetAll 已保证）。
 func userTokensSignature(lst []*models.UserToken) string {
-	sorted := make([]*models.UserToken, len(lst))
-	copy(sorted, lst)
-	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Id < sorted[j].Id })
-
 	h := sha256.New()
-	for _, t := range sorted {
+	for _, t := range lst {
 		fmt.Fprintf(h, "%d\x00%s\x00%s\n", t.Id, t.Username, t.Token)
 	}
 	return hex.EncodeToString(h.Sum(nil))
@@ -96,9 +77,6 @@ func userTokensSignature(lst []*models.UserToken) string {
 func (utc *UserTokenCacheType) GetByToken(token string) *models.User {
 	utc.Lock()
 	defer utc.Unlock()
-	if utc.tokensLastUsed == nil {
-		utc.tokensLastUsed = make(map[string]int64)
-	}
 	utc.tokensLastUsed[token] = time.Now().Unix()
 
 	return utc.tokens[token]

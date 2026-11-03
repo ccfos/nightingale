@@ -114,10 +114,6 @@ func (rt *Router) addToken(c *gin.Context) {
 	}
 
 	token, err := models.AddToken(rt.Ctx, username, uuid.New().String(), f.TokenName)
-	if err == nil && rt.UserTokenCache != nil {
-		// 本实例立即生效，其他实例等下一轮同步
-		rt.UserTokenCache.Inject(token.Token, c.MustGet("user").(*models.User))
-	}
 	ginx.NewRender(c).Data(token, err)
 }
 
@@ -132,17 +128,10 @@ func (rt *Router) deleteToken(c *gin.Context) {
 		return
 	}
 
-	// 只能删除自己的 token
-	token, err := models.GetUserToken(rt.Ctx, id, username)
+	deleted, err := models.DeleteToken(rt.Ctx, id, username)
 	ginx.Dangerous(err)
-	if token == nil {
+	if !deleted {
 		ginx.Bomb(http.StatusNotFound, "token not found")
 	}
-
-	err = models.DeleteToken(rt.Ctx, id)
-	if err == nil && rt.UserTokenCache != nil {
-		// 本实例立即失效，其他实例等下一轮同步
-		rt.UserTokenCache.Remove(token.Token)
-	}
-	ginx.NewRender(c).Message(err)
+	ginx.NewRender(c).Message(nil)
 }

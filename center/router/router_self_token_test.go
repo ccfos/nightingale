@@ -1,18 +1,16 @@
 package router
 
 import (
-	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 
-	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/errorx"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -28,64 +26,60 @@ func setupSelfTokenTest(t *testing.T) (*Router, *ctx.Context) {
 		t.Fatalf("migrate user_token: %v", err)
 	}
 	c := &ctx.Context{DB: db, IsCenter: true}
-	return &Router{Ctx: c, UserTokenCache: &memsto.UserTokenCacheType{}}, c
+	return &Router{Ctx: c}, c
 }
 
-func callSelfToken(handler gin.HandlerFunc, user *models.User, method, path string, params gin.Params, body string) (*httptest.ResponseRecorder, any) {
+// callDeleteToken 调用 deleteToken，返回响应和 ginx.Bomb 抛出的 panic（如有）。
+func callDeleteToken(rt *Router, username string, id int64) (*httptest.ResponseRecorder, any) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(method, path, bytes.NewBufferString(body))
-	c.Request.Header.Set("Content-Type", "application/json")
-	c.Params = params
-	c.Set("user", user)
-	c.Set("username", user.Username)
+	idStr := strconv.FormatInt(id, 10)
+	c.Request = httptest.NewRequest(http.MethodDelete, "/api/n9e/self/token/"+idStr, nil)
+	c.Params = gin.Params{{Key: "id", Value: idStr}}
+	c.Set("username", username)
 
 	var recovered any
 	func() {
 		defer func() { recovered = recover() }()
-		handler(c)
+		rt.deleteToken(c)
 	}()
 	return w, recovered
 }
 
-func TestSelfTokenAddAndDeleteUpdateCacheImmediately(t *testing.T) {
+func tokenExists(t *testing.T, c *ctx.Context, id int64) bool {
+	t.Helper()
+	var count int64
+	if err := c.DB.Model(&models.UserToken{}).Where("id = ?", id).Count(&count).Error; err != nil {
+		t.Fatalf("count token: %v", err)
+	}
+	return count > 0
+}
+
+func TestSelfTokenDeleteOwnToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	rt, c := setupSelfTokenTest(t)
-	alice := &models.User{Id: 1, Username: "alice"}
 
-	// 预置一个 token，保证删除时不是最后一个
+	// 预置两个 token，保证删除时不是最后一个
 	if _, err := models.AddToken(c, "alice", "token-keep", "keep"); err != nil {
 		t.Fatalf("seed token: %v", err)
 	}
-
-	w, rec := callSelfToken(rt.addToken, alice, http.MethodPost, "/api/n9e/self/token", nil, `{"token_name":"new"}`)
-	if rec != nil || w.Code != http.StatusOK {
-		t.Fatalf("addToken: code=%d recovered=%v body=%s", w.Code, rec, w.Body.String())
-	}
-	var resp struct {
-		Dat models.UserToken `json:"dat"`
-	}
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil || resp.Dat.Token == "" {
-		t.Fatalf("decode addToken response: %v, body=%s", err, w.Body.String())
-	}
-	if u := rt.UserTokenCache.GetByToken(resp.Dat.Token); u == nil || u.Username != "alice" {
-		t.Fatalf("new token should authenticate without waiting for sync, got %+v", u)
+	tok, err := models.AddToken(c, "alice", "token-del", "del")
+	if err != nil {
+		t.Fatalf("seed token: %v", err)
 	}
 
-	id := strconv.FormatInt(resp.Dat.Id, 10)
-	w, rec = callSelfToken(rt.deleteToken, alice, http.MethodDelete, "/api/n9e/self/token/"+id, gin.Params{{Key: "id", Value: id}}, "")
+	w, rec := callDeleteToken(rt, "alice", tok.Id)
 	if rec != nil || w.Code != http.StatusOK {
 		t.Fatalf("deleteToken: code=%d recovered=%v body=%s", w.Code, rec, w.Body.String())
 	}
-	if u := rt.UserTokenCache.GetByToken(resp.Dat.Token); u != nil {
-		t.Fatalf("deleted token should stop authenticating immediately, got %+v", u)
+	if tokenExists(t, c, tok.Id) {
+		t.Fatalf("token should be deleted")
 	}
 }
 
 func TestSelfTokenDeleteRejectsOtherUsersToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	rt, c := setupSelfTokenTest(t)
-	alice := &models.User{Id: 1, Username: "alice"}
 
 	for _, name := range []string{"a1", "a2"} {
 		if _, err := models.AddToken(c, "alice", "token-"+name, name); err != nil {
@@ -97,15 +91,12 @@ func TestSelfTokenDeleteRejectsOtherUsersToken(t *testing.T) {
 		t.Fatalf("seed bob token: %v", err)
 	}
 
-	id := strconv.FormatInt(bobToken.Id, 10)
-	_, rec := callSelfToken(rt.deleteToken, alice, http.MethodDelete, "/api/n9e/self/token/"+id, gin.Params{{Key: "id", Value: id}}, "")
-	if rec == nil {
-		t.Fatalf("deleting another user's token should be rejected")
+	_, rec := callDeleteToken(rt, "alice", bobToken.Id)
+	bomb, ok := rec.(errorx.PageError)
+	if !ok || bomb.Code != http.StatusNotFound {
+		t.Fatalf("deleting another user's token should return 404, recovered=%v", rec)
 	}
-
-	var count int64
-	c.DB.Model(&models.UserToken{}).Where("id = ?", bobToken.Id).Count(&count)
-	if count != 1 {
+	if !tokenExists(t, c, bobToken.Id) {
 		t.Fatalf("bob's token was deleted by alice")
 	}
 }
