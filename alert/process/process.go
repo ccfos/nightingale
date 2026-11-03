@@ -314,8 +314,11 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 
 	if event.TargetIdent != "" {
 		if pt, exist := p.TargetCache.Get(event.TargetIdent); exist {
-			pt.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(pt.GroupIds)
-			event.Target = pt
+			// copy before filling GroupNames: the cached object is shared and
+			// read concurrently (e.g. TargetCache.Snapshot)
+			t := *pt
+			t.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(t.GroupIds)
+			event.Target = &t
 		} else {
 			logger.Infof("alert_eval_%d datasource_%d fill event target error, ident: %s doesn't exist in cache.", p.rule.Id, p.datasourceId, event.TargetIdent)
 		}
@@ -689,8 +692,10 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 		event.DB2Mem()
 		target, exists := p.TargetCache.Get(event.TargetIdent)
 		if exists {
-			target.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(target.GroupIds)
-			event.Target = target
+			// copy before filling GroupNames, see BuildEvent
+			t := *target
+			t.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(t.GroupIds)
+			event.Target = &t
 		}
 
 		fireMap[event.Hash] = event

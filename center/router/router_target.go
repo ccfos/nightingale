@@ -234,9 +234,26 @@ func (rt *Router) targetExtendInfoByIdent(c *gin.Context) {
 	}, nil)
 }
 
+// targetGetsByService is polled by every edge/alert instance whenever the target
+// statistic changes. Serving it from the center's TargetCache keeps those full
+// reloads (target + target_busi_group full scans) off the DB; the cache holds the
+// same rows TargetGetsAll returns, refreshed on the same statistic.
+//
+// Only callers sending from_cache=1 get the cached list. They store the stat
+// derived from the list itself (memsto TargetCacheType.syncTargets). Older
+// edges store the stat from /v1/n9e/statistic instead, which with several
+// centers may come from a center whose cache is newer than the one serving
+// the list, latching a stale list. They keep reading the DB: a DB list is
+// never older than any center's cached stat, so at worst they reload once more.
 func (rt *Router) targetGetsByService(c *gin.Context) {
-	lst, err := models.TargetGetsAll(rt.Ctx)
-	ginx.NewRender(c).Data(lst, err)
+	if rt.TargetCache == nil || c.Query("from_cache") != "1" {
+		lst, err := models.TargetGetsAll(rt.Ctx)
+		ginx.NewRender(c).Data(lst, err)
+		return
+	}
+
+	lst, _, _ := rt.TargetCache.Snapshot()
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 func (rt *Router) targetGetTags(c *gin.Context) {
