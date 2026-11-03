@@ -301,7 +301,9 @@ func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, li
 
 func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 	if !ctx.IsCenter {
-		lst, err := poster.GetByUrls[[]*Target](ctx, "/v1/n9e/targets")
+		// from_cache=1: the center may answer from its TargetCache, since
+		// TargetCacheType.syncTargets stores the stat derived from this list
+		lst, err := poster.GetByUrls[[]*Target](ctx, "/v1/n9e/targets?from_cache=1")
 		return lst, err
 	}
 

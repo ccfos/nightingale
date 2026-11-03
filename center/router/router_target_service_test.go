@@ -9,7 +9,11 @@ import (
 
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/gin-gonic/gin"
+	"github.com/glebarez/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // TestTargetServiceEndpointsFromCache covers /v1/n9e/targets and
@@ -50,7 +54,7 @@ func TestTargetServiceEndpointsFromCache(t *testing.T) {
 	t.Run("targets", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/v1/n9e/targets", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/v1/n9e/targets?from_cache=1", nil)
 
 		rt.targetGetsByService(c)
 
@@ -71,6 +75,48 @@ func TestTargetServiceEndpointsFromCache(t *testing.T) {
 			t.Fatalf("host-1 = %+v, fields not carried over", got)
 		}
 	})
+}
+
+// TestTargetGetsByServiceWithoutFromCacheReadsDB covers edges that predate
+// from_cache=1: they store the stat from /v1/n9e/statistic as is, so they must
+// keep getting the list from the DB rather than from a possibly older cache.
+func TestTargetGetsByServiceWithoutFromCacheReadsDB(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.AutoMigrate(&models.Target{}, &models.TargetBusiGroup{}); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	if err := db.Create(&models.Target{Ident: "host-db"}).Error; err != nil {
+		t.Fatalf("create target: %v", err)
+	}
+
+	tc := &memsto.TargetCacheType{}
+	tc.Set(map[string]*models.Target{"host-cache": {Ident: "host-cache"}}, 1, 1)
+	rt := &Router{TargetCache: tc, Ctx: &ctx.Context{DB: db, IsCenter: true}}
+
+	for _, tt := range []struct{ url, want string }{
+		{"/v1/n9e/targets", "host-db"},
+		{"/v1/n9e/targets?from_cache=1", "host-cache"},
+	} {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodGet, tt.url, nil)
+
+		rt.targetGetsByService(c)
+
+		var resp struct {
+			Dat []*models.Target `json:"dat"`
+			Err string           `json:"err"`
+		}
+		decodeServiceResp(t, w, &resp)
+		if resp.Err != "" || len(resp.Dat) != 1 || resp.Dat[0].Ident != tt.want {
+			t.Fatalf("%s: err = %q, targets = %+v, want %s", tt.url, resp.Err, resp.Dat, tt.want)
+		}
+	}
 }
 
 // TestTargetCacheSnapshotIsolated makes sure Snapshot hands out copies: the

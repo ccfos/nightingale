@@ -94,9 +94,11 @@ func (tc *TargetCacheType) Stat() (total, lastUpdated int64) {
 
 // Snapshot returns shallow copies of all cached targets together with the
 // statistics they were loaded at. Copies are taken under the read lock, so the
-// caller may read (e.g. JSON-encode) them while refreshBeatTime/refreshHostMetas
-// keep updating the cached objects. Slice and map fields are shared and must be
-// treated as read-only.
+// caller may read (e.g. JSON-encode) them while the cache keeps updating its
+// objects. That only holds for writers taking the write lock (refreshBeatTime,
+// refreshHostMetas, UpdateTarget): objects returned by Get/Gets/GetAll are
+// shared and must never be modified in place. Slice and map fields of the
+// copies are shared too and must be treated as read-only.
 func (tc *TargetCacheType) Snapshot() (lst []*models.Target, total, lastUpdated int64) {
 	tc.RLock()
 	defer tc.RUnlock()
@@ -106,6 +108,19 @@ func (tc *TargetCacheType) Snapshot() (lst []*models.Target, total, lastUpdated 
 		lst = append(lst, &t)
 	}
 	return lst, tc.statTotal, tc.statLastUpdated
+}
+
+// UpdateTarget applies fn to the cached target under the write lock, for
+// callers that persisted a change and want the cache to reflect it before the
+// next full reload. It reports whether the target was cached.
+func (tc *TargetCacheType) UpdateTarget(ident string, fn func(t *models.Target)) bool {
+	tc.Lock()
+	defer tc.Unlock()
+	target, has := tc.targets[ident]
+	if has {
+		fn(target)
+	}
+	return has
 }
 
 func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {

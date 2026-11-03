@@ -25,6 +25,9 @@ func TestSyncTargetsEdgeStoresListStat(t *testing.T) {
 		case "/v1/n9e/statistic":
 			dat = &models.Statistics{Total: 2, LastUpdated: 300}
 		case "/v1/n9e/targets":
+			if r.URL.Query().Get("from_cache") != "1" {
+				t.Errorf("targets request without from_cache=1: %s", r.URL.RequestURI())
+			}
 			dat = stale
 		default:
 			http.NotFound(w, r)
@@ -64,5 +67,35 @@ func TestTargetsStat(t *testing.T) {
 	total, last := targetsStat([]*models.Target{{UpdateAt: 5}, {UpdateAt: 9}, {UpdateAt: 7}})
 	if total != 3 || last != 9 {
 		t.Fatalf("stat = {%d %d}, want {3 9}", total, last)
+	}
+}
+
+// TestUpdateTargetConcurrentWithSnapshot runs the locked writer against
+// Snapshot; with -race this fails if UpdateTarget stops taking the write lock.
+func TestUpdateTargetConcurrentWithSnapshot(t *testing.T) {
+	tc := &TargetCacheType{}
+	tc.Set(map[string]*models.Target{"host-1": {Ident: "host-1"}}, 1, 1)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 1000; i++ {
+			tc.UpdateTarget("host-1", func(t *models.Target) {
+				t.OS = "linux"
+				t.HostTags = []string{"a=b"}
+			})
+		}
+	}()
+	for i := 0; i < 1000; i++ {
+		lst, _, _ := tc.Snapshot()
+		_ = lst[0].HostTags
+	}
+	<-done
+
+	if cached, _ := tc.Get("host-1"); cached.OS != "linux" {
+		t.Fatalf("OS = %q, want linux", cached.OS)
+	}
+	if tc.UpdateTarget("missing", func(*models.Target) { t.Fatal("fn called for missing target") }) {
+		t.Fatal("UpdateTarget(missing) = true")
 	}
 }

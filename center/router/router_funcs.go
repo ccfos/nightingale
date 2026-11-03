@@ -36,7 +36,9 @@ func (rt *Router) statistic(c *gin.Context) {
 		// It is only a change signal: with several centers the edge's next
 		// /v1/n9e/targets call may hit a center whose cache is at another
 		// stat, so the edge stores the stat derived from the list it actually
-		// received (see memsto TargetCacheType.syncTargets).
+		// received (see memsto TargetCacheType.syncTargets). Older edges that
+		// store this stat as is get the list from the DB instead (see
+		// targetGetsByService), which is never older than a cached stat.
 		if rt.TargetCache != nil {
 			total, lastUpdated := rt.TargetCache.Stat()
 			ginx.NewRender(c).Data(&models.Statistics{Total: total, LastUpdated: lastUpdated}, nil)
