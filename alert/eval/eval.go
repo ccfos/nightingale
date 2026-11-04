@@ -305,11 +305,14 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 		}
 
 		if query.VarEnabled && strings.Contains(query.PromQl, "$") {
-			var anomalyPoints []models.AnomalyPoint
+			var (
+				anomalyPoints []models.AnomalyPoint
+				varErr        error
+			)
 			varQueryStart := time.Now()
 			if hasLabelLossAggregator(query) || notExactMatch(query) {
 				// 若有聚合函数或非精确匹配则需要先填充变量然后查询，这个方式效率较低
-				anomalyPoints = arw.VarFillingBeforeQuery(query, readerClient)
+				anomalyPoints, varErr = arw.VarFillingBeforeQuery(query, readerClient)
 				arw.Processor.Stats.CounterVarFillingQuery.WithLabelValues(
 					fmt.Sprintf("%v", arw.Rule.Id),
 					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
@@ -318,13 +321,27 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 				).Inc()
 			} else {
 				// 先查询再过滤变量，效率较高，但无法处理有聚合函数的情况
-				anomalyPoints = arw.VarFillingAfterQuery(query, readerClient)
+				anomalyPoints, varErr = arw.VarFillingAfterQuery(query, readerClient)
 				arw.Processor.Stats.CounterVarFillingQuery.WithLabelValues(
 					fmt.Sprintf("%v", arw.Rule.Id),
 					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 					fmt.Sprintf("%v", i),
 					"AfterQuery",
 				).Inc()
+			}
+
+			if varErr != nil {
+				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), QUERY_DATA, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
+				if arw.EvalRec != nil {
+					arw.EvalRec.AddQuery(evallog.QueryRecord{
+						Ref:        fmt.Sprintf("%d", i),
+						Query:      query.PromQl,
+						DurationMs: time.Since(varQueryStart).Milliseconds(),
+						Error:      varErr.Error(),
+						VarQuery:   true,
+					})
+				}
+				return lst, varErr
 			}
 
 			if arw.EvalRec != nil {
@@ -445,7 +462,7 @@ type sample struct {
 // 每个节点先查询无参数的 query, 即 mem_used_percent{} > curVal, 得到满足值变量的所有结果
 // 结果中有满足本节点参数变量的值，加入异常点列表
 // 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
-func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerClient promsdk.API) []models.AnomalyPoint {
+func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerClient promsdk.API) ([]models.AnomalyPoint, error) {
 	varToLabel := ExtractVarMapping(query.PromQl)
 	fullQuery := removeVal(query.PromQl)
 	// 存储所有的异常点，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
@@ -498,13 +515,18 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 			value, _, err := readerClient.Query(context.Background(), curQuery, time.Now())
 			if err != nil {
 				logger.Errorf("alert_eval_%d datasource_%d promql:%s, error:%v", arw.Rule.Id, arw.DatasourceId, curQuery, err)
-				continue
+				arw.Processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
+				// 查询失败不能当成"无数据"，否则会误发恢复，或让子筛选覆盖不到上层的异常点
+				return nil, fmt.Errorf("promql:%s query error: %w", curQuery, err)
 			}
 			seqVals := getSamples(value)
 			// 得到参数变量的所有组合
 			paramPermutation, err := arw.getParamPermutation(param, ParamKeys, varToLabel, query.PromQl, readerClient)
 			if err != nil {
 				logger.Errorf("alert_eval_%d datasource_%d paramPermutation error:%v", arw.Rule.Id, arw.DatasourceId, err)
+				if errors.Is(err, errParamValueFetch) {
+					return nil, err
+				}
 				continue
 			}
 			// 判断哪些参数值符合条件
@@ -543,7 +565,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 	for _, point := range anomalyPointsMap {
 		anomalyPoints = append(anomalyPoints, point)
 	}
-	return anomalyPoints
+	return anomalyPoints, nil
 }
 
 // getSamples 获取查询结果的所有样本，并转化为统一的格式
@@ -622,6 +644,10 @@ func removeVal(promql string) string {
 	return sb.String()
 }
 
+// errParamValueFetch 表示参数变量取值失败（如请求中心/DB 出错），区别于筛选结果为空。
+// 取值失败时本轮评估必须中止，否则会被当成"无异常点"而误发恢复，或让子筛选失效。
+var errParamValueFetch = errors.New("fail to fetch param values")
+
 // 获取参数变量的所有组合
 func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.ParamQuery, paramKeys []string, varToLabel map[string]string, originPromql string, readerClient promsdk.API) (map[string]struct{}, error) {
 
@@ -638,14 +664,14 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 			hostIdents, err := arw.getHostIdents(paramQuery)
 			if err != nil {
 				logger.Errorf("alert_eval_%d datasource_%d fail to get host idents, error:%v", arw.Rule.Id, arw.DatasourceId, err)
-				break
+				return nil, fmt.Errorf("%w: param key %s: %v", errParamValueFetch, paramKey, err)
 			}
 			params = hostIdents
 		case "device":
 			deviceIdents, err := arw.getDeviceIdents(paramQuery)
 			if err != nil {
 				logger.Errorf("alert_eval_%d datasource_%d fail to get device idents, error:%v", arw.Rule.Id, arw.DatasourceId, err)
-				break
+				return nil, fmt.Errorf("%w: param key %s: %v", errParamValueFetch, paramKey, err)
 			}
 			params = deviceIdents
 		case "enum":
@@ -659,6 +685,9 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 				paramsKeyAllLabel, err := getParamKeyAllLabel(varToLabel[paramKey], originPromql, readerClient, arw.DatasourceId, arw.Rule.Id, arw.Processor.Stats)
 				if err != nil {
 					logger.Errorf("alert_eval_%d datasource_%d fail to getParamKeyAllLabel, error:%v query:%s", arw.Rule.Id, arw.DatasourceId, err, paramQuery.Query)
+					if errors.Is(err, errParamValueFetch) {
+						return nil, err
+					}
 				}
 				params = paramsKeyAllLabel
 			} else {
@@ -704,7 +733,7 @@ func getParamKeyAllLabel(paramKey string, promql string, client promsdk.API, dsI
 	stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", dsId), fmt.Sprintf("%d", rid)).Inc()
 	value, _, err := client.Query(context.Background(), pr, time.Now())
 	if err != nil {
-		return nil, fmt.Errorf("promql: %s query error: %v", pr, err)
+		return nil, fmt.Errorf("%w: promql: %s query error: %v", errParamValueFetch, pr, err)
 	}
 	labelValuesMap := make(map[string]struct{})
 
@@ -756,7 +785,14 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 		return nil, err
 	}
 
-	if !arw.Ctx.IsCenter {
+	if !arw.Ctx.IsCenter && arw.Processor != nil && arw.Processor.TargetCache != nil {
+		// edge 用本地 TargetCache 过滤，不再每轮请求中心，避免网络抖动导致取不到主机列表。
+		// TargetCache 启动时首次同步失败会直接退出，这里拿到的总是一份完整列表。
+		lst := models.FilterTargetsByHostQueries(arw.Processor.TargetCache.GetAll(), queries)
+		for i := range lst {
+			params = append(params, lst[i].Ident)
+		}
+	} else if !arw.Ctx.IsCenter {
 		lst, err := poster.PostByUrlsWithResp[[]*models.Target](arw.Ctx, "/v1/n9e/targets-of-host-query", queries)
 		if err != nil {
 			return nil, err
@@ -1330,7 +1366,7 @@ func GetQueryRefAndUnit(query interface{}) (string, string, error) {
 // 每个节点先填充参数再进行查询, 即先得到完整的 promql avg(mem_used_percent{host="127.0.0.1"}) > 5
 // 再查询得到满足值变量的所有结果加入异常点列表
 // 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
-func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, readerClient promsdk.API) []models.AnomalyPoint {
+func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, readerClient promsdk.API) ([]models.AnomalyPoint, error) {
 	varToLabel := ExtractVarMapping(query.PromQl)
 	// 存储异常点的 map，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
 	anomalyPointsMap := sync.Map{}
@@ -1377,6 +1413,9 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			paramPermutation, err := arw.getParamPermutation(param, ParamKeys, varToLabel, query.PromQl, readerClient)
 			if err != nil {
 				logger.Errorf("alert_eval_%d datasource_%d paramPermutation error:%v", arw.Rule.Id, arw.DatasourceId, err)
+				if errors.Is(err, errParamValueFetch) {
+					return nil, err
+				}
 				continue
 			}
 
@@ -1393,6 +1432,8 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			// 并发查询
 			wg := sync.WaitGroup{}
 			semaphore := make(chan struct{}, 200)
+			var queryErrOnce sync.Once
+			var queryErr error
 			for key, promql := range keyToPromql {
 				wg.Add(1)
 				semaphore <- struct{}{}
@@ -1405,6 +1446,10 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 					value, _, err := readerClient.Query(context.Background(), promql, time.Now())
 					if err != nil {
 						logger.Errorf("alert_eval_%d datasource_%d promql:%s, error:%v", arw.Rule.Id, arw.DatasourceId, promql, err)
+						arw.Processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
+						queryErrOnce.Do(func() {
+							queryErr = fmt.Errorf("promql:%s query error: %w", promql, err)
+						})
 						return
 					}
 					logger.Infof("alert_eval_%d datasource_%d promql:%s, value:%+v", arw.Rule.Id, arw.DatasourceId, promql, value)
@@ -1431,6 +1476,10 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 				}(key, promql)
 			}
 			wg.Wait()
+			if queryErr != nil {
+				// 任一子查询失败都中止本轮，避免失败的组合被当成"无数据"而误发恢复
+				return nil, queryErr
+			}
 		}
 		curNode = curNode.ChildVarConfigs
 	}
@@ -1441,7 +1490,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 		}
 		return true
 	})
-	return anomalyPoints
+	return anomalyPoints, nil
 }
 
 // 判断 query 中是否有会导致标签丢失的聚合函数
