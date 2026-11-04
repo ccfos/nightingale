@@ -130,7 +130,9 @@ func TestGetHostsQuery_GroupIDs_EmptyValuesSkipped(t *testing.T) {
 func TestGetHostsQuery_EmptyConditionsSkipped(t *testing.T) {
 	for _, filter := range []models.HostQuery{
 		{Key: "hosts", Op: "!~"},
+		{Key: "hosts", Op: "=~"},
 		{Key: "tags", Op: "!="},
+		{Key: "tags", Op: "=="},
 		{Key: "unknown", Op: "=="},
 		{Key: "hosts", Op: "unknown"},
 	} {
@@ -171,7 +173,9 @@ func TestTargetFilterQueryBuild_EmptyConditionsSkipped(t *testing.T) {
 
 	for _, filter := range []models.HostQuery{
 		{Key: "hosts", Op: "!~"},
+		{Key: "hosts", Op: "=~"},
 		{Key: "tags", Op: "!="},
+		{Key: "tags", Op: "=="},
 	} {
 		for _, values := range []struct {
 			name string
@@ -179,6 +183,7 @@ func TestTargetFilterQueryBuild_EmptyConditionsSkipped(t *testing.T) {
 		}{
 			{"nil", nil},
 			{"empty", []interface{}{}},
+			{"nil element", []interface{}{nil}},
 		} {
 			for _, restricted := range []bool{false, true} {
 				name := filter.Key + "/" + filter.Op + "/" + values.name
@@ -203,65 +208,6 @@ func TestTargetFilterQueryBuild_EmptyConditionsSkipped(t *testing.T) {
 					}
 					if !reflect.DeepEqual(idents, want) {
 						t.Fatalf("expected idents %v, got %v", want, idents)
-					}
-				})
-			}
-		}
-	}
-}
-
-func TestTargetFilterQueryBuild_EmptyPositiveConditionsMatchNothing(t *testing.T) {
-	c := newSqliteCtx(t)
-	if err := models.DB(c).Exec(`INSERT INTO target (ident, tags, host_tags) VALUES
-		('a','env=prod',NULL),('b','','env=prod'),('c','env=dev','env=dev')`).Error; err != nil {
-		t.Fatalf("seed target: %v", err)
-	}
-
-	for _, filter := range []struct {
-		key       string
-		op        string
-		predicate string
-	}{
-		{"tags", "==", "1 = 0"},
-		{"hosts", "==", "ident in (NULL)"},
-		{"hosts", "=~", "1 = 0"},
-	} {
-		for _, values := range []struct {
-			name string
-			list []interface{}
-		}{
-			{"nil", nil},
-			{"empty", []interface{}{}},
-			{"nil element", []interface{}{nil}},
-			{"all nil", []interface{}{nil, nil}},
-		} {
-			for _, restricted := range []bool{false, true} {
-				name := filter.key + "/" + filter.op + "/" + values.name
-				if restricted {
-					name += "/with host equality"
-				}
-				t.Run(name, func(t *testing.T) {
-					filters := []models.HostQuery{{Key: filter.key, Op: filter.op, Values: values.list}}
-					if restricted {
-						filters = append(filters, models.HostQuery{
-							Key: "hosts", Op: "==", Values: []interface{}{"a", "b"},
-						})
-					}
-					query := models.GetHostsQuery(filters)
-					if len(query) != len(filters) || len(query[0]) != 1 {
-						t.Fatalf("expected an explicit condition for empty positive filter, got %#v", query)
-					}
-					session := models.TargetFilterQueryBuild(c, query, 0, 0)
-					stmt := session.Session(&gorm.Session{DryRun: true}).Find(&[]models.Target{}).Statement
-					if sql := session.Dialector.Explain(stmt.SQL.String(), stmt.Vars...); !strings.Contains(sql, filter.predicate) {
-						t.Fatalf("expected %q in SQL: %s", filter.predicate, sql)
-					}
-					var idents []string
-					if err := session.Order("ident").Pluck("ident", &idents).Error; err != nil {
-						t.Fatalf("execute filter query: %v", err)
-					}
-					if len(idents) != 0 {
-						t.Fatalf("expected no targets for empty positive filter, got %v", idents)
 					}
 				})
 			}
