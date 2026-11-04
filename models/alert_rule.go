@@ -511,7 +511,9 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 						"(host_tags not like ? or host_tags is null)")
 					args = append(args, "%"+tag+"%", "%"+tag+"%")
 				}
-				m[strings.Join(query, " and ")] = args
+				if len(query) > 0 {
+					m[strings.Join(query, " and ")] = args
+				}
 			}
 		case "hosts":
 			lst := []string{}
@@ -538,8 +540,13 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 					query = append(query, "ident not like ?")
 					args = append(args, strings.ReplaceAll(host, "*", "%"))
 				}
-				m[strings.Join(query, " and ")] = args
+				if len(query) > 0 {
+					m[strings.Join(query, " and ")] = args
+				}
 			}
+		}
+		if len(m) == 0 {
+			continue
 		}
 		query = append(query, m)
 	}
