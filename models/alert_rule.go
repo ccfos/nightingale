@@ -497,6 +497,10 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 				lst = append(lst, v.(string))
 			}
 			if q.Op == "==" {
+				if len(lst) == 0 {
+					// 空等值列表应匹配零台机器，不能跳过条件而扩大告警范围。
+					m["1 = 0"] = nil
+				}
 				blank := " "
 				for _, tag := range lst {
 					m["tags like ?"+blank] = "%" + tag + "%"
@@ -511,7 +515,9 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 						"(host_tags not like ? or host_tags is null)")
 					args = append(args, "%"+tag+"%", "%"+tag+"%")
 				}
-				m[strings.Join(query, " and ")] = args
+				if len(query) > 0 {
+					m[strings.Join(query, " and ")] = args
+				}
 			}
 		case "hosts":
 			lst := []string{}
@@ -538,8 +544,13 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 					query = append(query, "ident not like ?")
 					args = append(args, strings.ReplaceAll(host, "*", "%"))
 				}
-				m[strings.Join(query, " and ")] = args
+				if len(query) > 0 {
+					m[strings.Join(query, " and ")] = args
+				}
 			}
+		}
+		if len(m) == 0 {
+			continue
 		}
 		query = append(query, m)
 	}
