@@ -532,6 +532,9 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 			} else if q.Op == "!=" {
 				m["ident not in (?)"] = lst
 			} else if q.Op == "=~" {
+				if len(lst) == 0 {
+					m["1 = 0"] = nil
+				}
 				blank := " "
 				for _, host := range lst {
 					m["ident like ?"+blank] = strings.ReplaceAll(host, "*", "%")
