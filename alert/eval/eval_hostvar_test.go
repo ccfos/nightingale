@@ -3,6 +3,7 @@ package eval
 import (
 	"context"
 	"errors"
+	"reflect"
 	"sort"
 	"strings"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 
 	"github.com/prometheus/common/model"
+	promparser "github.com/prometheus/prometheus/promql/parser"
 )
 
 // fakePromAPI 返回固定的 cpu 序列；查询里已填好 ident 时只返回该主机的序列
@@ -173,6 +175,109 @@ func TestEnumAllLabelQueryErrorIsFetchError(t *testing.T) {
 	_, err := arw.getParamPermutation(
 		map[string]models.ParamQuery{"ident": {ParamType: "enum", Query: []interface{}{}}},
 		[]string{"ident"}, map[string]string{"ident": "ident"}, `cpu_usage{ident="$ident"} > 1`, reader)
+	if !errors.Is(err, errParamValueFetch) {
+		t.Fatalf("err = %v, want errParamValueFetch", err)
+	}
+}
+
+// rejectingPromAPI 对查询指定主机的子查询返回 errFor 里的错误，其余行为同 fakePromAPI
+type rejectingPromAPI struct {
+	fakePromAPI
+	errFor map[string]error
+}
+
+func (f *rejectingPromAPI) Query(ctx context.Context, query string, ts time.Time) (model.Value, promsdk.Warnings, error) {
+	for ident, err := range f.errFor {
+		if strings.Contains(query, `ident="`+ident+`"`) {
+			return nil, nil, err
+		}
+	}
+	return f.fakePromAPI.Query(ctx, query, ts)
+}
+
+func webHostsQuery() models.PromQuery {
+	return models.PromQuery{
+		PromQl:     `cpu_usage{ident="$ident"} > 1`,
+		VarEnabled: true,
+		VarConfig: models.VarConfig{
+			ParamVal: []models.ParamQueryForFirst{{
+				Name:      "ident",
+				ParamType: "host",
+				Query:     []interface{}{map[string]interface{}{"key": "hosts", "op": "=~", "values": []interface{}{"web*"}}},
+			}},
+		},
+	}
+}
+
+var errBadData = &promsdk.Error{Type: promsdk.ErrBadData, Msg: "parse error"}
+
+func TestVarFillingBeforeQueryInvalidSubQueries(t *testing.T) {
+	cases := []struct {
+		name      string
+		errFor    map[string]error
+		wantErr   bool
+		wantHosts []string
+		wantWarns int
+	}{
+		// 只有一个组合的查询不合法：跳过它并写入 eval log 警告，其他主机照常出点
+		{"one invalid", map[string]error{"web-02": errBadData}, false, []string{"web-01"}, 1},
+		// 所有组合都不合法：promql 本身有问题，中止本轮
+		{"all invalid", map[string]error{"web-01": errBadData, "web-02": errBadData}, true, nil, 0},
+		// 超时等瞬时错误仍然中止本轮
+		{"one timeout", map[string]error{"web-02": &promsdk.Error{Type: promsdk.ErrTimeout, Msg: "timeout"}}, true, nil, 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			arw := newEdgeHostVarWorker(nil)
+			reader := &rejectingPromAPI{fakePromAPI: fakePromAPI{idents: []string{"web-01", "web-02"}}, errFor: tc.errFor}
+			points, warns, err := arw.varFillingBeforeQuery(webHostsQuery(), reader)
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("err = %v, wantErr %v", err, tc.wantErr)
+			}
+			if got := pointIdents(points); !reflect.DeepEqual(got, tc.wantHosts) {
+				t.Fatalf("points = %v, want %v", got, tc.wantHosts)
+			}
+			if len(warns) != tc.wantWarns {
+				t.Fatalf("warns = %v, want %d", warns, tc.wantWarns)
+			}
+		})
+	}
+}
+
+// 填进 promql 的值带引号或反斜杠时，发给数据源的查询仍要能解析
+func TestFillVarEscapedValues(t *testing.T) {
+	// 展示用的 fillVar 保持原样：其结果参与告警事件 hash
+	if got := fillVar(`cpu{ident="$ident"}`, "ident", `a"b`); got != `cpu{ident="a"b"}` {
+		t.Fatalf("fillVar must not escape, got %s", got)
+	}
+	for _, val := range []string{`HOST\SQLEXPRESS`, `say "hi"`, `it's`, `\d+`} {
+		for _, ql := range []string{`cpu{ident="$ident"}`, `cpu{ident='$ident'}`} {
+			got := fillVarEscaped(ql, "ident", val)
+			expr, err := promparser.ParseExpr(got)
+			if err != nil {
+				t.Fatalf("fillVarEscaped(%q, %q) = %q, parse error: %v", ql, val, got, err)
+			}
+			sel, ok := expr.(*promparser.VectorSelector)
+			if !ok {
+				t.Fatalf("unexpected expr %T", expr)
+			}
+			for _, m := range sel.LabelMatchers {
+				if m.Name == "ident" && m.Value != val {
+					t.Fatalf("ident = %q, want %q", m.Value, val)
+				}
+			}
+		}
+	}
+}
+
+// 主机筛选值无法编译成正则时，按取值失败中止本轮，不能 panic
+func TestEdgeHostVarInvalidFilterIsFetchError(t *testing.T) {
+	arw := newEdgeHostVarWorker(nil)
+	query := webHostsQuery()
+	query.VarConfig.ParamVal[0].Query = []interface{}{map[string]interface{}{
+		"key": "hosts", "op": "=~", "values": []interface{}{strings.Repeat("a_", 2_000_000)},
+	}}
+	_, err := arw.VarFillingBeforeQuery(query, &fakePromAPI{idents: []string{"web-01"}})
 	if !errors.Is(err, errParamValueFetch) {
 		t.Fatalf("err = %v, want errParamValueFetch", err)
 	}

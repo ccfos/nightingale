@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"text/template"
 	"time"
 
@@ -307,12 +308,13 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 		if query.VarEnabled && strings.Contains(query.PromQl, "$") {
 			var (
 				anomalyPoints []models.AnomalyPoint
+				varWarns      []string
 				varErr        error
 			)
 			varQueryStart := time.Now()
 			if hasLabelLossAggregator(query) || notExactMatch(query) {
 				// 若有聚合函数或非精确匹配则需要先填充变量然后查询，这个方式效率较低
-				anomalyPoints, varErr = arw.VarFillingBeforeQuery(query, readerClient)
+				anomalyPoints, varWarns, varErr = arw.varFillingBeforeQuery(query, readerClient)
 				arw.Processor.Stats.CounterVarFillingQuery.WithLabelValues(
 					fmt.Sprintf("%v", arw.Rule.Id),
 					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
@@ -353,6 +355,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 					DurationMs:  time.Since(varQueryStart).Milliseconds(),
 					SeriesTotal: total,
 					Series:      samples,
+					Warnings:    varWarns,
 					VarQuery:    true,
 				})
 			}
@@ -788,7 +791,10 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 	if !arw.Ctx.IsCenter && arw.Processor != nil && arw.Processor.TargetCache != nil {
 		// edge 用本地 TargetCache 过滤，不再每轮请求中心，避免网络抖动导致取不到主机列表。
 		// TargetCache 启动时首次同步失败会直接退出，这里拿到的总是一份完整列表。
-		lst := models.FilterTargetsByHostQueries(arw.Processor.TargetCache.GetAll(), queries)
+		lst, err := models.FilterTargetsByHostQueries(arw.Processor.TargetCache.GetAll(), queries)
+		if err != nil {
+			return nil, err
+		}
 		for i := range lst {
 			params = append(params, lst[i].Ident)
 		}
@@ -1367,6 +1373,13 @@ func GetQueryRefAndUnit(query interface{}) (string, string, error) {
 // 再查询得到满足值变量的所有结果加入异常点列表
 // 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
 func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, readerClient promsdk.API) ([]models.AnomalyPoint, error) {
+	points, _, err := arw.varFillingBeforeQuery(query, readerClient)
+	return points, err
+}
+
+// varFillingBeforeQuery 额外返回写入 eval log 的警告（如被跳过的不合法子查询）
+func (arw *AlertRuleWorker) varFillingBeforeQuery(query models.PromQuery, readerClient promsdk.API) ([]models.AnomalyPoint, []string, error) {
+	var warns []string
 	varToLabel := ExtractVarMapping(query.PromQl)
 	// 存储异常点的 map，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
 	anomalyPointsMap := sync.Map{}
@@ -1414,7 +1427,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			if err != nil {
 				logger.Errorf("alert_eval_%d datasource_%d paramPermutation error:%v", arw.Rule.Id, arw.DatasourceId, err)
 				if errors.Is(err, errParamValueFetch) {
-					return nil, err
+					return nil, nil, err
 				}
 				continue
 			}
@@ -1424,7 +1437,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 				realPromql := curPromql
 				split := strings.Split(paramPermutationKeys, JoinMark)
 				for j := range ParamKeys {
-					realPromql = fillVar(realPromql, ParamKeys[j], split[j])
+					realPromql = fillVarEscaped(realPromql, ParamKeys[j], split[j])
 				}
 				keyToPromql[paramPermutationKeys] = realPromql
 			}
@@ -1432,8 +1445,9 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			// 并发查询
 			wg := sync.WaitGroup{}
 			semaphore := make(chan struct{}, 200)
-			var queryErrOnce sync.Once
-			var queryErr error
+			var queryErrOnce, invalidErrOnce sync.Once
+			var queryErr, invalidErr error
+			var invalidCount atomic.Int32
 			for key, promql := range keyToPromql {
 				wg.Add(1)
 				semaphore <- struct{}{}
@@ -1447,6 +1461,15 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 					if err != nil {
 						logger.Errorf("alert_eval_%d datasource_%d promql:%s, error:%v", arw.Rule.Id, arw.DatasourceId, promql, err)
 						arw.Processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
+						if isInvalidQueryErr(err) {
+							// 只是这个组合的查询本身不合法，每轮结果都一样：与改动前一样只跳过这个组合，
+							// 否则一个组合就会让整条规则每轮都中止
+							invalidCount.Add(1)
+							invalidErrOnce.Do(func() {
+								invalidErr = fmt.Errorf("promql:%s query error: %w", promql, err)
+							})
+							return
+						}
 						queryErrOnce.Do(func() {
 							queryErr = fmt.Errorf("promql:%s query error: %w", promql, err)
 						})
@@ -1477,8 +1500,15 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			}
 			wg.Wait()
 			if queryErr != nil {
-				// 任一子查询失败都中止本轮，避免失败的组合被当成"无数据"而误发恢复
-				return nil, queryErr
+				// 超时、数据源不可达等失败中止本轮，避免失败的组合被当成"无数据"而误发恢复
+				return nil, nil, queryErr
+			}
+			if n := int(invalidCount.Load()); n > 0 {
+				if n == len(keyToPromql) {
+					// 所有组合都不合法，说明 promql 本身有问题，与不带变量的查询失败一样处理
+					return nil, nil, fmt.Errorf("all %d sub-queries are invalid, first: %w", n, invalidErr)
+				}
+				warns = append(warns, fmt.Sprintf("%d of %d sub-queries rejected as invalid and skipped, first error: %v", n, len(keyToPromql), invalidErr))
 			}
 		}
 		curNode = curNode.ChildVarConfigs
@@ -1490,7 +1520,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 		}
 		return true
 	})
-	return anomalyPoints, nil
+	return anomalyPoints, warns, nil
 }
 
 // 判断 query 中是否有会导致标签丢失的聚合函数
@@ -1578,10 +1608,33 @@ func ExtractVarMapping(promql string) map[string]string {
 	return varMapping
 }
 
+var (
+	promqlSingleQuoteEscaper = strings.NewReplacer(`\`, `\\`, `'`, `\'`)
+	promqlDoubleQuoteEscaper = strings.NewReplacer(`\`, `\\`, `"`, `\"`)
+)
+
+// fillVar 把参数值原样填进 promql 里带引号的变量位置。
+// VarFillingAfterQuery 用它生成异常点的展示 query；该 query 参与告警事件 hash，
+// 改成转义会让已触发的告警在升级后先恢复再重新触发，所以保持原样
 func fillVar(curRealQuery string, paramKey string, val string) string {
 	curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("'$%s'", paramKey), fmt.Sprintf("'%s'", val), -1)
 	curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("\"$%s\"", paramKey), fmt.Sprintf("\"%s\"", val), -1)
 	return curRealQuery
+}
+
+// fillVarEscaped 同 fillVar，但值按 PromQL 字符串规则转义，用于真正发给数据源的查询；
+// 否则值里的引号或反斜杠（如 HOST\SQLEXPRESS）会让查询每轮都解析失败
+func fillVarEscaped(curRealQuery string, paramKey string, val string) string {
+	curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("'$%s'", paramKey), "'"+promqlSingleQuoteEscaper.Replace(val)+"'", -1)
+	curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("\"$%s\"", paramKey), "\""+promqlDoubleQuoteEscaper.Replace(val)+"\"", -1)
+	return curRealQuery
+}
+
+// isInvalidQueryErr 判断是否是数据源拒绝了查询本身（如 PromQL 解析失败）。
+// 这类错误每轮都会复现；超时、5xx、网络错误等不在此列
+func isInvalidQueryErr(err error) bool {
+	var pe *promsdk.Error
+	return errors.As(err, &pe) && pe.Type == promsdk.ErrBadData
 }
 
 func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) ([]models.AnomalyPoint, []models.AnomalyPoint, error) {

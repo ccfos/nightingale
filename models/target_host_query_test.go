@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -90,6 +91,8 @@ func TestFilterTargetsByHostQueriesMatchesSQL(t *testing.T) {
 		{"tags == any of", []models.HostQuery{q("tags", "==", "app=db", "region=bj")}},
 		{"tags == case insensitive", []models.HostQuery{q("tags", "==", "role=master")}},
 		{"tags != ", []models.HostQuery{q("tags", "!=", "env=prod", "region=sh")}},
+		// DB 中 tags 末尾带空格，_ 能匹配到它
+		{"tags == trailing underscore", []models.HostQuery{q("tags", "==", "app=web_")}},
 		{"hosts ==", []models.HostQuery{q("hosts", "==", "web-01", "db-01", "nope")}},
 		{"hosts !=", []models.HostQuery{q("hosts", "!=", "web-01")}},
 		{"hosts =~", []models.HostQuery{q("hosts", "=~", "web*", "cache-0*")}},
@@ -111,9 +114,34 @@ func TestFilterTargetsByHostQueriesMatchesSQL(t *testing.T) {
 				t.Fatalf("sql filter: %v", err)
 			}
 			want := identsOf(dbLst)
-			got := identsOf(models.FilterTargetsByHostQueries(edgeTargets, tc.queries))
+			lst, err := models.FilterTargetsByHostQueries(edgeTargets, tc.queries)
+			if err != nil {
+				t.Fatalf("memory filter: %v", err)
+			}
+			got := identsOf(lst)
 			if !reflect.DeepEqual(got, want) {
 				t.Fatalf("memory filter = %v, sql filter = %v", got, want)
+			}
+		})
+	}
+}
+
+// 超长的筛选值无法编译成正则时返回 error，不能 panic 让 edge 进程退出
+func TestFilterTargetsByHostQueriesOversizedPattern(t *testing.T) {
+	huge := strings.Repeat("a_", 2_000_000)
+	targets := []*models.Target{{Ident: "web-01", TagsJSON: []string{"env=prod"}}}
+	for _, key := range []string{"hosts", "tags"} {
+		t.Run(key, func(t *testing.T) {
+			op := "=="
+			if key == "hosts" {
+				op = "=~"
+			}
+			_, err := models.FilterTargetsByHostQueries(targets, []models.HostQuery{{Key: key, Op: op, Values: []interface{}{huge}}})
+			if err == nil {
+				t.Fatal("expected error for oversized pattern")
+			}
+			if len(err.Error()) > 200 {
+				t.Fatalf("error message should not carry the pattern, got %d chars", len(err.Error()))
 			}
 		})
 	}
