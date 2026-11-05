@@ -667,7 +667,11 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 			hostIdents, err := arw.getHostIdents(paramQuery)
 			if err != nil {
 				logger.Errorf("alert_eval_%d datasource_%d fail to get host idents, error:%v", arw.Rule.Id, arw.DatasourceId, err)
-				return nil, fmt.Errorf("%w: param key %s: %v", errParamValueFetch, paramKey, err)
+				if errors.Is(err, errParamValueFetch) {
+					return nil, fmt.Errorf("param key %s: %w", paramKey, err)
+				}
+				// 筛选条件本身有问题（解析失败、无法编译），每轮结果都一样：与改动前一样跳过这个节点
+				break
 			}
 			params = hostIdents
 		case "device":
@@ -736,6 +740,10 @@ func getParamKeyAllLabel(paramKey string, promql string, client promsdk.API, dsI
 	stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", dsId), fmt.Sprintf("%d", rid)).Inc()
 	value, _, err := client.Query(context.Background(), pr, time.Now())
 	if err != nil {
+		if isInvalidQueryErr(err) {
+			// 查询本身被数据源拒绝，每轮结果都一样：与改动前一样跳过这个节点
+			return nil, fmt.Errorf("promql: %s query error: %w", pr, err)
+		}
 		return nil, fmt.Errorf("%w: promql: %s query error: %v", errParamValueFetch, pr, err)
 	}
 	labelValuesMap := make(map[string]struct{})
@@ -801,7 +809,7 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 	} else if !arw.Ctx.IsCenter {
 		lst, err := poster.PostByUrlsWithResp[[]*models.Target](arw.Ctx, "/v1/n9e/targets-of-host-query", queries)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: %v", errParamValueFetch, err)
 		}
 		for i := range lst {
 			params = append(params, lst[i].Ident)
@@ -812,7 +820,7 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 		var lst []*models.Target
 		err = session.Find(&lst).Error
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: %v", errParamValueFetch, err)
 		}
 		for i := range lst {
 			params = append(params, lst[i].Ident)
@@ -1630,11 +1638,12 @@ func fillVarEscaped(curRealQuery string, paramKey string, val string) string {
 	return curRealQuery
 }
 
-// isInvalidQueryErr 判断是否是数据源拒绝了查询本身（如 PromQL 解析失败）。
-// 这类错误每轮都会复现；超时、5xx、网络错误等不在此列
+// isInvalidQueryErr 判断是否是数据源拒绝了查询本身：bad_data（如 PromQL 解析失败），
+// 或 execution（如 many-to-many 匹配、duplicate series、样本数超限）。
+// 这类错误由查询和数据决定，每轮都会复现；超时、5xx、网络错误等不在此列
 func isInvalidQueryErr(err error) bool {
 	var pe *promsdk.Error
-	return errors.As(err, &pe) && pe.Type == promsdk.ErrBadData
+	return errors.As(err, &pe) && (pe.Type == promsdk.ErrBadData || pe.Type == promsdk.ErrExec)
 }
 
 func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) ([]models.AnomalyPoint, []models.AnomalyPoint, error) {

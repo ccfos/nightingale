@@ -178,6 +178,15 @@ func TestEnumAllLabelQueryErrorIsFetchError(t *testing.T) {
 	if !errors.Is(err, errParamValueFetch) {
 		t.Fatalf("err = %v, want errParamValueFetch", err)
 	}
+
+	// 查询本身被拒绝时每轮都一样，只跳过节点，不算取值失败
+	reader.err = errBadData
+	_, err = arw.getParamPermutation(
+		map[string]models.ParamQuery{"ident": {ParamType: "enum", Query: []interface{}{}}},
+		[]string{"ident"}, map[string]string{"ident": "ident"}, `cpu_usage{ident="$ident"} > 1`, reader)
+	if err == nil || errors.Is(err, errParamValueFetch) {
+		t.Fatalf("err = %v, want a non-fetch error", err)
+	}
 }
 
 // rejectingPromAPI 对查询指定主机的子查询返回 errFor 里的错误，其余行为同 fakePromAPI
@@ -221,6 +230,8 @@ func TestVarFillingBeforeQueryInvalidSubQueries(t *testing.T) {
 	}{
 		// 只有一个组合的查询不合法：跳过它并写入 eval log 警告，其他主机照常出点
 		{"one invalid", map[string]error{"web-02": errBadData}, false, []string{"web-01"}, 1},
+		// 执行错误（如 many-to-many 匹配）同样每轮复现，只跳过这个组合
+		{"one execution error", map[string]error{"web-02": &promsdk.Error{Type: promsdk.ErrExec, Msg: "many-to-many matching not allowed"}}, false, []string{"web-01"}, 1},
 		// 所有组合都不合法：promql 本身有问题，中止本轮
 		{"all invalid", map[string]error{"web-01": errBadData, "web-02": errBadData}, true, nil, 0},
 		// 超时等瞬时错误仍然中止本轮
@@ -270,15 +281,18 @@ func TestFillVarEscapedValues(t *testing.T) {
 	}
 }
 
-// 主机筛选值无法编译成正则时，按取值失败中止本轮，不能 panic
-func TestEdgeHostVarInvalidFilterIsFetchError(t *testing.T) {
+// 主机筛选值无法编译成正则时不能 panic；筛选条件本身有问题，与改动前一样跳过节点而不中止本轮
+func TestEdgeHostVarInvalidFilterSkipsNode(t *testing.T) {
 	arw := newEdgeHostVarWorker(nil)
 	query := webHostsQuery()
 	query.VarConfig.ParamVal[0].Query = []interface{}{map[string]interface{}{
 		"key": "hosts", "op": "=~", "values": []interface{}{strings.Repeat("a_", 2_000_000)},
 	}}
-	_, err := arw.VarFillingBeforeQuery(query, &fakePromAPI{idents: []string{"web-01"}})
-	if !errors.Is(err, errParamValueFetch) {
-		t.Fatalf("err = %v, want errParamValueFetch", err)
+	points, err := arw.VarFillingBeforeQuery(query, &fakePromAPI{idents: []string{"web-01"}})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(points) != 0 {
+		t.Fatalf("points = %v, want none", pointIdents(points))
 	}
 }
