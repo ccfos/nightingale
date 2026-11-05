@@ -29,6 +29,23 @@ type HeartbeatConfig struct {
 	Interval   int64
 	Endpoint   string
 	EngineName string
+	// SyncOwnTargetsOnly makes an edge sync only the targets whose engine_name
+	// is EngineName, i.e. the hosts reporting through this engine cluster,
+	// instead of the whole target table. Lookups of other idents then miss:
+	// host variables, event target info, mutes and self-healing see only
+	// these hosts, and pushgw adds no target labels to series of other idents.
+	// Only n9e-edge honors it.
+	SyncOwnTargetsOnly bool
+}
+
+// TargetSyncEngineName returns the engine name an edge's TargetCache is
+// limited to (see memsto.NewTargetCacheOfEngine): EngineName when
+// SyncOwnTargetsOnly is on, otherwise "" for all targets.
+func (h HeartbeatConfig) TargetSyncEngineName() string {
+	if h.SyncOwnTargetsOnly {
+		return h.EngineName
+	}
+	return ""
 }
 
 type Alerting struct {

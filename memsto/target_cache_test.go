@@ -99,3 +99,125 @@ func TestUpdateTargetConcurrentWithSnapshot(t *testing.T) {
 		t.Fatal("UpdateTarget(missing) = true")
 	}
 }
+
+// TestSyncTargetsOfEngine covers an edge with SyncOwnTargetsOnly: both the
+// stat and the list requests carry engine_name, and the stat derived from the
+// list matches the center's stat of the same engine, so an unchanged engine
+// does not reload every poll. A center that ignores engine_name returns all
+// targets, which the edge then stores with their own stat.
+func TestSyncTargetsOfEngine(t *testing.T) {
+	all := []*models.Target{
+		{Ident: "host-a", EngineName: "edge-a", UpdateAt: 100},
+		{Ident: "host-b", EngineName: "edge-b", UpdateAt: 300},
+	}
+	for _, tt := range []struct {
+		name        string
+		honorEngine bool
+		wantIdents  []string
+		wantStat    [2]int64
+	}{
+		{"new center", true, []string{"host-a"}, [2]int64{1, 100}},
+		{"old center", false, []string{"host-a", "host-b"}, [2]int64{2, 300}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var listCalls int
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				engine := r.URL.Query().Get("engine_name")
+				if engine != "edge-a" {
+					t.Errorf("request without engine_name=edge-a: %s", r.URL.RequestURI())
+				}
+				lst := all
+				if tt.honorEngine {
+					lst = nil
+					for _, target := range all {
+						if target.EngineName == engine {
+							lst = append(lst, target)
+						}
+					}
+				}
+				var dat interface{}
+				switch r.URL.Path {
+				case "/v1/n9e/statistic":
+					total, last := targetsStat(lst)
+					dat = &models.Statistics{Total: total, LastUpdated: last}
+				case "/v1/n9e/targets":
+					listCalls++
+					dat = lst
+				default:
+					http.NotFound(w, r)
+					return
+				}
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{"dat": dat, "err": ""})
+			}))
+			defer srv.Close()
+
+			tc := &TargetCacheType{
+				statTotal:       -1,
+				statLastUpdated: -1,
+				engineName:      "edge-a",
+				ctx:             &ctx.Context{IsCenter: false, CenterApi: conf.CenterApi{Addrs: []string{srv.URL}}},
+				stats: &Stats{
+					GaugeCronDuration: prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "test_cron_duration"}, []string{"name"}),
+					GaugeSyncNumber:   prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "test_sync_number"}, []string{"name"}),
+				},
+				targets:      make(map[string]*models.Target),
+				targetsIndex: make(map[string][]string),
+			}
+
+			for i := 0; i < 2; i++ {
+				if err := tc.syncTargets(); err != nil {
+					t.Fatalf("syncTargets: %v", err)
+				}
+			}
+			if listCalls != 1 {
+				t.Fatalf("list requested %d times, want 1: the unchanged stat must not reload", listCalls)
+			}
+			if total, last := tc.Stat(); total != tt.wantStat[0] || last != tt.wantStat[1] {
+				t.Fatalf("stat = {%d %d}, want %v", total, last, tt.wantStat)
+			}
+			for _, ident := range tt.wantIdents {
+				if _, has := tc.Get(ident); !has {
+					t.Fatalf("%s not cached", ident)
+				}
+			}
+			if got := len(tc.GetAll()); got != len(tt.wantIdents) {
+				t.Fatalf("cached %d targets, want %d", got, len(tt.wantIdents))
+			}
+		})
+	}
+}
+
+// TestTargetCacheOfEngine covers the center side: SnapshotOfEngine and
+// StatOfEngine pick the same targets, and their stat is what targetsStat
+// derives from the snapshot, so an edge storing that stat stays in sync. A
+// target moving to another engine changes the stat of both engines.
+func TestTargetCacheOfEngine(t *testing.T) {
+	tc := &TargetCacheType{}
+	tc.Set(map[string]*models.Target{
+		"host-1": {Ident: "host-1", EngineName: "edge-a", UpdateAt: 100},
+		"host-2": {Ident: "host-2", EngineName: "edge-a", UpdateAt: 200},
+		"host-3": {Ident: "host-3", EngineName: "edge-b", UpdateAt: 300},
+	}, 3, 300)
+
+	lst, total, last := tc.SnapshotOfEngine("edge-a")
+	if len(lst) != 2 || total != 2 || last != 200 {
+		t.Fatalf("snapshot = %d targets, stat {%d %d}, want 2 targets {2 200}", len(lst), total, last)
+	}
+	if st, sl := tc.StatOfEngine("edge-a"); st != total || sl != last {
+		t.Fatalf("StatOfEngine = {%d %d}, want {%d %d}", st, sl, total, last)
+	}
+	if lst, total, _ := tc.SnapshotOfEngine("none"); lst == nil || len(lst) != 0 || total != 0 {
+		t.Fatalf("unknown engine snapshot = %v, total %d, want empty non-nil list", lst, total)
+	}
+
+	tc.UpdateTarget("host-2", func(t *models.Target) {
+		t.EngineName = "edge-b"
+		t.UpdateAt = 400
+	})
+	if st, sl := tc.StatOfEngine("edge-a"); st != 1 || sl != 100 {
+		t.Fatalf("edge-a after move = {%d %d}, want {1 100}", st, sl)
+	}
+	if st, sl := tc.StatOfEngine("edge-b"); st != 2 || sl != 400 {
+		t.Fatalf("edge-b after move = {%d %d}, want {2 400}", st, sl)
+	}
+}

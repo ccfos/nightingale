@@ -65,6 +65,10 @@ IP = ""
 # unit ms
 Interval = 1000
 EngineName = "edge"
+# sync only the targets whose engine_name is EngineName (the hosts reporting
+# through this edge) instead of all targets; idents of other engines are then
+# unknown to this edge (host variables, mutes, target labels on series)
+# SyncOwnTargetsOnly = false
 
 # [Alert.Alerting]
 # NotifyConcurrency = 10
