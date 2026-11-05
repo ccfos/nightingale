@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "nightingale": {
+      "url": "${N9E_MCP_URL}",
+      "headers": {
+        "X-User-Token": "${N9E_TOKEN}"
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "nightingale",
+  "version": "0.1.0",
+  "description": "Open-source, self-hosted monitoring and alerting for metrics, logs and databases. Connect Cursor to Nightingale's built-in MCP server.",
+  "author": {
+    "name": "n9e",
+    "email": "n9e@710leo.com"
+  },
+  "homepage": "https://n9e.io",
+  "repository": "https://github.com/ccfos/nightingale",
+  "license": "Apache-2.0",
+  "keywords": [
+    "nightingale",
+    "n9e",
+    "monitoring",
+    "alerting",
+    "observability",
+    "mcp"
+  ],
+  "mcpServers": "mcp.json",
+  "variables": {
+    "type": "object",
+    "properties": {
+      "N9E_MCP_URL": {
+        "type": "string",
+        "title": "Nightingale MCP URL",
+        "description": "Full URL of your Nightingale instance's built-in MCP endpoint, including /mcp, for example https://n9e.example.com/mcp. Use an address reachable from the Cursor client.",
+        "minLength": 1
+      },
+      "N9E_TOKEN": {
+        "type": "string",
+        "title": "Nightingale personal token",
+        "description": "Personal token created under Profile > Token management in your Nightingale instance. Its API and business-group permissions apply to every tool call.",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "N9E_MCP_URL",
+      "N9E_TOKEN"
+    ]
+  }
+}
