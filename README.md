@@ -108,6 +108,78 @@ Configure a model endpoint to get started. The agent supports OpenAI-compatible 
 - **MCP** lets external assistants call Nightingale's tools. The server runs inside Nightingale at `/mcp`, exposes read tools by default, and applies the caller's existing API permissions. Write tools require explicit configuration. See [MCP setup](doc/api/mcp-server.md).
 - **A2A** lets another agent delegate a task to Nightingale's built-in agent. See [A2A integration](doc/api/a2a-integration.md).
 
+### Cursor plugin
+
+This repository also contains a Cursor plugin that connects to the built-in MCP
+server of your own Nightingale deployment. The plugin uses Streamable HTTP and
+the same permissions as your Nightingale account.
+
+**Prepare Nightingale.** Enable `[HTTP.TokenAuth].Enable`, leave
+`[HTTP.A2A].Disable` and `DisableMCP` unset or `false`, and create a personal token
+under **Profile → Token management**. Some Docker Compose examples disable token
+authentication; check the configuration you actually deploy. See
+[MCP setup](doc/api/mcp-server.md) for the server configuration.
+
+**Install from a repository.** In Cursor, open **Customize → Plugins → Add →
+From Local Repository** and select a checkout containing these plugin files.
+The `n9e` marketplace exposes one plugin, `nightingale`; choose **Add** to install
+it. `.cursor-plugin/marketplace.json` provides the repository installation entry.
+Repository imports use a Git revision, so commit the plugin files in the checkout
+before importing it. This also works before a public Marketplace listing exists.
+
+To test uncommitted changes, copy the plugin configuration under Cursor's local
+plugin directory instead. On macOS or Linux, run these commands from the
+repository root:
+
+```bash
+mkdir -p ~/.cursor/plugins/local/nightingale/.cursor-plugin
+cp .cursor-plugin/plugin.json ~/.cursor/plugins/local/nightingale/.cursor-plugin/
+cp mcp.json ~/.cursor/plugins/local/nightingale/
+```
+
+Use a different folder name if another local plugin already uses that path.
+Cursor skips local-plugin symlinks pointing outside `~/.cursor/plugins/local`.
+Restart Cursor or run **Developer: Reload Window**, then open
+**Customize** and check that the Nightingale plugin and its MCP server appear.
+This local installation does not depend on a Marketplace listing.
+
+**Configure your instance.** Open **Customize → Plugins → nightingale →
+Configure** and set the variables below. For a team-distributed plugin, an
+administrator sets them under **Dashboard → Plugins → Configure**:
+
+| Variable | Value |
+| --- | --- |
+| `N9E_MCP_URL` | The full endpoint, such as `https://n9e.example.com/mcp`. Include `/mcp`; use the instance address reachable from the client. |
+| `N9E_TOKEN` | Your Nightingale personal token, sent as `X-User-Token`. |
+
+For a local Nightingale process, the endpoint is normally
+`http://127.0.0.1:17000/mcp`. Use HTTPS for remote connections. The manifest
+declares only the configuration fields; `mcp.json` contains placeholders. Keep
+the actual token in your own Cursor configuration, not in this repository.
+Team-distributed plugin variables are shared by the team; choose the
+Nightingale account and permissions for that shared connection accordingly.
+
+**Verify the connection.** In **Customize**, enable the plugin's MCP server and
+check that it connects. Cursor prefixes plugin MCP names, so it may appear as
+`plugin-nightingale-nightingale`. If it stays at **Connecting** after you save
+the variables, open the MCP entry and choose **Reload**. List its tools, then ask:
+
+> List the business groups I can access in Nightingale.
+
+> Which alerts are firing right now? Group them by severity.
+
+The results should match what the same user can see in Nightingale. Read tools
+are enabled by default; server-side write-tool configuration is described in
+[MCP setup](doc/api/mcp-server.md#tools-and-permissions). A `401` response means
+the token is missing, invalid, or token authentication is disabled. A `404`
+usually means the endpoint or reverse-proxy route is wrong; it must be `/mcp`,
+not `/api/n9e/mcp`.
+
+For direct client configuration or OAuth, see
+[MCP setup](doc/api/mcp-server.md). Plugin structure, configuration variables and
+local installation follow the [Cursor plugin reference](https://cursor.com/docs/reference/plugins)
+and [local development guide](https://cursor.com/docs/plugins#test-plugins-locally).
+
 ## Product screenshots
 
 Manage alert rules by data source and business group:

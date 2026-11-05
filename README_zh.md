@@ -78,6 +78,65 @@
 
 每次工具调用都会带着你的 token 在进程内派发到夜莺自己的 HTTP API 上，所以 RBAC、业务组权限和该用户在页面上操作时完全一致 —— 客户端拿不到 token 所属用户看不到的东西。
 
+### Cursor 插件
+
+本仓库同时提供 Cursor 插件，连接用户自己部署的夜莺内置 MCP 服务，
+使用 Streamable HTTP，并沿用个人令牌对应的 API 和业务组权限。
+
+先确认夜莺的 `[HTTP.TokenAuth].Enable = true`，
+`[HTTP.A2A].Disable` 和 `DisableMCP` 未设置或为 `false`，
+再到 **个人信息 → Token 管理** 创建个人令牌。
+部分 Docker Compose 示例关闭了 Token 鉴权，需检查实际部署配置。
+完整服务端配置见 [MCP 接入文档](doc/api/mcp-server.md)。
+
+在 Cursor 的 **Customize → Plugins → Add → From Local Repository** 中选择
+包含插件文件的仓库检出目录，在 `n9e` 市场下找到 `nightingale`，点击 **Add**。
+`.cursor-plugin/marketplace.json` 提供仓库安装入口；此方式不依赖公开市场收录。
+仓库导入使用 Git 提交快照，因此需先在检出目录提交插件文件再导入。
+
+若要测试尚未提交的改动，可改为复制配置到 Cursor 的本地插件目录。
+macOS / Linux 用户在仓库根目录运行：
+
+```bash
+mkdir -p ~/.cursor/plugins/local/nightingale/.cursor-plugin
+cp .cursor-plugin/plugin.json ~/.cursor/plugins/local/nightingale/.cursor-plugin/
+cp mcp.json ~/.cursor/plugins/local/nightingale/
+```
+
+如果目标路径已被其他本地插件使用，请换一个目录名。
+Cursor 会跳过指向 `~/.cursor/plugins/local` 之外的软链接，因此需复制配置文件。
+重启 Cursor 或执行 **Developer: Reload Window**，在 **Customize** 中确认
+Nightingale 插件及其 MCP 服务已出现。此安装方式不依赖市场收录。
+
+在 **Customize → Plugins → nightingale → Configure** 中填写变量；
+团队分发的插件由管理员在 **Dashboard → Plugins → Configure** 配置：
+
+| 变量 | 填写内容 |
+| --- | --- |
+| `N9E_MCP_URL` | 完整端点，例如 `https://n9e.example.com/mcp`，必须包含 `/mcp`，并能从客户端访问。 |
+| `N9E_TOKEN` | 夜莺个人令牌，插件通过 `X-User-Token` 请求头发送。 |
+
+本机夜莺通常使用 `http://127.0.0.1:17000/mcp`，远程连接使用 HTTPS。
+插件清单只声明配置项，`mcp.json` 中只保存占位符；真实令牌放在用户自己的
+Cursor 配置里，不要提交到本仓库。
+团队分发的插件变量由整个团队共享，应为这条共享连接选择相应的夜莺账号和权限。
+
+在 **Customize** 启用插件的 MCP 服务并确认连接成功。插件服务名会带前缀，
+可能显示为 `plugin-nightingale-nightingale`。若保存变量后一直显示 **Connecting**，
+打开该 MCP 条目并点击 **Reload**。先查看工具列表，再试两个只读问题：
+
+> 列出我在夜莺中可以访问的业务组。
+
+> 当前有哪些正在触发的告警？按级别分组。
+
+结果应与同一个用户在夜莺页面中看到的数据一致。默认开放只读工具；
+写工具需要按 [MCP 文档](doc/api/mcp-server.md#tools-and-permissions)在服务端显式启用。
+`401` 表示令牌缺失、无效或 Token 鉴权未启用；`404` 通常表示端点或反向代理路径不对，
+应使用 `/mcp`，不是 `/api/n9e/mcp`。
+
+插件格式、变量与本地安装方式遵循 [Cursor 官方插件规范](https://cursor.com/docs/reference/plugins)
+和 [本地开发说明](https://cursor.com/docs/plugins#test-plugins-locally)。
+
 ### 工具
 
 13 个工具集共 74 个细粒度工具（42 个读、32 个写）：`alerts`、`targets`、`datasource`、`mutes`、`busi_groups`、`notify_rules`、`alert_subscribes`、`event_pipelines`、`users`、`metrics`、`logs`、`dashboards`、`roles`。
