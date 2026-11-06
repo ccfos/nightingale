@@ -24,7 +24,7 @@
   <a href="#community">Community</a>
 </p>
 
-[English](README.md) | [中文](README_zh.md)
+[English](README.md) | [中文](README_zh.md) | [日本語](README_ja.md)
 
 Nightingale brings alert rules, event processing, and notification routing into one place. Connect Prometheus, VictoriaMetrics, Elasticsearch, Loki, ClickHouse, and other data sources you already run, then deliver alerts to Slack, PagerDuty, and your team's existing tools.
 
