@@ -7,6 +7,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/datasource/victorialogs"
 	"github.com/ccfos/nightingale/v6/dscache"
+	dskitvictorialogs "github.com/ccfos/nightingale/v6/dskit/victorialogs"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 
@@ -45,6 +46,43 @@ type VictoriaLogsHistogramReq struct {
 	Cate         string                        `json:"cate"`
 	DatasourceId int64                         `json:"datasource_id"`
 	Query        []victorialogs.HistogramQuery `json:"query"`
+}
+
+type VictoriaLogsContextReq struct {
+	Cate         string `json:"cate"`
+	DatasourceId int64  `json:"datasource_id"`
+	Query        string `json:"query"`
+	Time         int64  `json:"time"`
+	StreamID     string `json:"stream_id"`
+	Before       int    `json:"before"`
+	After        int    `json:"after"`
+}
+
+func (rt *Router) QueryVictoriaLogsContext(c *gin.Context) {
+	var f VictoriaLogsContextReq
+	ginx.BindJSON(c, &f)
+	if strings.TrimSpace(f.Query) == "" {
+		ginx.Bomb(http.StatusBadRequest, "query is required")
+	}
+	if f.Time <= 0 {
+		ginx.Bomb(http.StatusBadRequest, "time is required")
+	}
+	if f.Before < 0 || f.After < 0 || f.Before > 500 || f.After > 500 {
+		ginx.Bomb(http.StatusBadRequest, "invalid context limits")
+	}
+	if !rt.Center.AnonymousAccess.PromQuerier && !CheckDsPerm(c, f.DatasourceId, f.Cate, f) {
+		ginx.Bomb(http.StatusForbidden, "no permission")
+	}
+
+	vl := getVictoriaLogs(c, f.Cate, f.DatasourceId)
+	logs, err := vl.QueryContext(c.Request.Context(), dskitvictorialogs.LogContextRequest{
+		Query:    f.Query,
+		Time:     f.Time,
+		StreamID: f.StreamID,
+		Before:   f.Before,
+		After:    f.After,
+	})
+	ginx.NewRender(c).Data(logs, err)
 }
 
 func (rt *Router) QueryVictoriaLogsFieldNames(c *gin.Context) {
