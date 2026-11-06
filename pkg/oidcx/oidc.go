@@ -168,6 +168,10 @@ func (s *SsoClient) Authorize(redis storage.Redis, redirect string) (string, err
 	s.RLock()
 	defer s.RUnlock()
 
+	if s.Provider == nil {
+		return "", fmt.Errorf("oidc provider is not initialized, check SsoAddr reachability")
+	}
+
 	state := uuid.New().String()
 	ctx := context.Background()
 
