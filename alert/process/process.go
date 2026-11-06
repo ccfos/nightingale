@@ -687,6 +687,14 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 				// 如果是 host rule，且 target 的 engineName 不是当前的 engineName 或者是中心机房 target EngineName 为空，就跳过
 				continue
 			}
+			if !exists && p.TargetCache.EngineName() != "" {
+				// The cache holds only this engine's targets, so a missing
+				// target belongs to another engine, whose events this edge
+				// must not load and then recover. A deleted target looks the
+				// same: its events are recovered only by engines with the full
+				// cache, i.e. the center's.
+				continue
+			}
 		}
 
 		event.DB2Mem()

@@ -245,7 +245,22 @@ func (rt *Router) targetExtendInfoByIdent(c *gin.Context) {
 // centers may come from a center whose cache is newer than the one serving
 // the list, latching a stale list. They keep reading the DB: a DB list is
 // never older than any center's cached stat, so at worst they reload once more.
+//
+// engine_name limits the list to the targets of that engine cluster, for edges
+// that sync only their own targets (memsto NewTargetCacheOfEngine).
 func (rt *Router) targetGetsByService(c *gin.Context) {
+	if engineName := c.Query("engine_name"); engineName != "" {
+		if rt.TargetCache == nil || c.Query("from_cache") != "1" {
+			lst, err := models.TargetGetsOfEngine(rt.Ctx, engineName)
+			ginx.NewRender(c).Data(lst, err)
+			return
+		}
+
+		lst, _, _ := rt.TargetCache.SnapshotOfEngine(engineName)
+		ginx.NewRender(c).Data(lst, nil)
+		return
+	}
+
 	if rt.TargetCache == nil || c.Query("from_cache") != "1" {
 		lst, err := models.TargetGetsAll(rt.Ctx)
 		ginx.NewRender(c).Data(lst, err)
