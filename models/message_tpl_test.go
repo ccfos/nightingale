@@ -537,6 +537,25 @@ func TestRenderEventForChannelPlainForNativeTypes(t *testing.T) {
 	}
 }
 
+func TestRenderEventForChannelPlainForSelfEncodingTypes(t *testing.T) {
+	tpl := &MessageTemplate{
+		NotifyChannelIdent: "custom",
+		Content:            map[string]string{"content": "rule: {{$event.RuleName}}\nnote: \"{{$event.RuleNote}}\""},
+	}
+	events := []*AlertCurEvent{{RuleName: `cpu <high> & "hot"`, RuleNote: "a&b"}}
+	want := "rule: cpu <high> & \"hot\"\nnote: \"a&b\""
+
+	for _, requestType := range []string{"smtp", "script", "wecomapp", "feishuapp"} {
+		if got := tpl.RenderEventForChannel(requestType, events, "http://n9e")["content"]; got != want {
+			t.Errorf("%s: got %q, want %q", requestType, got, want)
+		}
+		strict, err := tpl.RenderEventStrictForChannel(requestType, events, "http://n9e")
+		if err != nil || strict["content"] != want {
+			t.Errorf("%s strict: %v %q", requestType, err, strict["content"])
+		}
+	}
+}
+
 func TestJiraSeedHasTitleAndRealNewlines(t *testing.T) {
 	for _, tpl := range MsgTplMap {
 		if tpl.Ident != Jira {
