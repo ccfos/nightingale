@@ -27,7 +27,7 @@
 
 ![](https://gettrack.link/p/h7tXLNpu)
 
-[English](./README.md) | [中文](./README_zh.md)
+[English](./README.md) | [中文](./README_zh.md) | [日本語](./README_ja.md)
 
 ## 夜莺是什么
 
