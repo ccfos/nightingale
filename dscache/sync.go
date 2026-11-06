@@ -270,6 +270,7 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 			continue
 		}
 
+		datasource.ApplyAuth(ds, item.AuthJson.Config)
 		applyReadAddr(ds, item.Id, isCenter)
 
 		err = ds.Validate(context.Background())

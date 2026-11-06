@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 
@@ -91,12 +92,14 @@ func (pc *PromClientMap) loadFromDatabase() {
 			}
 		}
 
+		auth := ds.AuthJson.Normalize()
 		po := PromOption{
 			ClusterName:         ds.Name,
 			Url:                 strings.TrimSpace(ds.HTTPJson.Url),
 			WriteAddr:           writeAddr,
-			BasicAuthUser:       ds.AuthJson.BasicAuthUser,
-			BasicAuthPass:       ds.AuthJson.BasicAuthPassword,
+			BasicAuthUser:       auth.BasicAuthUser,
+			BasicAuthPass:       auth.BasicAuthPassword,
+			Auth:                auth.Config,
 			Timeout:             ds.HTTPJson.Timeout,
 			DialTimeout:         ds.HTTPJson.DialTimeout,
 			MaxIdleConnsPerHost: ds.HTTPJson.MaxIdleConnsPerHost,
@@ -113,7 +116,7 @@ func (pc *PromClientMap) loadFromDatabase() {
 		if pc.IsNil(dsId) {
 			// first time
 			if err = pc.setClientFromPromOption(dsId, po); err != nil {
-				logger.Errorf("failed to setClientFromPromOption po:%+v err:%v", po, err)
+				logger.Errorf("failed to setClientFromPromOption po:%s err:%v", po, err)
 				continue
 			}
 
@@ -150,17 +153,22 @@ func (pc *PromClientMap) newReaderClientFromPromOption(po PromOption) (api.Clien
 		return nil, fmt.Errorf("failed to create TLS config: %v", err)
 	}
 
+	rt, err := dsauth.Wrap(&http.Transport{
+		TLSClientConfig: tlsConfig,
+		Proxy:           http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout: time.Duration(po.DialTimeout) * time.Millisecond,
+		}).DialContext,
+		ResponseHeaderTimeout: time.Duration(po.Timeout) * time.Millisecond,
+		MaxIdleConnsPerHost:   po.MaxIdleConnsPerHost,
+	}, po.Auth)
+	if err != nil {
+		return nil, err
+	}
+
 	return api.NewClient(api.Config{
-		Address: po.Url,
-		RoundTripper: &http.Transport{
-			TLSClientConfig: tlsConfig,
-			Proxy:           http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout: time.Duration(po.DialTimeout) * time.Millisecond,
-			}).DialContext,
-			ResponseHeaderTimeout: time.Duration(po.Timeout) * time.Millisecond,
-			MaxIdleConnsPerHost:   po.MaxIdleConnsPerHost,
-		},
+		Address:      po.Url,
+		RoundTripper: rt,
 	})
 }
 
@@ -170,17 +178,22 @@ func (pc *PromClientMap) newWriterClientFromPromOption(po PromOption) (api.Clien
 		return nil, fmt.Errorf("failed to create TLS config: %v", err)
 	}
 
+	rt, err := dsauth.Wrap(&http.Transport{
+		TLSClientConfig: tlsConfig,
+		Proxy:           http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout: time.Duration(po.DialTimeout) * time.Millisecond,
+		}).DialContext,
+		ResponseHeaderTimeout: time.Duration(po.Timeout) * time.Millisecond,
+		MaxIdleConnsPerHost:   po.MaxIdleConnsPerHost,
+	}, po.Auth)
+	if err != nil {
+		return nil, err
+	}
+
 	return api.NewClient(api.Config{
-		Address: po.WriteAddr,
-		RoundTripper: &http.Transport{
-			TLSClientConfig: tlsConfig,
-			Proxy:           http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout: time.Duration(po.DialTimeout) * time.Millisecond,
-			}).DialContext,
-			ResponseHeaderTimeout: time.Duration(po.Timeout) * time.Millisecond,
-			MaxIdleConnsPerHost:   po.MaxIdleConnsPerHost,
-		},
+		Address:      po.WriteAddr,
+		RoundTripper: rt,
 	})
 }
 
@@ -216,7 +229,7 @@ func (pc *PromClientMap) setClientFromPromOption(datasourceId int64, po PromOpti
 		Headers:       po.Headers,
 	})
 
-	logger.Debugf("setClientFromPromOption: %d, %+v", datasourceId, po)
+	logger.Debugf("setClientFromPromOption: %d, %s", datasourceId, po)
 	pc.Set(datasourceId, reader, w)
 
 	return nil

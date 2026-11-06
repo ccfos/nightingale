@@ -284,3 +284,16 @@ ForceUseServerTS = true
 [Ibex]
 Enable = true
 RPCListen = "0.0.0.0:20090"
+
+# Optional process-wide restrictions on datasource cloud authentication.
+# Configure each datasource's auth method and credentials on the datasource page.
+# Omit this section to allow ambient credentials and AssumeRole, with SigV4 limited to aps/es/aoss.
+# Each process that queries datasources (n9e, n9e-alert, n9e-edge) reads its own copy:
+# the AWS default credential chain and Azure managed / workload identity resolve on the local host.
+# [DatasourceAuthPolicy]
+# forbid the identity of the host (AWS default credential chain, Azure managed / workload identity)
+# DisableAmbientCredentials = false
+# forbid AWS AssumeRole
+# DisableAssumeRole = false
+# SigV4 service names a datasource may sign for, default ["aps", "es", "aoss"]
+# SigV4AllowedServices = ["aps", "es", "aoss"]
