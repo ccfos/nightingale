@@ -221,3 +221,44 @@ func TestTargetCacheOfEngine(t *testing.T) {
 		t.Fatalf("edge-b after move = {%d %d}, want {2 400}", st, sl)
 	}
 }
+
+// TestEngineStatsFollowUpdateTarget checks that the per-engine stat kept by
+// UpdateTarget always equals a scan of the cached targets, including moves of
+// the target holding an engine's max update_at and an engine left empty.
+func TestEngineStatsFollowUpdateTarget(t *testing.T) {
+	tc := &TargetCacheType{}
+	tc.Set(map[string]*models.Target{
+		"host-1": {Ident: "host-1", EngineName: "edge-a", UpdateAt: 100},
+		"host-2": {Ident: "host-2", EngineName: "edge-a", UpdateAt: 200},
+		"host-3": {Ident: "host-3", EngineName: "edge-b", UpdateAt: 300},
+		"host-4": {Ident: "host-4", EngineName: "", UpdateAt: 50},
+	}, 4, 300)
+
+	steps := []struct {
+		ident    string
+		engine   string
+		updateAt int64
+	}{
+		{"host-1", "edge-a", 250}, // raises edge-a's max
+		{"host-1", "edge-b", 260}, // edge-a's max holder leaves
+		{"host-2", "edge-a", 150}, // update_at goes back
+		{"host-2", "edge-a", 150}, // no change
+		{"host-2", "edge-c", 500}, // edge-a left empty
+		{"host-3", "edge-b", 300}, // no change
+		{"host-4", "edge-a", 50},  // "" left empty, edge-a refilled
+		{"host-3", "edge-c", 100}, // non-max holder leaves edge-b, joins below max
+	}
+	engines := []string{"", "edge-a", "edge-b", "edge-c"}
+	for i, step := range steps {
+		tc.UpdateTarget(step.ident, func(t *models.Target) {
+			t.EngineName = step.engine
+			t.UpdateAt = step.updateAt
+		})
+		for _, engine := range engines {
+			_, wantTotal, wantLast := tc.SnapshotOfEngine(engine)
+			if total, last := tc.StatOfEngine(engine); total != wantTotal || last != wantLast {
+				t.Fatalf("step %d: StatOfEngine(%q) = {%d %d}, want {%d %d}", i, engine, total, last, wantTotal, wantLast)
+			}
+		}
+	}
+}

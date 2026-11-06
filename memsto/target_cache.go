@@ -33,6 +33,14 @@ type TargetCacheType struct {
 	sync.RWMutex
 	targets      map[string]*models.Target // key: ident
 	targetsIndex map[string][]string       // key: ip, value: ident list
+	// engineStats is StatOfEngine per engine_name, kept in step with targets
+	// by Set and UpdateTarget so that the center answers every edge's stat
+	// poll without scanning all targets.
+	engineStats map[string]targetStat
+}
+
+type targetStat struct {
+	total, lastUpdated int64
 }
 
 func NewTargetCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *TargetCacheType {
@@ -53,6 +61,7 @@ func NewTargetCacheOfEngine(ctx *ctx.Context, stats *Stats, redis storage.Redis,
 		engineName:      engineName,
 		targets:         make(map[string]*models.Target),
 		targetsIndex:    make(map[string][]string),
+		engineStats:     make(map[string]targetStat),
 	}
 
 	tc.SyncTargets()
@@ -67,6 +76,7 @@ func (tc *TargetCacheType) Reset() {
 	tc.statLastUpdated = -1
 	tc.targets = make(map[string]*models.Target)
 	tc.targetsIndex = make(map[string][]string)
+	tc.engineStats = make(map[string]targetStat)
 }
 
 func (tc *TargetCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -86,11 +96,22 @@ func (tc *TargetCacheType) Set(m map[string]*models.Target, total, lastUpdated i
 		idx[target.HostIp] = append(idx[target.HostIp], ident)
 	}
 
+	engineStats := make(map[string]targetStat)
+	for _, target := range m {
+		s := engineStats[target.EngineName]
+		s.total++
+		if target.UpdateAt > s.lastUpdated {
+			s.lastUpdated = target.UpdateAt
+		}
+		engineStats[target.EngineName] = s
+	}
+
 	// stat is written under the lock together with targets so that Snapshot/Stat
 	// readers on other goroutines always see a matching (targets, stat) pair.
 	tc.Lock()
 	tc.targets = m
 	tc.targetsIndex = idx
+	tc.engineStats = engineStats
 	tc.statTotal = total
 	tc.statLastUpdated = lastUpdated
 	tc.Unlock()
@@ -152,16 +173,8 @@ func (tc *TargetCacheType) SnapshotOfEngine(engineName string) (lst []*models.Ta
 func (tc *TargetCacheType) StatOfEngine(engineName string) (total, lastUpdated int64) {
 	tc.RLock()
 	defer tc.RUnlock()
-	for _, target := range tc.targets {
-		if target.EngineName != engineName {
-			continue
-		}
-		total++
-		if target.UpdateAt > lastUpdated {
-			lastUpdated = target.UpdateAt
-		}
-	}
-	return total, lastUpdated
+	s := tc.engineStats[engineName]
+	return s.total, s.lastUpdated
 }
 
 // UpdateTarget applies fn to the cached target under the write lock, for
@@ -172,9 +185,67 @@ func (tc *TargetCacheType) UpdateTarget(ident string, fn func(t *models.Target))
 	defer tc.Unlock()
 	target, has := tc.targets[ident]
 	if has {
+		oldEngine, oldUpdateAt := target.EngineName, target.UpdateAt
 		fn(target)
+		tc.updateEngineStats(oldEngine, oldUpdateAt, target)
 	}
 	return has
+}
+
+// updateEngineStats moves target's contribution to engineStats from
+// (oldEngine, oldUpdateAt) to its current EngineName and UpdateAt. Only when
+// the target held an engine's max update_at and leaves it (or goes back in
+// time) is that engine rescanned; heartbeat updates just raise the max.
+// Callers hold the write lock.
+func (tc *TargetCacheType) updateEngineStats(oldEngine string, oldUpdateAt int64, target *models.Target) {
+	if target.EngineName == oldEngine && target.UpdateAt == oldUpdateAt {
+		return
+	}
+	if tc.engineStats == nil {
+		tc.engineStats = make(map[string]targetStat)
+	}
+
+	if target.EngineName != oldEngine {
+		s := tc.engineStats[oldEngine]
+		s.total--
+		if s.total <= 0 {
+			delete(tc.engineStats, oldEngine)
+		} else {
+			if oldUpdateAt >= s.lastUpdated {
+				s = tc.scanEngineStat(oldEngine)
+			}
+			tc.engineStats[oldEngine] = s
+		}
+
+		s = tc.engineStats[target.EngineName]
+		s.total++
+		if target.UpdateAt > s.lastUpdated {
+			s.lastUpdated = target.UpdateAt
+		}
+		tc.engineStats[target.EngineName] = s
+		return
+	}
+
+	s := tc.engineStats[oldEngine]
+	if target.UpdateAt > s.lastUpdated {
+		s.lastUpdated = target.UpdateAt
+	} else if oldUpdateAt >= s.lastUpdated {
+		s = tc.scanEngineStat(oldEngine)
+	}
+	tc.engineStats[oldEngine] = s
+}
+
+func (tc *TargetCacheType) scanEngineStat(engineName string) (s targetStat) {
+	for _, target := range tc.targets {
+		if target.EngineName != engineName {
+			continue
+		}
+		s.total++
+		if target.UpdateAt > s.lastUpdated {
+			s.lastUpdated = target.UpdateAt
+		}
+	}
+	return s
 }
 
 func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
