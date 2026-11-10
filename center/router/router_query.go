@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/ccfos/nightingale/v6/alert/eval"
+	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/dscache"
 	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
@@ -207,11 +208,35 @@ func (rt *Router) QueryLogBatch(c *gin.Context) {
 	anonymousAccess := rt.Center.AnonymousAccess.PromQuerier
 	// 分享 token 请求：本接口每条 query 自带数据源 id，需逐条校验板内归属
 	dsIds := make([]int64, 0, len(f.Queries))
+	hasDoris := false
 	for i := range f.Queries {
 		dsIds = append(dsIds, f.Queries[i].Did)
+		hasDoris = hasDoris || f.Queries[i].DsCate == "doris"
 	}
 	if rt.boardTokenQueryContext(c, dsIds...) {
 		anonymousAccess = true
+	}
+
+	if hasDoris {
+		StreamLogQueryBatch(c, f.Queries, LogQueryBatchStreamOptions{
+			Concurrent: true,
+			Prepare: func(i int) (datasource.Datasource, error) {
+				q := f.Queries[i]
+				if !anonymousAccess && !CheckDsPerm(c, q.Did, q.DsCate, q) {
+					return nil, fmt.Errorf("err:forbidden")
+				}
+				plug, exists := dscache.DsCache.Get(q.DsCate, q.Did)
+				if !exists {
+					return nil, fmt.Errorf("err:cluster not exists")
+				}
+				if err := eval.ExecuteQueryTemplate(q.DsCate, q.Query, nil); err != nil {
+					return nil, fmt.Errorf("err:query template execute error: %v", err)
+				}
+				return plug, nil
+			},
+			QueryError: func(_ int, err error) error { return fmt.Errorf("err:%v", err) },
+		})
+		return
 	}
 
 	resp, err := QueryLogBatchConcurrently(anonymousAccess, c, f)

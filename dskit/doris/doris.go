@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"slices"
 	"strings"
@@ -575,68 +576,11 @@ func (d *Doris) SelectRows(ctx context.Context, database, table, query string) (
 // one is registered. The hook receives the user-supplied ctx so observers can
 // pull CallContext (or anything else) attached upstream.
 func (d *Doris) ExecQuery(ctx context.Context, database string, sql string) (results []map[string]interface{}, err error) {
-	startedAt := time.Now()
-	defer func() {
-		if OnQuery == nil {
-			return
-		}
-		OnQuery(ctx, QueryEvent{
-			Database:  database,
-			SQL:       sql,
-			StartedAt: startedAt,
-			Duration:  time.Since(startedAt),
-			RowCount:  len(results),
-			Err:       err,
-		})
-	}()
-
-	timeoutCtx, cancel := d.createTimeoutContext(ctx)
-	defer cancel()
-
-	db, err := d.NewConn(timeoutCtx, database)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := db.QueryContext(timeoutCtx, sql)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		columnValues := make([]interface{}, len(columns))
-		columnPointers := make([]interface{}, len(columns))
-		for i := range columnValues {
-			columnPointers[i] = &columnValues[i]
-		}
-
-		if err := rows.Scan(columnPointers...); err != nil {
-			continue
-		}
-
-		rowMap := make(map[string]interface{})
-		for i, colName := range columns {
-			val := columnValues[i]
-			bytes, ok := val.([]byte)
-			if ok {
-				rowMap[colName] = string(bytes)
-			} else {
-				rowMap[colName] = val
-			}
-		}
-		results = append(results, rowMap)
-	}
-
-	if err = rows.Err(); err != nil {
-		return results, fmt.Errorf("error iterating rows: %w", err)
-	}
-	return results, nil
+	_, err = d.readRows(ctx, database, sql, math.MaxInt64, true, func(row map[string]any) error {
+		results = append(results, row)
+		return nil
+	})
+	return results, err
 }
 
 // ExecContext executes a given SQL query in Doris and returns the results
