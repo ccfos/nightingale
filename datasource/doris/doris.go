@@ -218,9 +218,35 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 }
 
 func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{}, int64, error) {
+	param, err := prepareLogQuery(query)
+	if err != nil {
+		return nil, 0, err
+	}
+	items, err := d.Query(ctx, param)
+	if err != nil {
+		return []interface{}{}, 0, err
+	}
+	logs := make([]interface{}, 0, len(items))
+	for _, row := range items {
+		logs = append(logs, row)
+	}
+	return logs, int64(len(logs)), nil
+}
+
+// QueryLogStream shares QueryLog's decoding, time macros, SQL validation and
+// row-count check without collecting the returned rows.
+func (d *Doris) QueryLogStream(ctx context.Context, query interface{}, limit int64, consume func(map[string]any) error) (int64, error) {
+	param, err := prepareLogQuery(query)
+	if err != nil {
+		return 0, err
+	}
+	return d.QueryStream(ctx, param, limit, consume)
+}
+
+func prepareLogQuery(query interface{}) (*doris.QueryParam, error) {
 	dorisQueryParam := new(QueryParam)
 	if err := mapstructure.Decode(query, dorisQueryParam); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	// 记录规则预览场景下，只传了interval, 没有传From和To
@@ -239,24 +265,11 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		var err error
 		dorisQueryParam.SQL, err = macros.Macro(dorisQueryParam.SQL, dorisQueryParam.From, dorisQueryParam.To, DorisType)
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 	}
 
-	items, err := d.QueryLogs(ctx, &doris.QueryParam{
-		Database: dorisQueryParam.Database,
-		Sql:      dorisQueryParam.SQL,
-	})
-	if err != nil {
-		logx.Warningf(ctx, "query:%+v get data err:%v", dorisQueryParam, err)
-		return []interface{}{}, 0, err
-	}
-	logs := make([]interface{}, 0)
-	for i := range items {
-		logs = append(logs, items[i])
-	}
-
-	return logs, int64(len(logs)), nil
+	return &doris.QueryParam{Database: dorisQueryParam.Database, Sql: dorisQueryParam.SQL}, nil
 }
 
 func (d *Doris) DescribeTable(ctx context.Context, query interface{}) ([]*types.ColumnProperty, error) {
