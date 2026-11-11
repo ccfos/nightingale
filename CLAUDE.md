@@ -1,68 +1,41 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Nightingale (n9e) is an open-source alerting/monitoring platform (Go, gin + gorm). This file lists only what cannot be learned quickly by reading the code.
 
-## What this is
+## Cross-repo constraints
 
-Nightingale (n9e) is an open-source alerting/monitoring platform. Go module `github.com/ccfos/nightingale/v6`, Go 1.25, gin + gorm. The frontend lives in a separate repo (`n9e/fe`) and is embedded at build time as a statik bundle. A commercial fork (`flashcatcloud/n9e-plus`) imports this module and calls into `center.Initialize`-style entry points, so **exported function signatures that plus calls (e.g. `alert.Start`, `centerrt.New`, `BuildNotifyContext`) are effectively public API** — prefer adding fields/setters over changing parameter lists (see comments in `center/center.go` and `alert/alert.go`).
+- The commercial fork `flashcatcloud/n9e-plus` imports this module, so **exported signatures it calls (e.g. `alert.Start`, `centerrt.New`, `BuildNotifyContext`, `center.Initialize`-style entry points) are effectively public API**. Add fields/setters instead of changing parameter lists (see comments in `center/center.go` and `alert/alert.go`).
+- The frontend is a separate repo (`n9e/fe`), embedded as a statik bundle. `front/statik/statik.go` is committed, so `go build ./...` works without running `fe.sh`.
 
 ## Commands
 
 ```bash
-# Build (front/statik/statik.go is committed, so plain go build works without fe.sh)
-go build ./...                       # ~1 min cold; verifies everything incl. tests compile
-make build                           # ./n9e  (cmd/center, embeds version via ldflags)
-make build-edge | build-alert | build-pushgw | build-cli
-sh fe.sh                             # download latest n9e/fe release into ./pub and regenerate front/statik (needs $GOPATH/bin/statik)
+go build ./...                       # ~1 min cold; also verifies tests compile
+go test ./...                        # in-memory sqlite (github.com/glebarez/sqlite), no external services
+./n9e --configs etc.local            # etc.local* are git-ignored per-developer configs; etc/ is the shipped default
 
-# Run locally
-./n9e --configs etc.local            # etc.local* dirs are git-ignored per-developer configs; etc/ is the shipped default
-./n9e-edge --configs etc/edge        # edge/alert processes need [CenterApi] configured
-
-# Tests (unit tests use in-memory sqlite via github.com/glebarez/sqlite; no external services needed)
-go test ./...
-go test ./models/ -run TestAlertRuleVerify -count=1      # single test
-go test ./center/router/ -run 'TestQueryBatchV2' -v
-
-# CI gates for builtin integration templates (run these when touching integrations/**)
-go run ./cmd/integrations-alert-action check     # every builtin alert rule must carry a non-empty `action` annotation
+# CI gates, run when touching integrations/**
+go run ./cmd/integrations-alert-action check     # every builtin alert rule needs a non-empty `action` annotation
 go run ./cmd/integrations-alert-action update    # tighten integrations/alert_action_baseline.json after fixing rules
-go run ./cmd/integrations-i18n check -scope all  # en_US rendering of templates must contain no Chinese
+go run ./cmd/integrations-i18n check -scope all  # en_US rendering must contain no Chinese
 ```
 
-There is no lint config in the repo; CI only runs the two integration gates above and goreleaser on tags.
+There is no lint config; the two integration checks are the only code gates in CI.
 
-## Process topology
+## Rules that span several files
 
-Three deployable binaries share one codebase and one config schema (`conf/`):
+- **Center vs edge/alert.** `n9e` (center) owns the DB; `n9e-edge` and `n9e-alert` have none. Model functions branch on `ctx.IsCenter`: gorm directly, or HTTP to the center via `pkg/poster` against `/v1/n9e/...`. A new model read path that edge/alert needs must implement both branches, and the center must expose the matching `/v1/n9e` route.
+- **memsto caches.** Alert evaluation, dispatch and routers read from `memsto/` caches, never the DB on the hot path. Adding a cached table means: model `Stat()` + `GetsAll()` (both ctx branches), a cache in `memsto`, and threading it through `alert.Start`. Change detection uses `count/max(update_at)`; a row count alone misses "one created, one deleted" between two syncs, so tables without `update_at` whose rows are never edited (e.g. `user_token`) compare `count + max(id)`.
+- **Caches change only through their periodic sync.** Don't patch a cache from an API handler to make a change "take effect immediately": it only covers the instance that served the request, so behind a load balancer the same token or config works on one node and fails on another, and the next sync's full replace can undo it. Accept the sync delay and fix the sync's change detection instead. The one exception is the Skill Gateway's `UserTokenCache.Inject`, whose token must authenticate within the same request.
+- **Schema.** `models/migrate/migrate.go` runs AutoMigrate on center startup, and `docker/initsql/a-n9e.sql`, `docker/sqlite.sql`, `docker/migratesql/migrate.sql` are maintained by hand. A new column/table must land in the gorm struct and all three SQL files. MySQL/PostgreSQL/SQLite differences (text sizes, unique index limits) are handled explicitly in `MigrateTables`; long `string` fields need an explicit `gorm:"type:..."` or AutoMigrate drifts or fails.
+- **Models for the frontend.** Nullable JSON arrays must be normalized to `[]` on the way out (see `models/alert_rule_null_compat_test.go`).
+- **Alert pipeline order** (`alert/`): `eval` (query, produce `AlertCurEvent`) → `process` (mute, relabel, dedupe against `alert_cur_event`) → `queue` → `dispatch` (subscribe, notify rules, event pipelines) → `sender`.
+- **Event pipeline processors** self-register via `models.RegisterProcessor` in their package `init`; a new processor package must also be blank-imported in `alert/pipeline/pipeline.go`.
 
-| Binary | Entry | Role |
-|---|---|---|
-| `n9e` (center) | `cmd/center` → `center.Initialize` | Owns the DB. Serves UI + `/api/n9e`, `/v1/n9e` (service API for edge/alert), pushgw, alert engine, optional embedded TSDB, ibex task system. |
-| `n9e-edge` | `cmd/edge/edge.go` | Remote-datacenter node: pushgw + alert engine, **no DB**. |
-| `n9e-alert` | `cmd/alert` → `alert.Initialize` | Standalone alert engine, no DB. |
+## Conventions
 
-`pkg/ctx.Context` carries `DB` and `IsCenter`. Model functions branch on it: with `IsCenter` they hit gorm directly, otherwise they call the center over HTTP via `pkg/poster` (`GetByUrls`/`PostByUrls` against `CenterApi.Addrs`, endpoints under `/v1/n9e/...` in `center/router`). **Any new model read path that edge/alert needs must implement both branches**, and the center must expose a matching `/v1/n9e` route.
-
-Alert engines register in `alerting_engine` table with `engine_cluster` (= `Alert.Heartbeat.EngineName`, default `default`); rules are sharded across engines of the same cluster by a consistent hash (`alert/naming`). A datasource's `cluster_name` selects which engine cluster evaluates it.
-
-## Request/data flow
-
-- **`memsto/`**: in-memory caches (`*CacheType`) of DB tables, each polling on its own goroutine and refreshing when `count/max(update_at)` changes. Alert evaluation, dispatch and routers read from these caches, never from the DB on the hot path. Adding a cached table means: model `Stat()` + `GetsAll()` (both ctx branches), a cache in `memsto`, and threading it through `alert.Start`. A row count alone misses "one created, one deleted" between two syncs; tables without `update_at` whose rows are never edited (e.g. `user_token`) compare `count + max(id)` instead.
-- **Alert pipeline** (`alert/`): `eval` (scheduler per rule, queries via `prom`/`datasource`, produces `AlertCurEvent`) → `process` (mute, relabel, dedupe against `alert_cur_event`, `pushEventToQueue`) → `queue` → `dispatch` (subscribe, notify rules → channels/templates, event pipelines from `alert/pipeline`) → `sender` (per-channel senders, `sender/provider` for the configurable HTTP/script channel types). Event pipeline processors live in `alert/pipeline/processor/*`, implement `models.Processor` (or `BranchProcessor` for if/switch/foreach), self-register via `models.RegisterProcessor(typ, ...)` in their package `init`, and are executed by `alert/pipeline/engine` over a `WorkflowContext`; a new processor package must also be blank-imported in `alert/pipeline/pipeline.go` so its `init` runs.
-- **Datasources**: `datasource/` = per-type query plugins used by the engine and `/ds-query`; `dskit/` = lower-level SQL/log clients; `dscache/` = the live client map synced from the `datasource` table; `prom/` = Prometheus-like clients. Datasource type ids/categories are the table in `datasource/datasource.go`.
-- **Routers**: `center/router/router_*.go` one file per resource. Route groups in `router.go`: `/api/n9e` (UI, JWT via `rt.auth()`/`rt.user()`/`rt.admin()` + `rt.bgro/bgrw` for busi-group perms), `/v1/n9e` (service BasicAuth, consumed by edge/alert/plus), `/api/n9e/proxy/:id` (datasource proxy), agent heartbeat under `HTTP.APIForAgent`. Handlers use `ginx.Bomb`/`ginx.NewRender` from `toolkits/pkg`.
-- **Models** (`models/`): gorm structs with `TableName()`. Many have a DB form (JSON stored in `*_json`/`*Json` string columns) and a FE form; `FE2DB()`/`DB2FE()` convert on the way in/out, and `Verify()` validates. Nullable JSON arrays must be normalized to `[]` for the frontend (see `alert_rule_null_compat_test.go`).
-- **Schema**: `models/migrate/migrate.go` runs gorm `AutoMigrate` on center startup, **and** `docker/initsql/a-n9e.sql`, `docker/sqlite.sql`, `docker/migratesql/migrate.sql` are maintained by hand. A new column/table must land in the gorm struct **and** the SQL files, and MySQL vs PostgreSQL vs SQLite differences (text sizes, unique index limits) are handled explicitly in `MigrateTables`. Long `string` fields need an explicit `gorm:"type:..."` or AutoMigrate will drift/fail.
-- **Builtin integrations** (`integrations/<Component>/{alerts,dashboards,collect,markdown,i18n,icon}`): loaded by `center/integration` into `builtin_*` tables at startup; i18n sidecar files render the same template under multiple languages. Gated by the two `cmd/integrations-*` checks above.
-- **AI agent** (`aiagent/`): native function-calling loop, tools registered in `aiagent/tools` (defs in `tools/defs`), builtin skills under `aiagent/skill/embedded/builtin/<name>/SKILL.md`, sandboxed script execution in `pkg/sandbox` (bubblewrap assets built by `scripts/build-sandbox-assets.sh`). `/mcp` and `/a2a` endpoints are in `aiagent/a2a` and use the external `n9e-mcp-server` toolset in-process.
-- **Other top-level pkgs**: `pushgw/` (remote-write receiver + writers + ident/host registry), `tsdb/` (embedded Prometheus TSDB, single-instance only), `evallog/`+`pkg/evallog` (per-engine local files of rule evaluation records), `cron/` (retention cleaners), `dumper/` (debug endpoints), `pkg/i18nx` (backend i18n; new user-facing strings go through it).
-
-## Conventions worth knowing
-
-- Config is TOML in `etc/config.toml` loaded by `conf/` (koding/multiconfig, env overrides). Secret fields can be encrypted with `--crypto-key`.
-- API docs for newer features are in `doc/api/*.md`; add one when introducing a new endpoint family.
-- Comments in code are frequently Chinese; keep commit messages and new code comments in English unless matching surrounding style.
-- memsto caches change only through their periodic sync. Don't patch a cache from an API handler (inject on create, remove on delete) to make a change "take effect immediately": it only covers the instance that served the request, so behind a load balancer the same token or config works on one node and fails on another, and the next sync's full replace can undo it. Accept the sync delay on every instance and fix the sync's change detection instead. The one exception is the Skill Gateway's `UserTokenCache.Inject`, whose token must authenticate within the same request.
 - Prefer the simplest code that is correct. Enforce ownership inside the write itself (`Where("id = ? and username = ?", ...)` and check `RowsAffected`) instead of reading the row first and then writing.
-- Tests that need a DB construct `gorm.Open(sqlite.Open(":memory:"))` and call the relevant `AutoMigrate`; follow existing `*_test.go` in the same package rather than adding a shared harness.
+- New user-facing backend strings go through `pkg/i18nx`.
+- Commit messages and new code comments are in English, even though existing comments are often Chinese.
+- Tests that need a DB open `sqlite.Open(":memory:")` and call the relevant `AutoMigrate`, following the existing `*_test.go` in the same package; don't add a shared harness.
+- A new endpoint family gets a doc in `doc/api/*.md`.
