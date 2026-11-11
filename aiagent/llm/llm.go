@@ -54,7 +54,23 @@ type Message struct {
 
 	// ThinkingBlocks 仅 assistant 轮：Anthropic 扩展思考块（带签名），续轮回填用。
 	ThinkingBlocks []ThinkingBlock `json:"thinking_blocks,omitempty"`
+
+	// ReasoningContent 仅 assistant 工具调用轮：OpenAI 兼容端点（DeepSeek/vLLM/Kimi
+	// 等）返回的推理文本。同一用户回合内的工具续轮回填，让模型延续上一步的推理；
+	// 跨用户回合不回填（调用方不持久化该字段）。
+	ReasoningContent string `json:"reasoning_content,omitempty"`
+	// ReasoningField 是端点返回推理时使用的字段名（ReasoningFieldContent /
+	// ReasoningFieldAlias），回填时原样沿用——各端点只保证认自己吐出的字段名
+	// （vLLM Python 前端只读 reasoning，DeepSeek 官方用 reasoning_content）。
+	// 空 = reasoning_content。
+	ReasoningField string `json:"-"`
 }
+
+// OpenAI 兼容端点的推理字段名。
+const (
+	ReasoningFieldContent = "reasoning_content" // DeepSeek 官方、Kimi、Qwen 等
+	ReasoningFieldAlias   = "reasoning"         // vLLM 等
+)
 
 // ToolCall represents a tool/function call from the LLM
 type ToolCall struct {
@@ -69,8 +85,8 @@ type ToolCall struct {
 
 // ThinkingBlock 是 Anthropic 扩展思考的内容块（Kimi 的 Claude 兼容线同语义）。
 // 开启 thinking 后工具续轮必须把上一条 assistant 消息的思考块**带签名原样回填**，
-// 否则 API 报 400——这是"有状态思考协议"，与 OpenAI 系无状态的 reasoning_content
-// 本质不同。Type: "thinking"（Thinking+Signature）| "redacted_thinking"（Data）。
+// 否则 API 报 400——这是"有状态思考协议"，与 OpenAI 系的 reasoning_content
+// （无签名，按需回填，见 Message.ReasoningContent）本质不同。Type: "thinking"（Thinking+Signature）| "redacted_thinking"（Data）。
 type ThinkingBlock struct {
 	Type      string `json:"type"`
 	Thinking  string `json:"thinking,omitempty"`
@@ -99,6 +115,7 @@ type GenerateRequest struct {
 type GenerateResponse struct {
 	Content          string          `json:"content"`
 	ReasoningContent string          `json:"reasoning_content,omitempty"`
+	ReasoningField   string          `json:"-"`                         // OpenAI 系：推理所用字段名，回填时沿用
 	ThinkingBlocks   []ThinkingBlock `json:"thinking_blocks,omitempty"` // Anthropic 系：续轮回填用
 	ToolCalls        []ToolCall      `json:"tool_calls,omitempty"`
 	FinishReason     string          `json:"finish_reason"`
@@ -115,10 +132,12 @@ type Usage struct {
 // StreamChunk represents a chunk in streaming response
 type StreamChunk struct {
 	Content string `json:"content,omitempty"`
-	// Reasoning 是思考模型的推理增量（OpenAI 兼容端点的 delta.reasoning_content、
+	// Reasoning 是思考模型的推理增量（OpenAI 兼容端点的 delta.reasoning_content / delta.reasoning、
 	// Anthropic 的 thinking_delta、Gemini 的 thought part），用于实时展示。
 	// 与 Content 分通道，宿主可分别路由到 thinking/answer。
 	Reasoning string `json:"reasoning,omitempty"`
+	// ReasoningField 随 Reasoning 增量给出端点所用的推理字段名（仅 OpenAI 系）。
+	ReasoningField string `json:"-"`
 	// ThinkingBlock 是 Anthropic 系思考块收尾时（content_block_stop）发出的完整
 	// 块（含签名），调用方累积后随 assistant 轮回填。与 Reasoning 增量并存：
 	// 增量管展示，块管协议正确性。

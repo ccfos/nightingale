@@ -33,6 +33,7 @@ const (
 // while other pages may omit it entirely.
 type AssistantPageInfo struct {
 	Page  AssistantPageType `json:"page"`
+	URL   string            `json:"url,omitempty"`
 	Param json.RawMessage   `json:"param,omitempty"`
 }
 
@@ -57,7 +58,8 @@ type AssistantMessage struct {
 	ErrTitle        string                     `json:"err_title"`
 	ErrMsg          string                     `json:"err_msg"`
 	ExecutedTools   bool                       `json:"executed_tools"`
-	Extra           AssistantMessageExtra      `json:"-"` // internal, not exposed to frontend
+	Incomplete      bool                       `json:"incomplete,omitempty"` // tool loop hit its iteration budget: Response is a partial conclusion (ErrCode stays 0 so it still renders)
+	Extra           AssistantMessageExtra      `json:"-"`                    // internal, not exposed to frontend
 }
 
 type AssistantMessageExtra struct {
@@ -81,6 +83,10 @@ type PendingInterrupt struct {
 	Params     map[string]string `json:"params"`      // 原轮 AgentRequest.Params（user_id 等；重放时覆盖 chat_id/seq_id）
 	Prompt     string            `json:"prompt"`      // 当时给用户看的确认文案（拒绝/重提案时供上下文）
 	SeqID      int64             `json:"seq_id"`      // 提案所在轮
+
+	// ResumeAfterConfirm 仅 approval 类：确认并成功重放工具后回接 agent 续跑
+	// （读工具在 propose 腿声明的 flag，见 aiagent.ToolInterrupt.ResumeAfterConfirm）。
+	ResumeAfterConfirm bool `json:"resume_after_confirm,omitempty"`
 }
 
 // ConversationRoute 会话级路由状态，随每条 AssistantMessage 持久化、下一轮加载读取。
@@ -99,9 +105,11 @@ type ConversationRoute struct {
 // ==================== Message Query ====================
 
 type AssistantMessageQuery struct {
-	Content  string            `json:"content"`
-	Action   AssistantAction   `json:"action"`
-	PageFrom AssistantPageInfo `json:"page_from"`
+	Content     string                      `json:"content"`
+	References  []AssistantMessageReference `json:"references,omitempty"`
+	Action      AssistantAction             `json:"action"`
+	PageFrom    AssistantPageInfo           `json:"page_from"`
+	PageActions []AssistantPageAction       `json:"page_actions,omitempty"`
 }
 
 // ==================== Message Response ====================
@@ -115,6 +123,9 @@ const (
 	ContentTypeReasoning AssistantContentType = "reasoning"
 	ContentTypeAlertRule AssistantContentType = "alert_rule"
 	ContentTypeDashboard AssistantContentType = "dashboard"
+	// ContentTypePageAction tells the browser to perform one action declared by
+	// this request's page_actions. The agent never executes it server-side.
+	ContentTypePageAction AssistantContentType = "page_action"
 	// ContentTypeFormSelect carries a multi-field form the user must fill in
 	// before a halted creation flow can continue. Payload is a creationFormPayload
 	// JSON. Frontend renders fields progressively and submits all picks at once.
@@ -138,6 +149,7 @@ func (t AssistantContentType) IsStructuredPayload() bool {
 type AssistantMessageResponse struct {
 	ContentType AssistantContentType `json:"content_type"`
 	Content     string               `json:"content"`
+	Param       interface{}          `json:"param,omitempty"`
 	StreamID    string               `json:"stream_id,omitempty"`
 	IsFinish    bool                 `json:"is_finish"`
 	IsFromAI    bool                 `json:"is_from_ai"`

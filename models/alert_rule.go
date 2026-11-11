@@ -160,6 +160,46 @@ func (v VarConfig) MarshalJSON() ([]byte, error) {
 	return json.Marshal(Alias(v))
 }
 
+// ruleConfigArrayKeys 是 rule_config 里语义上是数组的 key。
+// v8.x 的类型化 marshal（老式 prom_ql 入参、Prom YAML 导入、v5 升 v6）会把这些 key 写成 null 落库，
+// 前端编辑页拿到后原样回传，null 就一直留在库里；API 消费方对 null 和 [] 的处理往往不同。
+// 对象类型的 key（如 child_var_configs）不在名单里：null 表示"没有下一层"，改成 {} 只会再套一层空。
+var ruleConfigArrayKeys = map[string]struct{}{
+	"queries":              {},
+	"triggers":             {},
+	"param_val":            {},
+	"joins":                {},
+	"on":                   {},
+	"task_tpls":            {},
+	"event_relabel_config": {},
+}
+
+// normalizeRuleConfigNulls 递归遍历 json.Unmarshal 到 interface{} 的 rule_config，
+// 把白名单 key 下的 null 改成空数组。只处理 map / slice，类型化结构体原样返回（它们自己的 MarshalJSON 已兜底）。
+// 就地修改并返回同一个值，方便链式赋值。
+func normalizeRuleConfigNulls(v interface{}) interface{} {
+	switch x := v.(type) {
+	case map[string]interface{}:
+		for k, val := range x {
+			if val == nil {
+				if _, ok := ruleConfigArrayKeys[k]; ok {
+					x[k] = []interface{}{}
+				}
+				continue
+			}
+			x[k] = normalizeRuleConfigNulls(val)
+		}
+		return x
+	case []interface{}:
+		for i := range x {
+			x[i] = normalizeRuleConfigNulls(x[i])
+		}
+		return x
+	default:
+		return v
+	}
+}
+
 // ParamQueryForFirst 同 ParamQuery，仅在第一层出现
 type ParamQueryForFirst struct {
 	Name      string      `json:"name"`
@@ -471,7 +511,9 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 						"(host_tags not like ? or host_tags is null)")
 					args = append(args, "%"+tag+"%", "%"+tag+"%")
 				}
-				m[strings.Join(query, " and ")] = args
+				if len(query) > 0 {
+					m[strings.Join(query, " and ")] = args
+				}
 			}
 		case "hosts":
 			lst := []string{}
@@ -498,8 +540,13 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 					query = append(query, "ident not like ?")
 					args = append(args, strings.ReplaceAll(host, "*", "%"))
 				}
-				m[strings.Join(query, " and ")] = args
+				if len(query) > 0 {
+					m[strings.Join(query, " and ")] = args
+				}
 			}
+		}
+		if len(m) == 0 {
+			continue
 		}
 		query = append(query, m)
 	}
@@ -567,6 +614,10 @@ func (ar *AlertRule) Verify() error {
 
 	if ar.RuleConfig == "" {
 		return errors.New("rule_config is blank")
+	}
+
+	if err := ar.ValidateRuleConfig(); err != nil {
+		return err
 	}
 
 	if ar.PromEvalInterval <= 0 {
@@ -656,6 +707,114 @@ func (ar *AlertRule) Verify() error {
 	return nil
 }
 
+type alertRuleConfigForVerify struct {
+	Version  string `json:"version"`
+	Severity *int   `json:"severity"`
+	Queries  []struct {
+		PromQl   string `json:"prom_ql"`
+		Severity int    `json:"severity"`
+	} `json:"queries"`
+	ExpTriggerDisable bool `json:"exp_trigger_disable"`
+	Triggers          []struct {
+		Exp      string `json:"exp"`
+		Severity int    `json:"severity"`
+	} `json:"triggers"`
+	NodataTrigger struct {
+		Enable   bool `json:"enable"`
+		Severity int  `json:"severity"`
+	} `json:"nodata_trigger"`
+	AnomalyTrigger struct {
+		Enable   bool `json:"enable"`
+		Severity int  `json:"severity"`
+	} `json:"anomaly_trigger"`
+}
+
+func validateAlertRuleSeverity(field string, severity int) error {
+	if severity < SeverityEmergency || severity > SeverityNotice {
+		return fmt.Errorf("%s(%d) invalid: severity must be 1, 2 or 3", field, severity)
+	}
+	return nil
+}
+
+// ValidateRuleConfig checks the rule_config fields every alert event depends
+// on: severities must be 1, 2 or 3 and the query/trigger expressions must not
+// be blank. The top-level AlertRule.Severity and rule_config.severity are
+// legacy shadow fields and may legitimately be zero when a rule uses queries
+// or triggers. Non-zero values in those fields must still be valid severities.
+func (ar *AlertRule) ValidateRuleConfig() error {
+	if ar.Severity != 0 {
+		if err := validateAlertRuleSeverity("severity", ar.Severity); err != nil {
+			return err
+		}
+	}
+
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(ar.RuleConfig), &object); err != nil {
+		// RuleConfig is intentionally polymorphic. Other validators own its
+		// overall shape; this validation only applies to JSON objects.
+		return nil
+	}
+
+	var config alertRuleConfigForVerify
+	if err := json.Unmarshal([]byte(ar.RuleConfig), &config); err != nil {
+		return fmt.Errorf("invalid rule_config: %v", err)
+	}
+
+	// Host rules are keyed by prod, not cate: Verify defaults an empty cate to
+	// prometheus and the engine dispatches host rules by prod (GetRuleType), so
+	// classifying by cate alone would validate a host rule as prom v1.
+	isHost := ar.Prod == HOST || ar.Cate == HOST
+	isPromV1 := !isHost && (ar.Cate == PROMETHEUS || ar.Cate == LOKI) && config.Version != "v2"
+	legacyConfigSeverityActive := isPromV1 && len(config.Queries) == 0
+	if config.Severity != nil && (legacyConfigSeverityActive || *config.Severity != 0) {
+		if err := validateAlertRuleSeverity("rule_config.severity", *config.Severity); err != nil {
+			return err
+		}
+	}
+
+	// Skip the per-query checks when the anomaly trigger is enabled: legacy
+	// anomaly rules (n9e-plus, prod=anomaly) are migrated into queries that
+	// are algorithm inputs without prom_ql/severity — their event severity
+	// lives in anomaly_trigger and is validated below.
+	if isPromV1 && len(config.Queries) > 0 && !config.AnomalyTrigger.Enable {
+		for i := range config.Queries {
+			if strings.TrimSpace(config.Queries[i].PromQl) == "" {
+				return fmt.Errorf("rule_config.queries[%d].prom_ql is blank", i)
+			}
+			if err := validateAlertRuleSeverity(fmt.Sprintf("rule_config.queries[%d].severity", i), config.Queries[i].Severity); err != nil {
+				return err
+			}
+		}
+	} else if !isPromV1 {
+		// Host rules describe triggers with type/duration/percent instead of
+		// an expression, so the exp requirement only applies to other cates
+		// with threshold conditions enabled.
+		expRequired := !isHost && !config.ExpTriggerDisable
+		for i := range config.Triggers {
+			if expRequired && strings.TrimSpace(config.Triggers[i].Exp) == "" {
+				return fmt.Errorf("rule_config.triggers[%d].exp is blank", i)
+			}
+			if err := validateAlertRuleSeverity(fmt.Sprintf("rule_config.triggers[%d].severity", i), config.Triggers[i].Severity); err != nil {
+				return err
+			}
+		}
+	}
+
+	if config.NodataTrigger.Enable {
+		if err := validateAlertRuleSeverity("rule_config.nodata_trigger.severity", config.NodataTrigger.Severity); err != nil {
+			return err
+		}
+	}
+
+	if config.AnomalyTrigger.Enable {
+		if err := validateAlertRuleSeverity("rule_config.anomaly_trigger.severity", config.AnomalyTrigger.Severity); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // hhmmPattern 严格匹配 24 小时制 HH:MM。不接受 8:00 这类缺前导零的写法：生效时段在运行时是把
 // 当前时间格式化成 HH:MM 后按字符串直接比大小的，位数不齐会让时段判断出错。
 var hhmmPattern = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
@@ -698,15 +857,30 @@ func (ar *AlertRule) validateCronPattern() error {
 		return nil
 	}
 
-	// 创建一个临时的 cron scheduler 来验证表达式
-	scheduler := cron.New(cron.WithSeconds())
+	return ValidateCronPattern(ar.CronPattern)
+}
 
-	// 尝试添加一个空函数来验证 cron 表达式
-	_, err := scheduler.AddFunc(ar.CronPattern, func() {})
-	if err != nil {
-		return fmt.Errorf("invalid cron pattern: %s, error: %v", ar.CronPattern, err)
+// cronPatternParser must stay in sync with the schedulers the engine builds for
+// alert rules and recording rules: cron.New(cron.WithSeconds()).
+var cronPatternParser = cron.NewParser(
+	cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+)
+
+// ValidateCronPattern rejects patterns the engine cannot schedule,
+// e.g. the 5-field form without seconds.
+//
+// robfig/cron v3.0.1 panics instead of returning an error on a "TZ=xxx" spec
+// without a space (slice bounds out of range), so the parse is guarded.
+func ValidateCronPattern(pattern string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("invalid cron pattern: %s, error: %v", pattern, r)
+		}
+	}()
+
+	if _, perr := cronPatternParser.Parse(pattern); perr != nil {
+		return fmt.Errorf("invalid cron pattern: %s, error: %v", pattern, perr)
 	}
-
 	return nil
 }
 
@@ -853,7 +1027,14 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 	}
 
 	if column == "severity" {
-		severity := int(value.(float64))
+		severityValue, ok := value.(float64)
+		if !ok || severityValue != float64(int(severityValue)) {
+			return fmt.Errorf("severity(%v) invalid: severity must be 1, 2 or 3", value)
+		}
+		severity := int(severityValue)
+		if err := validateAlertRuleSeverity("severity", severity); err != nil {
+			return err
+		}
 		if ar.Cate == PROMETHEUS {
 			var ruleConfig PromRuleConfig
 			err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
@@ -1142,6 +1323,8 @@ func (ar *AlertRule) FE2DB() error {
 
 	// json.Marshal  RuleConfigJson
 	if ar.RuleConfigJson != nil {
+		// 写侧顺手洗掉前端回传的 null，新落库的数据不再带 null（读侧 DB2FE 仍会兜底存量）
+		ar.RuleConfigJson = normalizeRuleConfigNulls(ar.RuleConfigJson)
 		b, err := json.Marshal(ar.RuleConfigJson)
 		if err != nil {
 			return fmt.Errorf("marshal rule_config err:%v", err)
@@ -1197,6 +1380,8 @@ func (ar *AlertRule) DB2FE() error {
 	json.Unmarshal([]byte(ar.RuleConfig), &ar.RuleConfigJson)
 	json.Unmarshal([]byte(ar.Annotations), &ar.AnnotationsJSON)
 	json.Unmarshal([]byte(ar.ExtraConfig), &ar.ExtraConfigJSON)
+	// 存量 rule_config 里的 null 数组（如 var_config.param_val）统一归成 []
+	ar.RuleConfigJson = normalizeRuleConfigNulls(ar.RuleConfigJson)
 
 	// 解析 RuleConfig 字段
 	// 空 rule_config 在老库里是存量数据（该列 text not null 无默认值），不是异常，直接跳过，
@@ -1229,6 +1414,26 @@ func (ar *AlertRule) DB2FE() error {
 	}
 
 	ar.FillSeverities()
+
+	// 数组 / map 字段对外统一返回 [] / {}，不返回 null：
+	// serializer:json 列为空、gorm:"-" 的派生字段没填、annotations 列为空串时这些字段都是 nil。
+	// Go 侧消费者（edge 同步、引擎）对 nil 和空切片的处理完全一致，只影响 JSON 形状。
+	if ar.DatasourceQueries == nil {
+		ar.DatasourceQueries = []DatasourceQuery{}
+	}
+	if ar.EventRelabelConfig == nil {
+		ar.EventRelabelConfig = []*pconf.RelabelConfig{}
+	}
+	if ar.NotifyGroupsObj == nil {
+		ar.NotifyGroupsObj = []UserGroup{}
+	}
+	// pipeline_configs 与 severities 故意不归一：这两个字段前端都是用真值兜底的，[] 是真值、null 才是假值，归一会让兜底失效。
+	// pipeline_configs：编辑页 `pipeline_configs ?? [{enable:true}]` 靠 null 出默认工作流行，[] 会让工作流区空白且无法添加。
+	// severities：列表页筛选是 `(item.severities && ...) || !item.severities`，[] 会让推不出严重度的规则整条从列表消失
+	// （rule_config 为空串、或非 prom 规则 triggers 为空时 FillSeverities 一个都 append 不出来）。该字段 gorm:"-" 且只给前端用。
+	if ar.AnnotationsJSON == nil {
+		ar.AnnotationsJSON = map[string]string{}
+	}
 
 	return nil
 }
@@ -1647,16 +1852,29 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 }
 
 func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]map[int64][]string, error) {
+	m, _, err := GetTargetsOfHostAlertRuleWithStatus(ctx, engineName)
+	return m, err
+}
+
+// GetTargetsOfHostAlertRuleWithStatus is GetTargetsOfHostAlertRule plus a
+// complete flag. complete is false when the target query of at least one host
+// rule failed, so m lacks that rule's targets; callers that cache the result
+// behind a change signature must not treat such a result as up to date.
+// Over HTTP (edge / alert) the center already did the computation, so complete
+// is always true there.
+func GetTargetsOfHostAlertRuleWithStatus(ctx *ctx.Context, engineName string) (map[string]map[int64][]string, bool, error) {
 	if !ctx.IsCenter {
 		m, err := poster.GetByUrls[map[string]map[int64][]string](ctx, "/v1/n9e/targets-of-alert-rule?engine_name="+engineName)
-		return m, err
+		return m, true, err
 	}
 
 	m := make(map[string]map[int64][]string)
 	hostAlertRules, err := AlertRulesGetsBy(ctx, []string{"host"}, "", "", "", []string{}, 0)
 	if err != nil {
-		return m, err
+		return m, false, err
 	}
+
+	complete := true
 
 	for i := 0; i < len(hostAlertRules); i++ {
 		var rule *HostRuleConfig
@@ -1676,6 +1894,7 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 		err := session.Find(&lst).Error
 		if err != nil {
 			logger.Errorf("failed to query targets: %v", err)
+			complete = false
 			continue
 		}
 
@@ -1693,7 +1912,7 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 		}
 	}
 
-	return m, nil
+	return m, complete, nil
 }
 
 // HostAlertRuleTargetsSig 计算 host 告警规则 -> target 映射的输入签名。

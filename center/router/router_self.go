@@ -1,11 +1,13 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
@@ -126,5 +128,10 @@ func (rt *Router) deleteToken(c *gin.Context) {
 		return
 	}
 
-	ginx.NewRender(c).Message(models.DeleteToken(rt.Ctx, id))
+	deleted, err := models.DeleteToken(rt.Ctx, id, username)
+	ginx.Dangerous(err)
+	if !deleted {
+		ginx.Bomb(http.StatusNotFound, "token not found")
+	}
+	ginx.NewRender(c).Message(nil)
 }

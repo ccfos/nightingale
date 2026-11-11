@@ -1,8 +1,10 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -201,6 +203,8 @@ type NotifyTestForm struct {
 	EventIDs     []int64             `json:"event_ids"`
 	UseMockEvent bool                `json:"use_mock_event"` // 新环境无历史事件时，用内置模拟事件验证通知链路
 	NotifyConfig models.NotifyConfig `json:"notify_config" binding:"required"`
+	// WithRecovery 为 true 时先按告警、再按恢复各发一次，用来验证恢复闭环（如 Jira 恢复时关单）
+	WithRecovery bool `json:"with_recovery"`
 }
 
 // buildNotifyTestMockEvent 构造用于通知测试的内置模拟事件，字段仅为演示用途，
@@ -265,11 +269,28 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		}
 	}
 
-	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
+	// 原生对接的媒介（Jira 等）每次测试用一个 nonce 拼去重键，见 withTestNonce
+	if ch, _ := models.NotifyChannelGet(rt.Ctx, "id = ?", f.NotifyConfig.ChannelID); ch != nil && models.IsNativeRequestType(ch.RequestType) {
+		f.NotifyConfig.Params = withTestNonce(f.NotifyConfig.Params)
+	}
+
+	var resps []string
+	for _, round := range testRounds(events, f.WithRecovery) {
+		resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, round)
+		if resp != "" {
+			resps = append(resps, resp)
+		}
+		if err != nil {
+			// 提示部分按请求语言翻译，第三方报错原文保持原样
+			ginx.NewRender(c).Data(strings.Join(resps, "\n"), errors.New(provider.LocalizeError(err, func(k string) string { return translate(c, k) })))
+			return
+		}
+	}
+	resp := strings.Join(resps, "\n")
 	if resp == "" {
 		resp = "success"
 	}
-	ginx.NewRender(c).Data(resp, err)
+	ginx.NewRender(c).Data(resp, nil)
 }
 
 // resolveSiteUrl 返回模板渲染与通知上下文共用的站点地址。
@@ -314,7 +335,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if len(messageTemplates) == 0 {
 			return "", fmt.Errorf("message template not found")
 		}
-		tplContent = messageTemplates[0].RenderEvent(events, siteUrl)
+		tplContent = messageTemplates[0].RenderEventForChannel(notifyChannel.RequestType, events, siteUrl)
 	}
 
 	return sendToNotifyChannel(ctx, userCache, userGroup, notifyConfig, notifyChannel, events, tplContent, siteUrl)
@@ -374,7 +395,7 @@ func sendToNotifyChannel(ctx *ctx.Context, userCache *memsto.UserCacheType, user
 			reqCopy.Sendtos = batch
 			r := nc.Provider.Notify(ctx.Ctx, &reqCopy)
 			logger.Infof("channel_name=%s event=%s sendto=%v customParams=%v resp=%s err=%v",
-				notifyChannel.Name, events[0].Hash, batch, nc.Request.CustomParams, r.Response, r.Err)
+				notifyChannel.Name, events[0].Hash, batch, provider.RedactParamsForLog(nc.Request.CustomParams), r.Response, r.Err)
 			if r.Err != nil {
 				return "", fmt.Errorf("failed to send http notify: %v", r.Err)
 			}
@@ -387,7 +408,7 @@ func sendToNotifyChannel(ctx *ctx.Context, userCache *memsto.UserCacheType, user
 	// TODO(dingtalkapp): 钉钉应用本次不上线，上线时在注释中补回 dingtalkapp。
 	r := nc.Provider.Notify(ctx.Ctx, nc.Request)
 	logger.Infof("channel_name=%s event=%s sendtos=%v customParams=%v resp=%s err=%v",
-		notifyChannel.Name, events[0].Hash, nc.Request.Sendtos, nc.Request.CustomParams, r.Response, r.Err)
+		notifyChannel.Name, events[0].Hash, nc.Request.Sendtos, provider.RedactParamsForLog(nc.Request.CustomParams), r.Response, r.Err)
 	return r.Response, r.Err
 }
 

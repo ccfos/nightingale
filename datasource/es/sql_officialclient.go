@@ -67,7 +67,12 @@ func officialClient(escli *Elasticsearch) (*elasticsearch8.Client, error) {
 		Transport: &productCheckTransport{base: transport},
 	}
 
-	if escli.Basic.Enable {
+	// Mirror InitClient()'s condition (Basic.Username != "") instead of
+	// checking only Basic.Enable: datasources synced through dscache
+	// (esN9eToDatasourceInfo) populate username/password but leave Enable
+	// false, which made every SQL request go out unauthenticated and fail
+	// with 401 against security-enabled clusters while DSL queries worked.
+	if escli.Basic.Enable || escli.Basic.Username != "" {
 		cfg.Username = escli.Basic.Username
 		cfg.Password = escli.Basic.Password
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 // integrations/ 目录下每个组件是 categraf 配置语法和指标命名的权威 ground truth
-// （比 flashcat.cloud/index.json 上的散文文档更可信）。
+// （比文档站上的散文文档更可信）。
 // 把 markdown/README.md 和 collect/*/*.toml 转成 docEntry 并入索引,
 // LLM 经 search_n9e_docs 检索时就能直接搜到真实的 [[instances]] 写法。
 //
@@ -26,7 +26,7 @@ const (
 // loadIntegrationsEntries scans the integrations/ tree and emits docEntries
 // for each component's README.md (one entry) and each collect/*/*.toml file
 // (one entry per file). Returns nil if integrations/ is missing — caller
-// (refreshDocIndex) treats that as "no extras", remote index alone keeps working.
+// (ensureDocIndex) treats that as "no extras", the embedded docs alone keep working.
 func loadIntegrationsEntries() ([]docEntry, error) {
 	dir := findIntegrationsDir()
 	if dir == "" {

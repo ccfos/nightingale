@@ -1,11 +1,95 @@
 package process
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/alert/queue"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 )
+
+func TestRecoverSingleSetsRecoverTime(t *testing.T) {
+	const now int64 = 200
+	for _, tc := range []struct {
+		name            string
+		judgeType       models.RecoverJudge
+		byRecover       bool
+		recoverDuration int64
+	}{
+		{name: "normal", judgeType: models.Origin},
+		{name: "explicit condition", judgeType: models.RecoverOnCondition, byRecover: true},
+		{name: "observation period", judgeType: models.Origin, recoverDuration: 60},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			queue.EventQueue.RemoveAll()
+			defer queue.EventQueue.RemoveAll()
+
+			var hookCalled bool
+			var hookRecoverTime int64
+			p := &Processor{
+				rule:                 &models.AlertRule{Id: 1, RecoverDuration: tc.recoverDuration},
+				fires:                NewAlertCurEventMap(nil),
+				pendings:             NewAlertCurEventMap(nil),
+				pendingsUseByRecover: NewAlertCurEventMap(nil),
+				alertMuteCache:       &memsto.AlertMuteCacheType{},
+				HandleRecoverEventHook: func(event *models.AlertCurEvent) {
+					hookCalled = true
+					hookRecoverTime = event.RecoverTime
+				},
+			}
+			event := &models.AlertCurEvent{
+				Hash:          "recover-time",
+				RuleId:        1,
+				TriggerTime:   100,
+				LastEvalTime:  140,
+				RecoverConfig: models.RecoverConfig{JudgeType: tc.judgeType},
+			}
+			p.pushEventToQueue(event)
+			p.pendingsUseByRecover.Set(event.Hash, event)
+
+			if tc.byRecover || tc.recoverDuration > 0 {
+				p.RecoverSingle(false, event.Hash, now-1, nil)
+				if event.IsRecovered || event.RecoverTime != 0 || event.LastEvalTime != 140 || hookCalled {
+					t.Fatal("event recovered before its recovery condition was satisfied")
+				}
+			}
+
+			p.RecoverSingle(tc.byRecover, event.Hash, now, nil)
+			if !hookCalled || hookRecoverTime != now {
+				t.Errorf("recovery hook: called=%v recover_time=%d, want true and %d", hookCalled, hookRecoverTime, now)
+			}
+			items := queue.EventQueue.PopBackBy(10)
+			if len(items) != 2 {
+				t.Fatalf("queued events: got %d, want one firing and one recovery event", len(items))
+			}
+			firing := items[0].(*models.AlertCurEvent)
+			if firing.IsRecovered || firing.RecoverTime != 0 {
+				t.Fatal("firing snapshot must not have a recovery time")
+			}
+			recovered := items[1].(*models.AlertCurEvent)
+			if !recovered.IsRecovered || recovered.RecoverTime != now || recovered.LastEvalTime != now {
+				t.Fatalf("recovery snapshot: is_recovered=%v recover_time=%d last_eval_time=%d, want true and %d", recovered.IsRecovered, recovered.RecoverTime, recovered.LastEvalTime, now)
+			}
+			if his := recovered.ToHis(nil); his.RecoverTime != recovered.RecoverTime {
+				t.Errorf("history recover_time=%d differs from notification recover_time=%d", his.RecoverTime, recovered.RecoverTime)
+			}
+			body, err := json.Marshal(recovered)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var payload struct {
+				RecoverTime int64 `json:"recover_time"`
+			}
+			if err := json.Unmarshal(body, &payload); err != nil {
+				t.Fatal(err)
+			}
+			if payload.RecoverTime != now {
+				t.Errorf("JSON recover_time: got %d, want %d", payload.RecoverTime, now)
+			}
+		})
+	}
+}
 
 // 回归：队列里必须是事件快照，不能是 p.fires 持有的活对象。
 //

@@ -329,14 +329,24 @@ type WritersType struct {
 type IdentQueue struct {
 	list    *SafeListLimited
 	closeCh chan struct{}
-	ts      int64
+	ts      atomic.Int64
 }
 
 func (ws *WritersType) ReportQueueStats(queueid string, identQueue *IdentQueue) (interface{}, bool) {
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
 	for {
-		time.Sleep(15 * time.Second)
-		count := identQueue.list.Len()
-		pstat.GaugeSampleQueueSize.WithLabelValues(queueid).Set(float64(count))
+		select {
+		case <-identQueue.closeCh:
+			return nil, false
+		case <-ticker.C:
+			ws.RLock()
+			if ws.queues[queueid] == identQueue {
+				count := identQueue.list.Len()
+				pstat.GaugeSampleQueueSize.WithLabelValues(queueid).Set(float64(count))
+			}
+			ws.RUnlock()
+		}
 	}
 }
 
@@ -402,53 +412,64 @@ func (ws *WritersType) isCriticalBackend(key string) bool {
 
 func (ws *WritersType) CleanExpQueue() {
 	for {
-		ws.Lock()
-		for ident := range ws.queues {
-			identQueue := ws.queues[ident]
-			if identQueue == nil {
-				delete(ws.queues, ident)
-				logger.Warningf("Write channel(%s) not found", ident)
-				continue
-			}
-
-			if time.Now().Unix()-identQueue.ts > 3600 {
-				close(identQueue.closeCh)
-				delete(ws.queues, ident)
-			}
-		}
-		ws.Unlock()
+		ws.cleanExpiredQueues(time.Now().Unix())
 		time.Sleep(time.Second * 600)
 	}
+}
+
+func (ws *WritersType) cleanExpiredQueues(now int64) {
+	ws.Lock()
+	for ident := range ws.queues {
+		identQueue := ws.queues[ident]
+		if identQueue == nil {
+			delete(ws.queues, ident)
+			logger.Warningf("Write channel(%s) not found", ident)
+			continue
+		}
+
+		if now-identQueue.ts.Load() > 3600 {
+			close(identQueue.closeCh)
+			pstat.GaugeSampleQueueSize.DeleteLabelValues(ident)
+			delete(ws.queues, ident)
+		}
+	}
+	ws.Unlock()
 }
 
 func (ws *WritersType) PushSample(queueid string, v interface{}) error {
 	ws.RLock()
 	queue := ws.queues[queueid]
-	ws.RUnlock()
-	if queue == nil {
-		queue = &IdentQueue{
-			list:    NewSafeListLimited(ws.pushgw.WriterOpt.QueueMaxSize),
-			closeCh: make(chan struct{}),
-			ts:      time.Now().Unix(),
-		}
-
+	var succ bool
+	if queue != nil {
+		succ = queue.push(v)
+		ws.RUnlock()
+	} else {
+		ws.RUnlock()
 		ws.Lock()
-		ws.queues[queueid] = queue
+		queue = ws.queues[queueid]
+		if queue == nil {
+			queue = &IdentQueue{
+				list:    NewSafeListLimited(ws.pushgw.WriterOpt.QueueMaxSize),
+				closeCh: make(chan struct{}),
+			}
+			ws.queues[queueid] = queue
+			go ws.ReportQueueStats(queueid, queue)
+			go ws.StartConsumer(queue)
+		}
+		succ = queue.push(v)
 		ws.Unlock()
-
-		go ws.ReportQueueStats(queueid, queue)
-		go ws.StartConsumer(queue)
 	}
-
-	queue.ts = time.Now().Unix()
-
-	succ := queue.list.PushFront(v)
 	if !succ {
 		logger.Warningf("Write channel(%s) full, current channel size: %d, item: %+v", queueid, queue.list.Len(), v)
 		pstat.CounterPushQueueErrorTotal.WithLabelValues(queueid).Inc()
 	}
 
 	return nil
+}
+
+func (queue *IdentQueue) push(v interface{}) bool {
+	queue.ts.Store(time.Now().Unix())
+	return queue.list.PushFront(v)
 }
 
 type Writer interface {

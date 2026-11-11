@@ -165,7 +165,10 @@ func (rt *Router) alertRuleTestFire(c *gin.Context) {
 	identExists, bgMatch := true, true
 	if rt.TargetCache != nil {
 		identExists = !mute.IdentNotExistsMuteStrategy(cfg, event, rt.TargetCache)
-		bgMatch = !mute.BgNotMatchMuteStrategy(cfg, event, rt.TargetCache)
+		// mock 样本的 ident 是虚构的，必然查不到机器，不做业务组归属判定以免误报
+		if synthStage.Data["sample_source"] != "mock" {
+			bgMatch = !mute.BgNotMatchMuteStrategy(cfg, event, rt.TargetCache)
+		}
 	}
 	effectiveStatus := testFireStagePass
 	if disabled || !inTimeSpan || !identExists || !bgMatch {

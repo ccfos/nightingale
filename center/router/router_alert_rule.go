@@ -513,6 +513,20 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "fields empty")
 	}
 
+	// The generic branch below writes columns directly and bypasses AlertRule.Verify.
+	// An empty pattern is fine: the engine falls back to prom_eval_interval.
+	if v, ok := f.Fields["cron_pattern"]; ok {
+		pattern, isStr := v.(string)
+		if !isStr {
+			ginx.Bomb(http.StatusBadRequest, "cron_pattern must be a string")
+		}
+		if pattern != "" {
+			if err := models.ValidateCronPattern(pattern); err != nil {
+				ginx.Bomb(http.StatusBadRequest, "%s", err.Error())
+			}
+		}
+	}
+
 	updateBy := c.MustGet("username").(string)
 	updateAt := time.Now().Unix()
 
@@ -533,6 +547,9 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				originRule["triggers"] = triggers
 				b, err := json.Marshal(originRule)
 				ginx.Dangerous(err)
+				candidate := *ar
+				candidate.RuleConfig = string(b)
+				ginx.Dangerous(candidate.ValidateRuleConfig(), http.StatusBadRequest)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"rule_config": string(b)}))
 			}
 

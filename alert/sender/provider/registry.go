@@ -40,6 +40,13 @@ func VerifyChannelConfig(ncc *models.NotifyChannelConfig) error {
 	if ncc == nil {
 		return fmt.Errorf("nil channel config")
 	}
+	// 原生媒介（request_type 与 ident 同名）没有可兜底的通用 provider：配置不合法时直接返回它自己的
+	// 校验报错（如 "pushover api token is required"），而不是让 Resolve 吞掉原因、报一句 unsupported channel。
+	if models.IsNativeRequestType(ncc.RequestType) && ncc.Ident == ncc.RequestType {
+		if p, ok := DefaultRegistry.Get(ncc.Ident); ok {
+			return p.Check(ncc)
+		}
+	}
 	p, ok := DefaultRegistry.Resolve(ncc)
 	if !ok {
 		return fmt.Errorf("unsupported channel: ident=%s request_type=%s",

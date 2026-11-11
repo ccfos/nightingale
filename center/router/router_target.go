@@ -234,9 +234,41 @@ func (rt *Router) targetExtendInfoByIdent(c *gin.Context) {
 	}, nil)
 }
 
+// targetGetsByService is polled by every edge/alert instance whenever the target
+// statistic changes. Serving it from the center's TargetCache keeps those full
+// reloads (target + target_busi_group full scans) off the DB; the cache holds the
+// same rows TargetGetsAll returns, refreshed on the same statistic.
+//
+// Only callers sending from_cache=1 get the cached list. They store the stat
+// derived from the list itself (memsto TargetCacheType.syncTargets). Older
+// edges store the stat from /v1/n9e/statistic instead, which with several
+// centers may come from a center whose cache is newer than the one serving
+// the list, latching a stale list. They keep reading the DB: a DB list is
+// never older than any center's cached stat, so at worst they reload once more.
+//
+// engine_name limits the list to the targets of that engine cluster, for edges
+// that sync only their own targets (memsto NewTargetCacheOfEngine).
 func (rt *Router) targetGetsByService(c *gin.Context) {
-	lst, err := models.TargetGetsAll(rt.Ctx)
-	ginx.NewRender(c).Data(lst, err)
+	if engineName := c.Query("engine_name"); engineName != "" {
+		if rt.TargetCache == nil || c.Query("from_cache") != "1" {
+			lst, err := models.TargetGetsOfEngine(rt.Ctx, engineName)
+			ginx.NewRender(c).Data(lst, err)
+			return
+		}
+
+		lst, _, _ := rt.TargetCache.SnapshotOfEngine(engineName)
+		ginx.NewRender(c).Data(lst, nil)
+		return
+	}
+
+	if rt.TargetCache == nil || c.Query("from_cache") != "1" {
+		lst, err := models.TargetGetsAll(rt.Ctx)
+		ginx.NewRender(c).Data(lst, err)
+		return
+	}
+
+	lst, _, _ := rt.TargetCache.Snapshot()
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 func (rt *Router) targetGetTags(c *gin.Context) {
@@ -667,10 +699,32 @@ func CheckTargetPerm(ctx *ctx.Context, c *gin.Context, idents []string) {
 	}
 }
 
+// targetsOfAlertRule serves edge / standalone alert nodes the "host rule ->
+// target idents" map for their engine. The response shape is
+// {engine_name: {rule_id: [ident...]}} with at most the requested engine as key;
+// an engine with no bound targets gets an empty object.
+//
+// The center's own alert engine already keeps this map in memory
+// (memsto.TargetsOfAlertRuleCacheType, refreshed only when rules / group
+// bindings / targets change), so the handler answers from that cache. The old
+// path recomputed everything on each request: one target-table scan per host
+// rule, for every engine, and then threw away all but one engine — with many
+// rules and hosts that took longer than the edge's CenterApi timeout and the
+// edge crash-looped at startup. The DB path is kept only as a fallback for
+// embedders that never wired the cache.
 func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 	engineName := ginx.QueryStr(c, "engine_name", "")
-	m, err := models.GetTargetsOfHostAlertRule(rt.Ctx, engineName)
 	ret := make(map[string]map[int64][]string)
+
+	if rt.TargetsOfAlertRuleCache != nil {
+		if m, has := rt.TargetsOfAlertRuleCache.GetByEngine(engineName); has {
+			ret[engineName] = m
+		}
+		ginx.NewRender(c).Data(ret, nil)
+		return
+	}
+
+	m, err := models.GetTargetsOfHostAlertRule(rt.Ctx, engineName)
 	for en, v := range m {
 		if en != engineName {
 			continue

@@ -26,21 +26,42 @@ type TargetCacheType struct {
 	stats           *Stats
 	redis           storage.Redis
 	metaSyncCycle   int // 计数器，用于控制 HostMeta 刷新频率
+	// engineName, when set, limits the sync to the targets whose engine_name
+	// is engineName (see NewTargetCacheOfEngine)
+	engineName string
 
 	sync.RWMutex
 	targets      map[string]*models.Target // key: ident
 	targetsIndex map[string][]string       // key: ip, value: ident list
+	// engineStats is StatOfEngine per engine_name, kept in step with targets
+	// by Set and UpdateTarget so that the center answers every edge's stat
+	// poll without scanning all targets.
+	engineStats map[string]targetStat
+}
+
+type targetStat struct {
+	total, lastUpdated int64
 }
 
 func NewTargetCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *TargetCacheType {
+	return NewTargetCacheOfEngine(ctx, stats, redis, "")
+}
+
+// NewTargetCacheOfEngine is NewTargetCache for an edge that only needs the
+// hosts reporting through its own engine cluster: it syncs just the targets
+// whose engine_name is engineName instead of the whole target table. Lookups
+// of any other ident then miss. An empty engineName syncs all targets.
+func NewTargetCacheOfEngine(ctx *ctx.Context, stats *Stats, redis storage.Redis, engineName string) *TargetCacheType {
 	tc := &TargetCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
 		ctx:             ctx,
 		stats:           stats,
 		redis:           redis,
+		engineName:      engineName,
 		targets:         make(map[string]*models.Target),
 		targetsIndex:    make(map[string][]string),
+		engineStats:     make(map[string]targetStat),
 	}
 
 	tc.SyncTargets()
@@ -55,6 +76,7 @@ func (tc *TargetCacheType) Reset() {
 	tc.statLastUpdated = -1
 	tc.targets = make(map[string]*models.Target)
 	tc.targetsIndex = make(map[string][]string)
+	tc.engineStats = make(map[string]targetStat)
 }
 
 func (tc *TargetCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -74,14 +96,156 @@ func (tc *TargetCacheType) Set(m map[string]*models.Target, total, lastUpdated i
 		idx[target.HostIp] = append(idx[target.HostIp], ident)
 	}
 
+	engineStats := make(map[string]targetStat)
+	for _, target := range m {
+		s := engineStats[target.EngineName]
+		s.total++
+		if target.UpdateAt > s.lastUpdated {
+			s.lastUpdated = target.UpdateAt
+		}
+		engineStats[target.EngineName] = s
+	}
+
+	// stat is written under the lock together with targets so that Snapshot/Stat
+	// readers on other goroutines always see a matching (targets, stat) pair.
 	tc.Lock()
 	tc.targets = m
 	tc.targetsIndex = idx
-	tc.Unlock()
-
-	// only one goroutine used, so no need lock
+	tc.engineStats = engineStats
 	tc.statTotal = total
 	tc.statLastUpdated = lastUpdated
+	tc.Unlock()
+}
+
+// Stat returns the (count, max(update_at)) of the target table as of the last
+// full load, i.e. the statistics the cached targets correspond to.
+func (tc *TargetCacheType) Stat() (total, lastUpdated int64) {
+	tc.RLock()
+	defer tc.RUnlock()
+	return tc.statTotal, tc.statLastUpdated
+}
+
+// Snapshot returns shallow copies of all cached targets together with the
+// statistics they were loaded at. Copies are taken under the read lock, so the
+// caller may read (e.g. JSON-encode) them while the cache keeps updating its
+// objects. That only holds for writers taking the write lock (refreshBeatTime,
+// refreshHostMetas, UpdateTarget): objects returned by Get/Gets/GetAll are
+// shared and must never be modified in place. Slice and map fields of the
+// copies are shared too and must be treated as read-only.
+func (tc *TargetCacheType) Snapshot() (lst []*models.Target, total, lastUpdated int64) {
+	tc.RLock()
+	defer tc.RUnlock()
+	lst = make([]*models.Target, 0, len(tc.targets))
+	for _, target := range tc.targets {
+		t := *target
+		lst = append(lst, &t)
+	}
+	return lst, tc.statTotal, tc.statLastUpdated
+}
+
+// EngineName returns the engine cluster the cache is limited to, or "" when it
+// holds all targets.
+func (tc *TargetCacheType) EngineName() string {
+	return tc.engineName
+}
+
+// SnapshotOfEngine is Snapshot limited to the targets whose EngineName is
+// engineName, with the statistic of exactly those targets (as targetsStat
+// computes it), so an edge that stores the stat derived from the list sees a
+// matching stat from StatOfEngine.
+func (tc *TargetCacheType) SnapshotOfEngine(engineName string) (lst []*models.Target, total, lastUpdated int64) {
+	tc.RLock()
+	defer tc.RUnlock()
+	lst = make([]*models.Target, 0)
+	for _, target := range tc.targets {
+		if target.EngineName != engineName {
+			continue
+		}
+		t := *target
+		lst = append(lst, &t)
+	}
+	total, lastUpdated = targetsStat(lst)
+	return lst, total, lastUpdated
+}
+
+// StatOfEngine returns the statistic of the targets SnapshotOfEngine would
+// return for engineName.
+func (tc *TargetCacheType) StatOfEngine(engineName string) (total, lastUpdated int64) {
+	tc.RLock()
+	defer tc.RUnlock()
+	s := tc.engineStats[engineName]
+	return s.total, s.lastUpdated
+}
+
+// UpdateTarget applies fn to the cached target under the write lock, for
+// callers that persisted a change and want the cache to reflect it before the
+// next full reload. It reports whether the target was cached.
+func (tc *TargetCacheType) UpdateTarget(ident string, fn func(t *models.Target)) bool {
+	tc.Lock()
+	defer tc.Unlock()
+	target, has := tc.targets[ident]
+	if has {
+		oldEngine, oldUpdateAt := target.EngineName, target.UpdateAt
+		fn(target)
+		tc.updateEngineStats(oldEngine, oldUpdateAt, target)
+	}
+	return has
+}
+
+// updateEngineStats moves target's contribution to engineStats from
+// (oldEngine, oldUpdateAt) to its current EngineName and UpdateAt. Only when
+// the target held an engine's max update_at and leaves it (or goes back in
+// time) is that engine rescanned; heartbeat updates just raise the max.
+// Callers hold the write lock.
+func (tc *TargetCacheType) updateEngineStats(oldEngine string, oldUpdateAt int64, target *models.Target) {
+	if target.EngineName == oldEngine && target.UpdateAt == oldUpdateAt {
+		return
+	}
+	if tc.engineStats == nil {
+		tc.engineStats = make(map[string]targetStat)
+	}
+
+	if target.EngineName != oldEngine {
+		s := tc.engineStats[oldEngine]
+		s.total--
+		if s.total <= 0 {
+			delete(tc.engineStats, oldEngine)
+		} else {
+			if oldUpdateAt >= s.lastUpdated {
+				s = tc.scanEngineStat(oldEngine)
+			}
+			tc.engineStats[oldEngine] = s
+		}
+
+		s = tc.engineStats[target.EngineName]
+		s.total++
+		if target.UpdateAt > s.lastUpdated {
+			s.lastUpdated = target.UpdateAt
+		}
+		tc.engineStats[target.EngineName] = s
+		return
+	}
+
+	s := tc.engineStats[oldEngine]
+	if target.UpdateAt > s.lastUpdated {
+		s.lastUpdated = target.UpdateAt
+	} else if oldUpdateAt >= s.lastUpdated {
+		s = tc.scanEngineStat(oldEngine)
+	}
+	tc.engineStats[oldEngine] = s
+}
+
+func (tc *TargetCacheType) scanEngineStat(engineName string) (s targetStat) {
+	for _, target := range tc.targets {
+		if target.EngineName != engineName {
+			continue
+		}
+		s.total++
+		if target.UpdateAt > s.lastUpdated {
+			s.lastUpdated = target.UpdateAt
+		}
+	}
+	return s
 }
 
 func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
@@ -254,7 +418,13 @@ func (tc *TargetCacheType) loopSyncTargets() {
 func (tc *TargetCacheType) syncTargets() error {
 	start := time.Now()
 
-	stat, err := models.TargetStatistics(tc.ctx)
+	var stat *models.Statistics
+	var err error
+	if tc.engineName != "" {
+		stat, err = models.TargetStatisticsOfEngine(tc.ctx, tc.engineName)
+	} else {
+		stat, err = models.TargetStatistics(tc.ctx)
+	}
 	if err != nil {
 		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to call TargetStatistics")
@@ -274,7 +444,12 @@ func (tc *TargetCacheType) syncTargets() error {
 		return nil
 	}
 
-	lst, err := models.TargetGetsAll(tc.ctx)
+	var lst []*models.Target
+	if tc.engineName != "" {
+		lst, err = models.TargetGetsOfEngine(tc.ctx, tc.engineName)
+	} else {
+		lst, err = models.TargetGetsAll(tc.ctx)
+	}
 	if err != nil {
 		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call TargetGetsAll")
@@ -298,7 +473,16 @@ func (tc *TargetCacheType) syncTargets() error {
 		m[lst[i].Ident] = lst[i]
 	}
 
-	tc.Set(m, stat.Total, stat.LastUpdated)
+	total, lastUpdated := stat.Total, stat.LastUpdated
+	if !tc.ctx.IsCenter {
+		// The stat and the list are two requests that may be answered by
+		// different centers, each serving its own TargetCache. Storing the
+		// list under the other center's stat could latch a stale list until
+		// the next target change, so derive the stat from the list itself:
+		// a list older than the centers' stat is then simply reloaded.
+		total, lastUpdated = targetsStat(lst)
+	}
+	tc.Set(m, total, lastUpdated)
 	tc.metaSyncCycle = 0 // 全量同步已包含 meta，重置计数器
 
 	ms := time.Since(start).Milliseconds()
@@ -307,6 +491,17 @@ func (tc *TargetCacheType) syncTargets() error {
 	dumper.PutSyncRecord("targets", start.Unix(), ms, len(lst), "success")
 
 	return nil
+}
+
+// targetsStat computes the (count(*), max(update_at)) statistic that
+// TargetStatistics would report for exactly these targets.
+func targetsStat(lst []*models.Target) (total, lastUpdated int64) {
+	for _, t := range lst {
+		if t.UpdateAt > lastUpdated {
+			lastUpdated = t.UpdateAt
+		}
+	}
+	return int64(len(lst)), lastUpdated
 }
 
 // get host update time

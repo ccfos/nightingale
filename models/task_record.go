@@ -30,6 +30,19 @@ func (r *TaskRecord) TableName() string {
 	return "task_record"
 }
 
+// TaskRecordGetById 按 id 取单条任务下发记录，不存在时返回 nil。
+func TaskRecordGetById(ctx *ctx.Context, id int64) (*TaskRecord, error) {
+	var lst []*TaskRecord
+	err := DB(ctx).Where("id = ?", id).Limit(1).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+	if len(lst) == 0 {
+		return nil, nil
+	}
+	return lst[0], nil
+}
+
 // create task
 func (r *TaskRecord) Add(ctx *ctx.Context) error {
 	if !ctx.IsCenter {

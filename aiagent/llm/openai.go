@@ -225,11 +225,26 @@ func positiveInt(v any) (int, bool) {
 }
 
 type openAIMessage struct {
-	Role             string           `json:"role"`
-	Content          string           `json:"content,omitempty"`
-	ReasoningContent string           `json:"reasoning_content,omitempty"`
-	ToolCalls        []openAIToolCall `json:"tool_calls,omitempty"`
-	ToolCallID       string           `json:"tool_call_id,omitempty"`
+	Role             string `json:"role"`
+	Content          string `json:"content,omitempty"`
+	ReasoningContent string `json:"reasoning_content,omitempty"`
+	// Reasoning 是 vLLM 等端点使用的推理字段名（与 reasoning_content 同义）。
+	// 请求侧回填时与 ReasoningContent 二选一，按端点响应所用的字段名设置。
+	Reasoning  string           `json:"reasoning,omitempty"`
+	ToolCalls  []openAIToolCall `json:"tool_calls,omitempty"`
+	ToolCallID string           `json:"tool_call_id,omitempty"`
+}
+
+// reasoningText 返回推理文本及其字段名：reasoning_content 优先，缺省时取
+// reasoning。两者同时出现时只取一个，避免同一段推理重复展示。
+func (m *openAIMessage) reasoningText() (text, field string) {
+	switch {
+	case m.ReasoningContent != "":
+		return m.ReasoningContent, ReasoningFieldContent
+	case m.Reasoning != "":
+		return m.Reasoning, ReasoningFieldAlias
+	}
+	return "", ""
 }
 
 type openAITool struct {
@@ -498,10 +513,12 @@ func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 		if len(streamResp.Choices) > 0 {
 			delta := streamResp.Choices[0].Delta
+			reasoning, field := delta.reasoningText()
 			chunk := StreamChunk{
-				Content:      delta.Content,
-				Reasoning:    delta.ReasoningContent,
-				FinishReason: streamResp.Choices[0].FinishReason,
+				Content:        delta.Content,
+				Reasoning:      reasoning,
+				ReasoningField: field,
+				FinishReason:   streamResp.Choices[0].FinishReason,
 			}
 
 			// tool_call 分片只进聚合器，不随增量 chunk 下发；流收尾时整块抛出
@@ -565,6 +582,16 @@ func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 		if msg.Role == RoleTool && oaMsg.Content == "" {
 			oaMsg.Content = "(empty result)"
 		}
+		// 工具调用轮回填推理：DeepSeek 思考模式等要求同一用户回合的工具续轮带回
+		// 推理，否则模型每轮都丢失上一步推理、反复重新探索。字段名沿用端点响应
+		// 所用的那个（vLLM Python 前端只读 reasoning，不认 reasoning_content）。
+		if msg.Role == RoleAssistant && len(msg.ToolCalls) > 0 {
+			if msg.ReasoningField == ReasoningFieldAlias {
+				oaMsg.Reasoning = msg.ReasoningContent
+			} else {
+				oaMsg.ReasoningContent = msg.ReasoningContent
+			}
+		}
 		for _, tc := range msg.ToolCalls {
 			oaTC := openAIToolCall{ID: tc.ID, Type: "function"}
 			oaTC.Function.Name = tc.Name
@@ -595,7 +622,7 @@ func (o *OpenAI) convertResponse(resp *openAIResponse) *GenerateResponse {
 	if len(resp.Choices) > 0 {
 		choice := resp.Choices[0]
 		result.Content = choice.Message.Content
-		result.ReasoningContent = choice.Message.ReasoningContent
+		result.ReasoningContent, result.ReasoningField = choice.Message.reasoningText()
 		result.FinishReason = choice.FinishReason
 
 		// Convert tool calls

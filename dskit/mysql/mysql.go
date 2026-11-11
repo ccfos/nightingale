@@ -4,6 +4,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -96,9 +97,6 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 		return nil, errors.New("empty addr")
 	}
 
-	if len(shard.Addr) == 0 {
-		return nil, errors.New("empty addr")
-	}
 	extraParams, err := NormalizeDSNExtraParams(shard.DsnExtraParams)
 	if err != nil {
 		return nil, fmt.Errorf("mysql connect: invalid mysql.dsn_extra_params: %w", err)
@@ -127,18 +125,55 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 		}
 	}()
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True", shard.User, shard.Password, shard.Addr, database)
-	if extraParams != "" {
-		dsn += "&" + extraParams
-	}
 	db, err = sqlbase.NewDB(
 		ctx,
-		mysql.Open(dsn),
+		mysql.Open(buildDSN(shard, database, extraParams)),
 		shard.MaxIdleConns,
 		shard.MaxOpenConns,
 		time.Duration(shard.ConnMaxLifetime)*time.Second,
 	)
 	return db, err
+}
+
+func buildDSN(shard Shard, database, extraParams string) string {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True", shard.User, shard.Password, shard.Addr, database)
+	if extraParams != "" {
+		dsn += "&" + extraParams
+	}
+	return dsn
+}
+
+// CheckHealth probes connectivity with a throwaway connection: it bypasses the
+// shared pool.PoolClient cache so a save-time check never leaves pools behind,
+// and it honors ctx for both dialing and the probe query.
+func (m *MySQL) CheckHealth(ctx context.Context) error {
+	if len(m.Shards) == 0 {
+		return errors.New("empty mysql shards")
+	}
+	shard := m.Shards[0]
+	if len(shard.Addr) == 0 {
+		return errors.New("empty addr")
+	}
+	extraParams, err := NormalizeDSNExtraParams(shard.DsnExtraParams)
+	if err != nil {
+		return fmt.Errorf("invalid mysql.dsn_extra_params: %w", err)
+	}
+
+	db, err := sql.Open("mysql", buildDSN(shard, "", extraParams))
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	db.SetMaxOpenConns(1)
+
+	if err := db.PingContext(ctx); err != nil {
+		return fmt.Errorf("mysql connect failed: %w", err)
+	}
+	var one int
+	if err := db.QueryRowContext(ctx, "SELECT 1").Scan(&one); err != nil {
+		return fmt.Errorf("mysql query test failed: %w", err)
+	}
+	return nil
 }
 
 func (m *MySQL) ShowDatabases(ctx context.Context) ([]string, error) {

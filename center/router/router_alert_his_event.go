@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
 	"golang.org/x/exp/slices"
+	"gorm.io/gorm"
 )
 
 // 历史告警 count(*) 缓存：大表上每次翻页都重算 count 代价很高，
@@ -76,6 +77,8 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 	severity := ginx.QueryInt(c, "severity", -1)
 	recovered := ginx.QueryInt(c, "is_recovered", -1)
 	query := ginx.QueryStr(c, "query", "")
+	// hash 一般是从告警通知文本或日志里复制来的，带上尾随空格/换行时等值查询会静默返回空
+	hash := strings.TrimSpace(ginx.QueryStr(c, "hash", ""))
 	limit := ginx.QueryInt(c, "limit", 20)
 	dsIds := queryDatasourceIds(c)
 
@@ -102,9 +105,15 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 
 	offset := ginx.Offset(c, limit)
 
-	// hours 模式下 stime/etime 随请求时刻漂移，缓存 key 里按分钟取整，翻页请求才能命中
-	cacheKey := fmt.Sprintf("%v|%v|%d|%d|%d|%d|%v|%v|%d|%s",
-		prods, bgids, stime/60, etime/60, severity, recovered, dsIds, cates, ruleId, query)
+	var scopes []func(*gorm.DB) *gorm.DB
+	if hash != "" {
+		scopes = append(scopes, models.AlertHisEventHashScope(hash))
+	}
+
+	// hours 模式下 stime/etime 随请求时刻漂移，缓存 key 里按分钟取整，翻页请求才能命中；
+	// query、hash 这类自由文本用 %q 引起来，否则值里的 | 会和分隔符混淆，撞上别的条件组合
+	cacheKey := fmt.Sprintf("%v|%v|%d|%d|%d|%d|%v|%v|%d|%q|%q",
+		prods, bgids, stime/60, etime/60, severity, recovered, dsIds, cates, ruleId, query, hash)
 
 	total, hit := int64(0), false
 	if offset > 0 {
@@ -112,7 +121,7 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 	}
 	if !hit {
 		total, err = models.AlertHisEventTotal(rt.Ctx, prods, bgids, stime, etime, severity,
-			recovered, dsIds, cates, ruleId, query, []int64{})
+			recovered, dsIds, cates, ruleId, query, []int64{}, scopes...)
 		ginx.Dangerous(err)
 		hisTotalCacheSet(cacheKey, total)
 	}
@@ -124,10 +133,10 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 	var list []models.AlertHisEvent
 	if cursorTime > 0 && cursorId > 0 {
 		list, err = models.AlertHisEventGetsByCursor(rt.Ctx, prods, bgids, stime, etime, severity,
-			recovered, dsIds, cates, ruleId, query, cursorTime, cursorId, limit, []int64{})
+			recovered, dsIds, cates, ruleId, query, cursorTime, cursorId, limit, []int64{}, scopes...)
 	} else {
 		list, err = models.AlertHisEventGets(rt.Ctx, prods, bgids, stime, etime, severity, recovered,
-			dsIds, cates, ruleId, query, limit, offset, []int64{})
+			dsIds, cates, ruleId, query, limit, offset, []int64{}, scopes...)
 	}
 	ginx.Dangerous(err)
 

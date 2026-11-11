@@ -473,7 +473,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "100 * (sum(rate(container_cpu_usage_seconds_total{id!=\"/\"}[2m])) by (pod_name,namespace,container) / sum(label_replace(kube_pod_container_resource_limits_cpu_cores{},\"pod_name\",\"$1\",\"pod\",\"(.*)\")) by (pod_name,namespace,container)) \u003e 80 and sum(label_replace(kube_pod_container_resource_limits_cpu_cores{},\"pod_name\",\"$1\",\"pod\",\"(.)\")) by (pod_name,namespace,container) != 0",
+                    "prom_ql": "100 * sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container!=\"\", container!=\"POD\"}[2m])) / sum by (namespace, pod, container) (kube_pod_container_resource_limits{resource=\"cpu\"}) \u003e 80",
                     "severity": 3
                 }
             ]
@@ -563,7 +563,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "(sum(container_memory_working_set_bytes{id!=\"/\"}) BY (instance,name,container,pod_name,namespace) / sum(container_spec_memory_limit_bytes{id!=\"/\"} \u003e 0) BY (instance,name,container,pod_name,namespace) * 100) \u003e 80",
+                    "prom_ql": "100 * sum by (namespace, pod, container) (container_memory_working_set_bytes{container!=\"\", container!=\"POD\"}) / sum by (namespace, pod, container) (container_spec_memory_limit_bytes{container!=\"\", container!=\"POD\"} \u003e 0) \u003e 80",
                     "severity": 3
                 }
             ]

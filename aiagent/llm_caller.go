@@ -18,6 +18,9 @@ func buildLLMRequest(messages []ChatMessage) *llm.GenerateRequest {
 			ToolCallID:     msg.ToolCallID,
 			ToolName:       msg.ToolName,
 			ThinkingBlocks: msg.ThinkingBlocks,
+
+			ReasoningContent: msg.ReasoningContent,
+			ReasoningField:   msg.ReasoningField,
 		}
 	}
 	return &llm.GenerateRequest{Messages: llmMessages}

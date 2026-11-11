@@ -2,17 +2,19 @@ package tplx
 
 import (
 	"bytes"
+	"encoding/base64"
+	"fmt"
+	"github.com/toolkits/pkg/logger"
 	"html/template"
 	"net/url"
 	"regexp"
 	"strings"
 	templateT "text/template"
-    "encoding/base64"
-	"github.com/toolkits/pkg/logger"
 )
 
 var TemplateFuncMap = template.FuncMap{
 	"escape":                        url.PathEscape,
+	"slackEscape":                   SlackEscape,
 	"unescaped":                     Unescaped,
 	"urlconvert":                    Urlconvert,
 	"timeformat":                    Timeformat,
@@ -64,16 +66,16 @@ var TemplateFuncMap = template.FuncMap{
 	"jsonMarshal":                   JsonMarshal,
 	"mapDifference":                 MapDifference,
 	"tagsMapToStr":                  TagsMapToStr,
-    "b64enc": func(s string) string {
-        return base64.StdEncoding.EncodeToString([]byte(s))
-    },
-    "b64dec": func(s string) string {
-        data, err := base64.StdEncoding.DecodeString(s)
-        if err != nil {
-            return s
-        }
-        return string(data)
-    },
+	"b64enc": func(s string) string {
+		return base64.StdEncoding.EncodeToString([]byte(s))
+	},
+	"b64dec": func(s string) string {
+		data, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			return s
+		}
+		return string(data)
+	},
 }
 
 // NewTemplateFuncMap copy on write for TemplateFuncMap
@@ -142,4 +144,21 @@ func ReplaceTemplateUseText(name string, templateText string, templateData any) 
 		return templateText
 	}
 	return body.String()
+}
+
+var slackEscaper = strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;")
+
+// SlackEscape 转义 Slack mrkdwn 的三个控制字符 & < >，把告警字段放进 Slack 消息时用：
+// 不转义的话，规则名里的 < 会被当成 <链接|文字> 的开头，整段显示错乱。
+func SlackEscape(v interface{}) string {
+	var s string
+	switch t := v.(type) {
+	case string:
+		s = t
+	case []string:
+		s = "[" + strings.Join(t, " ") + "]"
+	default:
+		s = fmt.Sprint(v)
+	}
+	return slackEscaper.Replace(s)
 }

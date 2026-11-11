@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -113,6 +114,24 @@ func TargetStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 	var stats []*Statistics
 	err := DB(ctx).Model(&Target{}).Select("count(*) as total", "max(update_at) as last_updated").Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
+// TargetStatisticsOfEngine is TargetStatistics over the targets whose
+// engine_name is engineName, matching TargetGetsOfEngine.
+func TargetStatisticsOfEngine(ctx *ctx.Context, engineName string) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=target&engine_name="+url.QueryEscape(engineName))
+		return s, err
+	}
+
+	var stats []*Statistics
+	err := DB(ctx).Model(&Target{}).Select("count(*) as total", "max(update_at) as last_updated").
+		Where("engine_name = ?", engineName).Find(&stats).Error
 	if err != nil {
 		return nil, err
 	}
@@ -301,12 +320,32 @@ func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, li
 
 func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 	if !ctx.IsCenter {
-		lst, err := poster.GetByUrls[[]*Target](ctx, "/v1/n9e/targets")
+		// from_cache=1: the center may answer from its TargetCache, since
+		// TargetCacheType.syncTargets stores the stat derived from this list
+		lst, err := poster.GetByUrls[[]*Target](ctx, "/v1/n9e/targets?from_cache=1")
 		return lst, err
 	}
 
+	return targetGetsWithGroupIds(ctx, DB(ctx).Model(&Target{}))
+}
+
+// TargetGetsOfEngine returns the targets whose engine_name is engineName, i.e.
+// the hosts that report through that engine cluster. An edge that syncs only
+// its own targets uses it in place of TargetGetsAll.
+func TargetGetsOfEngine(ctx *ctx.Context, engineName string) ([]*Target, error) {
+	if !ctx.IsCenter {
+		// A center that predates engine_name returns all targets; the edge
+		// derives its stat from the list, so that still converges.
+		lst, err := poster.GetByUrls[[]*Target](ctx, "/v1/n9e/targets?from_cache=1&engine_name="+url.QueryEscape(engineName))
+		return lst, err
+	}
+
+	return targetGetsWithGroupIds(ctx, DB(ctx).Model(&Target{}).Where("engine_name = ?", engineName))
+}
+
+func targetGetsWithGroupIds(ctx *ctx.Context, session *gorm.DB) ([]*Target, error) {
 	var lst []*Target
-	err := DB(ctx).Model(&Target{}).Find(&lst).Error
+	err := session.Find(&lst).Error
 	if err != nil {
 		return lst, err
 	}

@@ -57,6 +57,11 @@ func (rt *Router) handleProxyUser(c *gin.Context) *models.User {
 			bombErr(http.StatusInternalServerError, err)
 		}
 	}
+
+	if user.IsDisabled() {
+		ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
+	}
+
 	return user
 }
 
@@ -85,6 +90,31 @@ func (rt *Router) agentOAuthScope() gin.HandlerFunc {
 	}
 }
 
+// setAuthUser 把认证结果写入请求上下文。账号被禁用时在这里统一拒绝，
+// 于是 session、固定 token、OAuth token 几种入口都会立刻失效，不必等 token 过期。
+// 这里直接读库而不是查用户缓存：缓存以 count(*) 与 max(update_at) 判断是否需要同步，
+// update_at 只有秒级精度，禁用若与上一次用户变更落在同一秒，两个统计值都不变，
+// 同步会被一直跳过，禁用迟迟不生效。取单列的主键查询，代价与 user() 里那次读库同级。
+func (rt *Router) setAuthUser(c *gin.Context, userid int64, username string) {
+	exists, disabled, err := models.UserStatusById(rt.Ctx, userid)
+	if err != nil {
+		logger.Warningf("failed to check user(id=%d) status: %v", userid, err)
+		ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+	}
+
+	// 账号已删除但 token 还没过期：不能放行，否则重建的同名账号会被旧凭证接管
+	if !exists {
+		ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+	}
+
+	if disabled {
+		ginx.Bomb(http.StatusUnauthorized, models.ErrUserDisabled)
+	}
+
+	c.Set("userid", userid)
+	c.Set("username", username)
+}
+
 // tokenAuth 支持两种方式的认证，固定 token 和 jwt token
 // 因为不太好区分用户使用哪个方式，所以两种方式放在一个中间件里
 func (rt *Router) tokenAuth() gin.HandlerFunc {
@@ -99,8 +129,7 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 			if token != "" {
 				user := rt.UserTokenCache.GetByToken(token)
 				if user != nil && user.Username != "" {
-					c.Set("userid", user.Id)
-					c.Set("username", user.Username)
+					rt.setAuthUser(c, user.Id, user.Username)
 					c.Next()
 					return
 				}
@@ -122,8 +151,7 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 		if agentScope && rt.mcpAuthEnabled() {
 			if raw := rt.extractToken(c.Request); raw != "" {
 				if uid, uname, ok := rt.mcpVerifyAccessToken(raw); ok {
-					c.Set("userid", uid)
-					c.Set("username", uname)
+					rt.setAuthUser(c, uid, uname)
 					c.Next()
 					return
 				}
@@ -142,8 +170,7 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 					logger.Debugf("[RS] verify access token failed: %v", err)
 					ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 				}
-				c.Set("userid", user.Id)
-				c.Set("username", user.Username)
+				rt.setAuthUser(c, user.Id, user.Username)
 				c.Next()
 				return
 			}
@@ -171,8 +198,7 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		}
 
-		c.Set("userid", userid)
-		c.Set("username", arr[1])
+		rt.setAuthUser(c, userid, arr[1])
 
 		c.Next()
 	}

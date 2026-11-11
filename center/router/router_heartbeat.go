@@ -14,8 +14,8 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
@@ -192,13 +192,46 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 
 		if targetNeedUpdate {
 			newTarget.UpdateAt = time.Now().Unix()
-			err := models.DB(ctx).Model(&target).Updates(newTarget).Error
+			// Update through a fresh model: Model(target) would make gorm write the
+			// fields back into the shared cached object without the cache lock.
+			// The cache is updated under its lock instead, so the next heartbeats
+			// see the new values and do not bump update_at again before the reload.
+			err := models.DB(ctx).Model(&models.Target{}).Where("id = ?", target.Id).Updates(newTarget).Error
 			if err != nil {
 				logger.Errorf("update target fields failed, err: %v", err)
+			} else {
+				targetCache.UpdateTarget(target.Ident, func(t *models.Target) {
+					applyHeartbeatFields(t, &newTarget)
+				})
 			}
 		}
 		logger.Debugf("heartbeat field:%+v target: %v", newTarget, *target)
 	}
 
 	return req, nil
+}
+
+// applyHeartbeatFields copies the fields HandleHeartbeat persisted into the
+// cached target. It mirrors gorm's Updates(struct), which only writes non-zero
+// fields.
+func applyHeartbeatFields(t, updated *models.Target) {
+	if updated.HostIp != "" {
+		t.HostIp = updated.HostIp
+	}
+	if updated.HostTags != nil {
+		t.HostTags = updated.HostTags
+	}
+	if updated.Tags != "" {
+		t.Tags = updated.Tags
+	}
+	if updated.EngineName != "" {
+		t.EngineName = updated.EngineName
+	}
+	if updated.AgentVersion != "" {
+		t.AgentVersion = updated.AgentVersion
+	}
+	if updated.OS != "" {
+		t.OS = updated.OS
+	}
+	t.UpdateAt = updated.UpdateAt
 }

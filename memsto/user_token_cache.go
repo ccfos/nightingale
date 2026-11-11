@@ -15,6 +15,7 @@ import (
 
 type UserTokenCacheType struct {
 	statTotal int64
+	statMaxId int64
 	ctx       *ctx.Context
 	stats     *Stats
 
@@ -49,19 +50,19 @@ func (utc *UserTokenCacheType) Inject(token string, user *models.User) {
 	utc.Unlock()
 }
 
-func (utc *UserTokenCacheType) StatChanged(total int64) bool {
-	if utc.statTotal == total {
-		return false
-	}
-	return true
+// StatChanged also compares max(id): creating one token and deleting another
+// between two syncs keeps the count but raises max(id) (#3457).
+func (utc *UserTokenCacheType) StatChanged(total, maxId int64) bool {
+	return utc.statTotal != total || utc.statMaxId != maxId
 }
 
-func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, total int64) {
+func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, total, maxId int64) {
 	utc.Lock()
 	utc.tokens = tokenUsers
 	utc.Unlock()
 
 	utc.statTotal = total
+	utc.statMaxId = maxId
 }
 
 func (utc *UserTokenCacheType) GetByToken(token string) *models.User {
@@ -137,13 +138,13 @@ func (utc *UserTokenCacheType) updateUserTokenLastUsedTime() error {
 func (utc *UserTokenCacheType) syncUserTokens() error {
 	start := time.Now()
 
-	total, err := models.UserTokenTotal(utc.ctx)
+	total, maxId, err := models.UserTokenStatistics(utc.ctx)
 	if err != nil {
 		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to exec UserTokenStatistics")
 	}
 
-	if !utc.StatChanged(total) {
+	if !utc.StatChanged(total, maxId) {
 		utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(0)
 		utc.stats.GaugeSyncNumber.WithLabelValues("sync_user_tokens").Set(0)
 		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "not changed")
@@ -177,7 +178,7 @@ func (utc *UserTokenCacheType) syncUserTokens() error {
 		tokenUsers[token.Token] = user
 	}
 
-	utc.Set(tokenUsers, total)
+	utc.Set(tokenUsers, total, maxId)
 
 	ms := time.Since(start).Milliseconds()
 	utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(float64(ms))

@@ -11,16 +11,17 @@ import (
 
 func TestIsWriteTool(t *testing.T) {
 	for name, want := range map[string]bool{
-		"create_alert_rule": true,
-		"update_dashboard":  true,
-		"import_dashboard":  true,
-		"delete_panel":      true,
-		"get_dashboard":     false,
-		"list_dashboards":   false,
-		"query_prometheus":  false,
-		"load_skill":        false,
-		"search_n9e_docs":   false,
-		"updated_metrics":   false, // 前缀必须是 update_，updated_ 不算
+		"create_alert_rule":       true,
+		"update_dashboard":        true,
+		"import_dashboard":        true,
+		"delete_panel":            true,
+		"dispatch_task_stateless": true, // 一次性下发任务脚本，属高危写操作，参与去重
+		"get_dashboard":           false,
+		"list_dashboards":         false,
+		"query_prometheus":        false,
+		"load_skill":              false,
+		"search_n9e_docs":         false,
+		"updated_metrics":         false, // 前缀必须是 update_，updated_ 不算
 	} {
 		if got := isWriteTool(name); got != want {
 			t.Fatalf("isWriteTool(%q) = %v, want %v", name, got, want)

@@ -19,6 +19,7 @@ type Center struct {
 	I18NHeaderKey             string
 	MetricDesc                MetricDescType
 	AnonymousAccess           AnonymousAccess
+	DemoLogin                 DemoLogin
 	UseFileAssets             bool
 	FlashDuty                 FlashDuty
 	EventHistoryGroupView     bool
@@ -84,6 +85,15 @@ type FlashDuty struct {
 type AnonymousAccess struct {
 	PromQuerier bool
 	AlertDetail bool
+}
+
+// DemoLogin 演示站免登录入口：开启后访问 /api/n9e/auth/demo-login 会直接以 Username 的身份登录。
+// 这个入口不校验任何凭证，只应在公开演示环境开启，且 Username 必须是低权限账号
+type DemoLogin struct {
+	Enable   bool
+	Username string
+	// RedirectURL 登录成功后跳转的站内路径，默认 /
+	RedirectURL string
 }
 
 func (c *Center) PreCheck() {

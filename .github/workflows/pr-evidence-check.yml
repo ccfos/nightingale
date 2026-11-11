@@ -1,0 +1,165 @@
+name: pr-evidence-check
+
+# Enforces the evidence requirements from .github/PULL_REQUEST_TEMPLATE.md.
+# The template is only pre-filled in the web UI; PRs opened via `gh pr create`
+# (typical for automated / AI-generated submissions) bypass it entirely, so the
+# actual gate lives here.
+#
+# Trusted authors are skipped: OWNER / MEMBER / COLLABORATOR, anyone with write
+# access to the repo (covers private org members that GitHub reports as
+# CONTRIBUTOR), the ALLOWLIST below, and any PR carrying the
+# `skip-evidence-check` label.
+#
+# For everyone else, a Bug fix / New feature PR must contain:
+#   - at least one image (screenshot) in the description
+#   - a linked issue (`Fixes #123`, `Closes #123`, `Resolves #123`)
+#   - the "I ran this change on a real Nightingale instance" checkbox ticked
+# Refactor / docs / chore PRs only need the PR type selected.
+#
+# On failure the PR gets the `needs-evidence` label and an explanatory comment.
+# Authors with no relationship to the repo (NONE / FIRST_TIMER /
+# FIRST_TIME_CONTRIBUTOR) additionally get the PR closed; editing the
+# description to meet the requirements re-runs the check and reopens it.
+#
+# Uses pull_request_target so the token can label/comment/close on fork PRs.
+# It never checks out or runs PR code — it only reads the PR description.
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: >-
+      ${{ !contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+      && !contains(github.event.pull_request.labels.*.name, 'skip-evidence-check') }}
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            // Explicit trusted usernames (private org members, long-time maintainers, bots).
+            const ALLOWLIST = [];
+
+            const NEEDS_LABEL = 'needs-evidence';
+            const MARKER = '<!-- pr-evidence-check -->';
+            const AUTO_CLOSE_ASSOCIATIONS = ['NONE', 'FIRST_TIMER', 'FIRST_TIME_CONTRIBUTOR'];
+
+            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            const number = pr.number;
+            const author = pr.user.login;
+            const association = pr.author_association;
+            const body = pr.body || '';
+
+            // --- trust checks that cannot be expressed in the job-level `if` ---
+            if (ALLOWLIST.includes(author)) {
+              core.info(`${author} is allowlisted, skipping`);
+              return;
+            }
+            try {
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({ owner, repo, username: author });
+              if (['admin', 'maintain', 'write'].includes(data.permission)) {
+                core.info(`${author} has ${data.permission} access, skipping`);
+                return;
+              }
+            } catch (e) {
+              core.info(`permission lookup failed (${e.message}), treating ${author} as external`);
+            }
+
+            // --- parse the description ---
+            const checked = (label) => new RegExp(`^\\s*[-*]\\s*\\[[xX]\\]\\s*${label}`, 'm').test(body);
+            const isBugFix = checked('Bug fix');
+            const isFeature = checked('New feature');
+            const isChore = checked('Refactor');
+            const hasImage = /!\[[^\]]*\]\([^)]+\)|<img\s|github\.com\/user-attachments\/assets\//i.test(body);
+            const hasIssue = /\b(fix|fixes|fixed|close|closes|closed|resolve|resolves|resolved)\s*:?\s*(#\d+|https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/\d+)/i.test(body);
+            const hasVerified = checked('I ran this change on a real Nightingale instance');
+
+            const problems = [];
+            if (!body.trim()) {
+              problems.push('The PR description is empty. Please fill in the pull request template.');
+            } else {
+              if (!isBugFix && !isFeature && !isChore) {
+                problems.push('Select the PR type by ticking one of the `Bug fix` / `New feature` / `Refactor` checkboxes.');
+              }
+              if (isBugFix || isFeature) {
+                if (!hasImage) {
+                  problems.push(isBugFix
+                    ? 'Attach screenshots (or log excerpts as images) showing the problem **before** the fix and the same path **after** the fix, plus the full reproduction steps.'
+                    : 'Attach screenshot(s) of the new page / behavior running in Nightingale.');
+                }
+                if (!hasIssue) {
+                  problems.push('Link the issue this PR addresses, e.g. `Fixes #123`. Open one first if it does not exist.');
+                }
+                if (!hasVerified) {
+                  problems.push('Tick the checkbox confirming you ran this change on a real Nightingale instance yourself.');
+                }
+              }
+            }
+
+            // --- helpers ---
+            const ensureLabel = async () => {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: NEEDS_LABEL });
+              } catch (e) {
+                if (e.status !== 404) throw e;
+                await github.rest.issues.createLabel({ owner, repo, name: NEEDS_LABEL, color: 'e11d21',
+                  description: 'PR description is missing the required screenshots / reproduction steps' });
+              }
+            };
+            const hasNeedsLabel = pr.labels.some(l => l.name === NEEDS_LABEL);
+            const findBotComment = async () => {
+              const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: number, per_page: 100 });
+              return comments.find(c => c.body && c.body.includes(MARKER));
+            };
+            const upsertComment = async (text) => {
+              const existing = await findBotComment();
+              const full = `${MARKER}\n${text}`;
+              if (existing) {
+                await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: full });
+              } else {
+                await github.rest.issues.createComment({ owner, repo, issue_number: number, body: full });
+              }
+            };
+
+            // --- pass ---
+            if (problems.length === 0) {
+              if (hasNeedsLabel) {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: number, name: NEEDS_LABEL }).catch(() => {});
+                if (pr.state === 'closed') {
+                  await github.rest.pulls.update({ owner, repo, pull_number: number, state: 'open' });
+                }
+                await upsertComment('✅ Thanks, the PR description now contains the required evidence. A maintainer will review it.');
+              }
+              core.info('evidence check passed');
+              return;
+            }
+
+            // --- fail ---
+            const autoClose = AUTO_CLOSE_ASSOCIATIONS.includes(association);
+            await ensureLabel();
+            await github.rest.issues.addLabels({ owner, repo, issue_number: number, labels: [NEEDS_LABEL] });
+
+            const lines = [
+              `Hi @${author}, thanks for the PR. It cannot be reviewed yet because the description does not meet the requirements in the [pull request template](https://github.com/${owner}/${repo}/blob/main/.github/PULL_REQUEST_TEMPLATE.md):`,
+              '',
+              ...problems.map(p => `- ${p}`),
+              '',
+              'Every change must be verified by a human on a running Nightingale instance; unit tests alone are not sufficient. AI-assisted PRs are welcome, but the evidence above is still required.',
+              '',
+              autoClose
+                ? 'This PR has been **closed automatically**. Edit the description to include the missing items and it will be reopened automatically.'
+                : 'Please edit the description to include the missing items; the check will re-run automatically.',
+            ];
+            await upsertComment(lines.join('\n'));
+
+            if (autoClose && pr.state === 'open') {
+              await github.rest.pulls.update({ owner, repo, pull_number: number, state: 'closed' });
+            }
+            core.setFailed(`PR description is missing required evidence: ${problems.length} problem(s)`);

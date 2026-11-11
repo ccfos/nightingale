@@ -11,7 +11,7 @@ before:
     # QA code corpus assets, staged by the workflow (or locally by the script)
     # before this runs. Same fail-fast rationale as the sandbox assets above,
     # for the -tags=qa_code_embed build.
-    - bash -c 'for f in n9e.tar.gz categraf.tar.gz fe.tar.gz manifest.json; do test -s "aiagent/skill/embedded/codeassets/$f" || { echo "missing QA code asset $f — run scripts/build-qa-code-assets.sh"; exit 1; }; done'
+    - bash -c 'for f in n9e.tar.gz categraf.tar.gz fe.tar.gz docs.tar.gz manifest.json; do test -s "aiagent/skill/embedded/codeassets/$f" || { echo "missing QA code asset $f — run scripts/build-qa-code-assets.sh"; exit 1; }; done'
     # Stage the bundled categraf packages (linux amd64 + arm64) into
     # agents/categraf/, picked up below by archives.files and dockers.extra_files.
     # Release-time only, deliberately not wired into `make build`: a local

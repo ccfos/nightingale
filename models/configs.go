@@ -130,7 +130,15 @@ func InitJWTSigningKey(ctx *ctx.Context) string {
 		log.Fatalln("init jwt signing key in mysql", err)
 	}
 
-	return key
+	// Re-read the stored value so all center instances converge on the SAME key even if
+	// they raced on a fresh database (each generated its own key and inserted a row).
+	// ConfigsGet returns a deterministic (lowest-id) row, so every instance now agrees.
+	val, err = ConfigsGet(ctx, JWT_SIGNING_KEY)
+	if err != nil {
+		log.Fatalln("init jwt signing key in mysql", err)
+	}
+
+	return val
 }
 
 // InitSalt generate random salt
@@ -167,7 +175,13 @@ func InitRSAPassWord(ctx *ctx.Context) (string, error) {
 	if err != nil {
 		return "", errors.WithMessage(err, "failed to set rsa password")
 	}
-	return pwd, nil
+
+	// Re-read so all center instances converge on the same value (see InitJWTSigningKey).
+	val, err = ConfigsGet(ctx, RSA_PASSWORD)
+	if err != nil {
+		return "", errors.WithMessage(err, "failed to get rsa password after set")
+	}
+	return val, nil
 }
 
 func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) { //select built-in type configs
@@ -180,6 +194,7 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) { //select built-
 	err := DB(ctx).Model(&Configs{}).
 		Where("ckey = ?", ckey).
 		Where(configExternalEq(0)).
+		Order("id").
 		Pluck("cval", &lst).Error
 	if err != nil {
 		return "", errors.WithMessage(err, "failed to query configs")

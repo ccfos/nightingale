@@ -156,8 +156,13 @@ func (re *RecordingRule) Verify() error {
 		re.PromEvalInterval = 60
 	}
 
+	re.CronPattern = strings.TrimSpace(re.CronPattern)
 	if re.CronPattern == "" {
 		re.CronPattern = "@every 60s"
+	}
+
+	if err := ValidateCronPattern(re.CronPattern); err != nil {
+		return err
 	}
 
 	re.AppendTags = strings.TrimSpace(re.AppendTags)

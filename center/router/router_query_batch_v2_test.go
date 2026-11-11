@@ -498,7 +498,7 @@ func TestQueryBatchV2RecordsUsesElasticsearchSource(t *testing.T) {
 		"_index":  "logs-2026.07.25",
 		"_source": map[string]interface{}{"message": "hello", "status": "200"},
 		"sort":    []interface{}{float64(1784971399013)},
-	}})
+	}}, false)
 	if len(records) != 1 {
 		t.Fatalf("record count = %d, want 1", len(records))
 	}
@@ -508,28 +508,85 @@ func TestQueryBatchV2RecordsUsesElasticsearchSource(t *testing.T) {
 
 	withoutSource := queryBatchV2Records("elasticsearch.logging", []interface{}{map[string]interface{}{
 		"_id": "document-without-source", "_index": "logs-2026.07.25",
-	}})
+	}}, false)
 	if len(withoutSource[0].Fields) != 0 {
 		t.Fatalf("ES metadata leaked without _source: %#v", withoutSource[0].Fields)
 	}
 
-	generic := queryBatchV2Records("loki", []interface{}{map[string]interface{}{"message": "hello"}})
+	generic := queryBatchV2Records("loki", []interface{}{map[string]interface{}{"message": "hello"}}, false)
 	if generic[0].Fields["message"] != "hello" {
 		t.Fatalf("generic log record = %#v", generic[0].Fields)
 	}
 
 	openSearch := queryBatchV2Records("opensearch.logging", []interface{}{map[string]interface{}{
 		"_id": "document-id", "_index": "logs", "_source": map[string]interface{}{"message": "opensearch"},
-	}})
+	}}, false)
 	if openSearch[0].Fields["message"] != "opensearch" || openSearch[0].Fields["_id"] != nil {
 		t.Fatalf("OpenSearch record = %#v", openSearch[0].Fields)
 	}
 
 	nonES := queryBatchV2Records("mongodb", []interface{}{map[string]interface{}{
 		"_id": "document-id", "_index": "business-index", "message": "preserve",
-	}})
+	}}, false)
 	if nonES[0].Fields["message"] != "preserve" || nonES[0].Fields["_id"] != "document-id" {
 		t.Fatalf("non-ES record was stripped: %#v", nonES[0].Fields)
+	}
+}
+
+// The ES SQL branch of QueryLog returns plain column→value row maps instead of
+// SearchHit objects. Those rows carry no _source, so the unwrap must be
+// skipped or every SQL log record would be flattened to an empty fields map.
+// The detection is scoped to the elasticsearch cate: the opensearch plugin has
+// no SQL branch and always returns SearchHits, even if a stray sql field
+// rides along in the payload. The payload inspection is delegated to the es
+// package (IsSQLQueryLog), so the router sees exactly what the plugin's
+// extractSQLRequest sees — a payload whose sql/index/start/end does not
+// decode (e.g. a wrong-typed index) sends QueryLog down the DSL path and must
+// not be detected as SQL mode here either.
+func TestQueryBatchV2RecordsKeepsElasticsearchSQLRows(t *testing.T) {
+	sqlPayload := map[string]interface{}{"sql": "SELECT COUNT(\"x\") AS cnt FROM \"idx*\"", "index": "idx*"}
+	if !queryBatchV2ElasticsearchSQLPayload("elasticsearch", sqlPayload) {
+		t.Fatalf("non-empty sql payload was not detected as SQL mode")
+	}
+	if queryBatchV2ElasticsearchSQLPayload("elasticsearch", map[string]interface{}{"sql": "", "index": "idx*"}) {
+		t.Fatalf("empty sql payload must not be detected as SQL mode")
+	}
+	if queryBatchV2ElasticsearchSQLPayload("elasticsearch", map[string]interface{}{"index": "idx*"}) {
+		t.Fatalf("payload without sql must not be detected as SQL mode")
+	}
+	if queryBatchV2ElasticsearchSQLPayload("elasticsearch", map[string]interface{}{"sql": "SELECT 1", "index": 123}) {
+		t.Fatalf("payload with wrong-typed index must not be detected as SQL mode: plugin decodes via mapstructure and falls back to DSL")
+	}
+	if queryBatchV2ElasticsearchSQLPayload("elasticsearch", map[string]interface{}{"sql": 123}) {
+		t.Fatalf("payload with wrong-typed sql must not be detected as SQL mode")
+	}
+	if queryBatchV2ElasticsearchSQLPayload("elasticsearch", nil) {
+		t.Fatalf("nil payload must not be detected as SQL mode")
+	}
+	if queryBatchV2ElasticsearchSQLPayload("opensearch", sqlPayload) {
+		t.Fatalf("opensearch must never be detected as SQL mode")
+	}
+	if queryBatchV2ElasticsearchSQLPayload("opensearch.logging", sqlPayload) {
+		t.Fatalf("opensearch.logging must never be detected as SQL mode")
+	}
+
+	records := queryBatchV2Records("elasticsearch", []interface{}{
+		map[string]interface{}{"cnt": float64(202)},
+	}, queryBatchV2ElasticsearchSQLPayload("elasticsearch", sqlPayload))
+	if len(records) != 1 {
+		t.Fatalf("record count = %d, want 1", len(records))
+	}
+	if records[0].Fields["cnt"] != float64(202) {
+		t.Fatalf("SQL row was not preserved: %#v", records[0].Fields)
+	}
+
+	// An opensearch payload carrying a stray sql field still runs DSL and
+	// returns SearchHit-shaped maps, so the _source unwrap must stay active.
+	openSearchSQLStray := queryBatchV2Records("opensearch", []interface{}{map[string]interface{}{
+		"_id": "document-id", "_index": "logs", "_source": map[string]interface{}{"message": "hello"},
+	}}, queryBatchV2ElasticsearchSQLPayload("opensearch", sqlPayload))
+	if openSearchSQLStray[0].Fields["message"] != "hello" || openSearchSQLStray[0].Fields["_id"] != nil {
+		t.Fatalf("opensearch record with stray sql field was not unwrapped: %#v", openSearchSQLStray[0].Fields)
 	}
 }
 

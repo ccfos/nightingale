@@ -224,16 +224,39 @@ func updateBaselineHash(v interface{}) string {
 // fills p.Kind/TargetID/BaselineHash/Changes (and Payload if it precomputes the
 // write); ID/ChatID/SeqID/CreatedAt are stamped here.
 func proposeUpdate(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, p *updateProposal, prompt string, resumeArgs map[string]interface{}) (string, error) {
+	interrupt, err := stashProposalFn(ctx, deps, params, p, prompt, resumeArgs)
+	if err != nil {
+		return "", err
+	}
+	return "", interrupt
+}
+
+// proposeUpdateResume 与 proposeUpdate 相同，但声明的中断在确认并重放成功后会把
+// 工具结果回接 agent 续跑（ResumeAfterConfirm=true）——而非以终结回执收尾。适合
+// dispatch_task_stateless 这类"确认后让模型基于运行结果继续分析"的工具。确认/重放
+// 的运行时逻辑与 proposedUpdate 完全一致，仅多携带一个续跑语义给路由层。
+func proposeUpdateResume(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, p *updateProposal, prompt string, resumeArgs map[string]interface{}) (string, error) {
+	interrupt, err := stashProposalFn(ctx, deps, params, p, prompt, resumeArgs)
+	if err != nil {
+		return "", err
+	}
+	interrupt.ResumeAfterConfirm = true
+	return "", interrupt
+}
+
+// stashProposal 生成提案 id、落存并构造发起中断的公共逻辑，proposeUpdate /
+// proposeUpdateResume 共用。
+func stashProposalFn(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, p *updateProposal, prompt string, resumeArgs map[string]interface{}) (*aiagent.ToolInterrupt, error) {
 	pid, err := newProposalID()
 	if err != nil {
-		return "", fmt.Errorf("failed to generate proposal id: %v", err)
+		return nil, fmt.Errorf("failed to generate proposal id: %v", err)
 	}
 	p.ID = pid
 	p.ChatID = params["chat_id"]
 	p.SeqID, _ = strconv.ParseInt(params["seq_id"], 10, 64)
 	p.CreatedAt = time.Now()
 	if err := updateProposals.put(ctx, deps.Redis, p); err != nil {
-		return "", fmt.Errorf("failed to stash %s proposal: %v", p.Kind, err)
+		return nil, fmt.Errorf("failed to stash %s proposal: %v", p.Kind, err)
 	}
 
 	replay := make(map[string]interface{}, len(resumeArgs)+2)
@@ -243,11 +266,11 @@ func proposeUpdate(ctx context.Context, deps *aiagent.ToolDeps, params map[strin
 	replay["proposal_id"] = pid
 	replay["confirmed"] = true
 	raw, _ := json.Marshal(replay)
-	return "", &aiagent.ToolInterrupt{
+	return &aiagent.ToolInterrupt{
 		Kind:       aiagent.InterruptKindApproval,
 		Prompt:     prompt,
 		ResumeArgs: string(raw),
-	}
+	}, nil
 }
 
 // confirmUpdateGate enforces the guarantees the prompt alone couldn't, shared

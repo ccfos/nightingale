@@ -314,8 +314,11 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 
 	if event.TargetIdent != "" {
 		if pt, exist := p.TargetCache.Get(event.TargetIdent); exist {
-			pt.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(pt.GroupIds)
-			event.Target = pt
+			// copy before filling GroupNames: the cached object is shared and
+			// read concurrently (e.g. TargetCache.Snapshot)
+			t := *pt
+			t.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(t.GroupIds)
+			event.Target = &t
 		} else {
 			logger.Infof("alert_eval_%d datasource_%d fill event target error, ident: %s doesn't exist in cache.", p.rule.Id, p.datasourceId, event.TargetIdent)
 		}
@@ -424,6 +427,7 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 	cachedRule.UpdateEvent(event)
 	event.IsRecovered = true
 	event.LastEvalTime = now
+	event.RecoverTime = now
 
 	// 恢复通知是否屏蔽，按"恢复时刻"（clock=now）重新判定，而不是沿用触发期写入 p.fires 的陈旧 NotifyMuted：
 	// 仅当此刻仍命中「只屏蔽通知」规则才继续静默恢复通知，屏蔽已到期/删除则正常发出恢复通知。
@@ -683,13 +687,23 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 				// 如果是 host rule，且 target 的 engineName 不是当前的 engineName 或者是中心机房 target EngineName 为空，就跳过
 				continue
 			}
+			if !exists && p.TargetCache.EngineName() != "" {
+				// The cache holds only this engine's targets, so a missing
+				// target belongs to another engine, whose events this edge
+				// must not load and then recover. A deleted target looks the
+				// same: its events are recovered only by engines with the full
+				// cache, i.e. the center's.
+				continue
+			}
 		}
 
 		event.DB2Mem()
 		target, exists := p.TargetCache.Get(event.TargetIdent)
 		if exists {
-			target.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(target.GroupIds)
-			event.Target = target
+			// copy before filling GroupNames, see BuildEvent
+			t := *target
+			t.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(t.GroupIds)
+			event.Target = &t
 		}
 
 		fireMap[event.Hash] = event

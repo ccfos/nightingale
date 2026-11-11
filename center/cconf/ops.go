@@ -139,7 +139,7 @@ ops:
     - name: /dashboards/del
       cname: Dashboard - Delete
     - name: /public-dashboards
-      cname: Dashboard - View Public
+      cname: Dashboard - Public Filter (requires Dashboard - View)
 
 - name: alerting
   cname: Alerting

@@ -304,14 +304,14 @@ var UpdateDashboard = aiagent.AgentTool{
 - 用户如果拒绝或提出新要求，你会在新一轮收到反馈，按新要求重新调用提案即可（旧提案自动作废）。
 能力：
 - 改变量（variables）：按 name 匹配已有变量，合并你传的字段（definition / label / multi / default_value / type）；name 不存在则视为新增一个 query 变量（必须带 definition，否则报错——名字写错会落到新增分支，靠这个守卫拦下）；传 delete=true 删除该变量。
-- 改图表曲线（panels）：按 id（优先）或 name 定位图表；queries 传入则按 ref（即原曲线 refId）与现有曲线做增量合并，只覆盖你写的字段，原曲线的 step/hide/time/__mode__ 等及按 refId 关联的 overrides/transformations 一律保留；改已有曲线必须带上其 ref（不带 ref 一律视为新增曲线，没有位置匹配）；未在 queries 里提及的现有曲线原样保留（不会被删），要删某条曲线在该曲线项上带其 ref 并传 delete=true；每条 {promql, legend?, instant?, ref?, step?, hide?, delete?}；new_name 改标题；unit 改单位；description 改说明；type 改图表类型（仅 timeseries/stat/gauge/barGauge/pie/table，改类型会把该图表的类型样式选项重置为新类型默认值，改成 timeseries 时还会清掉曲线上的 instant 标志以恢复范围查询，row 布局行不能改）；delete=true 删除整个图表。panels 里只有这些字段有效，其他字段（颜色、阈值、布局等）不支持：patch 里只含不支持字段会被直接拒绝；混在支持字段里传则不支持的部分被丢弃，只有返回的改动清单里列出的才是真正写入的改动。
+- 改图表曲线（panels）：按 id（优先）或 name 定位图表；queries 传入则按 ref（即原曲线 refId）与现有曲线做增量合并，只覆盖你写的字段，原曲线的 step/hide/time/__mode__ 等及按 refId 关联的 overrides/transformations 一律保留；改已有曲线必须带上其 ref（不带 ref 一律视为新增曲线，没有位置匹配）；未在 queries 里提及的现有曲线原样保留（不会被删），要删某条曲线在该曲线项上带其 ref 并传 delete=true；每条 {promql, legend?, instant?, ref?, step?, hide?, delete?}；new_name 改标题；unit 改单位；description 改说明；type 改图表类型（仅 timeseries/stat/gauge/barGauge/pie/table/tableNG，改类型会把该图表的类型样式选项重置为新类型默认值，改成 timeseries 时还会清掉曲线上的 instant 标志以恢复范围查询，改成 tableNG 时会强制曲线使用即时查询，row 布局行不能改）；delete=true 删除整个图表。panels 里只有这些字段有效，其他字段（颜色、阈值、布局等）不支持：patch 里只含不支持字段会被直接拒绝；混在支持字段里传则不支持的部分被丢弃，只有返回的改动清单里列出的才是真正写入的改动。
 - 修复变量/数据源引用（fix_datasource=true）：把图表与变量里悬空/写死的数据源引用统一重指到大盘的数据源变量（修复"图表查不到数据/数据源引用不一致"类坏味道）。
 业务组、数据源从仪表盘本身读取，不需要、也不要向用户索要。`,
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "要修改的仪表盘 ID（必填）", Required: true},
 		{Name: "variables", Type: "string", Description: `变量改动 JSON 数组，按 name 匹配。每项: {"name":"ident", "definition":"label_values(cpu_usage_idle, ident)", "label":"主机", "multi":true, "default_value":"", "delete":false}。只写要改的字段；name 不存在则视为新增（必须带 definition）；delete=true 删除`, Required: false},
-		{Name: "panels", Type: "string", Description: `图表改动 JSON 数组，按 id（优先）或 name 定位。每项: {"id":"panel-3", "new_name":"CPU使用率(总)", "unit":"percent", "description":"...", "type":"timeseries", "queries":[{"ref":"A","promql":"...","legend":"{{ident}}","instant":false,"step":15,"hide":false}], "delete":false}。type 改图表类型(可选 timeseries/stat/gauge/barGauge/pie/table，会重置该图表的类型样式为新类型默认值；改成 timeseries 时会清掉曲线上的 instant 标志以恢复范围查询)。queries 传入则与现有曲线增量合并：按 ref(原 refId)匹配，只覆盖所写字段，未写字段(含 step/hide/__mode__ 及按 refId 关联的 overrides/transformations)原样保留；改已有曲线必须带上其 ref，不带 ref 一律视为新增曲线(没有位置匹配)；未在 queries 里出现的现有曲线一律原样保留、不会被删。要删某条曲线，在该曲线项上带其 ref 并传 delete:true。instant 传 true 即时查询、传 false 范围查询(true↔false 均可改)。不传 queries 则不动曲线`, Required: false},
+		{Name: "panels", Type: "string", Description: `图表改动 JSON 数组，按 id（优先）或 name 定位。每项: {"id":"panel-3", "new_name":"CPU使用率(总)", "unit":"percent", "description":"...", "type":"timeseries", "queries":[{"ref":"A","promql":"...","legend":"{{ident}}","instant":false,"step":15,"hide":false}], "delete":false}。type 改图表类型(可选 timeseries/stat/gauge/barGauge/pie/table/tableNG，会重置该图表的类型样式为新类型默认值；改成 timeseries 时会清掉曲线上的 instant 标志以恢复范围查询；改成 tableNG 时会强制曲线使用即时查询)。queries 传入则与现有曲线增量合并：按 ref(原 refId)匹配，只覆盖所写字段，未写字段(含 step/hide/__mode__ 及按 refId 关联的 overrides/transformations)原样保留；改已有曲线必须带上其 ref，不带 ref 一律视为新增曲线(没有位置匹配)；未在 queries 里出现的现有曲线一律原样保留、不会被删。要删某条曲线，在该曲线项上带其 ref 并传 delete:true。instant 传 true 即时查询、传 false 范围查询(true↔false 均可改)。不传 queries 则不动曲线`, Required: false},
 		{Name: "fix_datasource", Type: "boolean", Description: "是否修复悬空/写死的数据源引用，统一重指到大盘数据源变量。默认 false", Required: false},
 		{Name: "proposal_id", Type: "string", Description: "系统确认通道专用（用户确认后由系统自动重放时携带），模型不要传", Required: false},
 		{Name: "confirmed", Type: "boolean", Description: "系统确认通道专用，模型不要传", Required: false},
@@ -327,7 +327,7 @@ var CreateDashboard = aiagent.AgentTool{
 		{Name: "group_id", Type: "integer", Description: "业务组ID", Required: true},
 		{Name: "name", Type: "string", Description: "仪表盘名称", Required: true},
 		{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源ID（从 list_datasources 获取）", Required: true},
-		{Name: "panels", Type: "string", Description: `面板列表 JSON 数组。每个面板: {"name":"标题", "type":"timeseries", "queries":[{"promql":"PromQL表达式", "legend":"{{label}}"}]}。type 可选: timeseries/stat/gauge/barGauge/pie/table/row。可选字段: w(宽度)/h(高度)/unit(单位:percent,bytesIEC,seconds等)/stack(是否堆叠)`, Required: true},
+		{Name: "panels", Type: "string", Description: `面板列表 JSON 数组。每个面板: {"name":"标题", "type":"timeseries", "queries":[{"promql":"PromQL表达式", "legend":"{{label}}"}]}。type 可选: timeseries/stat/gauge/barGauge/pie/tableNG/row。可选字段: w(宽度)/h(高度)/unit(单位:percent,bytesIEC,seconds等)/stack(是否堆叠)`, Required: true},
 		{Name: "variables", Type: "string", Description: `变量列表 JSON 数组。每个变量: {"name":"变量名", "definition":"label_values(metric, label)"}。可选字段: label(显示名)/multi(是否多选,默认true)`, Required: false},
 		{Name: "tags", Type: "string", Description: "仪表盘标签，多个用空格分隔", Required: false},
 	},
@@ -502,8 +502,8 @@ must_revise=true 时不要 Final Answer, 否则你的答案会带 ⚠️ 警告�
 
 var SearchN9eDocs = aiagent.AgentTool{
 	Name: "search_n9e_docs",
-	Description: `在 Flashcat/夜莺(n9e) 官方文档站（flashcat.cloud/docs）做关键词搜索，返回 top N 篇匹配文档的标题、链接、描述和**完整正文**。
-专门用于回答"平台使用类"问题（怎么操作 / 如何配置 / 概念解释）。索引每天自动同步一次，常驻内存；只含 V9 文档（V5-V8 旧版已过滤）。
+	Description: `在夜莺(n9e) 官方文档站（n9e.github.io）做关键词搜索，返回 top N 篇匹配文档的标题、链接、描述和**完整正文**。
+专门用于回答"平台使用类"问题（怎么操作 / 如何配置 / 概念解释）。文档随版本内置在程序里（中英两种语言，同一页只返回命中更好的一种），只含 V9 文档。
 打分：关键词命中 title +5、description +3、contents 每次 +1（封顶 3）。
 返回字段 contents 是该文档的完整正文（rune 截断到 6000，覆盖 99% 文档全长）——必须以此为答题依据，**禁止**凭训练记忆补充正文里没出现的字段名/接口路径/Header 格式。permalink 必须在回答末尾以引用形式带给用户。
 若 total=0，换关键词重试一次；仍无 → 告诉用户文档里没找到。`,
@@ -952,6 +952,50 @@ var GetTaskTplDetail = aiagent.AgentTool{
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "任务模板ID", Required: true},
+	},
+}
+
+// =============================================================================
+// Ibex task dispatch & result
+// =============================================================================
+
+var DispatchTaskStateless = aiagent.AgentTool{
+	Name:        "dispatch_task_stateless",
+	Description: "把一段脚本直接下发到指定目标机执行（无需预建任务模板）。脚本由你现场生成，适合临时/按需运维。靶机上执行脚本属于高危操作，首次调用仅展示脚本全文供用户确认，用户确认后才真正下发。",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "busi_group_id", Type: "integer", Description: "任务所属业务组 ID", Required: true},
+		{Name: "host", Type: "string", Description: "目标机 ident，如 host01", Required: true},
+		{Name: "script", Type: "string", Description: "要在目标机上执行的脚本完整内容（sh/python 等），由你现场生成", Required: true},
+		{Name: "title", Type: "string", Description: "任务标题（展示用），默认 honor: <host>", Required: false},
+		{Name: "account", Type: "string", Description: "执行脚本的操作系统账号，默认 root", Required: false},
+		{Name: "args", Type: "string", Description: "执行脚本时附加的命令行参数", Required: false},
+		{Name: "stdin", Type: "string", Description: "注入脚本 stdin 的 JSON 字符串", Required: false},
+		{Name: "timeout", Type: "integer", Description: "单机执行超时（秒），默认30，上限432000（5天）", Required: false},
+		{Name: "wait_seconds", Type: "integer", Description: "用户确认后自动等待脚本执行结果的最长时间（秒），默认30，上限300；超时未完成会返回当前进度，可再用 get_task_status 查看完整结果", Required: false},
+		{Name: "auth_level", Type: "integer", Description: "AI 任务授权等级 0-3，默认0（沿用业务组授权策略）", Required: false},
+	},
+}
+
+var GetTaskStatus = aiagent.AgentTool{
+	Name:        "get_task_status",
+	Description: "查询一次已下发任务（dispatch_task_stateless）的记录元数据及各目标机的实时执行状态与脚本输出（host/status/stdout/stderr，用于下发后闭环查看结果。",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "task_id", Type: "integer", Description: "任务ID（dispatch_task_stateless 返回的 task_id）", Required: true},
+	},
+}
+
+var ListTaskRecords = aiagent.AgentTool{
+	Name:        "list_task_records",
+	Description: "查询当前用户可见的已下发任务记录（task_record）列表，可按业务组/关键词/时间窗过滤。",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "busi_group_id", Type: "integer", Description: "业务组 ID 过滤；不传则返回当前用户可见的所有业务组记录", Required: false},
+		{Name: "query", Type: "string", Description: "搜索关键词，匹配任务标题", Required: false},
+		{Name: "days", Type: "integer", Description: "只看最近 N 天的记录，默认7", Required: false},
+		{Name: "limit", Type: "integer", Description: "返回数量限制，默认20，最大100", Required: false},
+		{Name: "auth_level", Type: "string", Description: "逗号分隔的授权等级过滤，如 \"0,1\"；不传不过滤", Required: false},
 	},
 }
 

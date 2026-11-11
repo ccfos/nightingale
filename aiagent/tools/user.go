@@ -40,7 +40,7 @@ func listUsers(_ context.Context, deps *aiagent.ToolDeps, args map[string]interf
 		limit = 200
 	}
 
-	users, err := models.UserGets(deps.DBCtx, query, limit, 0, 0, 0, "username", false, nil, nil, nil)
+	users, err := models.UserGets(deps.DBCtx, query, limit, 0, 0, 0, "username", false, nil, nil, nil, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to query users: %v", err)
 	}

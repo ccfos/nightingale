@@ -7,9 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/url"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -61,10 +65,146 @@ func (p *FlashDutyProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	return &NotifyResult{Target: strings.Join(targets, ","), Response: strings.Join(responses, "; "), Err: aggErr}
 }
 
-func SendFlashDuty(config *models.FlashDutyRequestConfig, events []*models.AlertCurEvent, flashDutyChannelID int64, client *http.Client) (string, error) {
-	// todo 每一个 channel 批量发送事件
+// Prepare private event copies so other notification channels can still use the screenshots.
+func prepareFlashDutyEvents(config *models.FlashDutyRequestConfig, events []*models.AlertCurEvent, client *http.Client) ([]*models.AlertCurEvent, error) {
 	if client == nil {
-		return "", fmt.Errorf("http client not found")
+		return nil, errors.New("http client not found")
+	}
+	prepared := make([]*models.AlertCurEvent, len(events))
+	var uploads sync.WaitGroup
+	// Bound concurrent uploads to avoid excessive memory usage for large batches.
+	uploadSlots := make(chan struct{}, 5)
+	for i, event := range events {
+		if event == nil {
+			continue
+		}
+		copied := *event
+		copied.ShotImageBase64 = nil
+		prepared[i] = &copied
+		// The snapshot field holds one image. Pick it consistently when multiple screenshots exist.
+		keys := make([]string, 0, len(event.ShotImageBase64))
+		for key := range event.ShotImageBase64 {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			imageBase64 := event.ShotImageBase64[key]
+			if strings.TrimSpace(imageBase64) == "" {
+				continue
+			}
+			var ruleConfig map[string]json.RawMessage
+			configJSON := []byte(event.RuleConfig)
+			if event.RuleConfigJson != nil {
+				var err error
+				configJSON, err = json.Marshal(event.RuleConfigJson)
+				if err != nil {
+					logger.Warningf("send_flashduty: skip image attachment event_id=%d: marshal rule config: %v", event.Id, err)
+					break
+				}
+			}
+			if len(configJSON) > 0 {
+				if err := json.Unmarshal(configJSON, &ruleConfig); err != nil {
+					logger.Warningf("send_flashduty: skip image attachment event_id=%d: parse rule config: %v", event.Id, err)
+					break
+				}
+			}
+			if ruleConfig == nil {
+				ruleConfig = make(map[string]json.RawMessage)
+			}
+			uploadSlots <- struct{}{}
+			uploads.Add(1)
+			go func() {
+				defer uploads.Done()
+				defer func() { <-uploadSlots }()
+				imageKey, err := uploadFlashDutyImage(config.IntegrationUrl, imageBase64, client)
+				if err != nil {
+					// Screenshots are optional: keep sending alerts even if uploading fails.
+					logger.Warningf("send_flashduty: upload image failed event_id=%d: %v", event.Id, err)
+					return
+				}
+				// Match NewNorthstarAlertEvent: annotations.img_key and a string snapshot_pic_url.
+				ruleConfig["snapshot_pic_url"], _ = json.Marshal(imageKey)
+				copied.RuleConfigJson = ruleConfig
+				copied.AnnotationsJSON = make(map[string]string, len(event.AnnotationsJSON)+1)
+				for name, value := range event.AnnotationsJSON {
+					copied.AnnotationsJSON[name] = value
+				}
+				copied.AnnotationsJSON["img_key"] = imageKey
+			}()
+			break
+		}
+	}
+	uploads.Wait()
+	return prepared, nil
+}
+
+func uploadFlashDutyImage(integrationURL, imageBase64 string, client *http.Client) (string, error) {
+	uploadURL, err := url.Parse(integrationURL)
+	if err != nil {
+		return "", err
+	}
+	query := url.Values{"integration_key": {uploadURL.Query().Get("integration_key")}}
+	uploadURL.Path = "/push/image/upload"
+	uploadURL.RawPath = ""
+	uploadURL.RawQuery = query.Encode()
+	uploadURL.Fragment = ""
+	imgBytes, err := decodeBase64Payload(imageBase64)
+	if err != nil {
+		return "", fmt.Errorf("decode image: %w", err)
+	}
+	if len(imgBytes) == 0 || len(imgBytes) > 5*1024*1024 {
+		return "", errors.New("image must be non-empty and no larger than 5MB")
+	}
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	part, err := writer.CreateFormFile("image", "snapshot.png")
+	if err != nil {
+		return "", err
+	}
+	if _, err = part.Write(imgBytes); err != nil {
+		return "", err
+	}
+	if err = writer.Close(); err != nil {
+		return "", err
+	}
+	req, err := http.NewRequest(http.MethodPost, uploadURL.String(), &body)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("upload image returned status %d", resp.StatusCode)
+	}
+	var result struct {
+		Data struct {
+			ImageKey string `json:"image_key"`
+		} `json:"data"`
+		Error *struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("parse upload image response: %w", err)
+	}
+	if result.Error != nil {
+		return "", fmt.Errorf("upload image failed: %s: %s", result.Error.Code, result.Error.Message)
+	}
+	if result.Data.ImageKey == "" {
+		return "", errors.New("upload image response has no image_key")
+	}
+	return result.Data.ImageKey, nil
+}
+
+func SendFlashDuty(config *models.FlashDutyRequestConfig, events []*models.AlertCurEvent, flashDutyChannelID int64, client *http.Client) (string, error) {
+	events, err := prepareFlashDutyEvents(config, events, client)
+	if err != nil {
+		return "", err
 	}
 
 	body, err := json.Marshal(events)

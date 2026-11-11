@@ -66,11 +66,18 @@ func (rt *Router) userGets(c *gin.Context) {
 		emails = []string{}
 	}
 
+	// disabled 不传表示不按状态过滤，传 0/1 分别过滤正常与已禁用的账号
+	var disabled *int
+	if ginx.QueryStr(c, "disabled", "") != "" {
+		d := ginx.QueryInt(c, "disabled")
+		disabled = &d
+	}
+
 	go rt.UserCache.UpdateUsersLastActiveTime()
-	total, err := models.UserTotal(rt.Ctx, query, stime, etime)
+	total, err := models.UserTotal(rt.Ctx, query, stime, etime, disabled)
 	ginx.Dangerous(err)
 
-	list, err := models.UserGets(rt.Ctx, query, limit, ginx.Offset(c, limit), stime, etime, order, desc, usernames, phones, emails)
+	list, err := models.UserGets(rt.Ctx, query, limit, ginx.Offset(c, limit), stime, etime, order, desc, usernames, phones, emails, disabled)
 	ginx.Dangerous(err)
 
 	user := c.MustGet("user").(*models.User)
@@ -226,6 +233,45 @@ func (rt *Router) userPasswordPut(c *gin.Context) {
 	ginx.NewRender(c).Message(target.UpdatePassword(rt.Ctx, cryptoPass, c.MustGet("username").(string)))
 }
 
+type userDisabledForm struct {
+	Disabled int `json:"disabled"`
+}
+
+// 禁用/启用账号。只改这一个状态位，角色、团队、业务组关系原样保留，
+// 转岗回来重新启用即可，不需要重新配置权限
+func (rt *Router) userDisabledPut(c *gin.Context) {
+	var f userDisabledForm
+	ginx.BindJSON(c, &f)
+
+	if f.Disabled != models.UserEnabled && f.Disabled != models.UserDisabled {
+		ginx.Bomb(http.StatusBadRequest, "disabled invalid")
+	}
+
+	target := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+	me := c.MustGet("user").(*models.User)
+
+	if f.Disabled == models.UserDisabled {
+		ginx.Dangerous(checkUserCanBeDisabled(me, target), http.StatusBadRequest)
+	}
+
+	ginx.NewRender(c).Message(target.UpdateDisabled(rt.Ctx, f.Disabled, me.Username))
+}
+
+// 禁用自己会立刻把自己锁在门外，禁用 root 会让系统失去最后的兜底账号，两者都拦掉。
+// 「不能禁用最后一个可用管理员」放在 UpdateDisabled 的事务里判，那里和删除账号
+// 共用同一把锁，才挡得住「一边禁用、一边删除」的并发
+func checkUserCanBeDisabled(me, target *models.User) error {
+	if me.Id == target.Id {
+		return fmt.Errorf("cannot disable yourself")
+	}
+
+	if target.Username == "root" {
+		return fmt.Errorf("cannot disable the root user")
+	}
+
+	return nil
+}
+
 func (rt *Router) userDel(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
 	target, err := models.UserGetById(rt.Ctx, id)
@@ -236,16 +282,8 @@ func (rt *Router) userDel(c *gin.Context) {
 		return
 	}
 
-	// 如果要删除的用户是 admin 角色，检查是否是最后一个 admin
-	if target.IsAdmin() {
-		adminCount, err := models.CountAdminUsers(rt.Ctx)
-		ginx.Dangerous(err)
-
-		if adminCount <= 1 {
-			ginx.Bomb(http.StatusBadRequest, "Cannot delete the last admin user")
-		}
-	}
-
+	// 「不能删掉最后一个可用管理员」在 Del 的事务里判：它和禁用账号共用同一把锁，
+	// 单独在这里数一次挡不住两条路径并发
 	ginx.NewRender(c).Message(target.Del(rt.Ctx))
 }
 

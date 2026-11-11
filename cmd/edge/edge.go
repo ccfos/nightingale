@@ -52,7 +52,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	syncStats := memsto.NewSyncStats()
 
-	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
+	targetCache := memsto.NewTargetCacheOfEngine(ctx, syncStats, redis, config.Alert.Heartbeat.TargetSyncEngineName())
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
 	idents := idents.New(ctx, redis, config.Pushgw)

@@ -316,32 +316,77 @@ func isPublicIP(ip net.IP) bool {
 		return false
 	}
 	if ip4 := ip.To4(); ip4 != nil {
-		// 100.64.0.0/10 — Carrier-Grade NAT.
-		if ip4[0] == 100 && ip4[1] >= 64 && ip4[1] <= 127 {
-			return false
-		}
-		// 192.0.0.0/24 — IETF Protocol Assignments.
-		if ip4[0] == 192 && ip4[1] == 0 && ip4[2] == 0 {
-			return false
-		}
-		// 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24 — TEST-NET.
-		if ip4[0] == 192 && ip4[1] == 0 && ip4[2] == 2 {
-			return false
-		}
-		if ip4[0] == 198 && ip4[1] == 51 && ip4[2] == 100 {
-			return false
-		}
-		if ip4[0] == 203 && ip4[1] == 0 && ip4[2] == 113 {
-			return false
-		}
-		// 198.18.0.0/15 — benchmarking.
-		if ip4[0] == 198 && (ip4[1] == 18 || ip4[1] == 19) {
-			return false
-		}
-		// 240.0.0.0/4 — reserved (includes 255.255.255.255).
-		if ip4[0] >= 240 {
-			return false
-		}
+		return isPublicIPv4(ip4)
+	}
+	// ip.To4() only unwraps the standard "::ffff:a.b.c.d" IPv4-mapped form.
+	// A forbidden IPv4 address (e.g. cloud instance metadata,
+	// 169.254.169.254) can also reach here disguised as a 6to4 or NAT64
+	// IPv6 address, so those encodings must be unwrapped and re-checked
+	// too, and the deprecated IPv6 site-local range rejected outright.
+	ip16 := ip.To16()
+	if ip16 == nil {
+		return true
+	}
+	if ip16[0] == 0xfe && ip16[1]&0xc0 == 0xc0 {
+		// fec0::/10 — deprecated IPv6 site-local, still routed on some networks.
+		return false
+	}
+	if ip16[0] == 0x20 && ip16[1] == 0x02 {
+		// 2002::/16 — 6to4. The embedded IPv4 address is bytes 2-5.
+		return isPublicIPv4(net.IPv4(ip16[2], ip16[3], ip16[4], ip16[5]).To4())
+	}
+	nat64WellKnown := net.IP{0, 0x64, 0xff, 0x9b, 0, 0, 0, 0, 0, 0, 0, 0}
+	if ip16[:12].Equal(nat64WellKnown) {
+		// 64:ff9b::/96 — NAT64 well-known prefix. The embedded IPv4 address
+		// is the last 4 bytes.
+		return isPublicIPv4(net.IPv4(ip16[12], ip16[13], ip16[14], ip16[15]).To4())
+	}
+	nat64LocalUse := net.IP{0, 0x64, 0xff, 0x9b, 0, 1, 0, 0, 0, 0, 0, 0}
+	if ip16[:6].Equal(nat64LocalUse[:6]) {
+		// 64:ff9b:1::/48 — NAT64 local-use prefix. Per RFC 8215 this is only
+		// ever valid within a single administrative domain and must never be
+		// treated as a globally routable address, so reject the whole prefix
+		// rather than attempting to decode an embedded IPv4 address out of it.
+		return false
+	}
+	return true
+}
+
+func isPublicIPv4(ip4 net.IP) bool {
+	if ip4 == nil {
+		return false
+	}
+	// 100.64.0.0/10 — Carrier-Grade NAT.
+	if ip4[0] == 100 && ip4[1] >= 64 && ip4[1] <= 127 {
+		return false
+	}
+	// 192.0.0.0/24 — IETF Protocol Assignments.
+	if ip4[0] == 192 && ip4[1] == 0 && ip4[2] == 0 {
+		return false
+	}
+	// 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24 — TEST-NET.
+	if ip4[0] == 192 && ip4[1] == 0 && ip4[2] == 2 {
+		return false
+	}
+	if ip4[0] == 198 && ip4[1] == 51 && ip4[2] == 100 {
+		return false
+	}
+	if ip4[0] == 203 && ip4[1] == 0 && ip4[2] == 113 {
+		return false
+	}
+	// 198.18.0.0/15 — benchmarking.
+	if ip4[0] == 198 && (ip4[1] == 18 || ip4[1] == 19) {
+		return false
+	}
+	// 240.0.0.0/4 — reserved (includes 255.255.255.255).
+	if ip4[0] >= 240 {
+		return false
+	}
+	// Loopback/private/link-local/CGNAT-mapped forms embedded via 6to4/NAT64
+	// must be caught even though they arrive as a plain 4-byte net.IP here.
+	if ip4.IsLoopback() || ip4.IsPrivate() || ip4.IsLinkLocalUnicast() ||
+		ip4.IsLinkLocalMulticast() || ip4.IsMulticast() || ip4.IsUnspecified() {
+		return false
 	}
 	return true
 }

@@ -3,9 +3,14 @@ package unit
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 )
+
+// maxAdaptiveDecimals caps how far formatFixed may extend precision beyond the
+// requested decimals when the rounded text would hide the real value.
+const maxAdaptiveDecimals = 6
 
 // FormattedValue 格式化后的值的结构
 type FormattedValue struct {
@@ -291,10 +296,11 @@ func formatScaled(value float64, su scaledUnit, decimals int) FormattedValue {
 
 // formatSymbol 处理不做换算、直接在数值后拼接符号的单位
 func formatSymbol(value float64, symbol string, decimals int) FormattedValue {
+	text, shown := formatFixed(value, decimals)
 	return FormattedValue{
-		Value: roundFloat(value, decimals),
+		Value: shown,
 		Unit:  symbol,
-		Text:  fmt.Sprintf("%.*f %s", decimals, value, symbol),
+		Text:  text + " " + symbol,
 		Stat:  value,
 	}
 }
@@ -436,22 +442,65 @@ func formatPercent(value float64, decimals int, isUnit bool) FormattedValue {
 	if isUnit {
 		value = value * 100
 	}
+	text, shown := formatFixed(value, decimals)
 	return FormattedValue{
-		Value: roundFloat(value, decimals),
+		Value: shown,
 		Unit:  "%",
-		Text:  fmt.Sprintf("%.*f%%", decimals, value),
+		Text:  text + "%",
 		Stat:  value,
 	}
 }
 
 // formatNone 处理无单位格式化
 func formatNone(value float64, decimals int) FormattedValue {
+	text, _ := formatFixed(value, decimals)
 	return FormattedValue{
 		Value: value,
 		Unit:  "",
-		Text:  fmt.Sprintf("%.*f", decimals, value),
+		Text:  text,
 		Stat:  value,
 	}
+}
+
+// formatFixed renders value with at least `decimals` fractional digits and
+// returns the text together with the number it displays.
+//
+// Rounding to a fixed number of decimals can collapse a value onto an integer
+// and hide the very deviation an alert fired on: an SLA of 99.9996 evaluated
+// against `< 99.9998` would be shown as "100.00", and an error ratio of 0.004
+// as "0.00". When that happens the precision is extended, one digit at a time
+// up to maxAdaptiveDecimals, until the last digit is non-zero. Values that keep
+// any non-zero fractional digit (37.126 -> "37.13", 37.104 -> "37.10") are left
+// untouched, so ordinary readings do not become noisier, and float noise below
+// the cap (37.00000001 -> "37.00") is still rounded away.
+func formatFixed(value float64, decimals int) (string, float64) {
+	if decimals < 0 {
+		decimals = 0
+	}
+	text := fmt.Sprintf("%.*f", decimals, value)
+	shown, _ := strconv.ParseFloat(text, 64)
+	if shown == value || !collapsedByRounding(text, decimals) {
+		return text, shown
+	}
+	for d := decimals + 1; d <= maxAdaptiveDecimals; d++ {
+		candidate := fmt.Sprintf("%.*f", d, value)
+		if !strings.HasSuffix(candidate, "0") {
+			shown, _ = strconv.ParseFloat(candidate, 64)
+			return candidate, shown
+		}
+	}
+	return text, shown
+}
+
+// collapsedByRounding reports whether text, produced with `decimals` fractional
+// digits, has an all-zero fractional part, i.e. rounding landed on an integer.
+// A single trailing zero is not enough: 85.2034 -> "85.20" loses no more than
+// 85.2134 -> "85.21" does, and extending it would make ~1 in 10 readings noisier.
+func collapsedByRounding(text string, decimals int) bool {
+	if decimals == 0 {
+		return false
+	}
+	return strings.Trim(text[len(text)-decimals:], "0") == ""
 }
 
 // formatDateTime 处理时间戳格式化
