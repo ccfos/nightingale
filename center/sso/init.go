@@ -200,9 +200,9 @@ func Init(center cconf.Center, ctx *ctx.Context, configCache *memsto.ConfigCache
 			oidcClient, err := oidcx.New(config)
 			if err != nil {
 				logger.Error("init oidc failed:", err)
-			} else {
-				ssoClient.OIDC = oidcClient
 			}
+			// New always returns a non-nil client; keep it so the periodic reload does not dereference nil
+			ssoClient.OIDC = oidcClient
 		case "CAS":
 			var config cas.Config
 			err := toml.Unmarshal([]byte(cfg.Content), &config)

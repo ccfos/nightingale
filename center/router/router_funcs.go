@@ -39,6 +39,19 @@ func (rt *Router) statistic(c *gin.Context) {
 		// received (see memsto TargetCacheType.syncTargets). Older edges that
 		// store this stat as is get the list from the DB instead (see
 		// targetGetsByService), which is never older than a cached stat.
+		//
+		// engine_name comes from an edge that syncs only its own targets: the
+		// stat then covers just the targets of that engine cluster.
+		if engineName := ginx.QueryStr(c, "engine_name", ""); engineName != "" {
+			if rt.TargetCache != nil {
+				total, lastUpdated := rt.TargetCache.StatOfEngine(engineName)
+				ginx.NewRender(c).Data(&models.Statistics{Total: total, LastUpdated: lastUpdated}, nil)
+				return
+			}
+			statistics, err = models.TargetStatisticsOfEngine(rt.Ctx, engineName)
+			ginx.NewRender(c).Data(statistics, err)
+			return
+		}
 		if rt.TargetCache != nil {
 			total, lastUpdated := rt.TargetCache.Stat()
 			ginx.NewRender(c).Data(&models.Statistics{Total: total, LastUpdated: lastUpdated}, nil)
