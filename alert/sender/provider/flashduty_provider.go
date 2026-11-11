@@ -116,7 +116,7 @@ func prepareFlashDutyEvents(config *models.FlashDutyRequestConfig, events []*mod
 			go func() {
 				defer uploads.Done()
 				defer func() { <-uploadSlots }()
-				imageKey, err := uploadFlashDutyImage(config.IntegrationUrl, imageBase64, client)
+				imageKey, err := uploadFlashDutyImage(context.Background(), config.IntegrationUrl, imageBase64, client)
 				if err != nil {
 					// Screenshots are optional: keep sending alerts even if uploading fails.
 					logger.Warningf("send_flashduty: upload image failed event_id=%d: %v", event.Id, err)
@@ -138,7 +138,7 @@ func prepareFlashDutyEvents(config *models.FlashDutyRequestConfig, events []*mod
 	return prepared, nil
 }
 
-func uploadFlashDutyImage(integrationURL, imageBase64 string, client *http.Client) (string, error) {
+func uploadFlashDutyImage(ctx context.Context, integrationURL, imageBase64 string, client *http.Client) (string, error) {
 	uploadURL, err := url.Parse(integrationURL)
 	if err != nil {
 		return "", err
@@ -167,7 +167,7 @@ func uploadFlashDutyImage(integrationURL, imageBase64 string, client *http.Clien
 	if err = writer.Close(); err != nil {
 		return "", err
 	}
-	req, err := http.NewRequest(http.MethodPost, uploadURL.String(), &body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL.String(), &body)
 	if err != nil {
 		return "", err
 	}
