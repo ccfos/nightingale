@@ -16,14 +16,31 @@ func TestMaskPhone(t *testing.T) {
 	}{
 		{"", ""},
 		{"1", "*"},
-		{"1234567", "*******"},
-		{"12345678", "123*5678"},
-		{"13800138000", "138****8000"},
-		{"+8613800138000", "+86******8000"},
-		{"138****8000", "138****8000"},
+		{"12345", "*****"},
+		{"123456", "123*56"},
+		{"1234567", "123**67"},
+		{"12345678", "123***78"},
+		{"13800138000", "138******00"},
+		{"+8613800138000", "+86138******00"},
+		{"+14155552671", "+141******71"},
+		{"+85291234567", "+85291****67"},
+		{"+447911123456", "+4479******56"},
+		{"+420601123456", "+42060*****56"},
+		{"+421901123456", "+42190*****56"},
+		{"+4236612345", "+42366***45"},
+		{"+71234567890", "+712******90"},
+		{"+80012345678", "+80012****78"},
+		{"+86", "+86"},
+		{"+8612345", "+86*****"},
+		{"+8521234", "+852****"},
+		{"+85212345", "+85212*45"},
+		{"138******00", "138******00"},
+		{"+86138******00", "+86138******00"},
+		{"+85291****67", "+85291****67"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.phone, func(t *testing.T) {
+			t.Parallel()
 			if got := maskPhone(tc.phone); got != tc.want {
 				t.Fatalf("maskPhone(%q) = %q, want %q", tc.phone, got, tc.want)
 			}
@@ -52,7 +69,7 @@ func TestSelfProfileMasksPhoneForAllRoles(t *testing.T) {
 			if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
 				t.Fatal(err)
 			}
-			if response.Data.Phone != "138****8000" || response.Data.Username != user.Username {
+			if response.Data.Phone != "138******00" || response.Data.Username != user.Username {
 				t.Fatalf("unexpected user response: %s", w.Body.String())
 			}
 			if user.Phone != "13800138000" {
@@ -72,7 +89,7 @@ func TestCallbackOutputMasksPhone(t *testing.T) {
 	if err := json.Unmarshal(body, &response); err != nil {
 		t.Fatal(err)
 	}
-	if response.User.Phone != "138****8000" || user.Phone != "13800138000" {
+	if response.User.Phone != "138******00" || user.Phone != "13800138000" {
 		t.Fatalf("unexpected callback phone: response=%q, original=%q", response.User.Phone, user.Phone)
 	}
 }
