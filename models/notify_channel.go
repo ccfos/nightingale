@@ -357,10 +357,25 @@ type SMTPRequestConfig struct {
 }
 
 type ScriptRequestConfig struct {
-	ScriptType string `json:"script_type"` // 脚本类型，目前支持 python, shell
-	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
-	Script     string `json:"script"`      // 脚本内容
-	Path       string `json:"path"`        // 脚本路径
+	ScriptType  string             `json:"script_type"`  // 脚本类型，目前支持 python, shell
+	Timeout     int                `json:"timeout"`      // 超时时间（毫秒）
+	Script      string             `json:"script"`       // 脚本内容
+	Path        string             `json:"path"`         // 脚本路径
+	ImageUpload *ScriptImageUpload `json:"image_upload"` // 图片上传配置
+	Proxy       *ScriptProxy       `json:"proxy"`        // 脚本执行代理
+}
+
+type ScriptProxy struct {
+	Url     string            `json:"url"`
+	Timeout int               `json:"timeout"` // 超时时间（秒）
+	Headers map[string]string `json:"headers"`
+}
+
+type ScriptImageUpload struct {
+	Platform               string                  `json:"platform,omitempty"` // 图片上传平台，目前支持 dingtalk、feishu、flashduty
+	DingtalkRequestConfig  *DingtalkRequestConfig  `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
+	FeishuRequestConfig    *FeishuRequestConfig    `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
+	FlashDutyRequestConfig *FlashDutyRequestConfig `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
 }
 
 // HTTPRequestConfig 通知请求配置
@@ -597,6 +612,16 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 		insecureSkipVerify = insecureSkipVerify || n.InsecureSkipVerify
 	}
 
+	if nc.RequestType == "script" && rc.ScriptRequestConfig != nil && rc.ScriptRequestConfig.Proxy != nil {
+		scriptProxy := rc.ScriptRequestConfig.Proxy
+		if scriptProxy.Url != "" {
+			proxy = scriptProxy.Url
+		}
+		if scriptProxy.Timeout > 0 {
+			timeout = scriptProxy.Timeout * 1000 // ScriptProxy uses seconds; HTTP config uses milliseconds.
+		}
+	}
+
 	if timeout == 0 {
 		timeout = 10000 // HTTP 默认 10 秒
 	}
@@ -739,7 +764,39 @@ func (ncc *NotifyChannelConfig) ValidateScriptRequestConfig() error {
 	if ncc.RequestConfig.ScriptRequestConfig.Script == "" && ncc.RequestConfig.ScriptRequestConfig.Path == "" {
 		return errors.New("either script content or script path must be provided")
 	}
+	if ncc.RequestConfig.ScriptRequestConfig.ImageUpload != nil {
+		return ncc.RequestConfig.ScriptRequestConfig.ImageUpload.Verify()
+	}
+	return nil
+}
 
+func (c *ScriptImageUpload) Verify() error {
+	if c == nil || c.Platform == "" {
+		return errors.New("script image upload config cannot be nil")
+	}
+	switch c.Platform {
+	case "dingtalk":
+		cfg := c.DingtalkRequestConfig
+		if cfg == nil || strings.TrimSpace(cfg.AppKey) == "" || strings.TrimSpace(cfg.AppSecret) == "" {
+			return errors.New("dingtalk image upload requires app_key and app_secret")
+		}
+	case "feishu":
+		cfg := c.FeishuRequestConfig
+		if cfg == nil || strings.TrimSpace(cfg.AppID) == "" || strings.TrimSpace(cfg.AppSecret) == "" {
+			return errors.New("feishu image upload requires app_id and app_secret")
+		}
+	case "flashduty":
+		if c.FlashDutyRequestConfig == nil {
+			return errors.New("flashduty image upload requires integration_url")
+		}
+		u, err := url.Parse(c.FlashDutyRequestConfig.IntegrationUrl)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" || strings.TrimSpace(u.Query().Get("integration_key")) == "" {
+			return errors.New("flashduty image upload requires an HTTP(S) integration_url with integration_key")
+		}
+
+	default:
+		return errors.New("unsupported script image upload platform")
+	}
 	return nil
 }
 
