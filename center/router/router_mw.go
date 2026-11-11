@@ -228,7 +228,7 @@ func (rt *Router) jwtMock() gin.HandlerFunc {
 		}
 		user := rt.handleProxyUser(c)
 		ginx.NewRender(c).Data(gin.H{
-			"user":          user,
+			"user":          userForResponse(user),
 			"access_token":  "",
 			"refresh_token": "",
 		}, nil)

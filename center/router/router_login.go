@@ -100,7 +100,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
 
 	ginx.NewRender(c).Data(gin.H{
-		"user":          user,
+		"user":          userForResponse(user),
 		"access_token":  ts.AccessToken,
 		"refresh_token": ts.RefreshToken,
 	}, nil)
@@ -356,7 +356,7 @@ func (rt *Router) loginCallback(c *gin.Context) {
 
 	ginx.NewRender(c).Data(CallbackOutput{
 		Redirect:     redirect,
-		User:         user,
+		User:         userForResponse(user),
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	}, nil)
@@ -448,7 +448,7 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 	}
 	ginx.NewRender(c).Data(CallbackOutput{
 		Redirect:     redirect,
-		User:         user,
+		User:         userForResponse(user),
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	}, nil)
@@ -558,7 +558,7 @@ func (rt *Router) loginCallbackDingTalk(c *gin.Context) {
 
 	ginx.NewRender(c).Data(CallbackOutput{
 		Redirect:     redirect,
-		User:         user,
+		User:         userForResponse(user),
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	}, nil)
@@ -654,7 +654,7 @@ func (rt *Router) loginCallbackFeiShu(c *gin.Context) {
 
 	ginx.NewRender(c).Data(CallbackOutput{
 		Redirect:     redirect,
-		User:         user,
+		User:         userForResponse(user),
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	}, nil)
@@ -721,7 +721,7 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 
 	ginx.NewRender(c).Data(CallbackOutput{
 		Redirect:     redirect,
-		User:         user,
+		User:         userForResponse(user),
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	}, nil)
