@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 	elasticsearch8 "github.com/elastic/go-elasticsearch/v8"
 )
 
@@ -62,9 +63,14 @@ func officialClient(escli *Elasticsearch) (*elasticsearch8.Client, error) {
 		}
 	}
 
+	rt, err := dsauth.Wrap(transport, escli.Auth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init elasticsearch auth: %w", err)
+	}
+
 	cfg := elasticsearch8.Config{
 		Addresses: escli.Nodes,
-		Transport: &productCheckTransport{base: transport},
+		Transport: &productCheckTransport{base: rt},
 	}
 
 	// Mirror InitClient()'s condition (Basic.Username != "") instead of
@@ -72,7 +78,7 @@ func officialClient(escli *Elasticsearch) (*elasticsearch8.Client, error) {
 	// (esN9eToDatasourceInfo) populate username/password but leave Enable
 	// false, which made every SQL request go out unauthenticated and fail
 	// with 401 against security-enabled clusters while DSL queries worked.
-	if escli.Basic.Enable || escli.Basic.Username != "" {
+	if !escli.Auth.IsCloud() && (escli.Basic.Enable || escli.Basic.Username != "") {
 		cfg.Username = escli.Basic.Username
 		cfg.Password = escli.Basic.Password
 	}

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
 
@@ -54,6 +55,38 @@ type Auth struct {
 	BasicAuth         bool   `json:"basic_auth"`
 	BasicAuthUser     string `json:"basic_auth_user"`
 	BasicAuthPassword string `json:"basic_auth_password"`
+
+	// Cloud auth (sigv4 / oauth2 / azure). An empty Type keeps the legacy
+	// behaviour: Basic Auth when basic_auth_user is set.
+	dsauth.Config
+}
+
+// Normalize fills defaults of the cloud auth and, when a cloud auth type is
+// selected, drops Basic credentials so they are never sent alongside it.
+func (a Auth) Normalize() Auth {
+	a.Config = a.Config.Normalize()
+	if a.IsCloud() {
+		a.BasicAuth = false
+		a.BasicAuthUser = ""
+		a.BasicAuthPassword = ""
+	}
+	return a
+}
+
+// VerifyAuth normalizes and validates the auth settings. Basic and header
+// based auth stay unrestricted; a cloud auth must not be combined with a
+// custom Authorization header, which it would silently override.
+func (ds *Datasource) VerifyAuth() error {
+	ds.AuthJson = ds.AuthJson.Normalize()
+	if !ds.AuthJson.IsCloud() {
+		return nil
+	}
+	for k := range ds.HTTPJson.Headers {
+		if strings.EqualFold(strings.TrimSpace(k), "Authorization") {
+			return errors.New("custom Authorization header conflicts with the selected auth type, remove the header")
+		}
+	}
+	return dsauth.Validate(ds.AuthJson.Config)
 }
 
 var rsaConfig *RsaConfig
@@ -223,6 +256,10 @@ func (ds *Datasource) TableName() string {
 func (ds *Datasource) Verify() error {
 	if str.Dangerous(ds.Name) {
 		return errors.New("Name has invalid characters")
+	}
+
+	if err := ds.VerifyAuth(); err != nil {
+		return err
 	}
 
 	err := ds.FE2DB()
@@ -561,9 +598,11 @@ func (ds *Datasource) ClearPlaintext() {
 	ds.Settings = ""
 	ds.SettingsJson = nil
 
+	// AuthEncoded carries everything edge needs; any plaintext left here
+	// (basic password, sigv4 secret key, oauth2/azure client secret) would be
+	// shipped to edge unencrypted via /v1/n9e/datasources.
 	ds.Auth = ""
-	ds.AuthJson.BasicAuthUser = ""
-	ds.AuthJson.BasicAuthPassword = ""
+	ds.AuthJson = Auth{}
 }
 
 // RedactSecrets 抹掉所有可能携带密钥 / 口令 / 令牌的字段，用于把数据源对象

@@ -14,11 +14,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	pkgprom "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
@@ -200,7 +201,7 @@ func (rt *Router) dsProxy(c *gin.Context) {
 			return
 		}
 
-		transport = &http.Transport{
+		transport, err = dsauth.Wrap(&http.Transport{
 			TLSClientConfig: tlsConfig,
 			Proxy:           http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
@@ -208,6 +209,10 @@ func (rt *Router) dsProxy(c *gin.Context) {
 			}).DialContext,
 			ResponseHeaderTimeout: time.Duration(ds.HTTPJson.Timeout) * time.Millisecond,
 			MaxIdleConnsPerHost:   ds.HTTPJson.MaxIdleConnsPerHost,
+		}, ds.AuthJson.Config)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "failed to init datasource auth: %s", err.Error())
+			return
 		}
 		transportPut(dsId, ds.UpdatedAt, transport)
 	}
@@ -280,21 +285,27 @@ func transportGet(dsid, newUpdatedAt int64) (http.RoundTripper, bool) {
 
 	oldUpdateAt, has := updatedAts[dsid]
 	if !has {
-		oldtran := tran.(*http.Transport)
-		oldtran.CloseIdleConnections()
+		closeIdleConnections(tran)
 		delete(transports, dsid)
 		return nil, false
 	}
 
 	if oldUpdateAt != newUpdatedAt {
-		oldtran := tran.(*http.Transport)
-		oldtran.CloseIdleConnections()
+		closeIdleConnections(tran)
 		delete(transports, dsid)
 		delete(updatedAts, dsid)
 		return nil, false
 	}
 
 	return tran, has
+}
+
+// closeIdleConnections works for both a bare *http.Transport and the dsauth
+// wrappers, which forward the call to their base transport.
+func closeIdleConnections(tran http.RoundTripper) {
+	if c, ok := tran.(interface{ CloseIdleConnections() }); ok {
+		c.CloseIdleConnections()
+	}
 }
 
 func transportPut(dsid, updatedat int64, tran http.RoundTripper) {
