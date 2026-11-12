@@ -787,6 +787,9 @@ func updateAlertRule(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 			return "", fmt.Errorf("notify_rule_ids must be a JSON array of integers (got %q): %v", v, err)
 		}
 		updated.NotifyRuleIds = ids
+		// Notify rules only apply in the new notify mode; Verify clears them on legacy (v0) rules.
+		// Switch modes as the web API does when notify_rule_ids is set.
+		updated.NotifyVersion = 1
 		changes = append(changes, "notify_rule_ids")
 	}
 
