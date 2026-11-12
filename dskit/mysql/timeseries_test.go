@@ -1,3 +1,5 @@
+//go:build integration
+
 // @Author: Ciusyan 5/11/24
 
 package mysql
