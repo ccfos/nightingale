@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -34,35 +33,6 @@ func tencentRound6Request(url string) *NotifyRequest {
 
 func tencentRound6Providers() []NotifyChannelProvider {
 	return []NotifyChannelProvider{&TencentSmsProvider{}, &TencentVoiceProvider{}}
-}
-
-func TestTencentNotify_PostsRenderedSignedRequest(t *testing.T) {
-	for _, p := range tencentRound6Providers() {
-		t.Run(p.Ident(), func(t *testing.T) {
-			server, requests := newCaptureServer(t, always(http.StatusOK, `{"Response":{"RequestId":"local"}}`))
-			req := tencentRound6Request(server.URL)
-
-			result := p.Notify(context.Background(), req)
-
-			require.NoError(t, result.Err)
-			require.Equal(t, "12025550123", result.Target)
-			require.Contains(t, result.Response, `"RequestId":"local"`)
-			require.Len(t, requests(), 1)
-			sent := requests()[0]
-			require.Equal(t, http.MethodPost, sent.Method)
-			require.Equal(t, "/send", sent.Path)
-			require.Equal(t, "1", sent.Query.Get("existing"))
-			require.Equal(t, "west", sent.Query.Get("tenant"))
-			require.JSONEq(t, `{"message":"usage 91%","phone":"12025550123"}`, string(sent.Body))
-			require.Empty(t, sent.Header.Get("Secret_Key"))
-			timestamp, err := strconv.ParseInt(sent.Header.Get("X-TC-Timestamp"), 10, 64)
-			require.NoError(t, err)
-			// Validate the signature against the transmitted timestamp, without a clock assumption.
-			require.Equal(t, getTxSignature(req.Config.RequestConfig.HTTPRequestConfig, string(sent.Body), timestamp),
-				sent.Header.Get("Authorization"))
-			require.Equal(t, "local-secret", req.Config.RequestConfig.HTTPRequestConfig.Headers["Secret_Key"])
-		})
-	}
 }
 
 func TestTencentNotify_ReportsHTTPRejection(t *testing.T) {

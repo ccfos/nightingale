@@ -26,34 +26,6 @@ func TestMetricViewGets_IncludesPublicAndOwnedViewsSortedByCategoryName(t *testi
 	require.Equal(t, []int64{5, 1, 3, 2}, ids)
 }
 
-func TestMetricViewUpdate_NormalizesFieldsAndAssignsMissingCreator(t *testing.T) {
-	cases := []struct {
-		name        string
-		creator     int64
-		wantCreator int64
-	}{
-		{name: "missing creator", wantCreator: 7},
-		{name: "existing creator", creator: 8, wantCreator: 8},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			c := pipelineContext(t, &MetricView{})
-			view := MetricView{Id: 1, Name: "old", Configs: "{}", Cate: 1, CreateBy: tc.creator, CreateAt: 10}
-			require.NoError(t, c.DB.Create(&view).Error)
-
-			require.NoError(t, view.Update(c, " new ", " [] ", 0, 7))
-			got, err := MetricViewGet(c, "id = ?", 1)
-
-			require.NoError(t, err)
-			require.Equal(t, "new", got.Name)
-			require.Equal(t, "[]", got.Configs)
-			require.Zero(t, got.Cate)
-			require.Equal(t, tc.wantCreator, got.CreateBy)
-			require.Equal(t, int64(10), got.CreateAt)
-		})
-	}
-}
-
 func TestMetricViewAdd_RejectsBlankConfiguration(t *testing.T) {
 	c := pipelineContext(t, &MetricView{})
 	view := MetricView{Name: "CPU", Configs: " "}

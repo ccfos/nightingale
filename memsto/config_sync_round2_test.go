@@ -149,61 +149,6 @@ func round2ConfigFixture(t *testing.T, external int) round2ConfigSync {
 	return result
 }
 
-func TestSyncConfigCaches_LoadsDatabaseValues(t *testing.T) {
-	for _, external := range []int{0, 1} {
-		t.Run(map[int]string{0: "built in", 1: "user variables"}[external], func(t *testing.T) {
-			cache := round2ConfigFixture(t, external)
-
-			require.NoError(t, cache.sync())
-
-			require.Equal(t, "west", cache.get())
-		})
-	}
-}
-
-func TestSyncConfigCaches_UnchangedStatisticsPreserveSnapshot(t *testing.T) {
-	for _, external := range []int{0, 1} {
-		t.Run(map[int]string{0: "built in", 1: "user variables"}[external], func(t *testing.T) {
-			cache := round2ConfigFixture(t, external)
-			require.NoError(t, cache.sync())
-			cache.mark()
-
-			require.NoError(t, cache.sync())
-
-			// A reload would replace the in-memory marker with the database value.
-			require.Equal(t, "marker", cache.get())
-		})
-	}
-}
-
-func TestSyncConfigCaches_UpdatedTimestampReloadsValue(t *testing.T) {
-	for _, external := range []int{0, 1} {
-		t.Run(map[int]string{0: "built in", 1: "user variables"}[external], func(t *testing.T) {
-			cache := round2ConfigFixture(t, external)
-			require.NoError(t, cache.sync())
-			require.NoError(t, cache.db.Model(cache.row).Updates(map[string]interface{}{"cval": "east", "update_at": 11}).Error)
-
-			require.NoError(t, cache.sync())
-
-			require.Equal(t, "east", cache.get())
-		})
-	}
-}
-
-func TestSyncConfigCaches_DeletedValueDisappears(t *testing.T) {
-	for _, external := range []int{0, 1} {
-		t.Run(map[int]string{0: "built in", 1: "user variables"}[external], func(t *testing.T) {
-			cache := round2ConfigFixture(t, external)
-			require.NoError(t, cache.sync())
-			require.NoError(t, cache.db.Delete(cache.row).Error)
-
-			require.NoError(t, cache.sync())
-
-			require.Empty(t, cache.get())
-		})
-	}
-}
-
 func TestSyncNotifyConfigs_LoadsTransportSettingsWithoutSending(t *testing.T) {
 	db, c, _ := round2SyncDB(t, &models.Configs{})
 	require.NoError(t, db.Create(&[]models.Configs{

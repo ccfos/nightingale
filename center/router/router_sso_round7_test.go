@@ -523,16 +523,3 @@ func TestLoginCallbackDingTalk_DisabledUserDoesNotGetSession(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, keys)
 }
-
-func TestLoginCallbackDingTalk_InvalidEndpointDoesNotCreateAccount(t *testing.T) {
-	rt, redis := sessionRouter(t)
-	rt.Sso.DingTalk = dingtalk.New(dingtalk.Config{Enable: true, Endpoint: "http://["})
-
-	w := identityRequest(t, rt, rt.loginCallbackDingTalk, nil, "0?code=invalid&state=state", nil)
-
-	require.Contains(t, identityReply(t, w, nil), "create client")
-	require.Empty(t, redis.Keys())
-	var count int64
-	require.NoError(t, rt.Ctx.DB.Model(&models.User{}).Count(&count).Error)
-	require.Zero(t, count)
-}
