@@ -716,6 +716,16 @@ func TestRoleDelete_ProtectsAdminAndDeletesEditableRoles(t *testing.T) {
 	}
 }
 
+func TestRoleDelete_MissingRoleIsNoop(t *testing.T) {
+	rt := identityRouter(t,
+		&models.Role{},
+	)
+
+	w := identityRequest(t, rt, rt.roleDel, nil, "999", nil)
+
+	require.Empty(t, identityReply(t, w, nil))
+}
+
 func TestAllPerms_GroupsOperationsByRole(t *testing.T) {
 	rt := identityRouter(t,
 		&models.Role{},
