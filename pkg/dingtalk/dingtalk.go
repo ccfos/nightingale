@@ -220,6 +220,9 @@ func (s *SsoClient) AuthCodeURL(state string) (string, error) {
 
 func (s *SsoClient) GetUserToken(code string) (string, error) {
 	authClient, err := s.DingTalkConfig.CreateClient()
+	if err != nil {
+		return "", errors.New("dingTalk sso create client error: " + err.Error())
+	}
 	getUserTokenRequest := &dingtalkoauth2.GetUserTokenRequest{
 		ClientId:     tea.String(s.DingTalkConfig.ClientID),
 		ClientSecret: tea.String(s.DingTalkConfig.ClientSecret),
@@ -239,6 +242,9 @@ func (s *SsoClient) GetUserToken(code string) (string, error) {
 
 func (s *SsoClient) GetAccessToken() (string, error) {
 	authClient, err := s.DingTalkConfig.CreateClient()
+	if err != nil {
+		return "", errors.New("dingTalk sso create client error: " + err.Error())
+	}
 	getUserTokenRequest := &dingtalkoauth2.GetAccessTokenRequest{
 		AppKey:    tea.String(s.DingTalkConfig.ClientID),
 		AppSecret: tea.String(s.DingTalkConfig.ClientSecret),
