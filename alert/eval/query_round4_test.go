@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/hash"
 	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/stretchr/testify/require"
 )
 
@@ -55,6 +56,20 @@ func TestGetParamKeyAllLabel_DeduplicatesValuesFromQueryResults(t *testing.T) {
 			require.Equal(t, []string{`cpu{}`}, api.queries)
 		})
 	}
+}
+
+func TestGetParamKeyAllLabel_QuotesFixedLabelValues(t *testing.T) {
+	api := &fixedAnomalyPromAPI{value: model.Vector{{Metric: model.Metric{"host": "a"}}}}
+
+	values, err := getParamKeyAllLabel("host", `cpu{host="$host",env="prod",path=~"/api/\\d+"} > 5`, api, 1, 2, getTestStats())
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"a"}, values)
+	require.Len(t, api.queries, 1)
+	// The enumeration query must parse as PromQL, including escaped regex values.
+	_, err = parser.ParseExpr(api.queries[0])
+	require.NoError(t, err, api.queries[0])
+	require.Contains(t, api.queries[0], `env="prod"`)
 }
 
 func TestGetPromAnomalyPoint_ChoosesVariableFillingStrategy(t *testing.T) {
