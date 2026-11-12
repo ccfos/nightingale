@@ -236,6 +236,11 @@ func (g *Gemini) streamResponse(ctx context.Context, resp *http.Response, ch cha
 		// Reset buffer for next response
 		buffer.Reset()
 
+		if geminiResp.Error != nil {
+			ch <- StreamChunk{Done: true, Error: fmt.Errorf("stream error: %s (%s)", geminiResp.Error.Message, geminiResp.Error.Status)}
+			return
+		}
+
 		if len(geminiResp.Candidates) > 0 {
 			candidate := geminiResp.Candidates[0]
 			chunk := StreamChunk{
