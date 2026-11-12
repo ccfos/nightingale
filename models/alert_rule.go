@@ -1970,7 +1970,8 @@ func (ar *AlertRule) Hash() string {
 
 // 复制告警策略，需要提供操作者名称和新的业务组ID
 func (ar *AlertRule) Clone(operatorName string, newBgid int64) *AlertRule {
-	newAr := ar
+	clone := *ar
+	newAr := &clone
 
 	newAr.Id = 0
 	newAr.GroupId = newBgid
