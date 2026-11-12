@@ -60,7 +60,6 @@ func (rt *Router) targetGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 30)
 	downtime := ginx.QueryInt64(c, "downtime", 0)
-	dsIds := queryDatasourceIds(c)
 
 	order := ginx.QueryStr(c, "order", "ident")
 	desc := ginx.QueryBool(c, "desc", false)
@@ -89,7 +88,6 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 	options := []models.BuildTargetWhereOption{
 		models.BuildTargetWhereWithBgids(bgids),
-		models.BuildTargetWhereWithDsIds(dsIds),
 		models.BuildTargetWhereWithQuery(query),
 		models.BuildTargetWhereWithHosts(hosts),
 	}
