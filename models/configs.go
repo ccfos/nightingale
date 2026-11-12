@@ -248,7 +248,7 @@ func ConfigsSetWithUname(ctx *ctx.Context, ckey, cval, uName string) error { //b
 		}).Error
 	} else {
 		// update
-		err = DB(ctx).Model(&Configs{}).Where("ckey=?", ckey).Updates(map[string]interface{}{
+		err = DB(ctx).Model(&Configs{}).Where("ckey=?", ckey).Where(configExternalEq(0)).Updates(map[string]interface{}{
 			"cval":      cval,
 			"update_by": uName,
 			"update_at": now,
