@@ -52,6 +52,7 @@ func TestTDengine_EqualDetectsConnectionChanges(t *testing.T) {
 		{name: "headers count", change: func(d *TDengine) { d.Headers = nil }},
 		{name: "headers value", change: func(d *TDengine) { d.Headers = map[string]string{"X-Tenant": "other"} }},
 		{name: "TLS", change: func(d *TDengine) { d.SkipTlsVerify = true }},
+		{name: "basic auth removed", change: func(d *TDengine) { d.Basic = nil }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
