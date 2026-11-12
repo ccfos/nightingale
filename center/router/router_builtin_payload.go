@@ -79,7 +79,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 						ComponentID: lst[i].ComponentID,
 						Cate:        lst[i].Cate,
 						Name:        rule.Name,
-						Tags:        rule.AppendTags,
+						Tags:        strings.Join(rule.AppendTagsJSON, " "),
 						UUID:        rule.UUID,
 						Content:     string(contentBytes),
 						CreatedBy:   username,
@@ -114,7 +114,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				ComponentID: lst[i].ComponentID,
 				Cate:        lst[i].Cate,
 				Name:        alertRule.Name,
-				Tags:        alertRule.AppendTags,
+				Tags:        strings.Join(alertRule.AppendTagsJSON, " "),
 				UUID:        alertRule.UUID,
 				Content:     string(contentBytes),
 				CreatedBy:   username,
@@ -291,7 +291,7 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 		}
 
 		req.Name = alertRule.Name
-		req.Tags = alertRule.AppendTags
+		req.Tags = strings.Join(alertRule.AppendTagsJSON, " ")
 	} else if req.Type == "dashboard" {
 		dashboard := Board{}
 		if err := json.Unmarshal([]byte(req.Content), &dashboard); err != nil {

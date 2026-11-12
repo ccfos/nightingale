@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -16,10 +17,10 @@ func TestBuiltinPayloadsAdd_ImportsAlertRuleMetadata(t *testing.T) {
 		content       string
 		expectedNames []string
 	}{
-		{name: "single", content: `{"name":"CPU high","uuid":123}`, expectedNames: []string{"CPU high"}},
+		{name: "single", content: `{"name":"CPU high","uuid":123,"append_tags":["env=prod","team=ops"]}`, expectedNames: []string{"CPU high"}},
 		{
 			name:          "array",
-			content:       `[{"name":"CPU high","uuid":123},{"name":"CPU low","uuid":124}]`,
+			content:       `[{"name":"CPU high","uuid":123,"append_tags":["env=prod","team=ops"]},{"name":"CPU low","uuid":124}]`,
 			expectedNames: []string{"CPU high", "CPU low"},
 		},
 	}
@@ -45,8 +46,10 @@ func TestBuiltinPayloadsAdd_ImportsAlertRuleMetadata(t *testing.T) {
 				var rule models.AlertRule
 				require.NoError(t, json.Unmarshal([]byte(payload.Content), &rule))
 				require.Equal(t, rule.UUID, payload.UUID)
-				require.Equal(t, rule.AppendTags, payload.Tags)
+				// AppendTags is json:"-"; the tags arrive as append_tags.
+				require.Equal(t, strings.Join(rule.AppendTagsJSON, " "), payload.Tags)
 			}
+			require.Equal(t, "env=prod team=ops", saved[0].Tags)
 		})
 	}
 }
@@ -177,7 +180,7 @@ func TestBuiltinPayloadsPut_ExtractsMetadataAndPreservesCreation(t *testing.T) {
 		tags    string
 		note    string
 	}{
-		{name: "alert", typ: "alert", content: `{"name":"updated"}`, tags: ""},
+		{name: "alert", typ: "alert", content: `{"name":"updated","append_tags":["env=prod"]}`, tags: "env=prod"},
 		{
 			name:    "dashboard",
 			typ:     "dashboard",
