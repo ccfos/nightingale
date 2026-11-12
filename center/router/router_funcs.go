@@ -65,7 +65,10 @@ func (rt *Router) statistic(c *gin.Context) {
 	case "notify_rule":
 		model = models.NotifyRule{}
 	case "notify_channel":
-		model = models.NotifyChannel{}
+		// models.NotifyChannel has no table; edges sync NotifyChannelConfig rows.
+		statistics, err = models.NotifyChannelStatistics(rt.Ctx)
+		ginx.NewRender(c).Data(statistics, err)
+		return
 	case "event_pipeline":
 		statistics, err = models.EventPipelineStatistics(rt.Ctx)
 		ginx.NewRender(c).Data(statistics, err)

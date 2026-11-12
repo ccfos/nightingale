@@ -52,6 +52,23 @@ func TestStatistic_ReturnsCountAndLatestUpdateForRequestedResource(t *testing.T)
 	}
 }
 
+func TestStatistic_NotifyChannelMatchesEdgeSync(t *testing.T) {
+	rt := identityRouter(t, &models.NotifyChannelConfig{})
+	require.NoError(t, rt.Ctx.DB.Create(&[]models.NotifyChannelConfig{
+		{Name: "a", Ident: "a", Enable: true, UpdateAt: 100},
+		{Name: "b", Ident: "b", Enable: true, UpdateAt: 200},
+		{Name: "c", Ident: "c", Enable: false, UpdateAt: 300},
+	}).Error)
+
+	w := identityRequest(t, rt, rt.statistic, nil, "0?name=notify_channel", nil)
+
+	// Edge nodes compare this against the enabled channels they load.
+	var got models.Statistics
+	require.Empty(t, identityReply(t, w, &got))
+	require.Equal(t, int64(2), got.Total)
+	require.Equal(t, int64(200), got.LastUpdated)
+}
+
 func TestStatistic_SeparatesBuiltinAndUserVariableConfiguration(t *testing.T) {
 	rt := identityRouter(t, &models.Configs{})
 	require.NoError(t, rt.Ctx.DB.Create(&[]models.Configs{
