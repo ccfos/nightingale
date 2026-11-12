@@ -554,7 +554,7 @@ func getAlertMuteDetail(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 		Note:     mute.Note,
 		Cause:    mute.Cause,
 		Cate:     mute.Cate,
-		Tags:     mute.Tags,
+		Tags:     &mute.Tags, // MarshalJSON has a pointer receiver; a value would encode as base64
 		Disabled: mute.Disabled,
 		Btime:    formatUnixTime(mute.Btime),
 		Etime:    formatUnixTime(mute.Etime),
