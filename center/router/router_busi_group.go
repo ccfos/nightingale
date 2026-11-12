@@ -148,6 +148,11 @@ func (rt *Router) busiGroupsGetTags(c *gin.Context) {
 	bgids := strx.IdsInt64ForAPI(ginx.QueryStr(c, "gids", ""), ",")
 	targetIdents, err := models.TargetIndentsGetByBgids(rt.Ctx, bgids)
 	ginx.Dangerous(err)
+	// TargetGetTags treats an empty ident list as "all targets".
+	if len(bgids) > 0 && len(targetIdents) == 0 {
+		ginx.NewRender(c).Data([]string{}, nil)
+		return
+	}
 	tags, err := models.TargetGetTags(rt.Ctx, targetIdents, true, "busigroup")
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(tags, nil)

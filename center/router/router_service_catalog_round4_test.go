@@ -126,6 +126,19 @@ func TestBusiGroupsGetTags_ReturnsSelectedGroupsUserTags(t *testing.T) {
 	require.ElementsMatch(t, []string{"env=prod", "role=api"}, got)
 }
 
+func TestBusiGroupsGetTags_EmptyGroupReturnsNoTags(t *testing.T) {
+	rt := identityRouter(t, &models.Target{}, &models.TargetBusiGroup{})
+	require.NoError(t, rt.Ctx.DB.Create(&models.Target{Ident: "host-a", Tags: "env=secret"}).Error)
+	require.NoError(t, rt.Ctx.DB.Create(&models.TargetBusiGroup{TargetIdent: "host-a", GroupId: 1}).Error)
+
+	w := identityRequest(t, rt, rt.busiGroupsGetTags, nil, "0?gids=999", nil)
+
+	// Group 999 has no hosts, so no other group's tags may appear.
+	var got []string
+	require.Empty(t, identityReply(t, w, &got))
+	require.Empty(t, got)
+}
+
 func TestAlertAggrViewGets_ExcludesAnotherUsersPrivateViews(t *testing.T) {
 	rt := identityRouter(t, &models.AlertAggrView{})
 	require.NoError(t, rt.Ctx.DB.Create(&[]models.AlertAggrView{
