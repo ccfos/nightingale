@@ -2,6 +2,8 @@ package router
 
 import (
 	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/memsto"
@@ -64,4 +66,46 @@ func TestDatasourceDel_RemovesOnlyRequestedDatasources(t *testing.T) {
 	require.NoError(t, rt.Ctx.DB.Find(&got).Error)
 	require.Len(t, got, 1)
 	require.Equal(t, int64(2), got[0].Id)
+}
+
+func TestDatasourceUpsert_ForceSaveRejectsDuplicateWithoutProbing(t *testing.T) {
+	cases := []struct {
+		name     string
+		plugin   string
+		settings map[string]interface{}
+	}{
+		{name: "prometheus", plugin: models.PROMETHEUS},
+		{name: "loki", plugin: models.LOKI},
+		{
+			name: "elasticsearch with supplied version", plugin: models.ELASTICSEARCH,
+			settings: map[string]interface{}{"version": "8.0"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rt := identityRouter(t, &models.Datasource{})
+			rt.DatasourceCache = &memsto.DatasourceCacheType{DatasourceCheckHook: func(*gin.Context) bool { return false }}
+			require.NoError(t, rt.Ctx.DB.Create(&models.Datasource{Id: 1, Name: "existing", PluginType: tc.plugin}).Error)
+			var calls atomic.Int64
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls.Add(1)
+				w.WriteHeader(http.StatusInternalServerError)
+			}))
+			t.Cleanup(server.Close)
+			form := models.Datasource{
+				Name: "existing", PluginType: tc.plugin, ForceSave: true, SettingsJson: tc.settings,
+				HTTPJson: models.HTTP{Url: server.URL},
+			}
+
+			w := identityRequest(t, rt, rt.datasourceUpsert, form, "1", &models.User{Username: "alice"})
+
+			require.JSONEq(t, `{"error":{"message":"name already exists"}}`, w.Body.String())
+			require.Zero(t, calls.Load())
+			var got []models.Datasource
+			require.NoError(t, rt.Ctx.DB.Find(&got).Error)
+			require.Len(t, got, 1)
+			require.Equal(t, "existing", got[0].Name)
+			require.Empty(t, got[0].UpdatedBy)
+		})
+	}
 }

@@ -2,8 +2,10 @@ package memsto
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -279,6 +281,32 @@ func TestNotifyChannelCache_DeletionClosesResources(t *testing.T) {
 	require.Empty(t, cache.queueQuitCh)
 	require.Empty(t, cache.smtpQuitCh)
 	require.Nil(t, cache.Get(1))
+}
+
+func TestConfigCaches_QueryFailurePreservesSnapshot(t *testing.T) {
+	for _, external := range []int{0, 1} {
+		for _, phase := range []string{"statistics", "rows"} {
+			name := fmt.Sprintf("external=%d/%s", external, phase)
+			t.Run(name, func(t *testing.T) {
+				cache := round2ConfigFixture(t, external)
+				require.NoError(t, cache.sync())
+				require.NoError(t, cache.db.Model(cache.row).Update("update_at", 11).Error)
+				failure := errors.New("configuration query failed")
+				callback := "round5:fail-config-query"
+				require.NoError(t, cache.db.Callback().Query().Before("gorm:query").Register(callback, func(tx *gorm.DB) {
+					if phase == "statistics" || !strings.Contains(strings.Join(tx.Statement.Selects, ","), "count(") {
+						tx.AddError(failure)
+					}
+				}))
+				t.Cleanup(func() { require.NoError(t, cache.db.Callback().Query().Remove(callback)) })
+
+				err := cache.sync()
+
+				require.ErrorIs(t, err, failure)
+				require.Equal(t, "west", cache.get())
+			})
+		}
+	}
 }
 
 func TestAlertFilterCaches_QueryFailurePreservesSnapshot(t *testing.T) {

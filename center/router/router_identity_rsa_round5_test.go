@@ -72,6 +72,59 @@ func TestUserPasswordPut_RSADecryptsSuppliedPassword(t *testing.T) {
 	require.Equal(t, "operator", saved.UpdateBy)
 }
 
+func TestUserProfilePutByService_RSADecryptsPasswordAndUpdatesProfile(t *testing.T) {
+	rt := identityRouter(t, &models.User{}, &models.Configs{})
+	seedIdentitySalt(t, rt)
+	public := identityRSAKeys(t, rt)
+	require.NoError(t, rt.Ctx.DB.Create(&models.User{Id: 1, Username: "alice", Password: "old"}).Error)
+	cipher, err := secu.EncryptValue("new-password", public)
+	require.NoError(t, err)
+	body := map[string]interface{}{"password": cipher, "roles": []string{"Viewer"}, "nickname": "Alice"}
+
+	w := identityRequest(t, rt, rt.userProfilePutByService, body, "1", &models.User{Username: "operator"})
+
+	require.Empty(t, identityReply(t, w, nil))
+	var saved models.User
+	require.NoError(t, rt.Ctx.DB.First(&saved, 1).Error)
+	want, err := models.CryptoPass(rt.Ctx, "new-password")
+	require.NoError(t, err)
+	require.Equal(t, want, saved.Password)
+	require.Equal(t, "Alice", saved.Nickname)
+	require.Equal(t, "Viewer", saved.Roles)
+}
+
+func TestUserPasswordWrites_RSARejectsInvalidCiphertextWithoutMutation(t *testing.T) {
+	cases := []struct {
+		name    string
+		service bool
+	}{
+		{name: "password reset"},
+		{name: "service profile", service: true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rt := identityRouter(t, &models.User{}, &models.Configs{})
+			identityRSAKeys(t, rt)
+			original := models.User{Id: 1, Username: "alice", Password: "old", Nickname: "Original", Roles: "Viewer"}
+			require.NoError(t, rt.Ctx.DB.Create(&original).Error)
+			handler := rt.userPasswordPut
+			body := map[string]interface{}{"password": "invalid", "nickname": "Changed", "roles": []string{"Admin"}}
+			if tc.service {
+				handler = rt.userProfilePutByService
+			}
+
+			w := identityRequest(t, rt, handler, body, "1", nil)
+
+			require.Contains(t, identityReply(t, w, nil), "decryption error")
+			var saved models.User
+			require.NoError(t, rt.Ctx.DB.First(&saved, 1).Error)
+			require.Equal(t, original.Password, saved.Password)
+			require.Equal(t, original.Nickname, saved.Nickname)
+			require.Equal(t, original.Roles, saved.Roles)
+		})
+	}
+}
+
 func TestSelfPasswordPut_RSADecryptsBothPasswords(t *testing.T) {
 	rt := identityRouter(t, &models.User{}, &models.Configs{})
 	seedIdentitySalt(t, rt)
