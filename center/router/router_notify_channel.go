@@ -599,7 +599,7 @@ func buildChannelTestMockEvent(lang string, f MockEventForm) *models.AlertCurEve
 //
 //  1. NotifyChannelIdent 必须带上。RenderEvent 按它选渲染分支——email 走 text/template
 //     且不转义，slack 有专门的 &lt; 还原，其余走 html/template + JSON 转义。留空会一律落到
-//     默认分支：测试一个 smtp 媒介时正文里的换行变成字面量 \n、引号变成 \"，而保存之后走
+//     默认分支：测试一个 slackbot 媒介时事件字段里的 < 变成 &lt;、<url|text> 链接失效，而保存之后走
 //     生产链路（模板行带 notify_channel_ident）却是正常的——同一份模板两种结果，正好违背
 //     「保存前看到真实投递效果」这个目的。
 //

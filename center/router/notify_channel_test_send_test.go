@@ -168,17 +168,29 @@ func TestBuildTestTplContent(t *testing.T) {
 		buildChannelTestMockEvent("en_US", MockEventForm{MockSeverity: 1}),
 	}
 	const siteUrl = "http://site"
-	// 正文里同时有换行和引号：默认分支会转义，email 分支必须原样保留
+	// 正文里同时有换行和引号：默认分支会转义，纯文本分支必须原样保留
 	body := map[string]string{"content": "line1\nsay \"hi\""}
 
-	t.Run("smtp 媒介按 ident 走 email 分支，换行与引号不被转义", func(t *testing.T) {
+	t.Run("smtp 媒介按 request_type 走纯文本分支，换行与引号不被转义", func(t *testing.T) {
 		nc := &models.NotifyChannelConfig{RequestType: "smtp", Ident: "email"}
 		got, err := buildTestTplContent(nc, body, events, siteUrl)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if want := "line1\nsay \"hi\""; fmt.Sprint(got["content"]) != want {
-			t.Fatalf("got %q, want %q —— ident 没传到 MessageTemplate 上", fmt.Sprint(got["content"]), want)
+			t.Fatalf("got %q, want %q", fmt.Sprint(got["content"]), want)
+		}
+	})
+
+	t.Run("http 媒介按 ident 选分支，slackbot 把 &lt; 还原成 <", func(t *testing.T) {
+		nc := &models.NotifyChannelConfig{RequestType: "http", Ident: models.SlackBot}
+		evts := []*models.AlertCurEvent{{RuleName: "<http://x|link>"}}
+		got, err := buildTestTplContent(nc, map[string]string{"content": "{{$event.RuleName}}"}, evts, siteUrl)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if s := fmt.Sprint(got["content"]); !strings.HasPrefix(s, "<http://x|link") {
+			t.Fatalf("got %q, ident 没传到 MessageTemplate 上", s)
 		}
 	})
 
