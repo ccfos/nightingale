@@ -271,3 +271,18 @@ func TestInitEmbeddedTSDBDatasource_RespectsExistingDatasourceSetups(t *testing.
 		})
 	}
 }
+
+func TestGetDatasourcesBy_MatchesNameFragments(t *testing.T) {
+	c := pipelineContext(t, &Datasource{})
+	first, _ := seedDatasourcesRound2(t, c)
+
+	count, err := GetDatasourcesCountBy(c, "", "", "product")
+	require.NoError(t, err)
+	list, err := GetDatasourcesGetsBy(c, "", "", "product", "")
+	require.NoError(t, err)
+
+	// The name filter wraps each word in % and must match as a substring.
+	require.Equal(t, int64(1), count)
+	require.Len(t, list, 1)
+	require.Equal(t, first.Id, list[0].Id)
+}

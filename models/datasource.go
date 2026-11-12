@@ -361,7 +361,7 @@ func GetDatasourcesCountBy(ctx *ctx.Context, typ, cate, name string) (int64, err
 		arr := strings.Fields(name)
 		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
-			session = session.Where("name =  ?", qarg)
+			session = session.Where("name like ?", qarg)
 		}
 	}
 
@@ -383,7 +383,7 @@ func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name, status string) ([]*
 		arr := strings.Fields(name)
 		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
-			session = session.Where("name =  ?", qarg)
+			session = session.Where("name like ?", qarg)
 		}
 	}
 
