@@ -111,6 +111,9 @@ func (s *SsoClient) Reload(cf Config) {
 		}
 
 		s.HTTPClient = &http.Client{Transport: transport}
+	} else {
+		// Drop a client left over from an earlier SkipTlsVerify config so verification resumes.
+		s.HTTPClient = nil
 	}
 }
 
