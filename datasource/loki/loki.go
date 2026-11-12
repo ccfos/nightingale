@@ -576,8 +576,14 @@ func (vl *Loki) QueryMapData(ctx context.Context, query interface{}) ([]map[stri
 
 	var result []map[string]string
 	for _, log := range logs {
-		logMap, ok := log.(map[string]interface{})
-		if !ok {
+		// QueryLog returns lokikit.NormalizedLog, a named map type that a plain map assertion misses.
+		var logMap map[string]interface{}
+		switch v := log.(type) {
+		case lokikit.NormalizedLog:
+			logMap = v
+		case map[string]interface{}:
+			logMap = v
+		default:
 			continue
 		}
 		strMap := make(map[string]string)
