@@ -240,6 +240,17 @@ func TestConvertToTimeSeries_MatrixFiltersInvalidSamples(t *testing.T) {
 	}, got[0].Labels)
 }
 
+func TestConvertToTimeSeries_ScalarCarriesRecordingNameAndTags(t *testing.T) {
+	rule := &models.RecordingRule{Name: "recorded", AppendTagsJSON: []string{"env=prod"}}
+
+	series := ConvertToTimeSeries(&model.Scalar{Value: 4, Timestamp: 1000}, rule)
+
+	require.Len(t, series, 1)
+	// Remote write rejects a series without labels, so the name must be present.
+	require.ElementsMatch(t, []prompb.Label{{Name: LabelName, Value: "recorded"}, {Name: "env", Value: "prod"}}, series[0].Labels)
+	require.Equal(t, []prompb.Sample{{Value: 4, Timestamp: 1000}}, series[0].Samples)
+}
+
 func TestConvertToTimeSeries_DropsNaNScalarAndUnsupportedString(t *testing.T) {
 	tests := []struct {
 		name  string
