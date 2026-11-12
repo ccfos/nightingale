@@ -1,0 +1,5 @@
+# Entry-point binaries and generated frontend assets carry no testable logic,
+# so they are left out of the reported coverage.
+ignore:
+  - "cmd/**"
+  - "front/statik/**"
