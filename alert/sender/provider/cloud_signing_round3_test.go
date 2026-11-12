@@ -247,3 +247,17 @@ func TestTencentSignature_MatchesFixedCanonicalRequest(t *testing.T) {
 		"SignedHeaders=content-type;host;x-tc-action, Signature=1495990363eb80215a5368b5e4b04ce028cf53dfa4e528c0408d69e793140c78",
 		authorization)
 }
+
+func TestSetTxHeader_DoesNotSendSecretKey(t *testing.T) {
+	cfg := &models.HTTPRequestConfig{Method: "POST", Headers: map[string]string{
+		"Host": "sms.example.invalid", "X-TC-Action": "SendSms", "Service": "sms", "Secret_ID": "local-ak", "Secret_Key": "secret",
+	}}
+	headers := map[string]string{"Host": "sms.example.invalid", "Secret_ID": "local-ak", "Secret_Key": "secret"}
+
+	got := setTxHeader(cfg, headers, []byte(`{}`))
+
+	require.NotContains(t, got, "Secret_Key")
+	require.Contains(t, got["Authorization"], "Credential=local-ak/")
+	// The signing input still comes from the channel config.
+	require.Equal(t, "secret", cfg.Headers["Secret_Key"])
+}
