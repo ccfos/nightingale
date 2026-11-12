@@ -287,6 +287,29 @@ func TestWriterPost_FailsOverAfterServerError(t *testing.T) {
 	require.Equal(t, "/ok", <-paths)
 }
 
+func TestWriterPost_ReturnsRequestBuildError(t *testing.T) {
+	w := WriterType{Opts: pconf.WriterOptions{Url: "://bad"}}
+
+	err := w.Post([]byte("payload"))
+
+	// No request could be built for any URL, so nothing was written.
+	require.ErrorContains(t, err, "missing protocol scheme")
+}
+
+func TestWriterPost_SkipsInvalidURLAndUsesNextOne(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(server.Close)
+	client, err := api.NewClient(api.Config{Address: server.URL})
+	require.NoError(t, err)
+	w := WriterType{Client: client, Opts: pconf.WriterOptions{Url: "://bad," + server.URL}}
+
+	err = w.Post([]byte("payload"))
+
+	require.NoError(t, err)
+}
+
 func TestWriterPost_ReturnsServerError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable)
