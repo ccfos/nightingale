@@ -374,10 +374,10 @@ func (e *AlertCurEvent) GenCardTitle(rule string) (string, error) {
 }
 
 func (e *AlertCurEvent) GetTagValue(tagkey string) string {
+	prefix := tagkey + "="
 	for _, tag := range e.TagsJSON {
-		i := strings.Index(tag, tagkey+"=")
-		if i >= 0 {
-			return tag[len(tagkey+"="):]
+		if strings.HasPrefix(tag, prefix) {
+			return tag[len(prefix):]
 		}
 	}
 	return ""
