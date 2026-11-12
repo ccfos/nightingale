@@ -83,9 +83,18 @@ func TestRemoteCommitCacheRefreshesAtMostOncePerInterval(t *testing.T) {
 		t.Fatalf("age redis cache: %v", err)
 	}
 
+	// Hold the refresh until every Get has run: singleflight only coalesces calls
+	// that overlap, and a refresh finishing between two Gets would start another.
+	release := make(chan struct{})
+	cache.latestCommit = func(context.Context, GitConfig) (string, error) {
+		calls.Add(1)
+		<-release
+		return "updated", nil
+	}
 	for i := 0; i < 3; i++ {
 		cache.Get(skillName, cfg)
 	}
+	close(release)
 
 	waitFor(t, time.Second, func() bool {
 		return calls.Load() == 1
