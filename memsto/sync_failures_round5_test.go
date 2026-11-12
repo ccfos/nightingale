@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -383,4 +384,18 @@ func TestTargetCache_SyncRefreshesMetadataOnlyOnSixthUnchangedCycle(t *testing.T
 	require.Equal(t, int64(200), afterSixth.BeatTime)
 	require.Zero(t, cache.metaSyncCycle)
 	require.Zero(t, testutil.ToFloat64(stats.GaugeSyncNumber.WithLabelValues("sync_targets")))
+}
+
+func TestGetNotifyScript_DefaultTimeoutIsRaceFree(t *testing.T) {
+	cache := &NotifyConfigCacheType{}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			require.Equal(t, 10, cache.GetNotifyScript().Timeout)
+		}()
+	}
+	wg.Wait()
 }

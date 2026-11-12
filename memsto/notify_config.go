@@ -200,10 +200,12 @@ func (w *NotifyConfigCacheType) GetSMTP() aconf.SMTPConfig {
 
 func (w *NotifyConfigCacheType) GetNotifyScript() models.NotifyScript {
 	w.RWMutex.RLock()
-	defer w.RWMutex.RUnlock()
-	if w.script.Timeout == 0 {
-		w.script.Timeout = 10
-	}
+	script := w.script
+	w.RWMutex.RUnlock()
 
-	return w.script
+	// Default on the copy: writing w.script here would race under the read lock.
+	if script.Timeout == 0 {
+		script.Timeout = 10
+	}
+	return script
 }
