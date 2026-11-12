@@ -126,7 +126,9 @@ func TestSendEmail_ReportsSMTPRecipientRejection(t *testing.T) {
 	err := SendEmail("CPU high", "body", []string{"ops@example.test"}, config)
 
 	require.ErrorContains(t, err, "email_sender: failed to send:")
-	require.ErrorContains(t, err, "550 recipient refused")
+	// The SMTP reply text is quoted differently across Go versions; check its parts.
+	require.ErrorContains(t, err, "550")
+	require.ErrorContains(t, err, "recipient refused")
 	delivery := <-deliveries
 	require.NoError(t, delivery.err)
 	require.Contains(t, delivery.commands, "RCPT TO:<ops@example.test>")
