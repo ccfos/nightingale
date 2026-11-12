@@ -162,6 +162,11 @@ func (rt *Router) falconPush(c *gin.Context) {
 		return
 	}
 
+	if len(bs) == 0 {
+		c.String(400, "request body is empty")
+		return
+	}
+
 	var arr FalconMetricArr
 
 	if bs[0] == '[' {
