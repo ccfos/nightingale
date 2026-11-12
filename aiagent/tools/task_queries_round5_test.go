@@ -145,6 +145,21 @@ func TestListTaskRecords_FiltersVisibilityAgeAndAuthorizationLevel(t *testing.T)
 	require.Equal(t, "CPU recent", result.Items[0].Title)
 }
 
+func TestListTaskRecords_OmitsIbexPassword(t *testing.T) {
+	deps := newResourceTestDeps(t, &models.TaskRecord{})
+	resourceMembership(t, deps, "ro", PermJobTasks)
+	require.NoError(t, models.DB(deps.DBCtx).Create(&models.TaskRecord{
+		Id: 1, GroupId: 1, Title: "CPU", AuthLevel: 2, CreateAt: time.Now().Unix(), IbexAuthPass: "private-password",
+	}).Error)
+
+	out, err := listTaskRecords(context.Background(), deps, map[string]interface{}{"auth_level": "2"},
+		map[string]string{"user_id": "2"})
+
+	require.NoError(t, err)
+	require.Contains(t, out, `"title":"CPU"`)
+	require.NotContains(t, out, "private-password")
+}
+
 func TestListTaskRecords_DeniesExplicitInaccessibleGroup(t *testing.T) {
 	deps := newResourceTestDeps(t, &models.TaskRecord{})
 	resourceMembership(t, deps, "ro", PermJobTasks)
