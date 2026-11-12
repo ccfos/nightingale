@@ -42,7 +42,8 @@ func (w WriterType) Write(items []prompb.TimeSeries, headers ...map[string]strin
 		return nil
 	}
 
-	if err := w.Post(snappy.Encode(nil, data), headers...); err != nil {
+	err = w.Post(snappy.Encode(nil, data), headers...)
+	if err != nil {
 		logger.Warningf("%v post to %s got error: %v", w.Opts, w.Opts.Url, err)
 		logger.Debug("example timeseries:", items[0].String())
 	}
