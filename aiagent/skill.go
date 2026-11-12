@@ -286,7 +286,7 @@ func (r *SkillRegistry) loadContentFromFile(filePath string) (string, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if strings.TrimSpace(line) == "---" {
+		if !frontmatterEnded && strings.TrimSpace(line) == "---" {
 			if !inFrontmatter {
 				inFrontmatter = true
 				continue
