@@ -2,10 +2,12 @@ package router
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 
+	"github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
@@ -17,7 +19,6 @@ import (
 type LogQueryResponse struct {
 	c         *gin.Context
 	buffer    *bufio.Writer
-	encoder   *json.Encoder
 	started   bool
 	finished  bool
 	writeErr  error
@@ -39,7 +40,6 @@ func NewLogQueryResponse(c *gin.Context) *LogQueryResponse {
 		target = logger.ResponseWriter
 	}
 	w := &LogQueryResponse{c: c, buffer: bufio.NewWriterSize(logQueryStreamingBody{target}, 32<<10)}
-	w.encoder = json.NewEncoder(w)
 	return w
 }
 
@@ -47,10 +47,23 @@ type logQueryStreamingBody struct{ writer gin.ResponseWriter }
 
 func (w logQueryStreamingBody) Write(body []byte) (int, error) {
 	// Gin.WriteString updates status/size without appending to its body buffer.
-	return w.writer.WriteString(string(body))
+	written := 0
+	for len(body) > 0 {
+		size := min(len(body), 32<<10)
+		n, err := w.writer.WriteString(string(body[:size]))
+		written += n
+		if err != nil {
+			return written, err
+		}
+		if n != size {
+			return written, io.ErrShortWrite
+		}
+		body = body[size:]
+	}
+	return written, nil
 }
 
-// Write is called by Encoder only after the current row has encoded successfully.
+// Write accepts an already encoded complete row.
 func (w *LogQueryResponse) Write(body []byte) (int, error) {
 	if err := w.startItem(); err != nil {
 		return 0, err
@@ -127,7 +140,26 @@ func (w *LogQueryResponse) Row(row map[string]any) error {
 	if err := w.c.Request.Context().Err(); err != nil {
 		return err
 	}
-	return w.encoder.Encode(row)
+	prepared, err := doris.PrepareJSONRow(row)
+	if err != nil {
+		return err
+	}
+	if err := w.startItem(); err != nil {
+		w.writeErr = err
+		return err
+	}
+	// Finish the current row on application cancellation so Fail can close a
+	// valid envelope. A transport write error still stops output immediately.
+	if err := prepared.Write(context.WithoutCancel(w.c.Request.Context()), w.buffer); err != nil {
+		w.writeErr = err
+		return err
+	}
+	if err := w.buffer.WriteByte('\n'); err != nil {
+		w.writeErr = err
+		return err
+	}
+	w.rows++
+	return w.c.Request.Context().Err()
 }
 
 // Finish closes a successful response with its total and optional pagination flag.
