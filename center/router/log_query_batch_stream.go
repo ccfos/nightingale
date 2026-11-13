@@ -7,9 +7,11 @@ import (
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/datasource/doris"
+	doriskit "github.com/ccfos/nightingale/v6/dskit/doris"
 	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/gin-gonic/gin"
+	"github.com/mitchellh/mapstructure"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -112,44 +114,46 @@ func streamLogBatchConcurrently(ctx context.Context, response *LogQueryResponse,
 	group, queryCtx := errgroup.WithContext(ctx)
 	type result struct {
 		rows  chan map[string]any
-		ready chan struct{}
 		data  []any
 		total int64
 		err   error
 	}
 	results := make([]result, len(queries))
+	orderedContexts := make([]context.Context, len(queries))
+	finish := make([]func(), len(queries))
+	var order doriskit.StreamOrder
+	defer func() {
+		for _, done := range finish {
+			if done != nil {
+				done()
+			}
+		}
+	}()
+	for i, q := range queries {
+		cc, _ := dskittypes.CallContextFromCtx(contexts[i])
+		orderedContexts[i] = dskittypes.WithCallContext(queryCtx, cc)
+		if q.DsCate != "doris" {
+			continue
+		}
+		var param doris.QueryParam
+		if err := mapstructure.Decode(q.Query, &param); err != nil {
+			return 0, formatError(i, err)
+		}
+		pool, err := clients[i].(*doris.Doris).NewConn(queryCtx, param.Database)
+		if err != nil {
+			return 0, formatError(i, err)
+		}
+		orderedContexts[i], finish[i] = order.Context(orderedContexts[i], pool)
+	}
 	for i, q := range queries {
 		results[i].rows = make(chan map[string]any)
-		results[i].ready = make(chan struct{})
 		current := &results[i]
-		var previous <-chan struct{}
-		if i > 0 {
-			previous = results[i-1].ready
-		}
-		callContext, _ := dskittypes.CallContextFromCtx(contexts[i])
-		queryContext := dskittypes.WithCallContext(queryCtx, callContext)
 		group.Go(func() error {
 			defer close(current.rows)
-			ready := false
-			signal := func() {
-				if !ready {
-					close(current.ready)
-					ready = true
-				}
+			if finish[i] != nil {
+				defer finish[i]()
 			}
-			defer signal()
-			// Acquire cursors in output order so a later query cannot occupy the
-			// only pool connection while an earlier query waits to be written.
-			if previous != nil {
-				select {
-				case <-previous:
-				case <-queryCtx.Done():
-					current.err = queryCtx.Err()
-					return current.err
-				}
-			}
-			data, total, err := readLogBatchQuery(queryContext, q, clients[i], func(row map[string]any) error {
-				signal()
+			data, total, err := readLogBatchQuery(orderedContexts[i], q, clients[i], func(row map[string]any) error {
 				select {
 				case current.rows <- row:
 					return nil

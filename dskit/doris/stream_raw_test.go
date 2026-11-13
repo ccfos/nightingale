@@ -30,7 +30,13 @@ type rawConnector struct {
 	entered     chan struct{}
 }
 
-func (c *rawConnector) Driver() driver.Driver { return nil }
+type rawTestDriver struct{ connector driver.Connector }
+
+func (d rawTestDriver) Open(string) (driver.Conn, error) {
+	return d.connector.Connect(context.Background())
+}
+func (d rawTestDriver) OpenConnector(string) (driver.Connector, error) { return d.connector, nil }
+func (c *rawConnector) Driver() driver.Driver                          { return rawTestDriver{c} }
 func (c *rawConnector) Connect(context.Context) (driver.Conn, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -220,7 +226,7 @@ func TestExecQueryRawOpenErrors(t *testing.T) {
 		queries, connections int
 	}{
 		{"SQL_error_reuses", []rawPlan{{openErr: failure}}, failure, 1, 1},
-		{"bad_connection_retries", []rawPlan{{openErr: driver.ErrBadConn}, {rows: 2}}, nil, 2, 2},
+		{"bad_connection_retries", []rawPlan{{openErr: driver.ErrBadConn}, {rows: 2}}, nil, 2, 3},
 		{"bounded_retry", []rawPlan{{openErr: driver.ErrBadConn}, {openErr: driver.ErrBadConn}, {openErr: driver.ErrBadConn}}, driver.ErrBadConn, 3, 4},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

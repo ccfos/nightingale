@@ -2,6 +2,7 @@ package doris
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
 	"errors"
 	"fmt"
@@ -33,79 +34,131 @@ func (d *Doris) readRows(ctx context.Context, database, query string, limit int6
 	if err != nil {
 		return 0, err
 	}
-	// Match QueryContext's bounded retry of errors that guarantee no query ran.
-	// Never replay SQL after receiving a cursor or invoking the consumer.
-	for attempt := 0; attempt < 3; attempt++ {
-		conn, acquireErr := db.Conn(queryCtx)
-		if acquireErr != nil {
-			return count, acquireErr
+	var turn *streamTurn
+	if !skipScanErrors {
+		turn, _ = ctx.Value(streamOrderKey{}).(*streamTurn)
+		if turn != nil {
+			db = turn.pool
+			defer turn.release()
+			if err := turn.wait(queryCtx); err != nil {
+				return 0, err
+			}
 		}
-		retry := false
-		var queryErr error
-		rawErr := conn.Raw(func(raw any) error {
-			dc := raw.(driver.Conn)
-			querier, ok := raw.(driver.QueryerContext)
+	}
+	conn, err := db.Conn(queryCtx)
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Close()
+	if turn != nil {
+		turn.release()
+	}
+	var queryErr error
+	rawErr := conn.Raw(func(raw any) error {
+		dc := raw.(driver.Conn)
+		open, replaced := true, false
+		closeCurrent := func() {
+			if open {
+				_ = dc.Close()
+				open = false
+			}
+		}
+		defer func() {
+			if replaced {
+				closeCurrent()
+			}
+		}()
+		var rows driver.Rows
+		for attempt := range 3 {
+			if queryErr = queryCtx.Err(); queryErr != nil {
+				break
+			}
+			if attempt > 0 {
+				// Keep the pool lease while retrying, so later ordered queries cannot
+				// occupy our slot and block retries behind their output.
+				dc, queryErr = d.openFreshConnection(queryCtx, db, database)
+				if queryErr != nil {
+					if errors.Is(queryErr, driver.ErrBadConn) {
+						continue
+					}
+					break
+				}
+				open = true
+			}
+			querier, ok := dc.(driver.QueryerContext)
 			if !ok {
 				queryErr = fmt.Errorf("Doris driver does not support QueryContext")
-				return queryErr
+				break
 			}
-			if queryErr = queryCtx.Err(); queryErr != nil {
-				return queryErr
+			rows, queryErr = querier.QueryContext(queryCtx, query, nil)
+			if queryErr == nil {
+				break
 			}
-			rows, openErr := querier.QueryContext(queryCtx, query, nil)
-			if openErr != nil {
-				queryErr = openErr
-				if ctxErr := queryCtx.Err(); ctxErr != nil {
-					queryErr = ctxErr
-					_ = dc.Close()
-					return driver.ErrBadConn
-				}
-				retry = errors.Is(openErr, driver.ErrBadConn)
-				if retry {
-					_ = dc.Close()
-					return driver.ErrBadConn
-				}
-				return openErr
+			if ctxErr := queryCtx.Err(); ctxErr != nil {
+				queryErr = ctxErr
+				closeCurrent()
+				replaced = true
+				break
 			}
-			exhausted := false
-			closed := false
-			defer func() {
-				if !exhausted {
-					cancel()
-					// Rows.Close may drain unread results; close the socket first.
-					_ = dc.Close()
-				}
-				if !closed {
-					_ = rows.Close()
-				}
-			}()
-			count, queryErr, exhausted = consumeDriverRows(queryCtx, rows, limit, skipScanErrors, consume)
-			if !exhausted {
-				// Poison the pool connection without replacing the consumer's result.
-				return driver.ErrBadConn
+			if !errors.Is(queryErr, driver.ErrBadConn) {
+				break
 			}
-			closeErr := rows.Close()
-			closed = true
-			if closeErr != nil {
-				exhausted = false
-				queryErr = fmt.Errorf("error iterating rows: %w", closeErr)
+			closeCurrent()
+			replaced = true
+		}
+		if queryErr != nil {
+			if replaced {
 				return driver.ErrBadConn
 			}
 			return queryErr
-		})
-		_ = conn.Close()
-		if retry {
-			continue
 		}
-		if queryErr != nil {
-			return count, queryErr
+		exhausted, closed := false, false
+		defer func() {
+			if !exhausted {
+				cancel()
+				closeCurrent()
+			}
+			if !closed {
+				_ = rows.Close()
+			}
+		}()
+		count, queryErr, exhausted = consumeDriverRows(queryCtx, rows, limit, skipScanErrors, consume)
+		if !exhausted {
+			return driver.ErrBadConn
 		}
-		if rawErr != nil && !errors.Is(rawErr, driver.ErrBadConn) {
-			return count, rawErr
+		if closeErr := rows.Close(); closeErr != nil {
+			exhausted = false
+			queryErr = fmt.Errorf("error iterating rows: %w", closeErr)
 		}
-		return count, nil
+		closed = true
+		if !exhausted || replaced {
+			return driver.ErrBadConn
+		}
+		return queryErr
+	})
+	if queryErr != nil {
+		return count, queryErr
 	}
-	return count, driver.ErrBadConn
+	if rawErr != nil && !errors.Is(rawErr, driver.ErrBadConn) {
+		return count, rawErr
+	}
+	return count, nil
+}
+
+func (d *Doris) readDSN(database string) string {
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", d.User, d.Password, d.Addr, database)
+}
+
+func (d *Doris) openFreshConnection(ctx context.Context, db *sql.DB, database string) (driver.Conn, error) {
+	factory, ok := db.Driver().(driver.DriverContext)
+	if !ok {
+		return nil, fmt.Errorf("Doris driver does not support contextual connections")
+	}
+	connector, err := factory.OpenConnector(d.readDSN(database))
+	if err != nil {
+		return nil, err
+	}
+	return connector.Connect(ctx)
 }
 
 func consumeDriverRows(ctx context.Context, rows driver.Rows, limit int64, skipScanErrors bool, consume func(map[string]any) error) (count int64, err error, exhausted bool) {

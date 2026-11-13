@@ -34,15 +34,17 @@ import (
 )
 
 type batchStreamDB struct {
-	awaitSecond   chan struct{}
-	calls         []types.CallContext
-	mutex         sync.Mutex
-	queries       []string
-	cursors       []*batchStreamRows
-	writes        atomic.Int64
-	requireOutput bool
-	rowLimit      int
-	readOnly      []bool
+	firstRows        chan string
+	releaseFirstRows <-chan struct{}
+	awaitSecond      chan struct{}
+	calls            []types.CallContext
+	mutex            sync.Mutex
+	queries          []string
+	cursors          []*batchStreamRows
+	writes           atomic.Int64
+	requireOutput    bool
+	rowLimit         int
+	readOnly         []bool
 }
 type batchStreamConnector struct{ state *batchStreamDB }
 
@@ -92,6 +94,19 @@ func (r *batchStreamRows) Close() error {
 	return nil
 }
 func (r *batchStreamRows) Next(dest []driver.Value) error {
+	if r.index == 0 && r.state.firstRows != nil {
+		select {
+		case r.state.firstRows <- r.sql:
+		case <-r.ctx.Done():
+			return r.ctx.Err()
+		}
+		select {
+		case <-r.state.releaseFirstRows:
+		case <-r.ctx.Done():
+			return r.ctx.Err()
+		}
+	}
+
 	if r.index == 1 && r.state.awaitSecond != nil {
 		select {
 		case <-r.state.awaitSecond:
