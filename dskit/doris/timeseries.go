@@ -40,11 +40,30 @@ var (
 
 // Query executes a given SQL query in Doris and returns the results with MaxQueryRows check
 func (d *Doris) Query(ctx context.Context, query *QueryParam) ([]map[string]interface{}, error) {
+	if err := d.checkQuery(ctx, query); err != nil {
+		return nil, err
+	}
+	rows, err := d.ExecQuery(ctx, query.Database, query.Sql)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+// QueryStream applies the same SQL validation and row-count probe as Query.
+func (d *Doris) QueryStream(ctx context.Context, query *QueryParam, limit int64, consume func(map[string]any) error) (int64, error) {
+	if err := d.checkQuery(ctx, query); err != nil {
+		return 0, err
+	}
+	return d.ExecQueryStream(ctx, query.Database, query.Sql, limit, consume)
+}
+
+func (d *Doris) checkQuery(ctx context.Context, query *QueryParam) error {
 	// 不可信调用方（仪表盘匿名分享 token）额外走严格只读校验：
 	// 下面的黑名单按空格切词，不构成安全边界
 	if types.ReadOnlyEnforced(ctx) {
 		if err := sqlbase.ValidateReadOnly(query.Sql); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -52,21 +71,17 @@ func (d *Doris) Query(ctx context.Context, query *QueryParam) ([]map[string]inte
 	sqlItem := strings.Split(strings.ToUpper(query.Sql), " ")
 	for _, item := range sqlItem {
 		if _, ok := DorisBannedOp[item]; ok {
-			return nil, fmt.Errorf("operation %s is forbid, only read db, please check your sql", item)
+			return fmt.Errorf("operation %s is forbid, only read db, please check your sql", item)
 		}
 	}
 
 	// 检查查询结果行数
 	err := d.CheckMaxQueryRows(ctx, query.Database, query.Sql)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	rows, err := d.ExecQuery(ctx, query.Database, query.Sql)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
+	return nil
 }
 
 // QueryTimeseries executes a time series data query using the given parameters with MaxQueryRows check
