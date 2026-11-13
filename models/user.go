@@ -1204,8 +1204,7 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 			return nil, err
 		}
 		if t != nil && t.MatchGroupId(busiGroupIds...) {
-			// Only list the host's groups that the user can access.
-			err = DB(ctx).Order("name").Limit(limit).Where("id in ?", t.GroupIds).Where("id in ?", busiGroupIds).Find(&lst).Error
+			err = DB(ctx).Order("name").Limit(limit).Where("id in ?", t.GroupIds).Find(&lst).Error
 		}
 	}
 
