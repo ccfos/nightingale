@@ -13,6 +13,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/datasource/commons/eslike"
+	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 
@@ -224,6 +225,17 @@ func (e *Elasticsearch) MakeTSQuery(ctx context.Context, query interface{}, even
 	return eslike.MakeTSQuery(ctx, query, eventTags, start, end)
 }
 
+// rulePreference 为规则调度发起的查询生成固定的 preference，让同一条规则的告警查询和附加查询
+// 落到同一组分片副本上。主副本各自 refresh，不固定副本时，刚写入的日志可能告警查询能查到、
+// 紧接着的附加查询却查不到。非规则调用返回空串，保持 ES 默认的副本选择。
+func rulePreference(ctx context.Context) string {
+	cc, ok := dskittypes.CallContextFromCtx(ctx)
+	if !ok || cc.RuleID <= 0 || cc.Operator == "" {
+		return ""
+	}
+	return fmt.Sprintf("n9e-%s-%d", cc.Operator, cc.RuleID)
+}
+
 func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
 	tsReq, err := extractTSRequest(queryParam)
 	if err != nil {
@@ -240,6 +252,7 @@ func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) (
 			Source(source).
 			Timeout(fmt.Sprintf("%ds", timeout)).
 			MaxConcurrentShardRequests(maxShard).
+			Preference(rulePreference(ctx)).
 			Do(ctx)
 	}
 	return eslike.QueryData(ctx, queryParam, e.Timeout, e.Version, searchFunc)
@@ -454,6 +467,7 @@ func (e *Elasticsearch) QueryMapData(ctx context.Context, query interface{}) ([]
 			IgnoreUnavailable(true).
 			Source(source).
 			Timeout(fmt.Sprintf("%ds", timeout)).
+			Preference(rulePreference(ctx)).
 			Do(ctx)
 	}
 
