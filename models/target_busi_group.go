@@ -95,14 +95,11 @@ func TargetBindBgids(ctx *ctx.Context, idents []string, bgids []int64, tags []st
 		if err := tx.Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
 			return err
 		}
-		// Go through tx: on SQLite a second connection would block on the transaction's write lock.
-		txCtx := *ctx
-		txCtx.DB = tx
-		if targets, err := TargetsGetByIdents(&txCtx, idents); err != nil {
+		if targets, err := TargetsGetByIdents(ctx, idents); err != nil {
 			return err
 		} else if len(tags) > 0 {
 			for _, t := range targets {
-				if err := t.AddTags(&txCtx, tags); err != nil {
+				if err := t.AddTags(ctx, tags); err != nil {
 					return err
 				}
 			}

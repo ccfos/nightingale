@@ -1,15 +1,34 @@
 package models
 
 import (
+	"context"
 	"errors"
+	"path/filepath"
 	"testing"
 
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
 
+// TargetBindBgids reads targets outside its transaction, so the migration needs a
+// second connection to the same database: a file-backed SQLite instead of :memory:.
+func migrationContext(t *testing.T) *ctx.Context {
+	t.Helper()
+	dsn := filepath.Join(t.TempDir(), "migrate.db") + "?_pragma=busy_timeout(5000)"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	require.NoError(t, err)
+	sqlDB, err := db.DB()
+	require.NoError(t, err)
+	sqlDB.SetMaxOpenConns(2)
+	t.Cleanup(func() { require.NoError(t, sqlDB.Close()) })
+	require.NoError(t, db.AutoMigrate(&Target{}, &TargetBusiGroup{}, &BusiGroup{}))
+	return ctx.NewContext(context.Background(), db, true)
+}
+
 func TestDoMigrateBg_MovesLegacyGroupIntoBindings(t *testing.T) {
-	c := pipelineContext(t, &Target{}, &TargetBusiGroup{}, &BusiGroup{})
+	c := migrationContext(t)
 	require.NoError(t, c.DB.Create(&BusiGroup{Id: 7, Name: "operations"}).Error)
 	require.NoError(t, c.DB.Create(&[]Target{
 		{Ident: "legacy", GroupId: 7, Tags: "env=prod "},
@@ -32,7 +51,7 @@ func TestDoMigrateBg_MovesLegacyGroupIntoBindings(t *testing.T) {
 }
 
 func TestDoMigrateBg_AddsEnabledGroupLabel(t *testing.T) {
-	c := pipelineContext(t, &Target{}, &TargetBusiGroup{}, &BusiGroup{})
+	c := migrationContext(t)
 	require.NoError(t, c.DB.Create(&BusiGroup{Id: 7, Name: "operations", LabelEnable: 1, LabelValue: "ops"}).Error)
 	require.NoError(t, c.DB.Create(&Target{Ident: "legacy", GroupId: 7, Tags: "env=prod "}).Error)
 
@@ -46,7 +65,7 @@ func TestDoMigrateBg_AddsEnabledGroupLabel(t *testing.T) {
 }
 
 func TestDoMigrateBg_PreservesExplicitGroupLabel(t *testing.T) {
-	c := pipelineContext(t, &Target{}, &TargetBusiGroup{}, &BusiGroup{})
+	c := migrationContext(t)
 	require.NoError(t, c.DB.Create(&BusiGroup{Id: 7, Name: "operations", LabelEnable: 1, LabelValue: "ops"}).Error)
 	require.NoError(t, c.DB.Create(&Target{Ident: "legacy", GroupId: 7, Tags: "team=custom "}).Error)
 
@@ -64,7 +83,7 @@ func TestDoMigrateBg_PreservesExplicitGroupLabel(t *testing.T) {
 func TestDoMigrateBg_QueryFailureLeavesLegacyAssignmentsIntact(t *testing.T) {
 	for _, table := range []string{"target", "busi_group"} {
 		t.Run(table, func(t *testing.T) {
-			c := pipelineContext(t, &Target{}, &TargetBusiGroup{}, &BusiGroup{})
+			c := migrationContext(t)
 			require.NoError(t, c.DB.Create(&Target{Ident: "legacy", GroupId: 7}).Error)
 			failure := errors.New("migration read rejected")
 			const callback = "round7:reject_migration_read"
@@ -90,7 +109,7 @@ func TestDoMigrateBg_QueryFailureLeavesLegacyAssignmentsIntact(t *testing.T) {
 }
 
 func TestDoMigrateBg_BindingFailurePreservesLegacyGroupForRetry(t *testing.T) {
-	c := pipelineContext(t, &Target{}, &TargetBusiGroup{}, &BusiGroup{})
+	c := migrationContext(t)
 	require.NoError(t, c.DB.Create(&Target{Ident: "legacy", GroupId: 7, Tags: "env=prod "}).Error)
 	failure := errors.New("binding write rejected")
 	const callback = "round7:reject_migration_binding"
