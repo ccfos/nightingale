@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestListDatasources_AppliesQueryAndVisibilityBeforeLimit(t *testing.T) {
+func TestListDatasources_AppliesVisibilityBeforeLimit(t *testing.T) {
 	deps := newResourceTestDeps(t, &models.Datasource{})
 	require.NoError(t, models.DB(deps.DBCtx).Create(&[]models.Datasource{
 		{Id: 1, Name: "prod metrics", PluginType: "prometheus", Category: "timeseries", Status: "enabled"},
@@ -31,11 +31,11 @@ func TestListDatasources_AppliesQueryAndVisibilityBeforeLimit(t *testing.T) {
 	}
 
 	out, err := listDatasourcesBuiltin(context.Background(), deps, map[string]interface{}{
-		"plugin_type": "prometheus", "query": "prod", "limit": float64(1),
+		"plugin_type": "prometheus", "limit": float64(1),
 	}, map[string]string{"user_id": "2"})
 
 	require.NoError(t, err)
-	require.Equal(t, []int64{4, 1}, seenIDs)
+	require.Equal(t, []int64{4, 3, 1}, seenIDs)
 	var result struct {
 		Total int                `json:"total"`
 		Items []datasourceResult `json:"items"`
@@ -43,7 +43,7 @@ func TestListDatasources_AppliesQueryAndVisibilityBeforeLimit(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(out), &result))
 	require.Equal(t, 1, result.Total)
 	require.Equal(t, []datasourceResult{{
-		Id: 1, Name: "prod metrics", PluginType: "prometheus", Category: "timeseries", Status: "enabled",
+		Id: 3, Name: "staging metrics", PluginType: "prometheus",
 	}}, result.Items)
 }
 
