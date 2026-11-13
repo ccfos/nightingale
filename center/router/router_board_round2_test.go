@@ -198,6 +198,24 @@ func TestDashAnnotationMutations_RejectReadOnlyUsersWithoutWriting(t *testing.T)
 	}
 }
 
+func TestDashAnnotationPut_CannotMoveAnnotationToAnotherDashboard(t *testing.T) {
+	rt := identityRouter(t, &models.DashAnnotation{}, &models.Board{}, &models.BoardPayload{},
+		&models.BusiGroup{}, &models.BusiGroupMember{}, &models.UserGroupMember{})
+	seedBoardOwnerMembership(t, rt)
+	// User 1 can write busi group 1 (dashboard 1) but has no access to group 2 (dashboard 2).
+	require.NoError(t, rt.Ctx.DB.Create(&[]models.Board{{Id: 1, GroupId: 1}, {Id: 2, GroupId: 2}}).Error)
+	require.NoError(t, rt.Ctx.DB.Create(&models.DashAnnotation{Id: 1, DashboardId: 1, Tags: `[]`}).Error)
+	form := models.DashAnnotation{DashboardId: 2, Description: "moved", TagsJSON: []string{}, Config: "{}"}
+
+	w := identityRequest(t, rt, rt.dashAnnotationPut, form, "1", &models.User{Id: 1})
+
+	require.Empty(t, identityReply(t, w, nil))
+	got, err := models.DashAnnotationGet(rt.Ctx, "id = ?", 1)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), got.DashboardId)
+	require.Equal(t, "moved", got.Description)
+}
+
 func TestDashAnnotationPut_UpdatesContentAndPreservesCreation(t *testing.T) {
 	rt := identityRouter(t, &models.DashAnnotation{}, &models.Board{}, &models.BoardPayload{},
 		&models.BusiGroup{}, &models.BusiGroupMember{}, &models.UserGroupMember{})

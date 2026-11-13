@@ -181,15 +181,6 @@ func BuildTargetWhereWithBgids(bgids []int64) BuildTargetWhereOption {
 	}
 }
 
-func BuildTargetWhereWithDsIds(dsIds []int64) BuildTargetWhereOption {
-	return func(session *gorm.DB) *gorm.DB {
-		if len(dsIds) > 0 {
-			session = session.Where("datasource_id in (?)", dsIds)
-		}
-		return session
-	}
-}
-
 func BuildTargetWhereWithHosts(hosts []string) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if len(hosts) > 0 {

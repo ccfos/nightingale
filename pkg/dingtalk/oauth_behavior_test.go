@@ -182,6 +182,17 @@ func TestGetUserToken_PostsAuthorizationCodeAndParsesToken(t *testing.T) {
 	require.Equal(t, "authorization_code", body["grantType"])
 }
 
+func TestTokenRequests_ReportInvalidEndpoint(t *testing.T) {
+	client := New(Config{Enable: true, ClientID: "app-1", ClientSecret: "secret", Endpoint: "http://["})
+
+	_, userErr := client.GetUserToken("code-1")
+	_, appErr := client.GetAccessToken()
+
+	// Before the fix both calls dereferenced a nil client and panicked.
+	require.ErrorContains(t, userErr, "create client")
+	require.ErrorContains(t, appErr, "create client")
+}
+
 func TestGetAccessToken_PostsAppCredentials(t *testing.T) {
 	var path string
 	var body map[string]interface{}

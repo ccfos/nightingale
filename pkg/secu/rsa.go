@@ -45,6 +45,9 @@ func Decrypt(cipherText string, privateKeyByte []byte, password string) (decrypt
 
 func EncryptValue(value string, publicKeyData []byte) (string, error) {
 	publicKeyBlock, _ := pem.Decode(publicKeyData)
+	if publicKeyBlock == nil {
+		return "", fmt.Errorf("failed to decode public key: not PEM")
+	}
 	parsedPublicKey, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse public key: %v", err)

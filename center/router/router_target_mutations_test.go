@@ -10,11 +10,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -83,6 +85,34 @@ func targetMutationReply(t *testing.T, w *httptest.ResponseRecorder) (map[string
 	}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
 	return response.Dat, response.Err
+}
+
+func TestTargetGets_IgnoresDatasourceIDs(t *testing.T) {
+	rt := targetMutationRouter(t, &models.Target{}, &models.TargetBusiGroup{})
+	seedTargetMutationHosts(t, rt)
+	mr, err := miniredis.Run()
+	require.NoError(t, err)
+	t.Cleanup(mr.Close)
+	rt.Redis = redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	engine := gin.New()
+	engine.Use(aop.Recovery())
+	engine.Use(func(c *gin.Context) { c.Set("user", &models.User{RolesLst: []string{models.AdminRole}}) })
+	engine.GET("/targets", rt.targetGets)
+
+	// The target table has no datasource_id column since the v6 heartbeat refactor.
+	w := httptest.NewRecorder()
+	engine.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/targets?datasource_ids=3", nil))
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	var reply struct {
+		Err string `json:"err"`
+		Dat struct {
+			Total int64 `json:"total"`
+		} `json:"dat"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &reply))
+	require.Empty(t, reply.Err)
+	require.Equal(t, int64(2), reply.Dat.Total)
 }
 
 func TestTargetBindTags_ValidatesTagNamesAndValuesBeforeWriting(t *testing.T) {

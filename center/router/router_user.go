@@ -154,20 +154,41 @@ type userProfileForm struct {
 	Contacts ormx.JSONObj `json:"contacts"`
 }
 
+// models.User never binds the password (json:"-"), so the service form adds it.
+type userProfileServiceForm struct {
+	models.User
+	Password string `json:"password"`
+}
+
 func (rt *Router) userProfilePutByService(c *gin.Context) {
-	var f models.User
+	var f userProfileServiceForm
 	ginx.BindJSON(c, &f)
 
 	if len(f.RolesLst) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "roles empty")
 	}
 
-	password, err := models.CryptoPass(rt.Ctx, f.Password)
-	ginx.Dangerous(err)
-
 	target := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+
+	// Keep the current password unless a new one is supplied.
+	if f.Password != "" {
+		authPassWord := f.Password
+		if rt.HTTP.RSA.OpenRSA {
+			decPassWord, err := secu.Decrypt(f.Password, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
+			if err != nil {
+				logger.Errorf("RSA Decrypt failed: %v username: %s", err, target.Username)
+				ginx.NewRender(c).Message(err)
+				return
+			}
+			authPassWord = decPassWord
+		}
+
+		password, err := models.CryptoPass(rt.Ctx, authPassWord)
+		ginx.Dangerous(err)
+		target.Password = password
+	}
+
 	target.Nickname = f.Nickname
-	target.Password = password
 	target.Phone = f.Phone
 	target.Email = f.Email
 	target.Portrait = f.Portrait

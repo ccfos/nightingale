@@ -233,6 +233,25 @@ func TestGeminiGenerateStream_ParsesSplitJSONAndSignedCall(t *testing.T) {
 	require.True(t, chunks[2].Done)
 }
 
+func TestGeminiGenerateStream_ReportsProviderError(t *testing.T) {
+	body := `data: {"error":{"code":429,"message":"quota exhausted","status":"RESOURCE_EXHAUSTED"}}` + "\n"
+	srv, _ := providerHTTPServer(t, http.StatusOK, body)
+	client, err := NewGemini(&Config{Model: "gemini-test", BaseURL: srv.URL}, srv.Client())
+	require.NoError(t, err)
+
+	ch, err := client.GenerateStream(context.Background(), &GenerateRequest{})
+
+	require.NoError(t, err)
+	var chunks []StreamChunk
+	for chunk := range ch {
+		chunks = append(chunks, chunk)
+	}
+	require.Len(t, chunks, 1)
+	require.True(t, chunks[0].Done)
+	require.ErrorContains(t, chunks[0].Error, "quota exhausted")
+	require.ErrorContains(t, chunks[0].Error, "RESOURCE_EXHAUSTED")
+}
+
 func TestProviderGenerate_RejectsInvalidResponses(t *testing.T) {
 	cases := []struct {
 		name     string

@@ -170,6 +170,43 @@ func TestUserProfilePut_PreservesDisabledStateAndPassword(t *testing.T) {
 	require.Equal(t, "operator", saved.UpdateBy)
 }
 
+func TestUserProfilePutByService_SetsSuppliedPassword(t *testing.T) {
+	rt := identityRouter(t,
+		&models.User{},
+		&models.Configs{},
+	)
+	seedIdentitySalt(t, rt)
+	require.NoError(t, rt.Ctx.DB.Create(&models.User{Id: 1, Username: "alice", Password: "old", Roles: "Viewer"}).Error)
+	body := map[string]interface{}{"password": "new-password", "roles": []string{"Viewer"}}
+
+	w := identityRequest(t, rt, rt.userProfilePutByService, body, "1", &models.User{Username: "operator"})
+
+	require.Empty(t, identityReply(t, w, nil))
+	var saved models.User
+	require.NoError(t, rt.Ctx.DB.First(&saved, 1).Error)
+	require.Equal(t, str.MD5("test-salt<-*Uk30^96eY*->new-password"), saved.Password)
+}
+
+func TestUserProfilePutByService_KeepsPasswordWhenOmitted(t *testing.T) {
+	rt := identityRouter(t,
+		&models.User{},
+		&models.Configs{},
+	)
+	seedIdentitySalt(t, rt)
+	require.NoError(t, rt.Ctx.DB.Create(&models.User{Id: 1, Username: "alice", Password: "old", Roles: "Viewer"}).Error)
+	body := map[string]interface{}{"nickname": "Alice", "roles": []string{"Standard"}}
+
+	w := identityRequest(t, rt, rt.userProfilePutByService, body, "1", &models.User{Username: "operator"})
+
+	require.Empty(t, identityReply(t, w, nil))
+	var saved models.User
+	require.NoError(t, rt.Ctx.DB.First(&saved, 1).Error)
+	// Before the fix, every service update overwrote the password with the hash of "".
+	require.Equal(t, "old", saved.Password)
+	require.Equal(t, "Alice", saved.Nickname)
+	require.Equal(t, "Standard", saved.Roles)
+}
+
 func TestUserPasswordPut_ChangesOnlyPasswordAndAuditFields(t *testing.T) {
 	rt := identityRouter(t,
 		&models.User{},
@@ -677,6 +714,16 @@ func TestRoleDelete_ProtectsAdminAndDeletesEditableRoles(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRoleDelete_MissingRoleIsNoop(t *testing.T) {
+	rt := identityRouter(t,
+		&models.Role{},
+	)
+
+	w := identityRequest(t, rt, rt.roleDel, nil, "999", nil)
+
+	require.Empty(t, identityReply(t, w, nil))
 }
 
 func TestAllPerms_GroupsOperationsByRole(t *testing.T) {

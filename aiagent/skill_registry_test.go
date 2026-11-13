@@ -5,6 +5,24 @@ import (
 	"testing"
 )
 
+func TestLoadContentFromFile_KeepsHorizontalRulesInBody(t *testing.T) {
+	file := t.TempDir() + "/SKILL.md"
+	body := "---\nname: mock-skill\n---\n# Steps\n---\nRead metrics."
+	if err := os.WriteFile(file, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := (&SkillRegistry{}).loadContentFromFile(file)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Only the first two "---" lines delimit the frontmatter.
+	if want := "# Steps\n---\nRead metrics."; got != want {
+		t.Errorf("content = %q, want %q", got, want)
+	}
+}
+
 func TestLoadMetadata_HandlesBlockScalarDescription(t *testing.T) {
 	// 用临时文件喂给 registry — 历史 bug 会在第 3 行 yaml 报 missing ":"
 	dir := t.TempDir()

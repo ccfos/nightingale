@@ -8,6 +8,59 @@ import (
 	"gorm.io/gorm"
 )
 
+func TestDoMigrateBg_MovesLegacyGroupIntoBindings(t *testing.T) {
+	c := pipelineContext(t, &Target{}, &TargetBusiGroup{}, &BusiGroup{})
+	require.NoError(t, c.DB.Create(&BusiGroup{Id: 7, Name: "operations"}).Error)
+	require.NoError(t, c.DB.Create(&[]Target{
+		{Ident: "legacy", GroupId: 7, Tags: "env=prod "},
+		{Ident: "unassigned", Tags: "env=dev "},
+	}).Error)
+
+	err := DoMigrateBg(c, "team")
+
+	require.NoError(t, err)
+	groups, err := TargetGroupIdsGetByIdent(c, "legacy")
+	require.NoError(t, err)
+	require.Equal(t, []int64{7}, groups)
+	var legacy Target
+	require.NoError(t, c.DB.First(&legacy, "ident = ?", "legacy").Error)
+	require.Zero(t, legacy.GroupId)
+	require.Equal(t, "env=prod ", legacy.Tags)
+	groups, err = TargetGroupIdsGetByIdent(c, "unassigned")
+	require.NoError(t, err)
+	require.Empty(t, groups)
+}
+
+func TestDoMigrateBg_AddsEnabledGroupLabel(t *testing.T) {
+	c := pipelineContext(t, &Target{}, &TargetBusiGroup{}, &BusiGroup{})
+	require.NoError(t, c.DB.Create(&BusiGroup{Id: 7, Name: "operations", LabelEnable: 1, LabelValue: "ops"}).Error)
+	require.NoError(t, c.DB.Create(&Target{Ident: "legacy", GroupId: 7, Tags: "env=prod "}).Error)
+
+	err := DoMigrateBg(c, "team")
+
+	require.NoError(t, err)
+	var row Target
+	require.NoError(t, c.DB.First(&row, "ident = ?", "legacy").Error)
+	require.Equal(t, []string{"env=prod", "team=ops"}, row.TagsJSON)
+	require.Zero(t, row.GroupId)
+}
+
+func TestDoMigrateBg_PreservesExplicitGroupLabel(t *testing.T) {
+	c := pipelineContext(t, &Target{}, &TargetBusiGroup{}, &BusiGroup{})
+	require.NoError(t, c.DB.Create(&BusiGroup{Id: 7, Name: "operations", LabelEnable: 1, LabelValue: "ops"}).Error)
+	require.NoError(t, c.DB.Create(&Target{Ident: "legacy", GroupId: 7, Tags: "team=custom "}).Error)
+
+	err := DoMigrateBg(c, "team")
+
+	require.NoError(t, err)
+	var row Target
+	require.NoError(t, c.DB.First(&row, "ident = ?", "legacy").Error)
+	require.Equal(t, "team=custom ", row.Tags)
+	groups, err := TargetGroupIdsGetByIdent(c, "legacy")
+	require.NoError(t, err)
+	require.Equal(t, []int64{7}, groups)
+}
+
 func TestDoMigrateBg_QueryFailureLeavesLegacyAssignmentsIntact(t *testing.T) {
 	for _, table := range []string{"target", "busi_group"} {
 		t.Run(table, func(t *testing.T) {

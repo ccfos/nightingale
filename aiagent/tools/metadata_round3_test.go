@@ -9,6 +9,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestListDatasources_AppliesVisibilityBeforeLimit(t *testing.T) {
+	deps := newResourceTestDeps(t, &models.Datasource{})
+	require.NoError(t, models.DB(deps.DBCtx).Create(&[]models.Datasource{
+		{Id: 1, Name: "prod metrics", PluginType: "prometheus", Category: "timeseries", Status: "enabled"},
+		{Id: 2, Name: "prod SQL", PluginType: "mysql"},
+		{Id: 3, Name: "staging metrics", PluginType: "prometheus"},
+		{Id: 4, Name: "prod private", PluginType: "prometheus"},
+	}).Error)
+	var seenIDs []int64
+	deps.FilterDatasources = func(rows []*models.Datasource, user *models.User) []*models.Datasource {
+		require.Equal(t, int64(2), user.Id)
+		var visible []*models.Datasource
+		for _, row := range rows {
+			seenIDs = append(seenIDs, row.Id)
+			if row.Id != 4 {
+				visible = append(visible, row)
+			}
+		}
+		return visible
+	}
+
+	out, err := listDatasourcesBuiltin(context.Background(), deps, map[string]interface{}{
+		"plugin_type": "prometheus", "limit": float64(1),
+	}, map[string]string{"user_id": "2"})
+
+	require.NoError(t, err)
+	require.Equal(t, []int64{4, 3, 1}, seenIDs)
+	var result struct {
+		Total int                `json:"total"`
+		Items []datasourceResult `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &result))
+	require.Equal(t, 1, result.Total)
+	require.Equal(t, []datasourceResult{{
+		Id: 3, Name: "staging metrics", PluginType: "prometheus",
+	}}, result.Items)
+}
+
 func TestGetDatasourceDetail_ReturnsMetadataWithoutCredentials(t *testing.T) {
 	deps := newResourceTestDeps(t, &models.Datasource{})
 	ds := &models.Datasource{

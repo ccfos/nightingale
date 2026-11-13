@@ -2,6 +2,7 @@ package record
 
 import (
 	"context"
+	"errors"
 	"io"
 	"math"
 	"net/http"
@@ -118,6 +119,45 @@ func TestRecordRuleEval_EmptyResultSkipsWrite(t *testing.T) {
 	require.Len(t, query.queries, 1)
 	require.Empty(t, sink.requests)
 	require.Zero(t, testutil.ToFloat64(rrc.stats.GaugeRecordSeriesCount.WithLabelValues("42", "7")))
+}
+
+// Negative series counts distinguish unavailable clients (-2) from query failures (-1).
+func TestRecordRuleEval_ReportsFailureStage(t *testing.T) {
+	tests := []struct {
+		name    string
+		prepare func(*RecordRuleContext, *recordQueryFake, *recordWriteFake)
+		stage   string
+		series  float64
+		queries int
+		writes  int
+	}{
+		{name: "blank query", prepare: func(r *RecordRuleContext, _ *recordQueryFake, _ *recordWriteFake) {
+			r.rule.PromQl = " \n "
+		}, stage: StageCheckQuery},
+		{name: "missing reader", prepare: func(r *RecordRuleContext, _ *recordQueryFake, _ *recordWriteFake) {
+			r.promClients.Del(7)
+		}, stage: StageGetClient, series: -2},
+		{name: "query failure", prepare: func(_ *RecordRuleContext, q *recordQueryFake, _ *recordWriteFake) {
+			q.err = errors.New("query failed")
+		}, stage: StageQueryData, series: -1, queries: 1},
+		{name: "query warning", prepare: func(_ *RecordRuleContext, q *recordQueryFake, _ *recordWriteFake) {
+			q.warnings = promapi.Warnings{"partial response"}
+		}, stage: StageQueryData, series: -1, queries: 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rrc, query, sink := recordEvalFixture(t)
+			tt.prepare(rrc, query, sink)
+
+			rrc.Eval()
+
+			require.Len(t, query.queries, tt.queries)
+			require.Len(t, sink.requests, tt.writes)
+			counter := rrc.stats.CounterRecordEvalErrorTotal.WithLabelValues("7", "7", tt.stage, "42")
+			require.Equal(t, float64(1), testutil.ToFloat64(counter))
+			require.Equal(t, tt.series, testutil.ToFloat64(rrc.stats.GaugeRecordSeriesCount.WithLabelValues("42", "7")))
+		})
+	}
 }
 
 func TestRecordRuleContext_DefaultIntervalRegistersSchedule(t *testing.T) {

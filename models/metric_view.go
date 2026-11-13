@@ -50,14 +50,14 @@ func (v *MetricView) Add(ctx *ctx.Context) error {
 }
 
 func (v *MetricView) Update(ctx *ctx.Context, name, configs string, cate int, createBy int64) error {
-	if err := v.Verify(); err != nil {
-		return err
-	}
-
 	v.UpdateAt = time.Now().Unix()
 	v.Name = name
 	v.Configs = configs
 	v.Cate = cate
+
+	if err := v.Verify(); err != nil {
+		return err
+	}
 
 	if v.CreateBy == 0 {
 		v.CreateBy = createBy

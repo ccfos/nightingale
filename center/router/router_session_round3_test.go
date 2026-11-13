@@ -94,6 +94,20 @@ func TestLoginPost_CaptchaRejectionStopsBeforeCredentialCheck(t *testing.T) {
 	require.Empty(t, server.Keys())
 }
 
+func TestLoginPost_CaptchaRejectsUnknownChallengeWithEmptyAnswer(t *testing.T) {
+	rt, server := sessionRouter(t)
+	original := captchaStore
+	captchaStore = &CaptchaRedisStore{redis: rt.Redis}
+	t.Cleanup(func() { captchaStore = original })
+	rt.HTTP.ShowCaptcha.Enable = true
+
+	w := identityRequest(t, rt, rt.loginPost,
+		loginForm{Username: "alice", Password: "secret", Captchaid: "never-issued", Verifyvalue: ""}, "0", nil)
+
+	require.Contains(t, identityReply(t, w, nil), "incorrect verification code")
+	require.Empty(t, server.Keys())
+}
+
 func TestLogoutPost_DeletesBothTokensAndIdentityToken(t *testing.T) {
 	rt, server := sessionRouter(t)
 	tokens, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, "1-alice")
