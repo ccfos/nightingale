@@ -72,7 +72,7 @@ func ExpandTimeFilter(sql string, start, end int64, datasourceType string) (stri
 	// Literals mirror mysql.MySQLType and doris.DorisType; importing those
 	// packages here would create an import cycle, as they import this one.
 	switch datasourceType {
-	case "mysql", "doris":
+	case "mysql", "doris", "iotdb":
 	default:
 		return sql, nil
 	}
@@ -92,6 +92,9 @@ func ExpandTimeFilter(sql string, start, end int64, datasourceType string) (stri
 			return match
 		}
 
+		if datasourceType == "iotdb" {
+			return fmt.Sprintf("(%s >= %d AND %s < %d)", column, start*1000, column, end*1000)
+		}
 		return fmt.Sprintf("(%s >= FROM_UNIXTIME(%d) AND %s < FROM_UNIXTIME(%d))",
 			column, start, column, end)
 	})

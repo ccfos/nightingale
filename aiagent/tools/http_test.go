@@ -37,21 +37,21 @@ func TestIsPublicIP(t *testing.T) {
 	}{
 		{"1.1.1.1", true},
 		{"8.8.8.8", true},
-		{"127.0.0.1", false},      // loopback
-		{"10.0.0.1", false},       // RFC1918
-		{"192.168.1.1", false},    // RFC1918
-		{"172.16.0.1", false},     // RFC1918
-		{"169.254.0.1", false},    // link-local
-		{"0.0.0.0", false},        // unspecified
-		{"100.64.0.1", false},     // CGNAT
-		{"192.0.2.1", false},      // TEST-NET-1
-		{"198.51.100.1", false},   // TEST-NET-2
-		{"203.0.113.1", false},    // TEST-NET-3
-		{"198.18.0.1", false},     // benchmarking
-		{"240.0.0.1", false},      // reserved
-		{"::1", false},            // ipv6 loopback
-		{"fe80::1", false},        // ipv6 link-local
-		{"fc00::1", false},        // ipv6 ULA
+		{"127.0.0.1", false},           // loopback
+		{"10.0.0.1", false},            // RFC1918
+		{"192.168.1.1", false},         // RFC1918
+		{"172.16.0.1", false},          // RFC1918
+		{"169.254.0.1", false},         // link-local
+		{"0.0.0.0", false},             // unspecified
+		{"100.64.0.1", false},          // CGNAT
+		{"192.0.2.1", false},           // TEST-NET-1
+		{"198.51.100.1", false},        // TEST-NET-2
+		{"203.0.113.1", false},         // TEST-NET-3
+		{"198.18.0.1", false},          // benchmarking
+		{"240.0.0.1", false},           // reserved
+		{"::1", false},                 // ipv6 loopback
+		{"fe80::1", false},             // ipv6 link-local
+		{"fc00::1", false},             // ipv6 ULA
 		{"2606:4700:4700::1111", true}, // cloudflare ipv6
 	}
 	for _, c := range cases {
