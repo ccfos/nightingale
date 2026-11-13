@@ -539,12 +539,11 @@ func (b *BuiltinPayloadInFileType) BuiltinMetricGets(metricsInDB []*models.Built
 	builtinMetricsByDB := convertBuiltinMetricByDB(metricsInDB)
 	builtinMetricsMap := make(map[string]*models.BuiltinMetric)
 
-	// Load file metrics first so DB customizations with the same expression override them.
-	for expression, metric := range b.BuiltinMetrics {
+	for expression, metric := range builtinMetricsByDB {
 		builtinMetricsMap[expression] = metric
 	}
 
-	for expression, metric := range builtinMetricsByDB {
+	for expression, metric := range b.BuiltinMetrics {
 		builtinMetricsMap[expression] = metric
 	}
 
