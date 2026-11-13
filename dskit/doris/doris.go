@@ -144,7 +144,7 @@ func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 	}()
 
 	// Simplified connection logic for Doris using MySQL driver
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", d.User, d.Password, d.Addr, database)
+	dsn := d.readDSN(database)
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
