@@ -475,9 +475,5 @@ func listTaskRecords(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	if err != nil {
 		return "", fmt.Errorf("failed to list task records: %v", err)
 	}
-	// Tool output goes to the LLM provider; never include the Ibex password.
-	for _, r := range list {
-		r.IbexAuthPass = ""
-	}
 	return marshalList(int(total), list), nil
 }

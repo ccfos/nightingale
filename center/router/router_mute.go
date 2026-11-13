@@ -180,14 +180,8 @@ func (rt *Router) alertMuteDel(c *gin.Context) {
 func (rt *Router) alertMuteGet(c *gin.Context) {
 	amid := ginx.UrlParamInt64(c, "amid")
 	am, err := models.AlertMuteGetById(rt.Ctx, amid)
-	ginx.Dangerous(err)
-
-	if am == nil {
-		ginx.Bomb(http.StatusNotFound, "No such AlertMute")
-	}
-
 	am.DB2FE()
-	ginx.NewRender(c).Data(am, nil)
+	ginx.NewRender(c).Data(am, err)
 }
 
 func (rt *Router) alertMutePutByFE(c *gin.Context) {

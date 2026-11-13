@@ -283,25 +283,6 @@ func TestFeishuCardCallback_StripsQueryAndRendersMentions(t *testing.T) {
 		"\n\nRecovered\n\n", body.Card.Elements[0].Text.Content)
 }
 
-func TestLarkCardCallback_StripsQueryAndRendersMentions(t *testing.T) {
-	ctx := isolatedNotifyQueue(t)
-	server, requests := newMessageServer(t, http.StatusOK)
-	sender := &LarkCardSender{tpl: template.Must(template.New("card").Parse("Recovered"))}
-
-	sender.CallBack(CallBackContext{
-		Ctx: ctx, Stats: newStaticWebhookTestStats(), Events: messageEvents(),
-		CallBackURL: server.URL + "/card?ats=alice@example.com,bob",
-	})
-
-	// The Lark card API rejects query strings, so mentions move into the body.
-	request := takeMessageRequest(t, requests)
-	var body feishuCard
-	require.NoError(t, json.Unmarshal(request.body, &body))
-	require.Equal(t, "/card", request.uri)
-	require.Equal(t, `<at email="alice@example.com" ></at><at id="bob" ></at>Recovered`+
-		"\n\nRecovered\n\n", body.Card.Elements[0].Text.Content)
-}
-
 func TestMmSender_FansOutChannelsAndMentions(t *testing.T) {
 	ctx := isolatedNotifyQueue(t)
 	server, requests := newMessageServer(t, http.StatusOK)

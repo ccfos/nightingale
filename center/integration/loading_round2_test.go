@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -69,7 +68,7 @@ func TestInit_LoadsRepositoryComponentAndLocalizedPayloads(t *testing.T) {
 		require.Equal(t, rule.Name, payload.Name)
 		require.Equal(t, component.ID, payload.ComponentID)
 		require.Equal(t, rule.UUID, payload.ID)
-		require.Equal(t, strings.Join(rule.AppendTagsJSON, " "), payload.Tags)
+		require.Equal(t, rule.AppendTags, payload.Tags)
 		require.Equal(t, SYSTEM, payload.CreatedBy)
 		encoded, err := json.Marshal(rule)
 		require.NoError(t, err)

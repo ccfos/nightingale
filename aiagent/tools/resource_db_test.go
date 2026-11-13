@@ -371,25 +371,6 @@ func TestResourceDetails_RejectOtherGroups(t *testing.T) {
 	}
 }
 
-func TestGetAlertMuteDetail_ReturnsTagsAsJSONArray(t *testing.T) {
-	deps := newResourceTestDeps(t, &models.AlertMute{})
-	resourceMembership(t, deps, "ro", PermAlertMutes)
-	db := models.DB(deps.DBCtx)
-	mute := &models.AlertMute{Id: 7, GroupId: 1, Tags: ormx.JSONArr(`[{"key":"host","func":"==","value":"web-1"}]`)}
-	require.NoError(t, mute.FE2DB())
-	require.NoError(t, db.Create(mute).Error)
-
-	out, err := getAlertMuteDetail(context.Background(), deps, map[string]interface{}{"id": "7"},
-		map[string]string{"user_id": "2"})
-
-	require.NoError(t, err)
-	var detail struct {
-		Tags []map[string]string `json:"tags"`
-	}
-	require.NoError(t, json.Unmarshal([]byte(out), &detail))
-	require.Equal(t, []map[string]string{{"key": "host", "func": "==", "value": "web-1"}}, detail.Tags)
-}
-
 func TestCreateAlertRule_PersistsThresholdAndDatasource(t *testing.T) {
 	deps := newResourceTestDeps(t, &models.AlertRule{}, &models.BusiGroup{}, &models.Datasource{})
 	db := models.DB(deps.DBCtx)

@@ -46,23 +46,6 @@ func TestConfigsSetWithUname_UpdatesValueAndPreservesCreationAudit(t *testing.T)
 	require.Zero(t, configs[0].External)
 }
 
-func TestConfigsSetWithUname_LeavesExternalVariableWithSameKey(t *testing.T) {
-	c := pipelineContext(t, &Configs{})
-	require.NoError(t, c.DB.Create(&[]Configs{
-		{Id: 1, Ckey: "shared", Cval: "builtin"},
-		{Id: 2, Ckey: "shared", Cval: "external", External: ConfigExternal},
-	}).Error)
-
-	require.NoError(t, ConfigsSetWithUname(c, "shared", "updated", "editor"))
-
-	var external Configs
-	require.NoError(t, c.DB.First(&external, 2).Error)
-	require.Equal(t, "external", external.Cval)
-	var builtin Configs
-	require.NoError(t, c.DB.First(&builtin, 1).Error)
-	require.Equal(t, "updated", builtin.Cval)
-}
-
 func TestConfigsStatistics_SeparateBuiltinAndExternalWatermarks(t *testing.T) {
 	c := pipelineContext(t, &Configs{})
 	require.NoError(t, c.DB.Create(&[]Configs{

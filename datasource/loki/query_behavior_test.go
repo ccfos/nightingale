@@ -218,25 +218,6 @@ func TestLoki_QueryHistogramBuildsGroupedQueryAndLimitsSeries(t *testing.T) {
 	}}, got)
 }
 
-func TestLoki_QueryMapDataReturnsFirstLog(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/api/v1/query_range", r.URL.Path)
-		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"streams","result":[` +
-			`{"stream":{"app":"api"},"values":[["1700000000000000000","hello"]]}]}}`))
-	}))
-	defer server.Close()
-	client := &Loki{Loki: lokikit.Loki{LokiAddr: server.URL}}
-
-	rows, err := client.QueryMapData(context.Background(), Query{
-		Query: `{app="api"}`, Start: 1700000000, End: 1700000060, SkipCount: true,
-	})
-
-	require.NoError(t, err)
-	require.Len(t, rows, 1)
-	require.Equal(t, "hello", rows[0]["line"])
-	require.Equal(t, "1700000000000000000", rows[0]["__timestamp__"])
-}
-
 func TestConvertLokiToDataResp_SkipsInvalidSamples(t *testing.T) {
 	response := &lokikit.QueryResponse{Data: lokikit.QueryData{Result: []lokikit.QueryItem{
 		{

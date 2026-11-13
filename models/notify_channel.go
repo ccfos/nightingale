@@ -682,7 +682,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 }
 
 func (ncc *NotifyChannelConfig) ValidateHTTPRequestConfig() error {
-	if ncc.RequestConfig == nil || ncc.RequestConfig.HTTPRequestConfig == nil {
+	if ncc.RequestConfig.HTTPRequestConfig == nil {
 		return errors.New("http request config cannot be nil")
 	}
 	return ncc.RequestConfig.HTTPRequestConfig.Verify()

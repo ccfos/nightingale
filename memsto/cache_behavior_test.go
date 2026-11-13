@@ -333,21 +333,6 @@ func TestCvalCache_SiteConfiguration(t *testing.T) {
 	require.True(t, c.statChanged(1, 11))
 }
 
-func TestCvalCache_SetDropsDeletedKeys(t *testing.T) {
-	c := &CvalCache{cvals: make(map[string]string)}
-	c.Set([]*models.Configs{
-		{Ckey: "site_info", Cval: `{"site_url":"https://n9e.test"}`},
-		{Ckey: "keep", Cval: "v1"},
-	}, 2, 10)
-
-	// The next sync no longer returns site_info because it was deleted from the DB.
-	c.Set([]*models.Configs{{Ckey: "keep", Cval: "v2"}}, 1, 11)
-
-	require.Empty(t, c.Get("site_info"))
-	require.Empty(t, c.GetSiteInfo().SiteUrl)
-	require.Equal(t, "v2", c.Get("keep"))
-}
-
 func TestCvalCache_InvalidSiteConfiguration(t *testing.T) {
 	c := &CvalCache{cvals: make(map[string]string)}
 

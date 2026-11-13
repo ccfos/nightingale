@@ -78,9 +78,8 @@ func ConvertToTimeSeries(value model.Value, rule *models.RecordingRule) (lst []p
 			return
 		}
 
-		// A scalar has no labels of its own, but the recorded series still needs its name and tags.
 		lst = append(lst, prompb.TimeSeries{
-			Labels:  labelsToLabelsProto(nil, rule),
+			Labels:  nil,
 			Samples: []prompb.Sample{{Value: float64(item.Value), Timestamp: time.Unix(item.Timestamp.Unix(), 0).UnixNano() / 1e6}},
 		})
 	default:

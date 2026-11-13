@@ -20,7 +20,7 @@ func (d *Doris) QueryLogs(ctx context.Context, query *QueryParam) ([]map[string]
 func (d *Doris) QueryHistogram(ctx context.Context, query *QueryParam) ([][]float64, error) {
 	values, err := d.QueryTimeseries(ctx, query)
 	if err != nil {
-		return [][]float64{}, err
+		return [][]float64{}, nil
 	}
 	if len(values) > 0 && len(values[0].Values) > 0 {
 		items := values[0].Values

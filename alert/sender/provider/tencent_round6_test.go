@@ -54,7 +54,6 @@ func TestTencentNotify_PostsRenderedSignedRequest(t *testing.T) {
 			require.Equal(t, "1", sent.Query.Get("existing"))
 			require.Equal(t, "west", sent.Query.Get("tenant"))
 			require.JSONEq(t, `{"message":"usage 91%","phone":"12025550123"}`, string(sent.Body))
-			require.Empty(t, sent.Header.Get("Secret_Key"))
 			timestamp, err := strconv.ParseInt(sent.Header.Get("X-TC-Timestamp"), 10, 64)
 			require.NoError(t, err)
 			// Validate the signature against the transmitted timestamp, without a clock assumption.

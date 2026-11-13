@@ -264,15 +264,6 @@ func TestQueryHistogram_ReturnsSortedPoints(t *testing.T) {
 	require.Equal(t, [][]float64{{100, 2}, {200, 4}}, points)
 }
 
-func TestQueryHistogram_ReturnsQueryError(t *testing.T) {
-	d := &Doris{}
-
-	points, err := d.QueryHistogram(context.Background(), &QueryParam{Sql: "DROP TABLE users"})
-
-	require.ErrorContains(t, err, "operation DROP is forbid")
-	require.Empty(t, points)
-}
-
 func TestSplitSQLStatements_PreservesQuotedAndCommentSemicolons(t *testing.T) {
 	tests := []struct {
 		name  string

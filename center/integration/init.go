@@ -197,7 +197,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						Type:        "alert",
 						Cate:        cate,
 						Name:        alert.Name,
-						Tags:        strings.Join(alert.AppendTagsJSON, " "),
+						Tags:        alert.AppendTags,
 						Content:     string(content),
 						UUID:        alert.UUID,
 						ID:          alert.UUID,

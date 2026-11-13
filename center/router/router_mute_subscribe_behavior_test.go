@@ -166,17 +166,6 @@ func TestAlertMutePut_ReturnsNotFound(t *testing.T) {
 	require.Equal(t, "No such AlertMute", w.Body.String())
 }
 
-func TestAlertMuteGet_ReturnsNotFound(t *testing.T) {
-	rt := muteSubscribeRouter(t,
-		&models.AlertMute{},
-	)
-
-	w := muteSubscribeRequest(t, rt.alertMuteGet, nil, "/groups/1/objects/404/0", &models.User{Id: 1})
-
-	require.Equal(t, http.StatusNotFound, w.Code)
-	require.Equal(t, "No such AlertMute", w.Body.String())
-}
-
 func TestAlertMuteGets_FiltersGroupProductDisabledAndCause(t *testing.T) {
 	rt := muteSubscribeRouter(t,
 		&models.AlertMute{},

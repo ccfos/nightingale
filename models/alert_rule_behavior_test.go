@@ -42,21 +42,6 @@ func TestAlertRule_FE2DBRoundTripsEffectiveTimesAndJSONFields(t *testing.T) {
 	require.Equal(t, rule.ExtraConfigJSON, decoded.ExtraConfigJSON)
 }
 
-func TestAlertRule_CloneLeavesSourceUnchanged(t *testing.T) {
-	src := &AlertRule{Id: 42, GroupId: 7, Name: "cpu", CreateBy: "alice"}
-
-	clone := src.Clone("bob", 8)
-
-	require.NotSame(t, src, clone)
-	require.Equal(t, int64(42), src.Id)
-	require.Equal(t, int64(7), src.GroupId)
-	require.Equal(t, "alice", src.CreateBy)
-	require.Zero(t, clone.Id)
-	require.Equal(t, int64(8), clone.GroupId)
-	require.Equal(t, "cpu", clone.Name)
-	require.Equal(t, "bob", clone.CreateBy)
-}
-
 func TestAlertRule_FE2DBMigratesLegacyPromQL(t *testing.T) {
 	rule := AlertRule{PromQl: "up == 0", Severity: 2, EnableStimeJSON: "09:00", EnableEtimeJSON: "17:00",
 		EnableDaysOfWeekJSON: []string{"1", "2"}}

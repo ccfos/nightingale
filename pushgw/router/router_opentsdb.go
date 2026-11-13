@@ -147,11 +147,6 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 		return
 	}
 
-	if len(bs) == 0 {
-		c.String(400, "request body is empty")
-		return
-	}
-
 	var arr HTTPMetricArr
 
 	if bs[0] == '[' {

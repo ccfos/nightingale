@@ -104,12 +104,9 @@ func (c *CvalCache) Set(cvals []*models.Configs, total int64, updated int64) {
 	defer c.mu.Unlock()
 	c.statTotal = total
 	c.statLastUpdated = updated
-	// Replace rather than merge, so configs deleted from the DB leave the cache too.
-	m := make(map[string]string, len(cvals))
 	for _, cfg := range cvals {
-		m[cfg.Ckey] = cfg.Cval
+		c.cvals[cfg.Ckey] = cfg.Cval
 	}
-	c.cvals = m
 }
 
 func (c *CvalCache) Get(ckey string) string {

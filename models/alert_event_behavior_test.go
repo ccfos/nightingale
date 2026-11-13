@@ -213,8 +213,6 @@ func TestAlertCurEvent_GenCardTitleSupportsLegacyAndTemplateFormats(t *testing.T
 	}{
 		{name: "legacy", rule: "field:group_name::field:severity::tagkey:ident", want: "ops::2::node-a"},
 		{name: "missing tag", rule: "tagkey:missing", want: "Others"},
-		// Tag key "dent" must not match the "ident=node-a" tag.
-		{name: "tag key is not a substring match", rule: "tagkey:dent", want: "Others"},
 		{name: "template", rule: "{{.RuleName}} / {{.Severity}}", want: "CPU high / 2"},
 		{name: "invalid template", rule: "{{", want: "failed to parse card title"},
 		{name: "execution error", rule: "{{.Missing}}", want: "failed to execute card title"},

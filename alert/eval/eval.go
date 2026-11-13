@@ -733,8 +733,7 @@ func getParamKeyAllLabel(paramKey string, promql string, client promsdk.API, dsI
 		if strings.HasPrefix(label.Value, "$") {
 			continue
 		}
-		// label.Value comes back unquoted from the parser; quote it so the selector stays valid PromQL.
-		labelstrs = append(labelstrs, label.Name+label.Op+strconv.Quote(label.Value))
+		labelstrs = append(labelstrs, label.Name+label.Op+label.Value)
 	}
 	pr := metricName + "{" + strings.Join(labelstrs, ",") + "}"
 

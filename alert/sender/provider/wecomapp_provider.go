@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
@@ -180,12 +179,11 @@ func truncateWecomMarkdown(s string) string {
 	if len(s) <= wecomMarkdownMaxLen {
 		return s
 	}
-	// Back up to the start of the rune that crosses the limit so no partial rune is kept.
-	cut := wecomMarkdownMaxLen
-	for cut > 0 && !utf8.RuneStart(s[cut]) {
-		cut--
+	s = s[:wecomMarkdownMaxLen]
+	for len(s) > 0 && s[len(s)-1]&0xc0 == 0x80 {
+		s = s[:len(s)-1]
 	}
-	return s[:cut]
+	return s
 }
 
 func (p *WecomAppProvider) getAccessToken(ctx context.Context, client *http.Client, cfg *models.WecomAppRequestConfig) (string, error) {

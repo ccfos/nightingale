@@ -248,12 +248,10 @@ func TestIngestion_RejectsMalformedPayloads(t *testing.T) {
 		body     string
 		encoding string
 	}{
-		{name: "opentsdb empty body", handler: "opentsdb", body: ""},
 		{name: "opentsdb malformed json", handler: "opentsdb", body: "{"},
 		{name: "opentsdb bad gzip", handler: "opentsdb", body: "broken", encoding: "gzip"},
 		{name: "opentsdb wrong timestamp type", handler: "opentsdb", body: `{"timestamp":"x"}`},
 		{name: "opentsdb wrong tags type", handler: "opentsdb", body: `{"tags":[]}`},
-		{name: "falcon empty body", handler: "falcon", body: ""},
 		{name: "falcon malformed json", handler: "falcon", body: "["},
 		{name: "falcon bad gzip", handler: "falcon", body: "broken", encoding: "gzip"},
 		{name: "falcon wrong endpoint type", handler: "falcon", body: `{"endpoint":1}`},

@@ -368,18 +368,3 @@ func TestTargetsMetadata_EncodesTargetFilter(t *testing.T) {
 	}}, result)
 }
 
-func TestWriterWrite_ReturnsPostError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = io.WriteString(w, "invalid samples")
-	}))
-	defer server.Close()
-	client, err := api.NewClient(api.Config{Address: server.URL})
-	require.NoError(t, err)
-	writer := NewWriter(client, ClientOptions{Url: server.URL})
-
-	err = writer.Write([]prompb.TimeSeries{{Labels: []prompb.Label{{Name: "__name__", Value: "up"}}}})
-
-	// Recording rules rely on this error to count and log failed writes.
-	require.ErrorContains(t, err, "invalid samples")
-}

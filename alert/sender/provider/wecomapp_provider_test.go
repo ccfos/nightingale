@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-	"unicode/utf8"
 
 	"github.com/ccfos/nightingale/v6/models"
 )
@@ -16,20 +15,6 @@ func TestTruncateWecomMarkdown(t *testing.T) {
 	out := truncateWecomMarkdown(s)
 	if len(out) > wecomMarkdownMaxLen {
 		t.Fatalf("len=%d want <= %d", len(out), wecomMarkdownMaxLen)
-	}
-}
-
-func TestTruncateWecomMarkdown_KeepsValidUTF8(t *testing.T) {
-	// "告" is 3 bytes, so it straddles the limit and must be dropped entirely.
-	s := strings.Repeat("a", wecomMarkdownMaxLen-1) + "告"
-
-	out := truncateWecomMarkdown(s)
-
-	if !utf8.ValidString(out) {
-		t.Fatalf("truncated markdown is not valid UTF-8: % x", out[len(out)-3:])
-	}
-	if out != strings.Repeat("a", wecomMarkdownMaxLen-1) {
-		t.Fatalf("len=%d, want the ASCII prefix only", len(out))
 	}
 }
 

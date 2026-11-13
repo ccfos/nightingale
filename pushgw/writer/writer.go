@@ -234,7 +234,6 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 		httpReq, newRequestErr = http.NewRequest("POST", url, bytes.NewReader(req))
 		if newRequestErr != nil {
 			logger.Warningf("create remote write:%s request got error: %s", url, newRequestErr.Error())
-			err = newRequestErr
 			continue
 		}
 

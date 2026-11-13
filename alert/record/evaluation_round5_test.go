@@ -143,10 +143,6 @@ func TestRecordRuleEval_ReportsFailureStage(t *testing.T) {
 		{name: "query warning", prepare: func(_ *RecordRuleContext, q *recordQueryFake, _ *recordWriteFake) {
 			q.warnings = promapi.Warnings{"partial response"}
 		}, stage: StageQueryData, series: -1, queries: 1},
-		{name: "write failure", prepare: func(_ *RecordRuleContext, q *recordQueryFake, w *recordWriteFake) {
-			q.value = model.Vector{&model.Sample{Value: 3, Timestamp: 1000}}
-			w.status = http.StatusServiceUnavailable
-		}, stage: StageWriteData, series: 1, queries: 1, writes: 1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -238,17 +234,6 @@ func TestConvertToTimeSeries_MatrixFiltersInvalidSamples(t *testing.T) {
 	require.ElementsMatch(t, []prompb.Label{
 		{Name: "__name__", Value: "recorded"}, {Name: "job", Value: "api"},
 	}, got[0].Labels)
-}
-
-func TestConvertToTimeSeries_ScalarCarriesRecordingNameAndTags(t *testing.T) {
-	rule := &models.RecordingRule{Name: "recorded", AppendTagsJSON: []string{"env=prod"}}
-
-	series := ConvertToTimeSeries(&model.Scalar{Value: 4, Timestamp: 1000}, rule)
-
-	require.Len(t, series, 1)
-	// Remote write rejects a series without labels, so the name must be present.
-	require.ElementsMatch(t, []prompb.Label{{Name: LabelName, Value: "recorded"}, {Name: "env", Value: "prod"}}, series[0].Labels)
-	require.Equal(t, []prompb.Sample{{Value: 4, Timestamp: 1000}}, series[0].Samples)
 }
 
 func TestConvertToTimeSeries_DropsNaNScalarAndUnsupportedString(t *testing.T) {

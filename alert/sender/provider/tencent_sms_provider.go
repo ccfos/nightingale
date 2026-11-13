@@ -150,8 +150,6 @@ func setTxHeader(httpConfig *models.HTTPRequestConfig, headers map[string]string
 	authorization := getTxSignature(httpConfig, string(payloadBytes), timestamp)
 	headers["X-TC-Timestamp"] = fmt.Sprintf("%d", timestamp)
 	headers["Authorization"] = authorization
-	// Secret_Key is configured as a header only to sign the request; never send it.
-	delete(headers, "Secret_Key")
 
 	return headers
 }

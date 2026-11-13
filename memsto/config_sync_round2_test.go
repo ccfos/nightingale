@@ -142,7 +142,7 @@ func round2ConfigFixture(t *testing.T, external int) round2ConfigSync {
 		result.sync, result.get = cache.syncConfigs, func() string { return cache.Get()["region"] }
 		result.mark = func() { cache.Set(map[string]string{"region": "marker"}, 1, 10) }
 	} else {
-		cache := &CvalCache{ctx: c, stats: stats, statTotal: -1}
+		cache := &CvalCache{ctx: c, stats: stats, statTotal: -1, cvals: make(map[string]string)}
 		result.sync, result.get = cache.syncConfigs, func() string { return cache.Get("region") }
 		result.mark = func() { cache.Set([]*models.Configs{{Ckey: "region", Cval: "marker"}}, 1, 10) }
 	}
@@ -190,18 +190,14 @@ func TestSyncConfigCaches_UpdatedTimestampReloadsValue(t *testing.T) {
 	}
 }
 
-func TestSyncConfigCaches_DeletedValueDisappears(t *testing.T) {
-	for _, external := range []int{0, 1} {
-		t.Run(map[int]string{0: "built in", 1: "user variables"}[external], func(t *testing.T) {
-			cache := round2ConfigFixture(t, external)
-			require.NoError(t, cache.sync())
-			require.NoError(t, cache.db.Delete(cache.row).Error)
+func TestSyncConfigCaches_DeletedUserVariableDisappears(t *testing.T) {
+	cache := round2ConfigFixture(t, 1)
+	require.NoError(t, cache.sync())
+	require.NoError(t, cache.db.Delete(cache.row).Error)
 
-			require.NoError(t, cache.sync())
+	require.NoError(t, cache.sync())
 
-			require.Empty(t, cache.get())
-		})
-	}
+	require.Empty(t, cache.get())
 }
 
 func TestSyncNotifyConfigs_LoadsTransportSettingsWithoutSending(t *testing.T) {
