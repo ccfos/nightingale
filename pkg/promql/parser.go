@@ -2,6 +2,7 @@ package promql
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/VictoriaMetrics/metricsql"
@@ -21,6 +22,7 @@ func SplitBinaryOp(code string) ([]string, error) {
 	for k := range m {
 		lst = append(lst, k)
 	}
+	sort.Strings(lst)
 
 	return lst, nil
 }

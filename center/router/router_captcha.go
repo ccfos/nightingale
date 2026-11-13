@@ -43,7 +43,8 @@ func (s *CaptchaRedisStore) Get(id string, clear bool) string {
 func (s *CaptchaRedisStore) Verify(id, answer string, clear bool) bool {
 
 	old := s.Get(id, clear)
-	return old == answer
+	// A missing or expired challenge reads as "", which must not match an empty answer.
+	return old != "" && old == answer
 }
 
 func (rt *Router) newCaptchaRedisStore() *CaptchaRedisStore {

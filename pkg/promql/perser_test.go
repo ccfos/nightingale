@@ -140,11 +140,15 @@ func TestGetLabelsAndMetricNameWithReplace(t *testing.T) {
 		},
 		// 更多测试案例...
 		{
-			name:               "告警规则支持变量",
-			ql:                 `mem{test1="$test1", test2="$test2", test3="test3"} > $val`,
-			rep:                "$",
-			expectedLabels:     map[string]Label{},
-			expectedMetricName: "snmp_interface_speed",
+			name: "告警规则支持变量",
+			ql:   `mem{test1="$test1", test2="$test2", test3="test3"} > $val`,
+			rep:  "$",
+			expectedLabels: map[string]Label{
+				"test1": {Name: "test1", Value: "$test1", Op: "="},
+				"test2": {Name: "test2", Value: "$test2", Op: "="},
+				"test3": {Name: "test3", Value: "test3", Op: "="},
+			},
+			expectedMetricName: "mem",
 			expectError:        false,
 		},
 	}

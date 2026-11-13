@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
+	"fmt"
 	"strings"
 )
 
@@ -58,11 +59,19 @@ func AesDecrypt(encrypted, key []byte) ([]byte, error) {
 		return nil, err
 	}
 	blockSize := block.BlockSize()
+	// CryptBlocks panics on input that is not whole blocks.
+	if len(encrypted) == 0 || len(encrypted)%blockSize != 0 {
+		return nil, fmt.Errorf("ciphertext length %d is not a positive multiple of %d", len(encrypted), blockSize)
+	}
 	blockMode := cipher.NewCBCDecrypter(block, key[:blockSize])
 	origData := make([]byte, len(encrypted))
 	//解密
 	blockMode.CryptBlocks(origData, encrypted)
 	//去除填充
+	unpadding := int(origData[len(origData)-1])
+	if unpadding == 0 || unpadding > blockSize {
+		return nil, fmt.Errorf("invalid padding")
+	}
 	origData = PKCS7UnPadding(origData)
 	return origData, nil
 }

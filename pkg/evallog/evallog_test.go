@@ -1,6 +1,7 @@
 package evallog
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -11,6 +12,9 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"unicode/utf8"
+
+	"github.com/stretchr/testify/require"
 )
 
 func initForTest(t *testing.T, mutate func(*Config)) Config {
@@ -1548,4 +1552,178 @@ func TestPruneToBudget(t *testing.T) {
 	if _, err := os.Stat(cur); err != nil {
 		t.Fatalf("current hour file must never be pruned: %v", err)
 	}
+}
+
+func TestSeriesAndPointsCap_ReflectActiveConfiguration(t *testing.T) {
+	mu.Lock()
+	previous := defaultWriter
+	defaultWriter = nil
+	mu.Unlock()
+	t.Cleanup(func() {
+		mu.Lock()
+		defaultWriter = previous
+		mu.Unlock()
+	})
+	require.Zero(t, SeriesCap())
+	require.Zero(t, PointsCap())
+
+	mu.Lock()
+	defaultWriter = &Writer{cfg: Config{MaxSeriesPerQuery: 7, MaxPointsPerSeries: 11}}
+	mu.Unlock()
+
+	require.Equal(t, 7, SeriesCap())
+	require.Equal(t, 11, PointsCap())
+}
+
+func TestTruncateRunes_PreservesUTF8AtByteBoundary(t *testing.T) {
+	cases := []struct {
+		name, input, want string
+		max               int
+	}{
+		{name: "short", input: "alert", max: 8, want: "alert"},
+		{name: "ascii", input: "alert", max: 3, want: "ale...(truncated)"},
+		{name: "multibyte", input: "告警中", max: 7, want: "告警...(truncated)"},
+		{name: "zero", input: "alert", max: 0, want: "...(truncated)"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := truncateRunes(tc.input, tc.max)
+
+			require.Equal(t, tc.want, got)
+			require.True(t, utf8.ValidString(got))
+		})
+	}
+}
+
+func TestMarshalWithinLimit_RecoversFromNonFiniteRawSeries(t *testing.T) {
+	writer := &Writer{cfg: Config{MaxRecordBytes: 4096}}
+	record := &EvalRecord{
+		RuleId: 7, DatasourceId: 3, AnomalyTotal: 2,
+		Queries: []QueryRecord{{
+			Ref: "A", Query: "up", SeriesTotal: 1,
+			Series: []SeriesSample{{Points: [][2]float64{{1, math.NaN()}}}},
+		}},
+		Events: []EventTrail{{Hash: "event-test", Stage: StageFired, Detail: "details"}},
+	}
+
+	line, ok := writer.marshalWithinLimit(record)
+
+	require.True(t, ok)
+	var decoded EvalRecord
+	require.NoError(t, json.Unmarshal(line, &decoded))
+	require.True(t, decoded.Truncated)
+	require.Equal(t, 2, decoded.AnomalyTotal)
+	require.Equal(t, "A", decoded.Queries[0].Ref)
+	require.Equal(t, 1, decoded.Queries[0].SeriesTotal)
+	require.Empty(t, decoded.Queries[0].Series)
+	require.Equal(t, []EventTrail{{Hash: "event-test", Stage: StageFired}}, decoded.Events)
+}
+
+func TestMarshalWithinLimit_TruncatesLongQueryAndErrors(t *testing.T) {
+	writer := &Writer{cfg: Config{MaxRecordBytes: 2048}}
+	record := &EvalRecord{
+		RuleId: 7, Error: strings.Repeat("error", 200),
+		Queries: []QueryRecord{{
+			Ref: "A", Query: strings.Repeat("query", 200), Error: strings.Repeat("error", 200),
+			Warnings: []string{strings.Repeat("warning", 300)}, SeriesTotal: 12,
+		}},
+		Anomalies: []AnomalyBrief{{Key: "host=api", Value: 3}}, AnomalyTotal: 1,
+	}
+
+	line, ok := writer.marshalWithinLimit(record)
+
+	require.True(t, ok)
+	var decoded EvalRecord
+	require.NoError(t, json.Unmarshal(line, &decoded))
+	require.True(t, decoded.Truncated)
+	// The retained prefix is followed by an explicit truncation marker.
+	require.Equal(t, strings.Repeat("error", 200)[:512]+"...(truncated)", decoded.Error)
+	require.Equal(t, strings.Repeat("query", 200)[:512]+"...(truncated)", decoded.Queries[0].Query)
+	require.Equal(t, strings.Repeat("error", 200)[:512]+"...(truncated)", decoded.Queries[0].Error)
+	require.Empty(t, decoded.Queries[0].Warnings)
+	require.Empty(t, decoded.Anomalies)
+	require.Equal(t, 1, decoded.AnomalyTotal)
+	require.Equal(t, 12, decoded.Queries[0].SeriesTotal)
+}
+
+func TestEnforceLineCeiling_TrimsEventTrailsToReadableSize(t *testing.T) {
+	writer := &Writer{}
+	record := &EvalRecord{RuleId: 7, Events: []EventTrail{
+		{Hash: "first", Stage: StageFired, Detail: strings.Repeat("x", maxRecordLineBytes/2)},
+		{Hash: "second", Stage: StageFired, Detail: strings.Repeat("x", maxRecordLineBytes/2)},
+	}}
+	line, err := json.Marshal(record)
+	require.NoError(t, err)
+	require.Greater(t, len(line), maxRecordLineBytes)
+
+	line, ok := writer.enforceLineCeiling(record, line)
+
+	require.True(t, ok)
+	require.LessOrEqual(t, len(line), maxRecordLineBytes)
+	var decoded EvalRecord
+	require.NoError(t, json.Unmarshal(line, &decoded))
+	require.True(t, decoded.Truncated)
+	require.Len(t, decoded.Events, 1)
+	require.Equal(t, "first", decoded.Events[0].Hash)
+}
+
+func TestEnforceLineCeiling_CountsDroppedOversizeRecord(t *testing.T) {
+	drops := 0
+	writer := &Writer{dropHook: func() { drops++ }}
+	record := &EvalRecord{RuleId: 7, Error: strings.Repeat("x", maxRecordLineBytes+1)}
+	line, err := json.Marshal(record)
+	require.NoError(t, err)
+
+	line, ok := writer.enforceLineCeiling(record, line)
+
+	require.False(t, ok)
+	require.Nil(t, line)
+	require.Equal(t, 1, drops)
+}
+
+func TestHousekeep_PrunesUnusedBudgets(t *testing.T) {
+	now := time.Now()
+	writer := &Writer{budgets: map[string]*ruleBudget{
+		"expired": {lastUse: now.Add(-2 * budgetIdleTimeout)},
+		"active":  {lastUse: now},
+	}}
+
+	writer.housekeep()
+
+	require.NotContains(t, writer.budgets, "expired")
+	require.Contains(t, writer.budgets, "active")
+}
+
+func TestEvictOldest_FlushesAndQueuesOldestAppender(t *testing.T) {
+	writer := &Writer{
+		appenders: make(map[string]*appender), gzCh: make(chan string, 2), gzInflight: make(map[string]chan struct{}),
+	}
+	baseTime := time.Unix(1700000000, 0)
+	for index, key := range []string{"old", "new"} {
+		path := filepath.Join(t.TempDir(), key+".jsonl")
+		file, err := os.Create(path)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = file.Close() })
+		buffer := bufio.NewWriter(file)
+		_, err = buffer.WriteString("record\n")
+		require.NoError(t, err)
+		writer.appenders[key] = &appender{
+			ruleDs: key, hourKey: "2000-01-01/00", hourPath: path, f: file, bw: buffer,
+			lastWrite: baseTime.Add(time.Duration(index) * time.Minute),
+		}
+	}
+	old := writer.appenders["old"]
+
+	writer.evictOldest()
+	queuedPath := <-writer.gzCh
+	writer.finishGz(queuedPath)
+
+	require.NotContains(t, writer.appenders, "old")
+	require.Contains(t, writer.appenders, "new")
+	data, err := os.ReadFile(old.hourPath)
+	require.NoError(t, err)
+	require.Equal(t, "record\n", string(data))
+	require.Equal(t, old.hourPath, queuedPath)
+	_, err = old.f.WriteString("closed")
+	require.ErrorIs(t, err, os.ErrClosed)
 }

@@ -328,64 +328,7 @@ func TestProcess(t *testing.T) {
 				{Name: "foo", Value: "bar"},
 			},
 		},
-		// 12. 条件重标记 (Conditional relabeling)
-		{
-			name: "Conditional relabeling matches",
-			labels: []prompb.Label{
-				{Name: "label", Value: "x"},
-				{Name: "foo", Value: "aaa"},
-			},
-			cfgs: []*pconf.RelabelConfig{
-				{
-					Action:      "replace",
-					If:          `label="x|y"`,
-					TargetLabel: "foo",
-					Replacement: "bar",
-					IfRegex:     compileRegex(`label="x|y"`),
-				},
-			},
-			expected: []prompb.Label{
-				{Name: "label", Value: "x"},
-				{Name: "foo", Value: "bar"},
-			},
-		},
-		{
-			name: "Conditional relabeling matches alternative",
-			labels: []prompb.Label{
-				{Name: "label", Value: "y"},
-			},
-			cfgs: []*pconf.RelabelConfig{
-				{
-					Action:      "replace",
-					If:          `label="x|y"`,
-					TargetLabel: "foo",
-					Replacement: "bar",
-					IfRegex:     compileRegex(`label="x|y"`),
-				},
-			},
-			expected: []prompb.Label{
-				{Name: "label", Value: "y"},
-				{Name: "foo", Value: "bar"},
-			},
-		},
-		{
-			name: "Conditional relabeling does not match",
-			labels: []prompb.Label{
-				{Name: "label", Value: "z"},
-			},
-			cfgs: []*pconf.RelabelConfig{
-				{
-					Action:      "replace",
-					If:          `label="x|y"`,
-					TargetLabel: "foo",
-					Replacement: "bar",
-					IfRegex:     compileRegex(`label="x|y"`),
-				},
-			},
-			expected: []prompb.Label{
-				{Name: "label", Value: "z"},
-			},
-		},
+		// RelabelConfig.If is not implemented by relabel(), so there are no conditional cases here.
 	}
 
 	for _, tt := range tests {

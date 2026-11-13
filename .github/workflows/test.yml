@@ -1,0 +1,26 @@
+name: test
+
+# Unit tests with coverage. Tests that need a live MySQL/PostgreSQL/ClickHouse/
+# VictoriaLogs carry the `integration` build tag and are excluded here; run them
+# locally with `go test -tags integration ./...` against real services.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: Run unit tests
+        run: go test -coverprofile=coverage.out -covermode=atomic ./...
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false

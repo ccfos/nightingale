@@ -68,7 +68,7 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 		}
 	}
 	if len(m.Shards) == 0 {
-		return nil, errors.New("empty pgsql shards")
+		return nil, errors.New("empty mysql shards")
 	}
 
 	shard := m.Shards[0]

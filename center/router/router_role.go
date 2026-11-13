@@ -78,13 +78,13 @@ func (rt *Router) roleDel(c *gin.Context) {
 	target, err := models.RoleGet(rt.Ctx, "id=?", id)
 	ginx.Dangerous(err)
 
-	if target.Name == "Admin" {
-		ginx.Bomb(http.StatusOK, "admin role can not be modified")
-	}
-
 	if target == nil {
 		ginx.NewRender(c).Message(nil)
 		return
+	}
+
+	if target.Name == "Admin" {
+		ginx.Bomb(http.StatusOK, "admin role can not be modified")
 	}
 
 	ginx.NewRender(c).Message(target.Del(rt.Ctx))

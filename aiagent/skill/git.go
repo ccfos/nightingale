@@ -199,9 +199,13 @@ func LatestGitCommit(ctx context.Context, cfg GitConfig) (string, error) {
 	refs, err := remote.ListContext(ctx, &gogit.ListOptions{
 		Auth:            gitAuth(cfg),
 		InsecureSkipTLS: true,
+		// Needed for the "^{}" lookup below; go-git ignores peeled refs by default.
+		PeelingOption: gogit.AppendPeeled,
 	})
 	if err != nil {
-		return "", fmt.Errorf("list remote refs url=%s: %w", RedactedGitURL(cfg.URL), err)
+		// go-git errors can embed the URL with its credentials, so redact the message too.
+		redacted := RedactedGitURL(cfg.URL)
+		return "", fmt.Errorf("list remote refs url=%s: %s", redacted, strings.ReplaceAll(err.Error(), cfg.URL, redacted))
 	}
 
 	switch cfg.RefType {

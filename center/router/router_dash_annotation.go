@@ -69,7 +69,9 @@ func (rt *Router) dashAnnotationPut(c *gin.Context) {
 
 	checkAnnotationPermission(c, rt.Ctx, annotation.DashboardId)
 
+	// The permission check covers the stored dashboard only, so the body must not move it.
 	f.Id = id
+	f.DashboardId = annotation.DashboardId
 	f.UpdateAt = time.Now().Unix()
 	f.UpdateBy = c.MustGet("username").(string)
 

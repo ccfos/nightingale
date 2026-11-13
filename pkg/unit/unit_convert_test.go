@@ -3,9 +3,16 @@ package unit
 import (
 	"math"
 	"testing"
+	"time"
 )
 
 func TestValueFormatter(t *testing.T) {
+	// The timestamp cases expect UTC+8 wall-clock text; pin the zone so the test does not
+	// depend on the machine's local time zone (CI runners use UTC).
+	local := time.Local
+	time.Local = time.FixedZone("UTC+8", 8*3600)
+	t.Cleanup(func() { time.Local = local })
+
 	tests := []struct {
 		name     string
 		unit     string
