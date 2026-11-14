@@ -57,6 +57,9 @@ type Writer struct {
 	// gzInflight 记录已排队/正在压缩的路径 → 完成信号，供 getAppender 在重开同名文件前
 	// 等待，避免压缩任务的 os.Remove 删掉刚被重新打开的 inode（详见 waitGzDone）。
 	gzInflight map[string]chan struct{}
+	// sweepCh carries leftover paths found by sweepLeftovers to the consumer goroutine,
+	// which alone knows which hour files are still open (see enqueueLeftover).
+	sweepCh chan string
 
 	// 写失败熔断（见 markDegraded）。degradedUntilNs 由消费 goroutine 写、Push 在
 	// eval goroutine 读，两个字段都必须原子访问。
@@ -106,6 +109,7 @@ func NewWriter(cfg Config, dropHook func()) (*Writer, error) {
 		budgets:    make(map[string]*ruleBudget),
 		gzCh:       make(chan string, 1024),
 		gzInflight: make(map[string]chan struct{}),
+		sweepCh:    make(chan string),
 	}
 
 	w.gzWg.Add(1)
@@ -183,6 +187,8 @@ func (w *Writer) loop() {
 				return
 			}
 			w.write(r)
+		case path := <-w.sweepCh:
+			w.enqueueLeftover(path)
 		case <-ticker.C:
 			w.housekeep()
 		}
@@ -388,22 +394,11 @@ func (w *Writer) getAppender(key string, r *EvalRecord) *appender {
 	}
 
 	dir := filepath.Join(w.cfg.Dir, key, t.Format(dateLayout))
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		logger.Warningf("evallog mkdir %s error: %v", dir, err)
-		return nil
-	}
 	path := filepath.Join(dir, t.Format(hourLayout)+".jsonl")
 	// 该路径可能正被异步 gzip 处理（迟到的跨整点记录）。必须等它压完再打开，
 	// 否则拿到的是马上会被 os.Remove 掉的 inode，之后的写入静默丢失。
 	w.waitGzDone(path)
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if os.IsNotExist(err) {
-		// 清理协程的 pruneEmptyDirs 可能刚好在 MkdirAll 与 OpenFile 之间把这个空目录删掉
-		// （写入历史小时的记录时尤其可能命中），重建一次再试
-		if mkErr := os.MkdirAll(dir, 0755); mkErr == nil {
-			f, err = os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-		}
-	}
+	f, err := openHourFile(dir, path)
 	if err != nil {
 		logger.Warningf("evallog open %s error: %v", path, err)
 		return nil
@@ -418,6 +413,25 @@ func (w *Writer) getAppender(key string, r *EvalRecord) *appender {
 	}
 	w.appenders[key] = na
 	return na
+}
+
+// openHourFile creates dir and opens path for appending, retrying once.
+// The cleaner's pruneEmptyDirs may remove the (still empty) rule dir while MkdirAll is
+// creating the date dir under it, or the date dir between MkdirAll and OpenFile; both
+// surface as an error here (ENOENT, or EINVAL from mkdir on macOS). Failing would put
+// the whole writer into degraded mode for writeFailCooldown, so rebuild and retry.
+func openHourFile(dir, path string) (*os.File, error) {
+	var err error
+	for i := 0; i < 2; i++ {
+		if err = os.MkdirAll(dir, 0755); err != nil {
+			continue
+		}
+		var f *os.File
+		if f, err = os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err == nil {
+			return f, nil
+		}
+	}
+	return nil, err
 }
 
 // finalize 刷盘并关闭 appender；compress=true 时投递异步 gzip。
@@ -586,9 +600,28 @@ func (w *Writer) sweepLeftovers() {
 		if !h.Before(currentHour) {
 			return nil // 当前（及未来）小时文件继续追加
 		}
-		w.enqueueGz(path)
-		return nil
+		select {
+		case w.sweepCh <- path:
+			return nil
+		case <-w.done:
+			return filepath.SkipAll
+		}
 	})
+}
+
+// enqueueLeftover runs on the consumer goroutine and compresses a leftover hour file
+// unless an appender currently has it open. A record for a past hour (a late one, or
+// one written right after startup) may have reopened the file before the sweep got to
+// it; compressing it then would remove the file under the appender, and everything
+// still in its bufio buffer would be written to an unlinked inode and lost. Such a
+// file is compressed by housekeep/getAppender when that appender rolls instead.
+func (w *Writer) enqueueLeftover(path string) {
+	for _, a := range w.appenders {
+		if a.hourPath == path {
+			return
+		}
+	}
+	w.enqueueGz(path)
 }
 
 func compressFile(path string) error {
