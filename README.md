@@ -13,7 +13,7 @@
   <a href="LICENSE"><img alt="Apache-2.0 license" src="https://img.shields.io/badge/license-Apache--2.0-blue" /></a>
   <a href="https://github.com/ccfos/nightingale/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ccfos/nightingale" /></a>
   <a href="https://hub.docker.com/r/flashcatcloud/nightingale"><img alt="Docker pulls" src="https://img.shields.io/docker/pulls/flashcatcloud/nightingale" /></a>
-  <a href="https://join.slack.com/t/n9e/shared_invite/zt-480klxytf-P9qm3C1M87kDmRPp_H30Kw"><img alt="Join the Nightingale Slack community" src="https://img.shields.io/badge/Slack-join%20the%20community-brightgreen" /></a>
+  <a href="https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g"><img alt="Join the Nightingale Slack community" src="https://img.shields.io/badge/Slack-join%20the%20community-brightgreen" /></a>
 </p>
 
 <p align="center">
@@ -226,7 +226,7 @@ Questions, bug reports, documentation improvements, and contributions are welcom
 
 - [GitHub Discussions](https://github.com/ccfos/nightingale/discussions) — ask questions and share ideas.
 - [GitHub Issues](https://github.com/ccfos/nightingale/issues) — report bugs and request features. Include the version, deployment method, and steps to reproduce.
-- [Slack](https://join.slack.com/t/n9e/shared_invite/zt-480klxytf-P9qm3C1M87kDmRPp_H30Kw) — join the community.
+- [Slack](https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g) — join the community.
 - [Adopter reports](https://github.com/ccfos/nightingale/issues/897) — see how others use Nightingale and share your own experience.
 - [Security policy](SECURITY.md) — report vulnerabilities privately and check version support.
 

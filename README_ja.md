@@ -13,7 +13,7 @@
   <a href="LICENSE"><img alt="Apache-2.0 license" src="https://img.shields.io/badge/license-Apache--2.0-blue" /></a>
   <a href="https://github.com/ccfos/nightingale/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ccfos/nightingale" /></a>
   <a href="https://hub.docker.com/r/flashcatcloud/nightingale"><img alt="Docker pulls" src="https://img.shields.io/docker/pulls/flashcatcloud/nightingale" /></a>
-  <a href="https://join.slack.com/t/n9e/shared_invite/zt-480klxytf-P9qm3C1M87kDmRPp_H30Kw"><img alt="Join the Nightingale Slack community" src="https://img.shields.io/badge/Slack-join%20the%20community-brightgreen" /></a>
+  <a href="https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g"><img alt="Join the Nightingale Slack community" src="https://img.shields.io/badge/Slack-join%20the%20community-brightgreen" /></a>
 </p>
 
 <p align="center">
@@ -191,7 +191,7 @@ cp mcp.json ~/.cursor/plugins/local/nightingale/
 
 - [GitHub Discussions](https://github.com/ccfos/nightingale/discussions) — 質問やアイデアの共有。
 - [GitHub Issues](https://github.com/ccfos/nightingale/issues) — バグの報告と機能のリクエスト。バージョン、デプロイの方法、再現の手順を含めてください。
-- [Slack](https://join.slack.com/t/n9e/shared_invite/zt-480klxytf-P9qm3C1M87kDmRPp_H30Kw) — コミュニティへの参加。
+- [Slack](https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g) — コミュニティへの参加。
 - [導入事例の報告](https://github.com/ccfos/nightingale/issues/897) — ほかの人が Nightingale をどう使っているかを知り、ご自身の経験を共有できます。
 - [セキュリティポリシー](SECURITY.md) — 脆弱性の非公開での報告と、サポート対象のバージョンの確認。
 
