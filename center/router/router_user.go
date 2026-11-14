@@ -79,6 +79,9 @@ func (rt *Router) userGets(c *gin.Context) {
 
 	list, err := models.UserGets(rt.Ctx, query, limit, ginx.Offset(c, limit), stime, etime, order, desc, usernames, phones, emails, disabled)
 	ginx.Dangerous(err)
+	for i := range list {
+		list[i].Phone = maskPhone(list[i].Phone)
+	}
 
 	user := c.MustGet("user").(*models.User)
 
@@ -143,7 +146,7 @@ func (rt *Router) userAddPost(c *gin.Context) {
 
 func (rt *Router) userProfileGet(c *gin.Context) {
 	user := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
-	ginx.NewRender(c).Data(user, nil)
+	ginx.NewRender(c).Data(userForResponse(user), nil)
 }
 
 type userProfileForm struct {
@@ -208,6 +211,9 @@ func (rt *Router) userProfilePut(c *gin.Context) {
 	}
 
 	target := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+	if f.Phone == maskPhone(target.Phone) {
+		f.Phone = target.Phone
+	}
 	oldInfo := models.User{
 		Username: target.Username,
 		Phone:    target.Phone,

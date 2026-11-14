@@ -148,6 +148,9 @@ func (rt *Router) userGroupGet(c *gin.Context) {
 
 	logger.Info("userGroupGet", ids)
 	users, err := models.UserGetsByIds(rt.Ctx, ids)
+	for i := range users {
+		users[i].Phone = maskPhone(users[i].Phone)
+	}
 
 	ginx.NewRender(c).Data(gin.H{
 		"users":      users,

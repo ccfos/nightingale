@@ -19,7 +19,7 @@ func (rt *Router) selfProfileGet(c *gin.Context) {
 	if user.IsAdmin() {
 		user.Admin = true
 	}
-	ginx.NewRender(c).Data(user, nil)
+	ginx.NewRender(c).Data(userForResponse(user), nil)
 }
 
 type selfProfileForm struct {
@@ -35,6 +35,9 @@ func (rt *Router) selfProfilePut(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 
 	user := c.MustGet("user").(*models.User)
+	if f.Phone == maskPhone(user.Phone) {
+		f.Phone = user.Phone
+	}
 	oldInfo := models.User{
 		Username: user.Username,
 		Phone:    user.Phone,
