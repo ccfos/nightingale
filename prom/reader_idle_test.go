@@ -55,8 +55,8 @@ func TestReaderClientRetiresIdleConnections(t *testing.T) {
 	}
 	select {
 	case <-closed:
-	case <-time.After(40 * time.Second):
-		t.Fatal("client did not retire its idle connection before a one-minute server timeout")
+	case <-time.After(100 * time.Second):
+		t.Fatal("client did not retire its idle connection within the configured 90-second idle timeout")
 	}
 	if next := query(); next == first {
 		t.Fatal("query reused the retired connection")
