@@ -18,6 +18,10 @@
 <br/><img alt="GitHub Repo issues" src="https://img.shields.io/github/issues/ccfos/nightingale">
 <img alt="GitHub Repo issues closed" src="https://img.shields.io/github/issues-closed/ccfos/nightingale">
 <img alt="GitHub latest release" src="https://img.shields.io/github/v/release/ccfos/nightingale"/>
+<a href="https://pkg.go.dev/github.com/ccfos/nightingale/v6">
+  <img alt="Go Reference" src="https://pkg.go.dev/badge/github.com/ccfos/nightingale/v6.svg"/></a>
+<a href="https://coveralls.io/github/ccfos/nightingale?branch=main">
+  <img alt="Coverage status" src="https://coveralls.io/repos/github/ccfos/nightingale/badge.svg?branch=main"/></a>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 <a href="https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g">
   <img alt="GitHub contributors" src="https://img.shields.io/badge/join%20slack-%23n9e-brightgreen.svg"/></a>
