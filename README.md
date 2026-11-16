@@ -232,7 +232,7 @@ Questions, bug reports, documentation improvements, and contributions are welcom
 - [Adopter reports](https://github.com/ccfos/nightingale/issues/897) — see how others use Nightingale and share your own experience.
 - [Security policy](SECURITY.md) — report vulnerabilities privately and check version support.
 
-For substantial changes, open an issue to discuss the approach before submitting a pull request. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+Before submitting a pull request, read the [contributing guide](CONTRIBUTING.md): code changes are discussed in an issue first and must be verified on a running instance. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 Nightingale was originally developed at DiDi and donated to CCF ODC in 2022. Learn about [project governance](doc/community-governance.md), [committers](doc/committers.md), and [contributors](https://github.com/ccfos/nightingale/graphs/contributors).
 
