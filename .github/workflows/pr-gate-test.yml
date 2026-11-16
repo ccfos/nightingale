@@ -1,0 +1,16 @@
+name: pr-gate-test
+
+# Unit tests for the PR gate script used by pr-evidence-check.yml.
+on:
+  push:
+    branches: [main]
+    paths: ['.github/scripts/**']
+  pull_request:
+    paths: ['.github/scripts/**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --test .github/scripts/pr-gate.test.js

@@ -197,7 +197,7 @@ cp mcp.json ~/.cursor/plugins/local/nightingale/
 - [導入事例の報告](https://github.com/ccfos/nightingale/issues/897) — ほかの人が Nightingale をどう使っているかを知り、ご自身の経験を共有できます。
 - [セキュリティポリシー](SECURITY.md) — 脆弱性の非公開での報告と、サポート対象のバージョンの確認。
 
-大きな変更については、プルリクエストを送る前に issue を作成して、進め方を議論してください。[行動規範](CODE_OF_CONDUCT.md)に従ってください。
+プルリクエストを送る前に[コントリビューションガイド](CONTRIBUTING.md)をお読みください。コードの変更は事前に issue で議論し、稼働中のインスタンスで検証する必要があります。[行動規範](CODE_OF_CONDUCT.md)に従ってください。
 
 Nightingale はもともと DiDi で開発され、2022 年に CCF ODC に寄贈されました。[プロジェクトのガバナンス](doc/community-governance.md)、[コミッター](doc/committers.md)、[コントリビューター](https://github.com/ccfos/nightingale/graphs/contributors)についてご覧ください。
 
