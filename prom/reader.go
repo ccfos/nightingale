@@ -160,6 +160,8 @@ func (pc *PromClientMap) newReaderClientFromPromOption(po PromOption) (api.Clien
 			}).DialContext,
 			ResponseHeaderTimeout: time.Duration(po.Timeout) * time.Millisecond,
 			MaxIdleConnsPerHost:   po.MaxIdleConnsPerHost,
+			// Retire idle query connections before servers with a one-minute idle timeout.
+			IdleConnTimeout: 30 * time.Second,
 		},
 	})
 }
