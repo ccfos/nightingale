@@ -266,7 +266,9 @@ func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	// 将去重后的结果转换回切片
 	result := make([]string, 0, len(cateMap))
 	for cate := range cateMap {
-		result = append(result, cate)
+		if cate != "" {
+			result = append(result, cate)
+		}
 	}
 
 	ginx.NewRender(c).Data(result, nil)
