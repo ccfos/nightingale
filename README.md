@@ -248,6 +248,4 @@ Nightingale was originally developed at DiDi and donated to CCF ODC in 2022. Lea
 
 Nightingale is available under the [Apache License 2.0](LICENSE).
 
-<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=3f539666-22f5-468d-914d-1e344945d3d8" alt="" />
-
-![](https://gettrack.link/p/h7tXLNpu)
+<img referrerpolicy="no-referrer-when-downgrade" src="https://play.n9e.io/stats/p/qD3jn0con" alt="" />

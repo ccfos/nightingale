@@ -27,9 +27,7 @@
   <img alt="GitHub contributors" src="https://img.shields.io/badge/join%20slack-%23n9e-brightgreen.svg"/></a>
 </p>
 
-<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=3f539666-22f5-468d-914d-1e344945d3d8" />
-
-![](https://gettrack.link/p/h7tXLNpu)
+<img referrerpolicy="no-referrer-when-downgrade" src="https://play.n9e.io/stats/p/qD3jn0con" alt="" />
 
 [English](./README.md) | [中文](./README_zh.md) | [日本語](./README_ja.md)
 
