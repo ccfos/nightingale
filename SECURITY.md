@@ -23,13 +23,21 @@ Report vulnerabilities privately through GitHub's private vulnerability reportin
 2. Click **Report a vulnerability**.
 3. Fill in the form. Only the maintainers and you can see the report.
 
-Please include as much of the following as you can:
+Complete the required fields in the [private reporting form](.github/VULNERABILITY_REPORT.yml). Reports must include:
 
-- The affected version(s) and deployment method (binary, Docker, Helm, etc.)
-- The affected component (e.g. `center`, `alert`, `pushgw`, API endpoint, UI page)
-- Step-by-step instructions to reproduce the issue
-- A proof of concept or exploit code, if available
-- The impact of the issue, including how an attacker might exploit it
+- The exact tested release or commit, version output, and binary/image/build provenance. Verify the issue on the latest supported release or current `main` and explain any testing limitations.
+- The affected component and entry point, deployment method, relevant effective configuration, and all changes from the shipped configuration.
+- The attacker's authentication, exact granted permissions, resource ownership/group membership, and the intended security boundary the action exceeds.
+- Complete setup and reproduction steps, a minimal runnable proof of concept, and sanitized requests, responses, or equivalent output from an actual run, with a screenshot showing the attack input and observed unauthorized result.
+- The expected restriction and an observed normal or denied control comparison on the same tested instance/version, with a separate screenshot showing the actual input and result and an explanation of the identity, permissions, and configuration used. Terminal screenshots are acceptable for API or CLI results. If a safe control cannot be run, explain the limitation and provide independent runtime verification of the boundary with a separate screenshot.
+- The demonstrated impact, necessary deployment/upstream conditions, related public reports or fixes checked, and a clear list of unverified assumptions.
+- Whether AI tools assisted the report; if so, name the tools, describe their contribution, and state which reproduction and evidence you personally ran and checked.
+
+Submit one root cause per report, including its related affected endpoints. Keep essential steps and results inline. Upload at least two distinct screenshots directly through the private report: the actual attack result in the attack-results field and the control result in the control-results field. Reusing the same screenshot twice counts as one. External image hosts, repository-committed images, relative image paths, and badges are not accepted as screenshot evidence. Caption each image with its reproduction step, tested version, test time, and identity. Other attachments may supplement this evidence. Use synthetic data and redact real credentials and personal or third-party data.
+
+Personally reproduce the issue on a running Nightingale instance and identify mocked upstreams, modified product code, or omitted middleware. Code inspection, scanner output, unit tests, and handler-only harnesses may supplement the instance reproduction but do not replace it. AI-assisted reports are welcome; the reporter remains responsible for verifying the observations. `Pending`, `TODO`, unmodified prompts, and promises to attach evidence later do not satisfy required fields. Reports with missing evidence, hypothetical results presented as observations, or no demonstrated security boundary may be returned for more information or closed.
+
+Administrative credentials and explicitly granted configuration or user-management permissions carry their intended administrative capabilities. A report involving those capabilities must explain an action outside their delegated scope; possession of the permission alone is not an authorization bypass.
 
 ## What to Expect
 
