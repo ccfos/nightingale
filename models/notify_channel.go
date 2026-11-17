@@ -2,6 +2,7 @@ package models
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -361,6 +362,10 @@ type ScriptRequestConfig struct {
 	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
 	Script     string `json:"script"`      // 脚本内容
 	Path       string `json:"path"`        // 脚本路径
+
+	// Optional extension configuration interpreted by the registered script provider.
+	ImageUpload json.RawMessage `json:"image_upload,omitempty"`
+	Proxy       json.RawMessage `json:"proxy,omitempty"`
 }
 
 // HTTPRequestConfig 通知请求配置
