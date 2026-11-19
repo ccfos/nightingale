@@ -114,6 +114,9 @@ func FormatMetricValues(keys types.Keys, rows []map[string]interface{}, ignoreDe
 				}
 				metricValue[k] = val
 			case "label":
+				if v == nil {
+					continue
+				}
 				labels[k] = fmt.Sprintf("%v", v)
 			case "time":
 				ts, err := ParseTime(v, keys.TimeFormat)
@@ -125,6 +128,9 @@ func FormatMetricValues(keys types.Keys, rows []map[string]interface{}, ignoreDe
 				// Default to labels for any unrecognized columns
 				if !ignore && keys.LabelKey == "" {
 					// 只有当 labelKey 为空时，才将剩余的列作为 label
+					if v == nil {
+						continue
+					}
 					labels[k] = fmt.Sprintf("%v", v)
 				}
 			}
@@ -132,8 +138,9 @@ func FormatMetricValues(keys types.Keys, rows []map[string]interface{}, ignoreDe
 
 		// Compile and store the metric values
 		for metricName, value := range metricValue {
-			// NaN 无法执行json.Marshal(), 接口会报错
-			if math.IsNaN(value) {
+			// JSON cannot represent NaN or Infinity; skip non-finite samples so a
+			// single malformed/null-derived value does not fail the whole response.
+			if math.IsNaN(value) || math.IsInf(value, 0) {
 				continue
 			}
 

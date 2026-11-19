@@ -13,12 +13,12 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/cas"
 	"github.com/ccfos/nightingale/v6/pkg/dingtalk"
 	"github.com/ccfos/nightingale/v6/pkg/feishu"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
