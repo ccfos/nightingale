@@ -4,7 +4,8 @@
 # (design §9.3: a self-contained binary that needs no external bwrap / rootfs).
 #
 # Usage:  scripts/build-sandbox-assets.sh [arm64|amd64]
-# Output: pkg/sandbox/embedassets/linux_<arch>/{bwrap,python-base.tar.gz}
+# Output: pkg/sandbox/embedassets/linux_<arch>/{bwrap,python-base.tar.gz,n9e-sandbox-init}
+#         pkg/sandbox/embed_assets_generated_linux_<arch>.go
 #
 # - bwrap is built STATICALLY (musl + static libcap, selinux disabled), so the
 #   host running n9e needs NO libcap/libselinux at all — truly self-contained.
@@ -71,6 +72,8 @@ echo ">> [$ARCH] building STATIC n9e-sandbox-init egress forwarder (§10.2)"
 # rootfs with no libc; it is the in-netns TCP↔UDS relay (the socat replacement).
 GOOS=linux GOARCH="$ARCH" CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" \
   -o "$OUT/n9e-sandbox-init" "$ROOT/cmd/n9e-sandbox-init"
+
+bash "$ROOT/scripts/generate-sandbox-embed.sh" "$ARCH"
 
 echo ">> done:"
 ls -lah "$OUT"

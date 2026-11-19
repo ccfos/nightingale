@@ -4,14 +4,14 @@ before:
     - go mod tidy
     - go install github.com/rakyll/statik
     # Sandbox assets are pre-built by the `sandbox-assets` CI job (native per-arch
-    # runners) and staged into pkg/sandbox/embedassets/ before this runs. Fail
-    # fast with a clear message if they're missing, instead of a cryptic go:embed
-    # "pattern matches no files" error from the -tags=sandbox_embed build below.
-    - bash -c 'for a in amd64 arm64; do for f in bwrap python-base.tar.gz n9e-sandbox-init; do test -s "pkg/sandbox/embedassets/linux_$a/$f" || { echo "missing sandbox asset linux_$a/$f — run scripts/build-sandbox-assets.sh $a"; exit 1; }; done; done'
+    # runners) and staged into pkg/sandbox/embedassets/ before this runs. Validate
+    # them and generate embed declarations after restoring the cached assets.
+    - bash scripts/generate-sandbox-embed.sh amd64
+    - bash scripts/generate-sandbox-embed.sh arm64
     # QA code corpus assets, staged by the workflow (or locally by the script)
     # before this runs. Same fail-fast rationale as the sandbox assets above,
     # for the -tags=qa_code_embed build.
-    - bash -c 'for f in n9e.tar.gz categraf.tar.gz fe.tar.gz docs.tar.gz manifest.json; do test -s "aiagent/skill/embedded/codeassets/$f" || { echo "missing QA code asset $f — run scripts/build-qa-code-assets.sh"; exit 1; }; done'
+    - bash -c 'test -s aiagent/skill/embedded/code_assets_generated.go || { echo "missing QA embed declarations — run scripts/build-qa-code-assets.sh"; exit 1; }; for f in n9e.tar.gz categraf.tar.gz fe.tar.gz docs.tar.gz manifest.json; do test -s "aiagent/skill/embedded/codeassets/$f" || { echo "missing QA code asset $f — run scripts/build-qa-code-assets.sh"; exit 1; }; done'
     # Stage the bundled categraf packages (linux amd64 + arm64) into
     # agents/categraf/, picked up below by archives.files and dockers.extra_files.
     # Release-time only, deliberately not wired into `make build`: a local
