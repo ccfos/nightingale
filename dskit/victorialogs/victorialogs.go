@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 )
 
 // maxLogFieldSize 单个日志字段值的字节上限，超出部分截断。
@@ -44,6 +45,12 @@ type VictoriaLogs struct {
 	WriteAddrs   []string          `json:"victorialogs.write_addrs" mapstructure:"victorialogs.write_addrs"`
 
 	HTTPClient *http.Client `json:"-" mapstructure:"-"`
+	// Cloud auth (OAuth2 / Azure Entra), set via SetAuth.
+	Auth dsauth.Config `json:"-" mapstructure:"-"`
+}
+
+func (vl *VictoriaLogs) SetAuth(auth dsauth.Config) {
+	vl.Auth = auth
 }
 
 // LogEntry 日志条目
@@ -106,8 +113,13 @@ func (vl *VictoriaLogs) InitHTTPClient() error {
 		timeout = 60 * time.Second
 	}
 
+	rt, err := dsauth.Wrap(transport, vl.Auth)
+	if err != nil {
+		return err
+	}
+
 	vl.HTTPClient = &http.Client{
-		Transport: transport,
+		Transport: rt,
 		Timeout:   timeout,
 	}
 
@@ -458,7 +470,7 @@ func (vl *VictoriaLogs) doRequest(ctx context.Context, method, endpoint string, 
 		return nil, fmt.Errorf("create request failed: %w", err)
 	}
 
-	if vl.VictorialogsBasic.VictorialogsUser != "" {
+	if vl.VictorialogsBasic.VictorialogsUser != "" && !vl.Auth.IsCloud() {
 		req.SetBasicAuth(vl.VictorialogsBasic.VictorialogsUser, vl.VictorialogsBasic.VictorialogsPass)
 	}
 

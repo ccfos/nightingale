@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/pkg/cfg"
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
@@ -31,6 +32,10 @@ type ConfigType struct {
 	Center       cconf.Center
 	Ibex         Ibex
 	EmbeddedTSDB tconf.EmbeddedTSDB
+
+	// Optional process-wide restrictions on datasource cloud authentication.
+	// Each datasource configures its own auth method and credentials in the UI.
+	DatasourceAuthPolicy dsauth.Policy
 }
 
 type CenterApi struct {
@@ -75,6 +80,10 @@ func initConfig(configDir, cryptoKey string, isCenter bool) (*ConfigType, error)
 	if err := config.EmbeddedTSDB.PreCheck(); err != nil {
 		return nil, err
 	}
+
+	// Every process that queries datasources (center, alert, edge) applies its
+	// own copy, since ambient credentials resolve on the local host.
+	dsauth.SetPolicy(config.DatasourceAuthPolicy)
 
 	// 内置 tsdb 的 remote write 端点只有 center 会挂载（见 center.Initialize 里的
 	// tsdb/router），而 edge / alert / pushgw 默认也读 etc 目录、会读到同一份

@@ -1,9 +1,11 @@
 package prom
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 )
 
 type PromOption struct {
@@ -22,6 +24,16 @@ type PromOption struct {
 
 	// TLS 配置（支持 mTLS）
 	TLS models.TLS
+
+	// Cloud auth (sigv4 / oauth2 / azure)
+	Auth dsauth.Config
+}
+
+// String keeps credentials out of logs: PromOption used to be printed with %+v,
+// which wrote the basic auth password and header values verbatim.
+func (po PromOption) String() string {
+	return fmt.Sprintf("{ClusterName:%s Url:%s WriteAddr:%s BasicAuthUser:%s Timeout:%d DialTimeout:%d MaxIdleConnsPerHost:%d HeaderCount:%d AuthType:%s}",
+		po.ClusterName, po.Url, po.WriteAddr, po.BasicAuthUser, po.Timeout, po.DialTimeout, po.MaxIdleConnsPerHost, len(po.Headers)/2, po.Auth.Type)
 }
 
 func (po *PromOption) Equal(target PromOption) bool {
@@ -83,6 +95,10 @@ func (po *PromOption) Equal(target PromOption) bool {
 		return false
 	}
 	if po.TLS.MaxVersion != target.TLS.MaxVersion {
+		return false
+	}
+
+	if !po.Auth.Equal(target.Auth) {
 		return false
 	}
 

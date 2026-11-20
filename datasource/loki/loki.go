@@ -126,7 +126,8 @@ func (vl *Loki) Equal(other datasource.Datasource) bool {
 		vl.Timeout == o.Timeout &&
 		vl.MaxQueryRows == o.MaxQueryRows &&
 		vl.ClusterName == o.ClusterName &&
-		reflect.DeepEqual(vl.Headers, o.Headers)
+		reflect.DeepEqual(vl.Headers, o.Headers) &&
+		vl.Auth.Equal(o.Auth)
 }
 
 func (vl *Loki) QueryLog(ctx context.Context, queryParam interface{}) ([]interface{}, int64, error) {

@@ -15,6 +15,7 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource/commons/eslike"
 	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 
 	"github.com/mitchellh/mapstructure"
@@ -46,6 +47,21 @@ type Elasticsearch struct {
 	ClusterName string            `json:"es.cluster_name" mapstructure:"es.cluster_name"`
 	EnableWrite bool              `json:"es.enable_write" mapstructure:"es.enable_write"` // Enable write operations
 	Client      *elastic.Client   `json:"es.client" mapstructure:"es.client"`
+	// Cloud auth (e.g. SigV4 for Amazon OpenSearch Service), set via SetAuth.
+	Auth dsauth.Config `json:"-" mapstructure:"-"`
+}
+
+func (e *Elasticsearch) SetAuth(auth dsauth.Config) {
+	e.Auth = auth
+}
+
+// basicAuth returns the basic credentials to send, none when a cloud auth
+// replaces them.
+func (e *Elasticsearch) basicAuth() (string, string, bool) {
+	if e.Auth.IsCloud() || e.Basic.Username == "" {
+		return "", "", false
+	}
+	return e.Basic.Username, e.Basic.Password, true
 }
 
 type TLS struct {
@@ -101,8 +117,8 @@ func (e *Elasticsearch) InitClient() error {
 		elastic.SetHealthcheck(false),
 	}
 
-	if e.Basic.Username != "" {
-		options = append(options, elastic.SetBasicAuth(e.Basic.Username, e.Basic.Password))
+	if user, pass, ok := e.basicAuth(); ok {
+		options = append(options, elastic.SetBasicAuth(user, pass))
 	}
 
 	if len(e.Headers) > 0 {
@@ -113,12 +129,16 @@ func (e *Elasticsearch) InitClient() error {
 		options = append(options, elastic.SetHeaders(headers))
 	}
 
+	rt, err := dsauth.Wrap(transport, e.Auth)
+	if err != nil {
+		return fmt.Errorf("failed to init elasticsearch auth: %w", err)
+	}
+
 	options = append(options, elastic.SetHttpClient(&http.Client{
-		Transport: transport,
+		Transport: rt,
 		Timeout:   time.Duration(e.Timeout) * time.Millisecond,
 	}))
 
-	var err error
 	e.Client, err = elastic.NewClient(options...)
 	if err != nil {
 		return fmt.Errorf("failed to create Elasticsearch client: %w", err)
@@ -179,6 +199,10 @@ func (e *Elasticsearch) Equal(other datasource.Datasource) bool {
 	}
 
 	if e.MaxShard != otherES.MaxShard {
+		return false
+	}
+
+	if !e.Auth.Equal(otherES.Auth) {
 		return false
 	}
 

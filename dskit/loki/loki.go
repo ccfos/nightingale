@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ccfos/nightingale/v6/pkg/dsauth"
 )
 
 type LokiBasicAuth struct {
@@ -37,6 +39,12 @@ type Loki struct {
 	ClusterName         string            `json:"loki.cluster_name" mapstructure:"loki.cluster_name"`
 	MaxQueryRows        int               `json:"loki.max_query_rows" mapstructure:"loki.max_query_rows"`
 	HTTPClient          *http.Client      `json:"-" mapstructure:"-"`
+	// Cloud auth (SigV4 / OAuth2 / Azure Entra), set via SetAuth.
+	Auth dsauth.Config `json:"-" mapstructure:"-"`
+}
+
+func (vl *Loki) SetAuth(auth dsauth.Config) {
+	vl.Auth = auth
 }
 
 type QueryResponse struct {
@@ -109,8 +117,13 @@ func (vl *Loki) InitHTTPClient() error {
 		timeout = 60 * time.Second
 	}
 
+	rt, err := dsauth.Wrap(transport, vl.Auth)
+	if err != nil {
+		return err
+	}
+
 	vl.HTTPClient = &http.Client{
-		Transport: transport,
+		Transport: rt,
 		Timeout:   timeout,
 	}
 	return nil
@@ -409,7 +422,7 @@ func (vl *Loki) doRequest(ctx context.Context, method, path string, params url.V
 	if method != http.MethodGet {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
-	if vl.LokiBasic.LokiUser != "" {
+	if vl.LokiBasic.LokiUser != "" && !vl.Auth.IsCloud() {
 		req.SetBasicAuth(vl.LokiBasic.LokiUser, vl.LokiBasic.LokiPass)
 	}
 	for k, v := range vl.Headers {
