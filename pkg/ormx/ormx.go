@@ -122,7 +122,17 @@ func createPostgresDatabase(dsn string, gconfig *gorm.Config) error {
 
 	result := tempDB.Exec(createDBQuery)
 	if result.Error != nil {
-		return fmt.Errorf("failed to execute create database query: %v", result.Error)
+		// openGauss rejects LC_COLLATE/LC_CTYPE in CREATE DATABASE. Retry with
+		// the reduced statement only for openGauss; surface the original error
+		// on standard PostgreSQL so real failures are not silently swallowed.
+		if !IsOpenGaussDB(tempDB) {
+			return fmt.Errorf("failed to execute create database query: %v", result.Error)
+		}
+		tklog.Warningf("create database %s with LC_COLLATE/LC_CTYPE failed on openGauss, retrying without them: %v", dbName, result.Error)
+		fallbackQuery := fmt.Sprintf("CREATE DATABASE %s ENCODING 'UTF8';", dbName)
+		if fallbackErr := tempDB.Exec(fallbackQuery).Error; fallbackErr != nil {
+			return fmt.Errorf("failed to execute create database query: %v (fallback also failed: %v)", result.Error, fallbackErr)
+		}
 	}
 
 	return nil
