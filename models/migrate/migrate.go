@@ -161,6 +161,11 @@ func isPostgres(db *gorm.DB) bool {
 	return dialect == "postgres"
 }
 
+// isOpenGaussDB selects the plain-DDL path where IF NOT EXISTS is unsupported.
+func isOpenGaussDB(db *gorm.DB) bool {
+	return ormx.NeedsOpenGaussCompat(db)
+}
+
 // notificationRecordIndexes 通知记录查询与清理所需的索引，见 models.NotificationRecord 的说明。
 // cols 必须保持「逗号分隔的裸列名」这一形态：它既被拼进 CREATE INDEX，也被
 // notificationRecordIndexColumnsReady 拆开逐列判存在性，写成 `created_at DESC`
@@ -188,15 +193,28 @@ func migrateNotificationRecordIndexes(db *gorm.DB) {
 		var err error
 		switch {
 		case isPostgres(db):
-			// CREATE INDEX CONCURRENTLY 中途失败会留下 indisvalid=false 的残次索引，
-			// 而 IF NOT EXISTS 会认为它已存在从而跳过重建：这个索引永远不被查询选用，
-			// 却仍要承担每次写入的维护开销，必须先清掉
-			if err = dropInvalidPgIndex(db, idx.name); err != nil {
-				logger.Errorf("failed to drop invalid index %s on notification_record: %v", idx.name, err)
-				continue
+			if isOpenGaussDB(db) {
+				// PG 9.2 kernel lacks CREATE INDEX IF NOT EXISTS; pre-check and use plain DDL.
+				if err = dropInvalidPgIndex(db, idx.name); err != nil {
+					logger.Errorf("failed to drop invalid index %s on notification_record: %v", idx.name, err)
+					continue
+				}
+				if db.Migrator().HasIndex("notification_record", idx.name) {
+					continue
+				}
+				logger.Warningf("creating index %s on notification_record without CONCURRENTLY (openGauss/PG 9.2 kernel: IF NOT EXISTS unsupported): INSERTs on this table will block until the DDL finishes", idx.name)
+				err = db.Exec(fmt.Sprintf("CREATE INDEX %s ON notification_record(%s)", idx.name, idx.cols)).Error
+			} else {
+				// CREATE INDEX CONCURRENTLY 中途失败会留下 indisvalid=false 的残次索引，
+				// 而 IF NOT EXISTS 会认为它已存在从而跳过重建：这个索引永远不被查询选用，
+				// 却仍要承担每次写入的维护开销，必须先清掉
+				if err = dropInvalidPgIndex(db, idx.name); err != nil {
+					logger.Errorf("failed to drop invalid index %s on notification_record: %v", idx.name, err)
+					continue
+				}
+				// CONCURRENTLY 不能在事务块里执行，gorm 的 Exec 不会自动开启事务
+				err = db.Exec(fmt.Sprintf("CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON notification_record(%s)", idx.name, idx.cols)).Error
 			}
-			// CONCURRENTLY 不能在事务块里执行，gorm 的 Exec 不会自动开启事务
-			err = db.Exec(fmt.Sprintf("CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON notification_record(%s)", idx.name, idx.cols)).Error
 		case db.Dialector.Name() == "mysql":
 			if db.Migrator().HasIndex("notification_record", idx.name) {
 				continue
@@ -239,6 +257,10 @@ func dropInvalidPgIndex(db *gorm.DB, name string) error {
 	}
 
 	logger.Infof("dropping invalid index %s left behind by a failed CREATE INDEX CONCURRENTLY", name)
+	if isOpenGaussDB(db) {
+		// Match the plain DDL above; CONCURRENTLY is not used on openGauss.
+		return db.Exec("DROP INDEX IF EXISTS " + name).Error
+	}
 	return db.Exec("DROP INDEX CONCURRENTLY IF EXISTS " + name).Error
 }
 func MigrateTables(db *gorm.DB) error {
