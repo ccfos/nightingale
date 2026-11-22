@@ -1,9 +1,12 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -44,6 +47,28 @@ func UpsertDingtalkGroupInstall(c *ctx.Context, row *DingtalkGroup) error {
 	row.UpdatedAt = now
 	row.Status = DingtalkGroupStatusInstalled
 	row.UninstalledAt = 0
+
+	// openGauss rejects ON CONFLICT combined with the implicit RETURNING "id";
+	// emulate the upsert with a lookup followed by update or insert.
+	if ormx.NeedsOpenGaussCompat(DB(c)) {
+		var existing DingtalkGroup
+		err := DB(c).Where("client_id = ? AND open_conversation_corp_id = ? AND open_conversation_id = ?",
+			row.ClientID, row.OpenConversationCorpID, row.OpenConversationID).First(&existing).Error
+		if err == nil {
+			return DB(c).Model(&existing).Updates(map[string]interface{}{
+				"cool_app_code":  row.CoolAppCode,
+				"robot_code":     row.RobotCode,
+				"title":          row.Title,
+				"status":         row.Status,
+				"updated_at":     row.UpdatedAt,
+				"uninstalled_at": row.UninstalledAt,
+			}).Error
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		return DB(c).Create(row).Error
+	}
 
 	return DB(c).Clauses(clause.OnConflict{
 		Columns: []clause.Column{

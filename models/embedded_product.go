@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -71,8 +72,22 @@ func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
 	}
 
 	// 用主键做冲突判断，有冲突则更新（UPSERT）
-	// 磐维数据库(基于OpenGauss/PostgreSQL 9.2)不支持 ON CONFLICT DO UPDATE（无冲突目标）语法，
-	// 必须显式指定冲突列：ON CONFLICT (id) DO UPDATE SET ...
+	// openGauss also rejects ON CONFLICT combined with the implicit RETURNING "id";
+	// replace the upsert with DELETE + INSERT inside a transaction.
+	if ormx.NeedsOpenGaussCompat(DB(ctx)) {
+		return DB(ctx).Transaction(func(tx *gorm.DB) error {
+			for i := range eps {
+				if err := tx.Exec("DELETE FROM embedded_product WHERE id = ?", eps[i].ID).Error; err != nil {
+					return err
+				}
+				if err := tx.Create(&eps[i]).Error; err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+	}
+
 	return DB(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		UpdateAll: true, // 冲突时更新所有字段

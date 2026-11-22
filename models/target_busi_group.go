@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -83,18 +84,31 @@ func TargetBindBgids(ctx *ctx.Context, idents []string, bgids []int64, tags []st
 	case "sqlite":
 		cl = clause.Insert{Modifier: "or ignore"}
 	case "postgres":
-		// 磐维数据库(基于OpenGauss/PostgreSQL 9.2)不支持 ON CONFLICT DO NOTHING（无冲突目标）语法，
-		// 必须显式指定冲突列：ON CONFLICT (target_ident, group_id) DO NOTHING
 		cl = clause.OnConflict{
 			Columns:   []clause.Column{{Name: "target_ident"}, {Name: "group_id"}},
 			DoNothing: true,
 		}
 	}
 
+	// openGauss rejects ON CONFLICT combined with the implicit RETURNING "id";
+	// emulate DO NOTHING with INSERT ... WHERE NOT EXISTS.
+	openGauss := ormx.NeedsOpenGaussCompat(DB(ctx))
+
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
+		if openGauss {
+			for i := range lst {
+				if err := tx.Exec(`INSERT INTO target_busi_group (target_ident, group_id, update_at)
+					SELECT ?, ?, ? WHERE NOT EXISTS
+					(SELECT 1 FROM target_busi_group WHERE target_ident = ? AND group_id = ?)`,
+					lst[i].TargetIdent, lst[i].GroupId, lst[i].UpdateAt,
+					lst[i].TargetIdent, lst[i].GroupId).Error; err != nil {
+					return err
+				}
+			}
+		} else if err := tx.Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
 			return err
 		}
+
 		if targets, err := TargetsGetByIdents(ctx, idents); err != nil {
 			return err
 		} else if len(tags) > 0 {
@@ -169,14 +183,17 @@ func TargetOverrideBgids(ctx *ctx.Context, idents []string, bgids []int64, tags 
 		case "sqlite":
 			cl = clause.Insert{Modifier: "or ignore"}
 		case "postgres":
-			// 磐维数据库(基于OpenGauss/PostgreSQL 9.2)不支持 ON CONFLICT DO NOTHING（无冲突目标）语法，
-			// 必须显式指定冲突列：ON CONFLICT (target_ident, group_id) DO NOTHING
 			cl = clause.OnConflict{
 				Columns:   []clause.Column{{Name: "target_ident"}, {Name: "group_id"}},
 				DoNothing: true,
 			}
 		}
-		if err := tx.Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
+		if ormx.NeedsOpenGaussCompat(tx) {
+			// Old rows were just deleted; avoid ON CONFLICT + RETURNING on openGauss.
+			if err := tx.CreateInBatches(&lst, 10).Error; err != nil {
+				return err
+			}
+		} else if err := tx.Clauses(cl).CreateInBatches(&lst, 10).Error; err != nil {
 			return err
 		}
 		if len(tags) == 0 {
