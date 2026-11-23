@@ -672,6 +672,13 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 		return
 	}
 
+	var ruleQuery models.RuleQuery
+	if alertRule := p.alertRuleCache.Get(p.rule.Id); alertRule != nil {
+		if err := json.Unmarshal([]byte(alertRule.RuleConfig), &ruleQuery); err != nil {
+			logger.Warningf("alert_eval_%d datasource_%d unmarshal rule config failed, err:%s", p.rule.Id, p.datasourceId, err)
+		}
+	}
+
 	fireMap := make(map[string]*models.AlertCurEvent)
 	pendingsUseByRecoverMap := make(map[string]*models.AlertCurEvent)
 	for _, event := range curEvents {
@@ -698,6 +705,7 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 		}
 
 		event.DB2Mem()
+		event.RecoverConfig = recoverConfigOfEvent(ruleQuery, event)
 		target, exists := p.TargetCache.Get(event.TargetIdent)
 		if exists {
 			// copy before filling GroupNames, see BuildEvent
@@ -715,6 +723,24 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 
 	// 修改告警规则，或者进程重启之后，需要重新加载 pendingsUseByRecover
 	p.pendingsUseByRecover = NewAlertCurEventMap(pendingsUseByRecoverMap)
+}
+
+// recoverConfigOfEvent restores the RecoverConfig of an event loaded from the
+// db, which does not persist it. Without it RecoverSingle treats the event as
+// models.Origin and recovers it as soon as it is missing from an eval round,
+// bypassing the configured recover condition. The trigger is found by the
+// event's PromQl, the anomaly point's Query built by eval from the rule's
+// queries and that trigger, which is also part of the event hash. Only an exact
+// match proves the current rule can still produce the event; any other event
+// keeps models.Origin so it can recover instead of firing forever. That
+// includes events whose Query eval took from the series (sample.Query).
+func recoverConfigOfEvent(ruleQuery models.RuleQuery, event *models.AlertCurEvent) models.RecoverConfig {
+	for _, trigger := range ruleQuery.Triggers {
+		if event.PromQl == fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger) {
+			return trigger.RecoverConfig
+		}
+	}
+	return models.RecoverConfig{}
 }
 
 func (p *Processor) fillTags(anomalyPoint models.AnomalyPoint) {
