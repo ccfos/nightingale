@@ -709,6 +709,12 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	} else {
 		end = now
 		start = end - param.Interval
+
+		// 告警附加查询与告警查询使用同一个延迟，保证查询窗口一致；显式时间范围（日志查询页）不受影响
+		if delay, ok := ctx.Value("delay").(int64); ok && delay > 0 {
+			end = end - delay
+			start = start - delay
+		}
 	}
 
 	q := elastic.NewRangeQuery(param.DateField)
