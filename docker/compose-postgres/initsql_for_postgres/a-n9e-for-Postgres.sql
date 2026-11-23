@@ -732,7 +732,7 @@ CREATE TABLE datasource
     id serial,
     name varchar(191) not null default '',
     identifier varchar(255) not null default '',
-    description varchar(255) not null default '',
+    description text,
     category varchar(255) not null default '',
     plugin_id int  not null default 0,
     plugin_type varchar(255) not null default '',
