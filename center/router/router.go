@@ -328,6 +328,11 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/fields", rt.QueryFields)
 			pages.POST("/log-query", rt.QueryLog)
 			pages.POST("/es-cluster-info", rt.ESClusterInfo)
+
+			// OpenSearch 专用接口
+			pages.POST("/os-indices", rt.QueryOSIndices)
+			pages.POST("/os-variable", rt.QueryOSVariable)
+			pages.POST("/os-fields", rt.QueryOSFields)
 		} else {
 			// proxy 也纳入分享 token 通道：dsProxy 内部按板内集合校验数据源，并只放行
 			// 只读查询路径（见 router_board_share.go isReadOnlyProxyPath），供 ES 面板与
@@ -371,12 +376,12 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/fields", rt.auth(), rt.user(), rt.QueryFields)
 			pages.POST("/log-query", rt.auth(), rt.user(), rt.QueryLog)
 			pages.POST("/es-cluster-info", rt.auth(), rt.user(), rt.ESClusterInfo)
-		}
 
-		// OpenSearch 专用接口
-		pages.POST("/os-indices", rt.QueryOSIndices)
-		pages.POST("/os-variable", rt.QueryOSVariable)
-		pages.POST("/os-fields", rt.QueryOSFields)
+			// OpenSearch 专用接口
+			pages.POST("/os-indices", rt.auth(), rt.user(), rt.QueryOSIndices)
+			pages.POST("/os-variable", rt.auth(), rt.user(), rt.QueryOSVariable)
+			pages.POST("/os-fields", rt.auth(), rt.user(), rt.QueryOSFields)
+		}
 
 		pages.GET("/sql-template", rt.auth(), rt.user(), rt.QuerySqlTemplate)
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
@@ -517,7 +522,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/board/:bid/public", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.boardPutPublic)
 		pages.DELETE("/boards", rt.auth(), rt.user(), rt.perm("/dashboards/del"), rt.boardDel)
 
-		pages.GET("/share-charts", rt.chartShareGets)
+		// 单图分享链接没有 board 分享 token 可用，未开启匿名查询时匿名访客本就取不到数，
+		// 读取分享配置也要求登录，避免按自增 id 遍历出全部分享的查询语句
+		if rt.Center.AnonymousAccess.PromQuerier {
+			pages.GET("/share-charts", rt.chartShareGets)
+		} else {
+			pages.GET("/share-charts", rt.auth(), rt.chartShareGets)
+		}
 		pages.POST("/share-charts", rt.auth(), rt.chartShareAdd)
 
 		pages.POST("/dashboard-annotations", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.dashAnnotationAdd)
