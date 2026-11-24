@@ -585,7 +585,7 @@ CREATE TABLE `datasource`
 (
     `id` integer primary key autoincrement,
     `name` varchar(191) not null default '' unique,
-    `description` varchar(255) not null default '',
+    `description` text,
     `category` varchar(255) not null default '',
     `plugin_id` int unsigned not null default 0,
     `plugin_type` varchar(255) not null default '',

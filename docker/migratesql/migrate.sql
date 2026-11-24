@@ -522,3 +522,10 @@ ALTER TABLE `source_token` ADD KEY `idx_source_token_token` (`token`);
    PostgreSQL 请执行：ALTER TABLE users ADD COLUMN disabled int NOT NULL DEFAULT 0;
    通常不需要手工执行，程序启动时的 AutoMigrate 会补上这一列 */
 ALTER TABLE `users` ADD COLUMN `disabled` int NOT NULL DEFAULT 0 COMMENT '0:enabled 1:disabled';
+
+/* v9 2026-11-23 widen datasource description to text: datasources synced from fc-insight
+   (where the column is text) fail to save once the description exceeds 255 characters.
+   TEXT cannot carry a literal default value, hence no NOT NULL DEFAULT.
+   PostgreSQL: ALTER TABLE datasource ALTER COLUMN description TYPE text;
+   Usually unnecessary to run by hand: AutoMigrate widens the column on startup */
+ALTER TABLE `datasource` MODIFY `description` text COMMENT 'description';

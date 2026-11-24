@@ -455,6 +455,9 @@ type Datasource struct {
 	IsDefault  bool   `gorm:"column:is_default;type:boolean;comment:is default datasource"`
 	Identifier string `gorm:"column:identifier;type:varchar(255);default:'';comment:identifier"`
 	Weight     int    `gorm:"column:weight;type:int;default:0;comment:weight for sorting"`
+	// text rather than varchar(255): datasources synced from fc-insight carry
+	// descriptions of unbounded length. TEXT cannot carry a literal default.
+	Description string `gorm:"column:description;type:text;comment:description"`
 }
 
 type Configs struct {
