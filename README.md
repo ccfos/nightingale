@@ -16,6 +16,7 @@
   <a href="https://github.com/ccfos/nightingale/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ccfos/nightingale" /></a>
   <a href="https://hub.docker.com/r/flashcatcloud/nightingale"><img alt="Docker pulls" src="https://img.shields.io/docker/pulls/flashcatcloud/nightingale" /></a>
   <a href="https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g"><img alt="Join the Nightingale Slack community" src="https://img.shields.io/badge/Slack-join%20the%20community-brightgreen" /></a>
+  <a href="https://glama.ai/mcp/servers/ccfos/nightingale"><img alt="ccfos/nightingale MCP server" src="https://glama.ai/mcp/servers/ccfos/nightingale/badges/score.svg" /></a>
 </p>
 
 <p align="center">
@@ -109,8 +110,6 @@ Configure a model endpoint to get started. The agent supports OpenAI-compatible 
 
 - **MCP** lets external assistants call Nightingale's tools. The server runs inside Nightingale at `/mcp`, exposes read tools by default, and applies the caller's existing API permissions. Write tools require explicit configuration. See [MCP setup](doc/api/mcp-server.md).
 - **A2A** lets another agent delegate a task to Nightingale's built-in agent. See [A2A integration](doc/api/a2a-integration.md).
-
-[![ccfos/nightingale MCP server](https://glama.ai/mcp/servers/ccfos/nightingale/badges/score.svg)](https://glama.ai/mcp/servers/ccfos/nightingale)
 
 ### Cursor plugin
 

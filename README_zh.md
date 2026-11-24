@@ -25,6 +25,8 @@
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 <a href="https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g">
   <img alt="GitHub contributors" src="https://img.shields.io/badge/join%20slack-%23n9e-brightgreen.svg"/></a>
+<a href="https://glama.ai/mcp/servers/ccfos/nightingale">
+  <img alt="ccfos/nightingale MCP server" src="https://glama.ai/mcp/servers/ccfos/nightingale/badges/score.svg"/></a>
 </p>
 
 <img referrerpolicy="no-referrer-when-downgrade" src="https://play.n9e.io/stats/p/qD3jn0con" alt="" />
@@ -61,8 +63,6 @@
 ## MCP Server
 
 夜莺**服务端内置 MCP Server**：n9e 进程自身以 Streamable HTTP 方式在 `/mcp` 提供 [Model Context Protocol](https://modelcontextprotocol.io/) 服务，无需额外部署进程。任意 MCP 客户端（Claude Code / Claude Desktop、Cursor、ChatGPT connector、自研 Agent）都可以用自然语言查询和管理夜莺。
-
-[![ccfos/nightingale MCP server](https://glama.ai/mcp/servers/ccfos/nightingale/badges/score.svg)](https://glama.ai/mcp/servers/ccfos/nightingale)
 
 ### 客户端接入
 
