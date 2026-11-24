@@ -516,7 +516,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/boards", rt.auth(), rt.user(), rt.boardGetsByBids)
 		pages.GET("/board/:bid", rt.boardGet)
-		pages.GET("/board/:bid/pure", rt.boardPureGet)
+		pages.GET("/board/:bid/pure", rt.auth(), rt.user(), rt.boardPureGet)
 		pages.PUT("/board/:bid", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.boardPut)
 		pages.PUT("/board/:bid/configs", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.boardPutConfigs)
 		pages.PUT("/board/:bid/public", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.boardPutPublic)
