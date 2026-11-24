@@ -25,6 +25,8 @@
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 <a href="https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g">
   <img alt="GitHub contributors" src="https://img.shields.io/badge/join%20slack-%23n9e-brightgreen.svg"/></a>
+<a href="https://glama.ai/mcp/servers/ccfos/nightingale">
+  <img alt="ccfos/nightingale MCP server" src="https://glama.ai/mcp/servers/ccfos/nightingale/badges/score.svg"/></a>
 </p>
 
 <img referrerpolicy="no-referrer-when-downgrade" src="https://play.n9e.io/stats/p/qD3jn0con" alt="" />
