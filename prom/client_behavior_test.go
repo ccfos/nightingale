@@ -3,6 +3,7 @@ package prom
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	n9ectx "github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -192,4 +193,13 @@ func TestPromClientMap_LoadFromEmptyDatabaseRemovesStaleClients(t *testing.T) {
 	require.Equal(t, promkit.WriterType{}, pc.GetWriterCli(42))
 	_, found := PromOptions.Get(42)
 	require.False(t, found)
+}
+
+func TestNewPromTransport_RetiresIdleConnectionsBeforeServer(t *testing.T) {
+	transport := newPromTransport(PromOption{Timeout: 5000, DialTimeout: 1000, MaxIdleConnsPerHost: 8}, nil)
+
+	require.Equal(t, 30*time.Second, transport.IdleConnTimeout)
+	require.Less(t, transport.IdleConnTimeout, time.Minute, "must stay below VictoriaMetrics' default -http.idleConnTimeout")
+	require.Equal(t, 5*time.Second, transport.ResponseHeaderTimeout)
+	require.Equal(t, 8, transport.MaxIdleConnsPerHost)
 }

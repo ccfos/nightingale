@@ -1,6 +1,7 @@
 package prom
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -151,16 +152,8 @@ func (pc *PromClientMap) newReaderClientFromPromOption(po PromOption) (api.Clien
 	}
 
 	return api.NewClient(api.Config{
-		Address: po.Url,
-		RoundTripper: &http.Transport{
-			TLSClientConfig: tlsConfig,
-			Proxy:           http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout: time.Duration(po.DialTimeout) * time.Millisecond,
-			}).DialContext,
-			ResponseHeaderTimeout: time.Duration(po.Timeout) * time.Millisecond,
-			MaxIdleConnsPerHost:   po.MaxIdleConnsPerHost,
-		},
+		Address:      po.Url,
+		RoundTripper: newPromTransport(po, tlsConfig),
 	})
 }
 
@@ -171,17 +164,28 @@ func (pc *PromClientMap) newWriterClientFromPromOption(po PromOption) (api.Clien
 	}
 
 	return api.NewClient(api.Config{
-		Address: po.WriteAddr,
-		RoundTripper: &http.Transport{
-			TLSClientConfig: tlsConfig,
-			Proxy:           http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout: time.Duration(po.DialTimeout) * time.Millisecond,
-			}).DialContext,
-			ResponseHeaderTimeout: time.Duration(po.Timeout) * time.Millisecond,
-			MaxIdleConnsPerHost:   po.MaxIdleConnsPerHost,
-		},
+		Address:      po.WriteAddr,
+		RoundTripper: newPromTransport(po, tlsConfig),
 	})
+}
+
+// promIdleConnTimeout retires pooled connections before common server-side
+// idle timeouts (VictoriaMetrics 60s, nginx 75s). Otherwise a connection idle
+// for exactly that long can be reused just as the server closes it, and the
+// query POST, which Go does not retry, fails with "connection reset by peer".
+const promIdleConnTimeout = 30 * time.Second
+
+func newPromTransport(po PromOption, tlsConfig *tls.Config) *http.Transport {
+	return &http.Transport{
+		TLSClientConfig: tlsConfig,
+		Proxy:           http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout: time.Duration(po.DialTimeout) * time.Millisecond,
+		}).DialContext,
+		ResponseHeaderTimeout: time.Duration(po.Timeout) * time.Millisecond,
+		MaxIdleConnsPerHost:   po.MaxIdleConnsPerHost,
+		IdleConnTimeout:       promIdleConnTimeout,
+	}
 }
 
 func (pc *PromClientMap) setClientFromPromOption(datasourceId int64, po PromOption) error {
