@@ -16,7 +16,6 @@
   <a href="https://github.com/ccfos/nightingale/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ccfos/nightingale" /></a>
   <a href="https://hub.docker.com/r/flashcatcloud/nightingale"><img alt="Docker pulls" src="https://img.shields.io/docker/pulls/flashcatcloud/nightingale" /></a>
   <a href="https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g"><img alt="Join the Nightingale Slack community" src="https://img.shields.io/badge/Slack-join%20the%20community-brightgreen" /></a>
-  <a href="https://glama.ai/mcp/servers/ccfos/nightingale"><img alt="ccfos/nightingale MCP server" src="https://glama.ai/mcp/servers/ccfos/nightingale/badges/score.svg" /></a>
 </p>
 
 <p align="center">
@@ -110,6 +109,8 @@ Nightingale には、Web UI で直接使える AI エージェントが含まれ
 
 - **MCP** を使うと、外部のアシスタントから Nightingale のツールを呼び出せます。サーバーは Nightingale の中の `/mcp` で動作し、デフォルトでは読み取り用のツールを公開し、呼び出し元の既存の API 権限を適用します。書き込み用のツールには明示的な設定が必要です。[MCP のセットアップ](doc/api/mcp-server.md)をご覧ください。
 - **A2A** を使うと、ほかのエージェントが Nightingale の内蔵エージェントにタスクを委任できます。[A2A の連携](doc/api/a2a-integration.md)をご覧ください。
+
+[![ccfos/nightingale MCP server](https://glama.ai/mcp/servers/ccfos/nightingale/badges/score.svg)](https://glama.ai/mcp/servers/ccfos/nightingale)
 
 ### Cursor プラグイン
 
