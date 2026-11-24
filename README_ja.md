@@ -16,6 +16,7 @@
   <a href="https://github.com/ccfos/nightingale/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ccfos/nightingale" /></a>
   <a href="https://hub.docker.com/r/flashcatcloud/nightingale"><img alt="Docker pulls" src="https://img.shields.io/docker/pulls/flashcatcloud/nightingale" /></a>
   <a href="https://n9e.slack.com/join/shared_invite/zt-4ejx42fd0-S9aVULH4FTdH~jEAz80U7g"><img alt="Join the Nightingale Slack community" src="https://img.shields.io/badge/Slack-join%20the%20community-brightgreen" /></a>
+  <a href="https://glama.ai/mcp/servers/ccfos/nightingale"><img alt="ccfos/nightingale MCP server" src="https://glama.ai/mcp/servers/ccfos/nightingale/badges/score.svg" /></a>
 </p>
 
 <p align="center">
