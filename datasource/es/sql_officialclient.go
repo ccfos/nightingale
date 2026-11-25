@@ -48,23 +48,29 @@ func officialClient(escli *Elasticsearch) (*elasticsearch8.Client, error) {
 		timeout = time.Duration(defaultTimeout) * time.Millisecond
 	}
 
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout: timeout,
-		}).DialContext,
-		ResponseHeaderTimeout: timeout,
-	}
-
-	if escli.TLS.SkipTlsVerify {
-		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true, //nolint:gosec
+	var baseTransport http.RoundTripper
+	if escli.CustomTransport != nil {
+		baseTransport = escli.CustomTransport
+	} else {
+		transport := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout: timeout,
+			}).DialContext,
+			ResponseHeaderTimeout: timeout,
 		}
+
+		if escli.TLS.SkipTlsVerify {
+			transport.TLSClientConfig = &tls.Config{
+				InsecureSkipVerify: true, //nolint:gosec
+			}
+		}
+		baseTransport = transport
 	}
 
 	cfg := elasticsearch8.Config{
 		Addresses: escli.Nodes,
-		Transport: &productCheckTransport{base: transport},
+		Transport: &productCheckTransport{base: baseTransport},
 	}
 
 	// Mirror InitClient()'s condition (Basic.Username != "") instead of
@@ -72,12 +78,13 @@ func officialClient(escli *Elasticsearch) (*elasticsearch8.Client, error) {
 	// (esN9eToDatasourceInfo) populate username/password but leave Enable
 	// false, which made every SQL request go out unauthenticated and fail
 	// with 401 against security-enabled clusters while DSL queries worked.
-	if escli.Basic.Enable || escli.Basic.Username != "" {
+	// For edge queries, the edge node adds authentication headers using its local datasource configuration.
+	if escli.CustomTransport == nil && (escli.Basic.Enable || escli.Basic.Username != "") {
 		cfg.Username = escli.Basic.Username
 		cfg.Password = escli.Basic.Password
 	}
 
-	if len(escli.Headers) > 0 {
+	if escli.CustomTransport == nil && len(escli.Headers) > 0 {
 		cfg.Header = make(http.Header)
 		for k, v := range escli.Headers {
 			cfg.Header.Set(k, v)

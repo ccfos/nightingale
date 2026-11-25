@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
+	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
@@ -127,6 +128,13 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 			}
 		}
 
+		if isUseEdgeSettings(item.SettingsJson) {
+			if safeSettings == nil {
+				safeSettings = make(map[string]interface{})
+			}
+			safeSettings["use_edge"] = true
+		}
+
 		item.RedactSecrets()
 		item.SettingsJson = safeSettings
 		dss = append(dss, item)
@@ -178,6 +186,90 @@ func sanitizeDsError(msg string) string {
 	return dsUrlCredRe.ReplaceAllString(msg, "$1***:***@")
 }
 
+// EdgeQueryEnabledHook reports whether edge queries are enabled in commercial builds.
+// When nil (pure open-source builds), datasourceUpsert relies on the datasource hooks check below.
+var EdgeQueryEnabledHook func() bool
+
+func parseUseEdgeSettings(settings map[string]interface{}) (bool, error) {
+	if len(settings) == 0 {
+		return false, nil
+	}
+	raw, ok := settings["use_edge"]
+	if !ok || raw == nil {
+		return false, nil
+	}
+	v, ok := raw.(bool)
+	if !ok {
+		return false, fmt.Errorf("settings.use_edge must be a boolean")
+	}
+	return v, nil
+}
+
+func isUseEdgeSettings(settings map[string]interface{}) bool {
+	v, err := parseUseEdgeSettings(settings)
+	return err == nil && v
+}
+
+func isSupportedEdgeDatasourceType(pluginType string) bool {
+	typ := strings.TrimSuffix(strings.TrimSpace(pluginType), ".logging")
+	return typ == models.ELASTICSEARCH || typ == models.MYSQL
+}
+
+// ResolveClusterNameFromSettings fills an omitted cluster_name from legacy settings.
+// If several legacy keys have usable values, the first key in lexical order wins.
+func ResolveClusterNameFromSettings(ds *models.Datasource) {
+	if ds == nil || strings.TrimSpace(ds.ClusterName) != "" {
+		return
+	}
+
+	var legacyKey string
+	for key, value := range ds.SettingsJson {
+		if key != "cluster_name" && !strings.HasSuffix(key, ".cluster_name") {
+			continue
+		}
+		if name, ok := value.(string); ok && strings.TrimSpace(name) != "" && (legacyKey == "" || key < legacyKey) {
+			legacyKey = key
+			ds.ClusterName = name
+		}
+	}
+}
+
+// ValidateUseEdgeDatasource validates use_edge constraints consistently across upsert and import paths.
+func ValidateUseEdgeDatasource(ds *models.Datasource) (bool, error) {
+	if ds == nil {
+		return false, nil
+	}
+	useEdge, err := parseUseEdgeSettings(ds.SettingsJson)
+	if err != nil {
+		return false, err
+	}
+	if !useEdge {
+		return false, nil
+	}
+	if EdgeProxyTransportHook == nil || dscache.CenterDatasourceWrapHook == nil {
+		return true, fmt.Errorf("edge datasource query is not supported in this edition")
+	}
+	if EdgeQueryEnabledHook != nil && !EdgeQueryEnabledHook() {
+		return true, fmt.Errorf("edge datasource query is disabled")
+	}
+	if !isSupportedEdgeDatasourceType(ds.PluginType) {
+		return true, fmt.Errorf("datasource type %s does not support edge query", ds.PluginType)
+	}
+	clusterName := strings.TrimSpace(ds.ClusterName)
+	if clusterName == "" || clusterName == "no_assigned_engine" {
+		return true, fmt.Errorf("cluster_name is required when settings.use_edge is enabled")
+	}
+	ds.ClusterName = clusterName
+	for k, v := range ds.SettingsJson {
+		if strings.Contains(k, "cluster_name") {
+			if s, ok := v.(string); ok {
+				ds.SettingsJson[k] = strings.TrimSpace(s)
+			}
+		}
+	}
+	return true, nil
+}
+
 func (rt *Router) datasourceUpsert(c *gin.Context) {
 	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
@@ -188,6 +280,35 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	ginx.BindJSON(c, &req)
 	username := Username(c)
 	req.UpdatedBy = username
+
+	ResolveClusterNameFromSettings(&req)
+
+	if useEdgeRequested, _ := parseUseEdgeSettings(req.SettingsJson); req.Id > 0 && useEdgeRequested {
+		existing, getErr := models.DatasourceGet(rt.Ctx, req.Id)
+		if getErr != nil {
+			Dangerous(c, getErr)
+			return
+		}
+		if existing == nil {
+			Dangerous(c, fmt.Errorf("datasource not found"))
+			return
+		}
+		if req.PluginType != "" && req.PluginType != existing.PluginType {
+			Dangerous(c, fmt.Errorf("datasource plugin_type %q does not match existing record %q", req.PluginType, existing.PluginType))
+			return
+		}
+		req.PluginType = existing.PluginType
+	}
+
+	useEdge, useEdgeErr := ValidateUseEdgeDatasource(&req)
+	if useEdgeErr != nil {
+		Dangerous(c, useEdgeErr)
+		return
+	}
+	if useEdge {
+		// Skip the center connectivity check and leave the datasource in the saved_unverified state.
+		req.ForceSave = true
+	}
 
 	var err error
 	var count int64
@@ -224,13 +345,6 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	if req.PluginType == models.PROMETHEUS || req.PluginType == models.LOKI || req.PluginType == models.TDENGINE || req.PluginType == models.IOTDB {
 		if runCheck("query", func() error { return DatasourceCheck(c, req) }) {
 			return
-		}
-	}
-
-	for k, v := range req.SettingsJson {
-		if strings.Contains(k, "cluster_name") {
-			req.ClusterName = v.(string)
-			break
 		}
 	}
 
@@ -315,7 +429,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	}
 
 	if req.PluginType == models.ELASTICSEARCH {
-		skipAuto := false
+		skipAuto := useEdge
 		// 若用户输入了version（version字符串存在且不为空），则不自动获取
 		if req.SettingsJson != nil {
 			if v, ok := req.SettingsJson["version"]; ok {

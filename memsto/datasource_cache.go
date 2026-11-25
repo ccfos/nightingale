@@ -96,6 +96,17 @@ func (d *DatasourceCacheType) GetById(id int64) *models.Datasource {
 	return d.ds[id]
 }
 
+// GetAll returns a snapshot of the cached datasource pointers.
+func (d *DatasourceCacheType) GetAll() []*models.Datasource {
+	d.RLock()
+	defer d.RUnlock()
+	lst := make([]*models.Datasource, 0, len(d.ds))
+	for _, ds := range d.ds {
+		lst = append(lst, ds)
+	}
+	return lst
+}
+
 // GetByCate 返回某个 plugin_type 下的全部数据源快照。返回的是 map 迭代顺序，
 // 调用方若需要稳定输出（如写进 API 响应）要自行排序。
 func (d *DatasourceCacheType) GetByCate(cate string) []*models.Datasource {
@@ -156,6 +167,11 @@ func (d *DatasourceCacheType) syncDatasources() error {
 		return errors.WithMessage(err, "failed to call DatasourceStatistics")
 	}
 
+	// Known second-granularity cache limitation: StatChanged compares (total, max(updated_at)),
+	// where updated_at uses time.Now().Unix(). If the same datasource is updated twice within
+	// the same second after the first write has already been synced, neither statistic changes,
+	// causing SyncOnce and periodic syncs across center/edge instances to skip the second write
+	// until a later mutation bumps total or max(updated_at) (while dscache polls rows independently).
 	if !d.StatChanged(stat.Total, stat.LastUpdated) {
 		d.stats.GaugeCronDuration.WithLabelValues("sync_datasources").Set(0)
 		d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(0)
