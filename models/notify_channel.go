@@ -721,11 +721,14 @@ func (c *SMTPRequestConfig) Verify() error {
 	if c.Port <= 0 {
 		return errors.New("smtp port must be greater than 0")
 	}
-	if c.Username == "" {
-		return errors.New("smtp username cannot be empty")
+	// Both empty sends without AUTH, for relays that allow anonymous senders
+	// from trusted networks. A username alone would still attempt AUTH with an
+	// empty password and fail on every send.
+	if c.Username != "" && c.Password == "" {
+		return errors.New("smtp password cannot be empty when username is set")
 	}
-	if c.Password == "" {
-		return errors.New("smtp password cannot be empty")
+	if c.Username == "" && c.Password != "" {
+		return errors.New("smtp username cannot be empty when password is set")
 	}
 	if c.From == "" {
 		return errors.New("smtp from address cannot be empty")

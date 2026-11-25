@@ -46,8 +46,9 @@ func TestSMTPRequestConfig_VerifyRequiresConnectionAndSenderFields(t *testing.T)
 	}{
 		{name: "missing host", change: func(c *SMTPRequestConfig) { c.Host = "" }, want: "host cannot be empty"},
 		{name: "missing port", change: func(c *SMTPRequestConfig) { c.Port = 0 }, want: "port must be greater than 0"},
-		{name: "missing username", change: func(c *SMTPRequestConfig) { c.Username = "" }, want: "username cannot be empty"},
-		{name: "missing password", change: func(c *SMTPRequestConfig) { c.Password = "" }, want: "password cannot be empty"},
+		{name: "missing username", change: func(c *SMTPRequestConfig) { c.Username = "" }, want: "username cannot be empty when password is set"},
+		{name: "missing password", change: func(c *SMTPRequestConfig) { c.Password = "" }, want: "password cannot be empty when username is set"},
+		{name: "anonymous", change: func(c *SMTPRequestConfig) { c.Username, c.Password = "", "" }},
 		{name: "missing sender", change: func(c *SMTPRequestConfig) { c.From = "" }, want: "from address cannot be empty"},
 		{name: "valid", change: func(c *SMTPRequestConfig) {}},
 	}
