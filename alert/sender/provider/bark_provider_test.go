@@ -198,11 +198,16 @@ func TestBarkPayloadFitsAPNsLimit(t *testing.T) {
 			t.Fatalf("case #%d: APNs payload is %d bytes", i, size)
 		}
 		m := barkBody(t, r)
+		// the provider's estimate must match the payload rebuilt independently from bark-server's code
+		if est, rebuilt := barkAPNsSize(m), len(upstreamAPNsPayload(t, r)); est != rebuilt {
+			t.Fatalf("case #%d: estimate %d bytes, upstream payload %d bytes", i, est, rebuilt)
+		}
 		if !utf8.ValidString(m.Body) || len([]rune(m.Group)) > barkMaxOptionRunes {
 			t.Fatalf("case #%d: invalid body or group: %d runes", i, len([]rune(m.Group)))
 		}
-		if i < 4 && (!strings.HasSuffix(m.Body, "…") || len(upstreamAPNsPayload(t, r)) < 3700) {
-			t.Fatalf("case #%d: body must be cut, but not more than needed: %d bytes", i, len(upstreamAPNsPayload(t, r)))
+		// a long body is cut, while the event link (the only way to open the event from the push) stays
+		if i < 4 && (!strings.HasSuffix(m.Body, "…") || len(upstreamAPNsPayload(t, r)) < 3700 || m.URL != "http://n9e.example.com/share/alert-his-events/42") {
+			t.Fatalf("case #%d: body must be cut, but not more than needed, and the link kept: %d bytes, url=%q", i, len(upstreamAPNsPayload(t, r)), m.URL)
 		}
 		if i == 4 && (m.URL != "" || m.Body != "short body") {
 			t.Fatalf("an over-long event link must be dropped, keeping the body: %+v", m)

@@ -17,12 +17,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/toolkits/pkg/logger"
 )
 
 const (
@@ -120,7 +122,8 @@ func (p *BarkProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyRe
 	if server == "" {
 		server = barkDefaultServerURL
 	}
-	if u, err := url.Parse(server); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+	u, err := url.Parse(server)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return &NotifyResult{Err: errors.New("bark server url must start with http:// or https://")}
 	}
 
@@ -182,6 +185,8 @@ func (p *BarkProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyRe
 		defer func() {
 			if r := recover(); r != nil {
 				err = fmt.Errorf("bark push panicked: %v", r)
+				// the record only keeps a redacted, truncated reason: the stack goes to the log
+				logger.Errorf("bark_sender: %s (target=%s, server=%s)\n%s", err, barkMaskKey(key), u.Host, debug.Stack())
 			}
 		}()
 		m := msg
