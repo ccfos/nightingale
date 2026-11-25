@@ -90,6 +90,12 @@ func (rt *Router) QueryVictoriaLogsFieldNames(c *gin.Context) {
 	sort.Slice(ret, func(i, j int) bool {
 		return ret[i].Field < ret[j].Field
 	})
+	// Truncate after filtering and sorting: VictoriaLogs can return more field
+	// names than the requested limit (118 for limit=100 on v1.53.0), which would
+	// contradict the frontend's "only the first N fields" hint.
+	if f.Limit > 0 && len(ret) > f.Limit {
+		ret = ret[:f.Limit]
+	}
 
 	ginx.NewRender(c).Data(ret, nil)
 }
@@ -124,7 +130,7 @@ func (rt *Router) QueryVictoriaLogsFieldValues(c *gin.Context) {
 		return
 	}
 
-	if isVictoriaLogsBuilderSuggestionBlockedField(f.Field) {
+	if isVictoriaLogsValueSuggestionBlockedField(f.Field) {
 		ginx.NewRender(c).Data([]victorialogs.FieldValue{}, nil)
 		return
 	}
@@ -208,15 +214,29 @@ func validateVictoriaLogsField(field string) {
 	}
 }
 
+// isVictoriaLogsBuilderSuggestionBlockedField keeps metadata fields out of the
+// builder's field suggestions. `_msg` is the log message body, so it is allowed
+// as a filter field (for example `_msg:*error*`).
 func isVictoriaLogsBuilderSuggestionBlockedField(field string) bool {
 	switch field {
-	case "_time", "_msg", "_stream", "_stream_id":
+	case "_time", "_stream", "_stream_id":
 		return true
 	}
 	if strings.HasPrefix(field, "_stream.") {
 		return true
 	}
 	return false
+}
+
+// isVictoriaLogsValueSuggestionBlockedField controls the value dropdown only.
+// `_msg` values are effectively unique per line: a top-N list is not meaningful
+// and would scan the whole message body, so values stay empty while the field
+// remains selectable (the user can type a keyword manually).
+func isVictoriaLogsValueSuggestionBlockedField(field string) bool {
+	if isVictoriaLogsBuilderSuggestionBlockedField(field) {
+		return true
+	}
+	return field == "_msg"
 }
 
 func getVictoriaLogs(c *gin.Context, cate string, datasourceId int64) *victorialogs.VictoriaLogs {
