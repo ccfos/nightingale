@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 )
 
 type SsoClient struct {
+	UsePKCE         bool
 	Enable          bool
 	Config          oauth2.Config
 	SsoAddr         string
@@ -77,6 +79,7 @@ type rsTokenCacheEntry struct {
 const rsTokenCacheSweepThreshold = 1024
 
 type Config struct {
+	UsePKCE         bool
 	Enable          bool
 	DisplayName     string
 	RedirectURL     string
@@ -139,6 +142,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.SsoLogoutAddr = cf.SsoLogoutAddr
 	s.UserInfoAddr = cf.UserInfoAddr
 	s.TranTokenMethod = cf.TranTokenMethod
+	s.UsePKCE = cf.UsePKCE
 	s.CallbackAddr = cf.RedirectURL
 	s.DisplayName = cf.DisplayName
 	s.CoverAttributes = cf.CoverAttributes
@@ -216,48 +220,91 @@ func (s *SsoClient) GetSsoLogoutAddr() string {
 	return s.SsoLogoutAddr
 }
 
-func wrapStateKey(key string) string {
-	return "n9e_oauth_" + key
+const oauthStateTTL = 5 * time.Minute
+
+type loginState struct {
+	Redirect string
+	Verifier string
 }
 
-// Authorize return the sso authorize location with state
-func (s *SsoClient) Authorize(redis storage.Redis, redirect string) (string, error) {
-	state := uuid.New().String()
-	ctx := context.Background()
+func loginStateKey(state, browser string) string {
+	return "n9e_oauth_state_" + state + ":" + browser
+}
 
-	err := redis.Set(ctx, wrapStateKey(state), redirect, time.Duration(300*time.Second)).Err()
-	if err != nil {
-		return "", err
+// LoginRedirect limits post-login navigation to a path on this site.
+func LoginRedirect(redirect string) string {
+	u, err := url.Parse(redirect)
+	if err != nil || u.Host != "" || u.Scheme != "" || !strings.HasPrefix(u.Path, "/") ||
+		strings.HasPrefix(u.Path, "//") || strings.ContainsAny(u.Path, "\\\r\n\t") {
+		return "/"
 	}
+	return redirect
+}
 
+// Authorize returns the SSO URL and the state to use for a PKCE browser cookie.
+func (s *SsoClient) Authorize(redis storage.Redis, redirect, browser string) (address, state string, err error) {
+	state = uuid.New().String()
+	ctx := context.Background()
 	s.RLock()
 	defer s.RUnlock()
-	return s.Config.AuthCodeURL(state), nil
+	if !s.UsePKCE {
+		if err := redis.Set(ctx, "n9e_oauth_"+state, redirect, oauthStateTTL).Err(); err != nil {
+			return "", "", err
+		}
+		return s.Config.AuthCodeURL(state), "", nil
+	}
+	if browser == "" {
+		return "", "", fmt.Errorf("missing OAuth2 browser binding")
+	}
+	entry := loginState{Redirect: LoginRedirect(redirect), Verifier: oauth2.GenerateVerifier()}
+	data, err := json.Marshal(entry)
+	if err != nil {
+		return "", "", err
+	}
+	if err := redis.Set(context.Background(), loginStateKey(state, browser), data, oauthStateTTL).Err(); err != nil {
+		return "", "", err
+	}
+	return s.Config.AuthCodeURL(state, oauth2.S256ChallengeOption(entry.Verifier)), state, nil
 }
 
-func fetchRedirect(redis storage.Redis, ctx context.Context, state string) (string, error) {
-	return redis.Get(ctx, wrapStateKey(state)).Result()
-}
-
-func deleteRedirect(redis storage.Redis, ctx context.Context, state string) error {
-	return redis.Del(ctx, wrapStateKey(state)).Err()
-}
-
-// Callback 用 code 兑换 accessToken 以及 用户信息
-func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, state string) (*CallbackOutput, error) {
-	ret, err := s.exchangeUser(code)
-	if err != nil {
-		return nil, fmt.Errorf("illegal user:%v", err)
+// Callback exchanges a code from the same browser that started authorization.
+func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, state, browser string) (*CallbackOutput, error) {
+	s.RLock()
+	defer s.RUnlock()
+	if !s.UsePKCE {
+		ret, err := s.exchangeUserLocked(s.Ctx, code)
+		if err != nil {
+			return nil, fmt.Errorf("illegal user: %w", err)
+		}
+		key := "n9e_oauth_" + state
+		ret.Redirect, err = redis.Get(ctx, key).Result()
+		if err != nil {
+			logger.Errorf("get OAuth2 redirect: %v", err)
+		}
+		if err := redis.Del(ctx, key).Err(); err != nil {
+			logger.Errorf("delete OAuth2 redirect: %v", err)
+		}
+		return ret, nil
 	}
-	ret.Redirect, err = fetchRedirect(redis, ctx, state)
-	if err != nil {
-		logger.Errorf("get redirect err:%v code:%s state:%s", err, code, state)
+	if state == "" || code == "" || browser == "" {
+		return nil, fmt.Errorf("missing OAuth2 callback parameters")
 	}
-
-	err = deleteRedirect(redis, ctx, state)
+	// Consume the state atomically, including on Redis versions without GETDEL.
+	data, err := redis.Eval(ctx, `local value = redis.call('GET', KEYS[1])
+if value then redis.call('DEL', KEYS[1]) end
+return value`, []string{loginStateKey(state, browser)}).Text()
 	if err != nil {
-		logger.Errorf("delete redirect err:%v code:%s state:%s", err, code, state)
+		return nil, fmt.Errorf("failed to consume OAuth2 login state: %w", err)
 	}
+	var entry loginState
+	if err := json.Unmarshal([]byte(data), &entry); err != nil || entry.Verifier == "" {
+		return nil, fmt.Errorf("invalid OAuth2 login state")
+	}
+	ret, err := s.exchangeUserLocked(ctx, code, oauth2.VerifierOption(entry.Verifier))
+	if err != nil {
+		return nil, fmt.Errorf("illegal user: %w", err)
+	}
+	ret.Redirect = entry.Redirect
 	return ret, nil
 }
 
@@ -275,7 +322,14 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	s.RLock()
 	defer s.RUnlock()
 
-	oauth2Token, err := s.Config.Exchange(s.Ctx, code)
+	return s.exchangeUserLocked(s.Ctx, code)
+}
+
+func (s *SsoClient) exchangeUserLocked(ctx context.Context, code string, options ...oauth2.AuthCodeOption) (*CallbackOutput, error) {
+	if client, ok := s.Ctx.Value(oauth2.HTTPClient).(*http.Client); ok {
+		ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
+	}
+	oauth2Token, err := s.Config.Exchange(ctx, code, options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %s", err)
 	}

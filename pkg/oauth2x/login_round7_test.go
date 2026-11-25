@@ -28,7 +28,8 @@ func TestAuthorize_PersistsRedirectWithExpiringRandomState(t *testing.T) {
 		RedirectURL: "http://127.0.0.1/callback", Scopes: []string{"profile", "email"},
 	})
 
-	location, err := client.Authorize(redisClient, "/dashboards?team=ops")
+	location, cookieState, err := client.Authorize(redisClient, "/dashboards?team=ops", "")
+	require.Empty(t, cookieState)
 
 	require.NoError(t, err)
 	parsed, err := url.Parse(location)
@@ -52,7 +53,7 @@ func TestAuthorize_ReturnsRedisErrorWithoutLocation(t *testing.T) {
 	server.SetError("ERR storage unavailable")
 	client := New(Config{Enable: true})
 
-	location, err := client.Authorize(redisClient, "/dashboard")
+	location, _, err := client.Authorize(redisClient, "/dashboard", "")
 
 	require.ErrorContains(t, err, "storage unavailable")
 	require.Empty(t, location)
@@ -66,7 +67,7 @@ func TestCallback_RestoresRedirectAndConsumesState(t *testing.T) {
 	t.Cleanup(provider.Close)
 	client := new4AClient(provider.URL)
 
-	output, err := client.Callback(redisClient, context.Background(), "code-1", "state-1")
+	output, err := client.Callback(redisClient, context.Background(), "code-1", "state-1", "")
 
 	require.NoError(t, err)
 	require.Equal(t, "/dashboard/42", output.Redirect)
@@ -85,7 +86,7 @@ func TestCallback_ExchangeFailurePreservesState(t *testing.T) {
 	t.Cleanup(provider.Close)
 	client := new4AClient(provider.URL)
 
-	output, err := client.Callback(redisClient, context.Background(), "bad-code", "state-1")
+	output, err := client.Callback(redisClient, context.Background(), "bad-code", "state-1", "")
 
 	require.ErrorContains(t, err, "illegal user")
 	require.ErrorContains(t, err, "invalid_grant")
