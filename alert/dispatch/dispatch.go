@@ -470,6 +470,13 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 }
 
 func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []int64, []string, map[string]string, []string) {
+	sendtos, _, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs := notifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
+	return sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
+}
+
+// notifyConfigParams is GetNotifyConfigParams plus the usernames of the selected users who have
+// not filled the contact, so a provider can report who was skipped instead of dropping them silently.
+func notifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []string, []int64, []string, map[string]string, []string) {
 	customParams := make(map[string]string)
 	var flashDutyChannelIDs []int64
 	var pagerDutyRoutingKeys []string
@@ -522,7 +529,7 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 	}
 
 	if len(userInfoParams.UserIDs) == 0 && len(userInfoParams.UserGroupIDs) == 0 {
-		return []string{}, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
+		return []string{}, nil, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
 	}
 
 	userIds := make([]int64, 0)
@@ -538,10 +545,12 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 	users := userCache.GetByUserIds(userIds)
 	visited := make(map[int64]bool)
 	sendtos := make([]string, 0)
+	var missingContactUsers []string
 	for _, user := range users {
 		if visited[user.Id] {
 			continue
 		}
+		visited[user.Id] = true
 		var sendto string
 		if contactKey == "phone" {
 			sendto = user.Phone
@@ -551,14 +560,14 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 			sendto, _ = user.ExtractToken(contactKey)
 		}
 
-		if sendto == "" {
+		if strings.TrimSpace(sendto) == "" {
+			missingContactUsers = append(missingContactUsers, user.Username)
 			continue
 		}
 		sendtos = append(sendtos, sendto)
-		visited[user.Id] = true
 	}
 
-	return sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
+	return sendtos, missingContactUsers, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
 }
 
 // NotifyContext 由 BuildNotifyContext 产生，封装一次通知所需的 provider + 请求参数。
@@ -581,8 +590,8 @@ func BuildNotifyContext(nctx *ctx.Context, userCache *memsto.UserCacheType, user
 	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
 		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
 	}
-	sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs :=
-		GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
+	sendtos, missingContactUsers, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs :=
+		notifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
 
 	p, ok := provider.DefaultRegistry.Resolve(notifyChannel)
 	if !ok {
@@ -616,6 +625,7 @@ func BuildNotifyContext(nctx *ctx.Context, userCache *memsto.UserCacheType, user
 			PagerDutyRoutingKeys: pagerDutyRoutingKeys,
 			CustomParams:         customParams,
 			Sendtos:              sendtos,
+			MissingContactUsers:  missingContactUsers,
 			ImGroupIDs:           imGroupIDs,
 			ImGroupRobotCodes:    imGroupRobotCodes,
 			HttpClient:           httpClient,

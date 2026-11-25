@@ -581,7 +581,7 @@ func TestSlackTemplateOnLegacyHTTPPathIsNotDoubleEscaped(t *testing.T) {
 
 // Pushover / ntfy / LINE 共用的纯文本模板：不做任何转义，引号、& 和换行原样输出
 func TestPlainAlertContentIsNotEscaped(t *testing.T) {
-	for _, ident := range []string{Pushover, Ntfy, Line} {
+	for _, ident := range []string{Pushover, Ntfy, Line, Bark} {
 		tpl := &MessageTemplate{NotifyChannelIdent: ident, Content: map[string]string{"content": NewTplMap[ident]}}
 		event := &AlertCurEvent{RuleName: "cpu", RuleNote: `load > 90% & "hot"`, Severity: 2, TriggerValue: "92", TriggerTime: 1700000000, TagsJSON: []string{"env=prod"}}
 		got, _ := tpl.RenderEventForChannel(ident, []*AlertCurEvent{event}, "http://n9e")["content"].(string)
@@ -600,7 +600,7 @@ func TestMoreChannelsHaveTemplatesInEveryLanguage(t *testing.T) {
 	tables := map[string][]MessageTemplate{"": MsgTplMap, "-en": MsgTplMapEn, "-ja": MsgTplMapJa, "-ru": MsgTplMapRu,
 		"-fr": MsgTplMapFr, "-ko": MsgTplMapKo, "-id": MsgTplMapId, "-es": MsgTplMapEs, "-pt": MsgTplMapPt}
 	for suffix, table := range tables {
-		for _, ident := range []string{Pushover, Ntfy, SplunkOnCall, Line} {
+		for _, ident := range []string{Pushover, Ntfy, SplunkOnCall, Line, Bark} {
 			found := false
 			for _, tpl := range table {
 				if tpl.Ident == ident+suffix {

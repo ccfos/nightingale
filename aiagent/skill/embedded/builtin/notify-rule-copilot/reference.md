@@ -64,6 +64,7 @@ The first two rows are **not mutually exclusive**: a user's custom channel may h
 
 - `user_ids` and `user_group_ids` are an **OR** relationship; the matched users are deduplicated and their contact methods are taken.
 - Which specific contact field is taken (phone/email/dingtalk_userid…) is exactly `contact_key` — if that field is blank in the user's `contact_info`, it is **silently not sent** (the most common root cause of "test was OK but the real alert wasn't sent"); have the user confirm the recipient has filled in that field in the personal center / user management.
+- `request_type=bark` is of this type: `contact_key=bark_device_key`, the "Bark Device Key" each user fills in their profile under Contacts (the part right after the server address in the URL the Bark app shows). Bark does not skip silently: users without a key are named in the notification record and the test result. Levels are fixed: S1→timeSensitive, S2/S3→active, recovery→passive (silent).
 
 ### Custom-parameter type (custom_params non-empty)
 

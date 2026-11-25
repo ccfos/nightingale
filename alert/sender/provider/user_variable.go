@@ -299,3 +299,16 @@ func RedactParamsForLog(params map[string]string) map[string]string {
 	}
 	return out
 }
+
+// RedactSendtosForLog returns a loggable copy of the resolved recipients. Bark device keys are
+// push credentials (anyone holding one can push to that iPhone), so they are masked.
+func RedactSendtosForLog(requestType string, sendtos []string) []string {
+	if requestType != models.RequestTypeBark {
+		return sendtos
+	}
+	out := make([]string, len(sendtos))
+	for i, s := range sendtos {
+		out[i] = barkMaskKey(s)
+	}
+	return out
+}

@@ -53,6 +53,7 @@ const (
 	Ntfy              = "ntfy"
 	SplunkOnCall      = "splunk_oncall"
 	Line              = "line"
+	Bark              = "bark"
 
 	DingtalkKey  = "dingtalk_robot_token"
 	WecomKey     = "wecom_robot_token"
@@ -61,6 +62,7 @@ const (
 	TelegramKey  = "telegram_robot_token"
 	LarkKey      = "lark_robot_token"
 	PagerDutyKey = "pagerduty_key"
+	BarkKey      = "bark_device_key"
 
 	DingtalkDomain = "oapi.dingtalk.com"
 	WecomDomain    = "qyapi.weixin.qq.com"

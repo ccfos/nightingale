@@ -242,3 +242,22 @@ func TestNtfySeedIsIdempotentAndPreservesUserEdits(t *testing.T) {
 		}
 	}
 }
+
+// Bark needs no credentials and ships enabled; the device key comes from each user's contacts
+func TestBarkSeedReadsDeviceKeyFromUserContacts(t *testing.T) {
+	c := seedTestDB(t)
+	models.InitNotifyChannel(c)
+	models.InitNotifyChannel(c)
+	rows, err := models.NotifyChannelsGet(c, "ident = ?", models.Bark)
+	if err != nil || len(rows) != 1 {
+		t.Fatalf("expected one bark seed: %v, %v", rows, err)
+	}
+	row := rows[0]
+	if row.RequestType != models.RequestTypeBark || !row.Enable || row.ParamConfig.UserInfo == nil ||
+		row.ParamConfig.UserInfo.ContactKey != models.BarkKey || len(row.ParamConfig.Custom.Params) != 0 {
+		t.Fatalf("invalid bark seed: %+v", row)
+	}
+	if n := row.RequestConfig.NativeNetwork(models.RequestTypeBark); n == nil || n.Timeout != 10000 {
+		t.Fatalf("bark seed should carry default network settings: %+v", row.RequestConfig)
+	}
+}

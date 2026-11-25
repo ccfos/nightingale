@@ -195,6 +195,7 @@ func TestConfigContactOptions_HideDisabledEntries(t *testing.T) {
 		name    string
 		key     string
 		handler func(*Router) gin.HandlerFunc
+		extra   []models.LabelAndKey
 	}{
 		{
 			name:    "notify channels",
@@ -205,6 +206,8 @@ func TestConfigContactOptions_HideDisabledEntries(t *testing.T) {
 			name:    "contact keys",
 			key:     models.NOTIFYCONTACT,
 			handler: func(rt *Router) gin.HandlerFunc { return rt.contactKeysGets },
+			// The built-in Bark contact is offered even though the stored list lacks it
+			extra: []models.LabelAndKey{{Label: "Bark Device Key", Key: models.BarkKey}},
 		},
 	}
 	for _, tc := range cases {
@@ -218,7 +221,7 @@ func TestConfigContactOptions_HideDisabledEntries(t *testing.T) {
 
 			var got []models.LabelAndKey
 			require.Empty(t, identityReply(t, w, &got))
-			require.Equal(t, []models.LabelAndKey{{Label: "Visible", Key: "shown"}}, got)
+			require.Equal(t, append([]models.LabelAndKey{{Label: "Visible", Key: "shown"}}, tc.extra...), got)
 		})
 	}
 }
