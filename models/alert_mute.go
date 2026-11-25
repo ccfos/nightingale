@@ -282,7 +282,9 @@ func (p *PeriodicMute) Verify() error {
 	if !isHHMM(p.EnableStime) || !isHHMM(p.EnableEtime) {
 		return errors.New("invalid periodic mute time, expected HH:MM")
 	}
-	if p.EnableStime > p.EnableEtime {
+	// An end of 00:00 means midnight: Match then covers stime until the end of
+	// that day, so a split window like 23:00-00:00 + 00:00-03:00 leaves no gap.
+	if p.EnableStime > p.EnableEtime && p.EnableEtime != "00:00" {
 		return errors.New("monthly periodic mute cannot span midnight, split it into two rows")
 	}
 

@@ -661,7 +661,7 @@ var CreateAlertMute = aiagent.AgentTool{
 	Parameters: []aiagent.ToolParameter{
 		{Name: "group_id", Type: "integer", Description: "业务组ID。不传则从页面上下文/表单注入；都没有会弹业务组选择表单", Required: false},
 		{Name: "duration", Type: "string", Description: `固定时段屏蔽的持续时长，如 "2h"/"30m"/"7d"/"1d12h"（支持 s/m/h/d/w）。传了它就无需在 config 里算 etime：工具按 etime=btime+duration 自动算（btime 默认当前时间）。`, Required: false},
-		{Name: "config", Type: "string", Description: `屏蔽规则 JSON 对象字符串。形如 {"note":"标题","cause":"屏蔽原因","prod":"metric","cate":"prometheus","severities":[1,2,3],"tags":[{"key":"ident","func":"==","value":"web01"}],"mute_time_type":0}。tags 为标签匹配条件数组(func: == / != / =~ / !~ / in / not in；in/not in 的 value 可传数组)。时间：固定时段(mute_time_type=0)优先用顶层 duration 参数，不必填 btime/etime(btime 默认当前时间)；周期屏蔽(mute_time_type=1)填 periodic_mutes，每行二选一：按周(cycle 省略或 "week"，enable_days_of_week 可写"工作日"/"每天"/"周末")；按月(cycle="month"，enable_days_of_month 为整数数组，1-31 表示几号、-1 表示每月最后一天，时段不能跨天，跨天需拆成两行)。时段可写"全天"，btime/etime 可省。datasource_ids 不传默认全部。`, Required: true},
+		{Name: "config", Type: "string", Description: `屏蔽规则 JSON 对象字符串。形如 {"note":"标题","cause":"屏蔽原因","prod":"metric","cate":"prometheus","severities":[1,2,3],"tags":[{"key":"ident","func":"==","value":"web01"}],"mute_time_type":0}。tags 为标签匹配条件数组(func: == / != / =~ / !~ / in / not in；in/not in 的 value 可传数组)。时间：固定时段(mute_time_type=0)优先用顶层 duration 参数，不必填 btime/etime(btime 默认当前时间)；周期屏蔽(mute_time_type=1)填 periodic_mutes，每行二选一：按周(cycle 省略或 "week"，enable_days_of_week 可写"工作日"/"每天"/"周末")；按月(cycle="month"，enable_days_of_month 为整数数组，1-31 表示几号、-1 表示每月最后一天，时段不能跨天，跨天需拆成两行，结束时间 00:00 表示到当天结束，如 23:00~00:00 和次日 00:00~03:00)。时段可写"全天"，btime/etime 可省。datasource_ids 不传默认全部。`, Required: true},
 	},
 }
 

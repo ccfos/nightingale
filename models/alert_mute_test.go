@@ -145,6 +145,9 @@ func TestPeriodicMuteMatch(t *testing.T) {
 		{"monthly day 1 does not match 11", monthly("00:00", "06:00", 1), "2026-12-11 03:00", false},
 		{"monthly day 5 does not match 15", monthly("00:00", "06:00", 5), "2026-12-15 03:00", false},
 		{"monthly all day", monthly("00:00", "23:59", 31), "2026-12-31 23:59", true},
+		{"monthly end 00:00 covers 23:59", monthly("23:00", "00:00", LastDayOfMonth), "2026-11-30 23:59", true},
+		{"monthly end 00:00 stays on the day", monthly("23:00", "00:00", LastDayOfMonth), "2026-11-30 22:59", false},
+		{"monthly end 00:00 does not reach next day", monthly("23:00", "00:00", LastDayOfMonth), "2026-12-01 00:30", false},
 		{"monthly 31 skipped in 30-day month", monthly("00:00", "23:59", 31), "2026-11-30 12:00", false},
 		{"last day of 30-day month", monthly("00:00", "23:59", LastDayOfMonth), "2026-11-30 12:00", true},
 		{"last day of february", monthly("00:00", "23:59", LastDayOfMonth), "2027-02-28 12:00", true},
@@ -173,6 +176,7 @@ func TestPeriodicMuteVerify(t *testing.T) {
 		{"monthly day out of range", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{32}, EnableStime: "00:00", EnableEtime: "06:00"}, "day of month must be between 1 and 31, or -1 for the last day"},
 		{"monthly day zero", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{0}, EnableStime: "00:00", EnableEtime: "06:00"}, "day of month must be between 1 and 31, or -1 for the last day"},
 		{"monthly bad time", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{1}, EnableStime: "0:00", EnableEtime: "06:00"}, "invalid periodic mute time, expected HH:MM"},
+		{"monthly until midnight", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{LastDayOfMonth}, EnableStime: "23:00", EnableEtime: "00:00"}, ""},
 		{"monthly cross midnight", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{1}, EnableStime: "23:00", EnableEtime: "03:00"}, "monthly periodic mute cannot span midnight, split it into two rows"},
 	}
 	for _, tt := range tests {
