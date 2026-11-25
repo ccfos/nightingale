@@ -120,3 +120,101 @@ func TestAlertMuteGetsAll_IncludesFutureBtime(t *testing.T) {
 	}
 	assert.ElementsMatch(t, []int64{1, 2, 5}, got)
 }
+
+func TestPeriodicMuteMatch(t *testing.T) {
+	at := func(s string) time.Time {
+		tm, err := time.ParseInLocation("2006-01-02 15:04", s, time.Local)
+		require.NoError(t, err)
+		return tm
+	}
+	monthly := func(stime, etime string, days ...int) PeriodicMute {
+		return PeriodicMute{Cycle: PeriodicCycleMonth, EnableStime: stime, EnableEtime: etime, EnableDaysOfMonth: days}
+	}
+
+	tests := []struct {
+		name string
+		p    PeriodicMute
+		at   string
+		want bool
+	}{
+		{"weekly legacy empty cycle", PeriodicMute{EnableDaysOfWeek: "1 2", EnableStime: "00:00", EnableEtime: "06:00"}, "2026-11-23 03:00", true}, // Monday
+		{"weekly other day", PeriodicMute{Cycle: PeriodicCycleWeek, EnableDaysOfWeek: "1 2", EnableStime: "00:00", EnableEtime: "06:00"}, "2026-11-25 03:00", false},
+		{"monthly day in window", monthly("00:00", "06:00", 1, 15), "2026-12-15 05:59", true},
+		{"monthly window end is exclusive", monthly("00:00", "06:00", 1, 15), "2026-12-15 06:00", false},
+		{"monthly other day", monthly("00:00", "06:00", 1, 15), "2026-12-14 03:00", false},
+		{"monthly day 1 does not match 11", monthly("00:00", "06:00", 1), "2026-12-11 03:00", false},
+		{"monthly day 5 does not match 15", monthly("00:00", "06:00", 5), "2026-12-15 03:00", false},
+		{"monthly all day", monthly("00:00", "23:59", 31), "2026-12-31 23:59", true},
+		{"monthly 31 skipped in 30-day month", monthly("00:00", "23:59", 31), "2026-11-30 12:00", false},
+		{"last day of 30-day month", monthly("00:00", "23:59", LastDayOfMonth), "2026-11-30 12:00", true},
+		{"last day of february", monthly("00:00", "23:59", LastDayOfMonth), "2027-02-28 12:00", true},
+		{"last day of leap february", monthly("00:00", "23:59", LastDayOfMonth), "2028-02-28 12:00", false},
+		{"leap february 29", monthly("00:00", "23:59", LastDayOfMonth), "2028-02-29 12:00", true},
+		{"monthly ignores days of week", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfWeek: "0 1 2 3 4 5 6", EnableStime: "00:00", EnableEtime: "23:59"}, "2026-12-15 12:00", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.p.Match(at(tt.at)))
+		})
+	}
+}
+
+func TestPeriodicMuteVerify(t *testing.T) {
+	tests := []struct {
+		name    string
+		p       PeriodicMute
+		wantErr string
+	}{
+		{"weekly is not checked", PeriodicMute{EnableDaysOfWeek: "1", EnableStime: "22:00", EnableEtime: "02:00"}, ""},
+		{"monthly ok", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{1, 31, LastDayOfMonth}, EnableStime: "00:00", EnableEtime: "06:00"}, ""},
+		{"monthly all day", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{1}, EnableStime: "00:00", EnableEtime: "00:00"}, ""},
+		{"unknown cycle", PeriodicMute{Cycle: "year"}, "invalid periodic mute cycle"},
+		{"monthly without days", PeriodicMute{Cycle: PeriodicCycleMonth, EnableStime: "00:00", EnableEtime: "06:00"}, "monthly periodic mute requires at least one day of month"},
+		{"monthly day out of range", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{32}, EnableStime: "00:00", EnableEtime: "06:00"}, "day of month must be between 1 and 31, or -1 for the last day"},
+		{"monthly day zero", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{0}, EnableStime: "00:00", EnableEtime: "06:00"}, "day of month must be between 1 and 31, or -1 for the last day"},
+		{"monthly bad time", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{1}, EnableStime: "0:00", EnableEtime: "06:00"}, "invalid periodic mute time, expected HH:MM"},
+		{"monthly cross midnight", PeriodicMute{Cycle: PeriodicCycleMonth, EnableDaysOfMonth: []int{1}, EnableStime: "23:00", EnableEtime: "03:00"}, "monthly periodic mute cannot span midnight, split it into two rows"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.p.Verify()
+			if tt.wantErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// Monthly rows are stored without days of week so nodes that only know weekly
+// mutes skip them instead of muting; weekly rows read back with an empty
+// days-of-month array rather than null.
+func TestAlertMuteMonthlyRoundTrip(t *testing.T) {
+	c := newAlertMuteTestCtx(t)
+	now := time.Now().Unix()
+	m := &AlertMute{
+		GroupId: 1, Cause: "billing", Btime: now, Etime: now + 3600, MuteTimeType: Periodic,
+		PeriodicMutesJson: []PeriodicMute{
+			{Cycle: PeriodicCycleMonth, EnableDaysOfWeek: "0 1 2 3 4 5 6", EnableDaysOfMonth: []int{1, LastDayOfMonth}, EnableStime: "00:00", EnableEtime: "06:00"},
+			{EnableDaysOfWeek: "0 6", EnableStime: "00:00", EnableEtime: "23:59"},
+		},
+	}
+	require.NoError(t, m.Add(c))
+
+	got, err := AlertMuteGetById(c, m.Id)
+	require.NoError(t, err)
+	require.Len(t, got.PeriodicMutesJson, 2)
+	assert.Equal(t, PeriodicCycleMonth, got.PeriodicMutesJson[0].Cycle)
+	assert.Equal(t, "", got.PeriodicMutesJson[0].EnableDaysOfWeek)
+	assert.Equal(t, []int{1, LastDayOfMonth}, got.PeriodicMutesJson[0].EnableDaysOfMonth)
+	assert.Equal(t, []int{}, got.PeriodicMutesJson[1].EnableDaysOfMonth)
+
+	// A row written by an older version has no cycle and no days of month.
+	insertMute(t, c, &AlertMute{Id: 100, GroupId: 1, MuteTimeType: Periodic, DatasourceIds: "[]",
+		PeriodicMutes: `[{"enable_stime":"00:00","enable_etime":"06:00","enable_days_of_week":"1"}]`})
+	legacy, err := AlertMuteGetById(c, 100)
+	require.NoError(t, err)
+	assert.Equal(t, []int{}, legacy.PeriodicMutesJson[0].EnableDaysOfMonth)
+	assert.True(t, legacy.IsWithinPeriodicMute(time.Date(2026, 11, 23, 3, 0, 0, 0, time.Local).Unix()))
+}
