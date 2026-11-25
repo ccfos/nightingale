@@ -10,7 +10,7 @@ The engine match function `alert/mute/mute.go:MatchMute` judges in the following
 | 1 | Business group | Muting is isolated by `group_id`; **the event's business group and the mute rule are not in the same business group** (one of the most common root causes) |
 | 2 | `disabled` | The rule is disabled (`disabled=1`) |
 | 3 | Datasource | `datasource_ids` is not all (does not contain 0) and the event's `datasource_id` is not in the list |
-| 4 | Time | Fixed period: the event trigger time is not in the closed interval `[btime, etime]`; periodic: the weekday or HH:mm period did not match (uses the n9e process's local timezone; 0=Sunday) |
+| 4 | Time | Fixed period: the event trigger time is not in the closed interval `[btime, etime]`; periodic: the day (weekday, or day of month for `cycle: "month"`) or HH:mm period did not match (uses the n9e process's local timezone; 0=Sunday) |
 | 5 | Severity | `severities` is non-empty and the event severity is not in it |
 | 6 | Tags | Multiple `tags` are AND'd; if the event is missing any one tag or value mismatch, it is not muted; writing the `in` value as comma-separated will also mismatch (must be spaces) |
 
@@ -33,8 +33,11 @@ Also note: muting only blocks **newly evaluated events**. If an event was alread
 | Symptom | Cause | Handling |
 |---|---|---|
 | `etime <= btime` error | Verify's hard validation, required for periodic mutes too | Use the tool's `duration` parameter, or omit btime/etime and let the tool fill them in automatically |
-| Behavior at the periodic-mute btime/etime boundary is unexpected | The current implementation's periodic matching **does not look at** btime/etime, only the weekday + time period | To get a "periodic mute that only takes effect in a certain month", you currently have to manually disable/delete it when it expires |
+| Behavior at the periodic-mute btime/etime boundary is unexpected | The current implementation's periodic matching **does not look at** btime/etime, only the days + time period | To get a "periodic mute that only takes effect in a certain month", you currently have to manually disable/delete it when it expires |
 | `enable_days_of_week` written as `1-5` or `Monday to Friday` does not work | The engine does a contains match on the space-separated digit string | Write `"1 2 3 4 5"`, or use a tool-recognized alias such as `"weekday"` |
+| `monthly periodic mute cannot span midnight` error | Monthly groups must not have `stime > etime` | Split into two groups: e.g. `-1` with `22:00`~`00:00` plus `1` with `00:00`~`06:00` (an end of `00:00` means the end of that day) |
+| Monthly mute never takes effect | `enable_days_of_month` was set but `cycle` was omitted, so the group is treated as weekly with no weekday | Set `"cycle": "month"` |
+| Monthly mute on day 31 (or 29/30) skips some months | Months without that day are skipped | Use `-1` for the last day of every month |
 | tags has `key` but `value` left empty | An empty value participates in exact matching and mostly mismatches | Confirm the real tag value; when unsure, first look at the tags of one real event |
 | Want to mute "a certain alert rule" | The event tags contain `rulename` | Use `{"key":"rulename","func":"==","value":"<rule name>"}`; remember to sync after the rule name changes |
 | Large-scope accidental muting | An empty tags array = mute all alerts within the business group | Confirm with the user before creating; when troubleshooting, first check whether an "unconditional mute" rule is in effect |
