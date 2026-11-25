@@ -49,7 +49,7 @@ func TestIsSQLQueryLogMatchesExtractSQLRequest(t *testing.T) {
 	}
 
 	req, ok := extractSQLRequest(map[string]interface{}{
-		"sql": `SELECT COUNT("status") AS cnt FROM "idx*"`,
+		"sql":   `SELECT COUNT("status") AS cnt FROM "idx*"`,
 		"start": int64(1784971399), "end": int64(1784974999),
 	})
 	if !ok {
