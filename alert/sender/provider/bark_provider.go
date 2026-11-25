@@ -39,7 +39,7 @@ const (
 	barkMaxTargetBytes = 1000
 	barkMaxErrorBytes  = 1900
 	barkMaxListBytes   = 300
-	barkMaxReasonRunes = 400
+	barkMaxReasonBytes = 600
 )
 
 type BarkProvider struct{}
@@ -170,46 +170,63 @@ func (p *BarkProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyRe
 	msg := barkMessage{Title: title, Body: body, Level: barkLevel(event), URL: eventDetailURL(req.SiteUrl, event)}
 	msg.Sound, _ = truncateInRunes(strings.TrimSpace(cfg.Sound), barkMaxOptionRunes)
 	msg.Group, _ = truncateInRunes(strings.TrimSpace(cfg.Group), barkMaxOptionRunes)
+	if err := fitBarkPayload(&msg); err != nil {
+		failures = append(failures, err)
+		return &NotifyResult{Target: target, Err: barkJoinWithin(failures, barkMaxErrorBytes)}
+	}
 	retryTimes, sleep := nativeRetrySettings(&cfg.NativeNetworkConfig)
 
-	// Each key waits out its own timeout and retries when the server is down, so send a few at a
-	// time instead of one after another; errs keeps the outcome of keys[i] at index i
-	errs := make([]error, len(keys))
-	sem := make(chan struct{}, barkMaxConcurrency)
-	var wg sync.WaitGroup
-	for i, key := range keys {
-		wg.Add(1)
-		go func(i int, key string) {
-			defer wg.Done()
-			select {
-			case sem <- struct{}{}:
-				defer func() { <-sem }()
-			case <-ctx.Done():
-				errs[i] = ctx.Err()
-				return
+	push := func(key string) (err error) {
+		// recover only works in the goroutine that panics: without it a panic in the HTTP stack
+		// would take the whole process down
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("bark push panicked: %v", r)
 			}
-			m := msg
-			m.DeviceKey = key
-			fitBarkBody(&m)
-			payload, err := json.Marshal(m)
-			if err != nil {
-				errs[i] = err
-				return
-			}
-			_, errs[i] = doWithRetry(ctx, req.HttpClient, retryTimes, sleep,
-				func(ctx context.Context) (*http.Request, error) {
-					r, err := http.NewRequestWithContext(ctx, http.MethodPost, server+"/push", bytes.NewReader(payload))
-					if err != nil {
-						return nil, err
-					}
-					r.Header.Set("Content-Type", "application/json; charset=utf-8")
-					if cfg.Username != "" {
-						r.SetBasicAuth(cfg.Username, cfg.Password)
-					}
-					return r, nil
-				}, checkBark)
-		}(i, key)
+		}()
+		m := msg
+		m.DeviceKey = key
+		payload, err := json.Marshal(m)
+		if err != nil {
+			return err
+		}
+		_, err = doWithRetry(ctx, req.HttpClient, retryTimes, sleep,
+			func(ctx context.Context) (*http.Request, error) {
+				r, err := http.NewRequestWithContext(ctx, http.MethodPost, server+"/push", bytes.NewReader(payload))
+				if err != nil {
+					return nil, err
+				}
+				r.Header.Set("Content-Type", "application/json; charset=utf-8")
+				if cfg.Username != "" {
+					r.SetBasicAuth(cfg.Username, cfg.Password)
+				}
+				return r, nil
+			}, checkBark)
+		return err
 	}
+
+	// Each key waits out its own timeout and retries when the server is down, so a fixed number of
+	// workers send in parallel; errs keeps the outcome of keys[i] at index i
+	errs := make([]error, len(keys))
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	for w := 0; w < barkMaxConcurrency && w < len(keys); w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range jobs {
+				errs[i] = push(keys[i])
+			}
+		}()
+	}
+	for i := range keys {
+		select {
+		case jobs <- i:
+		case <-ctx.Done():
+			errs[i] = ctx.Err()
+		}
+	}
+	close(jobs)
 	wg.Wait()
 
 	// Keys failing for the same reason (e.g. one wrong server for everybody) share one line
@@ -221,7 +238,8 @@ func (p *BarkProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyRe
 			sent = append(sent, barkMaskKey(keys[i]))
 			continue
 		}
-		reason, _ := truncateInRunes(redactBarkKeys(err.Error(), cfg.Password, keys), barkMaxReasonRunes)
+		// the error of keys[i] can only echo keys[i]
+		reason, _ := truncateInBytes(redactBarkKeys(err.Error(), cfg.Password, keys[i]), barkMaxReasonBytes)
 		hint := barkHint(err)
 		id := reason + "\x00" + hint
 		if byReason[id] == nil {
@@ -251,32 +269,50 @@ type barkFailure struct {
 	keys         []string
 }
 
-// barkAPNsSize estimates the payload bark-server sends to APNs for a push (apns/apns.go): the alert
-// title and body, the sound with ".caf", the group as thread-id, a fixed category, and every other
-// key as a custom string. JSON escaping is counted: quotes and backslashes double in size.
+// barkAPNsSize is the size of the payload bark-server sends to APNs for a push, rebuilt after its
+// apns/apns.go: title, body, category, mutable-content and the sound (default "1107", ".caf" appended)
+// under aps; the group as aps thread-id and again as a root key, like every other extra key (level,
+// url). JSON escaping is counted: quotes, backslashes and <>& grow when encoded.
 func barkAPNsSize(m barkMessage) int {
-	b, _ := json.Marshal(map[string]interface{}{
-		"aps": map[string]interface{}{
-			"alert":     map[string]string{"title": m.Title, "body": m.Body},
-			"sound":     m.Sound + ".caf",
-			"thread-id": m.Group,
-			"category":  "myNotificationCategory",
-		},
-		"level":      m.Level,
-		"url":        m.URL,
-		"device_key": m.DeviceKey,
-	})
+	sound := "1107"
+	if m.Sound != "" {
+		sound = m.Sound + ".caf"
+	}
+	aps := map[string]interface{}{
+		"alert":           map[string]string{"title": m.Title, "body": m.Body},
+		"category":        "myNotificationCategory",
+		"mutable-content": 1,
+		"sound":           sound,
+	}
+	root := map[string]interface{}{"aps": aps, "level": m.Level}
+	if m.Group != "" {
+		aps["thread-id"] = m.Group
+		root["group"] = m.Group
+	}
+	if m.URL != "" {
+		root["url"] = m.URL
+	}
+	b, _ := json.Marshal(root)
 	return len(b)
 }
 
-// fitBarkBody shortens the body on a character boundary until the APNs payload fits; Apple
-// rejects larger payloads and a retry with the same content cannot succeed
-func fitBarkBody(m *barkMessage) {
+// fitBarkPayload cuts the body on a character boundary until the APNs payload fits; Apple rejects
+// larger payloads and a retry with the same content cannot succeed. The event link is dropped when
+// the other fields alone are too large (a very long site URL).
+func fitBarkPayload(m *barkMessage) error {
 	if barkAPNsSize(*m) <= barkMaxPayloadBytes {
-		return
+		return nil
 	}
 	runes := []rune(m.Body)
 	cut := func(n int) string { return string(runes[:n]) + "…" }
+	probe := *m
+	probe.Body = cut(0)
+	if barkAPNsSize(probe) > barkMaxPayloadBytes {
+		m.URL = ""
+		if barkAPNsSize(*m) <= barkMaxPayloadBytes {
+			return nil
+		}
+	}
 	lo, hi := 0, len(runes)-1
 	for lo < hi {
 		mid := (lo + hi + 1) / 2
@@ -288,49 +324,58 @@ func fitBarkBody(m *barkMessage) {
 		}
 	}
 	m.Body = cut(lo)
+	if barkAPNsSize(*m) > barkMaxPayloadBytes {
+		return errors.New("the Bark push exceeds the 4096-byte APNs limit even with an empty body; shorten the title, group or sound")
+	}
+	return nil
 }
 
 // barkMaskKey keeps the last 4 characters of a key only when enough of it stays hidden;
 // self-hosted servers accept short and non-ASCII custom keys, so it counts runes, not bytes
 func barkMaskKey(key string) string {
-	r := []rune(key)
+	r := []rune(strings.TrimSpace(key))
 	if len(r) < 12 {
 		return redactedMark
 	}
 	return redactedMark + string(r[len(r)-4:])
 }
 
-// redactBarkKeys removes the password and device keys from an error text. redactSecrets skips
-// values shorter than 6 characters, so keys are also replaced wherever they stand as a whole token,
+// redactBarkKeys removes the password and a device key from an error text. redactSecrets skips
+// values shorter than 6 characters, so the key is also replaced wherever it stands as a whole token,
 // such as the "[key]" bark-server echoes for an unknown key.
-func redactBarkKeys(msg, password string, keys []string) string {
-	msg = redactSecrets(msg, append([]string{password}, keys...)...)
-	for _, k := range keys {
-		msg = replaceToken(msg, k, redactedMark)
-	}
-	return msg
+func redactBarkKeys(msg, password, key string) string {
+	return replaceToken(redactSecrets(msg, password, key), key, redactedMark)
 }
 
-// replaceToken replaces old in s where it is not part of a longer key-like word
+// replaceToken replaces old in s where it is not part of a longer key-like word; the boundaries
+// are checked against the original text
 func replaceToken(s, old, repl string) string {
+	if old == "" {
+		return s
+	}
 	isKeyChar := func(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' || r == '-' }
 	var b strings.Builder
+	last, pos := 0, 0
 	for {
-		i := strings.Index(s, old)
+		i := strings.Index(s[pos:], old)
 		if i < 0 {
-			b.WriteString(s)
-			return b.String()
+			break
 		}
+		i += pos
+		end := i + len(old)
 		before, _ := utf8.DecodeLastRuneInString(s[:i])
-		after, _ := utf8.DecodeRuneInString(s[i+len(old):])
-		b.WriteString(s[:i])
-		if (i == 0 || !isKeyChar(before)) && (i+len(old) == len(s) || !isKeyChar(after)) {
+		after, _ := utf8.DecodeRuneInString(s[end:])
+		if (i == 0 || !isKeyChar(before)) && (end == len(s) || !isKeyChar(after)) {
+			b.WriteString(s[last:i])
 			b.WriteString(repl)
+			last, pos = end, end
 		} else {
-			b.WriteString(old)
+			_, w := utf8.DecodeRuneInString(s[i:])
+			pos = i + w
 		}
-		s = s[i+len(old):]
 	}
+	b.WriteString(s[last:])
+	return b.String()
 }
 
 // barkJoinLimited joins items with ", " within max bytes; the items that do not fit become "+N more"
@@ -353,22 +398,40 @@ func barkJoinLimited(items []string, max int) string {
 	return out
 }
 
-// barkJoinWithin joins the errors while the text fits the notification record, dropping the last
-// ones first: the reasons come before the summary of who was pushed
+// barkJoinWithin joins the errors in order within max bytes, in one pass: the ones that do not fit
+// are counted at the end. Reasons come before the summary of who was pushed, so the summary goes first.
 func barkJoinWithin(errs []error, max int) error {
-	for n := len(errs); n > 1; n-- {
-		kept := append([]error(nil), errs[:n]...)
-		if n < len(errs) {
-			kept = append(kept, fmt.Errorf("+%d more not shown", len(errs)-n))
-		}
-		if err := errors.Join(kept...); len(err.Error()) <= max {
-			return err
-		}
+	if len(errs) == 0 {
+		return nil
 	}
-	if len(errs) > 1 {
-		return errors.Join(errs[0], fmt.Errorf("+%d more not shown", len(errs)-1))
+	note := func(n int) error { return fmt.Errorf("+%d more not shown", n) }
+	reserve := len(note(len(errs)).Error()) + 1
+	var kept []error
+	used := 0
+	for i, e := range errs {
+		n := len(e.Error())
+		if i > 0 {
+			n++
+		}
+		room := max - reserve
+		if i == len(errs)-1 {
+			room = max
+		}
+		if used+n > room {
+			break
+		}
+		kept = append(kept, e)
+		used += n
 	}
-	return errors.Join(errs...)
+	if len(kept) == 0 {
+		// the per-item caps keep a single error well below max; cut it anyway rather than overflow the record
+		first, _ := truncateInBytes(errs[0].Error(), max-reserve)
+		kept = append(kept, errors.New(first))
+	}
+	if n := len(errs) - len(kept); n > 0 {
+		kept = append(kept, note(n))
+	}
+	return errors.Join(kept...)
 }
 
 type barkResponse struct {

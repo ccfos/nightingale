@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -136,27 +137,75 @@ func TestBarkFixedLevels(t *testing.T) {
 	}
 }
 
-// Quotes and backslashes double when escaped: the body must be cut by the size of the final
-// APNs payload bark-server builds, not by its own length
+// upstreamAPNsPayload rebuilds, independently of the provider, the payload bark-server's
+// apns/apns.go sends for a received push: alert, category, sound (default 1107, ".caf" appended)
+// and mutable-content under aps, the group as thread-id, and every extra key again at the root
+func upstreamAPNsPayload(t *testing.T, r capturedRequest) []byte {
+	t.Helper()
+	var params map[string]interface{}
+	if err := json.Unmarshal(r.Body, &params); err != nil {
+		t.Fatal(err)
+	}
+	alert := map[string]interface{}{}
+	for _, k := range []string{"title", "subtitle", "body"} {
+		if v, ok := params[k].(string); ok && v != "" {
+			alert[k] = v
+		}
+	}
+	sound := "1107"
+	if v, ok := params["sound"].(string); ok && v != "" {
+		sound = v + ".caf"
+	}
+	aps := map[string]interface{}{"alert": alert, "category": "myNotificationCategory", "sound": sound, "mutable-content": 1}
+	if g, ok := params["group"].(string); ok {
+		aps["thread-id"] = g
+	}
+	root := map[string]interface{}{"aps": aps}
+	for k, v := range params {
+		switch k {
+		case "device_key", "device_keys", "title", "subtitle", "body", "sound":
+		default:
+			root[strings.ToLower(k)] = fmt.Sprintf("%v", v)
+		}
+	}
+	b, _ := json.Marshal(root)
+	return b
+}
+
+// Quotes, backslashes and <>& grow when escaped, and bark-server repeats the group at the root:
+// the body is cut by the size of the payload APNs finally receives, not by its own length
 func TestBarkPayloadFitsAPNsLimit(t *testing.T) {
 	srv, got := newCaptureServer(t, always(200, barkOK))
-	bodies := []string{strings.Repeat(`"`, 2500), strings.Repeat(`\`, 2500), strings.Repeat("告", 2000), strings.Repeat(`"\告<&>`, 600)}
-	for i, body := range bodies {
-		req := barkReq(srv.URL, func(c *models.BarkRequestConfig) { c.Group = strings.Repeat(`"g`, 200) }, testBarkKeyAlice)
-		req.TplContent["content"] = body
+	cases := []struct {
+		body, group, site string
+	}{
+		{strings.Repeat(`"`, 2500), "", "http://n9e.example.com"},
+		{strings.Repeat(`\`, 2500), strings.Repeat("&", 64), "http://n9e.example.com"},
+		{strings.Repeat("告", 2000), strings.Repeat(`"g`, 200), "http://n9e.example.com"},
+		{strings.Repeat(`"\告<&>`, 600), strings.Repeat("<", 64), "http://n9e.example.com"},
+		// a site URL longer than the whole budget: the event link is dropped instead of sending an oversized push
+		{"short body", strings.Repeat("&", 64), "http://n9e.example.com/" + strings.Repeat("p", 5000)},
+	}
+	for i, c := range cases {
+		req := barkReq(srv.URL, func(cfg *models.BarkRequestConfig) { cfg.Group, cfg.Sound = c.group, "alarm" }, testBarkKeyAlice)
+		req.TplContent["content"] = c.body
+		req.SiteUrl = c.site
 		if res := (&BarkProvider{}).Notify(context.Background(), req); res.Err != nil {
-			t.Fatal(res.Err)
+			t.Fatalf("case #%d: %v", i, res.Err)
 		}
-		m := barkBody(t, got()[i])
-		if size := barkAPNsSize(m); size > 4096 || !utf8.ValidString(m.Body) || !strings.HasSuffix(m.Body, "…") {
-			t.Fatalf("body #%d: APNs payload %d bytes, valid=%v", i, size, utf8.ValidString(m.Body))
+		r := got()[i]
+		if size := len(upstreamAPNsPayload(t, r)); size > 4096 {
+			t.Fatalf("case #%d: APNs payload is %d bytes", i, size)
 		}
-		if len([]rune(m.Group)) > barkMaxOptionRunes {
-			t.Fatalf("group must be capped: %d runes", len([]rune(m.Group)))
+		m := barkBody(t, r)
+		if !utf8.ValidString(m.Body) || len([]rune(m.Group)) > barkMaxOptionRunes {
+			t.Fatalf("case #%d: invalid body or group: %d runes", i, len([]rune(m.Group)))
 		}
-		// not cut more than needed
-		if barkAPNsSize(m) < barkMaxPayloadBytes-20 {
-			t.Fatalf("body #%d cut too short: %d bytes", i, barkAPNsSize(m))
+		if i < 4 && (!strings.HasSuffix(m.Body, "…") || len(upstreamAPNsPayload(t, r)) < 3700) {
+			t.Fatalf("case #%d: body must be cut, but not more than needed: %d bytes", i, len(upstreamAPNsPayload(t, r)))
+		}
+		if i == 4 && (m.URL != "" || m.Body != "short body") {
+			t.Fatalf("an over-long event link must be dropped, keeping the body: %+v", m)
 		}
 	}
 
@@ -165,7 +214,7 @@ func TestBarkPayloadFitsAPNsLimit(t *testing.T) {
 	if res := (&BarkProvider{}).Notify(context.Background(), req); res.Err != nil {
 		t.Fatal(res.Err)
 	}
-	if m := barkBody(t, got()[len(bodies)]); m.Body != m.Title || m.Body == "" {
+	if m := barkBody(t, got()[len(cases)]); m.Body != m.Title || m.Body == "" {
 		t.Fatalf("an empty body must fall back to the title: %+v", m)
 	}
 }
@@ -419,5 +468,122 @@ func TestBarkRecordFieldsStayWithinColumnLimits(t *testing.T) {
 	res = (&BarkProvider{}).Notify(context.Background(), req)
 	if len(res.Err.Error()) > barkMaxErrorBytes || !strings.Contains(res.Err.Error(), "more not shown") || !strings.Contains(res.Err.Error(), "distinct failure") {
 		t.Fatalf("an over-long error must be cut by whole items: %d bytes\n%s", len(res.Err.Error()), res.Err.Error())
+	}
+}
+
+// The number of goroutines is bounded by the workers, not by the size of the team
+func TestBarkGoroutinesAreBounded(t *testing.T) {
+	release := make(chan struct{})
+	var mu sync.Mutex
+	inflight := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		inflight++
+		mu.Unlock()
+		<-release
+		w.Write([]byte(barkOK))
+	}))
+	t.Cleanup(srv.Close)
+	var keys []string
+	for i := 0; i < 300; i++ {
+		keys = append(keys, fmt.Sprintf("BoundedDeviceKey%04d", i))
+	}
+	before := runtime.NumGoroutine()
+	done := make(chan *NotifyResult)
+	go func() { done <- (&BarkProvider{}).Notify(context.Background(), barkReq(srv.URL, nil, keys...)) }()
+	for deadline := time.Now().Add(3 * time.Second); ; time.Sleep(10 * time.Millisecond) {
+		mu.Lock()
+		n := inflight
+		mu.Unlock()
+		if n >= barkMaxConcurrency || time.Now().After(deadline) {
+			break
+		}
+	}
+	during := runtime.NumGoroutine()
+	close(release)
+	res := <-done
+	// workers + server handlers + client connections, far below one goroutine per recipient
+	if during-before > 60 || res.Err != nil {
+		t.Fatalf("%d goroutines added for %d recipients: %v", during-before, len(keys), res.Err)
+	}
+}
+
+type panicTransport struct{}
+
+func (panicTransport) RoundTrip(*http.Request) (*http.Response, error) { panic("boom in transport") }
+
+func TestBarkRecoversFromPanicsInWorkers(t *testing.T) {
+	req := barkReq("http://127.0.0.1:1", nil, testBarkKeyAlice, testBarkKeyCarol)
+	req.HttpClient = &http.Client{Transport: panicTransport{}}
+	res := (&BarkProvider{}).Notify(context.Background(), req)
+	if res.Err == nil || !strings.Contains(res.Err.Error(), "bark push panicked: boom in transport") {
+		t.Fatalf("a panic must become the recipient's error: %+v", res)
+	}
+	noLeak(t, res, testBarkKeyAlice, testBarkKeyCarol)
+}
+
+func TestBarkReplaceTokenUsesOriginalContext(t *testing.T) {
+	cases := []struct{ in, key, want string }{
+		{"address [s]", "s", "address [***]"},
+		{"ss s", "s", "ss ***"},
+		{"s,s", "s", "***,***"},
+		{"[ab] aab ab", "ab", "[***] aab ***"},
+		{"汉字 [汉字] 汉字字", "汉字", "*** [***] 汉字字"},
+	}
+	for _, c := range cases {
+		if got := replaceToken(c.in, c.key, "***"); got != c.want {
+			t.Fatalf("replaceToken(%q, %q) = %q, want %q", c.in, c.key, got, c.want)
+		}
+	}
+	if got := RedactSendtosForLog(models.RequestTypeBark, []string{"       abcde", " abcde "}); got[0] != redactedMark || got[1] != redactedMark {
+		t.Fatalf("spaces must not count towards a short key's length: %v", got)
+	}
+}
+
+func TestBarkJoinWithinBudget(t *testing.T) {
+	var errs []error
+	for i := 0; i < 1000; i++ {
+		errs = append(errs, fmt.Errorf("distinct failure %04d %s", i, strings.Repeat("x", 280)))
+	}
+	err := barkJoinWithin(errs, barkMaxErrorBytes)
+	if len(err.Error()) > barkMaxErrorBytes || !strings.HasPrefix(err.Error(), "distinct failure 0000") || !strings.Contains(err.Error(), "more not shown") {
+		t.Fatalf("unexpected cut: %d bytes", len(err.Error()))
+	}
+	if kept := strings.Count(err.Error(), "distinct failure"); !strings.HasSuffix(err.Error(), fmt.Sprintf("+%d more not shown", 1000-kept)) {
+		t.Fatalf("the omitted errors must be counted: %s", err.Error()[len(err.Error())-30:])
+	}
+	if allocs := testing.AllocsPerRun(5, func() { barkJoinWithin(errs, barkMaxErrorBytes) }); allocs > 100 {
+		t.Fatalf("joining must not rebuild the prefix for every error: %.0f allocations", allocs)
+	}
+	// a single error of 4-byte characters longer than the budget is cut on a character boundary
+	huge := errors.New(strings.Repeat("😀", 1000))
+	for _, in := range [][]error{{huge}, {huge, errors.New("second")}} {
+		err := barkJoinWithin(in, barkMaxErrorBytes)
+		if len(err.Error()) > barkMaxErrorBytes || !utf8.ValidString(err.Error()) {
+			t.Fatalf("an over-long first error must be cut: %d bytes, valid=%v", len(err.Error()), utf8.ValidString(err.Error()))
+		}
+	}
+}
+
+// Every recipient failing (a wrong server for the whole team) must stay cheap: each error is
+// redacted against its own key only
+func BenchmarkBarkManyFailures(b *testing.B) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var m barkMessage
+		json.NewDecoder(r.Body).Decode(&m)
+		w.WriteHeader(400)
+		w.Write([]byte(`{"code":400,"message":"failed to get device token: failed to get [` + m.DeviceKey + `] device token from database"}`))
+	}))
+	defer srv.Close()
+	var keys []string
+	for i := 0; i < 500; i++ {
+		keys = append(keys, fmt.Sprintf("FailingDeviceKey%04d", i))
+	}
+	req := barkReq(srv.URL, nil, keys...)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if res := (&BarkProvider{}).Notify(context.Background(), req); res.Err == nil {
+			b.Fatal("expected failures")
+		}
 	}
 }
