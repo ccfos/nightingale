@@ -212,10 +212,86 @@ type AlertMute struct {
 	MuteType          int            `json:"mute_type"` // 0: 屏蔽事件与通知（默认）; 1: 只屏蔽通知
 }
 
+// PeriodicMute cycles
+const (
+	PeriodicCycleWeek  = "week"  // match by days of week, also used when Cycle is empty
+	PeriodicCycleMonth = "month" // match by days of month
+)
+
+// LastDayOfMonth in EnableDaysOfMonth matches the last day of every month.
+const LastDayOfMonth = -1
+
 type PeriodicMute struct {
-	EnableStime      string `json:"enable_stime"`        // split by space: "00:00 10:00 12:00"
-	EnableEtime      string `json:"enable_etime"`        // split by space: "00:00 10:00 12:00"
-	EnableDaysOfWeek string `json:"enable_days_of_week"` // eg: "0 1 2 3 4 5 6"
+	Cycle             string `json:"cycle"`
+	EnableStime       string `json:"enable_stime"`         // split by space: "00:00 10:00 12:00"
+	EnableEtime       string `json:"enable_etime"`         // split by space: "00:00 10:00 12:00"
+	EnableDaysOfWeek  string `json:"enable_days_of_week"`  // eg: "0 1 2 3 4 5 6"
+	EnableDaysOfMonth []int  `json:"enable_days_of_month"` // 1-31, or LastDayOfMonth
+}
+
+// Match reports whether t falls in this periodic window, using t's location.
+func (p *PeriodicMute) Match(t time.Time) bool {
+	if !p.matchDay(t) {
+		return false
+	}
+
+	if p.EnableStime == p.EnableEtime || (p.EnableStime == "00:00" && p.EnableEtime == "23:59") {
+		return true
+	}
+
+	hm := t.Format("15:04")
+	if p.EnableStime < p.EnableEtime {
+		return hm >= p.EnableStime && hm < p.EnableEtime
+	}
+	return hm >= p.EnableStime || hm < p.EnableEtime
+}
+
+func (p *PeriodicMute) matchDay(t time.Time) bool {
+	if p.Cycle != PeriodicCycleMonth {
+		return strings.Contains(p.EnableDaysOfWeek, strconv.Itoa(int(t.Weekday())))
+	}
+
+	day := t.Day()
+	lastDay := time.Date(t.Year(), t.Month()+1, 0, 0, 0, 0, 0, t.Location()).Day()
+	for _, d := range p.EnableDaysOfMonth {
+		if d == day || (d == LastDayOfMonth && day == lastDay) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *PeriodicMute) Verify() error {
+	switch p.Cycle {
+	case "", PeriodicCycleWeek:
+		return nil
+	case PeriodicCycleMonth:
+	default:
+		return errors.New("invalid periodic mute cycle")
+	}
+
+	if len(p.EnableDaysOfMonth) == 0 {
+		return errors.New("monthly periodic mute requires at least one day of month")
+	}
+	for _, d := range p.EnableDaysOfMonth {
+		if d != LastDayOfMonth && (d < 1 || d > 31) {
+			return errors.New("day of month must be between 1 and 31, or -1 for the last day")
+		}
+	}
+
+	if !isHHMM(p.EnableStime) || !isHHMM(p.EnableEtime) {
+		return errors.New("invalid periodic mute time, expected HH:MM")
+	}
+	// An end of 00:00 means midnight: Match then covers stime until the end of
+	// that day, so a split window like 23:00-00:00 + 00:00-03:00 leaves no gap.
+	if p.EnableStime > p.EnableEtime && p.EnableEtime != "00:00" {
+		return errors.New("monthly periodic mute cannot span midnight, split it into two rows")
+	}
+
+	// Nodes that predate monthly mutes only read EnableDaysOfWeek; leaving it
+	// empty makes them skip the row (no mute) instead of muting the wrong days.
+	p.EnableDaysOfWeek = ""
+	return nil
 }
 
 func (m *AlertMute) TableName() string {
@@ -304,6 +380,12 @@ func AlertMuteGetsByBGIds(ctx *ctx.Context, bgids []int64) (lst []AlertMute, err
 	return
 }
 
+// isHHMM requires the zero-padded form, since Match compares times as strings.
+func isHHMM(s string) bool {
+	_, err := time.Parse("15:04", s)
+	return err == nil && len(s) == 5
+}
+
 func (m *AlertMute) Verify() error {
 	if m.GroupId < 0 {
 		return errors.New("group_id invalid")
@@ -315,6 +397,14 @@ func (m *AlertMute) Verify() error {
 
 	if m.Etime <= m.Btime {
 		return fmt.Errorf("oops... etime(%d) <= btime(%d)", m.Etime, m.Btime)
+	}
+
+	if m.MuteTimeType == Periodic {
+		for i := range m.PeriodicMutesJson {
+			if err := m.PeriodicMutesJson[i].Verify(); err != nil {
+				return err
+			}
+		}
 	}
 
 	if err := m.Parse(); err != nil {
@@ -420,6 +510,12 @@ func (m *AlertMute) DB2FE() error {
 		return err
 	}
 
+	for i := range m.PeriodicMutesJson {
+		if m.PeriodicMutesJson[i].EnableDaysOfMonth == nil {
+			m.PeriodicMutesJson[i].EnableDaysOfMonth = []int{}
+		}
+	}
+
 	if m.Severities != "" {
 		err = json.Unmarshal([]byte(m.Severities), &m.SeveritiesJson)
 		if err != nil {
@@ -459,25 +555,11 @@ func (m *AlertMute) IsWithinTimeRange(checkTime int64) bool {
 
 func (m *AlertMute) IsWithinPeriodicMute(checkTime int64) bool {
 	tm := time.Unix(checkTime, 0)
-	triggerTime := tm.Format("15:04")
-	triggerWeek := strconv.Itoa(int(tm.Weekday()))
-
-	for i := 0; i < len(m.PeriodicMutesJson); i++ {
-		if strings.Contains(m.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
-			if m.PeriodicMutesJson[i].EnableStime == m.PeriodicMutesJson[i].EnableEtime || (m.PeriodicMutesJson[i].EnableStime == "00:00" && m.PeriodicMutesJson[i].EnableEtime == "23:59") {
-				return true
-			} else if m.PeriodicMutesJson[i].EnableStime < m.PeriodicMutesJson[i].EnableEtime {
-				if triggerTime >= m.PeriodicMutesJson[i].EnableStime && triggerTime < m.PeriodicMutesJson[i].EnableEtime {
-					return true
-				}
-			} else {
-				if triggerTime >= m.PeriodicMutesJson[i].EnableStime || triggerTime < m.PeriodicMutesJson[i].EnableEtime {
-					return true
-				}
-			}
+	for i := range m.PeriodicMutesJson {
+		if m.PeriodicMutesJson[i].Match(tm) {
+			return true
 		}
 	}
-
 	return false
 }
 

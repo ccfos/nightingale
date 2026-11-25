@@ -1,6 +1,6 @@
 # Alert mutes (silences)
 
-Alert mutes (a.k.a. silences) suppress alert notifications for events whose tags match the mute's matchers, during a configured time window. The window is either a one-off time range (`mute_time_type=0`, using `btime`/`etime`) or a recurring weekly schedule (`mute_time_type=1`, using `periodic_mutes`). Use these read endpoints to list existing mutes.
+Alert mutes (a.k.a. silences) suppress alert notifications for events whose tags match the mute's matchers, during a configured time window. The window is either a one-off time range (`mute_time_type=0`, using `btime`/`etime`) or a recurring weekly or monthly schedule (`mute_time_type=1`, using `periodic_mutes`). Use these read endpoints to list existing mutes.
 
 > Gateway call: GET. Include the `/api/n9e` prefix in `path`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
 
@@ -40,8 +40,8 @@ Alert mutes (a.k.a. silences) suppress alert notifications for events whose tags
 | `update_by_nickname` | string (computed) | Display nickname of the last updater. |
 | `create_at` | int64 | Creation time, Unix seconds. |
 | `update_at` | int64 | Last update time, Unix seconds. |
-| `mute_time_type` | int | Window kind: `0` = one-off time range (`btime`/`etime`), `1` = periodic weekly schedule (`periodic_mutes`). |
-| `periodic_mutes` | array (computed) | Recurring schedule entries (used when `mute_time_type=1`). Each has `enable_stime`, `enable_etime` (space-separated `HH:MM` lists) and `enable_days_of_week` (e.g. `"0 1 2 3 4 5 6"`). |
+| `mute_time_type` | int | Window kind: `0` = one-off time range (`btime`/`etime`), `1` = periodic schedule (`periodic_mutes`). |
+| `periodic_mutes` | array (computed) | Recurring schedule entries (used when `mute_time_type=1`). Each has `enable_stime`, `enable_etime` (`HH:MM`) and `cycle`: `"week"` (or empty) repeats on `enable_days_of_week` (e.g. `"0 1 2 3 4 5 6"`), `"month"` repeats on `enable_days_of_month` (e.g. `[1, 15, -1]`, `-1` = last day of the month). |
 | `severities` | []int (computed) | Alert severity levels this mute applies to (e.g. `1`,`2`,`3`). Empty = all severities. |
 
 ### `TagFilter` (each item in the mute's `tags` matchers)
