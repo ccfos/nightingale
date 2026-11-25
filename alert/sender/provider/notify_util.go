@@ -224,12 +224,24 @@ func LocalizeError(err error, translate func(string) string) string {
 	if translate == nil {
 		return msg
 	}
-	var he *HintError
-	for e := err; errors.As(e, &he); e = he.Err {
-		if he.Hint != "" {
-			msg = strings.Replace(msg, "("+he.Hint+")", "("+translate(he.Hint)+")", 1)
+	// Walk joined errors too: a provider that notifies several recipients (Bark) joins one
+	// hinted error per failed recipient
+	var walk func(error)
+	walk = func(e error) {
+		for e != nil {
+			if he, ok := e.(*HintError); ok && he.Hint != "" {
+				msg = strings.Replace(msg, "("+he.Hint+")", "("+translate(he.Hint)+")", 1)
+			}
+			if joined, ok := e.(interface{ Unwrap() []error }); ok {
+				for _, inner := range joined.Unwrap() {
+					walk(inner)
+				}
+				return
+			}
+			e = errors.Unwrap(e)
 		}
 	}
+	walk(err)
 	return msg
 }
 

@@ -75,6 +75,7 @@ type RequestConfig struct {
 	NtfyRequestConfig              *NtfyRequestConfig              `json:"ntfy_request_config,omitempty" gorm:"serializer:json"`
 	SplunkOnCallRequestConfig      *SplunkOnCallRequestConfig      `json:"splunk_oncall_request_config,omitempty" gorm:"serializer:json"`
 	LineRequestConfig              *LineRequestConfig              `json:"line_request_config,omitempty" gorm:"serializer:json"`
+	BarkRequestConfig              *BarkRequestConfig              `json:"bark_request_config,omitempty" gorm:"serializer:json"`
 	// 兼容旧版本
 	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
 	FeishuRequestConfig   *FeishuRequestConfig   `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
@@ -128,6 +129,7 @@ const (
 	RequestTypeNtfy              = "ntfy"
 	RequestTypeSplunkOnCall      = "splunk_oncall"
 	RequestTypeLine              = "line"
+	RequestTypeBark              = "bark"
 )
 
 var nativeRequestTypes = map[string]struct{}{
@@ -142,6 +144,7 @@ var nativeRequestTypes = map[string]struct{}{
 	RequestTypeNtfy:              {},
 	RequestTypeSplunkOnCall:      {},
 	RequestTypeLine:              {},
+	RequestTypeBark:              {},
 }
 
 // IsNativeRequestType 表示该媒介类型是否为原生对接：这类媒介的 provider 用 json.Marshal
@@ -255,6 +258,18 @@ type LineRequestConfig struct {
 	NativeNetworkConfig
 }
 
+// BarkRequestConfig holds the server and its auth for the Bark media type. The device key
+// belongs to a person (one key per iPhone), so it is read from the user's contacts, not here.
+// The whole config may be empty: the public server https://api.day.app without auth.
+type BarkRequestConfig struct {
+	ServerURL string `json:"server_url"` // empty means https://api.day.app
+	Username  string `json:"username"`   // basic auth of a self-hosted bark-server
+	Password  string `json:"password"`
+	Sound     string `json:"sound"` // empty uses the sound chosen in the Bark app
+	Group     string `json:"group"` // groups the pushes in Notification Center
+	NativeNetworkConfig
+}
+
 // MattermostWebhookRequestConfig Mattermost Webhook 媒介：Webhook 地址在通知规则里填，
 // 媒介里只有所有规则共用的外观默认值和网络设置，整个配置可以为空。
 type MattermostWebhookRequestConfig struct {
@@ -315,6 +330,10 @@ func (rc *RequestConfig) NativeNetwork(requestType string) *NativeNetworkConfig 
 	case RequestTypeLine:
 		if rc.LineRequestConfig != nil {
 			return &rc.LineRequestConfig.NativeNetworkConfig
+		}
+	case RequestTypeBark:
+		if rc.BarkRequestConfig != nil {
+			return &rc.BarkRequestConfig.NativeNetworkConfig
 		}
 	case RequestTypeJira:
 		if rc.JiraRequestConfig != nil {
@@ -668,7 +687,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		ncc.RequestType != "feishuapp" &&
 		ncc.RequestType != "wecomapp" &&
 		!IsNativeRequestType(ncc.RequestType) {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert', 'slackwebhook', 'mattermostwebhook', 'teams', 'twilio', 'pushover', 'ntfy', 'splunk_oncall', 'line'")
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp', 'jira', 'discord', 'jsm_alert', 'slackwebhook', 'mattermostwebhook', 'teams', 'twilio', 'pushover', 'ntfy', 'splunk_oncall', 'line', 'bark'")
 	}
 
 	if ncc.ParamConfig != nil {
@@ -944,6 +963,14 @@ var NotiChMap = []*NotifyChannelConfig{
 			{Key: "topic", CName: "Topic", Type: "string"},
 			{Key: "bot_name", CName: "Name", Type: "string"},
 		}}},
+	},
+	{
+		// Works out of the box with the public server; each recipient fills their device key in their profile
+		Name: "Bark", Ident: Bark, RequestType: RequestTypeBark, Weight: 13, Enable: true,
+		RequestConfig: &RequestConfig{BarkRequestConfig: &BarkRequestConfig{
+			NativeNetworkConfig: NativeNetworkConfig{Timeout: 10000, RetryTimes: 3, RetrySleep: 1000},
+		}},
+		ParamConfig: &NotifyParamConfig{UserInfo: &UserInfo{ContactKey: BarkKey}},
 	},
 	{
 		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty", Weight: 1, Enable: true,

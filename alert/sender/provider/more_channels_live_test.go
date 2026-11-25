@@ -19,6 +19,7 @@ import (
 //	NIGHTINGALE_NTFY_TOPIC [NIGHTINGALE_NTFY_SERVER_URL, NIGHTINGALE_NTFY_TOKEN]   go test -run '^TestNtfyLive$'
 //	NIGHTINGALE_SPLUNK_ONCALL_API_KEY, NIGHTINGALE_SPLUNK_ONCALL_ROUTING_KEY       go test -run '^TestSplunkOnCallLive$'
 //	NIGHTINGALE_LINE_CHANNEL_ACCESS_TOKEN, NIGHTINGALE_LINE_TO  go test -run '^TestLineLive$'
+//	NIGHTINGALE_BARK_DEVICE_KEY [NIGHTINGALE_BARK_SERVER_URL]   go test -run '^TestBarkLive$'
 //
 // Optional for all: NIGHTINGALE_TEST_SITE_URL (adds the event links) and NIGHTINGALE_TEST_PROXY.
 // API acceptance is not proof of delivery: check the space, phone or incident timeline as well.
@@ -27,6 +28,12 @@ func runLive(t *testing.T, p NotifyChannelProvider, ident string, rc *models.Req
 	now := time.Now().Unix()
 	run := fmt.Sprintf("Nightingale %s live %s", ident, time.Now().UTC().Format("20060102T150405Z"))
 	ch := &models.NotifyChannelConfig{Name: ident + " live test", Ident: ident, RequestType: ident, RequestConfig: rc}
+	var sendtos []string
+	if ident == models.Bark {
+		// Bark reads the device key from the recipient's contacts, not from the rule params
+		ch.ParamConfig = &models.NotifyParamConfig{UserInfo: &models.UserInfo{ContactKey: models.BarkKey}}
+		sendtos = []string{params[models.BarkKey]}
+	}
 	if n := rc.NativeNetwork(ident); n != nil {
 		n.Timeout, n.Proxy = 30000, os.Getenv("NIGHTINGALE_TEST_PROXY")
 	}
@@ -52,7 +59,7 @@ func runLive(t *testing.T, p NotifyChannelProvider, ident string, rc *models.Req
 	for _, recovered := range []bool{false, true} {
 		event.IsRecovered = recovered
 		res := p.Notify(ctx, &NotifyRequest{Config: ch, Events: []*models.AlertCurEvent{event},
-			TplContent: tpl.RenderEventForChannel(ident, []*models.AlertCurEvent{event}, site), CustomParams: params, HttpClient: client, SiteUrl: site})
+			TplContent: tpl.RenderEventForChannel(ident, []*models.AlertCurEvent{event}, site), CustomParams: params, Sendtos: sendtos, HttpClient: client, SiteUrl: site})
 		if res.Err != nil {
 			t.Fatalf("recovered=%v: %v", recovered, res.Err)
 		}
@@ -98,4 +105,10 @@ func TestLineLive(t *testing.T) {
 	v := moreLiveEnv(t, "NIGHTINGALE_LINE_CHANNEL_ACCESS_TOKEN", "NIGHTINGALE_LINE_TO")
 	rc := &models.RequestConfig{LineRequestConfig: &models.LineRequestConfig{ChannelAccessToken: v[0]}}
 	runLive(t, &LineProvider{}, models.Line, rc, map[string]string{"to": v[1]}, 2, v[0], v[1])
+}
+
+func TestBarkLive(t *testing.T) {
+	v := moreLiveEnv(t, "NIGHTINGALE_BARK_DEVICE_KEY")
+	rc := &models.RequestConfig{BarkRequestConfig: &models.BarkRequestConfig{ServerURL: os.Getenv("NIGHTINGALE_BARK_SERVER_URL")}}
+	runLive(t, &BarkProvider{}, models.Bark, rc, map[string]string{models.BarkKey: v[0]}, 1, v[0])
 }

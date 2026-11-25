@@ -1,8 +1,11 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/toolkits/pkg/str"
 )
@@ -58,4 +61,40 @@ type NotifyContact struct {
 	Ident   string `json:"ident"`
 	Hide    bool   `json:"hide"`
 	BuiltIn bool   `json:"built_in"`
+}
+
+// builtinNotifyContacts are contacts a built-in media type relies on. They are merged into the
+// stored list on read instead of being written at startup, so they work on a fresh install and
+// the list an admin maintains is never rewritten. Once the list is saved with one of them, the
+// stored entry wins (an admin may hide it).
+var builtinNotifyContacts = []NotifyContact{
+	{Name: "Bark Device Key", Ident: BarkKey, BuiltIn: true},
+}
+
+// NotifyContactsGet returns the contacts users can fill in their profile: the list admins
+// maintain in Notification Settings plus the built-in ones it does not contain yet.
+func NotifyContactsGet(ctx *ctx.Context) ([]NotifyContact, error) {
+	contacts := []NotifyContact{}
+	cval, err := ConfigsGet(ctx, NOTIFYCONTACT)
+	if err != nil {
+		return nil, err
+	}
+	if cval != "" {
+		if err := json.Unmarshal([]byte(cval), &contacts); err != nil {
+			return nil, err
+		}
+	}
+	for _, b := range builtinNotifyContacts {
+		found := false
+		for _, c := range contacts {
+			if c.Ident == b.Ident {
+				found = true
+				break
+			}
+		}
+		if !found {
+			contacts = append(contacts, b)
+		}
+	}
+	return contacts, nil
 }

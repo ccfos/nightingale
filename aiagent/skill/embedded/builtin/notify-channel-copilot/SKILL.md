@@ -37,7 +37,7 @@ type NotifyChannelConfig struct {
     Enable      bool
 
     ParamConfig   *NotifyParamConfig   // user parameters: contact_key + custom params
-    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira | discord | jsm_alert | slackwebhook | mattermostwebhook | teams | twilio | pushover | ntfy | splunk_oncall | line
+    RequestType   string               // http | smtp | script | flashduty | pagerduty | jira | discord | jsm_alert | slackwebhook | mattermostwebhook | teams | twilio | pushover | ntfy | splunk_oncall | line | bark
     RequestConfig *RequestConfig       // pick the matching sub-struct by ident/request_type
 
     Weight int
@@ -64,6 +64,7 @@ type NotifyChannelConfig struct {
 | `NtfyRequestConfig` | `ntfy` (all optional: `server_url` defaults to https://ntfy.sh, `token` or `username` + `password`; priorities are fixed: S1→5, S2→4, S3 and recovery→3; the topic is a rule param) |
 | `SplunkOnCallRequestConfig` | `splunk_oncall` (required `api_key` of the REST endpoint integration; message types are fixed: S1→CRITICAL, S2/S3→WARNING, recovery→RECOVERY; the routing key is a rule param) |
 | `LineRequestConfig` | `line` (required `channel_access_token` of the Messaging API channel; the recipient ID is a rule param) |
+| `BarkRequestConfig` | `bark` (all optional: `server_url` defaults to https://api.day.app, `username` + `password` for a self-hosted bark-server, `sound`, `group`; levels are fixed: S1→timeSensitive, S2/S3→active, recovery→passive; the device key is a user contact: `param_config.user_info.contact_key=bark_device_key`, filled by each user in their profile) |
 
 ---
 
@@ -90,6 +91,7 @@ type NotifyChannelConfig struct {
 | `ntfy` (`request_type=ntfy`) | NtfyProvider | HTTP | ntfy push (public ntfy.sh or self-hosted); built-in |
 | `splunk_oncall` (`request_type=splunk_oncall`) | SplunkOnCallProvider | HTTP | Splunk On-Call (VictorOps) REST endpoint: incident on trigger, RECOVERY on recovery |
 | `line` (`request_type=line`) | LineProvider | HTTP | LINE Messaging API push from an official account |
+| `bark` (`request_type=bark`) | BarkProvider | HTTP | Bark iOS push (public api.day.app or self-hosted), one push per recipient's device key; built-in |
 | `jira` / `discord` / `jsm_alert` / `slackwebhook` / `mattermostwebhook` (legacy `request_type=http`) | callback | HTTP | legacy hand-made webhook configs |
 | `email` | EmailProvider | SMTP | Email |
 | `tx-sms` | TencentSmsProvider | HTTP | Tencent Cloud SMS |

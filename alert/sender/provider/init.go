@@ -35,6 +35,7 @@ func init() {
 	DefaultRegistry.Register(&NtfyProvider{})
 	DefaultRegistry.Register(&SplunkOnCallProvider{})
 	DefaultRegistry.Register(&LineProvider{})
+	DefaultRegistry.Register(&BarkProvider{})
 
 	// 纯 HTTP webhook 模板驱动 Provider：只差 ident，统一走 simpleHTTPProvider
 	for _, ident := range []string{

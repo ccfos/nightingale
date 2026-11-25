@@ -547,3 +547,49 @@ func TestCleanupNotifyMuted_RecoveredEventAlsoClearsSubscriptionRules(t *testing
 	require.Equal(t, [][]int64{{1}, {9}}, seen)
 	require.Equal(t, []int64{1}, event.NotifyRuleIds)
 }
+
+func TestBuildNotifyContext_ReportsUsersWithoutContact(t *testing.T) {
+	uc := &memsto.UserCacheType{}
+	ugc := &memsto.UserGroupCacheType{}
+	uc.Set(map[int64]*models.User{
+		1: {Id: 1, Username: "alice", Contacts: []byte(`{"bark_device_key":"aliceDeviceKey123"}`)},
+		2: {Id: 2, Username: "bob"},
+		3: {Id: 3, Username: "carol", Contacts: []byte(`{"bark_device_key":"carolDeviceKey456"}`)},
+	}, 3, 1, 0, 0)
+	ugc.Set(map[int64]*models.UserGroup{7: {Id: 7, UserIds: []int64{2, 3}}}, 1, 1)
+	// bob is selected directly and through the team: report him once
+	cfg := &models.NotifyConfig{Params: map[string]interface{}{"user_ids": []int64{1, 2}, "user_group_ids": []int64{7}}}
+	channel := &models.NotifyChannelConfig{Ident: models.Bark, RequestType: models.RequestTypeBark,
+		ParamConfig: &models.NotifyParamConfig{UserInfo: &models.UserInfo{ContactKey: models.BarkKey}}}
+
+	nc, err := BuildNotifyContext(nil, uc, ugc, []*models.AlertCurEvent{{Hash: "h"}}, 42, cfg, channel, nil, &http.Client{}, "")
+
+	require.NoError(t, err)
+	require.Equal(t, models.RequestTypeBark, nc.Provider.Ident())
+	require.ElementsMatch(t, []string{"aliceDeviceKey123", "carolDeviceKey456"}, nc.Request.Sendtos)
+	require.Equal(t, []string{"bob"}, nc.Request.MissingContactUsers)
+
+	// The exported helper keeps its result shape for existing callers
+	sendtos, _, _, _, _ := GetNotifyConfigParams(cfg, models.BarkKey, uc, ugc)
+	require.ElementsMatch(t, nc.Request.Sendtos, sendtos)
+}
+
+// A contact filled with spaces is as good as missing: report the user instead of dropping them silently
+func TestBuildNotifyContext_BlankContactCountsAsMissing(t *testing.T) {
+	uc := &memsto.UserCacheType{}
+	ugc := &memsto.UserGroupCacheType{}
+	uc.Set(map[int64]*models.User{
+		1: {Id: 1, Username: "alice", Contacts: []byte(`{"bark_device_key":"aliceDeviceKey123"}`)},
+		2: {Id: 2, Username: "erin", Contacts: []byte(`{"bark_device_key":"   "}`)},
+	}, 2, 1, 0, 0)
+	ugc.Set(map[int64]*models.UserGroup{}, 0, 0)
+	cfg := &models.NotifyConfig{Params: map[string]interface{}{"user_ids": []int64{1, 2}}}
+	channel := &models.NotifyChannelConfig{Ident: models.Bark, RequestType: models.RequestTypeBark,
+		ParamConfig: &models.NotifyParamConfig{UserInfo: &models.UserInfo{ContactKey: models.BarkKey}}}
+
+	nc, err := BuildNotifyContext(nil, uc, ugc, []*models.AlertCurEvent{{Hash: "h"}}, 42, cfg, channel, nil, &http.Client{}, "")
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"aliceDeviceKey123"}, nc.Request.Sendtos)
+	require.Equal(t, []string{"erin"}, nc.Request.MissingContactUsers)
+}

@@ -332,7 +332,7 @@ const teamsAlertContent = `{{if $event.RuleNote}}{{$event.RuleNote}}{{end}}{{$fi
 
 {{end}}**Labels**  {{else}} · {{end}}{{$first = false}}{{if eq $k "__name__"}}{{$v}}{{else}}{{$k}}={{$v}}{{end}}{{end}}{{end}}`
 
-// plainAlertContent 是 Pushover、ntfy、LINE 共用的默认正文（纯文本）。级别、状态和规则名由各媒介放进通知标题，
+// plainAlertContent 是 Pushover、ntfy、LINE、Bark 共用的默认正文（纯文本）。级别、状态和规则名由各媒介放进通知标题，
 // 事件详情链接也由媒介带上；正文保持简短，手机推送的预览只有几行。
 const plainAlertContent = `{{if $event.TargetIdent}}Target: {{$event.TargetIdent}}
 {{end}}{{if not $event.IsRecovered}}Value: {{$event.TriggerValue}}
@@ -706,6 +706,7 @@ var NewTplMap = map[string]string{
 	Pushover: plainAlertContent,
 	Ntfy:     plainAlertContent,
 	Line:     plainAlertContent,
+	Bark:     plainAlertContent,
 
 	MattermostWebhook: markdownAlertContent,
 
@@ -733,6 +734,7 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "ntfy", Ident: Ntfy, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
 	{Name: "Splunk On-Call", Ident: SplunkOnCall, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "LINE", Ident: Line, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Bark", Ident: Bark, Weight: 26, Content: map[string]string{"content": NewTplMap[Bark]}},
 	{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
@@ -3471,6 +3473,7 @@ var MsgTplMapEn = []MessageTemplate{
 	{Name: "ntfy", Ident: Ntfy + "-en", NotifyChannelIdent: Ntfy, Lang: MsgTplLangEn, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
 	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-en", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangEn, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "LINE", Ident: Line + "-en", NotifyChannelIdent: Line, Lang: MsgTplLangEn, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Bark", Ident: Bark + "-en", NotifyChannelIdent: Bark, Lang: MsgTplLangEn, Weight: 26, Content: map[string]string{"content": NewTplMap[Bark]}},
 	{Name: "Jira", Ident: Jira + "-en", NotifyChannelIdent: Jira, Lang: MsgTplLangEn, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-en", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEn, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-en", NotifyChannelIdent: "callback", Lang: MsgTplLangEn, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3502,6 +3505,7 @@ var MsgTplMapJa = []MessageTemplate{
 	{Name: "ntfy", Ident: Ntfy + "-ja", NotifyChannelIdent: Ntfy, Lang: MsgTplLangJa, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
 	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-ja", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangJa, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "LINE", Ident: Line + "-ja", NotifyChannelIdent: Line, Lang: MsgTplLangJa, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Bark", Ident: Bark + "-ja", NotifyChannelIdent: Bark, Lang: MsgTplLangJa, Weight: 26, Content: map[string]string{"content": NewTplMap[Bark]}},
 	{Name: "Jira", Ident: Jira + "-ja", NotifyChannelIdent: Jira, Lang: MsgTplLangJa, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-ja", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangJa, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ja", NotifyChannelIdent: "callback", Lang: MsgTplLangJa, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3533,6 +3537,7 @@ var MsgTplMapRu = []MessageTemplate{
 	{Name: "ntfy", Ident: Ntfy + "-ru", NotifyChannelIdent: Ntfy, Lang: MsgTplLangRu, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
 	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-ru", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangRu, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "LINE", Ident: Line + "-ru", NotifyChannelIdent: Line, Lang: MsgTplLangRu, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Bark", Ident: Bark + "-ru", NotifyChannelIdent: Bark, Lang: MsgTplLangRu, Weight: 26, Content: map[string]string{"content": NewTplMap[Bark]}},
 	{Name: "Jira", Ident: Jira + "-ru", NotifyChannelIdent: Jira, Lang: MsgTplLangRu, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-ru", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangRu, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ru", NotifyChannelIdent: "callback", Lang: MsgTplLangRu, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3564,6 +3569,7 @@ var MsgTplMapFr = []MessageTemplate{
 	{Name: "ntfy", Ident: Ntfy + "-fr", NotifyChannelIdent: Ntfy, Lang: MsgTplLangFr, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
 	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-fr", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangFr, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "LINE", Ident: Line + "-fr", NotifyChannelIdent: Line, Lang: MsgTplLangFr, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Bark", Ident: Bark + "-fr", NotifyChannelIdent: Bark, Lang: MsgTplLangFr, Weight: 26, Content: map[string]string{"content": NewTplMap[Bark]}},
 	{Name: "Jira", Ident: Jira + "-fr", NotifyChannelIdent: Jira, Lang: MsgTplLangFr, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-fr", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangFr, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-fr", NotifyChannelIdent: "callback", Lang: MsgTplLangFr, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3595,6 +3601,7 @@ var MsgTplMapKo = []MessageTemplate{
 	{Name: "ntfy", Ident: Ntfy + "-ko", NotifyChannelIdent: Ntfy, Lang: MsgTplLangKo, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
 	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-ko", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangKo, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "LINE", Ident: Line + "-ko", NotifyChannelIdent: Line, Lang: MsgTplLangKo, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Bark", Ident: Bark + "-ko", NotifyChannelIdent: Bark, Lang: MsgTplLangKo, Weight: 26, Content: map[string]string{"content": NewTplMap[Bark]}},
 	{Name: "Jira", Ident: Jira + "-ko", NotifyChannelIdent: Jira, Lang: MsgTplLangKo, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-ko", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangKo, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-ko", NotifyChannelIdent: "callback", Lang: MsgTplLangKo, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3626,6 +3633,7 @@ var MsgTplMapId = []MessageTemplate{
 	{Name: "ntfy", Ident: Ntfy + "-id", NotifyChannelIdent: Ntfy, Lang: MsgTplLangId, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
 	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-id", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangId, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "LINE", Ident: Line + "-id", NotifyChannelIdent: Line, Lang: MsgTplLangId, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Bark", Ident: Bark + "-id", NotifyChannelIdent: Bark, Lang: MsgTplLangId, Weight: 26, Content: map[string]string{"content": NewTplMap[Bark]}},
 	{Name: "Jira", Ident: Jira + "-id", NotifyChannelIdent: Jira, Lang: MsgTplLangId, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-id", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangId, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-id", NotifyChannelIdent: "callback", Lang: MsgTplLangId, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3657,6 +3665,7 @@ var MsgTplMapEs = []MessageTemplate{
 	{Name: "ntfy", Ident: Ntfy + "-es", NotifyChannelIdent: Ntfy, Lang: MsgTplLangEs, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
 	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-es", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangEs, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "LINE", Ident: Line + "-es", NotifyChannelIdent: Line, Lang: MsgTplLangEs, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Bark", Ident: Bark + "-es", NotifyChannelIdent: Bark, Lang: MsgTplLangEs, Weight: 26, Content: map[string]string{"content": NewTplMap[Bark]}},
 	{Name: "Jira", Ident: Jira + "-es", NotifyChannelIdent: Jira, Lang: MsgTplLangEs, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-es", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangEs, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-es", NotifyChannelIdent: "callback", Lang: MsgTplLangEs, Weight: 16, Content: map[string]string{"content": ""}},
@@ -3688,6 +3697,7 @@ var MsgTplMapPt = []MessageTemplate{
 	{Name: "ntfy", Ident: Ntfy + "-pt", NotifyChannelIdent: Ntfy, Lang: MsgTplLangPt, Weight: 23, Content: map[string]string{"content": NewTplMap[Ntfy]}},
 	{Name: "Splunk On-Call", Ident: SplunkOnCall + "-pt", NotifyChannelIdent: SplunkOnCall, Lang: MsgTplLangPt, Weight: 24, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "LINE", Ident: Line + "-pt", NotifyChannelIdent: Line, Lang: MsgTplLangPt, Weight: 25, Content: map[string]string{"content": NewTplMap[Line]}},
+	{Name: "Bark", Ident: Bark + "-pt", NotifyChannelIdent: Bark, Lang: MsgTplLangPt, Weight: 26, Content: map[string]string{"content": NewTplMap[Bark]}},
 	{Name: "Jira", Ident: Jira + "-pt", NotifyChannelIdent: Jira, Lang: MsgTplLangPt, Weight: 18, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "JSMAlert", Ident: JSMAlert + "-pt", NotifyChannelIdent: JSMAlert, Lang: MsgTplLangPt, Weight: 17, Content: map[string]string{"title": JiraTitle, "content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback-pt", NotifyChannelIdent: "callback", Lang: MsgTplLangPt, Weight: 16, Content: map[string]string{"content": ""}},

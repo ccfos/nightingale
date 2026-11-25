@@ -218,6 +218,28 @@ Nightingale publishes JSON to the server root: `title`, `message` (the rendered 
 
 Sources: [ntfy publishing](https://docs.ntfy.sh/publish/), [error codes](https://github.com/binwiederhier/ntfy/blob/main/server/errors.go).
 
+## Bark
+
+`ident=bark`, `request_type=bark`. Pushes to the [Bark](https://github.com/Finb/Bark) iOS app. A built-in Bark channel is seeded on startup; with an empty config it pushes through the public `https://api.day.app` without authentication.
+
+| Field (`request_config.bark_request_config`) | Description |
+|---|---|
+| `server_url` | Root address of the bark-server; empty means `https://api.day.app` |
+| `username`, `password` | Basic authentication of a self-hosted bark-server (`--user` / `--password`); set both or neither |
+| `sound` | Optional sound name, e.g. `alarm`; empty uses the sound chosen in the Bark app |
+| `group` | Optional group name for Notification Center |
+| `proxy`, `timeout`, `retry_times`, `retry_sleep`, `insecure_skip_verify` | Shared network fields |
+
+A device key identifies one iPhone, so it belongs to a person like a phone number: `param_config.user_info.contact_key=bark_device_key` (required), and rules select `user_ids` / `user_group_ids`. Each user fills the key in their profile under Contacts. `Bark Device Key` (`bark_device_key`) is a built-in contact: `GET /api/n9e/contact-keys` and `GET /api/n9e/notify-contact` include it without anyone adding it to the contact list, and the stored list is not rewritten; once an admin saves the list with that entry (for example hidden), the stored entry wins.
+
+Nightingale sends one `POST {server_url}/push` per device key, up to 5 at a time, JSON with `device_key`, `title` (`[S1] Triggered: <rule>`, 120 characters), `body` (the rendered `content` template as plain text; the title when empty), `level`, `url` (the event details page), and `sound` / `group` (64 characters each) when set. The body is cut on a character boundary until the APNs payload bark-server builds from the push, JSON escaping included, stays under Apple's 4096-byte limit. The username and password are sent exactly as entered. Levels are fixed in the provider: S1→`timeSensitive` (breaks through Focus), S2/S3→`active`, and recovery→`passive` (delivered silently). `critical`, which rings even when the phone is muted, is not used.
+
+Duplicate keys are pushed once. A recipient who has not filled the key, or whose key contains `/` or spaces (a pasted URL), is reported by username or masked key in the result while the remaining recipients are still notified; a contact filled with only spaces counts as not filled. Such a partial failure is recorded as failed: its error lists the reasons first, keys failing for the same reason share one line, and the last line names the recipients that were pushed (e.g. `sent: ***m9Xw`). The target is kept under 1000 bytes and the error under 1900 bytes (notification record columns are 1024 / 2048), the overflow is counted as `+N more`. Notification records, errors and logs mask keys: the last 4 characters are kept only for keys of 12 characters or more (generated keys have 22), and a key the server echoes back is removed whatever its length. Success requires HTTP 200 with `"code":200`. HTTP 429 (with a rate limit hint) and 5xx are retried, except an APNs rejection of a dead token (`BadDeviceToken`, `Unregistered`). An unknown key gets 400 `failed to get device token`, and a wrong basic auth gets 418 from bark-server.
+
+`TestBarkLive` is an opt-in smoke test: set `NIGHTINGALE_BARK_DEVICE_KEY` (optionally `NIGHTINGALE_BARK_SERVER_URL`) and run `go test ./alert/sender/provider -run '^TestBarkLive$' -v -count=1`.
+
+Sources: [bark-server push API](https://github.com/Finb/bark-server/blob/master/docs/API_V2.md), [route_push.go](https://github.com/Finb/bark-server/blob/master/route_push.go).
+
 ## Splunk On-Call (VictorOps)
 
 `ident=splunk_oncall`, `request_type=splunk_oncall`. Create a media type with `request_config.splunk_oncall_request_config`:

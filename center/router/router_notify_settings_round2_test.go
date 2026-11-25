@@ -98,6 +98,13 @@ func TestNotifyContactPuts_RoundTripsContactOptions(t *testing.T) {
 	read := identityRequest(t, rt, rt.notifyContactGets, nil, "1", nil)
 	var got []models.NotifyContact
 	require.Empty(t, identityReply(t, read, &got))
+	// The built-in Bark contact is appended on read until the list is saved with it
+	require.Equal(t, append(form, models.NotifyContact{Name: "Bark Device Key", Ident: models.BarkKey, BuiltIn: true}), got)
+
+	form = append(form, models.NotifyContact{Name: "Bark", Ident: models.BarkKey, Hide: true, BuiltIn: true})
+	require.Empty(t, identityReply(t, identityRequest(t, rt, rt.notifyContactPuts, form, "1", nil), nil))
+	read = identityRequest(t, rt, rt.notifyContactGets, nil, "1", nil)
+	require.Empty(t, identityReply(t, read, &got))
 	require.Equal(t, form, got)
 }
 

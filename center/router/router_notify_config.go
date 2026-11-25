@@ -111,17 +111,7 @@ func (rt *Router) notifyChannelPuts(c *gin.Context) {
 }
 
 func (rt *Router) notifyContactGets(c *gin.Context) {
-	notifyContacts := []models.NotifyContact{}
-	cval, err := models.ConfigsGet(rt.Ctx, models.NOTIFYCONTACT)
-	ginx.Dangerous(err)
-	if cval == "" {
-		ginx.NewRender(c).Data(notifyContacts, nil)
-		return
-	}
-
-	err = json.Unmarshal([]byte(cval), &notifyContacts)
-
-	ginx.NewRender(c).Data(notifyContacts, err)
+	ginx.NewRender(c).Data(models.NotifyContactsGet(rt.Ctx))
 }
 
 func (rt *Router) notifyContactPuts(c *gin.Context) {

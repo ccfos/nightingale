@@ -38,16 +38,7 @@ func (rt *Router) notifyChannelsGets(c *gin.Context) {
 
 func (rt *Router) contactKeysGets(c *gin.Context) {
 	var labelAndKeys []models.LabelAndKey
-	cval, err := models.ConfigsGet(rt.Ctx, models.NOTIFYCONTACT)
-	ginx.Dangerous(err)
-
-	if cval == "" {
-		ginx.NewRender(c).Data(labelAndKeys, nil)
-		return
-	}
-
-	var notifyContacts []models.NotifyContact
-	err = json.Unmarshal([]byte(cval), &notifyContacts)
+	notifyContacts, err := models.NotifyContactsGet(rt.Ctx)
 	ginx.Dangerous(err)
 
 	for _, v := range notifyContacts {

@@ -30,6 +30,7 @@ type NotifyRequest struct {
 	PagerDutyRoutingKeys []string
 	CustomParams         map[string]string
 	Sendtos              []string
+	MissingContactUsers  []string                  // usernames of the selected users who have not filled the channel's contact
 	ImGroupIDs           []string                  // 飞书群/钉钉群ID
 	ImGroupRobotCodes    map[string]string         // 钉钉群 openConversationId -> robotCode, 由 BuildNotifyContext 预取
 	HttpClient           *http.Client              // 由 cache 层提供
