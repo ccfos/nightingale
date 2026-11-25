@@ -14,11 +14,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	pkgprom "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
@@ -113,6 +114,8 @@ func PromBatchQueryInstant(ctx context.Context, pc *prom.PromClientMap, f BatchI
 	return lst, nil
 }
 
+var EdgeProxyTransportHook func(ds *models.Datasource) http.RoundTripper
+
 func (rt *Router) dsProxy(c *gin.Context) {
 	dsId := ginx.UrlParamInt64(c, "id")
 
@@ -191,25 +194,34 @@ func (rt *Router) dsProxy(c *gin.Context) {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 	}
 
-	transport, has := transportGet(dsId, ds.UpdatedAt)
-	if !has {
-		// 使用 TLS 配置（支持 mTLS）
-		tlsConfig, err := ds.HTTPJson.TLS.TLSConfig()
-		if err != nil {
-			c.String(http.StatusInternalServerError, "failed to create TLS config: %s", err.Error())
-			return
-		}
+	var transport http.RoundTripper
+	if EdgeProxyTransportHook != nil {
+		transport = EdgeProxyTransportHook(ds)
+	}
+	if transport != nil {
+		transportEvict(dsId)
+	} else {
+		var has bool
+		transport, has = transportGet(dsId, ds.UpdatedAt)
+		if !has {
+			// Apply the datasource's TLS configuration, including mTLS.
+			tlsConfig, err := ds.HTTPJson.TLS.TLSConfig()
+			if err != nil {
+				c.String(http.StatusInternalServerError, "failed to create TLS config: %s", err.Error())
+				return
+			}
 
-		transport = &http.Transport{
-			TLSClientConfig: tlsConfig,
-			Proxy:           http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout: time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond,
-			}).DialContext,
-			ResponseHeaderTimeout: time.Duration(ds.HTTPJson.Timeout) * time.Millisecond,
-			MaxIdleConnsPerHost:   ds.HTTPJson.MaxIdleConnsPerHost,
+			transport = &http.Transport{
+				TLSClientConfig: tlsConfig,
+				Proxy:           http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout: time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond,
+				}).DialContext,
+				ResponseHeaderTimeout: time.Duration(ds.HTTPJson.Timeout) * time.Millisecond,
+				MaxIdleConnsPerHost:   ds.HTTPJson.MaxIdleConnsPerHost,
+			}
+			transportPut(dsId, ds.UpdatedAt, transport)
 		}
-		transportPut(dsId, ds.UpdatedAt, transport)
 	}
 
 	modifyResponse := func(r *http.Response) error {
@@ -280,15 +292,17 @@ func transportGet(dsid, newUpdatedAt int64) (http.RoundTripper, bool) {
 
 	oldUpdateAt, has := updatedAts[dsid]
 	if !has {
-		oldtran := tran.(*http.Transport)
-		oldtran.CloseIdleConnections()
+		if oldtran, ok := tran.(*http.Transport); ok {
+			oldtran.CloseIdleConnections()
+		}
 		delete(transports, dsid)
 		return nil, false
 	}
 
 	if oldUpdateAt != newUpdatedAt {
-		oldtran := tran.(*http.Transport)
-		oldtran.CloseIdleConnections()
+		if oldtran, ok := tran.(*http.Transport); ok {
+			oldtran.CloseIdleConnections()
+		}
 		delete(transports, dsid)
 		delete(updatedAts, dsid)
 		return nil, false
@@ -302,6 +316,19 @@ func transportPut(dsid, updatedat int64, tran http.RoundTripper) {
 	transports[dsid] = tran
 	updatedAts[dsid] = updatedat
 	transportsLock.Unlock()
+}
+
+func transportEvict(dsid int64) {
+	transportsLock.Lock()
+	defer transportsLock.Unlock()
+
+	if tran, has := transports[dsid]; has {
+		if oldtran, ok := tran.(*http.Transport); ok {
+			oldtran.CloseIdleConnections()
+		}
+		delete(transports, dsid)
+	}
+	delete(updatedAts, dsid)
 }
 
 const (

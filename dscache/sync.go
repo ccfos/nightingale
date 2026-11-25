@@ -31,6 +31,10 @@ var FromAPIHook func()
 
 var DatasourceProcessHook func(items []datasource.DatasourceInfo) []datasource.DatasourceInfo
 
+var CenterDatasourceWrapHook func(item datasource.DatasourceInfo, ds datasource.Datasource) (datasource.Datasource, bool)
+
+var EdgeSyncNotifyHook func()
+
 var (
 	// engineName 保存当前进程所属告警引擎集群名；edge 模式下用于过滤掉不属于本集群的数据源，
 	// 避免对无关数据源做 InitClient 而产生连接报错（issue #3159）。center 不参与过滤。
@@ -134,6 +138,7 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					Id:             item.Id,
 					Name:           item.Name,
 					Description:    item.Description,
+					ClusterName:    item.ClusterName,
 					Category:       item.Category,
 					PluginId:       item.PluginId,
 					Type:           item.PluginType,
@@ -144,6 +149,7 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					Status:         item.Status,
 					IsDefault:      item.IsDefault,
 					Weight:         item.Weight,
+					UpdatedAt:      item.UpdatedAt,
 				}
 
 				if item.PluginType == "elasticsearch" {
@@ -246,6 +252,9 @@ func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["es.min_interval"] = item.SettingsJson["min_interval"]
 	ds.Settings["es.max_shard"] = item.SettingsJson["max_shard"]
 	ds.Settings["es.enable_write"] = item.SettingsJson["enable_write"]
+	if useEdge, ok := item.SettingsJson["use_edge"]; ok {
+		ds.Settings["use_edge"] = useEdge
+	}
 }
 
 func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
@@ -268,6 +277,12 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 		if err != nil {
 			logger.Debugf("get plugin:%+v fail: %v", item, err)
 			continue
+		}
+
+		if isCenter && CenterDatasourceWrapHook != nil {
+			if wrapped, replaced := CenterDatasourceWrapHook(item, ds); replaced && wrapped != nil {
+				ds = wrapped
+			}
 		}
 
 		applyReadAddr(ds, item.Id, isCenter)
@@ -311,6 +326,9 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 	}
 
 	// logger.Debugf("get plugin by type success Ids:%v", ids)
+	if !isCenter && EdgeSyncNotifyHook != nil {
+		EdgeSyncNotifyHook()
+	}
 }
 
 // applyReadAddr asks each ReadAddrApplier to pick its effective read address for this process.
