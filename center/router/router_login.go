@@ -13,15 +13,16 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/cas"
 	"github.com/ccfos/nightingale/v6/pkg/dingtalk"
 	"github.com/ccfos/nightingale/v6/pkg/feishu"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -477,10 +478,25 @@ func (rt *Router) loginRedirectOAuth(c *gin.Context) {
 		return
 	}
 
-	redirect, err := rt.Sso.OAuth2.Authorize(rt.Redis, redirect)
+	browser := uuid.New().String()
+	redirect, state, err := rt.Sso.OAuth2.Authorize(rt.Redis, redirect, browser)
 	ginx.Dangerous(err)
+	if state != "" {
+		cookie := oauthBrowserCookie(c, state)
+		cookie.Value, cookie.MaxAge = browser, 300
+		http.SetCookie(c.Writer, cookie)
+	}
 
 	ginx.NewRender(c).Data(redirect, err)
+}
+
+func oauthBrowserCookie(c *gin.Context, state string) *http.Cookie {
+	secure := c.Request.TLS != nil || strings.EqualFold(c.GetHeader("X-Forwarded-Proto"), "https")
+	name := "n9e-oauth-" + state
+	if secure {
+		name = "__Host-" + name
+	}
+	return &http.Cookie{Name: name, Path: "/", HttpOnly: true, Secure: secure, SameSite: http.SameSiteLaxMode}
 }
 
 func (rt *Router) loginRedirectDingTalk(c *gin.Context) {
@@ -666,7 +682,16 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 	code := ginx.QueryStr(c, "code", "")
 	state := ginx.QueryStr(c, "state", "")
 
-	ret, err := rt.Sso.OAuth2.Callback(rt.Redis, rctx, code, state)
+	var browser string
+	if parsedState, err := uuid.Parse(state); err == nil && state == parsedState.String() {
+		cookie := oauthBrowserCookie(c, state)
+		browser, _ = c.Cookie(cookie.Name)
+		if browser != "" {
+			cookie.MaxAge = -1
+			http.SetCookie(c.Writer, cookie)
+		}
+	}
+	ret, err := rt.Sso.OAuth2.Callback(rt.Redis, rctx, code, state, browser)
 	if err != nil {
 		logx.Debugf(rctx, "sso.callback() get ret %+v error %v", ret, err)
 		ginx.NewRender(c).Data(CallbackOutput{}, err)
