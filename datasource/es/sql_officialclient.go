@@ -48,23 +48,29 @@ func officialClient(escli *Elasticsearch) (*elasticsearch8.Client, error) {
 		timeout = time.Duration(defaultTimeout) * time.Millisecond
 	}
 
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout: timeout,
-		}).DialContext,
-		ResponseHeaderTimeout: timeout,
-	}
-
-	if escli.TLS.SkipTlsVerify {
-		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true, //nolint:gosec
+	var baseTransport http.RoundTripper
+	if escli.CustomTransport != nil {
+		baseTransport = escli.CustomTransport
+	} else {
+		transport := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout: timeout,
+			}).DialContext,
+			ResponseHeaderTimeout: timeout,
 		}
+
+		if escli.TLS.SkipTlsVerify {
+			transport.TLSClientConfig = &tls.Config{
+				InsecureSkipVerify: true, //nolint:gosec
+			}
+		}
+		baseTransport = transport
 	}
 
 	cfg := elasticsearch8.Config{
 		Addresses: escli.Nodes,
-		Transport: &productCheckTransport{base: transport},
+		Transport: &productCheckTransport{base: baseTransport},
 	}
 
 	// Mirror InitClient()'s condition (Basic.Username != "") instead of

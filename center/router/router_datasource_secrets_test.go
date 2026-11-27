@@ -169,3 +169,50 @@ func TestDatasourceSharedBriefHidesConnectionInfo(t *testing.T) {
 	require.Equal(t, models.HTTP{}, result.Dat[0].HTTPJson)
 	require.Nil(t, result.Dat[0].SettingsJson)
 }
+
+func TestDatasourceBriefSettingsHookAndRedaction(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	prev := DatasourceBriefSettingsHook
+	DatasourceBriefSettingsHook = func(item *models.Datasource, safeSettings map[string]interface{}) map[string]interface{} {
+		if v, ok := item.SettingsJson["custom_flag"]; ok {
+			if safeSettings == nil {
+				safeSettings = make(map[string]interface{})
+			}
+			safeSettings["custom_flag"] = v
+		}
+		return safeSettings
+	}
+	t.Cleanup(func() { DatasourceBriefSettingsHook = prev })
+
+	rt := setupDatasourceSecretsTest(t)
+	var ds models.Datasource
+	require.NoError(t, rt.Ctx.DB.First(&ds, 2).Error)
+	require.NoError(t, ds.DB2FE())
+	ds.SettingsJson["custom_flag"] = true
+	require.NoError(t, ds.FE2DB())
+	require.NoError(t, rt.Ctx.DB.Save(&ds).Error)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/n9e/datasource/brief", nil)
+	c.Set("user", &models.User{})
+	rt.datasourceBriefs(c)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	var result struct {
+		Dat []*models.Datasource `json:"dat"`
+		Err string               `json:"err"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+	require.Empty(t, result.Err)
+	require.Len(t, result.Dat, 2)
+	byID := make(map[int64]*models.Datasource, len(result.Dat))
+	for _, item := range result.Dat {
+		byID[item.Id] = item
+	}
+	require.Empty(t, byID[1].SettingsJson)
+	require.Equal(t, map[string]interface{}{"custom_flag": true}, byID[2].SettingsJson)
+	for _, secret := range []string{"url-password", "auth-password", "header-secret", "key-secret", "settings-secret"} {
+		require.NotContains(t, w.Body.String(), secret)
+	}
+}

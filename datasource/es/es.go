@@ -34,18 +34,19 @@ const (
 )
 
 type Elasticsearch struct {
-	Addr        string            `json:"es.addr" mapstructure:"es.addr"`
-	Nodes       []string          `json:"es.nodes" mapstructure:"es.nodes"`
-	Timeout     int64             `json:"es.timeout" mapstructure:"es.timeout"` // millis
-	Basic       BasicAuth         `json:"es.basic" mapstructure:"es.basic"`
-	TLS         TLS               `json:"es.tls" mapstructure:"es.tls"`
-	Version     string            `json:"es.version" mapstructure:"es.version"`
-	Headers     map[string]string `json:"es.headers" mapstructure:"es.headers"`
-	MinInterval int               `json:"es.min_interval" mapstructure:"es.min_interval"` // seconds
-	MaxShard    int               `json:"es.max_shard" mapstructure:"es.max_shard"`
-	ClusterName string            `json:"es.cluster_name" mapstructure:"es.cluster_name"`
-	EnableWrite bool              `json:"es.enable_write" mapstructure:"es.enable_write"` // Enable write operations
-	Client      *elastic.Client   `json:"es.client" mapstructure:"es.client"`
+	Addr            string            `json:"es.addr" mapstructure:"es.addr"`
+	Nodes           []string          `json:"es.nodes" mapstructure:"es.nodes"`
+	Timeout         int64             `json:"es.timeout" mapstructure:"es.timeout"` // millis
+	Basic           BasicAuth         `json:"es.basic" mapstructure:"es.basic"`
+	TLS             TLS               `json:"es.tls" mapstructure:"es.tls"`
+	Version         string            `json:"es.version" mapstructure:"es.version"`
+	Headers         map[string]string `json:"es.headers" mapstructure:"es.headers"`
+	MinInterval     int               `json:"es.min_interval" mapstructure:"es.min_interval"` // seconds
+	MaxShard        int               `json:"es.max_shard" mapstructure:"es.max_shard"`
+	ClusterName     string            `json:"es.cluster_name" mapstructure:"es.cluster_name"`
+	EnableWrite     bool              `json:"es.enable_write" mapstructure:"es.enable_write"` // Enable write operations
+	Client          *elastic.Client   `json:"es.client" mapstructure:"es.client"`
+	CustomTransport http.RoundTripper `json:"-" mapstructure:"-"`
 }
 
 type TLS struct {
@@ -71,28 +72,34 @@ func (e *Elasticsearch) Init(settings map[string]interface{}) (datasource.Dataso
 }
 
 func (e *Elasticsearch) InitClient() error {
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout: time.Duration(e.Timeout) * time.Millisecond,
-		}).DialContext,
-		ResponseHeaderTimeout: time.Duration(e.Timeout) * time.Millisecond,
-	}
-
 	if len(e.Nodes) > 0 {
 		e.Addr = e.Nodes[0]
 	}
 
-	if strings.Contains(e.Addr, "https") {
-		tlsConfig := tlsx.ClientConfig{
-			InsecureSkipVerify: e.TLS.SkipTlsVerify,
-			UseTLS:             true,
+	var roundTripper http.RoundTripper
+	if e.CustomTransport != nil {
+		roundTripper = e.CustomTransport
+	} else {
+		transport := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout: time.Duration(e.Timeout) * time.Millisecond,
+			}).DialContext,
+			ResponseHeaderTimeout: time.Duration(e.Timeout) * time.Millisecond,
 		}
-		cfg, err := tlsConfig.TLSConfig()
-		if err != nil {
-			return fmt.Errorf("failed to create elasticsearch TLS config: %w", err)
+
+		if strings.Contains(e.Addr, "https") {
+			tlsConfig := tlsx.ClientConfig{
+				InsecureSkipVerify: e.TLS.SkipTlsVerify,
+				UseTLS:             true,
+			}
+			cfg, err := tlsConfig.TLSConfig()
+			if err != nil {
+				return fmt.Errorf("failed to create elasticsearch TLS config: %w", err)
+			}
+			transport.TLSClientConfig = cfg
 		}
-		transport.TLSClientConfig = cfg
+		roundTripper = transport
 	}
 
 	options := []elastic.ClientOptionFunc{
@@ -114,7 +121,7 @@ func (e *Elasticsearch) InitClient() error {
 	}
 
 	options = append(options, elastic.SetHttpClient(&http.Client{
-		Transport: transport,
+		Transport: roundTripper,
 		Timeout:   time.Duration(e.Timeout) * time.Millisecond,
 	}))
 
@@ -179,6 +186,14 @@ func (e *Elasticsearch) Equal(other datasource.Datasource) bool {
 	}
 
 	if e.MaxShard != otherES.MaxShard {
+		return false
+	}
+
+	if (e.CustomTransport == nil) != (otherES.CustomTransport == nil) {
+		return false
+	}
+
+	if e.CustomTransport != nil && e.ClusterName != otherES.ClusterName {
 		return false
 	}
 
