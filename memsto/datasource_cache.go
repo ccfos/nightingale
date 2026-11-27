@@ -96,6 +96,17 @@ func (d *DatasourceCacheType) GetById(id int64) *models.Datasource {
 	return d.ds[id]
 }
 
+// GetAll returns a snapshot of the cached datasource pointers.
+func (d *DatasourceCacheType) GetAll() []*models.Datasource {
+	d.RLock()
+	defer d.RUnlock()
+	lst := make([]*models.Datasource, 0, len(d.ds))
+	for _, ds := range d.ds {
+		lst = append(lst, ds)
+	}
+	return lst
+}
+
 // GetByCate 返回某个 plugin_type 下的全部数据源快照。返回的是 map 迭代顺序，
 // 调用方若需要稳定输出（如写进 API 响应）要自行排序。
 func (d *DatasourceCacheType) GetByCate(cate string) []*models.Datasource {

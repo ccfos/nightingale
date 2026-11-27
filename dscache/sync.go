@@ -31,6 +31,8 @@ var FromAPIHook func()
 
 var DatasourceProcessHook func(items []datasource.DatasourceInfo) []datasource.DatasourceInfo
 
+var CenterDatasourceWrapHook func(item datasource.DatasourceInfo, ds datasource.Datasource) (datasource.Datasource, bool)
+
 var (
 	// engineName 保存当前进程所属告警引擎集群名；edge 模式下用于过滤掉不属于本集群的数据源，
 	// 避免对无关数据源做 InitClient 而产生连接报错（issue #3159）。center 不参与过滤。
@@ -134,6 +136,7 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					Id:             item.Id,
 					Name:           item.Name,
 					Description:    item.Description,
+					ClusterName:    item.ClusterName,
 					Category:       item.Category,
 					PluginId:       item.PluginId,
 					Type:           item.PluginType,
@@ -144,6 +147,7 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					Status:         item.Status,
 					IsDefault:      item.IsDefault,
 					Weight:         item.Weight,
+					UpdatedAt:      item.UpdatedAt,
 				}
 
 				if item.PluginType == "elasticsearch" {
@@ -229,6 +233,11 @@ func lokiN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasour
 
 func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource) {
 	ds.Settings = make(map[string]interface{})
+	for k, v := range item.SettingsJson {
+		if !strings.HasPrefix(strings.ToLower(k), "es.") {
+			ds.Settings[k] = v
+		}
+	}
 	ds.Settings["es.nodes"] = []string{item.HTTPJson.Url}
 	if len(item.HTTPJson.Urls) > 0 {
 		ds.Settings["es.nodes"] = item.HTTPJson.Urls
@@ -268,6 +277,12 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 		if err != nil {
 			logger.Debugf("get plugin:%+v fail: %v", item, err)
 			continue
+		}
+
+		if isCenter && CenterDatasourceWrapHook != nil {
+			if wrapped, replaced := CenterDatasourceWrapHook(item, ds); replaced && wrapped != nil {
+				ds = wrapped
+			}
 		}
 
 		applyReadAddr(ds, item.Id, isCenter)

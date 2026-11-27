@@ -127,6 +127,10 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 			}
 		}
 
+		if DatasourceBriefSettingsHook != nil {
+			safeSettings = DatasourceBriefSettingsHook(item, safeSettings)
+		}
+
 		item.RedactSecrets()
 		item.SettingsJson = safeSettings
 		dss = append(dss, item)
@@ -177,6 +181,9 @@ var dsUrlCredRe = regexp.MustCompile(`(://)[^/@\s]+:[^/@\s]+@`)
 func sanitizeDsError(msg string) string {
 	return dsUrlCredRe.ReplaceAllString(msg, "$1***:***@")
 }
+
+// DatasourceBriefSettingsHook allows extensions to append non-secret settings to datasourceBriefs output.
+var DatasourceBriefSettingsHook func(item *models.Datasource, safeSettings map[string]interface{}) map[string]interface{}
 
 func (rt *Router) datasourceUpsert(c *gin.Context) {
 	if rt.DatasourceCache.DatasourceCheckHook(c) {
