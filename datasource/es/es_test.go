@@ -2,10 +2,15 @@ package es
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+type testRoundTripper struct{}
+
+func (testRoundTripper) RoundTrip(*http.Request) (*http.Response, error) { return nil, nil }
 
 func TestElasticsearch_Init(t *testing.T) {
 	tests := []struct {
@@ -36,6 +41,13 @@ func TestElasticsearch_Init(t *testing.T) {
 			name:     "empty settings",
 			settings: map[string]interface{}{},
 			wantErr:  false,
+		},
+		{
+			name: "ignores non-boolean use_edge setting",
+			settings: map[string]interface{}{
+				"use_edge": "true",
+			},
+			wantErr: false,
 		},
 	}
 
@@ -205,6 +217,12 @@ func TestElasticsearch_Equal(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+
+	rt := testRoundTripper{}
+	assert.False(t, (&Elasticsearch{Nodes: []string{"http://node1:9200"}}).Equal(&Elasticsearch{Nodes: []string{"http://node1:9200"}, CustomTransport: rt}))
+	assert.True(t, (&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "a"}).Equal(&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "b"}))
+	assert.True(t, (&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "edge-a", CustomTransport: rt}).Equal(&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "edge-a", CustomTransport: rt}))
+	assert.False(t, (&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "edge-a", CustomTransport: rt}).Equal(&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "edge-b", CustomTransport: rt}))
 }
 
 func TestElasticsearch_isES6CompatibilityField(t *testing.T) {
