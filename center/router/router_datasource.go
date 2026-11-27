@@ -186,9 +186,6 @@ func sanitizeDsError(msg string) string {
 // DatasourceBriefSettingsHook allows extensions to append non-secret settings to datasourceBriefs output.
 var DatasourceBriefSettingsHook func(item *models.Datasource, safeSettings map[string]interface{}) map[string]interface{}
 
-// DatasourceBeforeSaveHook allows extensions to validate a datasource payload before persistence.
-var DatasourceBeforeSaveHook func(ds *models.Datasource) error
-
 func (rt *Router) datasourceUpsert(c *gin.Context) {
 	if rt.DatasourceCache.DatasourceCheckHook(c) {
 		Render(c, []int{}, nil)
@@ -199,13 +196,6 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	ginx.BindJSON(c, &req)
 	username := Username(c)
 	req.UpdatedBy = username
-
-	if DatasourceBeforeSaveHook != nil {
-		if err := DatasourceBeforeSaveHook(&req); err != nil {
-			Dangerous(c, err)
-			return
-		}
-	}
 
 	var err error
 	var count int64

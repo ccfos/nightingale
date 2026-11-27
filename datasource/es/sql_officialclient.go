@@ -78,13 +78,12 @@ func officialClient(escli *Elasticsearch) (*elasticsearch8.Client, error) {
 	// (esN9eToDatasourceInfo) populate username/password but leave Enable
 	// false, which made every SQL request go out unauthenticated and fail
 	// with 401 against security-enabled clusters while DSL queries worked.
-	// For edge queries, the edge node adds authentication headers using its local datasource configuration.
-	if escli.CustomTransport == nil && (escli.Basic.Enable || escli.Basic.Username != "") {
+	if escli.Basic.Enable || escli.Basic.Username != "" {
 		cfg.Username = escli.Basic.Username
 		cfg.Password = escli.Basic.Password
 	}
 
-	if escli.CustomTransport == nil && len(escli.Headers) > 0 {
+	if len(escli.Headers) > 0 {
 		cfg.Header = make(http.Header)
 		for k, v := range escli.Headers {
 			cfg.Header.Set(k, v)

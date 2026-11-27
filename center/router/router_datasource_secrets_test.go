@@ -2,7 +2,6 @@ package router
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -216,30 +215,4 @@ func TestDatasourceBriefSettingsHookAndRedaction(t *testing.T) {
 	for _, secret := range []string{"url-password", "auth-password", "header-secret", "key-secret", "settings-secret"} {
 		require.NotContains(t, w.Body.String(), secret)
 	}
-}
-
-func TestDatasourceBeforeSaveHookRejectsUpsert(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	prev := DatasourceBeforeSaveHook
-	DatasourceBeforeSaveHook = func(ds *models.Datasource) error {
-		return fmt.Errorf("blocked by hook for %s", ds.Name)
-	}
-	t.Cleanup(func() { DatasourceBeforeSaveHook = prev })
-
-	rt := setupDatasourceSecretsTest(t)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodPost, "/api/n9e/datasource/upsert", strings.NewReader(`{
-		"name":"blocked-ds",
-		"plugin_type":"elasticsearch",
-		"http":{"url":"http://127.0.0.1:9200"}
-	}`))
-	c.Request.Header.Set("Content-Type", "application/json")
-	c.Set("user", &models.User{Username: "root"})
-	rt.datasourceUpsert(c)
-
-	require.Contains(t, w.Body.String(), "blocked by hook for blocked-ds")
-	var count int64
-	require.NoError(t, rt.Ctx.DB.Model(&models.Datasource{}).Where("name = ?", "blocked-ds").Count(&count).Error)
-	require.Zero(t, count)
 }
