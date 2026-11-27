@@ -44,7 +44,6 @@ type Elasticsearch struct {
 	MaxShard        int               `json:"es.max_shard" mapstructure:"es.max_shard"`
 	ClusterName     string            `json:"es.cluster_name" mapstructure:"es.cluster_name"`
 	EnableWrite     bool              `json:"es.enable_write" mapstructure:"es.enable_write"` // Enable write operations
-	UseEdge         bool              `json:"use_edge" mapstructure:"use_edge"`
 	Client          *elastic.Client   `json:"es.client" mapstructure:"es.client"`
 	CustomTransport http.RoundTripper `json:"-" mapstructure:"-"`
 }
@@ -189,15 +188,11 @@ func (e *Elasticsearch) Equal(other datasource.Datasource) bool {
 		return false
 	}
 
-	if e.UseEdge != otherES.UseEdge {
-		return false
-	}
-
 	if (e.CustomTransport == nil) != (otherES.CustomTransport == nil) {
 		return false
 	}
 
-	if (e.UseEdge || otherES.UseEdge) && e.ClusterName != otherES.ClusterName {
+	if e.CustomTransport != nil && e.ClusterName != otherES.ClusterName {
 		return false
 	}
 

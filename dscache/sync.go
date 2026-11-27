@@ -33,8 +33,6 @@ var DatasourceProcessHook func(items []datasource.DatasourceInfo) []datasource.D
 
 var CenterDatasourceWrapHook func(item datasource.DatasourceInfo, ds datasource.Datasource) (datasource.Datasource, bool)
 
-var EdgeSyncNotifyHook func()
-
 var (
 	// engineName 保存当前进程所属告警引擎集群名；edge 模式下用于过滤掉不属于本集群的数据源，
 	// 避免对无关数据源做 InitClient 而产生连接报错（issue #3159）。center 不参与过滤。
@@ -326,9 +324,6 @@ func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {
 	}
 
 	// logger.Debugf("get plugin by type success Ids:%v", ids)
-	if !isCenter && EdgeSyncNotifyHook != nil {
-		EdgeSyncNotifyHook()
-	}
 }
 
 // applyReadAddr asks each ReadAddrApplier to pick its effective read address for this process.
