@@ -107,11 +107,11 @@ func (e *Elasticsearch) InitClient() error {
 		elastic.SetHealthcheck(false),
 	}
 
-	if e.CustomTransport == nil && e.Basic.Username != "" {
+	if e.Basic.Username != "" {
 		options = append(options, elastic.SetBasicAuth(e.Basic.Username, e.Basic.Password))
 	}
 
-	if e.CustomTransport == nil && len(e.Headers) > 0 {
+	if len(e.Headers) > 0 {
 		headers := http.Header{}
 		for k, v := range e.Headers {
 			headers[k] = []string{v}

@@ -2,15 +2,18 @@ package es
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type testRoundTripper struct{}
+type roundTripFunc func(*http.Request) (*http.Response, error)
 
-func (testRoundTripper) RoundTrip(*http.Request) (*http.Response, error) { return nil, nil }
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
 
 func TestElasticsearch_Init(t *testing.T) {
 	tests := []struct {
@@ -43,9 +46,9 @@ func TestElasticsearch_Init(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name: "ignores non-boolean use_edge setting",
+			name: "ignores unknown non-es setting",
 			settings: map[string]interface{}{
-				"use_edge": "true",
+				"custom_flag": "true",
 			},
 			wantErr: false,
 		},
@@ -218,7 +221,7 @@ func TestElasticsearch_Equal(t *testing.T) {
 		})
 	}
 
-	rt := testRoundTripper{}
+	rt := roundTripFunc(func(*http.Request) (*http.Response, error) { return nil, nil })
 	assert.False(t, (&Elasticsearch{Nodes: []string{"http://node1:9200"}}).Equal(&Elasticsearch{Nodes: []string{"http://node1:9200"}, CustomTransport: rt}))
 	assert.True(t, (&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "a"}).Equal(&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "b"}))
 	assert.True(t, (&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "edge-a", CustomTransport: rt}).Equal(&Elasticsearch{Nodes: []string{"http://node1:9200"}, ClusterName: "edge-a", CustomTransport: rt}))
@@ -424,4 +427,60 @@ func TestElasticsearch_Constants(t *testing.T) {
 	assert.Equal(t, int64(60000), int64(defaultTimeout))
 	assert.Equal(t, 30, defaultQueryInterval)
 	assert.Equal(t, "7.10+", minVersion)
+}
+
+func TestElasticsearch_CustomTransportRoutesDSLAndSQL(t *testing.T) {
+	var paths []string
+	escli := &Elasticsearch{
+		Nodes:   []string{"http://127.0.0.1:1"},
+		Timeout: 1000,
+		Basic:   BasicAuth{Username: "reader", Password: "secret"},
+		Headers: map[string]string{"X-Tenant": "team"},
+		CustomTransport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			user, pass, ok := req.BasicAuth()
+			require.True(t, ok)
+			require.Equal(t, "reader", user)
+			require.Equal(t, "secret", pass)
+			require.Equal(t, "team", req.Header.Get("X-Tenant"))
+			paths = append(paths, req.Method+" "+req.URL.Path)
+			var body string
+			switch req.Method + " " + req.URL.Path {
+			case http.MethodGet + " /_all/_settings":
+				body = `{"logs-a":{"settings":{}}}`
+			case http.MethodPost + " /_sql":
+				body = `{"columns":[{"name":"v","type":"long"}],"rows":[[1]]}`
+			default:
+				return &http.Response{
+					StatusCode: http.StatusNotFound,
+					Header:     make(http.Header),
+					Body:       io.NopCloser(strings.NewReader(`{}`)),
+					Request:    req,
+				}, nil
+			}
+			header := make(http.Header)
+			header.Set("Content-Type", "application/json")
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     header,
+				Body:       io.NopCloser(strings.NewReader(body)),
+				Request:    req,
+			}, nil
+		}),
+	}
+	require.NoError(t, escli.InitClient())
+	t.Cleanup(func() {
+		clientCache.Delete(escli)
+		if escli.Client != nil {
+			escli.Client.Stop()
+		}
+	})
+
+	indices, err := escli.QueryIndices()
+	require.NoError(t, err)
+	require.Equal(t, []string{"logs-a"}, indices)
+
+	sqlResp, err := xpackSQLExec(context.Background(), escli, XPackSQLRequest{Query: "SELECT 1"})
+	require.NoError(t, err)
+	require.Equal(t, [][]interface{}{{float64(1)}}, sqlResp.Rows)
+	require.Equal(t, []string{"GET /_all/_settings", "POST /_sql"}, paths)
 }

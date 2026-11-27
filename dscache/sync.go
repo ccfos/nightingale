@@ -233,6 +233,11 @@ func lokiN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasour
 
 func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource) {
 	ds.Settings = make(map[string]interface{})
+	for k, v := range item.SettingsJson {
+		if !strings.HasPrefix(strings.ToLower(k), "es.") {
+			ds.Settings[k] = v
+		}
+	}
 	ds.Settings["es.nodes"] = []string{item.HTTPJson.Url}
 	if len(item.HTTPJson.Urls) > 0 {
 		ds.Settings["es.nodes"] = item.HTTPJson.Urls
@@ -250,9 +255,6 @@ func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["es.min_interval"] = item.SettingsJson["min_interval"]
 	ds.Settings["es.max_shard"] = item.SettingsJson["max_shard"]
 	ds.Settings["es.enable_write"] = item.SettingsJson["enable_write"]
-	if useEdge, ok := item.SettingsJson["use_edge"]; ok {
-		ds.Settings["use_edge"] = useEdge
-	}
 }
 
 func PutDatasources(items []datasource.DatasourceInfo, isCenter bool) {

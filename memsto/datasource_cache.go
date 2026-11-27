@@ -167,11 +167,6 @@ func (d *DatasourceCacheType) syncDatasources() error {
 		return errors.WithMessage(err, "failed to call DatasourceStatistics")
 	}
 
-	// Known second-granularity cache limitation: StatChanged compares (total, max(updated_at)),
-	// where updated_at uses time.Now().Unix(). If the same datasource is updated twice within
-	// the same second after the first write has already been synced, neither statistic changes,
-	// causing SyncOnce and periodic syncs across center/edge instances to skip the second write
-	// until a later mutation bumps total or max(updated_at) (while dscache polls rows independently).
 	if !d.StatChanged(stat.Total, stat.LastUpdated) {
 		d.stats.GaugeCronDuration.WithLabelValues("sync_datasources").Set(0)
 		d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(0)
